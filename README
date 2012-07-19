@@ -1,0 +1,4 @@
+Cassandra Java Driver
+=====================
+
+A work in progress java driver using the binary protocol and the full power of CQL3.
