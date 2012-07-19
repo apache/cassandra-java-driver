@@ -1,12 +1,18 @@
 package com.datastax.driver.core;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Informations and known state of a Cassandra cluster.
  * <p>
  * This is the main entry point of the driver. A simple example of access to a
  * Cassandra cluster would be:
  * <code>
- *   Cluster cluster = Cluster.Builder().addContactPoint("192.168.0.1").build();
+ *   Cluster cluster = Cluster.Builder().addContactPoints("192.168.0.1").build();
  *   Session session = cluster.connect("db1");
  *
  *   for (CQLRow row : session.execute("SELECT * FROM table1"))
@@ -23,6 +29,26 @@ package com.datastax.driver.core;
  * to which this driver connects to, prefer maxConnectedNode().
  */
 public class Cluster {
+
+    private final List<InetSocketAddress> contactPoints;
+
+    private Cluster(List<InetSocketAddress> contactPoints)
+    {
+        this.contactPoints = contactPoints;
+    }
+
+    /**
+     * Build a new cluster based on the provided configuration.
+     *
+     * Note that for building a cluster programmatically, Cluster.Builder
+     * provides a slightly less verbose alternative.
+     *
+     * @param config the Cluster.Configuration to use
+     * @return the newly created Cluster instance
+     */
+    public static Cluster buildFrom(Configuration config) {
+        return new Cluster(config.contactPoints());
+    }
 
     /**
      * Creates a new session on this cluster.
@@ -68,7 +94,101 @@ public class Cluster {
         return null;
     }
 
-    public class Builder {
-        // TODO
+    public interface Configuration {
+
+        public List<InetSocketAddress> contactPoints();
+    }
+
+    public static class Builder {
+
+        private static class Config implements Configuration
+        {
+            // TODO: might not be the best default port, look at changing in C*
+            private static final int DEFAULT_PORT = 8000;
+
+            private List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+
+            public List<InetSocketAddress> contactPoints() {
+                return addresses;
+            }
+        }
+
+        private final Config config = new Config();
+
+        /**
+         * Adds a contact point.
+         *
+         * Contact points are addresses of Cassandra nodes that the driver uses
+         * to discover the cluster topology. Only one contact point is required
+         * (the driver will retrieve the address of the other nodes
+         * automatically), but it is usually a good idea to provide more than
+         * one contact point, as if that unique contact point is not available,
+         * the driver won't be able to initialize itself correctly.
+         *
+         * @param address the address of the node to connect to
+         * @param port the port to connect to
+         * @return this Builder
+         *
+         * @throws IllegalArgumentException if the port parameter is outside
+         * the range of valid port values, or if the hostname parameter is
+         * null.
+         * @throws SecurityException if a security manager is present and
+         * permission to resolve the host name is denied.
+         */
+        public Builder addContactPoint(String address, int port) {
+            config.addresses.add(new InetSocketAddress(address, port));
+            return this;
+        }
+
+        /**
+         * Add contact points using the default Cassandra port.
+         *
+         * @see addContactPoint for more details on contact points.
+         *
+         * @param addresses addresses of the nodes to add as contact point
+         * @return this Builder
+         *
+         * @throws SecurityException if a security manager is present and
+         * permission to resolve the host name is denied.
+         */
+        public Builder addContactPoints(String... addresses) {
+            for (String address : addresses)
+                addContactPoint(address, config.DEFAULT_PORT);
+            return this;
+        }
+
+        /**
+         * Add contact points using the default Cassandra port.
+         *
+         * @see addContactPoint for more details on contact points.
+         *
+         * @param addresses addresses of the nodes to add as contact point
+         * @return this Builder
+         *
+         * @throws SecurityException if a security manager is present and
+         * permission to resolve the host name is denied.
+         */
+        public Builder addContactPoints(InetAddress... addresses) {
+            for (InetAddress address : addresses)
+                config.addresses.add(new InetSocketAddress(address, config.DEFAULT_PORT));
+            return this;
+        }
+
+        /**
+         * Add contact points.
+         *
+         * @see addContactPoint for more details on contact points.
+         *
+         * @param sockAddresses the socket addresses of the nodes to add as
+         * contact point
+         * @return this Builder
+         *
+         * @throws SecurityException if a security manager is present and
+         * permission to resolve the host name is denied.
+         */
+        public Builder addContactPoints(InetSocketAddress... addresses) {
+            config.addresses.addAll(Arrays.asList(addresses));
+            return this;
+        }
     }
 }
