@@ -61,4 +61,9 @@ public class ResultSet implements Iterable<CQLRow> {
     public Iterator<CQLRow> iterator() {
         return null;
     }
+
+    public static class Future implements java.util.concurrent.Future<ResultSet>
+    {
+        // TODO
+    }
 }

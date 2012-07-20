@@ -47,6 +47,13 @@ public class Session {
     }
 
     /**
+     * @see #execute(String)
+     */
+    public ResultSet execute(CQLQuery query) {
+        return null;
+    }
+
+    /**
      * Execute the provided query asynchronously.
      *
      * This method does not block. It returns as soon as the query has been
@@ -63,7 +70,14 @@ public class Session {
      * @return the result of the query. That result will never be null be can
      * be empty and will be for any non SELECT query.
      */
-    public ResultSet executeAsync(String query) {
+    public ResultSet.Future executeAsync(String query) {
+        return null;
+    }
+
+    /**
+     * @see #executeAsync(String)
+     */
+    public ResultSet.Future executeAsync(CQLQuery query) {
         return null;
     }
 
@@ -74,6 +88,13 @@ public class Session {
      * @return the prepared statement corresponding to <code>query<code>.
      */
     public PreparedStatement prepare(String query) {
+        return null;
+    }
+
+    /**
+     * @see #prepare(String)
+     */
+    public PreparedStatement prepare(CQLQuery query) {
         return null;
     }
 
@@ -105,7 +126,7 @@ public class Session {
      * @return the result of the query. That result will never be null be can
      * be empty and will be for any non SELECT query.
      */
-    public ResultSet executePreparedAsync(BoundStatement stmt) {
+    public ResultSet.Future executePreparedAsync(BoundStatement stmt) {
         return null;
     }
 }
