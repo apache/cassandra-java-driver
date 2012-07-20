@@ -1,5 +1,17 @@
 package com.datastax.driver.core;
 
+import java.util.List;
+import java.net.InetSocketAddress;
+
+import com.datastax.driver.core.transport.Connection;
+import com.datastax.driver.core.transport.ConnectionException;
+
+import org.apache.cassandra.transport.Message;
+import org.apache.cassandra.transport.messages.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A session holds connections to a Cassandra cluster, allowing to query it.
  *
@@ -13,6 +25,17 @@ package com.datastax.driver.core;
  * at a time, so this is really more one instance per keyspace used.
  */
 public class Session {
+
+    private static final Logger logger = LoggerFactory.getLogger(Session.class);
+
+    // TODO: we can do better :)
+    private final Connection connection;
+
+    // Package protected, only Cluster should construct that.
+    Session(List<InetSocketAddress> addresses) throws ConnectionException {
+        Connection.Factory factory = new Connection.Factory(addresses.get(0));
+        this.connection = factory.open();
+    }
 
     /**
      * Sets the current keyspace to use for this session.
@@ -43,14 +66,24 @@ public class Session {
      * be empty and will be for any non SELECT query.
      */
     public ResultSet execute(String query) {
-        return null;
+
+        // TODO: this is not the real deal, just for tests
+        try {
+            QueryMessage msg = new QueryMessage(query);
+            Connection.Future future = connection.write(msg);
+            Message.Response response = future.get();
+            logger.info("Got " + response);
+            return null;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
      * @see #execute(String)
      */
     public ResultSet execute(CQLQuery query) {
-        return null;
+        return execute(query.toString());
     }
 
     /**
@@ -85,7 +118,7 @@ public class Session {
      * Prepare the provided query.
      *
      * @param query the CQL query to prepare
-     * @return the prepared statement corresponding to <code>query<code>.
+     * @return the prepared statement corresponding to {@code query}.
      */
     public PreparedStatement prepare(String query) {
         return null;
@@ -95,7 +128,7 @@ public class Session {
      * @see #prepare(String)
      */
     public PreparedStatement prepare(CQLQuery query) {
-        return null;
+        return prepare(query.toString());
     }
 
     /**

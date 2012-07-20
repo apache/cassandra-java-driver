@@ -1,4 +1,6 @@
-package com.datastax.driver.core.internal;
+package com.datastax.driver.core.transport;
+
+import java.net.InetSocketAddress;
 
 public class ConnectionException extends Exception
 {
@@ -6,18 +8,18 @@ public class ConnectionException extends Exception
 
     public ConnectionException(InetSocketAddress address, String msg, Throwable cause)
     {
-        this(msg, cause);
+        super(msg, cause);
         this.address = address;
     }
 
     public ConnectionException(InetSocketAddress address, String msg)
     {
-        this(msg);
+        super(msg);
         this.address = address;
     }
 
     @Override
-    public getMessage() {
+    public String getMessage() {
         return String.format("[%s] %s", address, super.getMessage());
     }
 }

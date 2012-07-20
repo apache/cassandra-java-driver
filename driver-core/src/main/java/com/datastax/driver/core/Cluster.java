@@ -6,13 +6,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.datastax.driver.core.transport.ConnectionException;
+
 /**
  * Informations and known state of a Cassandra cluster.
  * <p>
  * This is the main entry point of the driver. A simple example of access to a
  * Cassandra cluster would be:
  * <code>
- *   Cluster cluster = Cluster.Builder().addContactPoints("192.168.0.1").build();
+ *   Cluster cluster = new Cluster.Builder().addContactPoints("192.168.0.1").build();
  *   Session session = cluster.connect("db1");
  *
  *   for (CQLRow row : session.execute("SELECT * FROM table1"))
@@ -32,8 +34,7 @@ public class Cluster {
 
     private final List<InetSocketAddress> contactPoints;
 
-    private Cluster(List<InetSocketAddress> contactPoints)
-    {
+    private Cluster(List<InetSocketAddress> contactPoints) {
         this.contactPoints = contactPoints;
     }
 
@@ -41,7 +42,7 @@ public class Cluster {
      * Build a new cluster based on the provided configuration.
      *
      * Note that for building a cluster programmatically, Cluster.Builder
-     * provides a slightly less verbose alternative.
+     * provides a slightly less verbose shortcut with {@link Builder#build}.
      *
      * @param config the Cluster.Configuration to use
      * @return the newly created Cluster instance
@@ -56,7 +57,12 @@ public class Cluster {
      * @return a new session on this cluster sets to no keyspace.
      */
     public Session connect() {
-        return null;
+        try {
+            return new Session(contactPoints);
+        } catch (ConnectionException e) {
+            // TODO: Figure what exception we want to return (but maybe the ConnectionException is good enough)
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -74,9 +80,9 @@ public class Cluster {
      * Creates a new session on this cluster and sets a keyspace to use.
      *
      * @param keyspaceName The name of the keyspace to use for the created
-     * <code>Session</code>. This can be later changed using {@link Session#use}.
+     * {@code Session}. This can be later changed using {@link Session#use}.
      * @return a new session on this cluster sets to keyspace
-     * <code>keyspaceName</code>.
+     * {@code keyspaceName}.
      */
     public Session connect(String keyspace) {
         return null;
@@ -88,7 +94,7 @@ public class Cluster {
      * @param authInfo The authorisation credentials to use to connect to
      * Cassandra nodes.
      * @return a new session on this cluster sets to keyspace
-     * <code>keyspaceName</code>.
+     * {@code keyspaceName}.
      */
     public Session connect(String keyspace, AuthInfo authInfo) {
         return null;
@@ -99,21 +105,16 @@ public class Cluster {
         public List<InetSocketAddress> contactPoints();
     }
 
-    public static class Builder {
+    public static class Builder implements Configuration {
 
-        private static class Config implements Configuration
-        {
-            // TODO: might not be the best default port, look at changing in C*
-            private static final int DEFAULT_PORT = 8000;
+        // TODO: might not be the best default port, look at changing in C*
+        private static final int DEFAULT_PORT = 8000;
 
-            private List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+        private List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
 
-            public List<InetSocketAddress> contactPoints() {
-                return addresses;
-            }
+        public List<InetSocketAddress> contactPoints() {
+            return addresses;
         }
-
-        private final Config config = new Config();
 
         /**
          * Adds a contact point.
@@ -136,8 +137,23 @@ public class Cluster {
          * permission to resolve the host name is denied.
          */
         public Builder addContactPoint(String address, int port) {
-            config.addresses.add(new InetSocketAddress(address, port));
+            this.addresses.add(new InetSocketAddress(address, port));
             return this;
+        }
+
+        /**
+         * Add a contact point using the default Cassandra port.
+         *
+         * @see addContactPoint for more details on contact points.
+         *
+         * @param address the address of the node to add as contact point
+         * @return this Builder
+         *
+         * @throws SecurityException if a security manager is present and
+         * permission to resolve the host name is denied.
+         */
+        public Builder addContactPoint(String address) {
+            return addContactPoint(address, DEFAULT_PORT);
         }
 
         /**
@@ -153,7 +169,7 @@ public class Cluster {
          */
         public Builder addContactPoints(String... addresses) {
             for (String address : addresses)
-                addContactPoint(address, config.DEFAULT_PORT);
+                addContactPoint(address, DEFAULT_PORT);
             return this;
         }
 
@@ -170,7 +186,7 @@ public class Cluster {
          */
         public Builder addContactPoints(InetAddress... addresses) {
             for (InetAddress address : addresses)
-                config.addresses.add(new InetSocketAddress(address, config.DEFAULT_PORT));
+                this.addresses.add(new InetSocketAddress(address, DEFAULT_PORT));
             return this;
         }
 
@@ -187,8 +203,12 @@ public class Cluster {
          * permission to resolve the host name is denied.
          */
         public Builder addContactPoints(InetSocketAddress... addresses) {
-            config.addresses.addAll(Arrays.asList(addresses));
+            this.addresses.addAll(Arrays.asList(addresses));
             return this;
+        }
+
+        public Cluster build() {
+            return Cluster.buildFrom(this);
         }
     }
 }
