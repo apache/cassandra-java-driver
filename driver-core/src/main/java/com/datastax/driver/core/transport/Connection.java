@@ -3,12 +3,15 @@ package com.datastax.driver.core.transport;
 import com.datastax.driver.core.utils.SimpleFuture;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.transport.*;
+import org.apache.cassandra.transport.messages.*;
 
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
@@ -19,6 +22,9 @@ import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
  */
 public class Connection extends org.apache.cassandra.transport.Connection
 {
+    // TODO: that doesn't belong here
+    private static final String CQL_VERSION = "3.0.0";
+
     public final InetSocketAddress address;
 
     private final ClientBootstrap bootstrap;
@@ -34,7 +40,8 @@ public class Connection extends org.apache.cassandra.transport.Connection
      *
      * The connection is open and initialized by the constructor.
      *
-     * @throws ConnectionException if the connection attempts fails.
+     * @throws ConnectionException if the connection attempts fails or is
+     * refused by the server.
      */
     private Connection(InetSocketAddress address, Factory factory) throws ConnectionException {
         this.address = address;
@@ -51,6 +58,33 @@ public class Connection extends org.apache.cassandra.transport.Connection
         {
             bootstrap.releaseExternalResources();
             throw new TransportException(address, "Cannot connect", future.getCause());
+        }
+
+        initializeTransport();
+    }
+
+    private void initializeTransport() throws ConnectionException {
+
+        // TODO: we will need to get fancy about handling protocol version at
+        // some point, but keep it simple for now.
+        // TODO: we need to allow setting the compression to use
+        StartupMessage startup = new StartupMessage(CQL_VERSION, Collections.<StartupMessage.Option, Object>emptyMap());
+        try {
+            Message.Response response = write(startup).get();
+            switch (response.type) {
+                case READY:
+                    break;
+                case ERROR:
+                    throw new TransportException(address, String.format("Error initializing connection: %s", ((ErrorMessage)response).errorMsg));
+                case AUTHENTICATE:
+                    throw new TransportException(address, "Authentication required but not yet supported");
+                default:
+                    throw new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type));
+            }
+        } catch (ExecutionException e) {
+            throw new ConnectionException(address, "Unexpected error during transport initialization", e.getCause());
+        } catch (InterruptedException e) {
+            throw new RuntimeException();
         }
     }
 
