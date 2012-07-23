@@ -79,7 +79,7 @@ public class Cluster {
     /**
      * Creates a new session on this cluster and sets a keyspace to use.
      *
-     * @param keyspaceName The name of the keyspace to use for the created
+     * @param keyspace The name of the keyspace to use for the created
      * {@code Session}. This can be later changed using {@link Session#use}.
      * @return a new session on this cluster sets to keyspace
      * {@code keyspaceName}.
@@ -144,13 +144,16 @@ public class Cluster {
         /**
          * Add a contact point using the default Cassandra port.
          *
-         * @see addContactPoint for more details on contact points.
+         * See {@link Builder#addContactPoint} for more details on contact
+         * points.
          *
          * @param address the address of the node to add as contact point
          * @return this Builder
          *
          * @throws SecurityException if a security manager is present and
          * permission to resolve the host name is denied.
+         *
+         * @see Builder#addContactPoint
          */
         public Builder addContactPoint(String address) {
             return addContactPoint(address, DEFAULT_PORT);
@@ -159,13 +162,16 @@ public class Cluster {
         /**
          * Add contact points using the default Cassandra port.
          *
-         * @see addContactPoint for more details on contact points.
+         * See {@link Builder#addContactPoint} for more details on contact
+         * points.
          *
          * @param addresses addresses of the nodes to add as contact point
          * @return this Builder
          *
          * @throws SecurityException if a security manager is present and
          * permission to resolve the host name is denied.
+         *
+         * @see Builder#addContactPoint
          */
         public Builder addContactPoints(String... addresses) {
             for (String address : addresses)
@@ -176,13 +182,16 @@ public class Cluster {
         /**
          * Add contact points using the default Cassandra port.
          *
-         * @see addContactPoint for more details on contact points.
+         * See {@link Builder#addContactPoint} for more details on contact
+         * points.
          *
          * @param addresses addresses of the nodes to add as contact point
          * @return this Builder
          *
          * @throws SecurityException if a security manager is present and
          * permission to resolve the host name is denied.
+         *
+         * @see Builder#addContactPoint
          */
         public Builder addContactPoints(InetAddress... addresses) {
             for (InetAddress address : addresses)
@@ -193,14 +202,17 @@ public class Cluster {
         /**
          * Add contact points.
          *
-         * @see addContactPoint for more details on contact points.
+         * See {@link Builder#addContactPoint} for more details on contact
+         * points.
          *
-         * @param sockAddresses the socket addresses of the nodes to add as
-         * contact point
+         * @param addresses the socket addresses of the nodes to add as contact
+         * point
          * @return this Builder
          *
          * @throws SecurityException if a security manager is present and
          * permission to resolve the host name is denied.
+         *
+         * @see Builder#addContactPoint
          */
         public Builder addContactPoints(InetSocketAddress... addresses) {
             this.addresses.addAll(Arrays.asList(addresses));

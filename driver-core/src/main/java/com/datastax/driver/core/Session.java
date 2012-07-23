@@ -45,7 +45,6 @@ public class Session {
      *
      * @param keyspace the name of the keyspace to set
      * @return this session.
-     * 
      */
     public Session use(String keyspace) {
         return null;
@@ -93,6 +92,14 @@ public class Session {
     }
 
     /**
+     * Execute the provided query.
+     *
+     * This method works exactly as {@link #execute(String)}.
+     *
+     * @param query the CQL query to execute
+     * @return the result of the query. That result will never be null be can
+     * be empty and will be for any non SELECT query.
+     *
      * @see #execute(String)
      */
     public ResultSet execute(CQLQuery query) {
@@ -121,6 +128,14 @@ public class Session {
     }
 
     /**
+     * Execute the provided query asynchronously.
+     *
+     * This method works exactly as {@link #executeAsync(String)}.
+     *
+     * @param query the CQL query to execute
+     * @return the result of the query. That result will never be null be can
+     * be empty and will be for any non SELECT query.
+     *
      * @see #executeAsync(String)
      */
     public ResultSet.Future executeAsync(CQLQuery query) {
@@ -138,6 +153,11 @@ public class Session {
     }
 
     /**
+     * Prepare the provided query.
+     *
+     * @param query the CQL query to prepare
+     * @return the prepared statement corresponding to {@code query}.
+     *
      * @see #prepare(String)
      */
     public PreparedStatement prepare(CQLQuery query) {
@@ -148,7 +168,7 @@ public class Session {
      * Execute a prepared statement that had values provided for its bound
      * variables.
      *
-     * This method performs like {@link execute} but for prepared statements.
+     * This method performs like {@link #execute} but for prepared statements.
      * It blocks until at least some result has been received from the
      * database.
      *
@@ -164,7 +184,7 @@ public class Session {
      * Execute a prepared statement that had values provided for its bound
      * variables asynchronously.
      *
-     * This method performs like {@link executeAsync} but for prepared
+     * This method performs like {@link #executeAsync} but for prepared
      * statements. It return as soon as the query has been successfully sent to
      * the database.
      *

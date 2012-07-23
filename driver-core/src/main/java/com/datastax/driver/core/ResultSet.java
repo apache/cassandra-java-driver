@@ -88,11 +88,11 @@ public class ResultSet implements Iterable<CQLRow> {
     /**
      * An iterator over the rows contained in this ResultSet.
      *
-     * The {@link Iterator.next iterator next()} method is equivalent to
-     * calling {@link fetchOne}. So this iterator will consume results from
-     * this ResultSet and after a full iteration, the ResultSet will be empty.
+     * The {@link Iterator#next} method is equivalent to calling {@link #fetchOne}.
+     * So this iterator will consume results from this ResultSet and after a
+     * full iteration, the ResultSet will be empty.
      *
-     * The returned iterator does not support the {@link Iterato.remove} method.
+     * The returned iterator does not support the {@link Iterator#remove} method.
      *
      * @return an iterator that will consume and return the remaining rows of
      * this ResultSet.
