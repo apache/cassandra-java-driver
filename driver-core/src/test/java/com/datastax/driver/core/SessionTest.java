@@ -28,6 +28,9 @@ public class SessionTest {
         Cluster cluster = new Cluster.Builder().addContactPoint("localhost").build();
         Session session = cluster.connect();
 
-        session.execute("SELECT * FROM system.local");
+        ResultSet rs = session.execute("SELECT * FROM system.local");
+        System.out.println(rs.columns().toString());
+        for (CQLRow row : rs)
+            System.out.println(row.toString());
     }
 }

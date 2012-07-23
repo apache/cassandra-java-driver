@@ -72,8 +72,14 @@ public class Session {
             QueryMessage msg = new QueryMessage(query);
             Connection.Future future = connection.write(msg);
             Message.Response response = future.get();
-            logger.info("Got " + response);
-            return null;
+
+            if (response.type == Message.Type.RESULT) {
+                return ResultSet.fromMessage((ResultMessage)response);
+            }
+            else {
+                logger.info("Got " + response);
+                return null;
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

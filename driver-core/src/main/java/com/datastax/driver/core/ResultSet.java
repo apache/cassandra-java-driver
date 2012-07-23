@@ -1,12 +1,45 @@
 package com.datastax.driver.core;
 
-import java.util.Iterator;
-import java.util.List;
+import java.nio.ByteBuffer;
+import java.util.*;
+
+import org.apache.cassandra.cql3.ColumnSpecification;
+import org.apache.cassandra.transport.messages.ResultMessage;
 
 /**
  * The result of a query.
+ *
+ * Note that this class is not thread-safe.
  */
 public class ResultSet implements Iterable<CQLRow> {
+
+    private static final ResultSet EMPTY = new ResultSet(Columns.EMPTY, new ArrayDeque(0));
+
+    private final Columns metadata;
+    private final Queue<List<ByteBuffer>> rows;
+
+    private ResultSet(Columns metadata, Queue<List<ByteBuffer>> rows) {
+
+        this.metadata = metadata;
+        this.rows = rows;
+    }
+
+    static ResultSet fromMessage(ResultMessage msg) {
+
+        // TODO: turn that into a switch (need to expose the message kind in C*)
+        if (msg instanceof ResultMessage.Void) {
+            return EMPTY;
+        } else if (msg instanceof ResultMessage.Rows) {
+            ResultMessage.Rows r = (ResultMessage.Rows)msg;
+            Columns.Definition[] defs = new Columns.Definition[r.result.metadata.names.size()];
+            for (int i = 0; i < defs.length; i++)
+                defs[i] = Columns.Definition.fromTransportSpecification(r.result.metadata.names.get(i));
+
+            return new ResultSet(new Columns(defs), new ArrayDeque(r.result.rows));
+        } else {
+            throw new IllegalArgumentException("Cannot create a ResultSet from " + msg);
+        }
+    }
 
     /**
      * The columns returned in this ResultSet.
@@ -14,7 +47,7 @@ public class ResultSet implements Iterable<CQLRow> {
      * @return the columns returned in this ResultSet.
      */
     public Columns columns() {
-        return null;
+        return metadata;
     }
 
     /**
@@ -23,7 +56,7 @@ public class ResultSet implements Iterable<CQLRow> {
      * @return whether this ResultSet has more results.
      */
     public boolean isExhausted() {
-        return true;
+        return rows.isEmpty();
     }
 
     /**
@@ -33,7 +66,7 @@ public class ResultSet implements Iterable<CQLRow> {
      * exhausted.
      */
     public CQLRow fetchOne() {
-        return null;
+        return CQLRow.fromData(metadata, rows.poll());
     }
 
     /**
@@ -43,7 +76,13 @@ public class ResultSet implements Iterable<CQLRow> {
      * returned list is empty if and only the ResultSet is exhausted.
      */
     public List<CQLRow> fetchAll() {
-        return null;
+        if (isExhausted())
+            return Collections.emptyList();
+
+        List<CQLRow> result = new ArrayList<CQLRow>(rows.size());
+        for (CQLRow row : this)
+            result.add(row);
+        return result;
     }
 
     /**
@@ -59,7 +98,29 @@ public class ResultSet implements Iterable<CQLRow> {
      * this ResultSet.
      */
     public Iterator<CQLRow> iterator() {
-        return null;
+
+        return new Iterator<CQLRow>() {
+
+            public boolean hasNext() {
+                return !rows.isEmpty();
+            }
+
+            public CQLRow next() {
+                return CQLRow.fromData(metadata, rows.poll());
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("ResultSet[ exhausted: ").append(isExhausted());
+        sb.append(", ").append(metadata).append("]");
+        return sb.toString();
     }
 
     public static class Future // implements java.util.concurrent.Future<ResultSet>
