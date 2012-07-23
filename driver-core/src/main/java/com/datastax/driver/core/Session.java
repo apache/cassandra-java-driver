@@ -74,7 +74,14 @@ public class Session {
             Message.Response response = future.get();
 
             if (response.type == Message.Type.RESULT) {
-                return ResultSet.fromMessage((ResultMessage)response);
+                ResultMessage rmsg = (ResultMessage)response;
+                switch (rmsg.kind) {
+                    case VOID:
+                    case ROWS:
+                        return ResultSet.fromMessage(rmsg);
+                }
+                logger.info("Got " + response);
+                return null;
             }
             else {
                 logger.info("Got " + response);

@@ -26,18 +26,18 @@ public class ResultSet implements Iterable<CQLRow> {
 
     static ResultSet fromMessage(ResultMessage msg) {
 
-        // TODO: turn that into a switch (need to expose the message kind in C*)
-        if (msg instanceof ResultMessage.Void) {
-            return EMPTY;
-        } else if (msg instanceof ResultMessage.Rows) {
-            ResultMessage.Rows r = (ResultMessage.Rows)msg;
-            Columns.Definition[] defs = new Columns.Definition[r.result.metadata.names.size()];
-            for (int i = 0; i < defs.length; i++)
-                defs[i] = Columns.Definition.fromTransportSpecification(r.result.metadata.names.get(i));
+        switch (msg.kind) {
+            case VOID:
+                return EMPTY;
+            case ROWS:
+                ResultMessage.Rows r = (ResultMessage.Rows)msg;
+                Columns.Definition[] defs = new Columns.Definition[r.result.metadata.names.size()];
+                for (int i = 0; i < defs.length; i++)
+                    defs[i] = Columns.Definition.fromTransportSpecification(r.result.metadata.names.get(i));
 
-            return new ResultSet(new Columns(defs), new ArrayDeque(r.result.rows));
-        } else {
-            throw new IllegalArgumentException("Cannot create a ResultSet from " + msg);
+                return new ResultSet(new Columns(defs), new ArrayDeque(r.result.rows));
+            default:
+                throw new IllegalArgumentException("Cannot create a ResultSet from " + msg);
         }
     }
 

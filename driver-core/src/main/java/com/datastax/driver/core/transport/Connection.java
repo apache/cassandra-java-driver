@@ -117,7 +117,10 @@ public class Connection extends org.apache.cassandra.transport.Connection
             ChannelFuture writeFuture = channel.write(request);
             writeFuture.awaitUninterruptibly();
             if (!writeFuture.isSuccess())
+            {
+                dispatcher.setFuture(null);
                 throw new TransportException(address, "Error writting", writeFuture.getCause());
+            }
 
             return future;
 
@@ -186,7 +189,6 @@ public class Connection extends org.apache.cassandra.transport.Connection
     private class Dispatcher extends SimpleChannelUpstreamHandler {
 
         private volatile Future future;
-        private volatile Exception exception;
 
         public void setFuture(Future future) {
             this.future = future;
@@ -196,14 +198,18 @@ public class Connection extends org.apache.cassandra.transport.Connection
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
             // TODO: we should do something better than just throwing an exception
             if (future == null)
-                throw new RuntimeException("Not future set");
+                throw new RuntimeException(String.format("Received %s but no future set", e.getMessage()));
+
+            // As soon as we set the value to the currently set future, a new write could
+            // be started, so reset the local variable to null *before* setting the future for this query.
+            Future current = future;
+            future = null;
 
             if (!(e.getMessage() instanceof Message.Response)) {
-                future.setException(new TransportException(address, "Unexpected message received: " + e.getMessage()));
+                current.setException(new TransportException(address, "Unexpected message received: " + e.getMessage()));
             } else {
-                future.set((Message.Response)e.getMessage());
+                current.set((Message.Response)e.getMessage());
             }
-            future = null;
         }
     }
 
