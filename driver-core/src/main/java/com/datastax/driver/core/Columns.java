@@ -2,7 +2,7 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
-import com.datastax.driver.core.codec.Codec;
+import com.datastax.driver.core.transport.Codec;
 
 import org.apache.cassandra.cql3.ColumnSpecification;
 

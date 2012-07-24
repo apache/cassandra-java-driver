@@ -1,4 +1,4 @@
-package com.datastax.driver.core.codec;
+package com.datastax.driver.core.transport;
 
 import java.util.HashMap;
 import java.util.Map;
