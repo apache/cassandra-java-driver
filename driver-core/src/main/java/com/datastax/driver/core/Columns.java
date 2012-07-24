@@ -164,6 +164,21 @@ public class Columns implements Iterable<Columns.Definition> {
         return idx;
     }
 
+    void checkBounds(int i) {
+        if (i < 0 || i >= count())
+            throw new ArrayIndexOutOfBoundsException(i);
+    }
+
+    DataType.Native checkType(int i, DataType.Native... types) {
+        DataType defined = type(i);
+        for (DataType.Native type : types)
+            if (type == defined)
+                return type;
+
+        // TODO: change that exception
+        throw new IllegalArgumentException(String.format("Column %s is of type %s", name(i), defined));
+    }
+
     public static class Definition {
 
         public final String keyspace;

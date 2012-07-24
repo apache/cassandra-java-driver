@@ -39,7 +39,7 @@ public class CQLRow {
     }
 
     public boolean isNull(int i) {
-        checkBounds(i);
+        metadata.checkBounds(i);
         return data.get(i) != null;
     }
 
@@ -50,7 +50,7 @@ public class CQLRow {
     /**
      */
     public boolean getBool(int i) {
-        checkType(i, DataType.Native.BOOLEAN);
+        metadata.checkType(i, DataType.Native.BOOLEAN);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -64,7 +64,7 @@ public class CQLRow {
     }
 
     public int getInt(int i) {
-        checkType(i, DataType.Native.INT);
+        metadata.checkType(i, DataType.Native.INT);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -78,10 +78,10 @@ public class CQLRow {
     }
 
     public long getLong(int i) {
-        DataType type = checkType(i, DataType.Native.BIGINT,
-                                     DataType.Native.TIMESTAMP,
-                                     DataType.Native.INT,
-                                     DataType.Native.COUNTER);
+        DataType type = metadata.checkType(i, DataType.Native.BIGINT,
+                                              DataType.Native.TIMESTAMP,
+                                              DataType.Native.INT,
+                                              DataType.Native.COUNTER);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -97,7 +97,7 @@ public class CQLRow {
     }
 
     public Date getDate(int i) {
-        checkType(i, DataType.Native.TIMESTAMP);
+        metadata.checkType(i, DataType.Native.TIMESTAMP);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -111,7 +111,7 @@ public class CQLRow {
     }
 
     public float getFloat(int i) {
-        checkType(i, DataType.Native.FLOAT);
+        metadata.checkType(i, DataType.Native.FLOAT);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -125,8 +125,8 @@ public class CQLRow {
     }
 
     public double getDouble(int i) {
-        DataType type = checkType(i, DataType.Native.DOUBLE,
-                                     DataType.Native.FLOAT);
+        DataType type = metadata.checkType(i, DataType.Native.DOUBLE,
+                                              DataType.Native.FLOAT);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -138,7 +138,7 @@ public class CQLRow {
     }
 
     public ByteBuffer getByteBuffer(int i) {
-        checkBounds(i);
+        metadata.checkBounds(i);
 
         ByteBuffer value = data.get(i);
         if (value == null)
@@ -163,9 +163,9 @@ public class CQLRow {
     }
 
     public String getString(int i) {
-        DataType type = checkType(i, DataType.Native.VARCHAR,
-                                     DataType.Native.TEXT,
-                                     DataType.Native.ASCII);
+        DataType type = metadata.checkType(i, DataType.Native.VARCHAR,
+                                              DataType.Native.TEXT,
+                                              DataType.Native.ASCII);
 
         ByteBuffer value = data.get(i);
         if (value == null)
@@ -181,7 +181,7 @@ public class CQLRow {
     }
 
     public BigInteger getVarInt(int i) {
-        checkType(i, DataType.Native.VARINT);
+        metadata.checkType(i, DataType.Native.VARINT);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -195,7 +195,7 @@ public class CQLRow {
     }
 
     public BigDecimal getDecimal(int i) {
-        checkType(i, DataType.Native.DECIMAL);
+        metadata.checkType(i, DataType.Native.DECIMAL);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -209,7 +209,7 @@ public class CQLRow {
     }
 
     public UUID getUUID(int i) {
-        DataType type = checkType(i, DataType.Native.UUID, DataType.Native.TIMEUUID);
+        DataType type = metadata.checkType(i, DataType.Native.UUID, DataType.Native.TIMEUUID);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -222,21 +222,6 @@ public class CQLRow {
 
     public UUID getUUID(String name) {
         return getUUID(metadata.getIdx(name));
-    }
-
-    private DataType checkType(int i, DataType.Native... types) {
-        DataType defined = metadata.type(i);
-        for (DataType.Native type : types)
-            if (type == defined)
-                return type;
-
-        // TODO: change that exception
-        throw new IllegalArgumentException(String.format("Column %s is of type %s", metadata.name(i), defined));
-    }
-
-    private void checkBounds(int i) {
-        if (i < 0 || i >= metadata.count())
-            throw new ArrayIndexOutOfBoundsException(i);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.datastax.driver.core;
 
+import java.util.Arrays;
 import java.util.List;
 import java.net.InetSocketAddress;
 
@@ -149,7 +150,29 @@ public class Session {
      * @return the prepared statement corresponding to {@code query}.
      */
     public PreparedStatement prepare(String query) {
-        return null;
+
+        // TODO: this is not the real deal, just for tests
+        try {
+            PrepareMessage msg = new PrepareMessage(query);
+            Connection.Future future = connection.write(msg);
+            Message.Response response = future.get();
+
+            if (response.type == Message.Type.RESULT) {
+                ResultMessage rmsg = (ResultMessage)response;
+                switch (rmsg.kind) {
+                    case PREPARED:
+                        return PreparedStatement.fromMessage((ResultMessage.Prepared)rmsg);
+                }
+                logger.info("Got " + response);
+                return null;
+            }
+            else {
+                logger.info("Got " + response);
+                return null;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -177,7 +200,32 @@ public class Session {
      * be empty and will be for any non SELECT query.
      */
     public ResultSet executePrepared(BoundStatement stmt) {
-        return null;
+        // TODO: this is not the real deal, just for tests
+        try {
+            if (!stmt.ready())
+                throw new IllegalArgumentException("Provided statement has some variables not bound to values");
+
+            ExecuteMessage msg = new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values));
+            Connection.Future future = connection.write(msg);
+            Message.Response response = future.get();
+
+            if (response.type == Message.Type.RESULT) {
+                ResultMessage rmsg = (ResultMessage)response;
+                switch (rmsg.kind) {
+                    case VOID:
+                    case ROWS:
+                        return ResultSet.fromMessage(rmsg);
+                }
+                logger.info("Got " + response);
+                return null;
+            }
+            else {
+                logger.info("Got " + response);
+                return null;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
