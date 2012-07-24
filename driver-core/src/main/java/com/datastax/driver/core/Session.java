@@ -1,9 +1,10 @@
 package com.datastax.driver.core;
 
-import java.util.Arrays;
-import java.util.List;
 import java.net.InetSocketAddress;
+import java.util.*;
+import java.util.concurrent.*;
 
+import com.datastax.driver.core.pool.HostConnectionPool;
 import com.datastax.driver.core.transport.Connection;
 import com.datastax.driver.core.transport.ConnectionException;
 
@@ -29,13 +30,11 @@ public class Session {
 
     private static final Logger logger = LoggerFactory.getLogger(Session.class);
 
-    // TODO: we can do better :)
-    private final Connection connection;
+    private final Manager manager;
 
     // Package protected, only Cluster should construct that.
-    Session(List<InetSocketAddress> addresses) throws ConnectionException {
-        Connection.Factory factory = new Connection.Factory(addresses.get(0));
-        this.connection = factory.open();
+    Session(Cluster cluster, List<Host> hosts) {
+        this.manager = new Manager(cluster, hosts);
     }
 
     /**
@@ -48,7 +47,8 @@ public class Session {
      * @return this session.
      */
     public Session use(String keyspace) {
-        return null;
+        manager.setKeyspace(keyspace);
+        return this;
     }
 
     /**
@@ -66,27 +66,9 @@ public class Session {
      * be empty and will be for any non SELECT query.
      */
     public ResultSet execute(String query) {
-
-        // TODO: this is not the real deal, just for tests
+        // TODO: Deal with exceptions
         try {
-            QueryMessage msg = new QueryMessage(query);
-            Connection.Future future = connection.write(msg);
-            Message.Response response = future.get();
-
-            if (response.type == Message.Type.RESULT) {
-                ResultMessage rmsg = (ResultMessage)response;
-                switch (rmsg.kind) {
-                    case VOID:
-                    case ROWS:
-                        return ResultSet.fromMessage(rmsg);
-                }
-                logger.info("Got " + response);
-                return null;
-            }
-            else {
-                logger.info("Got " + response);
-                return null;
-            }
+            return toResultSet(manager.execute(new QueryMessage(query)));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -150,26 +132,9 @@ public class Session {
      * @return the prepared statement corresponding to {@code query}.
      */
     public PreparedStatement prepare(String query) {
-
-        // TODO: this is not the real deal, just for tests
+        // TODO: Deal with exceptions
         try {
-            PrepareMessage msg = new PrepareMessage(query);
-            Connection.Future future = connection.write(msg);
-            Message.Response response = future.get();
-
-            if (response.type == Message.Type.RESULT) {
-                ResultMessage rmsg = (ResultMessage)response;
-                switch (rmsg.kind) {
-                    case PREPARED:
-                        return PreparedStatement.fromMessage((ResultMessage.Prepared)rmsg);
-                }
-                logger.info("Got " + response);
-                return null;
-            }
-            else {
-                logger.info("Got " + response);
-                return null;
-            }
+            return toPreparedStatement(manager.execute(new PrepareMessage(query)));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -200,29 +165,9 @@ public class Session {
      * be empty and will be for any non SELECT query.
      */
     public ResultSet executePrepared(BoundStatement stmt) {
-        // TODO: this is not the real deal, just for tests
+        // TODO: Deal with exceptions
         try {
-            if (!stmt.ready())
-                throw new IllegalArgumentException("Provided statement has some variables not bound to values");
-
-            ExecuteMessage msg = new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values));
-            Connection.Future future = connection.write(msg);
-            Message.Response response = future.get();
-
-            if (response.type == Message.Type.RESULT) {
-                ResultMessage rmsg = (ResultMessage)response;
-                switch (rmsg.kind) {
-                    case VOID:
-                    case ROWS:
-                        return ResultSet.fromMessage(rmsg);
-                }
-                logger.info("Got " + response);
-                return null;
-            }
-            else {
-                logger.info("Got " + response);
-                return null;
-            }
+            return toResultSet(manager.execute(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values))));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -242,5 +187,143 @@ public class Session {
      */
     public ResultSet.Future executePreparedAsync(BoundStatement stmt) {
         return null;
+    }
+
+    private ResultSet toResultSet(Connection.Future future) {
+        try {
+            Message.Response response = future.get();
+            switch (response.type) {
+                case RESULT:
+                    return ResultSet.fromMessage((ResultMessage)response);
+                case ERROR:
+                    // TODO: handle errors
+                    logger.info("Got " + response);
+                    return null;
+                default:
+                    // TODO: handle errors (set the connection to defunct as this mean it is in a bad state)
+                    logger.info("Got " + response);
+                    return null;
+            }
+        } catch (Exception e) {
+            // TODO: do better
+            throw new RuntimeException(e);
+        }
+    }
+
+    private PreparedStatement toPreparedStatement(Connection.Future future) {
+        try {
+            Message.Response response = future.get();
+            switch (response.type) {
+                case RESULT:
+                    return PreparedStatement.fromMessage((ResultMessage)response);
+                case ERROR:
+                    // TODO: handle errors
+                    logger.info("Got " + response);
+                    return null;
+                default:
+                    // TODO: handle errors (set the connection to defunct as this mean it is in a bad state)
+                    logger.info("Got " + response);
+                    return null;
+            }
+        } catch (Exception e) {
+            // TODO: do better
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static class Manager implements Host.StateListener {
+
+        private final Cluster cluster;
+
+        private final ConcurrentMap<Host, HostConnectionPool> pools;
+        private final LoadBalancingPolicy loadBalancer;
+
+        private final HostConnectionPool.Configuration poolsConfiguration;
+
+        // TODO: Make that configurable
+        private final long DEFAULT_CONNECTION_TIMEOUT = 3000;
+
+        public Manager(Cluster cluster, List<Host> hosts) {
+            this.cluster = cluster;
+
+            // TODO: consider the use of NonBlockingHashMap
+            this.pools = new ConcurrentHashMap<Host, HostConnectionPool>(hosts.size());
+            this.loadBalancer = new RoundRobinPolicy();
+            this.poolsConfiguration = new HostConnectionPool.Configuration();
+
+            loadBalancer.initialize(hosts);
+
+            for (Host host : hosts) {
+                logger.debug("Adding new host " + host);
+                host.monitor().register(this);
+
+                addHost(host);
+                // If we fail to connect, the pool will be shutdown right away
+                if (pools.get(host).isShutdown()) {
+                    logger.debug("Cannot connect to " + host);
+                    pools.remove(host);
+                }
+            }
+        }
+
+        private HostConnectionPool addHost(Host host) {
+            return pools.put(host, new HostConnectionPool(host, cluster.connectionFactory, poolsConfiguration));
+        }
+
+        public void onUp(Host host) {
+            HostConnectionPool previous = addHost(host);;
+            loadBalancer.onUp(host);
+
+            // This should not be necessary but it's harmless
+            if (previous != null)
+                previous.shutdown();
+        }
+
+        public void onDown(Host host) {
+            loadBalancer.onDown(host);
+            HostConnectionPool pool = pools.remove(host);
+
+            // This should not be necessary but it's harmless
+            if (pool != null)
+                pool.shutdown();
+        }
+
+        public void setKeyspace(String keyspace) {
+            poolsConfiguration.setKeyspace(keyspace);
+        }
+
+        /**
+         * Execute the provided request.
+         *
+         * This method will find a suitable node to connect to using the {@link LoadBalancingPolicy}
+         * and handle host failover.
+         *
+         * @return a future on the response to the request.
+         */
+        public Connection.Future execute(Message.Request msg) {
+
+            Iterator<Host> plan = loadBalancer.newQueryPlan();
+            while (plan.hasNext()) {
+                Host host = plan.next();
+                HostConnectionPool pool = pools.get(host);
+                if (pool == null || pool.isShutdown())
+                    continue;
+
+                try {
+                    Connection connection = pool.borrowConnection(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+                    try {
+                        return connection.write(msg);
+                    } finally {
+                        pool.returnConnection(connection);
+                    }
+                } catch (ConnectionException e) {
+                    logger.trace("Error: " + e.getMessage());
+                    // If we have any problem with the connection, just move to the next node.
+                    // If that happens during the write of the request, the pool act on the error during returnConnection.
+                }
+            }
+            // TODO: Change that to a "NoAvailableHostException"
+            throw new RuntimeException();
+        }
     }
 }

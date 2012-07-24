@@ -25,7 +25,6 @@ public class ResultSet implements Iterable<CQLRow> {
     }
 
     static ResultSet fromMessage(ResultMessage msg) {
-
         switch (msg.kind) {
             case VOID:
                 return EMPTY;
@@ -36,8 +35,13 @@ public class ResultSet implements Iterable<CQLRow> {
                     defs[i] = Columns.Definition.fromTransportSpecification(r.result.metadata.names.get(i));
 
                 return new ResultSet(new Columns(defs), new ArrayDeque(r.result.rows));
+            case SET_KEYSPACE:
+                // TODO: we might want to do more with such result
+                return EMPTY;
+            case PREPARED:
+                throw new RuntimeException("Prepared statement received when a ResultSet was expected");
             default:
-                throw new IllegalArgumentException("Cannot create a ResultSet from " + msg);
+                throw new AssertionError();
         }
     }
 

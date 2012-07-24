@@ -2,11 +2,15 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.*;
 
+import com.datastax.driver.core.transport.Connection;
 import com.datastax.driver.core.transport.ConnectionException;
+import com.datastax.driver.core.utils.SimpleConvictionPolicy;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Informations and known state of a Cassandra cluster.
@@ -30,12 +34,37 @@ import com.datastax.driver.core.transport.ConnectionException;
  * against node set as contact point. If you want to limit the number of nodes
  * to which this driver connects to, prefer maxConnectedNode().
  */
-public class Cluster {
+public class Cluster implements Host.StateListener {
 
-    private final List<InetSocketAddress> contactPoints;
+    private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
+
+    private final List<Host> contactPoints;
+
+    private final Set<Session> sessions = new CopyOnWriteArraySet<Session>();
+    final Connection.Factory connectionFactory = new Connection.Factory();
+
+    private final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(2);
+
+    // TODO: Make that configurable
+    private final ConvictionPolicy.Factory convictionPolicyFactory = new SimpleConvictionPolicy.Factory();
 
     private Cluster(List<InetSocketAddress> contactPoints) {
-        this.contactPoints = contactPoints;
+        this.contactPoints = new ArrayList<Host>(contactPoints.size());
+        for (InetSocketAddress address : contactPoints)
+            this.contactPoints.add(new Host(address, convictionPolicyFactory));
+    }
+
+    public void onUp(Host host) {
+        // Nothing specific
+        // TODO: We should register reconnection attempts, to avoid starting two of
+        // them and if this method is called by other means that the
+        // reconnection handler (like C* tells us it's up), cancel the latter
+    }
+
+    public void onDown(Host host) {
+        // Note: we'll basically waste the first successful reconnection that way, but it's probably not a big deal
+        logger.debug(String.format("%s is down, scheduling connection retries", host));
+        new ReconnectionHandler(host, scheduledExecutor, connectionFactory).start();
     }
 
     /**
@@ -57,12 +86,12 @@ public class Cluster {
      * @return a new session on this cluster sets to no keyspace.
      */
     public Session connect() {
-        try {
-            return new Session(contactPoints);
-        } catch (ConnectionException e) {
-            // TODO: Figure what exception we want to return (but maybe the ConnectionException is good enough)
-            throw new RuntimeException(e);
-        }
+        for (Host host : contactPoints)
+            host.monitor().register(this);
+
+        Session session = new Session(this, contactPoints);
+        sessions.add(session);
+        return session;
     }
 
     /**
@@ -73,6 +102,7 @@ public class Cluster {
      * @return a new session on this cluster sets to no keyspace.
      */
     public Session connect(AuthInfo authInfo) {
+        // TODO
         return null;
     }
 
@@ -85,7 +115,7 @@ public class Cluster {
      * {@code keyspaceName}.
      */
     public Session connect(String keyspace) {
-        return null;
+        return connect().use(keyspace);
     }
 
     /**
@@ -97,7 +127,7 @@ public class Cluster {
      * {@code keyspaceName}.
      */
     public Session connect(String keyspace, AuthInfo authInfo) {
-        return null;
+        return connect(authInfo).use(keyspace);
     }
 
     public interface Configuration {

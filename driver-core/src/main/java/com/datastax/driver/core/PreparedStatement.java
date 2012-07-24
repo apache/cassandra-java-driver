@@ -21,13 +21,22 @@ public class PreparedStatement {
         this.id = id;
     }
 
-    static PreparedStatement fromMessage(ResultMessage.Prepared msg) {
+    static PreparedStatement fromMessage(ResultMessage msg) {
+        switch (msg.kind) {
+            case PREPARED:
+                ResultMessage.Prepared pmsg = (ResultMessage.Prepared)msg;
+                Columns.Definition[] defs = new Columns.Definition[pmsg.metadata.names.size()];
+                for (int i = 0; i < defs.length; i++)
+                    defs[i] = Columns.Definition.fromTransportSpecification(pmsg.metadata.names.get(i));
 
-        Columns.Definition[] defs = new Columns.Definition[msg.metadata.names.size()];
-        for (int i = 0; i < defs.length; i++)
-            defs[i] = Columns.Definition.fromTransportSpecification(msg.metadata.names.get(i));
-
-        return new PreparedStatement(new Columns(defs), msg.statementId);
+                return new PreparedStatement(new Columns(defs), pmsg.statementId);
+            case VOID:
+            case ROWS:
+            case SET_KEYSPACE:
+                throw new RuntimeException("ResultSet received when prepared statement received was expected");
+            default:
+                throw new AssertionError();
+        }
     }
 
     /**

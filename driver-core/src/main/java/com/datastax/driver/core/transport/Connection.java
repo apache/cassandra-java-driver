@@ -1,13 +1,13 @@
 package com.datastax.driver.core.transport;
 
-import com.datastax.driver.core.utils.SimpleFuture;
-
 import java.net.InetSocketAddress;
 import java.util.Collections;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.utils.SimpleFuture;
 
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.transport.*;
@@ -16,16 +16,21 @@ import org.apache.cassandra.transport.messages.*;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A connection to a Cassandra Node.
  */
 public class Connection extends org.apache.cassandra.transport.Connection
 {
+    private static final Logger logger = LoggerFactory.getLogger(Connection.class);
+
     // TODO: that doesn't belong here
     private static final String CQL_VERSION = "3.0.0";
 
     public final InetSocketAddress address;
+    private final String name;
 
     private final ClientBootstrap bootstrap;
     private final Channel channel;
@@ -33,7 +38,12 @@ public class Connection extends org.apache.cassandra.transport.Connection
     private final Dispatcher dispatcher = new Dispatcher();
 
     private AtomicInteger inFlight = new AtomicInteger(0);
-    private volatile boolean shutdown;
+    private volatile boolean isClosed;
+    private volatile String keyspace;
+
+    private volatile boolean isDefunct;
+    private volatile ConnectionException exception;
+
 
     /**
      * Create a new connection to a Cassandra node.
@@ -43,24 +53,38 @@ public class Connection extends org.apache.cassandra.transport.Connection
      * @throws ConnectionException if the connection attempts fails or is
      * refused by the server.
      */
-    private Connection(InetSocketAddress address, Factory factory) throws ConnectionException {
+    private Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException {
         this.address = address;
         this.factory = factory;
+        this.name = name;
         this.bootstrap = factory.bootstrap();
 
         bootstrap.setPipelineFactory(new PipelineFactory(this));
 
         ChannelFuture future = bootstrap.connect(address);
 
-        // Wait until the connection attempt succeeds or fails.
-        this.channel = future.awaitUninterruptibly().getChannel();
-        if (!future.isSuccess())
-        {
-            bootstrap.releaseExternalResources();
-            throw new TransportException(address, "Cannot connect", future.getCause());
+        inFlight.incrementAndGet();
+        try {
+            // Wait until the connection attempt succeeds or fails.
+            this.channel = future.awaitUninterruptibly().getChannel();
+            if (!future.isSuccess())
+            {
+                logger.debug(String.format("[%s] Error connecting to %s%s", name, address, extractMessage(future.getCause())));
+                throw new TransportException(address, "Cannot connect", future.getCause());
+            }
+        } finally {
+            inFlight.decrementAndGet();
         }
 
+        logger.trace(String.format("[%s] Connection opened successfully", name));
         initializeTransport();
+        logger.trace(String.format("[%s] Transport initialized and ready", name));
+    }
+
+    private static String extractMessage(Throwable t) {
+        if (t == null || t.getMessage().isEmpty())
+            return "";
+        return " (" + t.getMessage() + ")";
     }
 
     private void initializeTransport() throws ConnectionException {
@@ -75,16 +99,54 @@ public class Connection extends org.apache.cassandra.transport.Connection
                 case READY:
                     break;
                 case ERROR:
-                    throw new TransportException(address, String.format("Error initializing connection: %s", ((ErrorMessage)response).errorMsg));
+                    throw defunct(new TransportException(address, String.format("Error initializing connection: %s", ((ErrorMessage)response).errorMsg)));
                 case AUTHENTICATE:
                     throw new TransportException(address, "Authentication required but not yet supported");
                 default:
-                    throw new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type));
+                    throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type)));
             }
         } catch (ExecutionException e) {
-            throw new ConnectionException(address, "Unexpected error during transport initialization", e.getCause());
+            throw defunct(new ConnectionException(address, "Unexpected error during transport initialization", e.getCause()));
         } catch (InterruptedException e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean isDefunct() {
+        return isDefunct;
+    }
+
+    public ConnectionException lastException() {
+        return exception;
+    }
+
+    private ConnectionException defunct(ConnectionException e) {
+        exception = e;
+        isDefunct = true;
+        return e;
+    }
+
+    public String keyspace() {
+        return keyspace;
+    }
+
+    public void setKeyspace(String keyspace) throws ConnectionException {
+        if (keyspace == null)
+            return;
+
+        if (this.keyspace != null && this.keyspace.equals(keyspace))
+            return;
+
+        try {
+            logger.trace(String.format("[%s] Setting keyspace %s", name, keyspace));
+            write(new QueryMessage("USE " + keyspace)).get();
+            this.keyspace = keyspace;
+        } catch (ConnectionException e) {
+            throw defunct(e);
+        } catch (ExecutionException e) {
+            throw defunct(new ConnectionException(address, "Error while setting keyspace", e));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -98,7 +160,10 @@ public class Connection extends org.apache.cassandra.transport.Connection
      * @throws TransportException if an I/O error while sending the request
      */
     public Future write(Message.Request request) throws ConnectionException {
-        if (shutdown)
+        if (isDefunct)
+            throw new ConnectionException(address, "Write attempt on defunct connection");
+
+        if (isClosed)
             throw new ConnectionException(address, "Connection has been closed");
 
         request.attach(this);
@@ -112,16 +177,26 @@ public class Connection extends org.apache.cassandra.transport.Connection
             Future future = new Future(this);
 
             // TODO: This assumes the connection is used synchronously, fix that at some point
-            dispatcher.setFuture(future);
+            dispatcher.futureRef.set(future);
 
+            logger.trace(String.format("[%s] writting request %s", name, request));
             ChannelFuture writeFuture = channel.write(request);
             writeFuture.awaitUninterruptibly();
             if (!writeFuture.isSuccess())
             {
-                dispatcher.setFuture(null);
-                throw new TransportException(address, "Error writting", writeFuture.getCause());
+                logger.debug(String.format("[%s] Error writting request %s", name, request));
+
+                ConnectionException ce;
+                if (writeFuture.getCause() instanceof java.nio.channels.ClosedChannelException) {
+                    ce = new TransportException(address, "Error writting: Closed channel");
+                } else {
+                    ce = new TransportException(address, "Error writting", writeFuture.getCause());
+                }
+                dispatcher.futureRef.set(null);
+                throw defunct(ce);
             }
 
+            logger.trace(String.format("[%s] request sent successfully", name));
             return future;
 
         } finally {
@@ -130,20 +205,27 @@ public class Connection extends org.apache.cassandra.transport.Connection
     }
 
     public void close() {
-        // Make sure all new writes are rejected
-        shutdown = true;
+        if (isClosed)
+            return;
 
-        try {
-            // Busy waiting, we just wait for request to be fully written, shouldn't take long
-            while (inFlight.get() > 0) {
-                Thread.sleep(10);
+        // TODO: put that to trace
+        logger.debug(String.format("[%s] closing connection", name));
+
+        // Make sure all new writes are rejected
+        isClosed = true;
+
+        if (!isDefunct) {
+            try {
+                // Busy waiting, we just wait for request to be fully written, shouldn't take long
+                while (inFlight.get() > 0)
+                    Thread.sleep(10);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
 
         channel.close().awaitUninterruptibly();
-        bootstrap.releaseExternalResources();
+        // Note: we must not call releaseExternalResources, because this shutdown the executors, which are shared
     }
 
     // Cruft needed because we reuse server side classes, but we don't care about it
@@ -151,16 +233,15 @@ public class Connection extends org.apache.cassandra.transport.Connection
     public void applyStateTransition(Message.Type requestType, Message.Type responseType) {};
     public ClientState clientState() { return null; };
 
+    // TODO: We shouldn't need one factory per-host. We should just have one
+    // global factory that allow to set the connections parameters and use that everywhere
     public static class Factory {
 
+        // TODO We could share those amongst factories
         private final ExecutorService bossExecutor = Executors.newCachedThreadPool();
         private final ExecutorService workerExecutor = Executors.newCachedThreadPool();
 
-        private final InetSocketAddress address;
-
-        public Factory(InetSocketAddress address) {
-            this.address = address;
-        }
+        private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
 
         /**
          * Opens a new connection to the node this factory points to.
@@ -169,8 +250,21 @@ public class Connection extends org.apache.cassandra.transport.Connection
          *
          * @throws ConnectionException if connection attempt fails.
          */
-        public Connection open() throws ConnectionException {
-            return new Connection(address, this);
+        public Connection open(Host host) throws ConnectionException {
+            InetSocketAddress address = host.getAddress();
+            String name = address.toString() + "-" + getIdGenerator(host).getAndIncrement();
+            return new Connection(name, address, this);
+        }
+
+        private AtomicInteger getIdGenerator(Host host) {
+            AtomicInteger g = idGenerators.get(host);
+            if (g == null) {
+                g = new AtomicInteger(0);
+                AtomicInteger old = idGenerators.putIfAbsent(host, g);
+                if (old != null)
+                    g = old;
+            }
+            return g;
         }
 
         private ClientBootstrap bootstrap() {
@@ -183,33 +277,48 @@ public class Connection extends org.apache.cassandra.transport.Connection
 
             return b;
         }
-
     }
 
     private class Dispatcher extends SimpleChannelUpstreamHandler {
 
-        private volatile Future future;
-
-        public void setFuture(Future future) {
-            this.future = future;
-        }
+        private final AtomicReference<Future> futureRef = new AtomicReference();
 
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
+            logger.trace(String.format("[%s] received ", e.getMessage()));
+
+            // As soon as we set the value to the currently set future, a new write could
+            // be started, so reset the futureRef *before* setting the future for this query.
+            Future future = futureRef.getAndSet(null);
+
             // TODO: we should do something better than just throwing an exception
             if (future == null)
                 throw new RuntimeException(String.format("Received %s but no future set", e.getMessage()));
 
-            // As soon as we set the value to the currently set future, a new write could
-            // be started, so reset the local variable to null *before* setting the future for this query.
-            Future current = future;
-            future = null;
-
             if (!(e.getMessage() instanceof Message.Response)) {
-                current.setException(new TransportException(address, "Unexpected message received: " + e.getMessage()));
+                logger.debug(String.format("[%s] Received unexpected message: %s", name, e.getMessage()));
+                ConnectionException ce = new TransportException(address, "Unexpected message received: " + e.getMessage());
+                defunct(ce);
+                future.setException(ce);
             } else {
-                current.set((Message.Response)e.getMessage());
+                future.set((Message.Response)e.getMessage());
             }
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
+            logger.trace(String.format("[%s] connection error", name), e.getCause());
+
+            // Ignore exception while writting, this will be handled by write() directly
+            if (inFlight.get() > 0)
+                return;
+
+            ConnectionException ce = new TransportException(address, "Unexpected exception triggered", e.getCause());
+            defunct(ce);
+
+            Future future = futureRef.getAndSet(null);
+            if (future != null)
+                future.setException(ce);
         }
     }
 
@@ -221,8 +330,7 @@ public class Connection extends org.apache.cassandra.transport.Connection
         }
     }
 
-    private static class PipelineFactory implements ChannelPipelineFactory
-    {
+    private static class PipelineFactory implements ChannelPipelineFactory {
         // Stateless handlers
         private static final Message.ProtocolDecoder messageDecoder = new Message.ProtocolDecoder();
         private static final Message.ProtocolEncoder messageEncoder = new Message.ProtocolEncoder();
