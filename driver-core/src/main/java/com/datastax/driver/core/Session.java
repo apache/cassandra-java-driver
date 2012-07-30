@@ -248,10 +248,8 @@ public class Session {
 
             // TODO: consider the use of NonBlockingHashMap
             this.pools = new ConcurrentHashMap<Host, HostConnectionPool>(hosts.size());
-            this.loadBalancer = new RoundRobinPolicy();
+            this.loadBalancer = cluster.manager.loadBalancingFactory.create(hosts);
             this.poolsConfiguration = new HostConnectionPool.Configuration();
-
-            loadBalancer.initialize(hosts);
 
             for (Host host : hosts) {
                 logger.debug("Adding new host " + host);
@@ -267,7 +265,7 @@ public class Session {
         }
 
         private HostConnectionPool addHost(Host host) {
-            return pools.put(host, new HostConnectionPool(host, cluster.connectionFactory, poolsConfiguration));
+            return pools.put(host, new HostConnectionPool(host, host.monitor().signaler, cluster.manager.connectionFactory, poolsConfiguration));
         }
 
         public void onUp(Host host) {
@@ -286,6 +284,14 @@ public class Session {
             // This should not be necessary but it's harmless
             if (pool != null)
                 pool.shutdown();
+        }
+
+        public void onAdd(Host host) {
+            // TODO
+        }
+
+        public void onRemove(Host host) {
+            // TODO
         }
 
         public void setKeyspace(String keyspace) {

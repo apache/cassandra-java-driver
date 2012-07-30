@@ -15,6 +15,8 @@ public class HostConnectionPool {
     private static final Logger logger = LoggerFactory.getLogger(HostConnectionPool.class);
 
     private final Host host;
+    private final Host.HealthMonitor.Signaler failureSignaler;
+
     private final Connection.Factory factory;
 
     private final AtomicBoolean isShutdown = new AtomicBoolean();
@@ -31,8 +33,9 @@ public class HostConnectionPool {
     private final ExecutorService openExecutor = Executors.newCachedThreadPool();
     private final Runnable newConnectionTask;
 
-    public HostConnectionPool(Host host, Connection.Factory factory, Configuration configuration) {
+    public HostConnectionPool(Host host, Host.HealthMonitor.Signaler signaler, Connection.Factory factory, Configuration configuration) {
         this.host = host;
+        this.failureSignaler = signaler;
         this.factory = factory;
         this.configuration = configuration;
 
@@ -96,7 +99,7 @@ public class HostConnectionPool {
             }
         } catch (ConnectionException e) {
             logger.debug("Connection error to " + host + ", signaling monitor");
-            if (host.monitor().signalConnectionFailure(e))
+            if (failureSignaler.signalConnectionFailure(e))
                 shutdown();
             return false;
         }
@@ -122,7 +125,7 @@ public class HostConnectionPool {
         borrowed.decrementAndGet();
 
         if (connection.isDefunct()) {
-            if (host.monitor().signalConnectionFailure(connection.lastException()))
+            if (failureSignaler.signalConnectionFailure(connection.lastException()))
                 shutdown();
             // TODO: make the close async
             connection.close();

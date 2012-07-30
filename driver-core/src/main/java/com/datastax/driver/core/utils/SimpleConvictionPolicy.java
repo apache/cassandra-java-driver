@@ -21,6 +21,8 @@ public class SimpleConvictionPolicy implements ConvictionPolicy {
         return true;
     }
 
+    public void reset() {}
+
     public static class Factory implements ConvictionPolicy.Factory {
 
         public ConvictionPolicy create(Host host) {

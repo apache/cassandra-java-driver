@@ -1,14 +1,17 @@
-package com.datastax.driver.core;
+package com.datastax.driver.core.utils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.LoadBalancingPolicy;
 
 public class RoundRobinPolicy implements LoadBalancingPolicy {
 
     private volatile Host[] liveHosts;
     private final AtomicInteger index = new AtomicInteger();
 
-    public void initialize(Collection<Host> hosts) {
+    private RoundRobinPolicy(Collection<Host> hosts) {
         this.liveHosts = hosts.toArray(new Host[hosts.size()]);
         this.index.set(new Random().nextInt(hosts.size()));
     }
@@ -77,5 +80,20 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
             System.arraycopy(liveHosts, idx + 1, newHosts, idx, liveHosts.length - idx - 1);
         }
         liveHosts = newHosts;
+    }
+
+    public void onAdd(Host host) {
+        onUp(host);
+    }
+
+    public void onRemove(Host host) {
+        onDown(host);
+    }
+
+    public static class Factory implements LoadBalancingPolicy.Factory {
+
+        public LoadBalancingPolicy create(Collection<Host> hosts) {
+            return new RoundRobinPolicy(hosts);
+        }
     }
 }
