@@ -46,15 +46,6 @@ public class BoundStatement {
     }
 
     /**
-     * Returns the PreparedStatement on which this BoundStatement is based.
-     *
-     * @return the PreparedStatement on which this BoundStatement is based.
-     */
-    public PreparedStatement preparedStatement() {
-        return statement;
-    }
-
-    /**
      * Returns whether the {@code i}th variable has been bound to a value.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.

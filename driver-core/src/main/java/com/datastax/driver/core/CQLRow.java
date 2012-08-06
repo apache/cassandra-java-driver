@@ -525,7 +525,7 @@ public class CQLRow {
     }
 
     public <T> List<T> getList(String name, Class<T> elts) {
-        return getList(metadata.getIdx(name), klass);
+        return getList(metadata.getIdx(name), elts);
     }
 
     public <T> Set<T> getSet(int i, Class<T> elts) {
@@ -534,7 +534,7 @@ public class CQLRow {
     }
 
     public <T> Set<T> getSet(String name, Class<T> elts) {
-        return getSet(metadata.getIdx(name), klass);
+        return getSet(metadata.getIdx(name), elts);
     }
 
     public <K, V> Map<K, V> getMap(int i, Class<K> keys, Class<V> values) {
