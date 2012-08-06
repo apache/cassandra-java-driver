@@ -66,6 +66,16 @@ public class Columns implements Iterable<Columns.Definition> {
         return Arrays.asList(byIdx);
     }
 
+    public List<String> names() {
+        // TODO
+        return null;
+    }
+
+    public List<DataType> types() {
+        // TODO
+        return null;
+    }
+
     /**
      * Returns the name of the {@code i}th column in this metadata.
      *
@@ -175,8 +185,7 @@ public class Columns implements Iterable<Columns.Definition> {
             if (type == defined)
                 return type;
 
-        // TODO: change that exception
-        throw new IllegalArgumentException(String.format("Column %s is of type %s", name(i), defined));
+        throw new InvalidTypeException(String.format("Column %s is of type %s", name(i), defined));
     }
 
     public static class Definition {

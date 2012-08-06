@@ -45,16 +45,39 @@ public class BoundStatement {
         return remaining == 0;
     }
 
+    /**
+     * Returns the PreparedStatement on which this BoundStatement is based.
+     *
+     * @return the PreparedStatement on which this BoundStatement is based.
+     */
+    public PreparedStatement preparedStatement() {
+        return statement;
+    }
+
+    /**
+     * Returns whether the {@code i}th variable has been bound to a value.
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @return whether the {@code i}th variable has been bound to a value.
+     */
     public boolean isSet(int i) {
         metadata().checkBounds(i);
         return values[i] != null;
     }
 
+    /**
+     * Returns whether the variable {@code name} has been bound to a value.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a prepared
+     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @return whether the {@code i}th variable has been bound to a value.
+     */
     public boolean isSet(String name) {
         return isSet(metadata().getIdx(name));
     }
 
     public BoundStatement bind(Object... values) {
+        // TODO
         return null;
     }
 
