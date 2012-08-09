@@ -2,6 +2,7 @@ package com.datastax.driver.core.transport;
 
 import java.net.InetSocketAddress;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -123,6 +124,7 @@ public class Connection extends org.apache.cassandra.transport.Connection
     private ConnectionException defunct(ConnectionException e) {
         exception = e;
         isDefunct = true;
+        dispatcher.errorOutAllHandler(e);
         return e;
     }
 
@@ -169,15 +171,11 @@ public class Connection extends org.apache.cassandra.transport.Connection
         request.attach(this);
 
         // We only support synchronous mode so far
-        if (!inFlight.compareAndSet(0, 1))
-            throw new RuntimeException("Busy connection (this should not happen, please open a bug report if you see this)");
-
+        inFlight.incrementAndGet();
         try {
 
-            Future future = new Future(this);
-
-            // TODO: This assumes the connection is used synchronously, fix that at some point
-            dispatcher.futureRef.set(future);
+            Future future = dispatcher.newFuture();
+            request.setStreamId(future.streamId);
 
             logger.trace(String.format("[%s] writting request %s", name, request));
             ChannelFuture writeFuture = channel.write(request);
@@ -192,7 +190,6 @@ public class Connection extends org.apache.cassandra.transport.Connection
                 } else {
                     ce = new TransportException(address, "Error writting", writeFuture.getCause());
                 }
-                dispatcher.futureRef.set(null);
                 throw defunct(ce);
             }
 
@@ -233,8 +230,6 @@ public class Connection extends org.apache.cassandra.transport.Connection
     public void applyStateTransition(Message.Type requestType, Message.Type responseType) {};
     public ClientState clientState() { return null; };
 
-    // TODO: We shouldn't need one factory per-host. We should just have one
-    // global factory that allow to set the connections parameters and use that everywhere
     public static class Factory {
 
         // TODO We could share those amongst factories
@@ -279,29 +274,43 @@ public class Connection extends org.apache.cassandra.transport.Connection
         }
     }
 
+    // TODO: Having a map of Integer -> ResponseHandler might be overkill if we
+    // use the connection synchronously. See if we want to support lighter
+    // dispatcher that assume synchronous?
     private class Dispatcher extends SimpleChannelUpstreamHandler {
 
-        private final AtomicReference<Future> futureRef = new AtomicReference();
+        private final StreamIdHandler streamIdHandler = new StreamIdHandler();
+        private final ConcurrentMap<Integer, ResponseHandler> pending = new ConcurrentHashMap<Integer, ResponseHandler>();
+
+        public Future newFuture() throws ConnectionException {
+            int streamId = streamIdHandler.next();
+            Future future = new Future(Connection.this, streamId);
+            ResponseHandler old = pending.put(streamId, future);
+            assert old == null;
+            return future;
+        }
 
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
             logger.trace(String.format("[%s] received ", e.getMessage()));
 
-            // As soon as we set the value to the currently set future, a new write could
-            // be started, so reset the futureRef *before* setting the future for this query.
-            Future future = futureRef.getAndSet(null);
-
-            // TODO: we should do something better than just throwing an exception
-            if (future == null)
-                throw new RuntimeException(String.format("Received %s but no future set", e.getMessage()));
-
             if (!(e.getMessage() instanceof Message.Response)) {
                 logger.debug(String.format("[%s] Received unexpected message: %s", name, e.getMessage()));
-                ConnectionException ce = new TransportException(address, "Unexpected message received: " + e.getMessage());
-                defunct(ce);
-                future.setException(ce);
+                defunct(new TransportException(address, "Unexpected message received: " + e.getMessage()));
+                // TODO: we should allow calling some handler for such error
             } else {
-                future.set((Message.Response)e.getMessage());
+                Message.Response response = (Message.Response)e.getMessage();
+                int streamId = response.getStreamId();
+                if (streamId < 0)
+                    // TODO: fix
+                    throw new UnsupportedOperationException("Stream initiated server side are not yet supported");
+
+                ResponseHandler handler = pending.remove(streamId);
+                streamIdHandler.release(streamId);
+                if (handler == null)
+                    // TODO: we should handle those with a default handler
+                    throw new RuntimeException("No handler set");
+                handler.onSet(response);
             }
         }
 
@@ -313,21 +322,44 @@ public class Connection extends org.apache.cassandra.transport.Connection
             if (inFlight.get() > 0)
                 return;
 
-            ConnectionException ce = new TransportException(address, "Unexpected exception triggered", e.getCause());
-            defunct(ce);
+            defunct(new TransportException(address, "Unexpected exception triggered", e.getCause()));
+        }
 
-            Future future = futureRef.getAndSet(null);
-            if (future != null)
-                future.setException(ce);
+        public void errorOutAllHandler(ConnectionException ce) {
+            Iterator<ResponseHandler> iter = pending.values().iterator();
+            while (iter.hasNext())
+            {
+                iter.next().onException(ce);
+                iter.remove();
+            }
         }
     }
 
-    public static class Future extends SimpleFuture<Message.Response> {
-        private final Connection connection;
+    public static class Future extends SimpleFuture<Message.Response> implements ResponseHandler {
+        public final Connection connection;
+        public final int streamId;
 
-        public Future(Connection connection) {
+        public Future(Connection connection, int streamId) {
             this.connection = connection;
+            this.streamId = streamId;
         }
+
+        @Override
+        public void onSet(Message.Response response)
+        {
+            super.set(response);
+        }
+
+        @Override
+        public void onException(ConnectionException exception)
+        {
+            super.setException(exception);
+        }
+    }
+
+    public interface ResponseHandler {
+        public void onSet(Message.Response response);
+        public void onException(ConnectionException exception);
     }
 
     private static class PipelineFactory implements ChannelPipelineFactory {
