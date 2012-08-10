@@ -189,7 +189,7 @@ public class Session {
         return null;
     }
 
-    private ResultSet toResultSet(Connection.Future future) {
+    static ResultSet toResultSet(Connection.Future future) {
         try {
             Message.Response response = future.get();
             switch (response.type) {

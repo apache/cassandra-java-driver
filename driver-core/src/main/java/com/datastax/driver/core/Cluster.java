@@ -5,6 +5,8 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.apache.cassandra.transport.messages.QueryMessage;
+
 import com.datastax.driver.core.transport.Connection;
 import com.datastax.driver.core.transport.ConnectionException;
 import com.datastax.driver.core.utils.SimpleConvictionPolicy;
@@ -43,7 +45,15 @@ public class Cluster {
         List<Host> hosts = new ArrayList<Host>(contactPoints.size());
         for (InetSocketAddress address : contactPoints)
             hosts.add(new Host(address, convictionPolicyFactory));
-        this.manager = new Manager(hosts);
+        try
+        {
+            this.manager = new Manager(hosts);
+        }
+        catch (ConnectionException e)
+        {
+            // TODO: We should hide that somehow and only send a (non-checked) exception if there is no node to connect to
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -102,6 +112,20 @@ public class Cluster {
      */
     public Session connect(String keyspace, AuthInfo authInfo) {
         return connect(authInfo).use(keyspace);
+    }
+
+    /**
+     * Returns read-only metadata on the connected cluster.
+     *
+     * This includes the know nodes (with their status as seen by the driver)
+     * as well as the schema definitions.
+     *
+     * @return the cluster metadata.
+     */
+    public ClusterMetadata getMetadata() {
+        // Temporary way to get update to data schema
+        try { manager.refreshSchema(); } catch (Exception e) { throw new RuntimeException(e); }
+        return manager.metadata;
     }
 
     /**
@@ -253,20 +277,30 @@ public class Cluster {
         private final List<Host> contactPoints;
 
         private final Set<Session> sessions = new CopyOnWriteArraySet<Session>();
+        private final ClusterMetadata metadata;
 
         final Connection.Factory connectionFactory = new Connection.Factory();
+        private final ControlConnection controlConnection = new ControlConnection();
 
         // TODO: make configurable
         final LoadBalancingPolicy.Factory loadBalancingFactory = new RoundRobinPolicy.Factory();
 
         private final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(2);
 
-        private Manager(List<Host> contactPoints) {
+        private Manager(List<Host> contactPoints) throws ConnectionException {
             this.contactPoints = contactPoints;
+            this.metadata = new ClusterMetadata();
 
             // TODO: this probably belong some place else
             for (Host host : contactPoints)
                 host.monitor().register(this);
+
+            refreshSchema();
+        }
+
+        private void refreshSchema() throws ConnectionException {
+            // TODO: something less lame
+            controlConnection.tryConnect(contactPoints.get(0));
         }
 
         private Session newSession() {
@@ -294,6 +328,25 @@ public class Cluster {
 
         public void onRemove(Host host) {
             // TODO
+        }
+
+        public class ControlConnection {
+
+            private Connection connection;
+
+            private void tryConnect(Host host) throws ConnectionException {
+                connection = connectionFactory.open(host);
+
+                // Make sure we're up to date on metadata
+                Connection.Future ksFuture = connection.write(new QueryMessage("SELECT * FROM system.schema_keyspaces"));
+                Connection.Future cfFuture = connection.write(new QueryMessage("SELECT * FROM system.schema_columnfamilies"));
+                Connection.Future colsFuture = connection.write(new QueryMessage("SELECT * FROM system.schema_columns"));
+
+                // TODO: we should probably do something more fancy, like check if the schema changed and notify whoever wants to be notified
+                metadata.rebuildSchema(Session.toResultSet(ksFuture),
+                                       Session.toResultSet(cfFuture),
+                                       Session.toResultSet(colsFuture));
+            }
         }
     }
 }

@@ -19,7 +19,7 @@ public class SessionTest {
     public static void classSetUp() {
         Logger rootLogger = Logger.getRootLogger();
         if (!rootLogger.getAllAppenders().hasMoreElements()) {
-            rootLogger.setLevel(Level.DEBUG);
+            rootLogger.setLevel(Level.TRACE);
             rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%-5p [%t]: %m%n")));
         }
     }
@@ -107,6 +107,8 @@ public class SessionTest {
         session.execute("CREATE KEYSPACE test_ks WITH strategy_class = SimpleStrategy AND strategy_options:replication_factor = 2");
         session.use("test_ks");
         session.execute("CREATE TABLE test (k text PRIMARY KEY, i int, f float)");
+
+        //System.out.println("--- Schema ---\n" + cluster.getMetadata());
 
         for (int i = 0; i < 10000; ++i) {
             System.out.println(">> " + i);

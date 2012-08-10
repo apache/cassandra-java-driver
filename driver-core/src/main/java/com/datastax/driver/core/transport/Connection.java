@@ -45,7 +45,6 @@ public class Connection extends org.apache.cassandra.transport.Connection
     private volatile boolean isDefunct;
     private volatile ConnectionException exception;
 
-
     /**
      * Create a new connection to a Cassandra node.
      *
@@ -162,6 +161,26 @@ public class Connection extends org.apache.cassandra.transport.Connection
      * @throws TransportException if an I/O error while sending the request
      */
     public Future write(Message.Request request) throws ConnectionException {
+        Future future = new Future(this, dispatcher.streamIdHandler.next());
+        internalWrite(request, future);
+        return future;
+    }
+
+    public void write(Message.Request request, final ResponseCallback callback) throws ConnectionException {
+        final int streamId = dispatcher.streamIdHandler.next();
+        internalWrite(request, new ResponseHandler() {
+
+            public int getStreamId() {
+                return streamId;
+            }
+
+            public ResponseCallback callback() {
+                return callback;
+            }
+        });
+    }
+
+    private void internalWrite(Message.Request request, ResponseHandler handler) throws ConnectionException {
         if (isDefunct)
             throw new ConnectionException(address, "Write attempt on defunct connection");
 
@@ -174,8 +193,8 @@ public class Connection extends org.apache.cassandra.transport.Connection
         inFlight.incrementAndGet();
         try {
 
-            Future future = dispatcher.newFuture();
-            request.setStreamId(future.streamId);
+            dispatcher.add(handler);
+            request.setStreamId(handler.getStreamId());
 
             logger.trace(String.format("[%s] writting request %s", name, request));
             ChannelFuture writeFuture = channel.write(request);
@@ -194,7 +213,6 @@ public class Connection extends org.apache.cassandra.transport.Connection
             }
 
             logger.trace(String.format("[%s] request sent successfully", name));
-            return future;
 
         } finally {
             inFlight.decrementAndGet();
@@ -279,15 +297,12 @@ public class Connection extends org.apache.cassandra.transport.Connection
     // dispatcher that assume synchronous?
     private class Dispatcher extends SimpleChannelUpstreamHandler {
 
-        private final StreamIdHandler streamIdHandler = new StreamIdHandler();
+        public final StreamIdHandler streamIdHandler = new StreamIdHandler();
         private final ConcurrentMap<Integer, ResponseHandler> pending = new ConcurrentHashMap<Integer, ResponseHandler>();
 
-        public Future newFuture() throws ConnectionException {
-            int streamId = streamIdHandler.next();
-            Future future = new Future(Connection.this, streamId);
-            ResponseHandler old = pending.put(streamId, future);
+        public void add(ResponseHandler handler) {
+            ResponseHandler old = pending.put(handler.getStreamId(), handler);
             assert old == null;
-            return future;
         }
 
         @Override
@@ -309,8 +324,8 @@ public class Connection extends org.apache.cassandra.transport.Connection
                 streamIdHandler.release(streamId);
                 if (handler == null)
                     // TODO: we should handle those with a default handler
-                    throw new RuntimeException("No handler set");
-                handler.onSet(response);
+                    throw new RuntimeException("No handler set for " + streamId + ", handlers = " + pending);
+                handler.callback().onSet(response);
             }
         }
 
@@ -329,37 +344,48 @@ public class Connection extends org.apache.cassandra.transport.Connection
             Iterator<ResponseHandler> iter = pending.values().iterator();
             while (iter.hasNext())
             {
-                iter.next().onException(ce);
+                iter.next().callback().onException(ce);
                 iter.remove();
             }
         }
     }
 
-    public static class Future extends SimpleFuture<Message.Response> implements ResponseHandler {
-        public final Connection connection;
-        public final int streamId;
+    public static class Future extends SimpleFuture<Message.Response> implements ResponseHandler, ResponseCallback {
+        private final Connection connection;
+        private final int streamId;
 
         public Future(Connection connection, int streamId) {
             this.connection = connection;
             this.streamId = streamId;
         }
 
+        public int getStreamId() {
+            return streamId;
+        }
+
+        public ResponseCallback callback() {
+            return this;
+        }
+
         @Override
-        public void onSet(Message.Response response)
-        {
+        public void onSet(Message.Response response) {
             super.set(response);
         }
 
         @Override
-        public void onException(ConnectionException exception)
-        {
+        public void onException(ConnectionException exception) {
             super.setException(exception);
         }
     }
 
-    public interface ResponseHandler {
+    public interface ResponseCallback {
         public void onSet(Message.Response response);
         public void onException(ConnectionException exception);
+    }
+
+    private interface ResponseHandler {
+        public int getStreamId();
+        public ResponseCallback callback();
     }
 
     private static class PipelineFactory implements ChannelPipelineFactory {
