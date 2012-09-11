@@ -4,7 +4,7 @@ import java.util.*;
 
 import com.datastax.driver.core.transport.Codec;
 
-import org.apache.cassandra.config.ConfigurationException;
+import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.db.marshal.*;
 
 import org.codehaus.jackson.JsonFactory;
@@ -15,15 +15,15 @@ import org.codehaus.jackson.map.ObjectMapper;
  */
 public class TableMetadata {
 
-    public static final String CF_NAME                   = "columnfamily_name";
+    public static final String CF_NAME               = "columnfamily_name";
 
-    private static final String KEY_VALIDATOR            = "key_validator";
-    private static final String COMPARATOR               = "comparator";
-    private static final String VALIDATOR                = "default_validator";
+    private static final String KEY_VALIDATOR        = "key_validator";
+    private static final String COMPARATOR           = "comparator";
+    private static final String VALIDATOR            = "default_validator";
 
-    private static final String KEY_ALIASES              = "key_aliases";
-    private static final String COLUMN_ALIASES           = "column_aliases";
-    private static final String VALUE_ALIAS              = "value_alias";
+    private static final String KEY_ALIASES          = "key_aliases";
+    private static final String COLUMN_ALIASES       = "column_aliases";
+    private static final String VALUE_ALIAS          = "value_alias";
 
     private static final String DEFAULT_KEY_ALIAS    = "key";
     private static final String DEFAULT_COLUMN_ALIAS = "column";
@@ -113,7 +113,7 @@ public class TableMetadata {
 
             ksm.add(tm);
             return tm;
-        } catch (ConfigurationException e) {
+        } catch (RequestValidationException e) {
             // The server will have validated the type
             throw new RuntimeException(e);
         }
@@ -125,14 +125,19 @@ public class TableMetadata {
 
     // :_(
     private static ObjectMapper jsonMapper = new ObjectMapper(new JsonFactory());
-    private static List<String> fromJsonList(String json)
-    {
-        try
-        {
+
+    static List<String> fromJsonList(String json) {
+        try {
             return jsonMapper.readValue(json, List.class);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        catch (Exception e)
-        {
+    }
+
+    static Map<String, String> fromJsonMap(String json) {
+        try {
+            return jsonMapper.readValue(json, Map.class);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -168,9 +173,20 @@ public class TableMetadata {
             sb.append(", ").append(cm.getName());
         sb.append(")\n");
         // end PK
+        sb.append(")");
 
-        // TODO: finish
-        sb.append(");\n");
+        // Options
+        sb.append(" WITH read_repair_chance = ").append(options.readRepair);
+        sb.append("\n   AND local_read_repair_chance = ").append(options.localReadRepair);
+        sb.append("\n   AND replicate_on_write = ").append(options.replicateOnWrite);
+        sb.append("\n   AND gc_grace_seconds = ").append(options.gcGrace);
+        sb.append("\n   AND bloom_filter_fp_chance = ").append(options.bfFpChance);
+        sb.append("\n   AND caching = ").append(options.caching);
+        if (options.comment != null)
+            sb.append("\n   AND comment = ").append(options.comment);
+
+        // TODO: finish (compaction and compression)
+        sb.append(";\n");
         return sb.toString();
     }
 

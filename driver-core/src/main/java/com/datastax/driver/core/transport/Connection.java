@@ -1,8 +1,9 @@
 package com.datastax.driver.core.transport;
 
 import java.net.InetSocketAddress;
-import java.util.Collections;
 import java.util.Iterator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -30,6 +31,11 @@ public class Connection extends org.apache.cassandra.transport.Connection
     // TODO: that doesn't belong here
     private static final String CQL_VERSION = "3.0.0";
 
+    private static final org.apache.cassandra.transport.Connection.Tracker EMPTY_TRACKER = new org.apache.cassandra.transport.Connection.Tracker() {
+        public void addConnection(Channel ch, org.apache.cassandra.transport.Connection connection) {}
+        public void closeAll() {}
+    };
+
     public final InetSocketAddress address;
     private final String name;
 
@@ -54,6 +60,8 @@ public class Connection extends org.apache.cassandra.transport.Connection
      * refused by the server.
      */
     private Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException {
+        super(EMPTY_TRACKER);
+
         this.address = address;
         this.factory = factory;
         this.name = name;
@@ -92,14 +100,17 @@ public class Connection extends org.apache.cassandra.transport.Connection
         // TODO: we will need to get fancy about handling protocol version at
         // some point, but keep it simple for now.
         // TODO: we need to allow setting the compression to use
-        StartupMessage startup = new StartupMessage(CQL_VERSION, Collections.<StartupMessage.Option, Object>emptyMap());
+        Map<String, String> options = new HashMap<String, String>() {{
+            put(StartupMessage.CQL_VERSION, CQL_VERSION);
+        }};
+        StartupMessage startup = new StartupMessage(options);
         try {
             Message.Response response = write(startup).get();
             switch (response.type) {
                 case READY:
                     break;
                 case ERROR:
-                    throw defunct(new TransportException(address, String.format("Error initializing connection: %s", ((ErrorMessage)response).errorMsg)));
+                    throw defunct(new TransportException(address, String.format("Error initializing connection", ((ErrorMessage)response).error)));
                 case AUTHENTICATE:
                     throw new TransportException(address, "Authentication required but not yet supported");
                 default:
@@ -411,7 +422,7 @@ public class Connection extends org.apache.cassandra.transport.Connection
         public PipelineFactory(final Connection connection) {
             this.connection = connection;
             this.cfactory = new org.apache.cassandra.transport.Connection.Factory() {
-                public Connection newConnection() {
+                public Connection newConnection(org.apache.cassandra.transport.Connection.Tracker tracker) {
                     return connection;
                 }
             };

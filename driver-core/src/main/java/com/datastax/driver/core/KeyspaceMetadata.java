@@ -28,7 +28,7 @@ public class KeyspaceMetadata {
         boolean durableWrites = row.getBool(DURABLE_WRITES);
         KeyspaceMetadata ksm = new KeyspaceMetadata(name, durableWrites);
         ksm.replication.put("class", row.getString(STRATEGY_CLASS));
-        ksm.replication.put("options", row.getString(STRATEGY_OPTIONS));
+        ksm.replication.putAll(TableMetadata.fromJsonMap(row.getString(STRATEGY_OPTIONS)));
         return ksm;
     }
 
@@ -58,8 +58,13 @@ public class KeyspaceMetadata {
         StringBuilder sb = new StringBuilder();
 
         sb.append("CREATE KEYSPACE ").append(name).append(" WITH ");
-        sb.append("STRATEGY_CLASS = ").append(replication.get("class"));
-        // TODO: handle the options
+        sb.append("REPLICATION = { 'class' : '").append(replication.get("class")).append("'");
+        for (Map.Entry<String, String> entry : replication.entrySet()) {
+            if (entry.getKey().equals("class"))
+                continue;
+            sb.append(", '").append(entry.getKey()).append("': '").append(entry.getValue()).append("'");
+        }
+        sb.append(" } AND DURABLE_WRITES = ").append(durableWrites);
         sb.append(";\n");
 
         for (TableMetadata tm : tables.values())

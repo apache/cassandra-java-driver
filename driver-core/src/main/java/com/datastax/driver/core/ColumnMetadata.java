@@ -4,7 +4,7 @@ import java.util.*;
 
 import com.datastax.driver.core.transport.Codec;
 
-import org.apache.cassandra.config.ConfigurationException;
+import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.TypeParser;
 
@@ -36,7 +36,7 @@ public class ColumnMetadata {
             ColumnMetadata cm = new ColumnMetadata(tm, name, Codec.rawTypeToDataType(t), Index.build(row));
             tm.add(cm);
             return cm;
-        } catch (ConfigurationException e) {
+        } catch (RequestValidationException e) {
             // The server will have validated the type
             throw new RuntimeException(e);
         }

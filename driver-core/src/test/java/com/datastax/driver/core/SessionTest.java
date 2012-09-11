@@ -104,16 +104,18 @@ public class SessionTest {
         Cluster cluster = new Cluster.Builder().addContactPoints("127.0.0.1", "127.0.0.2").build();
         Session session = cluster.connect();
 
-        session.execute("CREATE KEYSPACE test_ks WITH strategy_class = SimpleStrategy AND strategy_options:replication_factor = 2");
+        session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 2 }");
+        // We should deal with that sleep
+        try { Thread.sleep(1000); } catch (Exception e) {}
         session.use("test_ks");
         session.execute("CREATE TABLE test (k text PRIMARY KEY, i int, f float)");
 
-        //System.out.println("--- Schema ---\n" + cluster.getMetadata());
+        System.out.println("--- Schema ---\n" + cluster.getMetadata());
 
-        for (int i = 0; i < 10000; ++i) {
-            System.out.println(">> " + i);
-            session.execute(String.format("INSERT INTO test (k, i, f) VALUES ('k%d', %d, %d.2)", i, i, i));
-            Thread.currentThread().sleep(1000);
-        }
+        //for (int i = 0; i < 10000; ++i) {
+        //    System.out.println(">> " + i);
+        //    session.execute(String.format("INSERT INTO test (k, i, f) VALUES ('k%d', %d, %d.2)", i, i, i));
+        //    Thread.currentThread().sleep(1000);
+        //}
     }
 }
