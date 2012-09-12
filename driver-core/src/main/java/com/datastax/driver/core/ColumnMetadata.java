@@ -46,6 +46,14 @@ public class ColumnMetadata {
         return name;
     }
 
+    public TableMetadata getTable() {
+        return table;
+    }
+
+    public DataType getType() {
+        return type;
+    }
+
     static class Index {
 
         private static final String INDEX_TYPE = "index_type";

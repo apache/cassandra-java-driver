@@ -92,6 +92,10 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
 
     public static class Factory implements LoadBalancingPolicy.Factory {
 
+        public static final Factory INSTANCE = new Factory();
+
+        private Factory() {}
+
         public LoadBalancingPolicy create(Collection<Host> hosts) {
             return new RoundRobinPolicy(hosts);
         }

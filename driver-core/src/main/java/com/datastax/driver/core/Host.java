@@ -16,6 +16,8 @@ public class Host {
     private final InetSocketAddress address;
     private final HealthMonitor monitor;
 
+    // ClusterMetadata keeps one Host object per inet address, so don't use
+    // that constructor unless you know what you do (use ClusterMetadata.getHost typically).
     Host(InetSocketAddress address, ConvictionPolicy.Factory policy) {
         if (address == null || policy == null)
             throw new NullPointerException();

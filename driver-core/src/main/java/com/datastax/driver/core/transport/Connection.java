@@ -151,6 +151,8 @@ public class Connection extends org.apache.cassandra.transport.Connection
 
         try {
             logger.trace(String.format("[%s] Setting keyspace %s", name, keyspace));
+            // TODO: Handle the case where we get an error because the keyspace doesn't
+            // exist (and don't set the keyspace to retry later)
             write(new QueryMessage("USE " + keyspace)).get();
             this.keyspace = keyspace;
         } catch (ConnectionException e) {
@@ -254,6 +256,10 @@ public class Connection extends org.apache.cassandra.transport.Connection
         // Note: we must not call releaseExternalResources, because this shutdown the executors, which are shared
     }
 
+    public boolean isClosed() {
+        return isClosed;
+    }
+
     // Cruft needed because we reuse server side classes, but we don't care about it
     public void validateNewMessage(Message.Type type) {};
     public void applyStateTransition(Message.Type requestType, Message.Type responseType) {};
@@ -266,6 +272,11 @@ public class Connection extends org.apache.cassandra.transport.Connection
         private final ExecutorService workerExecutor = Executors.newCachedThreadPool();
 
         private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
+        private final DefaultResponseHandler defaultHandler;
+
+        public Factory(DefaultResponseHandler defaultHandler) {
+            this.defaultHandler = defaultHandler;
+        }
 
         /**
          * Opens a new connection to the node this factory points to.
@@ -301,6 +312,10 @@ public class Connection extends org.apache.cassandra.transport.Connection
 
             return b;
         }
+
+        public DefaultResponseHandler defaultHandler() {
+            return defaultHandler;
+        }
     }
 
     // TODO: Having a map of Integer -> ResponseHandler might be overkill if we
@@ -327,9 +342,10 @@ public class Connection extends org.apache.cassandra.transport.Connection
             } else {
                 Message.Response response = (Message.Response)e.getMessage();
                 int streamId = response.getStreamId();
-                if (streamId < 0)
-                    // TODO: fix
-                    throw new UnsupportedOperationException("Stream initiated server side are not yet supported");
+                if (streamId < 0) {
+                    factory.defaultHandler().handle(response);
+                    return;
+                }
 
                 ResponseHandler handler = pending.remove(streamId);
                 streamIdHandler.release(streamId);
@@ -397,6 +413,10 @@ public class Connection extends org.apache.cassandra.transport.Connection
     private interface ResponseHandler {
         public int getStreamId();
         public ResponseCallback callback();
+    }
+
+    public interface DefaultResponseHandler {
+        public void handle(Message.Response response);
     }
 
     private static class PipelineFactory implements ChannelPipelineFactory {

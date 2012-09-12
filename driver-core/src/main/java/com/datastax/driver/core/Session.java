@@ -30,10 +30,10 @@ public class Session {
 
     private static final Logger logger = LoggerFactory.getLogger(Session.class);
 
-    private final Manager manager;
+    final Manager manager;
 
     // Package protected, only Cluster should construct that.
-    Session(Cluster cluster, List<Host> hosts) {
+    Session(Cluster cluster, Collection<Host> hosts) {
         this.manager = new Manager(cluster, hosts);
     }
 
@@ -231,7 +231,7 @@ public class Session {
         }
     }
 
-    private static class Manager implements Host.StateListener {
+    static class Manager implements Host.StateListener {
 
         private final Cluster cluster;
 
@@ -243,7 +243,7 @@ public class Session {
         // TODO: Make that configurable
         private final long DEFAULT_CONNECTION_TIMEOUT = 3000;
 
-        public Manager(Cluster cluster, List<Host> hosts) {
+        public Manager(Cluster cluster, Collection<Host> hosts) {
             this.cluster = cluster;
 
             // TODO: consider the use of NonBlockingHashMap
@@ -251,17 +251,8 @@ public class Session {
             this.loadBalancer = cluster.manager.loadBalancingFactory.create(hosts);
             this.poolsConfiguration = new HostConnectionPool.Configuration();
 
-            for (Host host : hosts) {
-                logger.debug("Adding new host " + host);
-                host.monitor().register(this);
-
+            for (Host host : hosts)
                 addHost(host);
-                // If we fail to connect, the pool will be shutdown right away
-                if (pools.get(host).isShutdown()) {
-                    logger.debug("Cannot connect to " + host);
-                    pools.remove(host);
-                }
-            }
         }
 
         private HostConnectionPool addHost(Host host) {
@@ -287,11 +278,21 @@ public class Session {
         }
 
         public void onAdd(Host host) {
-            // TODO
+            HostConnectionPool previous = addHost(host);;
+            loadBalancer.onAdd(host);
+
+            // This should not be necessary, especially since the host is
+            // supposed to be new, but it's safer to make that work correctly
+            // if the even is triggered multiple times.
+            if (previous != null)
+                previous.shutdown();
         }
 
         public void onRemove(Host host) {
-            // TODO
+            loadBalancer.onRemove(host);
+            HostConnectionPool pool = pools.remove(host);
+            if (pool != null)
+                pool.shutdown();
         }
 
         public void setKeyspace(String keyspace) {

@@ -123,6 +123,14 @@ public class TableMetadata {
         return name;
     }
 
+    public KeyspaceMetadata getKeyspace() {
+        return keyspace;
+    }
+
+    public ColumnMetadata getColumn(String name) {
+        return columns.get(name);
+    }
+
     // :_(
     private static ObjectMapper jsonMapper = new ObjectMapper(new JsonFactory());
 

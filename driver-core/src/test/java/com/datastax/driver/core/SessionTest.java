@@ -110,12 +110,12 @@ public class SessionTest {
         session.use("test_ks");
         session.execute("CREATE TABLE test (k text PRIMARY KEY, i int, f float)");
 
-        System.out.println("--- Schema ---\n" + cluster.getMetadata());
+        //System.out.println("--- Schema ---\n" + cluster.getMetadata());
 
-        //for (int i = 0; i < 10000; ++i) {
-        //    System.out.println(">> " + i);
-        //    session.execute(String.format("INSERT INTO test (k, i, f) VALUES ('k%d', %d, %d.2)", i, i, i));
-        //    Thread.currentThread().sleep(1000);
-        //}
+        for (int i = 0; i < 10000; ++i) {
+            System.out.println(">> " + i);
+            session.execute(String.format("INSERT INTO test (k, i, f) VALUES ('k%d', %d, %d.2)", i, i, i));
+            Thread.currentThread().sleep(1000);
+        }
     }
 }

@@ -188,7 +188,6 @@ public class Columns implements Iterable<Columns.Definition> {
         throw new InvalidTypeException(String.format("Column %s is of type %s", name(i), defined));
     }
 
-    // TODO: replace by ColumnMetadata
     public static class Definition {
 
         public final String keyspace;

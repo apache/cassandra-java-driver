@@ -1,14 +1,22 @@
 package com.datastax.driver.core;
 
+import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Keeps metadata on the connected cluster, including known nodes and schema definitions.
  */
 public class ClusterMetadata {
 
-    private final Set<Host> hosts = new HashSet<Host>();
+    private final Cluster.Manager cluster;
+    private final ConcurrentMap<InetSocketAddress, Host> hosts = new ConcurrentHashMap<InetSocketAddress, Host>();
     private final Map<String, KeyspaceMetadata> keyspaces = new HashMap<String, KeyspaceMetadata>();
+
+    ClusterMetadata(Cluster.Manager cluster) {
+        this.cluster = cluster;
+    }
 
     void rebuildSchema(ResultSet ks, ResultSet cfs, ResultSet cols) {
 
@@ -63,6 +71,36 @@ public class ClusterMetadata {
 
             keyspaces.put(ksName, ksm);
         }
+    }
+
+    Host add(InetSocketAddress address) {
+        Host newHost = new Host(address, cluster.convictionPolicyFactory);
+        Host previous = hosts.putIfAbsent(address, newHost);
+        if (previous == null)
+        {
+            newHost.monitor().register(cluster);
+            return newHost;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    boolean remove(Host host) {
+        return hosts.remove(host.getAddress()) != null;
+    }
+
+    Host getHost(InetSocketAddress address) {
+        return hosts.get(address);
+    }
+
+    Collection<Host> allHosts() {
+        return hosts.values();
+    }
+
+    public KeyspaceMetadata getKeyspace(String keyspace) {
+        return keyspaces.get(keyspace);
     }
 
     // TODO: Returning a multi-line string from toString might not be a good idea

@@ -5,6 +5,9 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.apache.cassandra.transport.Event;
+import org.apache.cassandra.transport.Message;
+import org.apache.cassandra.transport.messages.EventMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
 
 import com.datastax.driver.core.transport.Connection;
@@ -37,17 +40,12 @@ public class Cluster {
 
     private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
 
-    // TODO: Make that configurable
-    private final ConvictionPolicy.Factory convictionPolicyFactory = new SimpleConvictionPolicy.Factory();
     final Manager manager;
 
     private Cluster(List<InetSocketAddress> contactPoints) {
-        List<Host> hosts = new ArrayList<Host>(contactPoints.size());
-        for (InetSocketAddress address : contactPoints)
-            hosts.add(new Host(address, convictionPolicyFactory));
         try
         {
-            this.manager = new Manager(hosts);
+            this.manager = new Manager(contactPoints);
         }
         catch (ConnectionException e)
         {
@@ -123,8 +121,6 @@ public class Cluster {
      * @return the cluster metadata.
      */
     public ClusterMetadata getMetadata() {
-        // Temporary way to get update to data schema
-        try { manager.refreshSchema(); } catch (Exception e) { throw new RuntimeException(e); }
         return manager.metadata;
     }
 
@@ -271,82 +267,144 @@ public class Cluster {
      * that Manager is not publicly visible. For instance, we wouldn't want
      * user to be able to call the {@link #onUp} and {@link #onDown} methods.
      */
-    class Manager implements Host.StateListener {
+    class Manager implements Host.StateListener, Connection.DefaultResponseHandler {
 
         // Initial contacts point
-        private final List<Host> contactPoints;
+        final List<InetSocketAddress> contactPoints;
 
         private final Set<Session> sessions = new CopyOnWriteArraySet<Session>();
-        private final ClusterMetadata metadata;
+        final ClusterMetadata metadata;
 
-        final Connection.Factory connectionFactory = new Connection.Factory();
-        private final ControlConnection controlConnection = new ControlConnection();
+        // TODO: Make that configurable
+        final ConvictionPolicy.Factory convictionPolicyFactory = new SimpleConvictionPolicy.Factory();
+        final Connection.Factory connectionFactory;
+        private final ControlConnection controlConnection;
 
         // TODO: make configurable
-        final LoadBalancingPolicy.Factory loadBalancingFactory = new RoundRobinPolicy.Factory();
+        final LoadBalancingPolicy.Factory loadBalancingFactory = RoundRobinPolicy.Factory.INSTANCE;
 
-        private final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(2);
+        // TODO: give a name to the threads of this executor
+        private final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(1);
 
-        private Manager(List<Host> contactPoints) throws ConnectionException {
+        private Manager(List<InetSocketAddress> contactPoints) throws ConnectionException {
+            this.metadata = new ClusterMetadata(this);
             this.contactPoints = contactPoints;
-            this.metadata = new ClusterMetadata();
+            this.connectionFactory = new Connection.Factory(this);
 
-            // TODO: this probably belong some place else
-            for (Host host : contactPoints)
-                host.monitor().register(this);
+            for (InetSocketAddress address : contactPoints)
+                addHost(address, false);
 
-            refreshSchema();
-        }
-
-        private void refreshSchema() throws ConnectionException {
-            // TODO: something less lame
-            controlConnection.tryConnect(contactPoints.get(0));
+            this.controlConnection = new ControlConnection(this);
+            controlConnection.reconnect();
         }
 
         private Session newSession() {
-            Session session = new Session(Cluster.this, contactPoints);
+            Session session = new Session(Cluster.this, metadata.allHosts());
             sessions.add(session);
             return session;
         }
 
         public void onUp(Host host) {
-            // Nothing specific
+            logger.trace(String.format("Host %s is UP", host));
+            controlConnection.onUp(host);
+            for (Session s : sessions)
+                s.manager.onUp(host);
+
             // TODO: We should register reconnection attempts, to avoid starting two of
             // them and if this method is called by other means that the
             // reconnection handler (like C* tells us it's up), cancel the latter
         }
 
         public void onDown(Host host) {
+            logger.trace(String.format("Host %s is DOWN", host));
+            controlConnection.onUp(host);
+            for (Session s : sessions)
+                s.manager.onDown(host);
+
             // Note: we'll basically waste the first successful reconnection that way, but it's probably not a big deal
             logger.debug(String.format("%s is down, scheduling connection retries", host));
             new ReconnectionHandler(host, scheduledExecutor, connectionFactory).start();
         }
 
         public void onAdd(Host host) {
-            // TODO
+            logger.trace(String.format("Adding new host %s", host));
+            controlConnection.onAdd(host);
+            for (Session s : sessions)
+                s.manager.onAdd(host);
         }
 
         public void onRemove(Host host) {
-            // TODO
+            logger.trace(String.format("Removing host %s", host));
+            controlConnection.onRemove(host);
+            for (Session s : sessions)
+                s.manager.onRemove(host);
         }
 
-        public class ControlConnection {
+        public void addHost(InetSocketAddress address, boolean signal) {
+            Host newHost = metadata.add(address);
+            if (newHost != null && signal)
+                onAdd(newHost);
+        }
 
-            private Connection connection;
+        public void removeHost(Host host) {
+            if (host == null)
+                return;
 
-            private void tryConnect(Host host) throws ConnectionException {
-                connection = connectionFactory.open(host);
+            if (metadata.remove(host))
+                onRemove(host);
+        }
 
-                // Make sure we're up to date on metadata
-                Connection.Future ksFuture = connection.write(new QueryMessage("SELECT * FROM system.schema_keyspaces"));
-                Connection.Future cfFuture = connection.write(new QueryMessage("SELECT * FROM system.schema_columnfamilies"));
-                Connection.Future colsFuture = connection.write(new QueryMessage("SELECT * FROM system.schema_columns"));
+        // Called when some message has been received but has been initiated from the server (streamId < 0).
+        public void handle(Message.Response response) {
 
-                // TODO: we should probably do something more fancy, like check if the schema changed and notify whoever wants to be notified
-                metadata.rebuildSchema(Session.toResultSet(ksFuture),
-                                       Session.toResultSet(cfFuture),
-                                       Session.toResultSet(colsFuture));
+            if (!(response instanceof EventMessage)) {
+                // TODO: log some error
+                return;
             }
+
+            final Event event = ((EventMessage)response).event;
+
+            // When handle is called, the current thread is a network I/O
+            // thread, and we don't want to block it (typically addHost() will
+            // create the connection pool to the new node, which can take time)
+            scheduledExecutor.execute(new Runnable() {
+                public void run() {
+                    switch (event.type) {
+                        case TOPOLOGY_CHANGE:
+                            Event.TopologyChange tpc = (Event.TopologyChange)event;
+                            switch (tpc.change) {
+                                case NEW_NODE:
+                                    addHost(tpc.node, true);
+                                    break;
+                                case REMOVED_NODE:
+                                    removeHost(metadata.getHost(tpc.node));
+                                    break;
+                            }
+                            break;
+                        case STATUS_CHANGE:
+                            Event.StatusChange stc = (Event.StatusChange)event;
+                            switch (stc.status) {
+                                case UP:
+                                    Host host = metadata.getHost(stc.node);
+                                    if (host == null) {
+                                        // first time we heard about that node apparently, add it
+                                        addHost(stc.node, true);
+                                    } else {
+                                        onUp(host);
+                                    }
+                                    break;
+                                case DOWN:
+                                    // Ignore down event. Connection will realized a node is dead quicly enough when they write to
+                                    // it, and there is no point in taking the risk of marking the node down mistakenly because we
+                                    // didn't received the event in a timely fashion
+                                    break;
+                            }
+                            break;
+                    }
+                }
+            });
+
         }
+
     }
 }

@@ -51,6 +51,8 @@ public class HostConnectionPool {
         for (int i = 0; i < configuration.coreConnections; i++)
             if (!addConnection())
                 break;
+
+        logger.trace(String.format("Created connection pool to host %s", host));
     }
 
     public Connection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException {
