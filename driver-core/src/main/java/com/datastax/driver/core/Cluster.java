@@ -286,6 +286,9 @@ public class Cluster {
         // TODO: give a name to the threads of this executor
         private final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(1);
 
+        // TODO: give a name to the threads of this executor
+        final ExecutorService executor = Executors.newCachedThreadPool();
+
         private Manager(List<InetSocketAddress> contactPoints) throws ConnectionException {
             this.metadata = new ClusterMetadata(this);
             this.contactPoints = contactPoints;
@@ -367,7 +370,7 @@ public class Cluster {
             // When handle is called, the current thread is a network I/O
             // thread, and we don't want to block it (typically addHost() will
             // create the connection pool to the new node, which can take time)
-            scheduledExecutor.execute(new Runnable() {
+            executor.execute(new Runnable() {
                 public void run() {
                     switch (event.type) {
                         case TOPOLOGY_CHANGE:

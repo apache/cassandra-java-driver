@@ -153,8 +153,22 @@ public class Connection extends org.apache.cassandra.transport.Connection
             logger.trace(String.format("[%s] Setting keyspace %s", name, keyspace));
             // TODO: Handle the case where we get an error because the keyspace doesn't
             // exist (and don't set the keyspace to retry later)
-            write(new QueryMessage("USE " + keyspace)).get();
-            this.keyspace = keyspace;
+            Message.Response response = write(new QueryMessage("USE " + keyspace)).get();
+            switch (response.type) {
+                case RESULT:
+                    this.keyspace = keyspace;
+                    break;
+                case ERROR:
+                    // TODO: what to do when that happens? It could be that the
+                    // node doesn't know about that keyspace even though it
+                    // exists (new node not yet up on schemas?)
+                    logger.debug(String.format("Cannot set keyspace %s (%s)", keyspace, response));
+                    break;
+                default:
+                    // TODO: handle errors (set the connection to defunct as this mean it is in a bad state)
+                    logger.info("Got " + response);
+                    return null;
+            }
         } catch (ConnectionException e) {
             throw defunct(e);
         } catch (ExecutionException e) {
@@ -174,26 +188,13 @@ public class Connection extends org.apache.cassandra.transport.Connection
      * @throws TransportException if an I/O error while sending the request
      */
     public Future write(Message.Request request) throws ConnectionException {
-        Future future = new Future(this, dispatcher.streamIdHandler.next());
-        internalWrite(request, future);
+        Future future = new Future();
+        write(request, future);
         return future;
     }
 
-    public void write(Message.Request request, final ResponseCallback callback) throws ConnectionException {
-        final int streamId = dispatcher.streamIdHandler.next();
-        internalWrite(request, new ResponseHandler() {
+    public void write(Message.Request request, ResponseCallback callback) throws ConnectionException {
 
-            public int getStreamId() {
-                return streamId;
-            }
-
-            public ResponseCallback callback() {
-                return callback;
-            }
-        });
-    }
-
-    private void internalWrite(Message.Request request, ResponseHandler handler) throws ConnectionException {
         if (isDefunct)
             throw new ConnectionException(address, "Write attempt on defunct connection");
 
@@ -206,8 +207,9 @@ public class Connection extends org.apache.cassandra.transport.Connection
         inFlight.incrementAndGet();
         try {
 
+            ResponseHandler handler = new ResponseHandler(dispatcher, callback);
             dispatcher.add(handler);
-            request.setStreamId(handler.getStreamId());
+            request.setStreamId(handler.streamId);
 
             logger.trace(String.format("[%s] writting request %s", name, request));
             ChannelFuture writeFuture = channel.write(request);
@@ -327,7 +329,7 @@ public class Connection extends org.apache.cassandra.transport.Connection
         private final ConcurrentMap<Integer, ResponseHandler> pending = new ConcurrentHashMap<Integer, ResponseHandler>();
 
         public void add(ResponseHandler handler) {
-            ResponseHandler old = pending.put(handler.getStreamId(), handler);
+            ResponseHandler old = pending.put(handler.streamId, handler);
             assert old == null;
         }
 
@@ -352,7 +354,7 @@ public class Connection extends org.apache.cassandra.transport.Connection
                 if (handler == null)
                     // TODO: we should handle those with a default handler
                     throw new RuntimeException("No handler set for " + streamId + ", handlers = " + pending);
-                handler.callback().onSet(response);
+                handler.callback.onSet(response);
             }
         }
 
@@ -371,28 +373,13 @@ public class Connection extends org.apache.cassandra.transport.Connection
             Iterator<ResponseHandler> iter = pending.values().iterator();
             while (iter.hasNext())
             {
-                iter.next().callback().onException(ce);
+                iter.next().callback.onException(ce);
                 iter.remove();
             }
         }
     }
 
-    public static class Future extends SimpleFuture<Message.Response> implements ResponseHandler, ResponseCallback {
-        private final Connection connection;
-        private final int streamId;
-
-        public Future(Connection connection, int streamId) {
-            this.connection = connection;
-            this.streamId = streamId;
-        }
-
-        public int getStreamId() {
-            return streamId;
-        }
-
-        public ResponseCallback callback() {
-            return this;
-        }
+    public static class Future extends SimpleFuture<Message.Response> implements ResponseCallback {
 
         @Override
         public void onSet(Message.Response response) {
@@ -400,19 +387,25 @@ public class Connection extends org.apache.cassandra.transport.Connection
         }
 
         @Override
-        public void onException(ConnectionException exception) {
+        public void onException(Exception exception) {
             super.setException(exception);
         }
     }
 
     public interface ResponseCallback {
         public void onSet(Message.Response response);
-        public void onException(ConnectionException exception);
+        public void onException(Exception exception);
     }
 
-    private interface ResponseHandler {
-        public int getStreamId();
-        public ResponseCallback callback();
+    private static class ResponseHandler {
+
+        public final int streamId;
+        public final ResponseCallback callback;
+
+        public ResponseHandler(Dispatcher dispatcher, ResponseCallback callback) {
+            this.streamId = dispatcher.streamIdHandler.next();
+            this.callback = callback;
+        }
     }
 
     public interface DefaultResponseHandler {

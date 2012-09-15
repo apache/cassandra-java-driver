@@ -119,14 +119,31 @@ public class TableMetadata {
         }
     }
 
+    /**
+     * Returns the name of this table.
+     *
+     * @return the name of this CQL table.
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Returns the keyspace this table belong to.
+     *
+     * @return the keyspace metadata of the keyspace this table belong to.
+     */
     public KeyspaceMetadata getKeyspace() {
         return keyspace;
     }
 
+    /**
+     * Returns metadata on a column of this table.
+     *
+     * @param name the name of the column to retrieve.
+     * @return the metadata for the {@code name} column if it exists, or
+     * {@code null} otherwise.
+     */
     public ColumnMetadata getColumn(String name) {
         return columns.get(name);
     }
@@ -154,18 +171,56 @@ public class TableMetadata {
         columns.put(column.getName(), column);
     }
 
-    // TODO: Returning a multi-line string from toString might not be a good idea
-    @Override
-    public String toString() {
+    /**
+     * Return a {@code String} containing CQL queries representing this
+     * table and the index on it.
+     *
+     * In other words, this method returns the queries that would allow to
+     * recreate the schema of this table, along with the index defined on
+     * columns of this table.
+     *
+     * Note that the returned String is formatted to be human readable (for
+     * some defintion of human readable at least).
+     *
+     * @return the CQL queries representing this table schema as a {code
+     * String}.
+     */
+    public String exportAsString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("CREATE TABLE ").append(name).append(" (\n");
-        for (ColumnMetadata cm : columns.values()) {
-            sb.append("    ").append(cm).append(",\n");
-        }
+        sb.append(asCQLQuery(true)).append("\n");
+
+        // TODO: handle indexes
+
+        return sb.toString();
+    }
+
+    /**
+     * Returns a CQL query representing this table.
+     *
+     * This method returns a single 'CREATE TABLE' query with the options
+     * corresponding to this table definition.
+     *
+     * Note that the returned string will be a single line; the returned query
+     * is not formatted in any way.
+     *
+     * @return the 'CREATE TABLE' query corresponding to this table.
+     * @see #exportAsString
+     */
+    public String asCQLQuery() {
+        return asCQLQuery(false);
+    }
+
+    private String asCQLQuery(boolean formatted) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("CREATE TABLE ").append(name);
+        newLine(sb, formatted);
+        for (ColumnMetadata cm : columns.values())
+            newLine(sb.append(spaces(4, formatted)).append(cm), formatted);
 
         // PK
-        sb.append("    ").append("PRIMARY KEY (");
+        sb.append(spaces(4, formatted)).append("PRIMARY KEY (");
         if (partitionKey.size() == 1) {
             sb.append(partitionKey.get(0).getName());
         } else {
@@ -179,27 +234,51 @@ public class TableMetadata {
         }
         for (ColumnMetadata cm : clusteringKey)
             sb.append(", ").append(cm.getName());
-        sb.append(")\n");
-        // end PK
         sb.append(")");
+        newLine(sb, formatted);
+        // end PK
+
+        newLine(sb, formatted);
 
         // Options
         sb.append(" WITH read_repair_chance = ").append(options.readRepair);
-        sb.append("\n   AND local_read_repair_chance = ").append(options.localReadRepair);
-        sb.append("\n   AND replicate_on_write = ").append(options.replicateOnWrite);
-        sb.append("\n   AND gc_grace_seconds = ").append(options.gcGrace);
-        sb.append("\n   AND bloom_filter_fp_chance = ").append(options.bfFpChance);
-        sb.append("\n   AND caching = ").append(options.caching);
+        and(sb, formatted).append("local_read_repair_chance = ").append(options.localReadRepair);
+        and(sb, formatted).append("replicate_on_write = ").append(options.replicateOnWrite);
+        and(sb, formatted).append("gc_grace_seconds = ").append(options.gcGrace);
+        and(sb, formatted).append("bloom_filter_fp_chance = ").append(options.bfFpChance);
+        and(sb, formatted).append("caching = ").append(options.caching);
         if (options.comment != null)
-            sb.append("\n   AND comment = ").append(options.comment);
+            and(sb, formatted).append("comment = ").append(options.comment);
 
         // TODO: finish (compaction and compression)
-        sb.append(";\n");
+        newLine(sb, formatted);
+
         return sb.toString();
     }
 
+    private StringBuilder and(StringBuilder sb, boolean formatted) {
+        return newLine(sb, formatted).append(spaces(3, formatted)).append("AND ");
+    }
+
+    private String spaces(int n, boolean formatted) {
+        if (!formatted)
+            return "";
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < n; i++)
+            sb.append(' ');
+
+        return sb.toString();
+    }
+
+    private StringBuilder newLine(StringBuilder sb, boolean formatted) {
+        if (formatted)
+            sb.append('\n');
+        return sb;
+    }
+
     // TODO: add getter for those
-    private static class Options {
+    public static class Options {
 
         private static final String COMMENT                  = "comment";
         private static final String READ_REPAIR              = "read_repair_chance";

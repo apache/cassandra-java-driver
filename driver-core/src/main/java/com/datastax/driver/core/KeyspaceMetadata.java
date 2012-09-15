@@ -3,7 +3,7 @@ package com.datastax.driver.core;
 import java.util.*;
 
 /**
- * Describes the keyspace defined in the cluster, i.e. the current schema.
+ * Describes a keyspace defined in this cluster.
  */
 public class KeyspaceMetadata {
 
@@ -32,29 +32,89 @@ public class KeyspaceMetadata {
         return ksm;
     }
 
+    /**
+     * Returns the name of this keyspace.
+     *
+     * @return the name of this CQL keyspace.
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Returns whether durable writes are set on this keyspace.
+     *
+     * @return {@code true} if durable writes are set on this keyspace (the
+     * default), {@code false} otherwise.
+     */
     public boolean isDurableWrites() {
         return durableWrites;
     }
 
-    public Map<String, String> getReplicationStrategy() {
+    /**
+     * Returns the replication options for this keyspace.
+     *
+     * @return a map containing the replication options for this keyspace.
+     */
+    public Map<String, String> getReplication() {
         return new HashMap<String, String>(replication);
     }
 
+    /**
+     * Returns the metadata for a table contained in this keyspace.
+     *
+     * @param name the name of table to retrieve
+     * @return the metadata for table {@code name} in this keyspace if it
+     * exists, {@code false} otherwise.
+     */
     public TableMetadata getTable(String name) {
         return tables.get(name);
     }
 
+    /**
+     * Returns the tables defined in this keyspace.
+     *
+     * @return a collection of the metadata for the tables defined in this
+     * keyspace.
+     */
     public Collection<TableMetadata> getTables() {
         return tables.values();
     }
 
-    // TODO: Returning a multi-line string from toString might not be a good idea
-    @Override
-    public String toString() {
+    /**
+     * Return a {@code String} containing CQL queries representing this
+     * keyspace and the table it contains.
+     *
+     * In other words, this method returns the queries that would allow to
+     * recreate the schema of this keyspace, along with all its table.
+     *
+     * Note that the returned String is formatted to be human readable (for
+     * some defintion of human readable at least).
+     *
+     * @return the CQL queries representing this keyspace schema as a {code
+     * String}.
+     */
+    public String exportAsString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(asCQLQuery()).append("\n");
+
+        for (TableMetadata tm : tables.values())
+            sb.append("\n").append(tm.exportAsString());
+
+        return sb.toString();
+    }
+
+    /**
+     * Returns a CQL query representing this keyspace.
+     *
+     * This method returns a single 'CREATE KEYSPACE' query with the options
+     * corresponding to this keyspace definition.
+     *
+     * @return the 'CREATE KEYSPACE' query corresponding to this keyspace.
+     * @see #exportAsString
+     */
+    public String asCQLQuery() {
         StringBuilder sb = new StringBuilder();
 
         sb.append("CREATE KEYSPACE ").append(name).append(" WITH ");
@@ -65,11 +125,7 @@ public class KeyspaceMetadata {
             sb.append(", '").append(entry.getKey()).append("': '").append(entry.getValue()).append("'");
         }
         sb.append(" } AND DURABLE_WRITES = ").append(durableWrites);
-        sb.append(";\n");
-
-        for (TableMetadata tm : tables.values())
-            sb.append("\n").append(tm);
-
+        sb.append(";");
         return sb.toString();
     }
 

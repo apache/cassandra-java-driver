@@ -99,17 +99,48 @@ public class ClusterMetadata {
         return hosts.values();
     }
 
+    /**
+     * Returns the known hosts of this cluster.
+     *
+     * @return A set will all the know host of this cluster.
+     */
+    public Set<Host> getAllHosts() {
+        return new HashSet<Host>(allHosts());
+    }
+
+    /**
+     * Return the metadata of a keyspace given its name.
+     *
+     * @param keyspace the name of the keyspace for which metadata should be
+     * returned.
+     * @return the metadat of the requested keyspace or {@code null} if {@code
+     * keyspace} is not a known keyspace.
+     */
     public KeyspaceMetadata getKeyspace(String keyspace) {
         return keyspaces.get(keyspace);
     }
 
-    // TODO: Returning a multi-line string from toString might not be a good idea
-    @Override
-    public String toString() {
+    /**
+     * Return a {@code String} containing CQL queries representing the schema
+     * of this cluster.
+     *
+     * In other words, this method returns the queries that would allow to
+     * recreate the schema of this cluster.
+     *
+     * Note that the returned String is formatted to be human readable (for
+     * some defintion of human readable at least).
+     *
+     * @return the CQL queries representing this cluster schema as a {code
+     * String}.
+     */
+    // TODO: add some boolean arg to deal with thift defs that can't be fully
+    // represented by CQL queries (like either throw an exception or
+    // do-our-best). Or some other way to deal with that.
+    public String exportSchemaAsString() {
         StringBuilder sb = new StringBuilder();
 
         for (KeyspaceMetadata ksm : keyspaces.values())
-            sb.append(ksm).append("\n");
+            sb.append(ksm.exportAsString()).append("\n");
 
         return sb.toString();
     }

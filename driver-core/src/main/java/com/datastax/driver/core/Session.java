@@ -68,7 +68,7 @@ public class Session {
     public ResultSet execute(String query) {
         // TODO: Deal with exceptions
         try {
-            return toResultSet(manager.execute(new QueryMessage(query)));
+            return toResultSet(manager.executeWithRetry(new QueryMessage(query)));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -134,7 +134,9 @@ public class Session {
     public PreparedStatement prepare(String query) {
         // TODO: Deal with exceptions
         try {
-            return toPreparedStatement(manager.execute(new PrepareMessage(query)));
+            Connection.Future future = new Connection.Future();
+            manager.execute(new PrepareMessage(query), future);
+            return toPreparedStatement(future);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -167,7 +169,7 @@ public class Session {
     public ResultSet executePrepared(BoundStatement stmt) {
         // TODO: Deal with exceptions
         try {
-            return toResultSet(manager.execute(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values))));
+            return toResultSet(manager.executeWithRetry(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values))));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -189,7 +191,7 @@ public class Session {
         return null;
     }
 
-    static ResultSet toResultSet(Connection.Future future) {
+    static ResultSet toResultSet(Future<Message.Response> future) {
         try {
             Message.Response response = future.get();
             switch (response.type) {
@@ -237,6 +239,9 @@ public class Session {
 
         private final ConcurrentMap<Host, HostConnectionPool> pools;
         private final LoadBalancingPolicy loadBalancer;
+
+        // TODO: make that configurable
+        final RetryPolicy retryPolicy = RetryPolicy.DefaultPolicy.INSTANCE;
 
         private final HostConnectionPool.Configuration poolsConfiguration;
 
@@ -307,7 +312,7 @@ public class Session {
          *
          * @return a future on the response to the request.
          */
-        public Connection.Future execute(Message.Request msg) {
+        public void execute(Message.Request msg, Connection.ResponseCallback callback) {
 
             Iterator<Host> plan = loadBalancer.newQueryPlan();
             while (plan.hasNext()) {
@@ -319,7 +324,8 @@ public class Session {
                 try {
                     Connection connection = pool.borrowConnection(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
                     try {
-                        return connection.write(msg);
+                        connection.write(msg, callback);
+                        return;
                     } finally {
                         pool.returnConnection(connection);
                     }
@@ -330,7 +336,25 @@ public class Session {
                 }
             }
             // TODO: Change that to a "NoAvailableHostException"
-            throw new RuntimeException();
+            callback.onException(new RuntimeException());
+        }
+
+        // TODO: this will need to evolve a bit for async calls
+        public Future<Message.Response> executeWithRetry(Message.Request msg) {
+            RetryingFuture future = new RetryingFuture(this, msg);
+            execute(msg, future);
+            return future;
+        }
+
+        // TODO: This doesn't work for prepared statement, fix it.
+        public void retry(final RetryingFuture retryFuture) {
+            // TODO: retry callback on executor (to avoid doing write on IO
+            // thread)
+            cluster.manager.executor.execute(new Runnable() {
+                public void run() {
+                    execute(retryFuture.getRequest(), retryFuture);
+                }
+            });
         }
     }
 }
