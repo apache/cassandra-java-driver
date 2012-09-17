@@ -519,31 +519,54 @@ public class CQLRow {
         return getUUID(metadata.getIdx(name));
     }
 
-    public <T> List<T> getList(int i, Class<T> elts) {
-        // TODO
-        return null;
+    // TODO: I don't have a good idea on how to make that typesafe in a way that is not ugly
+    public List<?> getList(int i) {
+        DataType type = metadata.type(i);
+        if (!(type instanceof DataType.Collection.List))
+            throw new InvalidTypeException(String.format("Column %s is not of list type", metadata.name(i)));
+
+        ByteBuffer value = data.get(i);
+        if (value == null)
+            return null;
+
+        // TODO: we could avoid the getCodec call if we kept a reference to the original message.
+        return (List<?>)Codec.getCodec(type).compose(value);
     }
 
-    public <T> List<T> getList(String name, Class<T> elts) {
-        return getList(metadata.getIdx(name), elts);
+    public List<?> getList(String name) {
+        return getList(metadata.getIdx(name));
     }
 
-    public <T> Set<T> getSet(int i, Class<T> elts) {
-        // TODO
-        return null;
+    public Set<?> getSet(int i) {
+        DataType type = metadata.type(i);
+        if (!(type instanceof DataType.Collection.Set))
+            throw new InvalidTypeException(String.format("Column %s is not of set type", metadata.name(i)));
+
+        ByteBuffer value = data.get(i);
+        if (value == null)
+            return null;
+
+        return (Set<?>)Codec.getCodec(type).compose(value);
     }
 
-    public <T> Set<T> getSet(String name, Class<T> elts) {
-        return getSet(metadata.getIdx(name), elts);
+    public Set<?> getSet(String name) {
+        return getSet(metadata.getIdx(name));
     }
 
-    public <K, V> Map<K, V> getMap(int i, Class<K> keys, Class<V> values) {
-        // TODO
-        return null;
+    public Map<?, ?> getMap(int i) {
+        DataType type = metadata.type(i);
+        if (!(type instanceof DataType.Collection.Map))
+            throw new InvalidTypeException(String.format("Column %s is not of map type", metadata.name(i)));
+
+        ByteBuffer value = data.get(i);
+        if (value == null)
+            return null;
+
+        return (Map<?, ?>)Codec.getCodec(type).compose(value);
     }
 
-    public <K, V> Map<K, V> getMap(String name, Class<K> keys, Class<V> values) {
-        return getMap(metadata.getIdx(name), keys, values);
+    public Map<?, ?> getMap(String name) {
+        return getMap(metadata.getIdx(name));
     }
 
     @Override

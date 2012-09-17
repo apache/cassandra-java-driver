@@ -68,7 +68,22 @@ public class Codec {
     }
 
     private static AbstractType<?> collectionCodec(DataType.Collection type) {
-        return null;
+
+        switch (type.collectionType()) {
+            case LIST:
+                AbstractType<?> listElts = getCodec(((DataType.Collection.List)type).getElementsType());
+                return ListType.getInstance(listElts);
+            case SET:
+                AbstractType<?> setElts = getCodec(((DataType.Collection.Set)type).getElementsType());
+                return SetType.getInstance(setElts);
+            case MAP:
+                DataType.Collection.Map mt = (DataType.Collection.Map)type;
+                AbstractType<?> mapKeys = getCodec(mt.getKeysType());
+                AbstractType<?> mapValues = getCodec(mt.getKeysType());
+                return MapType.getInstance(mapKeys, mapValues);
+            default:
+                throw new RuntimeException("Unknown collection type");
+        }
     }
 
     private static AbstractType<?> customCodec(DataType.Custom type) {
@@ -80,7 +95,25 @@ public class Codec {
         if (type != null)
             return type;
 
-        // TODO: handle collections and custom
+        if (rawType instanceof CollectionType) {
+            switch (((CollectionType)rawType).kind) {
+                case LIST:
+                    DataType listElts = rawTypeToDataType(((ListType)rawType).elements);
+                    return new DataType.Collection.List(listElts);
+                case SET:
+                    DataType setElts = rawTypeToDataType(((SetType)rawType).elements);
+                    return new DataType.Collection.Set(setElts);
+                case MAP:
+                    MapType mt = (MapType)rawType;
+                    DataType mapKeys = rawTypeToDataType(mt.keys);
+                    DataType mapValues = rawTypeToDataType(mt.values);
+                    return new DataType.Collection.Map(mapKeys, mapValues);
+                default:
+                    throw new RuntimeException("Unknown collection type");
+            }
+        }
+
+        // TODO: handle custom
         return null;
     }
 }

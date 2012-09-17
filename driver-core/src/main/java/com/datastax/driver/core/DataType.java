@@ -93,14 +93,69 @@ public interface DataType {
     /**
      * A collection type (lists, sets and maps).
      */
-    public static class Collection implements DataType {
-        // TODO
+    public static abstract class Collection implements DataType {
+
+        // TODO: Type is a very ugly/confusing name
+        public enum Type { LIST, SET, MAP };
+
+        private final Type type;
+
+        protected Collection(Type type) {
+            this.type = type;
+        }
 
         public Kind kind() { return Kind.COLLECTION; }
+
+        public Type collectionType() { return type; }
 
         public Native asNative()         { throw new IllegalStateException("Not a native type, but a collection one"); }
         public Collection asCollection() { return this; }
         public Custom asCustom()         { throw new IllegalStateException("Not a custom type, but a collection one"); }
+
+        public static class List extends Collection {
+            private final DataType elementsType;
+
+            public List(DataType elementsType) {
+                super(Type.LIST);
+                this.elementsType = elementsType;
+            }
+
+            public DataType getElementsType() {
+                return elementsType;
+            }
+        }
+
+        public static class Set extends Collection {
+            private final DataType elementsType;
+
+            public Set(DataType elementsType) {
+                super(Type.SET);
+                this.elementsType = elementsType;
+            }
+
+            public DataType getElementsType() {
+                return elementsType;
+            }
+        }
+
+        public static class Map extends Collection {
+            private final DataType keysType;
+            private final DataType valuesType;
+
+            public Map(DataType keysType, DataType valuesType) {
+                super(Type.MAP);
+                this.keysType = keysType;
+                this.valuesType = valuesType;
+            }
+
+            public DataType getKeysType() {
+                return keysType;
+            }
+
+            public DataType getValuesType() {
+                return keysType;
+            }
+        }
     }
 
     /**

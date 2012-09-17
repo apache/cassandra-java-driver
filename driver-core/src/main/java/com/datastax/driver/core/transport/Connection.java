@@ -167,7 +167,7 @@ public class Connection extends org.apache.cassandra.transport.Connection
                 default:
                     // TODO: handle errors (set the connection to defunct as this mean it is in a bad state)
                     logger.info("Got " + response);
-                    return null;
+                    return;
             }
         } catch (ConnectionException e) {
             throw defunct(e);
