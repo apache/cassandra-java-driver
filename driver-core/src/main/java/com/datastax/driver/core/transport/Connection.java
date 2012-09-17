@@ -379,6 +379,7 @@ public class Connection extends org.apache.cassandra.transport.Connection
         }
     }
 
+    // TODO: Do we really need that after all?
     public static class Future extends SimpleFuture<Message.Response> implements ResponseCallback {
 
         @Override

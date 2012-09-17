@@ -104,11 +104,16 @@ public class SessionTest {
         Cluster cluster = new Cluster.Builder().addContactPoints("127.0.0.1").build();
         Session session = cluster.connect();
 
-        session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
-        // We should deal with that sleep
-        try { Thread.sleep(1000); } catch (Exception e) {}
-        session.use("test_ks");
-        session.execute("CREATE TABLE test (k text PRIMARY KEY, l list<int>, s set<text>, m map<int, int>)");
+        try {
+            session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
+            // We should deal with that sleep
+            try { Thread.sleep(1000); } catch (Exception e) {}
+            session.use("test_ks");
+            session.execute("CREATE TABLE test (k text PRIMARY KEY, l list<int>, s set<text>, m map<int, int>)");
+        } catch (Exception e) {
+            // Skip if already created
+            session.use("test_ks");
+        }
 
         session.execute("INSERT INTO test (k, l, s, m) VALUES ('k', [3, 2, 1], { 3, 2, 1}, { 0 : 0, 1 : 1 })");
         for (CQLRow row : session.execute("SELECT * FROM test")) {

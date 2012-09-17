@@ -92,7 +92,7 @@ public class Host {
          *
          * Registering the same listener multiple times is a no-op.
          *
-         * @param listener the new {@linke Host.StateListener} to register.
+         * @param listener the new {@link Host.StateListener} to register.
          */
         public void register(StateListener listener) {
             listeners.add(listener);
@@ -104,7 +104,7 @@ public class Host {
          * This method is a no-op if {@code listener} hadn't previously be
          * registered against this monitor.
          *
-         * @param listener the {@linke Host.StateListener} to unregister.
+         * @param listener the {@link Host.StateListener} to unregister.
          */
         public void unregister(StateListener listener) {
             listeners.add(listener);

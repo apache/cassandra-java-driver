@@ -4,7 +4,17 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.apache.cassandra.cql3.ColumnSpecification;
+import org.apache.cassandra.transport.Message;
+import org.apache.cassandra.transport.ProtocolException;
+import org.apache.cassandra.transport.ServerError;
+import org.apache.cassandra.transport.messages.ErrorMessage;
 import org.apache.cassandra.transport.messages.ResultMessage;
+
+import com.datastax.driver.core.transport.Connection;
+import com.datastax.driver.core.utils.SimpleFuture;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The result of a query.
@@ -12,6 +22,8 @@ import org.apache.cassandra.transport.messages.ResultMessage;
  * Note that this class is not thread-safe.
  */
 public class ResultSet implements Iterable<CQLRow> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ResultSet.class);
 
     private static final ResultSet EMPTY = new ResultSet(Columns.EMPTY, new ArrayDeque(0));
 
@@ -127,8 +139,46 @@ public class ResultSet implements Iterable<CQLRow> {
         return sb.toString();
     }
 
-    public static class Future // implements java.util.concurrent.Future<ResultSet>
+    public static class Future extends SimpleFuture<ResultSet> implements Connection.ResponseCallback
     {
-        // TODO
+        Future() {}
+
+        @Override
+        public void onSet(Message.Response response) {
+            try {
+                switch (response.type) {
+                    case RESULT:
+                        super.set(ResultSet.fromMessage((ResultMessage)response));
+                        break;
+                    case ERROR:
+                        super.setException(convertException(((ErrorMessage)response).error));
+                        break;
+                    default:
+                        // TODO: handle errors (set the connection to defunct as this mean it is in a bad state)
+                        logger.info("Got " + response);
+                        throw new RuntimeException();
+                }
+            } catch (Exception e) {
+                // TODO: do better
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void onException(Exception exception) {
+            super.setException(exception);
+        }
+
+        // TODO: Convert to some internal exception
+        private Exception convertException(org.apache.cassandra.exceptions.TransportException te) {
+
+            if (te instanceof ServerError) {
+                return new RuntimeException("An unexpected error occured server side: " + te.getMessage());
+            } else if (te instanceof ProtocolException) {
+                return new RuntimeException("An unexpected protocol error occured. This is a bug in this library, please report: " + te.getMessage());
+            } else {
+                return new RuntimeException(te.getMessage());
+            }
+        }
     }
 }

@@ -277,7 +277,6 @@ public class TableMetadata {
         return sb;
     }
 
-    // TODO: add getter for those
     public static class Options {
 
         private static final String COMMENT                  = "comment";
@@ -295,15 +294,15 @@ public class TableMetadata {
 
         private static final double DEFAULT_BF_FP_CHANCE = 0.01;
 
-        public final String comment;
-        public final double readRepair;
-        public final double localReadRepair;
-        public final boolean replicateOnWrite;
-        public final int gcGrace;
-        public final double bfFpChance;
-        public final String caching;
-        public final Map<String, String> compaction = new HashMap<String, String>();
-        public final Map<String, String> compression = new HashMap<String, String>();
+        private final String comment;
+        private final double readRepair;
+        private final double localReadRepair;
+        private final boolean replicateOnWrite;
+        private final int gcGrace;
+        private final double bfFpChance;
+        private final String caching;
+        private final Map<String, String> compaction = new HashMap<String, String>();
+        private final Map<String, String> compression = new HashMap<String, String>();
 
         public Options(CQLRow row) {
             this.comment = row.isNull(COMMENT) ? "" : row.getString(COMMENT);
@@ -320,6 +319,89 @@ public class TableMetadata {
 
             // TODO: this should split the parameters
             compression.put("params", row.getString(COMPRESSION_PARAMS));
+        }
+
+        /**
+         * The commentary set for this table.
+         *
+         * @return the commentary set for this table, or {@code null} if noe has been set.
+         */
+        public String comment() {
+            return comment;
+        }
+
+        /**
+         * The chance with which a read repair is triggered for this table.
+         *
+         * @return the read repair change set for table (in [0.0, 1.0]).
+         */
+        public double readRepairChance() {
+            return readRepair;
+        }
+
+        /**
+         * The (cluster) local read repair chance set for this table.
+         *
+         * @return the local read repair change set for table (in [0.0, 1.0]).
+         */
+        public double localReadRepairChance() {
+            return localReadRepair;
+        }
+
+        /**
+         * Whether replicateOnWrite is set for this table.
+         *
+         * This is only meaningful for tables holding counters.
+         *
+         * @return whether replicateOnWrite is set for this table.
+         */
+        public boolean replicateOnWrite() {
+            return replicateOnWrite;
+        }
+
+        /**
+         * The tombstone garbage collection grace time in seconds for this table.
+         *
+         * @return the tombstone garbage collection grace time in seconds for this table.
+         */
+        public int gcGraceInSeconds() {
+            return gcGrace;
+        }
+
+        /**
+         * The false positive chance for the bloom filter of this table.
+         *
+         * @return the bloom filter false positive chance for this table (in [0.0, 1.0]).
+         */
+        public double bloomFilterFalsePositiveChance() {
+            return bfFpChance;
+        }
+
+        /**
+         * The caching option for this table.
+         *
+         * @return the caching option for this table.
+         */
+        public String caching() {
+            return caching;
+        }
+
+        /**
+         * The compaction options for this table.
+         *
+         * @return a map containing the compaction options for this table.
+         */
+        public Map<String, String> compaction() {
+            return new HashMap<String, String>(compaction);
+        }
+
+        /**
+         * The compression options for this table.
+         *
+         * @return a map containing the compression options for this table.
+         */
+        public Map<String, String> compression() {
+            return new HashMap<String, String>(compression);
         }
     }
 }

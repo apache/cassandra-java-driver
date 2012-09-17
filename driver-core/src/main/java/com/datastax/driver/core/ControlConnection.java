@@ -3,6 +3,7 @@ package com.datastax.driver.core;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import com.datastax.driver.core.transport.Connection;
 import com.datastax.driver.core.transport.ConnectionException;
@@ -76,17 +77,24 @@ class ControlConnection implements Host.StateListener {
 
         // Make sure we're up to date on metadata
         try {
-            Connection.Future ksFuture = connection.write(new QueryMessage(SELECT_KEYSPACES));
-            Connection.Future cfFuture = connection.write(new QueryMessage(SELECT_COLUMN_FAMILIES));
-            Connection.Future colsFuture = connection.write(new QueryMessage(SELECT_COLUMNS));
+            ResultSet.Future ksFuture = new ResultSet.Future();
+            ResultSet.Future cfFuture = new ResultSet.Future();
+            ResultSet.Future colsFuture = new ResultSet.Future();
+            connection.write(new QueryMessage(SELECT_KEYSPACES), ksFuture);
+            connection.write(new QueryMessage(SELECT_COLUMN_FAMILIES), cfFuture);
+            connection.write(new QueryMessage(SELECT_COLUMNS), colsFuture);
 
             // TODO: we should probably do something more fancy, like check if the schema changed and notify whoever wants to be notified
-            cluster.metadata.rebuildSchema(Session.toResultSet(ksFuture),
-                                           Session.toResultSet(cfFuture),
-                                           Session.toResultSet(colsFuture));
+            cluster.metadata.rebuildSchema(ksFuture.get(), cfFuture.get(), colsFuture.get());
         } catch (ConnectionException e) {
             // TODO: log
             reconnect();
+        } catch (ExecutionException e) {
+            // TODO: log and decide what to do since in theory that shouldn't be a cassandra exception
+            reconnect();
+        } catch (InterruptedException e) {
+            // TODO: it's bad to do that but at the same time it's annoying to be interrupted
+            throw new RuntimeException(e);
         }
     }
 

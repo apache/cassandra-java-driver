@@ -68,7 +68,7 @@ public class Session {
     public ResultSet execute(String query) {
         // TODO: Deal with exceptions
         try {
-            return toResultSet(manager.executeWithRetry(new QueryMessage(query)));
+            return executeAsync(query).get();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -107,7 +107,7 @@ public class Session {
      * be empty and will be for any non SELECT query.
      */
     public ResultSet.Future executeAsync(String query) {
-        return null;
+        return manager.executeWithRetry(new QueryMessage(query));
     }
 
     /**
@@ -122,7 +122,7 @@ public class Session {
      * @see #executeAsync(String)
      */
     public ResultSet.Future executeAsync(CQLQuery query) {
-        return null;
+        return executeAsync(query.toString());
     }
 
     /**
@@ -169,7 +169,7 @@ public class Session {
     public ResultSet executePrepared(BoundStatement stmt) {
         // TODO: Deal with exceptions
         try {
-            return toResultSet(manager.executeWithRetry(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values))));
+            return executePreparedAsync(stmt).get();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -188,28 +188,7 @@ public class Session {
      * be empty and will be for any non SELECT query.
      */
     public ResultSet.Future executePreparedAsync(BoundStatement stmt) {
-        return null;
-    }
-
-    static ResultSet toResultSet(Future<Message.Response> future) {
-        try {
-            Message.Response response = future.get();
-            switch (response.type) {
-                case RESULT:
-                    return ResultSet.fromMessage((ResultMessage)response);
-                case ERROR:
-                    // TODO: handle errors
-                    logger.info("Got " + response);
-                    return null;
-                default:
-                    // TODO: handle errors (set the connection to defunct as this mean it is in a bad state)
-                    logger.info("Got " + response);
-                    return null;
-            }
-        } catch (Exception e) {
-            // TODO: do better
-            throw new RuntimeException(e);
-        }
+        return manager.executeWithRetry(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values)));
     }
 
     private PreparedStatement toPreparedStatement(Connection.Future future) {
@@ -340,19 +319,19 @@ public class Session {
         }
 
         // TODO: this will need to evolve a bit for async calls
-        public Future<Message.Response> executeWithRetry(Message.Request msg) {
-            RetryingFuture future = new RetryingFuture(this, msg);
-            execute(msg, future);
+        public ResultSet.Future executeWithRetry(Message.Request msg) {
+            ResultSet.Future future = new ResultSet.Future();
+            execute(msg, new RetryingCallback(this, msg, future));
             return future;
         }
 
         // TODO: This doesn't work for prepared statement, fix it.
-        public void retry(final RetryingFuture retryFuture) {
+        public void retry(final RetryingCallback retryCallback) {
             // TODO: retry callback on executor (to avoid doing write on IO
             // thread)
             cluster.manager.executor.execute(new Runnable() {
                 public void run() {
-                    execute(retryFuture.getRequest(), retryFuture);
+                    execute(retryCallback.getRequest(), retryCallback);
                 }
             });
         }

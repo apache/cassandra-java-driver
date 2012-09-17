@@ -10,18 +10,20 @@ import org.apache.cassandra.exceptions.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class RetryingFuture extends SimpleFuture<Message.Response> implements Connection.ResponseCallback {
+class RetryingCallback implements Connection.ResponseCallback {
 
-    private static final Logger logger = LoggerFactory.getLogger(RetryingFuture.class);
+    private static final Logger logger = LoggerFactory.getLogger(RetryingCallback.class);
 
     private final Session.Manager manager;
     private final Message.Request request;
+    private final Connection.ResponseCallback callback;
 
     private volatile int retries;
 
-    public RetryingFuture(Session.Manager manager, Message.Request request) {
+    public RetryingCallback(Session.Manager manager, Message.Request request, Connection.ResponseCallback callback) {
         this.manager = manager;
         this.request = request;
+        this.callback = callback;
     }
 
     public Message.Request getRequest() {
@@ -32,7 +34,7 @@ class RetryingFuture extends SimpleFuture<Message.Response> implements Connectio
     public void onSet(Message.Response response) {
         switch (response.type) {
             case RESULT:
-                super.set(response);
+                callback.onSet(response);
                 break;
             case ERROR:
                 ErrorMessage err = (ErrorMessage)response;
@@ -74,19 +76,18 @@ class RetryingFuture extends SimpleFuture<Message.Response> implements Connectio
                     ++retries;
                     manager.retry(this);
                 } else {
-                    super.set(response);
+                    callback.onSet(response);
                 }
 
                 break;
             default:
-                // TODO: handle errors (set the connection to defunct as this mean it is in a bad state)
-                logger.info("Got " + response);
+                callback.onSet(response);
                 break;
         }
     }
 
     @Override
     public void onException(Exception exception) {
-        super.setException(exception);
+        callback.onException(exception);
     }
 }
