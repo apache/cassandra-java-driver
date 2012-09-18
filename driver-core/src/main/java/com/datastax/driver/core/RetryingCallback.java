@@ -1,36 +1,100 @@
 package com.datastax.driver.core;
 
+import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
+
 import com.datastax.driver.core.transport.*;
+import com.datastax.driver.core.pool.HostConnectionPool;
 import com.datastax.driver.core.utils.SimpleFuture;
 
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.ErrorMessage;
-import org.apache.cassandra.exceptions.*;
+import org.apache.cassandra.transport.messages.ExecuteMessage;
+import org.apache.cassandra.transport.messages.QueryMessage;
+import org.apache.cassandra.exceptions.UnavailableException;
+import org.apache.cassandra.exceptions.ReadTimeoutException;
+import org.apache.cassandra.exceptions.WriteTimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Connection callback that handle retrying another node if the connection fails.
+ *
+ * For queries, this also handle retrying the query if the RetryPolicy say so.
+ */
 class RetryingCallback implements Connection.ResponseCallback {
 
     private static final Logger logger = LoggerFactory.getLogger(RetryingCallback.class);
 
     private final Session.Manager manager;
-    private final Message.Request request;
     private final Connection.ResponseCallback callback;
 
-    private volatile int retries;
+    private final Iterator<Host> queryPlan;
+    private volatile Host current;
 
-    public RetryingCallback(Session.Manager manager, Message.Request request, Connection.ResponseCallback callback) {
+    private final boolean isQuery;
+    private volatile int queryRetries;
+
+    public RetryingCallback(Session.Manager manager, Connection.ResponseCallback callback) {
         this.manager = manager;
-        this.request = request;
         this.callback = callback;
+
+        this.queryPlan = manager.loadBalancer.newQueryPlan();
+        this.isQuery = request() instanceof QueryMessage || request() instanceof ExecuteMessage;
     }
 
-    public Message.Request getRequest() {
-        return request;
+    public void sendRequest() {
+
+        while (queryPlan.hasNext()) {
+            Host host = queryPlan.next();
+            if (query(host))
+                return;
+        }
+        // TODO: Change that to a "NoAvailableHostException"
+        callback.onException(new RuntimeException());
     }
 
-    @Override
+    private boolean query(Host host) {
+        HostConnectionPool pool = manager.pools.get(host);
+        if (pool == null || pool.isShutdown())
+            return false;
+
+        try {
+            Connection connection = pool.borrowConnection(manager.DEFAULT_CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+            current = host;
+            try {
+                connection.write(this);
+                return true;
+            } finally {
+                pool.returnConnection(connection);
+            }
+        } catch (ConnectionException e) {
+            logger.trace("Error: " + e.getMessage());
+            // If we have any problem with the connection, just move to the next node.
+            return false;
+        }
+    }
+
+    private void retry(final boolean retryCurrent) {
+        final Host h = current;
+
+        // We should not retry on the current thread as this will be an IO thread.
+        manager.cluster.manager.executor.execute(new Runnable() {
+            public void run() {
+                if (retryCurrent) {
+                    if (query(h))
+                        return;
+                }
+                sendRequest();
+            }
+        });
+    }
+
+    public Message.Request request() {
+        return callback.request();
+    }
+
     public void onSet(Message.Response response) {
         switch (response.type) {
             case RESULT:
@@ -45,36 +109,35 @@ class RetryingCallback implements Connection.ResponseCallback {
                         assert err.error instanceof ReadTimeoutException;
                         ReadTimeoutException rte = (ReadTimeoutException)err.error;
                         ConsistencyLevel rcl = ConsistencyLevel.from(rte.consistency);
-                        retry = manager.retryPolicy.onReadTimeout(rcl, rte.received, rte.blockFor, rte.dataPresent, retries);
+                        retry = manager.retryPolicy.onReadTimeout(rcl, rte.received, rte.blockFor, rte.dataPresent, queryRetries);
                         break;
                     case WRITE_TIMEOUT:
                         assert err.error instanceof WriteTimeoutException;
                         WriteTimeoutException wte = (WriteTimeoutException)err.error;
                         ConsistencyLevel wcl = ConsistencyLevel.from(wte.consistency);
-                        retry = manager.retryPolicy.onWriteTimeout(wcl, wte.received, wte.blockFor, retries);
+                        retry = manager.retryPolicy.onWriteTimeout(wcl, wte.received, wte.blockFor, queryRetries);
                         break;
                     case UNAVAILABLE:
                         assert err.error instanceof UnavailableException;
                         UnavailableException ue = (UnavailableException)err.error;
                         ConsistencyLevel ucl = ConsistencyLevel.from(ue.consistency);
-                        retry = manager.retryPolicy.onUnavailable(ucl, ue.required, ue.alive, retries);
+                        retry = manager.retryPolicy.onUnavailable(ucl, ue.required, ue.alive, queryRetries);
                         break;
                     case OVERLOADED:
                         // TODO: maybe we could make that part of the retrying policy?
-                        // retry once
-                        if (retries == 0)
+                        if (queryRetries == 0)
                             retry = true;
                         break;
                     case IS_BOOTSTRAPPING:
                         // TODO: log error as this shouldn't happen
                         // retry once
-                        if (retries == 0)
+                        if (queryRetries == 0)
                             retry = true;
                         break;
                 }
                 if (retry) {
-                    ++retries;
-                    manager.retry(this);
+                    ++queryRetries;
+                    retry(true);
                 } else {
                     callback.onSet(response);
                 }
@@ -86,8 +149,15 @@ class RetryingCallback implements Connection.ResponseCallback {
         }
     }
 
-    @Override
     public void onException(Exception exception) {
+
+        if (exception instanceof ConnectionException) {
+            logger.debug(String.format("Error sending request to %s, retrying with next host", ((ConnectionException)exception).address));
+            retry(false);
+            return;
+        }
+
         callback.onException(exception);
     }
+
 }

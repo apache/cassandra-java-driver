@@ -107,7 +107,7 @@ public class Session {
      * be empty and will be for any non SELECT query.
      */
     public ResultSet.Future executeAsync(String query) {
-        return manager.executeWithRetry(new QueryMessage(query));
+        return manager.executeQuery(new QueryMessage(query));
     }
 
     /**
@@ -134,8 +134,8 @@ public class Session {
     public PreparedStatement prepare(String query) {
         // TODO: Deal with exceptions
         try {
-            Connection.Future future = new Connection.Future();
-            manager.execute(new PrepareMessage(query), future);
+            Connection.Future future = new Connection.Future(new PrepareMessage(query));
+            manager.execute(future);
             return toPreparedStatement(future);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -188,7 +188,7 @@ public class Session {
      * be empty and will be for any non SELECT query.
      */
     public ResultSet.Future executePreparedAsync(BoundStatement stmt) {
-        return manager.executeWithRetry(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values)));
+        return manager.executeQuery(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values)));
     }
 
     private PreparedStatement toPreparedStatement(Connection.Future future) {
@@ -214,10 +214,10 @@ public class Session {
 
     static class Manager implements Host.StateListener {
 
-        private final Cluster cluster;
+        final Cluster cluster;
 
-        private final ConcurrentMap<Host, HostConnectionPool> pools;
-        private final LoadBalancingPolicy loadBalancer;
+        final ConcurrentMap<Host, HostConnectionPool> pools;
+        final LoadBalancingPolicy loadBalancer;
 
         // TODO: make that configurable
         final RetryPolicy retryPolicy = RetryPolicy.DefaultPolicy.INSTANCE;
@@ -225,7 +225,7 @@ public class Session {
         private final HostConnectionPool.Configuration poolsConfiguration;
 
         // TODO: Make that configurable
-        private final long DEFAULT_CONNECTION_TIMEOUT = 3000;
+        final long DEFAULT_CONNECTION_TIMEOUT = 3000;
 
         public Manager(Cluster cluster, Collection<Host> hosts) {
             this.cluster = cluster;
@@ -286,54 +286,17 @@ public class Session {
         /**
          * Execute the provided request.
          *
-         * This method will find a suitable node to connect to using the {@link LoadBalancingPolicy}
-         * and handle host failover.
-         *
-         * @return a future on the response to the request.
+         * This method will find a suitable node to connect to using the
+         * {@link LoadBalancingPolicy} and handle host failover.
          */
-        public void execute(Message.Request msg, Connection.ResponseCallback callback) {
-
-            Iterator<Host> plan = loadBalancer.newQueryPlan();
-            while (plan.hasNext()) {
-                Host host = plan.next();
-                HostConnectionPool pool = pools.get(host);
-                if (pool == null || pool.isShutdown())
-                    continue;
-
-                try {
-                    Connection connection = pool.borrowConnection(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
-                    try {
-                        connection.write(msg, callback);
-                        return;
-                    } finally {
-                        pool.returnConnection(connection);
-                    }
-                } catch (ConnectionException e) {
-                    logger.trace("Error: " + e.getMessage());
-                    // If we have any problem with the connection, just move to the next node.
-                    // If that happens during the write of the request, the pool act on the error during returnConnection.
-                }
-            }
-            // TODO: Change that to a "NoAvailableHostException"
-            callback.onException(new RuntimeException());
+        public void execute(Connection.ResponseCallback callback) {
+            new RetryingCallback(this, callback).sendRequest();
         }
 
-        // TODO: this will need to evolve a bit for async calls
-        public ResultSet.Future executeWithRetry(Message.Request msg) {
-            ResultSet.Future future = new ResultSet.Future();
-            execute(msg, new RetryingCallback(this, msg, future));
+        public ResultSet.Future executeQuery(Message.Request msg) {
+            ResultSet.Future future = new ResultSet.Future(msg);
+            execute(future);
             return future;
-        }
-
-        // TODO: This doesn't work for prepared statement, fix it.
-        public void retry(final RetryingCallback retryCallback) {
-            // TODO: retry callback on executor (to avoid doing write on IO
-            // thread)
-            cluster.manager.executor.execute(new Runnable() {
-                public void run() {
-                    execute(retryCallback.getRequest(), retryCallback);
-                }
-            });
         }
     }
 }

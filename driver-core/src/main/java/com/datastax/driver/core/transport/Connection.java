@@ -188,12 +188,14 @@ public class Connection extends org.apache.cassandra.transport.Connection
      * @throws TransportException if an I/O error while sending the request
      */
     public Future write(Message.Request request) throws ConnectionException {
-        Future future = new Future();
-        write(request, future);
+        Future future = new Future(request);
+        write(future);
         return future;
     }
 
-    public void write(Message.Request request, ResponseCallback callback) throws ConnectionException {
+    public void write(ResponseCallback callback) throws ConnectionException {
+
+        Message.Request request = callback.request();
 
         if (isDefunct)
             throw new ConnectionException(address, "Write attempt on defunct connection");
@@ -217,6 +219,9 @@ public class Connection extends org.apache.cassandra.transport.Connection
             if (!writeFuture.isSuccess())
             {
                 logger.debug(String.format("[%s] Error writting request %s", name, request));
+                // Remove this handler from the dispatcher so it don't get notified of the error
+                // twice (we will fail that method already)
+                dispatcher.removeHandler(handler.streamId);
 
                 ConnectionException ce;
                 if (writeFuture.getCause() instanceof java.nio.channels.ClosedChannelException) {
@@ -333,6 +338,10 @@ public class Connection extends org.apache.cassandra.transport.Connection
             assert old == null;
         }
 
+        public void removeHandler(int streamId) {
+            pending.remove(streamId);
+        }
+
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
             logger.trace(String.format("[%s] received ", e.getMessage()));
@@ -382,18 +391,27 @@ public class Connection extends org.apache.cassandra.transport.Connection
     // TODO: Do we really need that after all?
     public static class Future extends SimpleFuture<Message.Response> implements ResponseCallback {
 
-        @Override
+        private final Message.Request request;
+
+        public Future(Message.Request request) {
+            this.request = request;
+        }
+
+        public Message.Request request() {
+            return request;
+        }
+
         public void onSet(Message.Response response) {
             super.set(response);
         }
 
-        @Override
         public void onException(Exception exception) {
             super.setException(exception);
         }
     }
 
     public interface ResponseCallback {
+        public Message.Request request();
         public void onSet(Message.Response response);
         public void onException(Exception exception);
     }

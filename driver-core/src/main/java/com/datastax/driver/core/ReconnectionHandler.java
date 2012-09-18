@@ -9,7 +9,7 @@ import com.datastax.driver.core.transport.ConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ReconnectionHandler implements Runnable {
+class ReconnectionHandler implements Runnable {
 
     private static final Logger logger = LoggerFactory.getLogger(ReconnectionHandler.class);
 
@@ -18,7 +18,8 @@ public class ReconnectionHandler implements Runnable {
     private final Connection.Factory factory;
 
     // The next delay in milliseconds
-    // TODO: implements something better than "every 3 seconds"
+    // TODO: Implements something better than "every 3 seconds"
+    // TODO: And also evict the node after some (long) time
     private int nextDelay = 3000;
 
     public ReconnectionHandler(Host host, ScheduledExecutorService executor, Connection.Factory factory) {

@@ -77,12 +77,12 @@ class ControlConnection implements Host.StateListener {
 
         // Make sure we're up to date on metadata
         try {
-            ResultSet.Future ksFuture = new ResultSet.Future();
-            ResultSet.Future cfFuture = new ResultSet.Future();
-            ResultSet.Future colsFuture = new ResultSet.Future();
-            connection.write(new QueryMessage(SELECT_KEYSPACES), ksFuture);
-            connection.write(new QueryMessage(SELECT_COLUMN_FAMILIES), cfFuture);
-            connection.write(new QueryMessage(SELECT_COLUMNS), colsFuture);
+            ResultSet.Future ksFuture = new ResultSet.Future(new QueryMessage(SELECT_KEYSPACES));
+            ResultSet.Future cfFuture = new ResultSet.Future(new QueryMessage(SELECT_COLUMN_FAMILIES));
+            ResultSet.Future colsFuture = new ResultSet.Future(new QueryMessage(SELECT_COLUMNS));
+            connection.write(ksFuture);
+            connection.write(cfFuture);
+            connection.write(colsFuture);
 
             // TODO: we should probably do something more fancy, like check if the schema changed and notify whoever wants to be notified
             cluster.metadata.rebuildSchema(ksFuture.get(), cfFuture.get(), colsFuture.get());

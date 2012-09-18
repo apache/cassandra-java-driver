@@ -141,9 +141,18 @@ public class ResultSet implements Iterable<CQLRow> {
 
     public static class Future extends SimpleFuture<ResultSet> implements Connection.ResponseCallback
     {
-        Future() {}
+        private final Message.Request request;
 
-        @Override
+        Future(Message.Request request) {
+            this.request = request;
+        }
+
+        // TODO: We don't really want to expose that :(
+        // (Nor onSet/onException if we can avoid it)
+        public Message.Request request() {
+            return request;
+        }
+
         public void onSet(Message.Response response) {
             try {
                 switch (response.type) {
@@ -164,7 +173,6 @@ public class ResultSet implements Iterable<CQLRow> {
             }
         }
 
-        @Override
         public void onException(Exception exception) {
             super.setException(exception);
         }
