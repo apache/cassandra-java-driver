@@ -406,8 +406,6 @@ public class Cluster {
                     }
                 }
             });
-
         }
-
     }
 }

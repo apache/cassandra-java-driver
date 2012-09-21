@@ -62,6 +62,7 @@ class ControlConnection implements Host.StateListener {
         List<Event.Type> evs = Arrays.asList(new Event.Type[]{
             Event.Type.TOPOLOGY_CHANGE,
             Event.Type.STATUS_CHANGE,
+            Event.Type.SCHEMA_CHANGE,
         });
         connection.write(new RegisterMessage(evs));
 

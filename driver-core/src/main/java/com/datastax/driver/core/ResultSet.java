@@ -10,6 +10,7 @@ import org.apache.cassandra.transport.ServerError;
 import org.apache.cassandra.transport.messages.ErrorMessage;
 import org.apache.cassandra.transport.messages.ResultMessage;
 
+import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.transport.Connection;
 import com.datastax.driver.core.utils.SimpleFuture;
 
@@ -53,7 +54,8 @@ public class ResultSet implements Iterable<CQLRow> {
             case PREPARED:
                 throw new RuntimeException("Prepared statement received when a ResultSet was expected");
             default:
-                throw new AssertionError();
+                logger.error(String.format("Received unknow result type '%s'; returning empty result set", msg.kind));
+                return EMPTY;
         }
     }
 
@@ -180,12 +182,42 @@ public class ResultSet implements Iterable<CQLRow> {
         // TODO: Convert to some internal exception
         private Exception convertException(org.apache.cassandra.exceptions.TransportException te) {
 
-            if (te instanceof ServerError) {
-                return new RuntimeException("An unexpected error occured server side: " + te.getMessage());
-            } else if (te instanceof ProtocolException) {
-                return new RuntimeException("An unexpected protocol error occured. This is a bug in this library, please report: " + te.getMessage());
-            } else {
-                return new RuntimeException(te.getMessage());
+            switch (te.code()) {
+                case SERVER_ERROR:
+                    return new DriverInternalError("An unexpected error occured server side: " + te.getMessage());
+                case PROTOCOL_ERROR:
+                    return new DriverInternalError("An unexpected protocol error occured. This is a bug in this library, please report: " + te.getMessage());
+                case UNAVAILABLE:
+                    org.apache.cassandra.exceptions.UnavailableException ue = (org.apache.cassandra.exceptions.UnavailableException)te;
+                    return new UnavailableException(ConsistencyLevel.from(ue.consistency), ue.required, ue.alive);
+                case OVERLOADED:
+                    // TODO: Catch that so that we retry another node
+                    return new DriverInternalError("Queried host was overloaded; this shouldn't happen, another node should have been tried");
+                case IS_BOOTSTRAPPING:
+                    // TODO: Catch that so that we retry another node
+                    return new DriverInternalError("Queried host was boostrapping; this shouldn't happen, another node should have been tried");
+                case TRUNCATE_ERROR:
+                    return new TruncateException(te.getMessage());
+                case WRITE_TIMEOUT:
+                    org.apache.cassandra.exceptions.WriteTimeoutException wte = (org.apache.cassandra.exceptions.WriteTimeoutException)te;
+                    return new WriteTimeoutException(ConsistencyLevel.from(wte.consistency), wte.received, wte.blockFor);
+                case READ_TIMEOUT:
+                    org.apache.cassandra.exceptions.ReadTimeoutException rte = (org.apache.cassandra.exceptions.ReadTimeoutException)te;
+                    return new ReadTimeoutException(ConsistencyLevel.from(rte.consistency), rte.received, rte.blockFor, rte.dataPresent);
+                case SYNTAX_ERROR:
+                    return new SyntaxError(te.getMessage());
+                case UNAUTHORIZED:
+                    return new UnauthorizedException(te.getMessage());
+                case INVALID:
+                    return new InvalidQueryException(te.getMessage());
+                case CONFIG_ERROR:
+                    // TODO: I don't know if it's worth having a specific exception for that
+                    return new InvalidQueryException(te.getMessage());
+                case ALREADY_EXISTS:
+                    org.apache.cassandra.exceptions.AlreadyExistsException aee = (org.apache.cassandra.exceptions.AlreadyExistsException)te;
+                    return new AlreadyExistsException(aee.ksName, aee.cfName);
+                default:
+                    return new DriverInternalError("Unknown error return code: " + te.code());
             }
         }
     }

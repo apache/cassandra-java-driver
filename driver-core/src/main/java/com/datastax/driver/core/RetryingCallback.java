@@ -1,8 +1,12 @@
 package com.datastax.driver.core;
 
+import java.net.InetSocketAddress;
 import java.util.Iterator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.transport.*;
 import com.datastax.driver.core.pool.HostConnectionPool;
 import com.datastax.driver.core.utils.SimpleFuture;
@@ -36,6 +40,8 @@ class RetryingCallback implements Connection.ResponseCallback {
     private final boolean isQuery;
     private volatile int queryRetries;
 
+    private volatile Map<InetSocketAddress, String> errors;
+
     public RetryingCallback(Session.Manager manager, Connection.ResponseCallback callback) {
         this.manager = manager;
         this.callback = callback;
@@ -51,8 +57,7 @@ class RetryingCallback implements Connection.ResponseCallback {
             if (query(host))
                 return;
         }
-        // TODO: Change that to a "NoAvailableHostException"
-        callback.onException(new RuntimeException());
+        callback.onException(new NoHostAvailableException(errors));
     }
 
     private boolean query(Host host) {
@@ -70,10 +75,17 @@ class RetryingCallback implements Connection.ResponseCallback {
                 pool.returnConnection(connection);
             }
         } catch (ConnectionException e) {
-            logger.trace("Error: " + e.getMessage());
-            // If we have any problem with the connection, just move to the next node.
+            // If we have any problem with the connection, move to the next node.
+            logError(e);
             return false;
         }
+    }
+
+    private void logError(ConnectionException e) {
+        logger.debug(String.format("Error querying %s, trying next host (error is: %s)", e.address, e.getMessage()));
+        if (errors == null)
+            errors = new HashMap<InetSocketAddress, String>();
+        errors.put(e.address, e.getMessage());
     }
 
     private void retry(final boolean retryCurrent) {
@@ -152,7 +164,7 @@ class RetryingCallback implements Connection.ResponseCallback {
     public void onException(Exception exception) {
 
         if (exception instanceof ConnectionException) {
-            logger.debug(String.format("Error sending request to %s, retrying with next host", ((ConnectionException)exception).address));
+            logError((ConnectionException)exception);
             retry(false);
             return;
         }
