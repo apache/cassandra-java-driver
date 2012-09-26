@@ -51,14 +51,15 @@ public class Session {
      * @param query the CQL query to execute
      * @return the result of the query. That result will never be null be can
      * be empty and will be for any non SELECT query.
+     *
+     * @throws NoHostAvailableException if no host in the cluster can be
+     * contacted successfully to execute this query.
+     * @throws QueryExecutionException if the query triggered an execution
+     * exception, i.e. an exception thrown by Cassandra when it cannot execute
+     * the query with the requested consistency level successfully.
      */
-    public ResultSet execute(String query) {
-        // TODO: Deal with exceptions
-        try {
-            return executeAsync(query).get();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public ResultSet execute(String query) throws NoHostAvailableException, QueryExecutionException {
+        return executeAsync(query).getUninterruptibly();
     }
 
     /**
@@ -70,9 +71,15 @@ public class Session {
      * @return the result of the query. That result will never be null be can
      * be empty and will be for any non SELECT query.
      *
+     * @throws NoHostAvailableException if no host in the cluster can be
+     * contacted successfully to execute this query.
+     * @throws QueryExecutionException if the query triggered an execution
+     * exception, i.e. an exception thrown by Cassandra when it cannot execute
+     * the query with the requested consistency level successfully.
+     *
      * @see #execute(String)
      */
-    public ResultSet execute(CQLQuery query) {
+    public ResultSet execute(CQLQuery query) throws NoHostAvailableException, QueryExecutionException {
         return execute(query.toString());
     }
 

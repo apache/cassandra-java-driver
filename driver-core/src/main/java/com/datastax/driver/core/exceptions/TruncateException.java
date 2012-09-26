@@ -6,7 +6,7 @@ package com.datastax.driver.core.exceptions;
 // TODO: should that extend QueryExecutionException. In theory yes, but that's
 // probably not part of what you want to deal with when you catch
 // QueryExecutionException?
-public class TruncateException extends DriverException {
+public class TruncateException extends DriverUncheckedException {
 
     public TruncateException(String msg) {
         super(msg);

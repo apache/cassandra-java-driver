@@ -92,6 +92,7 @@ public class ClusterMetadata {
         return hosts.get(address);
     }
 
+    // For internal use only
     Collection<Host> allHosts() {
         return hosts.values();
     }

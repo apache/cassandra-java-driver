@@ -84,10 +84,10 @@ public class Cluster {
      * Cassandra nodes.
      * @return a new session on this cluster sets to no keyspace.
      */
-    public Session connect(AuthInfo authInfo) {
-        // TODO
-        return null;
-    }
+    // TODO
+    //public Session connect(AuthInfo authInfo) {
+    //    return null;
+    //}
 
     /**
      * Creates a new session on this cluster and sets a keyspace to use.
@@ -117,11 +117,10 @@ public class Cluster {
      * @throws NoHostAvailableException if no host can be contacted to set the
      * {@code keyspace}.
      */
-    public Session connect(String keyspace, AuthInfo authInfo) throws NoHostAvailableException {
-        Session session = connect(authInfo);
-        session.manager.setKeyspace(keyspace);
-        return session;
-    }
+    //    Session session = connect(authInfo);
+    //    session.manager.setKeyspace(keyspace);
+    //    return session;
+    //}
 
     /**
      * Returns read-only metadata on the connected cluster.

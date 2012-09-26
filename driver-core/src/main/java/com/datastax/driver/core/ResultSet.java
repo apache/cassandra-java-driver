@@ -2,6 +2,9 @@ package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.transport.Message;
@@ -187,6 +190,94 @@ public class ResultSet implements Iterable<CQLRow> {
 
         public void onException(Exception exception) {
             super.setException(exception);
+        }
+
+        /**
+         * Waits for the query to return and return its result.
+         *
+         * This method is usually more convenient than {@link #get} as it:
+         * <ul>
+         *   <li>It waits for the result uninterruptibly, and so doesn't throw
+         *   {@link InterruptedException}.</li>
+         *   <li>It returns meaningful exceptions, instead of having to deal
+         *   with ExecutionException.</li>
+         * </ul>
+         * As such, it is the preferred way to get the future result.
+         *
+         * @throws NoHostAvailableException if no host in the cluster can be
+         * contacted successfully to execute this query.
+         * @throws QueryExecutionException if the query triggered an execution
+         * exception, i.e. an exception thrown by Cassandra when it cannot execute
+         * the query with the requested consistency level successfully.
+         */
+        public ResultSet getUninterruptibly() throws NoHostAvailableException, QueryExecutionException {
+            try {
+                while (true) {
+                    try {
+                        return super.get();
+                    } catch (InterruptedException e) {
+                        // We said 'uninterruptibly'
+                    }
+                }
+            } catch (ExecutionException e) {
+                extractCause(e);
+                throw new AssertionError();
+            }
+        }
+
+        /**
+         * Waits for the given time for the query to return and return its
+         * result if available.
+         *
+         * This method is usually more convenient than {@link #get} as it:
+         * <ul>
+         *   <li>It waits for the result uninterruptibly, and so doesn't throw
+         *   {@link InterruptedException}.</li>
+         *   <li>It returns meaningful exceptions, instead of having to deal
+         *   with ExecutionException.</li>
+         * </ul>
+         * As such, it is the preferred way to get the future result.
+         *
+         * @throws NoHostAvailableException if no host in the cluster can be
+         * contacted successfully to execute this query.
+         * @throws QueryExecutionException if the query triggered an execution
+         * exception, i.e. an exception thrown by Cassandra when it cannot execute
+         * the query with the requested consistency level successfully.
+         * @throws TimeoutException if the wait timed out (Note that this is
+         * different from a Cassandra timeout, which is a {@code
+         * QueryExecutionException}).
+         */
+        public ResultSet getUninterruptibly(long timeout, TimeUnit unit) throws NoHostAvailableException, QueryExecutionException, TimeoutException {
+            long start = System.nanoTime();
+            long timeoutNanos = unit.toNanos(timeout);
+            try {
+                while (true) {
+                    try {
+                        return super.get(timeoutNanos, TimeUnit.NANOSECONDS);
+                    } catch (InterruptedException e) {
+                        // We said 'uninterruptibly'
+                        long now = System.nanoTime();
+                        long elapsedNanos = now - start;
+                        timeout = timeoutNanos - elapsedNanos;
+                        start = now;
+                    }
+                }
+            } catch (ExecutionException e) {
+                extractCause(e);
+                throw new AssertionError();
+            }
+        }
+
+        private static void extractCause(ExecutionException e) throws NoHostAvailableException, QueryExecutionException {
+            Throwable cause = e.getCause();
+            if (cause instanceof NoHostAvailableException)
+                throw (NoHostAvailableException)cause;
+            else if (cause instanceof QueryExecutionException)
+                throw (QueryExecutionException)cause;
+            else if (cause instanceof DriverUncheckedException)
+                throw (DriverUncheckedException)cause;
+            else
+                throw new DriverInternalError("Unexpected exception thrown", cause);
         }
 
         // TODO: Convert to some internal exception
