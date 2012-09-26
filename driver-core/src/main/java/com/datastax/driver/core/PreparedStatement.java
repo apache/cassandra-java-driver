@@ -14,9 +14,9 @@ import org.apache.cassandra.transport.messages.ResultMessage;
 public class PreparedStatement {
 
     final Columns metadata;
-    final int id;
+    final byte[] id;
 
-    private PreparedStatement(Columns metadata, int id) {
+    private PreparedStatement(Columns metadata, byte[] id) {
         this.metadata = metadata;
         this.id = id;
     }
@@ -29,7 +29,7 @@ public class PreparedStatement {
                 for (int i = 0; i < defs.length; i++)
                     defs[i] = Columns.Definition.fromTransportSpecification(pmsg.metadata.names.get(i));
 
-                return new PreparedStatement(new Columns(defs), pmsg.statementId);
+                return new PreparedStatement(new Columns(defs), pmsg.statementId.bytes);
             case VOID:
             case ROWS:
             case SET_KEYSPACE:

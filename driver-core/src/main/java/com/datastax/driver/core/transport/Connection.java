@@ -151,23 +151,19 @@ public class Connection extends org.apache.cassandra.transport.Connection
 
         try {
             logger.trace(String.format("[%s] Setting keyspace %s", name, keyspace));
-            // TODO: Handle the case where we get an error because the keyspace doesn't
-            // exist (and don't set the keyspace to retry later)
             Message.Response response = write(new QueryMessage("USE " + keyspace)).get();
             switch (response.type) {
                 case RESULT:
                     this.keyspace = keyspace;
                     break;
-                case ERROR:
-                    // TODO: what to do when that happens? It could be that the
-                    // node doesn't know about that keyspace even though it
-                    // exists (new node not yet up on schemas?)
-                    logger.debug(String.format("Cannot set keyspace %s (%s)", keyspace, response));
-                    break;
                 default:
-                    // TODO: handle errors (set the connection to defunct as this mean it is in a bad state)
-                    logger.info("Got " + response);
-                    return;
+                    // The code set the keyspace only when a successful 'use'
+                    // has been perform, so there shouldn't be any error here.
+                    // It can happen however that the node we're connecting to
+                    // is not up on the schema yet. In that case, defuncting
+                    // the connection is not a bad choice.
+                    defunct(new ConnectionException(address, String.format("Problem while setting keyspace, got %s as response", response)));
+                    break;
             }
         } catch (ConnectionException e) {
             throw defunct(e);

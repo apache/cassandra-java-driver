@@ -37,7 +37,7 @@ public class ResultSet implements Iterable<CQLRow> {
         this.rows = rows;
     }
 
-    static ResultSet fromMessage(ResultMessage msg) {
+    private static ResultSet fromMessage(ResultMessage msg) {
         switch (msg.kind) {
             case VOID:
                 return EMPTY;
@@ -49,7 +49,6 @@ public class ResultSet implements Iterable<CQLRow> {
 
                 return new ResultSet(new Columns(defs), new ArrayDeque(r.result.rows));
             case SET_KEYSPACE:
-                // TODO: we might want to do more with such result
                 return EMPTY;
             case PREPARED:
                 throw new RuntimeException("Prepared statement received when a ResultSet was expected");
@@ -143,9 +142,11 @@ public class ResultSet implements Iterable<CQLRow> {
 
     public static class Future extends SimpleFuture<ResultSet> implements Connection.ResponseCallback
     {
+        private final Session.Manager session;
         private final Message.Request request;
 
-        Future(Message.Request request) {
+        Future(Session.Manager session, Message.Request request) {
+            this.session = session;
             this.request = request;
         }
 
@@ -159,7 +160,16 @@ public class ResultSet implements Iterable<CQLRow> {
             try {
                 switch (response.type) {
                     case RESULT:
-                        super.set(ResultSet.fromMessage((ResultMessage)response));
+                        ResultMessage rm = (ResultMessage)response;
+                        if (rm.kind == ResultMessage.Kind.SET_KEYSPACE) {
+                            // TODO: I think there is a problem if someone set
+                            // a keyspace, then drop it. But that basically
+                            // means we should reset the keyspace to null in that case.
+
+                            // propagate the keyspace change to other connections
+                            session.poolsConfiguration.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
+                        }
+                        super.set(ResultSet.fromMessage(rm));
                         break;
                     case ERROR:
                         super.setException(convertException(((ErrorMessage)response).error));

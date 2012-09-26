@@ -3,7 +3,7 @@ package com.datastax.driver.core.exceptions;
 /**
  * Top level class for unchecked exceptions thrown by the driver.
  */
-public class DriverUncheckedException extends Exception {
+public class DriverUncheckedException extends RuntimeException {
 
     public DriverUncheckedException() {
         super();

@@ -10,6 +10,7 @@ import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.EventMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
 
+import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.transport.Connection;
 import com.datastax.driver.core.transport.ConnectionException;
 import com.datastax.driver.core.utils.SimpleConvictionPolicy;
@@ -95,9 +96,14 @@ public class Cluster {
      * {@code Session}. This can be later changed using {@link Session#use}.
      * @return a new session on this cluster sets to keyspace
      * {@code keyspaceName}.
+     *
+     * @throws NoHostAvailableException if no host can be contacted to set the
+     * {@code keyspace}.
      */
-    public Session connect(String keyspace) {
-        return connect().use(keyspace);
+    public Session connect(String keyspace) throws NoHostAvailableException {
+        Session session = connect();
+        session.manager.setKeyspace(keyspace);
+        return session;
     }
 
     /**
@@ -107,9 +113,14 @@ public class Cluster {
      * Cassandra nodes.
      * @return a new session on this cluster sets to keyspace
      * {@code keyspaceName}.
+     *
+     * @throws NoHostAvailableException if no host can be contacted to set the
+     * {@code keyspace}.
      */
-    public Session connect(String keyspace, AuthInfo authInfo) {
-        return connect(authInfo).use(keyspace);
+    public Session connect(String keyspace, AuthInfo authInfo) throws NoHostAvailableException {
+        Session session = connect(authInfo);
+        session.manager.setKeyspace(keyspace);
+        return session;
     }
 
     /**

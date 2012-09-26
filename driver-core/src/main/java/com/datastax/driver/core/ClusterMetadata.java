@@ -12,15 +12,13 @@ public class ClusterMetadata {
 
     private final Cluster.Manager cluster;
     private final ConcurrentMap<InetSocketAddress, Host> hosts = new ConcurrentHashMap<InetSocketAddress, Host>();
-    private final Map<String, KeyspaceMetadata> keyspaces = new HashMap<String, KeyspaceMetadata>();
+    private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
 
     ClusterMetadata(Cluster.Manager cluster) {
         this.cluster = cluster;
     }
 
     void rebuildSchema(ResultSet ks, ResultSet cfs, ResultSet cols) {
-
-        // TODO: we need to switch the keyspaces map completely
 
         Map<String, List<CQLRow>> cfDefs = new HashMap<String, List<CQLRow>>();
         Map<String, Map<String, List<CQLRow>>> colsDefs = new HashMap<String, Map<String, List<CQLRow>>>();
@@ -68,7 +66,6 @@ public class ClusterMetadata {
                     }
                 }
             }
-
             keyspaces.put(ksName, ksm);
         }
     }

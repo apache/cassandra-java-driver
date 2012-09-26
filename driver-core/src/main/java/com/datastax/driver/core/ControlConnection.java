@@ -62,7 +62,7 @@ class ControlConnection implements Host.StateListener {
         List<Event.Type> evs = Arrays.asList(new Event.Type[]{
             Event.Type.TOPOLOGY_CHANGE,
             Event.Type.STATUS_CHANGE,
-            Event.Type.SCHEMA_CHANGE,
+            //Event.Type.SCHEMA_CHANGE,
         });
         connection.write(new RegisterMessage(evs));
 
@@ -78,9 +78,9 @@ class ControlConnection implements Host.StateListener {
 
         // Make sure we're up to date on metadata
         try {
-            ResultSet.Future ksFuture = new ResultSet.Future(new QueryMessage(SELECT_KEYSPACES));
-            ResultSet.Future cfFuture = new ResultSet.Future(new QueryMessage(SELECT_COLUMN_FAMILIES));
-            ResultSet.Future colsFuture = new ResultSet.Future(new QueryMessage(SELECT_COLUMNS));
+            ResultSet.Future ksFuture = new ResultSet.Future(null, new QueryMessage(SELECT_KEYSPACES));
+            ResultSet.Future cfFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMN_FAMILIES));
+            ResultSet.Future colsFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMNS));
             connection.write(ksFuture);
             connection.write(cfFuture);
             connection.write(colsFuture);

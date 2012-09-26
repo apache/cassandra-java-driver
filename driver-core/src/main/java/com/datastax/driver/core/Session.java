@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.pool.HostConnectionPool;
 import com.datastax.driver.core.transport.Connection;
 import com.datastax.driver.core.transport.ConnectionException;
@@ -35,20 +36,6 @@ public class Session {
     // Package protected, only Cluster should construct that.
     Session(Cluster cluster, Collection<Host> hosts) {
         this.manager = new Manager(cluster, hosts);
-    }
-
-    /**
-     * Sets the current keyspace to use for this session.
-     *
-     * Note that it is up to the application to synchronize calls to this
-     * method with queries executed against this session.
-     *
-     * @param keyspace the name of the keyspace to set
-     * @return this session.
-     */
-    public Session use(String keyspace) {
-        manager.setKeyspace(keyspace);
-        return this;
     }
 
     /**
@@ -222,7 +209,7 @@ public class Session {
         // TODO: make that configurable
         final RetryPolicy retryPolicy = RetryPolicy.DefaultPolicy.INSTANCE;
 
-        private final HostConnectionPool.Configuration poolsConfiguration;
+        final HostConnectionPool.Configuration poolsConfiguration;
 
         // TODO: Make that configurable
         final long DEFAULT_CONNECTION_TIMEOUT = 3000;
@@ -279,8 +266,22 @@ public class Session {
                 pool.shutdown();
         }
 
-        public void setKeyspace(String keyspace) {
-            poolsConfiguration.setKeyspace(keyspace);
+        public void setKeyspace(String keyspace) throws NoHostAvailableException {
+            try {
+                executeQuery(new QueryMessage("use " + keyspace)).get();
+            } catch (InterruptedException e) {
+                // TODO: do we want to handle interrupted exception in a better way?
+                throw new DriverInternalError("Hey! I was waiting!", e);
+            } catch (ExecutionException e) {
+                Throwable cause = e.getCause();
+                // A USE query should never fail unless we cannot contact a node
+                if (cause instanceof NoHostAvailableException)
+                    throw (NoHostAvailableException)cause;
+                else if (cause instanceof DriverUncheckedException)
+                    throw (DriverUncheckedException)cause;
+                else
+                    throw new DriverInternalError("Unexpected exception thrown", cause);
+            }
         }
 
         /**
@@ -294,7 +295,7 @@ public class Session {
         }
 
         public ResultSet.Future executeQuery(Message.Request msg) {
-            ResultSet.Future future = new ResultSet.Future(msg);
+            ResultSet.Future future = new ResultSet.Future(this, msg);
             execute(future);
             return future;
         }
