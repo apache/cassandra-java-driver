@@ -290,14 +290,14 @@ public class Connection extends org.apache.cassandra.transport.Connection
          */
         public Connection open(Host host) throws ConnectionException {
             InetSocketAddress address = host.getAddress();
-            String name = address.toString() + "-" + getIdGenerator(host).getAndIncrement();
+            String name =address.toString() + "-" + getIdGenerator(host).getAndIncrement();
             return new Connection(name, address, this);
         }
 
         private AtomicInteger getIdGenerator(Host host) {
             AtomicInteger g = idGenerators.get(host);
             if (g == null) {
-                g = new AtomicInteger(0);
+                g = new AtomicInteger(1);
                 AtomicInteger old = idGenerators.putIfAbsent(host, g);
                 if (old != null)
                     g = old;

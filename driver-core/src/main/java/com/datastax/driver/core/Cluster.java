@@ -294,11 +294,10 @@ public class Cluster {
         // TODO: make configurable
         final LoadBalancingPolicy.Factory loadBalancingFactory = RoundRobinPolicy.Factory.INSTANCE;
 
-        // TODO: give a name to the threads of this executor
-        final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(2);
+        final ScheduledExecutorService reconnectionExecutor = Executors.newScheduledThreadPool(2, new NamedThreadFactory("Reconnection"));
 
         // TODO: give a name to the threads of this executor
-        final ExecutorService executor = Executors.newCachedThreadPool();
+        final ExecutorService executor = Executors.newCachedThreadPool(new NamedThreadFactory("Cassandra Java Driver worker"));
 
         private Manager(List<InetSocketAddress> contactPoints) throws ConnectionException {
             this.metadata = new ClusterMetadata(this);
@@ -339,7 +338,7 @@ public class Cluster {
 
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug(String.format("%s is down, scheduling connection retries", host));
-            new AbstractReconnectionHandler(scheduledExecutor, reconnectionPolicyFactory.create(), host.reconnectionAttempt) {
+            new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicyFactory.create(), host.reconnectionAttempt) {
 
                 protected Connection tryReconnect() throws ConnectionException {
                     return connectionFactory.open(host);

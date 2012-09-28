@@ -43,7 +43,7 @@ class ControlConnection implements Host.StateListener {
             setNewConnection(reconnectInternal());
         } catch (ConnectionException e) {
             logger.error("[Control connection] Cannot connect to any host, scheduling retry");
-            new AbstractReconnectionHandler(cluster.scheduledExecutor, reconnectionPolicyFactory.create(), reconnectionAttempt) {
+            new AbstractReconnectionHandler(cluster.reconnectionExecutor, reconnectionPolicyFactory.create(), reconnectionAttempt) {
                 protected Connection tryReconnect() throws ConnectionException {
                     return reconnectInternal();
                 }
