@@ -287,6 +287,7 @@ public class Cluster {
 
         // TODO: Make that configurable
         final ConvictionPolicy.Factory convictionPolicyFactory = new SimpleConvictionPolicy.Factory();
+        final ReconnectionPolicy.Factory reconnectionPolicyFactory = ReconnectionPolicy.Exponential.makeFactory(2 * 1000, 5 * 60 * 1000);
         final Connection.Factory connectionFactory;
         private final ControlConnection controlConnection;
 
@@ -294,7 +295,7 @@ public class Cluster {
         final LoadBalancingPolicy.Factory loadBalancingFactory = RoundRobinPolicy.Factory.INSTANCE;
 
         // TODO: give a name to the threads of this executor
-        private final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(1);
+        final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(2);
 
         // TODO: give a name to the threads of this executor
         final ExecutorService executor = Executors.newCachedThreadPool();
@@ -319,24 +320,47 @@ public class Cluster {
 
         public void onUp(Host host) {
             logger.trace(String.format("Host %s is UP", host));
+
+            // If there is a reconnection attempt scheduled for that node, cancel it
+            ScheduledFuture scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
+            if (scheduledAttempt != null)
+                scheduledAttempt.cancel(false);
+
             controlConnection.onUp(host);
             for (Session s : sessions)
                 s.manager.onUp(host);
-
-            // TODO: We should register reconnection attempts, to avoid starting two of
-            // them and if this method is called by other means that the
-            // reconnection handler (like C* tells us it's up), cancel the latter
         }
 
-        public void onDown(Host host) {
+        public void onDown(final Host host) {
             logger.trace(String.format("Host %s is DOWN", host));
-            controlConnection.onUp(host);
+            controlConnection.onDown(host);
             for (Session s : sessions)
                 s.manager.onDown(host);
 
-            // Note: we'll basically waste the first successful reconnection that way, but it's probably not a big deal
+            // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug(String.format("%s is down, scheduling connection retries", host));
-            new ReconnectionHandler(host, scheduledExecutor, connectionFactory).start();
+            new AbstractReconnectionHandler(scheduledExecutor, reconnectionPolicyFactory.create(), host.reconnectionAttempt) {
+
+                protected Connection tryReconnect() throws ConnectionException {
+                    return connectionFactory.open(host);
+                }
+
+                protected void onReconnection(Connection connection) {
+                    logger.debug(String.format("Successful reconnection to %s, setting host UP", host));
+                    host.monitor().reset();
+                }
+
+                protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
+                    logger.debug(String.format("Failed reconnection to %s (%s), scheduling retry in %d milliseconds", host, e.getMessage(), nextDelayMs));
+                    return true;
+                }
+
+                protected boolean onUnknownException(Exception e, long nextDelayMs) {
+                    logger.error(String.format("Unknown error during control connection reconnection, scheduling retry in %d milliseconds", nextDelayMs), e);
+                    return true;
+                }
+
+            }.start();
         }
 
         public void onAdd(Host host) {

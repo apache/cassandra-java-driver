@@ -11,6 +11,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
+import com.datastax.driver.core.exceptions.*;
+
 public class SessionTest {
 
     // I really think we should make sure the library doesn't complain about
@@ -136,12 +138,12 @@ public class SessionTest {
         try {
             session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 2 }");
             // We should deal with that sleep
-            try { Thread.sleep(1000); } catch (Exception e) {}
-            session.use("test_ks");
+            try { Thread.sleep(2000); } catch (Exception e) {}
+            session.execute("USE test_ks");
             session.execute("CREATE TABLE test (k text PRIMARY KEY, i int, f float)");
-        } catch (Exception e) {
+        } catch (AlreadyExistsException e) {
             // Skip if already exists
-            session.use("test_ks");
+            session.execute("USE test_ks");
         }
 
         //System.out.println("--- Schema ---\n" + cluster.getMetadata());

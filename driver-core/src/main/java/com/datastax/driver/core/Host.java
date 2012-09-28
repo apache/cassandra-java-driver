@@ -2,7 +2,9 @@ package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ScheduledFuture;
 
 import com.datastax.driver.core.transport.ConnectionException;
 
@@ -15,6 +17,9 @@ public class Host {
 
     private final InetSocketAddress address;
     private final HealthMonitor monitor;
+
+    // Tracks reconnection attempts to that host so we avoid adding multiple tasks
+    final AtomicReference<ScheduledFuture> reconnectionAttempt = new AtomicReference<ScheduledFuture>();
 
     // ClusterMetadata keeps one Host object per inet address, so don't use
     // that constructor unless you know what you do (use ClusterMetadata.getHost typically).
