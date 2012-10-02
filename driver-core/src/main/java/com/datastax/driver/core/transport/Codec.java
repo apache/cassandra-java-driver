@@ -35,11 +35,11 @@ public class Codec {
 
     private Codec() {}
 
-    public static AbstractType<?> getCodec(DataType type) {
+    public static <T> AbstractType<T> getCodec(DataType type) {
         switch (type.kind()) {
-            case NATIVE:     return nativeCodec(type.asNative());
-            case COLLECTION: return collectionCodec(type.asCollection());
-            case CUSTOM:     return customCodec(type.asCustom());
+            case NATIVE:     return (AbstractType<T>)nativeCodec(type.asNative());
+            case COLLECTION: return (AbstractType<T>)collectionCodec(type.asCollection());
+            case CUSTOM:     return (AbstractType<T>)customCodec(type.asCustom());
             default:         throw new RuntimeException("Unknow data type kind");
         }
     }

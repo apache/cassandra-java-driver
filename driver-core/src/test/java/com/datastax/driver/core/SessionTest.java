@@ -100,58 +100,76 @@ public class SessionTest {
     //    assertEquals(0.2,   r.getFloat("f"), 0.01);
     //}
 
-    //@Test
-    //public void CollectionsTest() throws Exception {
-
-    //    Cluster cluster = new Cluster.Builder().addContactPoints("127.0.0.1").build();
-    //    Session session = cluster.connect();
-
-    //    try {
-    //        session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
-    //        // We should deal with that sleep
-    //        try { Thread.sleep(1000); } catch (Exception e) {}
-    //        session.use("test_ks");
-    //        session.execute("CREATE TABLE test (k text PRIMARY KEY, l list<int>, s set<text>, m map<int, int>)");
-    //    } catch (Exception e) {
-    //        // Skip if already created
-    //        session.use("test_ks");
-    //    }
-
-    //    session.execute("INSERT INTO test (k, l, s, m) VALUES ('k', [3, 2, 1], { 3, 2, 1}, { 0 : 0, 1 : 1 })");
-    //    for (CQLRow row : session.execute("SELECT * FROM test")) {
-    //        List<Integer> l = (List<Integer>)row.getList("l");
-    //        Set<String> s = (Set<String>)row.getSet("s");
-    //        Map<Integer, Integer> m = (Map<Integer, Integer>)row.getMap("m");
-
-    //        System.out.println("l = " + l);
-    //        System.out.println("s = " + s);
-    //        System.out.println("m = " + m);
-    //    }
-    //}
-
     @Test
-    public void MultiNodeContinuousExecuteTest() throws Exception {
+    public void CollectionsTest() throws Exception {
 
         Cluster cluster = new Cluster.Builder().addContactPoints("127.0.0.1").build();
         Session session = cluster.connect();
 
         try {
-            session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 2 }");
+            session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
             // We should deal with that sleep
-            try { Thread.sleep(2000); } catch (Exception e) {}
+            try { Thread.sleep(1000); } catch (Exception e) {}
             session.execute("USE test_ks");
-            session.execute("CREATE TABLE test (k text PRIMARY KEY, i int, f float)");
-        } catch (AlreadyExistsException e) {
-            // Skip if already exists
+            session.execute("CREATE TABLE test (k text PRIMARY KEY, l list<int>, s set<text>, m map<int, int>)");
+        } catch (Exception e) {
+            // Skip if already created
             session.execute("USE test_ks");
         }
 
-        //System.out.println("--- Schema ---\n" + cluster.getMetadata());
+        session.execute("INSERT INTO test (k, l, s, m) VALUES ('k', [3, 2, 1], { 3, 2, 1}, { 0 : 0, 1 : 1 })");
+        for (CQLRow row : session.execute("SELECT * FROM test")) {
+            List<Integer> l = (List<Integer>)row.getList("l");
+            Set<String> s = (Set<String>)row.getSet("s");
+            Map<Integer, Integer> m = (Map<Integer, Integer>)row.getMap("m");
 
-        for (int i = 0; i < 10000; ++i) {
-            System.out.println(">> " + i);
-            session.execute(String.format("INSERT INTO test (k, i, f) VALUES ('k%d', %d, %d.2)", i, i, i));
-            Thread.currentThread().sleep(1000);
+            System.out.println("l = " + l);
+            System.out.println("s = " + s);
+            System.out.println("m = " + m);
+        }
+
+        System.out.println("-------");
+
+        BoundStatement stmt = session.prepare("INSERT INTO test (k, l, s, m) VALUES ('k2', ?, ?, ?)").newBoundStatement();
+        stmt.setList(0, Arrays.asList(new Integer[]{ 5, 4, 3, 2, 1 }));
+        stmt.setSet(1, new HashSet(Arrays.asList(new String[]{ "5", "4", "3", "2", "1" })));
+        stmt.setMap(2, new HashMap(){{ put(3, 4); put(1, 42); }});
+        session.executePrepared(stmt);
+
+        for (CQLRow row : session.execute("SELECT * FROM test WHERE k = 'k2'")) {
+            List<Integer> l = (List<Integer>)row.getList("l");
+            Set<String> s = (Set<String>)row.getSet("s");
+            Map<Integer, Integer> m = (Map<Integer, Integer>)row.getMap("m");
+
+            System.out.println("l = " + l);
+            System.out.println("s = " + s);
+            System.out.println("m = " + m);
         }
     }
+
+    //@Test
+    //public void MultiNodeContinuousExecuteTest() throws Exception {
+
+    //    Cluster cluster = new Cluster.Builder().addContactPoints("127.0.0.1").build();
+    //    Session session = cluster.connect();
+
+    //    try {
+    //        session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 2 }");
+    //        // We should deal with that sleep
+    //        try { Thread.sleep(2000); } catch (Exception e) {}
+    //        session.execute("USE test_ks");
+    //        session.execute("CREATE TABLE test (k text PRIMARY KEY, i int, f float)");
+    //    } catch (AlreadyExistsException e) {
+    //        // Skip if already exists
+    //        session.execute("USE test_ks");
+    //    }
+
+    //    //System.out.println("--- Schema ---\n" + cluster.getMetadata());
+
+    //    for (int i = 0; i < 10000; ++i) {
+    //        System.out.println(">> " + i);
+    //        session.execute(String.format("INSERT INTO test (k, i, f) VALUES ('k%d', %d, %d.2)", i, i, i));
+    //        Thread.currentThread().sleep(1000);
+    //    }
+    //}
 }

@@ -295,6 +295,7 @@ public class Cluster {
         final LoadBalancingPolicy.Factory loadBalancingFactory = RoundRobinPolicy.Factory.INSTANCE;
 
         final ScheduledExecutorService reconnectionExecutor = Executors.newScheduledThreadPool(2, new NamedThreadFactory("Reconnection"));
+        final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("Scheduled Tasks"));
 
         // TODO: give a name to the threads of this executor
         final ExecutorService executor = Executors.newCachedThreadPool(new NamedThreadFactory("Cassandra Java Driver worker"));
@@ -400,10 +401,12 @@ public class Cluster {
 
             final Event event = ((EventMessage)response).event;
 
-            // When handle is called, the current thread is a network I/O
-            // thread, and we don't want to block it (typically addHost() will
-            // create the connection pool to the new node, which can take time)
-            executor.execute(new Runnable() {
+            // When handle is called, the current thread is a network I/O  thread, and we don't want to block
+            // it (typically addHost() will create the connection pool to the new node, which can take time)
+            // Besides, events are usually sent a bit too early (since they're
+            // triggered once gossip is up, but that before the client-side
+            // server is up) so adds a second delay.
+            scheduledTasksExecutor.schedule(new Runnable() {
                 public void run() {
                     switch (event.type) {
                         case TOPOLOGY_CHANGE:
@@ -438,7 +441,7 @@ public class Cluster {
                             break;
                     }
                 }
-            });
+            }, 1, TimeUnit.SECONDS);
         }
     }
 }

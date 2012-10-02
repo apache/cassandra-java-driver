@@ -3,8 +3,9 @@ package com.datastax.driver.core;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
+
+import com.datastax.driver.core.transport.Codec;
 
 import org.apache.cassandra.db.marshal.*;
 
@@ -239,6 +240,45 @@ public class BoundStatement {
 
     public BoundStatement setUUID(String name, UUID v) {
         return setUUID(metadata().getIdx(name), v);
+    }
+
+    public <T> BoundStatement setList(int i, List<T> v) {
+        DataType type = metadata().type(i);
+        if (type.kind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.LIST)
+            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a list", metadata().name(i), type));
+
+        // TODO: I should validate that it's the right parameter type
+        return setValue(i, Codec.<List<T>>getCodec(type).decompose(v));
+    }
+
+    public BoundStatement setList(String name, List<?> v) {
+        return setList(metadata().getIdx(name), v);
+    }
+
+    public <K, V> BoundStatement setMap(int i, Map<K, V> v) {
+        DataType type = metadata().type(i);
+        if (type.kind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.MAP)
+            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a map", metadata().name(i), type));
+
+        // TODO: I should validate that it's the right parameter type
+        return setValue(i, Codec.<Map<K, V>>getCodec(type).decompose(v));
+    }
+
+    public BoundStatement setMap(String name, Map<?, ?> v) {
+        return setMap(metadata().getIdx(name), v);
+    }
+
+    public <T> BoundStatement setSet(int i, Set<T> v) {
+        DataType type = metadata().type(i);
+        if (type.kind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.SET)
+            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a set", metadata().name(i), type));
+
+        // TODO: I should validate that it's the right parameter type
+        return setValue(i, Codec.<Set<T>>getCodec(type).decompose(v));
+    }
+
+    public BoundStatement setSet(String name, Set<?> v) {
+        return setSet(metadata().getIdx(name), v);
     }
 
     private Columns metadata() {
