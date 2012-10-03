@@ -118,7 +118,6 @@ public class ResultSet implements Iterable<CQLRow> {
      * this ResultSet.
      */
     public Iterator<CQLRow> iterator() {
-
         return new Iterator<CQLRow>() {
 
             public boolean hasNext() {

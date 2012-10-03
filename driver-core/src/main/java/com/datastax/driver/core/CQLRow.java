@@ -184,7 +184,7 @@ public class CQLRow {
      * value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
-     * @throws InvalidTypeException if columns {@code i} is not of type TIMESTAMP.
+     * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
      */
     public Date getDate(int i) {
         metadata.checkType(i, DataType.Native.TIMESTAMP);
@@ -205,7 +205,7 @@ public class CQLRow {
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if columns {@code name} is not of type TIMESTAMP.
+     * @throws InvalidTypeException if column {@code name} is not of type TIMESTAMP.
      */
     public Date getDate(String name) {
         return getDate(metadata.getIdx(name));
@@ -219,7 +219,7 @@ public class CQLRow {
      * value is NULL, {@code 0.0f} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
-     * @throws InvalidTypeException if columns {@code i} is not of type FLOAT.
+     * @throws InvalidTypeException if column {@code i} is not of type FLOAT.
      */
     public float getFloat(int i) {
         metadata.checkType(i, DataType.Native.FLOAT);
@@ -240,7 +240,7 @@ public class CQLRow {
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if columns {@code name} is not of type FLOAT.
+     * @throws InvalidTypeException if column {@code name} is not of type FLOAT.
      */
     public float getFloat(String name) {
         return getFloat(metadata.getIdx(name));
@@ -254,7 +254,7 @@ public class CQLRow {
      * value is NULL, {@code 0.0} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
-     * @throws InvalidTypeException if columns {@code i} is not of type
+     * @throws InvalidTypeException if column {@code i} is not of type
      * DOUBLE or FLOAT.
      */
     public double getDouble(int i) {
@@ -279,7 +279,7 @@ public class CQLRow {
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if columns {@code name} is not of type
+     * @throws InvalidTypeException if column {@code name} is not of type
      * DOUBLE or FLOAT.
      */
     public double getDouble(String name) {
@@ -377,7 +377,7 @@ public class CQLRow {
      * value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
-     * @throws InvalidTypeException if columns {@code i} type is none of:
+     * @throws InvalidTypeException if column {@code i} type is none of:
      * VARCHAR, TEXT or ASCII.
      */
     public String getString(int i) {
@@ -403,7 +403,7 @@ public class CQLRow {
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if columns {@code name} type is none of:
+     * @throws InvalidTypeException if column {@code name} type is none of:
      * VARCHAR, TEXT or ASCII.
      */
     public String getString(String name) {
@@ -418,7 +418,7 @@ public class CQLRow {
      * length integer. If the value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
-     * @throws InvalidTypeException if columns {@code i} is not of type VARINT.
+     * @throws InvalidTypeException if column {@code i} is not of type VARINT.
      */
     public BigInteger getVarInt(int i) {
         metadata.checkType(i, DataType.Native.VARINT);
@@ -439,7 +439,7 @@ public class CQLRow {
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if columns {@code name} is not of type VARINT.
+     * @throws InvalidTypeException if column {@code name} is not of type VARINT.
      */
     public BigInteger getVarInt(String name) {
         return getVarInt(metadata.getIdx(name));
@@ -453,7 +453,7 @@ public class CQLRow {
      * length decimal. If the value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
-     * @throws InvalidTypeException if columns {@code i} is not of type DECIMAL.
+     * @throws InvalidTypeException if column {@code i} is not of type DECIMAL.
      */
     public BigDecimal getDecimal(int i) {
         metadata.checkType(i, DataType.Native.DECIMAL);
@@ -474,7 +474,7 @@ public class CQLRow {
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if columns {@code name} is not of type DECIMAL.
+     * @throws InvalidTypeException if column {@code name} is not of type DECIMAL.
      */
     public BigDecimal getDecimal(String name) {
         return getDecimal(metadata.getIdx(name));
@@ -488,7 +488,7 @@ public class CQLRow {
      * If the value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
-     * @throws InvalidTypeException if columns {@code i} is not of type UUID
+     * @throws InvalidTypeException if column {@code i} is not of type UUID
      * or TIMEUUID.
      */
     public UUID getUUID(int i) {
@@ -512,61 +512,170 @@ public class CQLRow {
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if columns {@code name} is not of type
+     * @throws InvalidTypeException if column {@code name} is not of type
      * UUID or TIMEUUID.
      */
     public UUID getUUID(String name) {
         return getUUID(metadata.getIdx(name));
     }
 
-    // TODO: I don't have a good idea on how to make that typesafe in a way that is not ugly
-    public List<?> getList(int i) {
+    /**
+     * Returns the {@code i}th value of this row has a list.
+     *
+     * @param i the index of the column to retrieve.
+     * @param elementsClass the class for the elements of the list to retrieve.
+     * @return the value of the {@code i}th column in this row as a list of
+     * {@code elementsClass} objects. If the value is NULL, an empty list is
+     * returned (note that Cassandra makes no difference between an empty list
+     * and column of type list that is not set).
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws InvalidTypeException if column {@code i} is not a list or if its
+     * elements are not of class {@code elementsClass}.
+     */
+    public <T> List<T> getList(int i, Class<T> elementsClass) {
+        // TODO: this is not as flexible as the methods above. For instance,
+        // with a list<int>, one cannot ask for getList(i, Long.class). We
+        // might want to improve that, though that reach into the
+        // ListType.compose() method.
+
         DataType type = metadata.type(i);
         if (!(type instanceof DataType.Collection.List))
             throw new InvalidTypeException(String.format("Column %s is not of list type", metadata.name(i)));
 
+        DataType.Native eltType = (DataType.Native)((DataType.Collection.List)type).getElementsType();
+        if (!Codec.isCompatible(eltType, elementsClass))
+            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a list of %s", metadata.name(i), type, elementsClass));
+
         ByteBuffer value = data.get(i);
         if (value == null)
-            return null;
+            return Collections.<T>emptyList();
 
         // TODO: we could avoid the getCodec call if we kept a reference to the original message.
-        return (List<?>)Codec.getCodec(type).compose(value);
+        return (List<T>)Codec.getCodec(type).compose(value);
     }
 
-    public List<?> getList(String name) {
-        return getList(metadata.getIdx(name));
+    /**
+     * Returns the value of column {@code name} has a list.
+     *
+     * @param name the name of the column to retrieve.
+     * @param elementsClass the class for the elements of the list to retrieve.
+     * @return the value of the {@code i}th column in this row as a list of
+     * {@code elementsClass} objects. If the value is NULL, an empty list is
+     * returned (note that Cassandra makes no difference between an empty list
+     * and column of type list that is not set).
+     *
+     * @throws IllegalArgumentException if {@code name} is not part of the
+     * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
+     * @throws InvalidTypeException if column {@code i} is not a list or if its
+     * elements are not of class {@code elementsClass}.
+     */
+    public <T> List<T> getList(String name, Class<T> elementsClass) {
+        return getList(metadata.getIdx(name), elementsClass);
     }
 
-    public Set<?> getSet(int i) {
+    /**
+     * Returns the {@code i}th value of this row has a set.
+     *
+     * @param i the index of the column to retrieve.
+     * @param elementsClass the class for the elements of the set to retrieve.
+     * @return the value of the {@code i}th column in this row as a set of
+     * {@code elementsClass} objects. If the value is NULL, an empty set is
+     * returned (note that Cassandra makes no difference between an empty set
+     * and column of type set that is not set).
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws InvalidTypeException if column {@code i} is not a set or if its
+     * elements are not of class {@code elementsClass}.
+     */
+    public <T> Set<T> getSet(int i, Class<T> elementsClass) {
         DataType type = metadata.type(i);
         if (!(type instanceof DataType.Collection.Set))
             throw new InvalidTypeException(String.format("Column %s is not of set type", metadata.name(i)));
 
+        DataType.Native eltType = (DataType.Native)((DataType.Collection.Set)type).getElementsType();
+        if (!Codec.isCompatible(eltType, elementsClass))
+            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a set of %s", metadata.name(i), type, elementsClass));
+
         ByteBuffer value = data.get(i);
         if (value == null)
-            return null;
+            return Collections.<T>emptySet();
 
-        return (Set<?>)Codec.getCodec(type).compose(value);
+        return (Set<T>)Codec.getCodec(type).compose(value);
     }
 
-    public Set<?> getSet(String name) {
-        return getSet(metadata.getIdx(name));
+    /**
+     * Returns the value of column {@code name} has a set.
+     *
+     * @param name the name of the column to retrieve.
+     * @param elementsClass the class for the elements of the set to retrieve.
+     * @return the value of the {@code i}th column in this row as a set of
+     * {@code elementsClass} objects. If the value is NULL, an empty set is
+     * returned (note that Cassandra makes no difference between an empty set
+     * and column of type set that is not set).
+     *
+     * @throws IllegalArgumentException if {@code name} is not part of the
+     * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
+     * @throws InvalidTypeException if column {@code i} is not a set or if its
+     * elements are not of class {@code elementsClass}.
+     */
+    public <T> Set<T> getSet(String name, Class<T> elementsClass) {
+        return getSet(metadata.getIdx(name), elementsClass);
     }
 
-    public Map<?, ?> getMap(int i) {
+    /**
+     * Returns the {@code i}th value of this row has a map.
+     *
+     * @param i the index of the column to retrieve.
+     * @param keysClass the class for the keys of the map to retrieve.
+     * @param valuesClass the class for the values of the map to retrieve.
+     * @return the value of the {@code i}th column in this row as a map of
+     * {@code keysClass} to {@code valuesClass} objects. If the value is NULL,
+     * an empty map is returned (note that Cassandra makes no difference
+     * between an empty map and column of type map that is not set).
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws InvalidTypeException if column {@code i} is not a map, if its
+     * keys are not of class {@code keysClass} or if its values are not of
+     * class {@code valuesClass}.
+     */
+    public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass) {
         DataType type = metadata.type(i);
         if (!(type instanceof DataType.Collection.Map))
             throw new InvalidTypeException(String.format("Column %s is not of map type", metadata.name(i)));
 
+        DataType.Collection.Map mapType = (DataType.Collection.Map)type;
+        DataType.Native keysType = (DataType.Native)mapType.getKeysType();
+        DataType.Native valuesType = (DataType.Native)mapType.getValuesType();
+        if (!Codec.isCompatible(keysType, keysClass) || !Codec.isCompatible(valuesType, valuesClass))
+            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a map of %s -> %s", metadata.name(i), type, keysType, valuesType));
+
         ByteBuffer value = data.get(i);
         if (value == null)
-            return null;
+            return Collections.<K, V>emptyMap();
 
-        return (Map<?, ?>)Codec.getCodec(type).compose(value);
+        return (Map<K, V>)Codec.getCodec(type).compose(value);
     }
 
-    public Map<?, ?> getMap(String name) {
-        return getMap(metadata.getIdx(name));
+    /**
+     * Returns the value of column {@code name} has a map.
+     *
+     * @param name the name of the column to retrieve.
+     * @param keysClass the class for the keys of the map to retrieve.
+     * @param valuesClass the class for the values of the map to retrieve.
+     * @return the value of the {@code i}th column in this row as a map of
+     * {@code keysClass} to {@code valuesClass} objects. If the value is NULL,
+     * an empty map is returned (note that Cassandra makes no difference
+     * between an empty map and column of type map that is not set).
+     *
+     * @throws IllegalArgumentException if {@code name} is not part of the
+     * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
+     * @throws InvalidTypeException if column {@code i} is not a map, if its
+     * keys are not of class {@code keysClass} or if its values are not of
+     * class {@code valuesClass}.
+     */
+    public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass) {
+        return getMap(metadata.getIdx(name), keysClass, valuesClass);
     }
 
     @Override

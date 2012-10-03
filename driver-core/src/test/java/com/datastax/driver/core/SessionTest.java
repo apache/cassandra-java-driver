@@ -119,9 +119,9 @@ public class SessionTest {
 
         session.execute("INSERT INTO test (k, l, s, m) VALUES ('k', [3, 2, 1], { 3, 2, 1}, { 0 : 0, 1 : 1 })");
         for (CQLRow row : session.execute("SELECT * FROM test")) {
-            List<Integer> l = (List<Integer>)row.getList("l");
-            Set<String> s = (Set<String>)row.getSet("s");
-            Map<Integer, Integer> m = (Map<Integer, Integer>)row.getMap("m");
+            List<Integer> l = row.getList("l", Integer.class);
+            Set<String> s = row.getSet("s", String.class);
+            Map<Integer, Integer> m = row.getMap("m", Integer.class, Integer.class);
 
             System.out.println("l = " + l);
             System.out.println("s = " + s);
@@ -137,9 +137,9 @@ public class SessionTest {
         session.executePrepared(stmt);
 
         for (CQLRow row : session.execute("SELECT * FROM test WHERE k = 'k2'")) {
-            List<Integer> l = (List<Integer>)row.getList("l");
-            Set<String> s = (Set<String>)row.getSet("s");
-            Map<Integer, Integer> m = (Map<Integer, Integer>)row.getMap("m");
+            List<Integer> l = row.getList("l", Integer.class);
+            Set<String> s = row.getSet("s", String.class);
+            Map<Integer, Integer> m = row.getMap("m", Integer.class, Integer.class);
 
             System.out.println("l = " + l);
             System.out.println("s = " + s);

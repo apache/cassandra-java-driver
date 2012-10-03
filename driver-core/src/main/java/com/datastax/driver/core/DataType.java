@@ -88,6 +88,11 @@ public interface DataType {
         public Native asNative()         { return this; }
         public Collection asCollection() { throw new IllegalStateException("Not a collection type, but a native one"); }
         public Custom asCustom()         { throw new IllegalStateException("Not a custom type, but a native one"); }
+
+        @Override
+        public String toString() {
+            return super.toString().toLowerCase();
+        }
     }
 
     /**
@@ -123,6 +128,11 @@ public interface DataType {
             public DataType getElementsType() {
                 return elementsType;
             }
+
+            @Override
+            public String toString() {
+                return "list<" + elementsType + ">";
+            }
         }
 
         public static class Set extends Collection {
@@ -135,6 +145,11 @@ public interface DataType {
 
             public DataType getElementsType() {
                 return elementsType;
+            }
+
+            @Override
+            public String toString() {
+                return "list<" + elementsType + ">";
             }
         }
 
@@ -154,6 +169,11 @@ public interface DataType {
 
             public DataType getValuesType() {
                 return keysType;
+            }
+
+            @Override
+            public String toString() {
+                return "map<" + keysType + ", " + valuesType + ">";
             }
         }
     }

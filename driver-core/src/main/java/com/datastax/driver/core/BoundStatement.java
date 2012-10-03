@@ -247,11 +247,20 @@ public class BoundStatement {
         if (type.kind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.LIST)
             throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a list", metadata().name(i), type));
 
-        // TODO: I should validate that it's the right parameter type
+        // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
+        if (!v.isEmpty()) {
+            // Ugly? Yes
+            Class klass = v.get(0).getClass();
+
+            DataType.Native eltType = (DataType.Native)((DataType.Collection.List)type).getElementsType();
+            if (!Codec.isCompatible(eltType, klass))
+                throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a list of %s", metadata().name(i), type, klass));
+        }
+
         return setValue(i, Codec.<List<T>>getCodec(type).decompose(v));
     }
 
-    public BoundStatement setList(String name, List<?> v) {
+    public <T> BoundStatement setList(String name, List<T> v) {
         return setList(metadata().getIdx(name), v);
     }
 
@@ -260,11 +269,23 @@ public class BoundStatement {
         if (type.kind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.MAP)
             throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a map", metadata().name(i), type));
 
-        // TODO: I should validate that it's the right parameter type
+        if (!v.isEmpty()) {
+            // Ugly? Yes
+            Map.Entry<K, V> entry = v.entrySet().iterator().next();
+            Class keysClass = entry.getKey().getClass();
+            Class valuesClass = entry.getValue().getClass();
+
+            DataType.Collection.Map mapType = (DataType.Collection.Map)type;
+            DataType.Native keysType = (DataType.Native)mapType.getKeysType();
+            DataType.Native valuesType = (DataType.Native)mapType.getValuesType();
+            if (!Codec.isCompatible(keysType, keysClass) || !Codec.isCompatible(valuesType, valuesClass))
+                throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a map of %s -> %s", metadata().name(i), type, keysType, valuesType));
+        }
+
         return setValue(i, Codec.<Map<K, V>>getCodec(type).decompose(v));
     }
 
-    public BoundStatement setMap(String name, Map<?, ?> v) {
+    public <K, V> BoundStatement setMap(String name, Map<K, V> v) {
         return setMap(metadata().getIdx(name), v);
     }
 
@@ -273,11 +294,19 @@ public class BoundStatement {
         if (type.kind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.SET)
             throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a set", metadata().name(i), type));
 
-        // TODO: I should validate that it's the right parameter type
+        if (!v.isEmpty()) {
+            // Ugly? Yes
+            Class klass = v.iterator().next().getClass();
+
+            DataType.Native eltType = (DataType.Native)((DataType.Collection.Set)type).getElementsType();
+            if (!Codec.isCompatible(eltType, klass))
+                throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a set of %s", metadata().name(i), type, klass));
+        }
+
         return setValue(i, Codec.<Set<T>>getCodec(type).decompose(v));
     }
 
-    public BoundStatement setSet(String name, Set<?> v) {
+    public <T> BoundStatement setSet(String name, Set<T> v) {
         return setSet(metadata().getIdx(name), v);
     }
 

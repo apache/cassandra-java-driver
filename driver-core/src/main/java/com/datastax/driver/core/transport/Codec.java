@@ -1,7 +1,10 @@
 package com.datastax.driver.core.transport;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 import com.datastax.driver.core.DataType;
 
@@ -13,25 +16,24 @@ import org.apache.cassandra.db.marshal.*;
  */
 public class Codec {
 
-    private static Map<AbstractType<?>, DataType.Native> rawNativeMap = new HashMap<AbstractType<?>, DataType.Native>();
-    static {
-        rawNativeMap.put(AsciiType.instance,         DataType.Native.ASCII);
-        rawNativeMap.put(LongType.instance,          DataType.Native.BIGINT);
-        rawNativeMap.put(BytesType.instance,         DataType.Native.BLOB);
-        rawNativeMap.put(BooleanType.instance,       DataType.Native.BOOLEAN);
-        rawNativeMap.put(CounterColumnType.instance, DataType.Native.COUNTER);
-        rawNativeMap.put(DecimalType.instance,       DataType.Native.DECIMAL);
-        rawNativeMap.put(DoubleType.instance,        DataType.Native.DOUBLE);
-        rawNativeMap.put(FloatType.instance,         DataType.Native.FLOAT);
-        rawNativeMap.put(InetAddressType.instance,   DataType.Native.INET);
-        rawNativeMap.put(Int32Type.instance,         DataType.Native.INT);
-        rawNativeMap.put(UTF8Type.instance,          DataType.Native.TEXT);
-        rawNativeMap.put(DateType.instance,          DataType.Native.TIMESTAMP);
-        rawNativeMap.put(UUIDType.instance,          DataType.Native.UUID);
-        rawNativeMap.put(UTF8Type.instance,          DataType.Native.VARCHAR);
-        rawNativeMap.put(IntegerType.instance,       DataType.Native.VARINT);
-        rawNativeMap.put(TimeUUIDType.instance,      DataType.Native.TIMEUUID);
-    }
+    private static Map<AbstractType<?>, DataType.Native> rawNativeMap = new HashMap<AbstractType<?>, DataType.Native>() {{
+        put(AsciiType.instance,         DataType.Native.ASCII);
+        put(LongType.instance,          DataType.Native.BIGINT);
+        put(BytesType.instance,         DataType.Native.BLOB);
+        put(BooleanType.instance,       DataType.Native.BOOLEAN);
+        put(CounterColumnType.instance, DataType.Native.COUNTER);
+        put(DecimalType.instance,       DataType.Native.DECIMAL);
+        put(DoubleType.instance,        DataType.Native.DOUBLE);
+        put(FloatType.instance,         DataType.Native.FLOAT);
+        put(InetAddressType.instance,   DataType.Native.INET);
+        put(Int32Type.instance,         DataType.Native.INT);
+        put(UTF8Type.instance,          DataType.Native.TEXT);
+        put(DateType.instance,          DataType.Native.TIMESTAMP);
+        put(UUIDType.instance,          DataType.Native.UUID);
+        put(UTF8Type.instance,          DataType.Native.VARCHAR);
+        put(IntegerType.instance,       DataType.Native.VARINT);
+        put(TimeUUIDType.instance,      DataType.Native.TIMEUUID);
+    }};
 
     private Codec() {}
 
@@ -115,5 +117,27 @@ public class Codec {
 
         // TODO: handle custom
         return null;
+    }
+
+    public static boolean isCompatible(DataType.Native type, Class klass) {
+        switch (type) {
+            case ASCII:     return klass.isAssignableFrom(String.class);
+            case BIGINT:    return klass.isAssignableFrom(Long.class);
+            case BLOB:      return klass.isAssignableFrom(ByteBuffer.class);
+            case BOOLEAN:   return klass.isAssignableFrom(Boolean.class);
+            case COUNTER:   return klass.isAssignableFrom(Long.class);
+            case DECIMAL:   return klass.isAssignableFrom(BigDecimal.class);
+            case DOUBLE:    return klass.isAssignableFrom(Double.class);
+            case FLOAT:     return klass.isAssignableFrom(Float.class);
+            case INET:      return klass.isAssignableFrom(InetAddress.class);
+            case INT:       return klass.isAssignableFrom(Integer.class);
+            case TEXT:      return klass.isAssignableFrom(String.class);
+            case TIMESTAMP: return klass.isAssignableFrom(Date.class);
+            case UUID:      return klass.isAssignableFrom(UUID.class);
+            case VARCHAR:   return klass.isAssignableFrom(String.class);
+            case VARINT:    return klass.isAssignableFrom(BigInteger.class);
+            case TIMEUUID:  return klass.isAssignableFrom(UUID.class);
+            default:        throw new RuntimeException("Unknown native type");
+        }
     }
 }
