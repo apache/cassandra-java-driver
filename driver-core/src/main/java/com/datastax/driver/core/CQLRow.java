@@ -648,7 +648,7 @@ public class CQLRow {
         DataType.Native keysType = (DataType.Native)mapType.getKeysType();
         DataType.Native valuesType = (DataType.Native)mapType.getValuesType();
         if (!Codec.isCompatible(keysType, keysClass) || !Codec.isCompatible(valuesType, valuesClass))
-            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a map of %s -> %s", metadata.name(i), type, keysType, valuesType));
+            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a map of %s -> %s", metadata.name(i), type, keysClass, valuesClass));
 
         ByteBuffer value = data.get(i);
         if (value == null)

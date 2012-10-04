@@ -168,7 +168,7 @@ public interface DataType {
             }
 
             public DataType getValuesType() {
-                return keysType;
+                return valuesType;
             }
 
             @Override

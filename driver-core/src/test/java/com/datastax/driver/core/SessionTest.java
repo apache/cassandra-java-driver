@@ -111,17 +111,17 @@ public class SessionTest {
             // We should deal with that sleep
             try { Thread.sleep(1000); } catch (Exception e) {}
             session.execute("USE test_ks");
-            session.execute("CREATE TABLE test (k text PRIMARY KEY, l list<int>, s set<text>, m map<int, int>)");
+            session.execute("CREATE TABLE test (k text PRIMARY KEY, l list<int>, s set<text>, m map<timestamp, int>)");
         } catch (Exception e) {
             // Skip if already created
             session.execute("USE test_ks");
         }
 
-        session.execute("INSERT INTO test (k, l, s, m) VALUES ('k', [3, 2, 1], { 3, 2, 1}, { 0 : 0, 1 : 1 })");
+        session.execute("INSERT INTO test (k, l, s, m) VALUES ('k', [3, 2, 1], { 3, 2, 1}, { 1349286846012 : 2 })");
         for (CQLRow row : session.execute("SELECT * FROM test")) {
             List<Integer> l = row.getList("l", Integer.class);
             Set<String> s = row.getSet("s", String.class);
-            Map<Integer, Integer> m = row.getMap("m", Integer.class, Integer.class);
+            Map<Date, Integer> m = row.getMap("m", Date.class, Integer.class);
 
             System.out.println("l = " + l);
             System.out.println("s = " + s);
@@ -133,13 +133,13 @@ public class SessionTest {
         BoundStatement stmt = session.prepare("INSERT INTO test (k, l, s, m) VALUES ('k2', ?, ?, ?)").newBoundStatement();
         stmt.setList(0, Arrays.asList(new Integer[]{ 5, 4, 3, 2, 1 }));
         stmt.setSet(1, new HashSet(Arrays.asList(new String[]{ "5", "4", "3", "2", "1" })));
-        stmt.setMap(2, new HashMap(){{ put(3, 4); put(1, 42); }});
+        stmt.setMap(2, new HashMap<Date, Integer>(){{ put(new Date(1349286846012L), 4); }});
         session.executePrepared(stmt);
 
         for (CQLRow row : session.execute("SELECT * FROM test WHERE k = 'k2'")) {
             List<Integer> l = row.getList("l", Integer.class);
             Set<String> s = row.getSet("s", String.class);
-            Map<Integer, Integer> m = row.getMap("m", Integer.class, Integer.class);
+            Map<Date, Integer> m = row.getMap("m", Date.class, Integer.class);
 
             System.out.println("l = " + l);
             System.out.println("s = " + s);

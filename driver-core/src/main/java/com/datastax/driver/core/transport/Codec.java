@@ -81,7 +81,7 @@ public class Codec {
             case MAP:
                 DataType.Collection.Map mt = (DataType.Collection.Map)type;
                 AbstractType<?> mapKeys = getCodec(mt.getKeysType());
-                AbstractType<?> mapValues = getCodec(mt.getKeysType());
+                AbstractType<?> mapValues = getCodec(mt.getValuesType());
                 return MapType.getInstance(mapKeys, mapValues);
             default:
                 throw new RuntimeException("Unknown collection type");
