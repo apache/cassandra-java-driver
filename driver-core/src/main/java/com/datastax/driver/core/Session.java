@@ -159,14 +159,11 @@ public class Session {
      * @param stmt the prepared statement with values for its bound variables.
      * @return the result of the query. That result will never be null be can
      * be empty and will be for any non SELECT query.
+     *
+     * @throws IllegalStateException if {@code !stmt.ready()}.
      */
-    public ResultSet executePrepared(BoundStatement stmt) {
-        // TODO: Deal with exceptions
-        try {
-            return executePreparedAsync(stmt).get();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public ResultSet executePrepared(BoundStatement stmt) throws NoHostAvailableException, QueryExecutionException {
+        return executePreparedAsync(stmt).getUninterruptibly();
     }
 
     /**
@@ -180,8 +177,13 @@ public class Session {
      * @param stmt the prepared statement with values for its bound variables.
      * @return the result of the query. That result will never be null be can
      * be empty and will be for any non SELECT query.
+     *
+     * @throws IllegalStateException if {@code !stmt.ready()}.
      */
     public ResultSet.Future executePreparedAsync(BoundStatement stmt) {
+        if (!stmt.ready())
+            throw new IllegalStateException("Some bind variables haven't been bound in the provided statement");
+
         return manager.executeQuery(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values)));
     }
 

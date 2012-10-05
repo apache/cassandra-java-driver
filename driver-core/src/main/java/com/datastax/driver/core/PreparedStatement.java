@@ -48,11 +48,29 @@ public class PreparedStatement {
         return metadata;
     }
 
+    /**
+     * Creates a new BoundStatement object and bind its variables to the
+     * provided values.
+     *
+     * This method is a shortcut for {@code this.newBoundStatement().bind(...)}.
+     *
+     * @param values the values to bind to the variables of the newly created
+     * BoundStatement.
+     * @return the newly created {@code BoundStatement} with its variables
+     * bound to {@code values}.
+     *
+     * @see {@link BoundStatement#bind}
+     */
     public BoundStatement bind(Object... values) {
         BoundStatement bs = new BoundStatement(this);
         return bs.bind(values);
     }
 
+    /**
+     * Creates a new {@code BoundStatement} from this prepared statement.
+     *
+     * @return the newly created {@code BoundStatement}.
+     */
     public BoundStatement newBoundStatement() {
         return new BoundStatement(this);
     }

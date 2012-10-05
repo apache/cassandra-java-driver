@@ -25,4 +25,20 @@ public class ReadTimeoutException extends QueryTimeoutException {
         else
             return String.format("timeout while waiting for repair of inconsistent replica");
     }
+
+    /**
+     * Whether the actual data was amongst the received replica responses.
+     *
+     * During reads, Cassandra doesn't request data from every replica to
+     * minimize internal network traffic. Instead, some replica are only asked
+     * for a checksum of the data. A read timeout may occured even if enough
+     * replica have responded to fulfill the consistency level if only checksum
+     * responses have been received. This method allow to detect that case.
+     *
+     * @return {@code true} if the data was amongst the received replica
+     * responses, {@code false} otherwise.
+     */
+    public boolean wasDataRetrieved() {
+        return dataPresent;
+    }
 }

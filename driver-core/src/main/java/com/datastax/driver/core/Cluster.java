@@ -98,7 +98,7 @@ public class Cluster {
      * Creates a new session on this cluster and sets a keyspace to use.
      *
      * @param keyspace The name of the keyspace to use for the created
-     * {@code Session}. This can be later changed using {@link Session#use}.
+     * {@code Session}.
      * @return a new session on this cluster sets to keyspace
      * {@code keyspaceName}.
      *

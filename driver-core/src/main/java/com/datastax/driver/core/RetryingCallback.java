@@ -1,6 +1,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +58,7 @@ class RetryingCallback implements Connection.ResponseCallback {
             if (query(host))
                 return;
         }
-        callback.onException(new NoHostAvailableException(errors));
+        callback.onException(new NoHostAvailableException(errors == null ? Collections.<InetSocketAddress, String>emptyMap() : errors));
     }
 
     private boolean query(Host host) {

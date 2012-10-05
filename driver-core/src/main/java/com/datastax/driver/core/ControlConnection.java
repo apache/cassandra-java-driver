@@ -146,6 +146,8 @@ class ControlConnection implements Host.StateListener {
                 knownHosts.add(host.getAddress());
 
             Set<InetSocketAddress> foundHosts = new HashSet<InetSocketAddress>();
+            // The node on which we're connected won't be in the peer table, so let's just add it manually
+            foundHosts.add(connection.address);
             for (CQLRow row : peersFuture.get()) {
                 if (!row.isNull("peer"))
                     // TODO: find what port people are using

@@ -5,6 +5,7 @@ package com.datastax.driver.core;
  * a TimeoutException or an UnavailableException.
  *
  * TODO: is that really useful to have such details if one cannot modify the request?
+ * TODO: Fix javadoc
  */
 public interface RetryPolicy {
 

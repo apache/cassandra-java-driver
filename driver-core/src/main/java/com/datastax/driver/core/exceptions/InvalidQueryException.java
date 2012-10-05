@@ -1,7 +1,7 @@
 package com.datastax.driver.core.exceptions;
 
 /**
- * Indicates a syntaxcally correct but invalid query.
+ * Indicates a syntactically correct but invalid query.
  */
 public class InvalidQueryException extends QueryValidationException {
 

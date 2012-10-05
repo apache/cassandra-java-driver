@@ -7,8 +7,8 @@ import java.util.Iterator;
  * The policy that decides which Cassandra hosts to contact for each new query.
  *
  * The main method to implement is {@link LoadBalancingPolicy#newQueryPlan} and
- * is used for each query to find which host to query, and which hosts use as
- * failover.
+ * is used for each query to find which host to query first, and which hosts to
+ * use as failover.
  *
  * The {@code LoadBalancingPolicy} is a {@link Host.StateListener} and is thus
  * informed of hosts up/down events. For efficiency purposes, the policy is

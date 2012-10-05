@@ -10,6 +10,8 @@ public interface ConvictionPolicy {
     /**
      * Called when a connection error occurs on a connection to the host this policy applies to.
      *
+     * @param exception the connection error that occurred.
+     *
      * @return {@code true} if the host should be considered down.
      */
     public boolean addFailure(ConnectionException exception);

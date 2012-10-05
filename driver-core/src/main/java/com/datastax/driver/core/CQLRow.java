@@ -604,7 +604,7 @@ public class CQLRow {
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code i} is not a list or if its
+     * @throws InvalidTypeException if column {@code name} is not a list or if its
      * elements are not of class {@code elementsClass}.
      */
     public <T> List<T> getList(String name, Class<T> elementsClass) {
@@ -653,7 +653,7 @@ public class CQLRow {
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code i} is not a set or if its
+     * @throws InvalidTypeException if column {@code name} is not a set or if its
      * elements are not of class {@code elementsClass}.
      */
     public <T> Set<T> getSet(String name, Class<T> elementsClass) {
@@ -707,7 +707,7 @@ public class CQLRow {
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code i} is not a map, if its
+     * @throws InvalidTypeException if column {@code name} is not a map, if its
      * keys are not of class {@code keysClass} or if its values are not of
      * class {@code valuesClass}.
      */

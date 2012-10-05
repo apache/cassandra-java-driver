@@ -19,14 +19,33 @@ public class UnavailableException extends QueryExecutionException {
         this.alive = alive;
     }
 
+    /**
+     * The consistency level of the operation triggering this unavailable exception.
+     *
+     * @return the consistency level of the operation triggering this unavailable exception.
+     */
     public ConsistencyLevel consistency() {
         return consistency;
     }
 
+    /**
+     * The number of replica acknowledgements/responses required to perform the
+     * operation (with its required consistency level).
+     *
+     * @return the number of replica acknowledgements/responses required to perform the
+     * operation.
+     */
     public int requiredReplicas() {
         return required;
     }
 
+    /**
+     * The number of replica that were known to be alive by the Cassandra
+     * coordinator node when it tried to execute the operation.
+     *
+     * @return The number of replica that were known to be alive by the Cassandra
+     * coordinator node when it tried to execute the operation.
+     */
     public int aliveReplicas() {
         return alive;
     }

@@ -66,14 +66,30 @@ public class Columns implements Iterable<Columns.Definition> {
         return Arrays.asList(byIdx);
     }
 
+    /**
+     * Returns the list of the names for the columns defined in these metadata.
+     *
+     * @return the list of the names for the columns defined in these metadata.
+     * The names in the returned list will be in the order of this metadata.
+     */
     public List<String> names() {
-        // TODO
-        return null;
+        List<String> names = new ArrayList<String>(byIdx.length);
+        for (Definition def : byIdx)
+            names.add(def.name);
+        return names;
     }
 
+    /**
+     * Returns the list of the types for the columns defined in these metadata.
+     *
+     * @return the list of the types for the columns defined in these metadata.
+     * The types in the returned list will be in the order of this metadata.
+     */
     public List<DataType> types() {
-        // TODO
-        return null;
+        List<DataType> types = new ArrayList<DataType>(byIdx.length);
+        for (Definition def : byIdx)
+            types.add(def.type);
+        return types;
     }
 
     /**
@@ -188,12 +204,15 @@ public class Columns implements Iterable<Columns.Definition> {
         throw new InvalidTypeException(String.format("Column %s is of type %s", name(i), defined));
     }
 
+    /**
+     * A column definition.
+     */
     public static class Definition {
 
-        public final String keyspace;
-        public final String table;
-        public final String name;
-        public final DataType type;
+        private final String keyspace;
+        private final String table;
+        private final String name;
+        private final DataType type;
 
         private Definition(String keyspace, String table, String name, DataType type) {
 
@@ -205,6 +224,42 @@ public class Columns implements Iterable<Columns.Definition> {
 
         static Definition fromTransportSpecification(ColumnSpecification spec) {
             return new Definition(spec.ksName, spec.cfName, spec.name.toString(), Codec.rawTypeToDataType(spec.type));
+        }
+
+        /**
+         * The name of the keyspace this column is part of.
+         *
+         * @return the name of the keyspace this column is part of.
+         */
+        public String getKeyspace() {
+            return keyspace;
+        }
+
+        /**
+         * The name of the table this column is part of.
+         *
+         * @return the name of the table this column is part of.
+         */
+        public String getTable() {
+            return table;
+        }
+
+        /**
+         * The name of the column.
+         *
+         * @return the name of the column.
+         */
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * The type of the column.
+         *
+         * @return the type of the column.
+         */
+        public DataType getType() {
+            return type;
         }
     }
 }

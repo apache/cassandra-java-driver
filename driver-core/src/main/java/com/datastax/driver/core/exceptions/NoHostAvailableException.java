@@ -22,6 +22,7 @@ public class NoHostAvailableException extends DriverException {
     private final Map<InetSocketAddress, String> errors;
 
     public NoHostAvailableException(Map<InetSocketAddress, String> errors) {
+        super(makeMessage(errors));
         this.errors = errors;
     }
 
@@ -36,8 +37,7 @@ public class NoHostAvailableException extends DriverException {
         return new HashMap<InetSocketAddress, String>(errors);
     }
 
-    @Override
-    public String getMessage() {
+    private static String makeMessage(Map<InetSocketAddress, String> errors) {
         return String.format("All host tried for query are in error (tried: %s)", errors.keySet());
     }
 }

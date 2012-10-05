@@ -42,14 +42,29 @@ public class ColumnMetadata {
         }
     }
 
+    /**
+     * The name of the column.
+     *
+     * @return the name of the column.
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * The metadata of the table this column is part of.
+     *
+     * @return the {@code TableMetadata} for the table this column is part of.
+     */
     public TableMetadata getTable() {
         return table;
     }
 
+    /**
+     * The type of the column.
+     *
+     * @return the type of the column.
+     */
     public DataType getType() {
         return type;
     }

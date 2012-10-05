@@ -111,20 +111,38 @@ public interface DataType {
 
         public Kind kind() { return Kind.COLLECTION; }
 
+        /**
+         * The type of collection.
+         *
+         * @return the type of collection.
+         */
         public Type collectionType() { return type; }
 
         public Native asNative()         { throw new IllegalStateException("Not a native type, but a collection one"); }
         public Collection asCollection() { return this; }
         public Custom asCustom()         { throw new IllegalStateException("Not a custom type, but a collection one"); }
 
+        /**
+         * The type of lists.
+         */
         public static class List extends Collection {
             private final DataType elementsType;
 
+            /**
+             * Creates a list type with the provided element type.
+             *
+             * @param elementsType the type of the elements of the list.
+             */
             public List(DataType elementsType) {
                 super(Type.LIST);
                 this.elementsType = elementsType;
             }
 
+            /**
+             * The data type of the elements for this list type.
+             *
+             * @return the data type of the elements for this list type.
+             */
             public DataType getElementsType() {
                 return elementsType;
             }
@@ -135,14 +153,27 @@ public interface DataType {
             }
         }
 
+        /**
+         * The type of sets.
+         */
         public static class Set extends Collection {
             private final DataType elementsType;
 
+            /**
+             * Creates a set type with the provided element type.
+             *
+             * @param elementsType the type of the elements of the set.
+             */
             public Set(DataType elementsType) {
                 super(Type.SET);
                 this.elementsType = elementsType;
             }
 
+            /**
+             * The data type of the elements for this set type.
+             *
+             * @return the data type of the elements for this set type.
+             */
             public DataType getElementsType() {
                 return elementsType;
             }
@@ -153,20 +184,39 @@ public interface DataType {
             }
         }
 
+        /**
+         * The type of maps.
+         */
         public static class Map extends Collection {
             private final DataType keysType;
             private final DataType valuesType;
 
+            /**
+             * Creates a map type with the provided key and value type.
+             *
+             * @param keysType the type of the keys of the map.
+             * @param valuesType the type of the keys of the map.
+             */
             public Map(DataType keysType, DataType valuesType) {
                 super(Type.MAP);
                 this.keysType = keysType;
                 this.valuesType = valuesType;
             }
 
+            /**
+             * The data type of the keys for this map type.
+             *
+             * @return the data type of the keys for this map type.
+             */
             public DataType getKeysType() {
                 return keysType;
             }
 
+            /**
+             * The data type of the values for this map type.
+             *
+             * @return the data type of the values for this map type.
+             */
             public DataType getValuesType() {
                 return valuesType;
             }

@@ -13,7 +13,7 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
 
     private RoundRobinPolicy(Collection<Host> hosts) {
         this.liveHosts = hosts.toArray(new Host[hosts.size()]);
-        this.index.set(new Random().nextInt(hosts.size()));
+        this.index.set(new Random().nextInt(Math.max(hosts.size(), 1)));
     }
 
     public Iterator<Host> newQueryPlan() {
