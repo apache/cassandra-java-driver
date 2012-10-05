@@ -119,6 +119,15 @@ public class ClusterMetadata {
     }
 
     /**
+     * Returns a list of all the defined keyspaces.
+     *
+     * @return a list of all the defined keyspaces.
+     */
+    public List<KeyspaceMetadata> getKeyspaces() {
+        return new ArrayList<KeyspaceMetadata>(keyspaces.values());
+    }
+
+    /**
      * Return a {@code String} containing CQL queries representing the schema
      * of this cluster.
      *
