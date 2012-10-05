@@ -2,6 +2,7 @@ package com.datastax.driver.core;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -517,6 +518,42 @@ public class CQLRow {
      */
     public UUID getUUID(String name) {
         return getUUID(metadata.getIdx(name));
+    }
+
+    /**
+     * Returns the {@code i}th value of this row has an InetAddress.
+     *
+     * @param i the index of the column to retrieve.
+     * @return the value of the {@code i}th column in this row as an InetAddress.
+     * If the value is NULL, {@code null} is returned.
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws InvalidTypeException if column {@code i} is not of type INET.
+     */
+    public InetAddress getInet(int i) {
+        DataType type = metadata.checkType(i, DataType.Native.INET);
+
+        ByteBuffer value = data.get(i);
+        if (value == null || value.remaining() == 0)
+            return null;
+
+        return InetAddressType.instance.compose(value);
+    }
+
+    /**
+     * Returns the value of column {@code name} has an InetAddress.
+     *
+     * @param name the name of the column to retrieve.
+     * @return the value of column {@code name} as an InetAddress.
+     * If the value is NULL, {@code null} is returned.
+     *
+     * @throws IllegalArgumentException if {@code name} is not part of the
+     * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
+     * @throws InvalidTypeException if column {@code name} is not of type
+     * INET.
+     */
+    public InetAddress getInet(String name) {
+        return getInet(metadata.getIdx(name));
     }
 
     /**

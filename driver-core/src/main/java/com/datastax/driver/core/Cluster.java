@@ -41,6 +41,11 @@ public class Cluster {
 
     private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
 
+    /**
+     * The default cassandra port for the native client protocol.
+     */
+    public static final int DEFAULT_PORT = 9042;
+
     final Manager manager;
 
     private Cluster(List<InetSocketAddress> contactPoints) {
@@ -152,9 +157,6 @@ public class Cluster {
      * Helper class to build {@link Cluster} instances.
      */
     public static class Builder implements Configuration {
-
-        // TODO: might not be the best default port, look at changing in C*
-        private static final int DEFAULT_PORT = 8000;
 
         private List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
 

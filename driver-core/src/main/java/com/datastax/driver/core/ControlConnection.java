@@ -1,8 +1,7 @@
 package com.datastax.driver.core;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.net.InetSocketAddress;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.*;
 
@@ -14,6 +13,8 @@ import org.apache.cassandra.transport.Event;
 import org.apache.cassandra.transport.messages.RegisterMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
 
+import com.google.common.collect.Sets;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +25,8 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_KEYSPACES = "SELECT * FROM system.schema_keyspaces";
     private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
+
+    private static final String SELECT_PEERS = "SELECT peer FROM system.peers";
 
     private final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
 
@@ -104,12 +107,12 @@ class ControlConnection implements Host.StateListener {
 
         logger.trace("[Control connection] Refreshing schema");
         refreshSchema(connection);
-        // TODO: also catch up on potentially missed nodes (and node that happens to be up but not known to us)
+        refreshNodeList(connection);
         return connection;
     }
 
     private void refreshSchema(Connection connection) {
-        // Make sure we're up to date on metadata
+        // Make sure we're up to date on schema
         try {
             ResultSet.Future ksFuture = new ResultSet.Future(null, new QueryMessage(SELECT_KEYSPACES));
             ResultSet.Future cfFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMN_FAMILIES));
@@ -125,6 +128,43 @@ class ControlConnection implements Host.StateListener {
             reconnect();
         } catch (ExecutionException e) {
             logger.error("[Control connection] Unexpected error while refeshing schema", e);
+            reconnect();
+        } catch (InterruptedException e) {
+            // TODO: it's bad to do that but at the same time it's annoying to be interrupted
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void refreshNodeList(Connection connection) {
+        // Make sure we're up to date on node list
+        try {
+            ResultSet.Future peersFuture = new ResultSet.Future(null, new QueryMessage(SELECT_PEERS));
+            connection.write(peersFuture);
+
+            Set<InetSocketAddress> knownHosts = new HashSet<InetSocketAddress>();
+            for (Host host : cluster.metadata.allHosts())
+                knownHosts.add(host.getAddress());
+
+            Set<InetSocketAddress> foundHosts = new HashSet<InetSocketAddress>();
+            for (CQLRow row : peersFuture.get()) {
+                if (!row.isNull("peer"))
+                    // TODO: find what port people are using
+                    foundHosts.add(new InetSocketAddress(row.getInet("peer"), Cluster.DEFAULT_PORT));
+            }
+
+            // Adds all those we don't know about
+            for (InetSocketAddress address : Sets.difference(foundHosts, knownHosts))
+                cluster.addHost(address, true);
+
+            // Removes all those that seems to have been removed (since we lost the control connection)
+            for (InetSocketAddress address : Sets.difference(knownHosts, foundHosts))
+                cluster.removeHost(cluster.metadata.getHost(address));
+
+        } catch (ConnectionException e) {
+            logger.debug(String.format("[Control connection] Connection error when refeshing hosts list (%s)", e.getMessage()));
+            reconnect();
+        } catch (ExecutionException e) {
+            logger.error("[Control connection] Unexpected error while refeshing hosts list", e);
             reconnect();
         } catch (InterruptedException e) {
             // TODO: it's bad to do that but at the same time it's annoying to be interrupted
