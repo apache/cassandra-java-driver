@@ -1,4 +1,4 @@
-package com.datastax.driver.core.transport;
+package com.datastax.driver.core;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -14,7 +14,7 @@ import org.apache.cassandra.db.marshal.*;
 /**
  * Static method to code/decode serialized data given their types.
  */
-public class Codec {
+class Codec {
 
     private static Map<AbstractType<?>, DataType.Native> rawNativeMap = new HashMap<AbstractType<?>, DataType.Native>() {{
         put(AsciiType.instance,         DataType.Native.ASCII);

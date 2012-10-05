@@ -14,7 +14,6 @@ import org.apache.cassandra.transport.messages.ErrorMessage;
 import org.apache.cassandra.transport.messages.ResultMessage;
 
 import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.transport.Connection;
 import com.datastax.driver.core.utils.SimpleFuture;
 
 import org.slf4j.Logger;
@@ -142,53 +141,58 @@ public class ResultSet implements Iterable<CQLRow> {
         return sb.toString();
     }
 
-    public static class Future extends SimpleFuture<ResultSet> implements Connection.ResponseCallback
+    public static class Future extends SimpleFuture<ResultSet>
     {
         private final Session.Manager session;
         private final Message.Request request;
+        final ResponseCallback callback = new ResponseCallback();
 
         Future(Session.Manager session, Message.Request request) {
             this.session = session;
             this.request = request;
         }
 
-        // TODO: We don't really want to expose that :(
-        // (Nor onSet/onException if we can avoid it)
-        public Message.Request request() {
-            return request;
-        }
+        // The only reason this exists is because we don't want to expose its
+        // method publicly (otherwise Future could have implemented
+        // Connection.ResponseCallback directly)
+        class ResponseCallback implements Connection.ResponseCallback {
 
-        public void onSet(Message.Response response) {
-            try {
-                switch (response.type) {
-                    case RESULT:
-                        ResultMessage rm = (ResultMessage)response;
-                        if (rm.kind == ResultMessage.Kind.SET_KEYSPACE) {
-                            // TODO: I think there is a problem if someone set
-                            // a keyspace, then drop it. But that basically
-                            // means we should reset the keyspace to null in that case.
-
-                            // propagate the keyspace change to other connections
-                            session.poolsConfiguration.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
-                        }
-                        super.set(ResultSet.fromMessage(rm));
-                        break;
-                    case ERROR:
-                        super.setException(convertException(((ErrorMessage)response).error));
-                        break;
-                    default:
-                        // TODO: handle errors (set the connection to defunct as this mean it is in a bad state)
-                        logger.info("Got " + response);
-                        throw new RuntimeException();
-                }
-            } catch (Exception e) {
-                // TODO: do better
-                throw new RuntimeException(e);
+            public Message.Request request() {
+                return request;
             }
-        }
 
-        public void onException(Exception exception) {
-            super.setException(exception);
+            public void onSet(Message.Response response) {
+                try {
+                    switch (response.type) {
+                        case RESULT:
+                            ResultMessage rm = (ResultMessage)response;
+                            if (rm.kind == ResultMessage.Kind.SET_KEYSPACE) {
+                                // TODO: I think there is a problem if someone set
+                                // a keyspace, then drop it. But that basically
+                                // means we should reset the keyspace to null in that case.
+
+                                // propagate the keyspace change to other connections
+                                session.poolsConfiguration.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
+                            }
+                            set(ResultSet.fromMessage(rm));
+                            break;
+                        case ERROR:
+                            setException(convertException(((ErrorMessage)response).error));
+                            break;
+                        default:
+                            // TODO: handle errors (set the connection to defunct as this mean it is in a bad state)
+                            logger.info("Got " + response);
+                            throw new RuntimeException();
+                    }
+                } catch (Exception e) {
+                    // TODO: do better
+                    throw new RuntimeException(e);
+                }
+            }
+
+            public void onException(Exception exception) {
+                setException(exception);
+            }
         }
 
         /**

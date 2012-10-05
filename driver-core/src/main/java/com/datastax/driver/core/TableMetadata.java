@@ -2,8 +2,6 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
-import com.datastax.driver.core.transport.Codec;
-
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.db.marshal.*;
 
@@ -15,7 +13,7 @@ import org.codehaus.jackson.map.ObjectMapper;
  */
 public class TableMetadata {
 
-    private static final String CF_NAME              = "columnfamily_name";
+    static final String CF_NAME                      = "columnfamily_name";
 
     private static final String KEY_VALIDATOR        = "key_validator";
     private static final String COMPARATOR           = "comparator";

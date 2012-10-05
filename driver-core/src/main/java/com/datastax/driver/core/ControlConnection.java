@@ -5,10 +5,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.*;
 
-import com.datastax.driver.core.transport.Connection;
-import com.datastax.driver.core.transport.ConnectionException;
-import com.datastax.driver.core.utils.RoundRobinPolicy;
-
 import org.apache.cassandra.transport.Event;
 import org.apache.cassandra.transport.messages.RegisterMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
@@ -117,9 +113,9 @@ class ControlConnection implements Host.StateListener {
             ResultSet.Future ksFuture = new ResultSet.Future(null, new QueryMessage(SELECT_KEYSPACES));
             ResultSet.Future cfFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMN_FAMILIES));
             ResultSet.Future colsFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMNS));
-            connection.write(ksFuture);
-            connection.write(cfFuture);
-            connection.write(colsFuture);
+            connection.write(ksFuture.callback);
+            connection.write(cfFuture.callback);
+            connection.write(colsFuture.callback);
 
             // TODO: we should probably do something more fancy, like check if the schema changed and notify whoever wants to be notified
             cluster.metadata.rebuildSchema(ksFuture.get(), cfFuture.get(), colsFuture.get());
@@ -139,7 +135,7 @@ class ControlConnection implements Host.StateListener {
         // Make sure we're up to date on node list
         try {
             ResultSet.Future peersFuture = new ResultSet.Future(null, new QueryMessage(SELECT_PEERS));
-            connection.write(peersFuture);
+            connection.write(peersFuture.callback);
 
             Set<InetSocketAddress> knownHosts = new HashSet<InetSocketAddress>();
             for (Host host : cluster.metadata.allHosts())

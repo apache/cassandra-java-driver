@@ -11,10 +11,6 @@ import org.apache.cassandra.transport.messages.EventMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
 
 import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.transport.Connection;
-import com.datastax.driver.core.transport.ConnectionException;
-import com.datastax.driver.core.utils.SimpleConvictionPolicy;
-import com.datastax.driver.core.utils.RoundRobinPolicy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

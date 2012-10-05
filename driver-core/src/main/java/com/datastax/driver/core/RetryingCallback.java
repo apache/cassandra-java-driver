@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.transport.*;
-import com.datastax.driver.core.pool.HostConnectionPool;
 import com.datastax.driver.core.utils.SimpleFuture;
 
 import org.apache.cassandra.transport.Message;

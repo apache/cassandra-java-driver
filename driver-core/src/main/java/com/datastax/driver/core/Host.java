@@ -6,8 +6,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ScheduledFuture;
 
-import com.datastax.driver.core.transport.ConnectionException;
-
 /**
  * A Cassandra node.
  *

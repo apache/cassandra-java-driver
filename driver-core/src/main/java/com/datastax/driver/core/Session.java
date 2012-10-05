@@ -5,9 +5,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.pool.HostConnectionPool;
-import com.datastax.driver.core.transport.Connection;
-import com.datastax.driver.core.transport.ConnectionException;
 
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.*;
@@ -305,7 +302,7 @@ public class Session {
 
         public ResultSet.Future executeQuery(Message.Request msg) {
             ResultSet.Future future = new ResultSet.Future(this, msg);
-            execute(future);
+            execute(future.callback);
             return future;
         }
     }

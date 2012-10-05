@@ -1,16 +1,13 @@
-package com.datastax.driver.core.pool;
+package com.datastax.driver.core;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.transport.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HostConnectionPool {
+class HostConnectionPool {
 
     private static final Logger logger = LoggerFactory.getLogger(HostConnectionPool.class);
 

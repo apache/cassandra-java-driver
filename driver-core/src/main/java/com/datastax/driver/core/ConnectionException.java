@@ -1,8 +1,8 @@
-package com.datastax.driver.core.transport;
+package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
 
-public class ConnectionException extends Exception
+class ConnectionException extends Exception
 {
     public final InetSocketAddress address;
 

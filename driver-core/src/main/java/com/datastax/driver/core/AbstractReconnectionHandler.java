@@ -3,9 +3,6 @@ package com.datastax.driver.core;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.*;
 
-import com.datastax.driver.core.transport.Connection;
-import com.datastax.driver.core.transport.ConnectionException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

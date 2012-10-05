@@ -1,4 +1,4 @@
-package com.datastax.driver.core.transport;
+package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
 import java.util.Iterator;
@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A connection to a Cassandra Node.
  */
-public class Connection extends org.apache.cassandra.transport.Connection
+class Connection extends org.apache.cassandra.transport.Connection
 {
     private static final Logger logger = LoggerFactory.getLogger(Connection.class);
 
@@ -385,7 +385,7 @@ public class Connection extends org.apache.cassandra.transport.Connection
     }
 
     // TODO: Do we really need that after all?
-    public static class Future extends SimpleFuture<Message.Response> implements ResponseCallback {
+    static class Future extends SimpleFuture<Message.Response> implements ResponseCallback {
 
         private final Message.Request request;
 
@@ -406,7 +406,7 @@ public class Connection extends org.apache.cassandra.transport.Connection
         }
     }
 
-    public interface ResponseCallback {
+    interface ResponseCallback {
         public Message.Request request();
         public void onSet(Message.Response response);
         public void onException(Exception exception);

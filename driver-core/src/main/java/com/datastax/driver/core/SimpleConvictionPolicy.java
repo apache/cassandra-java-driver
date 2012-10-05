@@ -1,8 +1,4 @@
-package com.datastax.driver.core.utils;
-
-import com.datastax.driver.core.ConvictionPolicy;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.transport.ConnectionException;
+package com.datastax.driver.core;
 
 public class SimpleConvictionPolicy implements ConvictionPolicy {
 

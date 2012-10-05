@@ -11,7 +11,7 @@ public enum ConsistencyLevel
     LOCAL_QUORUM,
     EACH_QUORUM;
 
-    public static ConsistencyLevel from(org.apache.cassandra.db.ConsistencyLevel cl) {
+    static ConsistencyLevel from(org.apache.cassandra.db.ConsistencyLevel cl) {
         switch (cl) {
             case ANY: return ANY;
             case ONE: return ONE;

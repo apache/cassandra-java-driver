@@ -1,4 +1,4 @@
-package com.datastax.driver.core.utils;
+package com.datastax.driver.core;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;

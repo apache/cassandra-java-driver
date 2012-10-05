@@ -1,7 +1,5 @@
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.transport.ConnectionException;
-
 /**
  * The policy with which to decide whether a host should be considered down.
  */

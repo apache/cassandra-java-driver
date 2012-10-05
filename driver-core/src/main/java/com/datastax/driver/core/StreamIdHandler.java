@@ -1,4 +1,4 @@
-package com.datastax.driver.core.transport;
+package com.datastax.driver.core;
 
 import java.util.BitSet;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Handle assigning stream id to message.
  */
-public class StreamIdHandler {
+class StreamIdHandler {
 
     // Stream ids are one byte long, signed and we only handle positive values ourselves.
     private static final int STREAM_ID_COUNT = 128;

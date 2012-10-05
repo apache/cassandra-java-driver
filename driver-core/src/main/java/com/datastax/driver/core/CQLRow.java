@@ -6,9 +6,9 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.datastax.driver.core.transport.Codec;
-
 import org.apache.cassandra.db.marshal.*;
+
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * A CQL Row returned in a {@link ResultSet}.
