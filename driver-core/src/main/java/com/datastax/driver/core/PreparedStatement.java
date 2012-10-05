@@ -59,7 +59,12 @@ public class PreparedStatement {
      * @return the newly created {@code BoundStatement} with its variables
      * bound to {@code values}.
      *
-     * @see {@link BoundStatement#bind}
+     * @throws IllegalArgumentException if more {@code values} are provided
+     * than there is of bound variables in this statement.
+     * @throws InvalidTypeException if any of the provided value is not of
+     * correct type to be bound to the corresponding bind variable.
+     *
+     * @see BoundStatement#bind
      */
     public BoundStatement bind(Object... values) {
         BoundStatement bs = new BoundStatement(this);

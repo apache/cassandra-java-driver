@@ -15,7 +15,7 @@ import org.codehaus.jackson.map.ObjectMapper;
  */
 public class TableMetadata {
 
-    public static final String CF_NAME               = "columnfamily_name";
+    private static final String CF_NAME              = "columnfamily_name";
 
     private static final String KEY_VALIDATOR        = "key_validator";
     private static final String COMPARATOR           = "comparator";
@@ -148,6 +148,68 @@ public class TableMetadata {
         return columns.get(name);
     }
 
+    /**
+     * Returns a list containing all the columns of this table.
+     *
+     * The order of the columns in the returned list will be consistent with
+     * the order of the columns returned by a {@code SELECT * FROM thisTable}:
+     * the first column will be the partition key, next will be the clustering
+     * keys in there defined order, and then will follow the rest of the
+     * columns in alphabetic order.
+     *
+     * @return a list containing the metadata for the columns of this table.
+     */
+    public List<ColumnMetadata> getColumns() {
+        return new ArrayList<ColumnMetadata>(columns.values());
+    }
+
+    /**
+     * Return the list of columns composing the primary key for this table.
+     *
+     * Note that a table will always have at least have a partition key (that
+     * may itself be one or more columns), so the returned list will at least
+     * have one element.
+     *
+     * @return the list of columns composing the primary key for this table.
+     */
+    public List<ColumnMetadata> getPrimaryKey() {
+        List<ColumnMetadata> pk = new ArrayList<ColumnMetadata>(partitionKey.size() + clusteringKey.size());
+        pk.addAll(partitionKey);
+        pk.addAll(clusteringKey);
+        return pk;
+    }
+
+    /**
+     * Return the list of columns composing the partition key for this table.
+     *
+     * Note that a table will always have a partition key so the returned list
+     * will at least have one element.
+     *
+     * @return the list of columns composing the partition key for this table.
+     */
+    public List<ColumnMetadata> getPartitionKey() {
+        return Collections.unmodifiableList(partitionKey);
+    }
+
+    /**
+     * Return the list of columns composing the clustering key for this table.
+     *
+     * @return the list of columns composing the clustering key for this table.
+     * If the clustering key is empty, an empty list is returned.
+     */
+    public List<ColumnMetadata> getClusteringKey() {
+        return Collections.unmodifiableList(clusteringKey);
+    }
+
+    /**
+     * The options of this table.
+     *
+     * @return the options of this table.
+     */
+    public Options getOptions() {
+        return options;
+    }
+
     // :_(
     private static ObjectMapper jsonMapper = new ObjectMapper(new JsonFactory());
 
@@ -190,8 +252,13 @@ public class TableMetadata {
 
         sb.append(asCQLQuery(true)).append("\n");
 
-        // TODO: handle indexes
+        for (ColumnMetadata column : columns.values()) {
+            ColumnMetadata.IndexMetadata index = column.getIndex();
+            if (index == null)
+                continue;
 
+            sb.append(index.asCQLQuery()).append("\n");
+        }
         return sb.toString();
     }
 
@@ -304,7 +371,7 @@ public class TableMetadata {
         private final Map<String, String> compaction = new HashMap<String, String>();
         private final Map<String, String> compression = new HashMap<String, String>();
 
-        public Options(CQLRow row) {
+        Options(CQLRow row) {
             this.comment = row.isNull(COMMENT) ? "" : row.getString(COMMENT);
             this.readRepair = row.getDouble(READ_REPAIR);
             this.localReadRepair = row.getDouble(LOCAL_READ_REPAIR);

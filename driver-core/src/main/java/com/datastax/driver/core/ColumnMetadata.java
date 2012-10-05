@@ -20,20 +20,20 @@ public class ColumnMetadata {
     private final TableMetadata table;
     private final String name;
     private final DataType type;
-    private final Index index;
+    private final IndexMetadata index;
 
-    ColumnMetadata(TableMetadata table, String name, DataType type, Index index) {
+    ColumnMetadata(TableMetadata table, String name, DataType type, CQLRow row) {
         this.table = table;
         this.name = name;
         this.type = type;
-        this.index = index;
+        this.index = IndexMetadata.build(this, row);
     }
 
     static ColumnMetadata build(TableMetadata tm, CQLRow row) {
         try {
             String name = row.getString(COLUMN_NAME);
             AbstractType<?> t = TypeParser.parse(row.getString(VALIDATOR));
-            ColumnMetadata cm = new ColumnMetadata(tm, name, Codec.rawTypeToDataType(t), Index.build(row));
+            ColumnMetadata cm = new ColumnMetadata(tm, name, Codec.rawTypeToDataType(t), row);
             tm.add(cm);
             return cm;
         } catch (RequestValidationException e) {
@@ -69,27 +69,76 @@ public class ColumnMetadata {
         return type;
     }
 
-    static class Index {
+    /**
+     * The indexing metadata on this column if the column is indexed.
+     *
+     * @return the metadata on the column index if the column is indexed,
+     * {@code null} otherwise.
+     */
+    public IndexMetadata getIndex() {
+        return index;
+    }
+
+    /**
+     * Metadata on a column index.
+     */
+    public static class IndexMetadata {
 
         private static final String INDEX_TYPE = "index_type";
         private static final String INDEX_OPTIONS = "index_options";
         private static final String INDEX_NAME = "index_name";
 
-        public final String name;
-        public final String type;
-        public final Map<String, String> options = new HashMap<String, String>();
+        private final ColumnMetadata column;
+        private final String name;
+        // It doesn't make sense to expose the index type for CQL3 at this
+        // point (the notion don't exist yet in CQL), but keeping it internally
+        // so we don't forget it exists
+        private final String type;
+        private final Map<String, String> options = new HashMap<String, String>();
 
-        private Index(String name, String type) {
+        private IndexMetadata(ColumnMetadata column, String name, String type) {
+            this.column = column;
             this.name = name;
             this.type = type;
         }
 
-        public static Index build(CQLRow row) {
+        /**
+         * The column this index metadata refers to.
+         *
+         * @return the column this index metadata refers to.
+         */
+        public ColumnMetadata getIndexedColumn() {
+            return column;
+        }
+
+        /**
+         * The index name.
+         *
+         * @return the index name.
+         */
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * Returns a CQL query representing this index.
+         *
+         * This method returns a single 'CREATE INDEX' query with the options
+         * corresponding to this index definition.
+         *
+         * @return the 'CREATE INDEX' query corresponding to this index.
+         */
+        public String asCQLQuery() {
+            TableMetadata table = column.getTable();
+            return String.format("CREATE INDEX %s ON %s.%s (%s)", name, table.getKeyspace().getName(), table.getName(), column.getName());
+        }
+
+        private static IndexMetadata build(ColumnMetadata column, CQLRow row) {
             String type = row.getString(INDEX_TYPE);
             if (type == null)
                 return null;
 
-            Index index = new Index(type, row.getString(INDEX_NAME));
+            IndexMetadata index = new IndexMetadata(column, type, row.getString(INDEX_NAME));
             // TODO: handle options
             return index;
         }
