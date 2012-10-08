@@ -24,7 +24,7 @@ public class BoundStatement {
 
     BoundStatement(PreparedStatement statement) {
         this.statement = statement;
-        this.values = new ByteBuffer[statement.variables().count()];
+        this.values = new ByteBuffer[statement.getVariables().count()];
         this.remaining = values.length;
     }
 
@@ -43,7 +43,7 @@ public class BoundStatement {
      *
      * @return whether all variables are bound.
      */
-    public boolean ready() {
+    public boolean isReady() {
         return remaining == 0;
     }
 
@@ -90,14 +90,14 @@ public class BoundStatement {
      */
     public BoundStatement bind(Object... values) {
 
-        if (values.length > statement.variables().count())
-            throw new IllegalArgumentException(String.format("Prepared statement has only %d variables, %d values provided", statement.variables().count(), values.length));
+        if (values.length > statement.getVariables().count())
+            throw new IllegalArgumentException(String.format("Prepared statement has only %d variables, %d values provided", statement.getVariables().count(), values.length));
 
         for (int i = 0; i < values.length; i++)
         {
             Object toSet = values[i];
-            DataType columnType = statement.variables().type(i);
-            switch (columnType.kind())
+            DataType columnType = statement.getVariables().getType(i);
+            switch (columnType.getKind())
             {
                 case NATIVE:
                     if (!Codec.isCompatible(columnType.asNative(), toSet.getClass()))
@@ -642,9 +642,9 @@ public class BoundStatement {
      * column {@code i}.
      */
     public <T> BoundStatement setList(int i, List<T> v) {
-        DataType type = metadata().type(i);
-        if (type.kind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.LIST)
-            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a list", metadata().name(i), type));
+        DataType type = metadata().getType(i);
+        if (type.getKind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.LIST)
+            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a list", metadata().getName(i), type));
 
         // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
         if (!v.isEmpty()) {
@@ -653,7 +653,7 @@ public class BoundStatement {
 
             DataType.Native eltType = (DataType.Native)((DataType.Collection.List)type).getElementsType();
             if (!Codec.isCompatible(eltType, klass))
-                throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a list of %s", metadata().name(i), type, klass));
+                throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a list of %s", metadata().getName(i), type, klass));
         }
 
         return setValue(i, Codec.<List<T>>getCodec(type).decompose(v));
@@ -685,9 +685,9 @@ public class BoundStatement {
      * elements of column {@code i}.
      */
     public <K, V> BoundStatement setMap(int i, Map<K, V> v) {
-        DataType type = metadata().type(i);
-        if (type.kind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.MAP)
-            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a map", metadata().name(i), type));
+        DataType type = metadata().getType(i);
+        if (type.getKind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.MAP)
+            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a map", metadata().getName(i), type));
 
         if (!v.isEmpty()) {
             // Ugly? Yes
@@ -699,7 +699,7 @@ public class BoundStatement {
             DataType.Native keysType = (DataType.Native)mapType.getKeysType();
             DataType.Native valuesType = (DataType.Native)mapType.getValuesType();
             if (!Codec.isCompatible(keysType, keysClass) || !Codec.isCompatible(valuesType, valuesClass))
-                throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a map of %s -> %s", metadata().name(i), type, keysType, valuesType));
+                throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a map of %s -> %s", metadata().getName(i), type, keysType, valuesType));
         }
 
         return setValue(i, Codec.<Map<K, V>>getCodec(type).decompose(v));
@@ -731,9 +731,9 @@ public class BoundStatement {
      * column {@code i}.
      */
     public <T> BoundStatement setSet(int i, Set<T> v) {
-        DataType type = metadata().type(i);
-        if (type.kind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.SET)
-            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a set", metadata().name(i), type));
+        DataType type = metadata().getType(i);
+        if (type.getKind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.SET)
+            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a set", metadata().getName(i), type));
 
         if (!v.isEmpty()) {
             // Ugly? Yes
@@ -741,7 +741,7 @@ public class BoundStatement {
 
             DataType.Native eltType = (DataType.Native)((DataType.Collection.Set)type).getElementsType();
             if (!Codec.isCompatible(eltType, klass))
-                throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a set of %s", metadata().name(i), type, klass));
+                throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a set of %s", metadata().getName(i), type, klass));
         }
 
         return setValue(i, Codec.<Set<T>>getCodec(type).decompose(v));

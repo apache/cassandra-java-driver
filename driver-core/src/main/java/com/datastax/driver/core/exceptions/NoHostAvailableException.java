@@ -33,7 +33,7 @@ public class NoHostAvailableException extends DriverException {
      * @return a map containing for each tried host a description of the error
      * triggered when trying it.
      */
-    public Map<InetSocketAddress, String> errors() {
+    public Map<InetSocketAddress, String> getErrors() {
         return new HashMap<InetSocketAddress, String>(errors);
     }
 

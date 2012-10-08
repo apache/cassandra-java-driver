@@ -38,7 +38,7 @@ class Codec {
     private Codec() {}
 
     public static <T> AbstractType<T> getCodec(DataType type) {
-        switch (type.kind()) {
+        switch (type.getKind()) {
             case NATIVE:     return (AbstractType<T>)nativeCodec(type.asNative());
             case COLLECTION: return (AbstractType<T>)collectionCodec(type.asCollection());
             case CUSTOM:     return (AbstractType<T>)customCodec(type.asCustom());

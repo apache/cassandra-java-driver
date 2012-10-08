@@ -35,7 +35,7 @@ public class CQLRow {
      *
      * @return the columns contained in this CQLRow.
      */
-    public Columns columns() {
+    public Columns getColumns() {
         return metadata;
     }
 
@@ -576,13 +576,13 @@ public class CQLRow {
         // might want to improve that, though that reach into the
         // ListType.compose() method.
 
-        DataType type = metadata.type(i);
+        DataType type = metadata.getType(i);
         if (!(type instanceof DataType.Collection.List))
-            throw new InvalidTypeException(String.format("Column %s is not of list type", metadata.name(i)));
+            throw new InvalidTypeException(String.format("Column %s is not of list type", metadata.getName(i)));
 
         DataType.Native eltType = (DataType.Native)((DataType.Collection.List)type).getElementsType();
         if (!Codec.isCompatible(eltType, elementsClass))
-            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a list of %s", metadata.name(i), type, elementsClass));
+            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a list of %s", metadata.getName(i), type, elementsClass));
 
         ByteBuffer value = data.get(i);
         if (value == null)
@@ -626,13 +626,13 @@ public class CQLRow {
      * elements are not of class {@code elementsClass}.
      */
     public <T> Set<T> getSet(int i, Class<T> elementsClass) {
-        DataType type = metadata.type(i);
+        DataType type = metadata.getType(i);
         if (!(type instanceof DataType.Collection.Set))
-            throw new InvalidTypeException(String.format("Column %s is not of set type", metadata.name(i)));
+            throw new InvalidTypeException(String.format("Column %s is not of set type", metadata.getName(i)));
 
         DataType.Native eltType = (DataType.Native)((DataType.Collection.Set)type).getElementsType();
         if (!Codec.isCompatible(eltType, elementsClass))
-            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a set of %s", metadata.name(i), type, elementsClass));
+            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a set of %s", metadata.getName(i), type, elementsClass));
 
         ByteBuffer value = data.get(i);
         if (value == null)
@@ -677,15 +677,15 @@ public class CQLRow {
      * class {@code valuesClass}.
      */
     public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass) {
-        DataType type = metadata.type(i);
+        DataType type = metadata.getType(i);
         if (!(type instanceof DataType.Collection.Map))
-            throw new InvalidTypeException(String.format("Column %s is not of map type", metadata.name(i)));
+            throw new InvalidTypeException(String.format("Column %s is not of map type", metadata.getName(i)));
 
         DataType.Collection.Map mapType = (DataType.Collection.Map)type;
         DataType.Native keysType = (DataType.Native)mapType.getKeysType();
         DataType.Native valuesType = (DataType.Native)mapType.getValuesType();
         if (!Codec.isCompatible(keysType, keysClass) || !Codec.isCompatible(valuesType, valuesClass))
-            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a map of %s -> %s", metadata.name(i), type, keysClass, valuesClass));
+            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a map of %s -> %s", metadata.getName(i), type, keysClass, valuesClass));
 
         ByteBuffer value = data.get(i);
         if (value == null)
@@ -726,7 +726,7 @@ public class CQLRow {
             if (bb == null)
                 sb.append("NULL");
             else
-                sb.append(Codec.getCodec(metadata.type(i)).getString(bb));
+                sb.append(Codec.getCodec(metadata.getType(i)).getString(bb));
         }
         sb.append("]");
         return sb.toString();

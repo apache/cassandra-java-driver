@@ -389,7 +389,7 @@ public class TableMetadata {
          *
          * @return the commentary set for this table, or {@code null} if noe has been set.
          */
-        public String comment() {
+        public String getComment() {
             return comment;
         }
 
@@ -398,7 +398,7 @@ public class TableMetadata {
          *
          * @return the read repair change set for table (in [0.0, 1.0]).
          */
-        public double readRepairChance() {
+        public double getReadRepairChance() {
             return readRepair;
         }
 
@@ -407,7 +407,7 @@ public class TableMetadata {
          *
          * @return the local read repair change set for table (in [0.0, 1.0]).
          */
-        public double localReadRepairChance() {
+        public double getLocalReadRepairChance() {
             return localReadRepair;
         }
 
@@ -418,7 +418,7 @@ public class TableMetadata {
          *
          * @return whether replicateOnWrite is set for this table.
          */
-        public boolean replicateOnWrite() {
+        public boolean getReplicateOnWrite() {
             return replicateOnWrite;
         }
 
@@ -427,7 +427,7 @@ public class TableMetadata {
          *
          * @return the tombstone garbage collection grace time in seconds for this table.
          */
-        public int gcGraceInSeconds() {
+        public int getGcGraceInSeconds() {
             return gcGrace;
         }
 
@@ -436,7 +436,7 @@ public class TableMetadata {
          *
          * @return the bloom filter false positive chance for this table (in [0.0, 1.0]).
          */
-        public double bloomFilterFalsePositiveChance() {
+        public double getBloomFilterFalsePositiveChance() {
             return bfFpChance;
         }
 
@@ -445,7 +445,7 @@ public class TableMetadata {
          *
          * @return the caching option for this table.
          */
-        public String caching() {
+        public String getCaching() {
             return caching;
         }
 
@@ -454,7 +454,7 @@ public class TableMetadata {
          *
          * @return a map containing the compaction options for this table.
          */
-        public Map<String, String> compaction() {
+        public Map<String, String> getCompaction() {
             return new HashMap<String, String>(compaction);
         }
 
@@ -463,7 +463,7 @@ public class TableMetadata {
          *
          * @return a map containing the compression options for this table.
          */
-        public Map<String, String> compression() {
+        public Map<String, String> getCompression() {
             return new HashMap<String, String>(compression);
         }
     }

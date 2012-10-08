@@ -59,7 +59,7 @@ public class KeyspaceMetadata {
      * @return a map containing the replication options for this keyspace.
      */
     public Map<String, String> getReplication() {
-        return new HashMap<String, String>(replication);
+        return Collections.<String, String>unmodifiableMap(replication);
     }
 
     /**
@@ -80,7 +80,7 @@ public class KeyspaceMetadata {
      * keyspace.
      */
     public Collection<TableMetadata> getTables() {
-        return tables.values();
+        return Collections.<TableMetadata>unmodifiableCollection(tables.values());
     }
 
     /**

@@ -42,7 +42,7 @@ public class AlreadyExistsException extends QueryValidationException {
      * the table creation attempt (in which case {@link #table} will return the
      * name of said table).
      */
-    public String keyspace() {
+    public String getKeyspace() {
         return keyspace;
     }
 
@@ -53,7 +53,7 @@ public class AlreadyExistsException extends QueryValidationException {
      * of this name already exists, or {@code null} if the query was a keyspace
      * creation query.
      */
-    public String table() {
+    public String getTable() {
         return table.isEmpty() ? null : table;
     }
 }

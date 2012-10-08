@@ -27,7 +27,7 @@ public class QueryTimeoutException extends QueryExecutionException {
      *
      * @return the consistency level of the operation that time outed.
      */
-    public ConsistencyLevel consistencyLevel() {
+    public ConsistencyLevel getConsistencyLevel() {
         return consistency;
     }
 
@@ -38,7 +38,7 @@ public class QueryTimeoutException extends QueryExecutionException {
      * @return the number of replica that had acknowledged/responded the
      * operation before it time outed.
      */
-    public int receivedAcknowledgements() {
+    public int getReceivedAcknowledgements() {
         return received;
     }
 
@@ -49,7 +49,7 @@ public class QueryTimeoutException extends QueryExecutionException {
      * @return The minimum number of replica acknowledgements/response that
      * were required to fulfill the operation.
      */
-    public int requiredAcknowledgements() {
+    public int getRequiredAcknowledgements() {
         return required;
     }
 }

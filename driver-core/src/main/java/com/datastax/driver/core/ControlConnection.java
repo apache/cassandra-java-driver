@@ -36,7 +36,7 @@ class ControlConnection implements Host.StateListener {
 
     public ControlConnection(Cluster.Manager cluster) {
         this.cluster = cluster;
-        this.balancingPolicy = RoundRobinPolicy.Factory.INSTANCE.create(cluster.metadata.allHosts());
+        this.balancingPolicy = LoadBalancingPolicy.RoundRobin.Factory.INSTANCE.create(cluster.metadata.allHosts());
     }
 
     // Only for the initial connection. Does not schedule retries if it fails

@@ -26,7 +26,7 @@ public interface DataType {
      *
      * @return this type {@link Kind}.
      */
-    public Kind kind();
+    public Kind getKind();
 
     /**
      * Returns this type as a {@link Native} type.
@@ -34,7 +34,7 @@ public interface DataType {
      * @return this type as a {@link Native} type.
      *
      * @throws IllegalStateException if this type is not a {@link Native} type.
-     * You should use {@link #kind} to check if this type is a native one
+     * You should use {@link #getKind} to check if this type is a native one
      * before calling this method.
      */
     public Native asNative();
@@ -45,7 +45,7 @@ public interface DataType {
      * @return this type as a {@link Collection} type.
      *
      * @throws IllegalStateException if this type is not a {@link Collection}
-     * type. You should use {@link #kind} to check if this type is a collection
+     * type. You should use {@link #getKind} to check if this type is a collection
      * one before calling this method.
      */
     public Collection asCollection();
@@ -56,7 +56,7 @@ public interface DataType {
      * @return this type as a {@link Custom} type.
      *
      * @throws IllegalStateException if this type is not a {@link Custom} type.
-     * You should use {@link #kind} to check if this type is a custom one
+     * You should use {@link #getKind} to check if this type is a custom one
      * before calling this method.
      */
     public Custom asCustom();
@@ -83,7 +83,7 @@ public interface DataType {
         VARINT,
         TIMEUUID;
 
-        public Kind kind() { return Kind.NATIVE; }
+        public Kind getKind() { return Kind.NATIVE; }
 
         public Native asNative()         { return this; }
         public Collection asCollection() { throw new IllegalStateException("Not a collection type, but a native one"); }
@@ -109,7 +109,7 @@ public interface DataType {
             this.type = type;
         }
 
-        public Kind kind() { return Kind.COLLECTION; }
+        public Kind getKind() { return Kind.COLLECTION; }
 
         /**
          * The type of collection.
@@ -234,7 +234,7 @@ public interface DataType {
     public static class Custom implements DataType {
         // TODO
 
-        public Kind kind() { return Kind.CUSTOM; }
+        public Kind getKind() { return Kind.CUSTOM; }
 
         public Native asNative()         { throw new IllegalStateException("Not a native type, but a custom one"); }
         public Collection asCollection() { throw new IllegalStateException("Not a collection type, but a custom one"); }

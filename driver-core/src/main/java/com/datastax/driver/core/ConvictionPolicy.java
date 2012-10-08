@@ -2,6 +2,8 @@ package com.datastax.driver.core;
 
 /**
  * The policy with which to decide whether a host should be considered down.
+ * TODO: not sure it's worth exposing this at this point. But if we do, we
+ * would need to expose ConnectionException
  */
 public interface ConvictionPolicy {
 

@@ -178,7 +178,7 @@ public class Session {
      * @throws IllegalStateException if {@code !stmt.ready()}.
      */
     public ResultSet.Future executePreparedAsync(BoundStatement stmt) {
-        if (!stmt.ready())
+        if (!stmt.isReady())
             throw new IllegalStateException("Some bind variables haven't been bound in the provided statement");
 
         return manager.executeQuery(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values)));
@@ -233,7 +233,7 @@ public class Session {
         }
 
         private HostConnectionPool addHost(Host host) {
-            return pools.put(host, new HostConnectionPool(host, host.monitor().signaler, cluster.manager.connectionFactory, poolsConfiguration));
+            return pools.put(host, new HostConnectionPool(host, host.getMonitor().signaler, cluster.manager.connectionFactory, poolsConfiguration));
         }
 
         public void onUp(Host host) {

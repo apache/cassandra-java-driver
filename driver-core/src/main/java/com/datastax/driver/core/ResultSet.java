@@ -66,7 +66,7 @@ public class ResultSet implements Iterable<CQLRow> {
      *
      * @return the columns returned in this ResultSet.
      */
-    public Columns columns() {
+    public Columns getColumns() {
         return metadata;
     }
 

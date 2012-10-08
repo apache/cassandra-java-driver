@@ -24,7 +24,7 @@ public class UnavailableException extends QueryExecutionException {
      *
      * @return the consistency level of the operation triggering this unavailable exception.
      */
-    public ConsistencyLevel consistency() {
+    public ConsistencyLevel getConsistency() {
         return consistency;
     }
 
@@ -35,7 +35,7 @@ public class UnavailableException extends QueryExecutionException {
      * @return the number of replica acknowledgements/responses required to perform the
      * operation.
      */
-    public int requiredReplicas() {
+    public int getRequiredReplicas() {
         return required;
     }
 
@@ -46,7 +46,7 @@ public class UnavailableException extends QueryExecutionException {
      * @return The number of replica that were known to be alive by the Cassandra
      * coordinator node when it tried to execute the operation.
      */
-    public int aliveReplicas() {
+    public int getAliveReplicas() {
         return alive;
     }
 }

@@ -42,7 +42,7 @@ public class PreparedStatement {
      *
      * @return the variables bounded in this prepared statement.
      */
-    public Columns variables() {
+    public Columns getVariables() {
         return metadata;
     }
 

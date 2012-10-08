@@ -61,7 +61,7 @@ public class Cluster {
      * can be reached.
      */
     public static Cluster buildFrom(Configuration config) throws NoHostAvailableException {
-        return new Cluster(config.contactPoints());
+        return new Cluster(config.getContactPoints());
     }
 
     /**
@@ -141,7 +141,7 @@ public class Cluster {
          * @return the initial Cassandra contact points. See {@link Builder#addContactPoint}
          * for more details on contact points.
          */
-        public List<InetSocketAddress> contactPoints();
+        public List<InetSocketAddress> getContactPoints();
     }
 
     /**
@@ -151,7 +151,7 @@ public class Cluster {
 
         private List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
 
-        public List<InetSocketAddress> contactPoints() {
+        public List<InetSocketAddress> getContactPoints() {
             return addresses;
         }
 
@@ -295,7 +295,7 @@ public class Cluster {
         private final ControlConnection controlConnection;
 
         // TODO: make configurable
-        final LoadBalancingPolicy.Factory loadBalancingFactory = RoundRobinPolicy.Factory.INSTANCE;
+        final LoadBalancingPolicy.Factory loadBalancingFactory = LoadBalancingPolicy.RoundRobin.Factory.INSTANCE;
 
         final ScheduledExecutorService reconnectionExecutor = Executors.newScheduledThreadPool(2, new NamedThreadFactory("Reconnection"));
         final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("Scheduled Tasks"));
@@ -350,7 +350,7 @@ public class Cluster {
 
                 protected void onReconnection(Connection connection) {
                     logger.debug(String.format("Successful reconnection to %s, setting host UP", host));
-                    host.monitor().reset();
+                    host.getMonitor().reset();
                 }
 
                 protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {

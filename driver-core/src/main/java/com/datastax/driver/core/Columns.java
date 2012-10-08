@@ -72,7 +72,7 @@ public class Columns implements Iterable<Columns.Definition> {
      * @return the list of the names for the columns defined in these metadata.
      * The names in the returned list will be in the order of this metadata.
      */
-    public List<String> names() {
+    public List<String> getNames() {
         List<String> names = new ArrayList<String>(byIdx.length);
         for (Definition def : byIdx)
             names.add(def.name);
@@ -85,7 +85,7 @@ public class Columns implements Iterable<Columns.Definition> {
      * @return the list of the types for the columns defined in these metadata.
      * The types in the returned list will be in the order of this metadata.
      */
-    public List<DataType> types() {
+    public List<DataType> getTypes() {
         List<DataType> types = new ArrayList<DataType>(byIdx.length);
         for (Definition def : byIdx)
             types.add(def.type);
@@ -99,7 +99,7 @@ public class Columns implements Iterable<Columns.Definition> {
      *
      * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= count()}
      */
-    public String name(int i) {
+    public String getName(int i) {
         return byIdx[i].name;
     }
 
@@ -110,7 +110,7 @@ public class Columns implements Iterable<Columns.Definition> {
      *
      * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= count()}
      */
-    public DataType type(int i) {
+    public DataType getType(int i) {
         return byIdx[i].type;
     }
 
@@ -121,8 +121,8 @@ public class Columns implements Iterable<Columns.Definition> {
      *
      * @throws IllegalArgumentException if {@code name} is not one of the columns in this metadata.
      */
-    public DataType type(String name) {
-        return type(getIdx(name));
+    public DataType geType(String name) {
+        return getType(getIdx(name));
     }
 
     /**
@@ -132,7 +132,7 @@ public class Columns implements Iterable<Columns.Definition> {
      *
      * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= count()}
      */
-    public String keyspace(int i) {
+    public String getKeyspace(int i) {
         return byIdx[i].keyspace;
     }
 
@@ -143,8 +143,8 @@ public class Columns implements Iterable<Columns.Definition> {
      *
      * @throws IllegalArgumentException if {@code name} is not one of the columns in this metadata.
      */
-    public String keyspace(String name) {
-        return keyspace(getIdx(name));
+    public String getKeyspace(String name) {
+        return getKeyspace(getIdx(name));
     }
 
     /**
@@ -154,7 +154,7 @@ public class Columns implements Iterable<Columns.Definition> {
      *
      * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= count()}
      */
-    public String table(int i) {
+    public String getTable(int i) {
         return byIdx[i].table;
     }
 
@@ -165,8 +165,8 @@ public class Columns implements Iterable<Columns.Definition> {
      *
      * @throws IllegalArgumentException if {@code name} is not one of the columns in this metadata.
      */
-    public String table(String name) {
-        return table(getIdx(name));
+    public String getTable(String name) {
+        return getTable(getIdx(name));
     }
 
     public String toString() {
@@ -196,12 +196,12 @@ public class Columns implements Iterable<Columns.Definition> {
     }
 
     DataType.Native checkType(int i, DataType.Native... types) {
-        DataType defined = type(i);
+        DataType defined = getType(i);
         for (DataType.Native type : types)
             if (type == defined)
                 return type;
 
-        throw new InvalidTypeException(String.format("Column %s is of type %s", name(i), defined));
+        throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
     }
 
     /**

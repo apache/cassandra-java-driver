@@ -47,7 +47,7 @@ public class Host {
      *
      * @return the host {@link HealthMonitor}.
      */
-    public HealthMonitor monitor() {
+    public HealthMonitor getMonitor() {
         return monitor;
     }
 
@@ -133,7 +133,7 @@ public class Host {
          * Reset the monitor, setting the host as up and informing the
          * registered listener that the node is up.
          */
-        public void reset() {
+        void reset() {
             isUp = true;
             policy.reset();
             for (Host.StateListener listener : listeners)

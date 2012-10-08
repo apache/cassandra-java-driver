@@ -116,7 +116,7 @@ public class ClusterMetadata {
         Host previous = hosts.putIfAbsent(address, newHost);
         if (previous == null)
         {
-            newHost.monitor().register(cluster);
+            newHost.getMonitor().register(cluster);
             return newHost;
         }
         else
