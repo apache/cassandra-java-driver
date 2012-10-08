@@ -132,6 +132,9 @@ public class ColumnMetadata {
         }
 
         private static IndexMetadata build(ColumnMetadata column, CQLRow row) {
+            if (row == null)
+                return null;
+
             String type = row.getString(INDEX_TYPE);
             if (type == null)
                 return null;

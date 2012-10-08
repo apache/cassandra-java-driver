@@ -51,6 +51,7 @@ public class ResultSet implements Iterable<CQLRow> {
 
                 return new ResultSet(new Columns(defs), new ArrayDeque(r.result.rows));
             case SET_KEYSPACE:
+            case SCHEMA_CHANGE:
                 return EMPTY;
             case PREPARED:
                 throw new RuntimeException("Prepared statement received when a ResultSet was expected");
@@ -166,13 +167,38 @@ public class ResultSet implements Iterable<CQLRow> {
                     switch (response.type) {
                         case RESULT:
                             ResultMessage rm = (ResultMessage)response;
-                            if (rm.kind == ResultMessage.Kind.SET_KEYSPACE) {
-                                // TODO: I think there is a problem if someone set
-                                // a keyspace, then drop it. But that basically
-                                // means we should reset the keyspace to null in that case.
+                            switch (rm.kind) {
+                                case SET_KEYSPACE:
+                                    // TODO: I think there is a problem if someone set
+                                    // a keyspace, then drop it. But that basically
+                                    // means we should reset the keyspace to null in that case.
 
-                                // propagate the keyspace change to other connections
-                                session.poolsConfiguration.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
+                                    // propagate the keyspace change to other connections
+                                    session.poolsConfiguration.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
+                                    break;
+                                case SCHEMA_CHANGE:
+                                    ResultMessage.SchemaChange scc = (ResultMessage.SchemaChange)rm;
+                                    switch (scc.change) {
+                                        case CREATED:
+                                            if (scc.columnFamily.isEmpty())
+                                                session.cluster.manager.submitSchemaRefresh(null, null);
+                                            else
+                                                session.cluster.manager.submitSchemaRefresh(scc.keyspace, null);
+                                            break;
+                                        case DROPPED:
+                                            if (scc.columnFamily.isEmpty())
+                                                session.cluster.manager.submitSchemaRefresh(null, null);
+                                            else
+                                                session.cluster.manager.submitSchemaRefresh(scc.keyspace, null);
+                                            break;
+                                        case UPDATED:
+                                            if (scc.columnFamily.isEmpty())
+                                                session.cluster.manager.submitSchemaRefresh(scc.keyspace, null);
+                                            else
+                                                session.cluster.manager.submitSchemaRefresh(scc.keyspace, scc.columnFamily);
+                                            break;
+                                    }
+                                    break;
                             }
                             set(ResultSet.fromMessage(rm));
                             break;

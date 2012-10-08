@@ -14,6 +14,8 @@ import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+
 class ControlConnection implements Host.StateListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ControlConnection.class);
@@ -37,14 +39,23 @@ class ControlConnection implements Host.StateListener {
         this.balancingPolicy = RoundRobinPolicy.Factory.INSTANCE.create(cluster.metadata.allHosts());
     }
 
-    public void reconnect() {
+    // Only for the initial connection. Does not schedule retries if it fails
+    public void connect() throws NoHostAvailableException {
+        setNewConnection(reconnectInternal());
+    }
+
+    private void reconnect() {
         try {
             setNewConnection(reconnectInternal());
-        } catch (ConnectionException e) {
+        } catch (NoHostAvailableException e) {
             logger.error("[Control connection] Cannot connect to any host, scheduling retry");
             new AbstractReconnectionHandler(cluster.reconnectionExecutor, reconnectionPolicyFactory.create(), reconnectionAttempt) {
                 protected Connection tryReconnect() throws ConnectionException {
-                    return reconnectInternal();
+                    try {
+                        return reconnectInternal();
+                    } catch (NoHostAvailableException e) {
+                        throw new ConnectionException(null, e.getMessage());
+                    }
                 }
 
                 protected void onReconnection(Connection connection) {
@@ -71,23 +82,27 @@ class ControlConnection implements Host.StateListener {
             old.close();
     }
 
-    private Connection reconnectInternal() throws ConnectionException {
+    private Connection reconnectInternal() throws NoHostAvailableException {
 
         Iterator<Host> iter = balancingPolicy.newQueryPlan();
+        Map<InetSocketAddress, String> errors = null;
         while (iter.hasNext()) {
             Host host = iter.next();
             try {
                 return tryConnect(host);
             } catch (ConnectionException e) {
+                if (errors == null)
+                    errors = new HashMap<InetSocketAddress, String>();
+                errors.put(e.address, e.getMessage());
+
                 if (iter.hasNext()) {
                     logger.debug(String.format("[Control connection] Failed connecting to %s, trying next host", host));
                 } else {
                     logger.debug(String.format("[Control connection] Failed connecting to %s, no more host to try", host));
-                    throw e;
                 }
             }
         }
-        throw new ConnectionException(null, "Cannot connect to any host");
+        throw new NoHostAvailableException(errors == null ? Collections.<InetSocketAddress, String>emptyMap(): errors);
     }
 
     private Connection tryConnect(Host host) throws ConnectionException {
@@ -97,28 +112,45 @@ class ControlConnection implements Host.StateListener {
         List<Event.Type> evs = Arrays.asList(new Event.Type[]{
             Event.Type.TOPOLOGY_CHANGE,
             Event.Type.STATUS_CHANGE,
-            //Event.Type.SCHEMA_CHANGE,
+            Event.Type.SCHEMA_CHANGE,
         });
         connection.write(new RegisterMessage(evs));
 
         logger.trace("[Control connection] Refreshing schema");
-        refreshSchema(connection);
+        refreshSchema(connection, null, null);
         refreshNodeList(connection);
         return connection;
     }
 
-    private void refreshSchema(Connection connection) {
+    public void refreshSchema(String keyspace, String table) {
+        refreshSchema(connectionRef.get(), keyspace, table);
+    }
+
+    private void refreshSchema(Connection connection, String keyspace, String table) {
         // Make sure we're up to date on schema
         try {
-            ResultSet.Future ksFuture = new ResultSet.Future(null, new QueryMessage(SELECT_KEYSPACES));
-            ResultSet.Future cfFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMN_FAMILIES));
-            ResultSet.Future colsFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMNS));
-            connection.write(ksFuture.callback);
+            logger.trace(String.format("[Control connection] Refreshing schema for %s.%s", keyspace, table));
+
+            String whereClause = "";
+            if (keyspace != null) {
+                whereClause = " WHERE keyspace_name = '" + keyspace + "'";
+                if (table != null)
+                    whereClause += " AND columnfamily_name = '" + table + "'";
+            }
+
+            ResultSet.Future ksFuture = table == null
+                                      ? new ResultSet.Future(null, new QueryMessage(SELECT_KEYSPACES + whereClause))
+                                      : null;
+            ResultSet.Future cfFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMN_FAMILIES + whereClause));
+            ResultSet.Future colsFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMNS + whereClause));
+
+            if (ksFuture != null)
+                connection.write(ksFuture.callback);
             connection.write(cfFuture.callback);
             connection.write(colsFuture.callback);
 
             // TODO: we should probably do something more fancy, like check if the schema changed and notify whoever wants to be notified
-            cluster.metadata.rebuildSchema(ksFuture.get(), cfFuture.get(), colsFuture.get());
+            cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get());
         } catch (ConnectionException e) {
             logger.debug(String.format("[Control connection] Connection error when refeshing schema (%s)", e.getMessage()));
             reconnect();

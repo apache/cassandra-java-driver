@@ -5,10 +5,15 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Keeps metadata on the connected cluster, including known nodes and schema definitions.
  */
 public class ClusterMetadata {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClusterMetadata.class);
 
     private final Cluster.Manager cluster;
     private final ConcurrentMap<InetSocketAddress, Host> hosts = new ConcurrentHashMap<InetSocketAddress, Host>();
@@ -18,11 +23,13 @@ public class ClusterMetadata {
         this.cluster = cluster;
     }
 
-    void rebuildSchema(ResultSet ks, ResultSet cfs, ResultSet cols) {
+    // Synchronized to make it easy to detect dropped keyspaces
+    synchronized void rebuildSchema(String keyspace, String table, ResultSet ks, ResultSet cfs, ResultSet cols) {
 
         Map<String, List<CQLRow>> cfDefs = new HashMap<String, List<CQLRow>>();
         Map<String, Map<String, List<CQLRow>>> colsDefs = new HashMap<String, Map<String, List<CQLRow>>>();
 
+        // Gather cf defs
         for (CQLRow row : cfs) {
             String ksName = row.getString(KeyspaceMetadata.KS_NAME);
             List<CQLRow> l = cfDefs.get(ksName);
@@ -33,6 +40,7 @@ public class ClusterMetadata {
             l.add(row);
         }
 
+        // Gather columns per Cf
         for (CQLRow row : cols) {
             String ksName = row.getString(KeyspaceMetadata.KS_NAME);
             String cfName = row.getString(TableMetadata.CF_NAME);
@@ -49,24 +57,57 @@ public class ClusterMetadata {
             l.add(row);
         }
 
-        for (CQLRow ksRow : ks) {
-            String ksName = ksRow.getString(KeyspaceMetadata.KS_NAME);
-            KeyspaceMetadata ksm = KeyspaceMetadata.build(ksRow);
+        if (table == null) {
+            assert ks != null;
+            Set<String> addedKs = new HashSet<String>();
+            for (CQLRow ksRow : ks) {
+                String ksName = ksRow.getString(KeyspaceMetadata.KS_NAME);
+                KeyspaceMetadata ksm = KeyspaceMetadata.build(ksRow);
 
-            if (cfDefs.get(ksName) != null) {
-                for (CQLRow cfRow : cfDefs.get(ksName)) {
-                    String cfName = cfRow.getString(TableMetadata.CF_NAME);
-                    TableMetadata tm = TableMetadata.build(ksm, cfRow);
+                if (cfDefs.containsKey(ksName)) {
+                    buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName));
+                }
+                addedKs.add(ksName);
+                keyspaces.put(ksName, ksm);
+            }
 
-                    if (colsDefs.get(ksName) == null || colsDefs.get(ksName).get(cfName) == null)
-                        continue;
-
-                    for (CQLRow colRow : colsDefs.get(ksName).get(cfName)) {
-                        ColumnMetadata cm = ColumnMetadata.build(tm, colRow);
-                    }
+            // If keyspace is null, it means we're rebuilding from scratch, so
+            // remove anything that was not just added as it means it's a dropped keyspace
+            if (keyspace == null) {
+                Iterator<String> iter = keyspaces.keySet().iterator();
+                while (iter.hasNext()) {
+                    if (!addedKs.contains(iter.next()))
+                        iter.remove();
                 }
             }
-            keyspaces.put(ksName, ksm);
+        } else {
+            assert keyspace != null;
+            KeyspaceMetadata ksm = keyspaces.get(keyspace);
+
+            // If we update a keyspace we don't know about, something went
+            // wrong. Log an error an schedule a full schema rebuilt.
+            if (ksm == null) {
+                logger.error(String.format("Asked to rebuild table %s.%s but I don't know keyspace %s", keyspace, table, keyspace));
+                cluster.submitSchemaRefresh(null, null);
+                return;
+            }
+
+            if (cfDefs.containsKey(keyspace))
+                buildTableMetadata(ksm, cfDefs.get(keyspace), colsDefs.get(keyspace));
+        }
+    }
+
+    private static void buildTableMetadata(KeyspaceMetadata ksm, List<CQLRow> cfRows, Map<String, List<CQLRow>> colsDefs) {
+        for (CQLRow cfRow : cfRows) {
+            String cfName = cfRow.getString(TableMetadata.CF_NAME);
+            TableMetadata tm = TableMetadata.build(ksm, cfRow);
+
+            if (colsDefs == null || colsDefs.get(cfName) == null)
+                continue;
+
+            for (CQLRow colRow : colsDefs.get(cfName)) {
+                ColumnMetadata cm = ColumnMetadata.build(tm, colRow);
+            }
         }
     }
 

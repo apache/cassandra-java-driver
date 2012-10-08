@@ -61,58 +61,58 @@ public class SessionTest {
     //    assertEquals(0.2,   r.getFloat("f"), 0.01);
     //}
 
-    @Test
-    public void PreparedStatementTest() throws Exception {
+    //@Test
+    //public void PreparedStatementTest() throws Exception {
 
-        Cluster cluster = new Cluster.Builder().addContactPoint("localhost").build();
-        Session session = cluster.connect();
+    //    Cluster cluster = new Cluster.Builder().addContactPoint("localhost").build();
+    //    Session session = cluster.connect();
 
-        try
-        {
-            session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
-            session.execute("USE test_ks");
-            session.execute("CREATE TABLE test_2 (k text, i int, f float, PRIMARY KEY(k, i))");
-        } catch (Exception e) {
-            // Skip if already created
-            session.execute("USE test_ks");
-        }
+    //    try
+    //    {
+    //        session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
+    //        session.execute("USE test_ks");
+    //        session.execute("CREATE TABLE test_2 (k text, i int, f float, PRIMARY KEY(k, i))");
+    //    } catch (Exception e) {
+    //        // Skip if already created
+    //        session.execute("USE test_ks");
+    //    }
 
-        PreparedStatement insertStmt = session.prepare("INSERT INTO test_2 (k, i, f) VALUES (?, ?, ?)");
-        PreparedStatement selectStmt = session.prepare("SELECT * FROM test_2 WHERE k = ?");
+    //    PreparedStatement insertStmt = session.prepare("INSERT INTO test_2 (k, i, f) VALUES (?, ?, ?)");
+    //    PreparedStatement selectStmt = session.prepare("SELECT * FROM test_2 WHERE k = ?");
 
-        ResultSet rs;
-        BoundStatement bs;
+    //    ResultSet rs;
+    //    BoundStatement bs;
 
-        bs = insertStmt.newBoundStatement().setString(0, "prep").setInt("i", 1).setFloat(2, 0.1f);
-        rs = session.executePrepared(bs);
+    //    bs = insertStmt.newBoundStatement().setString(0, "prep").setInt("i", 1).setFloat(2, 0.1f);
+    //    rs = session.executePrepared(bs);
 
-        bs = insertStmt.newBoundStatement().setString(0, "prep").setFloat("f", 0.2f).setInt(1, 2);
-        rs = session.executePrepared(bs);
+    //    bs = insertStmt.newBoundStatement().setString(0, "prep").setFloat("f", 0.2f).setInt(1, 2);
+    //    rs = session.executePrepared(bs);
 
-        session.executePrepared(insertStmt.bind("prep", 3, 42.0f));
+    //    session.executePrepared(insertStmt.bind("prep", 3, 42.0f));
 
-        bs = selectStmt.newBoundStatement().setString("k", "prep");
-        rs = session.executePrepared(bs);
+    //    bs = selectStmt.newBoundStatement().setString("k", "prep");
+    //    rs = session.executePrepared(bs);
 
-        List<CQLRow> l = rs.fetchAll();
-        assertEquals(3, l.size());
+    //    List<CQLRow> l = rs.fetchAll();
+    //    assertEquals(3, l.size());
 
-        CQLRow r;
-        r = l.get(0);
-        assertEquals("prep", r.getString(0));
-        assertEquals(1,     r.getInt("i"));
-        assertEquals(0.1,   r.getFloat("f"), 0.01);
+    //    CQLRow r;
+    //    r = l.get(0);
+    //    assertEquals("prep", r.getString(0));
+    //    assertEquals(1,     r.getInt("i"));
+    //    assertEquals(0.1,   r.getFloat("f"), 0.01);
 
-        r = l.get(1);
-        assertEquals("prep", r.getString("k"));
-        assertEquals(2,     r.getInt("i"));
-        assertEquals(0.2,   r.getFloat("f"), 0.01);
+    //    r = l.get(1);
+    //    assertEquals("prep", r.getString("k"));
+    //    assertEquals(2,     r.getInt("i"));
+    //    assertEquals(0.2,   r.getFloat("f"), 0.01);
 
-        r = l.get(2);
-        assertEquals("prep", r.getString("k"));
-        assertEquals(3,     r.getInt("i"));
-        assertEquals(42.0f, r.getFloat("f"), 0.01);
-    }
+    //    r = l.get(2);
+    //    assertEquals("prep", r.getString("k"));
+    //    assertEquals(3,     r.getInt("i"));
+    //    assertEquals(42.0f, r.getFloat("f"), 0.01);
+    //}
 
     //@Test
     //public void CollectionsTest() throws Exception {
@@ -186,4 +186,28 @@ public class SessionTest {
     //        Thread.currentThread().sleep(1000);
     //    }
     //}
+
+    @Test
+    public void SchemaTest() throws Exception {
+
+        Cluster cluster = new Cluster.Builder().addContactPoints("127.0.0.1").build();
+        Session session = cluster.connect();
+
+        try {
+            session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
+            // We should deal with that sleep
+            try { Thread.sleep(2000); } catch (Exception e) {}
+            session.execute("USE test_ks");
+            session.execute("CREATE TABLE test (k text PRIMARY KEY, i int, f float)");
+        } catch (AlreadyExistsException e) {
+            // Skip if already exists
+            session.execute("USE test_ks");
+        }
+
+        for (int i = 0; i < 10000; ++i) {
+            System.out.println("--- Schema " + i + " ---");
+            System.out.println(cluster.getMetadata().getKeyspace("test_ks").exportAsString());
+            Thread.currentThread().sleep(4000);
+        }
+    }
 }

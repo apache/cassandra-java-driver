@@ -44,16 +44,8 @@ public class Cluster {
 
     final Manager manager;
 
-    private Cluster(List<InetSocketAddress> contactPoints) {
-        try
-        {
-            this.manager = new Manager(contactPoints);
-        }
-        catch (ConnectionException e)
-        {
-            // TODO: We should hide that somehow and only send a (non-checked) exception if there is no node to connect to
-            throw new RuntimeException(e);
-        }
+    private Cluster(List<InetSocketAddress> contactPoints) throws NoHostAvailableException {
+        this.manager = new Manager(contactPoints);
     }
 
     /**
@@ -64,8 +56,11 @@ public class Cluster {
      *
      * @param config the Cluster.Configuration to use
      * @return the newly created Cluster instance
+     *
+     * @throws NoHostAvailableException if no host amongst the contact points
+     * can be reached.
      */
-    public static Cluster buildFrom(Configuration config) {
+    public static Cluster buildFrom(Configuration config) throws NoHostAvailableException {
         return new Cluster(config.contactPoints());
     }
 
@@ -263,7 +258,17 @@ public class Cluster {
             return this;
         }
 
-        public Cluster build() {
+        /**
+         * Build the cluster with the configured set of initial contact points.
+         *
+         * This is a shorthand for {@code Cluster.buildFrom(this)}.
+         *
+         * @return the newly build Cluster instance.
+         *
+         * @throws NoHostAvailableException if none of the contact points
+         * provided can be reached.
+         */
+        public Cluster build() throws NoHostAvailableException {
             return Cluster.buildFrom(this);
         }
     }
@@ -298,7 +303,7 @@ public class Cluster {
         // TODO: give a name to the threads of this executor
         final ExecutorService executor = Executors.newCachedThreadPool(new NamedThreadFactory("Cassandra Java Driver worker"));
 
-        private Manager(List<InetSocketAddress> contactPoints) throws ConnectionException {
+        private Manager(List<InetSocketAddress> contactPoints) throws NoHostAvailableException {
             this.metadata = new ClusterMetadata(this);
             this.contactPoints = contactPoints;
             this.connectionFactory = new Connection.Factory(this);
@@ -307,7 +312,7 @@ public class Cluster {
                 addHost(address, false);
 
             this.controlConnection = new ControlConnection(this);
-            controlConnection.reconnect();
+            controlConnection.connect();
         }
 
         private Session newSession() {
@@ -389,6 +394,17 @@ public class Cluster {
                 onRemove(host);
         }
 
+        // TODO: take a lot or something so that if a a getSchema() is called,
+        // we wait for that to be finished. And maybe avoid multiple refresh at
+        // the same time.
+        public void submitSchemaRefresh(final String keyspace, final String table) {
+            executor.submit(new Runnable() {
+                public void run() {
+                    controlConnection.refreshSchema(keyspace, table);
+                }
+            });
+        }
+
         // Called when some message has been received but has been initiated from the server (streamId < 0).
         public void handle(Message.Response response) {
 
@@ -434,6 +450,29 @@ public class Cluster {
                                     // Ignore down event. Connection will realized a node is dead quicly enough when they write to
                                     // it, and there is no point in taking the risk of marking the node down mistakenly because we
                                     // didn't received the event in a timely fashion
+                                    break;
+                            }
+                            break;
+                        case SCHEMA_CHANGE:
+                            Event.SchemaChange scc = (Event.SchemaChange)event;
+                            switch (scc.change) {
+                                case CREATED:
+                                    if (scc.table.isEmpty())
+                                        submitSchemaRefresh(null, null);
+                                    else
+                                        submitSchemaRefresh(scc.keyspace, null);
+                                    break;
+                                case DROPPED:
+                                    if (scc.table.isEmpty())
+                                        submitSchemaRefresh(null, null);
+                                    else
+                                        submitSchemaRefresh(scc.keyspace, null);
+                                    break;
+                                case UPDATED:
+                                    if (scc.table.isEmpty())
+                                        submitSchemaRefresh(scc.keyspace, null);
+                                    else
+                                        submitSchemaRefresh(scc.keyspace, scc.table);
                                     break;
                             }
                             break;

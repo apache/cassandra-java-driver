@@ -1,5 +1,7 @@
 package com.datastax.driver.core;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 import java.util.*;
 
 /**
@@ -15,7 +17,7 @@ public class KeyspaceMetadata {
     private final String name;
     private final boolean durableWrites;
     private final Map<String, String> replication = new HashMap<String, String>();
-    private final Map<String, TableMetadata> tables = new HashMap<String, TableMetadata>();
+    private final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
 
     private KeyspaceMetadata(String name, boolean durableWrites) {
         this.name = name;

@@ -279,7 +279,7 @@ public class TableMetadata {
     private String asCQLQuery(boolean formatted) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("CREATE TABLE ").append(name);
+        sb.append("CREATE TABLE ").append(name).append(" (");
         newLine(sb, formatted);
         for (ColumnMetadata cm : columns.values())
             newLine(sb.append(spaces(4, formatted)).append(cm), formatted);
@@ -303,17 +303,15 @@ public class TableMetadata {
         newLine(sb, formatted);
         // end PK
 
-        newLine(sb, formatted);
-
         // Options
-        sb.append(" WITH read_repair_chance = ").append(options.readRepair);
+        sb.append(") WITH read_repair_chance = ").append(options.readRepair);
         and(sb, formatted).append("local_read_repair_chance = ").append(options.localReadRepair);
         and(sb, formatted).append("replicate_on_write = ").append(options.replicateOnWrite);
         and(sb, formatted).append("gc_grace_seconds = ").append(options.gcGrace);
         and(sb, formatted).append("bloom_filter_fp_chance = ").append(options.bfFpChance);
         and(sb, formatted).append("caching = ").append(options.caching);
         if (options.comment != null)
-            and(sb, formatted).append("comment = ").append(options.comment);
+            and(sb, formatted).append("comment = '").append(options.comment).append("'");
 
         // TODO: finish (compaction and compression)
         newLine(sb, formatted);

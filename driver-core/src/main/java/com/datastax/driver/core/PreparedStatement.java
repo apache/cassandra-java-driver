@@ -2,6 +2,8 @@ package com.datastax.driver.core;
 
 import org.apache.cassandra.transport.messages.ResultMessage;
 
+import com.datastax.driver.core.exceptions.DriverInternalError;
+
 /**
  * Represents a prepared statement, a query with bound variables that has been
  * prepared (pre-parsed) by the database.
@@ -30,12 +32,8 @@ public class PreparedStatement {
                     defs[i] = Columns.Definition.fromTransportSpecification(pmsg.metadata.names.get(i));
 
                 return new PreparedStatement(new Columns(defs), pmsg.statementId.bytes);
-            case VOID:
-            case ROWS:
-            case SET_KEYSPACE:
-                throw new RuntimeException("ResultSet received when prepared statement received was expected");
             default:
-                throw new AssertionError();
+                throw new DriverInternalError(String.format("%s response received when prepared statement received was expected", msg.kind));
         }
     }
 
