@@ -359,7 +359,7 @@ class Connection extends org.apache.cassandra.transport.Connection
                 if (handler == null)
                     // TODO: we should handle those with a default handler
                     throw new RuntimeException("No handler set for " + streamId + ", handlers = " + pending);
-                handler.callback.onSet(response);
+                handler.callback.onSet(Connection.this, response);
             }
         }
 
@@ -388,6 +388,7 @@ class Connection extends org.apache.cassandra.transport.Connection
     static class Future extends SimpleFuture<Message.Response> implements ResponseCallback {
 
         private final Message.Request request;
+        private volatile InetSocketAddress address;
 
         public Future(Message.Request request) {
             this.request = request;
@@ -397,18 +398,23 @@ class Connection extends org.apache.cassandra.transport.Connection
             return request;
         }
 
-        public void onSet(Message.Response response) {
+        public void onSet(Connection connection, Message.Response response) {
+            this.address = connection.address;
             super.set(response);
         }
 
         public void onException(Exception exception) {
             super.setException(exception);
         }
+
+        public InetSocketAddress getAddress() {
+            return address;
+        }
     }
 
     interface ResponseCallback {
         public Message.Request request();
-        public void onSet(Message.Response response);
+        public void onSet(Connection connection, Message.Response response);
         public void onException(Exception exception);
     }
 

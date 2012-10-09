@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
 
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.SimpleFuture;
@@ -13,8 +14,10 @@ import com.datastax.driver.core.utils.SimpleFuture;
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.ErrorMessage;
 import org.apache.cassandra.transport.messages.ExecuteMessage;
+import org.apache.cassandra.transport.messages.PrepareMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
 import org.apache.cassandra.exceptions.UnavailableException;
+import org.apache.cassandra.exceptions.PreparedQueryNotFoundException;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
 import org.apache.cassandra.exceptions.WriteTimeoutException;
 
@@ -106,16 +109,15 @@ class RetryingCallback implements Connection.ResponseCallback {
         return callback.request();
     }
 
-    public void onSet(Message.Response response) {
+    public void onSet(Connection connection, Message.Response response) {
         switch (response.type) {
             case RESULT:
-                callback.onSet(response);
+                callback.onSet(connection, response);
                 break;
             case ERROR:
                 ErrorMessage err = (ErrorMessage)response;
                 boolean retry = false;
                 switch (err.error.code()) {
-                    // TODO: Handle cases take into account by the retry policy
                     case READ_TIMEOUT:
                         assert err.error instanceof ReadTimeoutException;
                         ReadTimeoutException rte = (ReadTimeoutException)err.error;
@@ -145,17 +147,47 @@ class RetryingCallback implements Connection.ResponseCallback {
                         if (queryRetries == 0)
                             retry = true;
                         break;
+                    case UNPREPARED:
+                        assert err.error instanceof PreparedQueryNotFoundException;
+                        PreparedQueryNotFoundException pqnf = (PreparedQueryNotFoundException)err.error;
+                        String toPrepare = manager.cluster.manager.preparedQueries.get(pqnf.id);
+                        if (toPrepare == null) {
+                            // This shouldn't happen
+                            String msg = String.format("Tried to execute unknown prepared query %s", pqnf.id);
+                            logger.error(msg);
+                            callback.onException(new DriverInternalError(msg));
+                            return;
+                        }
+
+                        try {
+                            Message.Response prepareResponse = connection.write(new PrepareMessage(toPrepare)).get();
+                            // TODO check return ?
+                            retry = true;
+                        } catch (InterruptedException e) {
+                            logError(new ConnectionException(connection.address, "Interrupted while preparing query to execute"));
+                            retry(false);
+                            return;
+                        } catch (ExecutionException e) {
+                            logError(new ConnectionException(connection.address, "Unexpected problem while preparing query to execute: " + e.getCause().getMessage()));
+                            retry(false);
+                            return;
+                        } catch (ConnectionException e) {
+                            logger.debug("Connection exception while preparing missing statement", e);
+                            logError(e);
+                            retry(false);
+                            return;
+                        }
                 }
                 if (retry) {
                     ++queryRetries;
                     retry(true);
                 } else {
-                    callback.onSet(response);
+                    callback.onSet(connection, response);
                 }
 
                 break;
             default:
-                callback.onSet(response);
+                callback.onSet(connection, response);
                 break;
         }
     }

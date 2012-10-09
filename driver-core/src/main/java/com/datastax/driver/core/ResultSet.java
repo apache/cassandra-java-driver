@@ -1,5 +1,6 @@
 package com.datastax.driver.core;
 
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -162,7 +163,7 @@ public class ResultSet implements Iterable<CQLRow> {
                 return request;
             }
 
-            public void onSet(Message.Response response) {
+            public void onSet(Connection connection, Message.Response response) {
                 try {
                     switch (response.type) {
                         case RESULT:

@@ -5,9 +5,11 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.apache.cassandra.utils.MD5Digest;
 import org.apache.cassandra.transport.Event;
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.EventMessage;
+import org.apache.cassandra.transport.messages.PrepareMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
 
 import com.datastax.driver.core.exceptions.*;
@@ -303,6 +305,13 @@ public class Cluster {
         // TODO: give a name to the threads of this executor
         final ExecutorService executor = Executors.newCachedThreadPool(new NamedThreadFactory("Cassandra Java Driver worker"));
 
+        // All the queries that have been prepared (we keep them so we can
+        // re-prepared them when a node fail or a new one join the cluster).
+        // Note: we could move this down to the session level, but since
+        // prepared statement are global to a node, this would yield a slightly
+        // less clear behavior.
+        final Map<MD5Digest, String> preparedQueries = new ConcurrentHashMap<MD5Digest, String>();
+
         private Manager(List<InetSocketAddress> contactPoints) throws NoHostAvailableException {
             this.metadata = new ClusterMetadata(this);
             this.contactPoints = contactPoints;
@@ -328,6 +337,8 @@ public class Cluster {
             ScheduledFuture scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
             if (scheduledAttempt != null)
                 scheduledAttempt.cancel(false);
+
+            prepareAllQueries(host);
 
             controlConnection.onUp(host);
             for (Session s : sessions)
@@ -368,6 +379,7 @@ public class Cluster {
 
         public void onAdd(Host host) {
             logger.trace(String.format("Adding new host %s", host));
+            prepareAllQueries(host);
             controlConnection.onAdd(host);
             for (Session s : sessions)
                 s.manager.onAdd(host);
@@ -392,6 +404,37 @@ public class Cluster {
 
             if (metadata.remove(host))
                 onRemove(host);
+        }
+
+        // Prepare a query on all nodes
+        public void prepare(MD5Digest digest, String query, InetSocketAddress toExclude) {
+            preparedQueries.put(digest, query);
+            for (Session s : sessions)
+                s.manager.prepare(query, toExclude);
+        }
+
+        private void prepareAllQueries(Host host) {
+            if (preparedQueries.isEmpty())
+                return;
+
+            try {
+                Connection connection = connectionFactory.open(host);
+                List<Connection.Future> futures = new ArrayList<Connection.Future>(preparedQueries.size());
+                for (String query : preparedQueries.values()) {
+                    futures.add(connection.write(new PrepareMessage(query)));
+                }
+                for (Connection.Future future : futures) {
+                    try {
+                        future.get();
+                    } catch (InterruptedException e) {
+                        logger.debug("Interupted while preparing queries on new/newly up host", e);
+                    } catch (ExecutionException e) {
+                        logger.debug("Unexpected error while preparing queries on new/newly up host", e);
+                    }
+                }
+            } catch (ConnectionException e) {
+                // Ignore, not a big deal
+            }
         }
 
         // TODO: take a lot or something so that if a a getSchema() is called,

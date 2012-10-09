@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
  * it makes sense), etc...
  * <p>
  * Session instances are thread-safe and usually a single instance is enough
- * per application. However, a given session can only use set to one keyspace
- * at a time, so this is really more one instance per keyspace used.
+ * per application. However, a given session can only be set to one keyspace
+ * at a time, so one instance per keyspace is necessary.
  */
 public class Session {
 
@@ -127,7 +127,7 @@ public class Session {
         try {
             Connection.Future future = new Connection.Future(new PrepareMessage(query));
             manager.execute(future);
-            return toPreparedStatement(future);
+            return toPreparedStatement(query, future);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -184,12 +184,20 @@ public class Session {
         return manager.executeQuery(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values)));
     }
 
-    private PreparedStatement toPreparedStatement(Connection.Future future) {
+    private PreparedStatement toPreparedStatement(String query, Connection.Future future) {
         try {
             Message.Response response = future.get();
             switch (response.type) {
                 case RESULT:
-                    return PreparedStatement.fromMessage((ResultMessage)response);
+                    ResultMessage rm = (ResultMessage)response;
+                    switch (rm.kind) {
+                        case PREPARED:
+                            ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
+                            manager.cluster.manager.prepare(pmsg.statementId, query, future.getAddress());
+                            return PreparedStatement.fromMessage(pmsg);
+                        default:
+                            throw new DriverInternalError(String.format("%s response received when prepared statement received was expected", rm.kind));
+                    }
                 case ERROR:
                     // TODO: handle errors
                     logger.info("Got " + response);
@@ -298,6 +306,32 @@ public class Session {
          */
         public void execute(Connection.ResponseCallback callback) {
             new RetryingCallback(this, callback).sendRequest();
+        }
+
+        public void prepare(String query, InetSocketAddress toExclude) {
+            for (Map.Entry<Host, HostConnectionPool> entry : pools.entrySet()) {
+                if (entry.getKey().getAddress().equals(toExclude))
+                    continue;
+
+                // Let's not wait too long if we can't get a connection. Things
+                // will fix themselves once the user tries a query anyway.
+                Connection c = null;
+                try {
+                    c = entry.getValue().borrowConnection(200, TimeUnit.MILLISECONDS);
+                    c.write(new PrepareMessage(query)).get();
+                } catch (ConnectionException e) {
+                    // Again, not being able to prepare the query right now is no big deal, so just ignore
+                } catch (InterruptedException e) {
+                    // Same as above
+                } catch (ExecutionException e) {
+                    // We shouldn't really get exception while preparing a
+                    // query, so log this (but ignore otherwise as it's not a big deal)
+                    logger.error(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), e);
+                } finally {
+                    if (c != null)
+                        entry.getValue().returnConnection(c);
+                }
+            }
         }
 
         public ResultSet.Future executeQuery(Message.Request msg) {

@@ -1,5 +1,6 @@
 package com.datastax.driver.core;
 
+import org.apache.cassandra.utils.MD5Digest;
 import org.apache.cassandra.transport.messages.ResultMessage;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
@@ -16,14 +17,14 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
 public class PreparedStatement {
 
     final Columns metadata;
-    final byte[] id;
+    final MD5Digest id;
 
-    private PreparedStatement(Columns metadata, byte[] id) {
+    private PreparedStatement(Columns metadata, MD5Digest id) {
         this.metadata = metadata;
         this.id = id;
     }
 
-    static PreparedStatement fromMessage(ResultMessage msg) {
+    static PreparedStatement fromMessage(ResultMessage.Prepared msg) {
         switch (msg.kind) {
             case PREPARED:
                 ResultMessage.Prepared pmsg = (ResultMessage.Prepared)msg;
@@ -31,7 +32,7 @@ public class PreparedStatement {
                 for (int i = 0; i < defs.length; i++)
                     defs[i] = Columns.Definition.fromTransportSpecification(pmsg.metadata.names.get(i));
 
-                return new PreparedStatement(new Columns(defs), pmsg.statementId.bytes);
+                return new PreparedStatement(new Columns(defs), pmsg.statementId);
             default:
                 throw new DriverInternalError(String.format("%s response received when prepared statement received was expected", msg.kind));
         }
