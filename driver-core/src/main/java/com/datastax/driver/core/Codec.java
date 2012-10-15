@@ -38,12 +38,10 @@ class Codec {
     private Codec() {}
 
     public static <T> AbstractType<T> getCodec(DataType type) {
-        switch (type.getKind()) {
-            case NATIVE:     return (AbstractType<T>)nativeCodec(type.asNative());
-            case COLLECTION: return (AbstractType<T>)collectionCodec(type.asCollection());
-            case CUSTOM:     return (AbstractType<T>)customCodec(type.asCustom());
-            default:         throw new RuntimeException("Unknow data type kind");
-        }
+        if (type.isCollection())
+            return (AbstractType<T>)collectionCodec(type.asCollection());
+        else
+            return (AbstractType<T>)nativeCodec(type.asNative());
     }
 
     private static AbstractType<?> nativeCodec(DataType.Native type) {
@@ -71,7 +69,7 @@ class Codec {
 
     private static AbstractType<?> collectionCodec(DataType.Collection type) {
 
-        switch (type.collectionType()) {
+        switch (type.getKind()) {
             case LIST:
                 AbstractType<?> listElts = getCodec(((DataType.Collection.List)type).getElementsType());
                 return ListType.getInstance(listElts);
@@ -86,10 +84,6 @@ class Codec {
             default:
                 throw new RuntimeException("Unknown collection type");
         }
-    }
-
-    private static AbstractType<?> customCodec(DataType.Custom type) {
-        return null;
     }
 
     public static DataType rawTypeToDataType(AbstractType<?> rawType) {

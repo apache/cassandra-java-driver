@@ -97,68 +97,60 @@ public class BoundStatement {
         {
             Object toSet = values[i];
             DataType columnType = statement.getVariables().getType(i);
-            switch (columnType.getKind())
-            {
-                case NATIVE:
-                    if (!Codec.isCompatible(columnType.asNative(), toSet.getClass()))
-                        throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but %s provided", i, columnType, toSet.getClass()));
-                    break;
-                case COLLECTION:
-                    switch (columnType.asCollection().collectionType())
-                    {
-                        case LIST:
-                            if (!(toSet instanceof List))
-                                throw new InvalidTypeException(String.format("Invalid type for value %d, column is a list but %s provided", i, toSet.getClass()));
+            if (columnType.isCollection()) {
+                switch (columnType.asCollection().getKind()) {
+                    case LIST:
+                        if (!(toSet instanceof List))
+                            throw new InvalidTypeException(String.format("Invalid type for value %d, column is a list but %s provided", i, toSet.getClass()));
 
-                            List l = (List)toSet;
-                            // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
-                            if (!l.isEmpty()) {
-                                // Ugly? Yes
-                                Class klass = l.get(0).getClass();
-                                DataType.Native eltType = (DataType.Native)((DataType.Collection.List)columnType).getElementsType();
-                                if (!Codec.isCompatible(eltType, klass))
-                                    throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but provided list value are %s", i, columnType, klass));
-                            }
-                            break;
-                        case SET:
-                            if (!(toSet instanceof Set))
-                                throw new InvalidTypeException(String.format("Invalid type for value %d, column is a set but %s provided", i, toSet.getClass()));
+                        List l = (List)toSet;
+                        // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
+                        if (!l.isEmpty()) {
+                            // Ugly? Yes
+                            Class klass = l.get(0).getClass();
+                            DataType.Native eltType = (DataType.Native)((DataType.Collection.List)columnType).getElementsType();
+                            if (!Codec.isCompatible(eltType, klass))
+                                throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but provided list value are %s", i, columnType, klass));
+                        }
+                        break;
+                    case SET:
+                        if (!(toSet instanceof Set))
+                            throw new InvalidTypeException(String.format("Invalid type for value %d, column is a set but %s provided", i, toSet.getClass()));
 
-                            Set s = (Set)toSet;
-                            // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
-                            if (!s.isEmpty()) {
-                                // Ugly? Yes
-                                Class klass = s.iterator().next().getClass();
-                                DataType.Native eltType = (DataType.Native)((DataType.Collection.List)columnType).getElementsType();
-                                if (!Codec.isCompatible(eltType, klass))
-                                    throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but provided set value are %s", i, columnType, klass));
-                            }
-                            break;
-                        case MAP:
-                            if (!(toSet instanceof Map))
-                                throw new InvalidTypeException(String.format("Invalid type for value %d, column is a map but %s provided", i, toSet.getClass()));
+                        Set s = (Set)toSet;
+                        // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
+                        if (!s.isEmpty()) {
+                            // Ugly? Yes
+                            Class klass = s.iterator().next().getClass();
+                            DataType.Native eltType = (DataType.Native)((DataType.Collection.List)columnType).getElementsType();
+                            if (!Codec.isCompatible(eltType, klass))
+                                throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but provided set value are %s", i, columnType, klass));
+                        }
+                        break;
+                    case MAP:
+                        if (!(toSet instanceof Map))
+                            throw new InvalidTypeException(String.format("Invalid type for value %d, column is a map but %s provided", i, toSet.getClass()));
 
-                            Map m = (Map)toSet;
-                            // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
-                            if (!m.isEmpty()) {
-                                // Ugly? Yes
-                                Map.Entry entry = (Map.Entry)m.entrySet().iterator().next();
-                                Class keysClass = entry.getKey().getClass();
-                                Class valuesClass = entry.getValue().getClass();
+                        Map m = (Map)toSet;
+                        // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
+                        if (!m.isEmpty()) {
+                            // Ugly? Yes
+                            Map.Entry entry = (Map.Entry)m.entrySet().iterator().next();
+                            Class keysClass = entry.getKey().getClass();
+                            Class valuesClass = entry.getValue().getClass();
 
-                                DataType.Collection.Map mapType = (DataType.Collection.Map)columnType;
-                                DataType.Native keysType = (DataType.Native)mapType.getKeysType();
-                                DataType.Native valuesType = (DataType.Native)mapType.getValuesType();
-                                if (!Codec.isCompatible(keysType, keysClass) || !Codec.isCompatible(valuesType, valuesClass))
-                                    throw new InvalidTypeException(String.format("Invalid type for value %d, column type %s conflicts with provided type %s", i, mapType, toSet.getClass()));
-                            }
-                            break;
+                            DataType.Collection.Map mapType = (DataType.Collection.Map)columnType;
+                            DataType.Native keysType = (DataType.Native)mapType.getKeysType();
+                            DataType.Native valuesType = (DataType.Native)mapType.getValuesType();
+                            if (!Codec.isCompatible(keysType, keysClass) || !Codec.isCompatible(valuesType, valuesClass))
+                                throw new InvalidTypeException(String.format("Invalid type for value %d, column type %s conflicts with provided type %s", i, mapType, toSet.getClass()));
+                        }
+                        break;
 
-                    }
-                    break;
-                case CUSTOM:
-                    // TODO: Not sure how to handle that though
-                    throw new UnsupportedOperationException();
+                }
+            } else {
+                if (!Codec.isCompatible(columnType.asNative(), toSet.getClass()))
+                    throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but %s provided", i, columnType, toSet.getClass()));
             }
             setValue(i, Codec.getCodec(columnType).decompose(toSet));
         }
@@ -643,7 +635,7 @@ public class BoundStatement {
      */
     public <T> BoundStatement setList(int i, List<T> v) {
         DataType type = metadata().getType(i);
-        if (type.getKind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.LIST)
+        if (!type.isCollection() || type.asCollection().getKind() != DataType.Collection.Kind.LIST)
             throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a list", metadata().getName(i), type));
 
         // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
@@ -686,7 +678,7 @@ public class BoundStatement {
      */
     public <K, V> BoundStatement setMap(int i, Map<K, V> v) {
         DataType type = metadata().getType(i);
-        if (type.getKind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.MAP)
+        if (!type.isCollection() || type.asCollection().getKind() != DataType.Collection.Kind.MAP)
             throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a map", metadata().getName(i), type));
 
         if (!v.isEmpty()) {
@@ -732,7 +724,7 @@ public class BoundStatement {
      */
     public <T> BoundStatement setSet(int i, Set<T> v) {
         DataType type = metadata().getType(i);
-        if (type.getKind() != DataType.Kind.COLLECTION || type.asCollection().collectionType() != DataType.Collection.Type.SET)
+        if (!type.isCollection() || type.asCollection().getKind() != DataType.Collection.Kind.SET)
             throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a set", metadata().getName(i), type));
 
         if (!v.isEmpty()) {
