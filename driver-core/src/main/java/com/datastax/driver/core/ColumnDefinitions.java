@@ -10,14 +10,14 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * Metadata describing the columns returned in a {@link ResultSet} or a
  * {@link PreparedStatement}.
  */
-public class Columns implements Iterable<Columns.Definition> {
+public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition> {
 
-    static final Columns EMPTY = new Columns(new Definition[0]);
+    static final ColumnDefinitions EMPTY = new ColumnDefinitions(new Definition[0]);
 
     private final Definition[] byIdx;
     private final Map<String, Integer> byName;
 
-    Columns(Definition[] defs) {
+    ColumnDefinitions(Definition[] defs) {
 
         this.byIdx = defs;
         this.byName = new HashMap<String, Integer>(defs.length);
@@ -32,7 +32,7 @@ public class Columns implements Iterable<Columns.Definition> {
      *
      * @return the number of columns described by this metadata.
      */
-    public int count() {
+    public int size() {
         return byIdx.length;
     }
 
@@ -67,37 +67,11 @@ public class Columns implements Iterable<Columns.Definition> {
     }
 
     /**
-     * Returns the list of the names for the columns defined in these metadata.
-     *
-     * @return the list of the names for the columns defined in these metadata.
-     * The names in the returned list will be in the order of this metadata.
-     */
-    public List<String> getNames() {
-        List<String> names = new ArrayList<String>(byIdx.length);
-        for (Definition def : byIdx)
-            names.add(def.name);
-        return names;
-    }
-
-    /**
-     * Returns the list of the types for the columns defined in these metadata.
-     *
-     * @return the list of the types for the columns defined in these metadata.
-     * The types in the returned list will be in the order of this metadata.
-     */
-    public List<DataType> getTypes() {
-        List<DataType> types = new ArrayList<DataType>(byIdx.length);
-        for (Definition def : byIdx)
-            types.add(def.type);
-        return types;
-    }
-
-    /**
      * Returns the name of the {@code i}th column in this metadata.
      *
      * @return the name of the {@code i}th column in this metadata.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= count()}
+     * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= size()}
      */
     public String getName(int i) {
         return byIdx[i].name;
@@ -108,7 +82,7 @@ public class Columns implements Iterable<Columns.Definition> {
      *
      * @return the type of the {@code i}th column in this metadata.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= count()}
+     * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= size()}
      */
     public DataType getType(int i) {
         return byIdx[i].type;
@@ -121,7 +95,7 @@ public class Columns implements Iterable<Columns.Definition> {
      *
      * @throws IllegalArgumentException if {@code name} is not one of the columns in this metadata.
      */
-    public DataType geType(String name) {
+    public DataType getType(String name) {
         return getType(getIdx(name));
     }
 
@@ -130,7 +104,7 @@ public class Columns implements Iterable<Columns.Definition> {
      *
      * @return the keyspace of the {@code i}th column in this metadata.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= count()}
+     * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= size()}
      */
     public String getKeyspace(int i) {
         return byIdx[i].keyspace;
@@ -152,7 +126,7 @@ public class Columns implements Iterable<Columns.Definition> {
      *
      * @return the table of the {@code i}th column in this metadata.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= count()}
+     * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= size()}
      */
     public String getTable(int i) {
         return byIdx[i].table;
@@ -172,7 +146,7 @@ public class Columns implements Iterable<Columns.Definition> {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Columns[");
-        for (int i = 0; i < count(); i++) {
+        for (int i = 0; i < size(); i++) {
             if (i != 0)
                 sb.append(", ");
             Definition def = byIdx[i];
@@ -191,7 +165,7 @@ public class Columns implements Iterable<Columns.Definition> {
     }
 
     void checkBounds(int i) {
-        if (i < 0 || i >= count())
+        if (i < 0 || i >= size())
             throw new ArrayIndexOutOfBoundsException(i);
     }
 

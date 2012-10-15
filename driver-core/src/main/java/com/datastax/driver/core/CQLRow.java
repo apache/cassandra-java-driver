@@ -15,15 +15,15 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  */
 public class CQLRow {
 
-    private final Columns metadata;
+    private final ColumnDefinitions metadata;
     private final List<ByteBuffer> data;
 
-    private CQLRow(Columns metadata, List<ByteBuffer> data) {
+    private CQLRow(ColumnDefinitions metadata, List<ByteBuffer> data) {
         this.metadata = metadata;
         this.data = data;
     }
 
-    static CQLRow fromData(Columns metadata, List<ByteBuffer> data) {
+    static CQLRow fromData(ColumnDefinitions metadata, List<ByteBuffer> data) {
         if (data == null)
             return null;
 
@@ -35,7 +35,7 @@ public class CQLRow {
      *
      * @return the columns contained in this CQLRow.
      */
-    public Columns getColumns() {
+    public ColumnDefinitions getColumnDefinitions() {
         return metadata;
     }
 
@@ -45,7 +45,7 @@ public class CQLRow {
      * @param i the index of the column to check.
      * @return whether the {@code i}th value of this row is NULL.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      */
     public boolean isNull(int i) {
         metadata.checkBounds(i);
@@ -72,7 +72,7 @@ public class CQLRow {
      * @return the boolean value of the {@code i}th column in this row. If the
      * value is NULL, {@code false} is returned.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type BOOLEAN.
      */
     public boolean getBool(int i) {
@@ -107,7 +107,7 @@ public class CQLRow {
      * @return the value of the {@code i}th column in this row as an integer. If the
      * value is NULL, {@code 0} is returned.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type INT.
      */
     public int getInt(int i) {
@@ -142,7 +142,7 @@ public class CQLRow {
      * @return the value of the {@code i}th column in this row as a long. If the
      * value is NULL, {@code 0L} is returned.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} type is not one of: BIGINT, TIMESTAMP,
      * INT or COUNTER.
      */
@@ -184,7 +184,7 @@ public class CQLRow {
      * @return the value of the {@code i}th column in this row as a data. If the
      * value is NULL, {@code null} is returned.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
      */
     public Date getDate(int i) {
@@ -219,7 +219,7 @@ public class CQLRow {
      * @return the value of the {@code i}th column in this row as a float. If the
      * value is NULL, {@code 0.0f} is returned.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type FLOAT.
      */
     public float getFloat(int i) {
@@ -254,7 +254,7 @@ public class CQLRow {
      * @return the value of the {@code i}th column in this row as a double. If the
      * value is NULL, {@code 0.0} is returned.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type
      * DOUBLE or FLOAT.
      */
@@ -299,7 +299,7 @@ public class CQLRow {
      * @return the value of the {@code i}th column in this row as a ByteBuffer. If the
      * value is NULL, {@code null} is returned.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      */
     public ByteBuffer getByteBuffer(int i) {
         metadata.checkBounds(i);
@@ -342,7 +342,7 @@ public class CQLRow {
      * @return the value of the {@code i}th column in this row as a byte array. If the
      * value is NULL, {@code null} is returned.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      */
     public byte[] getBytes(int i) {
         ByteBuffer bb = getByteBuffer(i);
@@ -377,7 +377,7 @@ public class CQLRow {
      * @return the value of the {@code i}th column in this row as a string. If the
      * value is NULL, {@code null} is returned.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} type is none of:
      * VARCHAR, TEXT or ASCII.
      */
@@ -418,10 +418,10 @@ public class CQLRow {
      * @return the value of the {@code i}th column in this row as a variable
      * length integer. If the value is NULL, {@code null} is returned.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type VARINT.
      */
-    public BigInteger getVarInt(int i) {
+    public BigInteger getVarint(int i) {
         metadata.checkType(i, DataType.Native.VARINT);
 
         ByteBuffer value = data.get(i);
@@ -442,8 +442,8 @@ public class CQLRow {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type VARINT.
      */
-    public BigInteger getVarInt(String name) {
-        return getVarInt(metadata.getIdx(name));
+    public BigInteger getVarint(String name) {
+        return getVarint(metadata.getIdx(name));
     }
 
     /**
@@ -453,7 +453,7 @@ public class CQLRow {
      * @return the value of the {@code i}th column in this row as a variable
      * length decimal. If the value is NULL, {@code null} is returned.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type DECIMAL.
      */
     public BigDecimal getDecimal(int i) {
@@ -488,7 +488,7 @@ public class CQLRow {
      * @return the value of the {@code i}th column in this row as a UUID.
      * If the value is NULL, {@code null} is returned.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type UUID
      * or TIMEUUID.
      */
@@ -527,7 +527,7 @@ public class CQLRow {
      * @return the value of the {@code i}th column in this row as an InetAddress.
      * If the value is NULL, {@code null} is returned.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type INET.
      */
     public InetAddress getInet(int i) {
@@ -566,7 +566,7 @@ public class CQLRow {
      * returned (note that Cassandra makes no difference between an empty list
      * and column of type list that is not set).
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not a list or if its
      * elements are not of class {@code elementsClass}.
      */
@@ -621,7 +621,7 @@ public class CQLRow {
      * returned (note that Cassandra makes no difference between an empty set
      * and column of type set that is not set).
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not a set or if its
      * elements are not of class {@code elementsClass}.
      */
@@ -671,7 +671,7 @@ public class CQLRow {
      * an empty map is returned (note that Cassandra makes no difference
      * between an empty map and column of type map that is not set).
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not a map, if its
      * keys are not of class {@code keysClass} or if its values are not of
      * class {@code valuesClass}.
@@ -719,7 +719,7 @@ public class CQLRow {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("CQLRow[");
-        for (int i = 0; i < metadata.count(); i++) {
+        for (int i = 0; i < metadata.size(); i++) {
             if (i != 0)
                 sb.append(", ");
             ByteBuffer bb = data.get(i);

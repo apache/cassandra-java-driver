@@ -16,10 +16,10 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
  */
 public class PreparedStatement {
 
-    final Columns metadata;
+    final ColumnDefinitions metadata;
     final MD5Digest id;
 
-    private PreparedStatement(Columns metadata, MD5Digest id) {
+    private PreparedStatement(ColumnDefinitions metadata, MD5Digest id) {
         this.metadata = metadata;
         this.id = id;
     }
@@ -28,11 +28,11 @@ public class PreparedStatement {
         switch (msg.kind) {
             case PREPARED:
                 ResultMessage.Prepared pmsg = (ResultMessage.Prepared)msg;
-                Columns.Definition[] defs = new Columns.Definition[pmsg.metadata.names.size()];
+                ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[pmsg.metadata.names.size()];
                 for (int i = 0; i < defs.length; i++)
-                    defs[i] = Columns.Definition.fromTransportSpecification(pmsg.metadata.names.get(i));
+                    defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(pmsg.metadata.names.get(i));
 
-                return new PreparedStatement(new Columns(defs), pmsg.statementId);
+                return new PreparedStatement(new ColumnDefinitions(defs), pmsg.statementId);
             default:
                 throw new DriverInternalError(String.format("%s response received when prepared statement received was expected", msg.kind));
         }
@@ -43,7 +43,7 @@ public class PreparedStatement {
      *
      * @return the variables bounded in this prepared statement.
      */
-    public Columns getVariables() {
+    public ColumnDefinitions getVariables() {
         return metadata;
     }
 

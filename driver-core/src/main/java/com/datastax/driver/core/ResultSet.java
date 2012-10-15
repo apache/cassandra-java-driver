@@ -29,12 +29,12 @@ public class ResultSet implements Iterable<CQLRow> {
 
     private static final Logger logger = LoggerFactory.getLogger(ResultSet.class);
 
-    private static final ResultSet EMPTY = new ResultSet(Columns.EMPTY, new ArrayDeque(0));
+    private static final ResultSet EMPTY = new ResultSet(ColumnDefinitions.EMPTY, new ArrayDeque(0));
 
-    private final Columns metadata;
+    private final ColumnDefinitions metadata;
     private final Queue<List<ByteBuffer>> rows;
 
-    private ResultSet(Columns metadata, Queue<List<ByteBuffer>> rows) {
+    private ResultSet(ColumnDefinitions metadata, Queue<List<ByteBuffer>> rows) {
 
         this.metadata = metadata;
         this.rows = rows;
@@ -46,11 +46,11 @@ public class ResultSet implements Iterable<CQLRow> {
                 return EMPTY;
             case ROWS:
                 ResultMessage.Rows r = (ResultMessage.Rows)msg;
-                Columns.Definition[] defs = new Columns.Definition[r.result.metadata.names.size()];
+                ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[r.result.metadata.names.size()];
                 for (int i = 0; i < defs.length; i++)
-                    defs[i] = Columns.Definition.fromTransportSpecification(r.result.metadata.names.get(i));
+                    defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(r.result.metadata.names.get(i));
 
-                return new ResultSet(new Columns(defs), new ArrayDeque(r.result.rows));
+                return new ResultSet(new ColumnDefinitions(defs), new ArrayDeque(r.result.rows));
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
                 return EMPTY;
@@ -67,7 +67,7 @@ public class ResultSet implements Iterable<CQLRow> {
      *
      * @return the columns returned in this ResultSet.
      */
-    public Columns getColumns() {
+    public ColumnDefinitions getColumnDefinitions() {
         return metadata;
     }
 

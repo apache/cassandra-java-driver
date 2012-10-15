@@ -24,7 +24,7 @@ public class BoundStatement {
 
     BoundStatement(PreparedStatement statement) {
         this.statement = statement;
-        this.values = new ByteBuffer[statement.getVariables().count()];
+        this.values = new ByteBuffer[statement.getVariables().size()];
         this.remaining = values.length;
     }
 
@@ -50,7 +50,7 @@ public class BoundStatement {
     /**
      * Returns whether the {@code i}th variable has been bound to a value.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @return whether the {@code i}th variable has been bound to a value.
      */
     public boolean isSet(int i) {
@@ -90,8 +90,8 @@ public class BoundStatement {
      */
     public BoundStatement bind(Object... values) {
 
-        if (values.length > statement.getVariables().count())
-            throw new IllegalArgumentException(String.format("Prepared statement has only %d variables, %d values provided", statement.getVariables().count(), values.length));
+        if (values.length > statement.getVariables().size())
+            throw new IllegalArgumentException(String.format("Prepared statement has only %d variables, %d values provided", statement.getVariables().size(), values.length));
 
         for (int i = 0; i < values.length; i++)
         {
@@ -170,7 +170,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type BOOLEAN.
      */
     public BoundStatement setBool(int i, boolean v) {
@@ -196,7 +196,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is of neither of the
      * following types: INT, TIMESTAMP, BIGINT, COUNTER or VARINT.
      */
@@ -240,7 +240,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is of neither of the
      * following types: BIGINT, TIMESTAMP, COUNTER or VARINT.
      */
@@ -281,7 +281,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
      */
     public BoundStatement setDate(int i, Date v) {
@@ -307,7 +307,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is of neither of the
      * following types: FLOAT, DOUBLE or DECIMAL.
      */
@@ -347,7 +347,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is of neither of the
      * following types: DOUBLE or DECIMAL.
      */
@@ -383,7 +383,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is of neither of the
      * following types: VARCHAR, TEXT or ASCII.
      */
@@ -425,7 +425,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type BLOB.
      */
     public BoundStatement setByteBuffer(int i, ByteBuffer v) {
@@ -460,7 +460,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      */
     public BoundStatement setByteBufferUnsafe(int i, ByteBuffer v) {
         return setValue(i, v.duplicate());
@@ -492,7 +492,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type BLOB.
      */
     public BoundStatement setBytes(int i, byte[] v) {
@@ -521,10 +521,10 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type VARINT.
      */
-    public BoundStatement setVarInt(int i, BigInteger v) {
+    public BoundStatement setVarint(int i, BigInteger v) {
         metadata().checkType(i, DataType.Native.VARINT);
         return setValue(i, IntegerType.instance.decompose(v));
     }
@@ -538,8 +538,8 @@ public class BoundStatement {
      * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type VARINT.
      */
-    public BoundStatement setVarInt(String name, BigInteger v) {
-        return setVarInt(metadata().getIdx(name), v);
+    public BoundStatement setVarint(String name, BigInteger v) {
+        return setVarint(metadata().getIdx(name), v);
     }
 
     /**
@@ -547,7 +547,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type DECIMAL.
      */
     public BoundStatement setDecimal(int i, BigDecimal v) {
@@ -573,7 +573,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type UUID or
      * TIMEUUID, or if columm {@code i} is of type TIMEUUID but {@code v} is
      * not a type 1 UUID.
@@ -610,7 +610,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type INET.
      */
     public BoundStatement setInet(int i, InetAddress v) {
@@ -636,7 +636,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not a list type or
      * if the elements of {@code v} are not of the type of the elements of
      * column {@code i}.
@@ -679,7 +679,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not a map type or
      * if the elements (keys or values) of {@code v} are not of the type of the
      * elements of column {@code i}.
@@ -725,7 +725,7 @@ public class BoundStatement {
      *
      * @return this BoundStatement.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().count()}.
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not a set type or
      * if the elements of {@code v} are not of the type of the elements of
      * column {@code i}.
@@ -762,7 +762,7 @@ public class BoundStatement {
         return setSet(metadata().getIdx(name), v);
     }
 
-    private Columns metadata() {
+    private ColumnDefinitions metadata() {
         return statement.metadata;
     }
 
