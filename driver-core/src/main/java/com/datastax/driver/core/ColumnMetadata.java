@@ -88,9 +88,9 @@ public class ColumnMetadata {
 
         private final ColumnMetadata column;
         private final String name;
-        // It doesn't make sense to expose the index type for CQL3 at this
-        // point (the notion don't exist yet in CQL), but keeping it internally
-        // so we don't forget it exists
+        // It doesn't make sense to expose the index type, not the index
+        // options for CQL3 at this point since the notion doesn't exist yet in CQL3.
+        // But keeping the variable internally so we don't forget it exists.
         private final String type;
         private final Map<String, String> options = new HashMap<String, String>();
 
@@ -121,8 +121,8 @@ public class ColumnMetadata {
         /**
          * Returns a CQL query representing this index.
          *
-         * This method returns a single 'CREATE INDEX' query with the options
-         * corresponding to this index definition.
+         * This method returns a single 'CREATE INDEX' query corresponding to
+         * this index definition.
          *
          * @return the 'CREATE INDEX' query corresponding to this index.
          */
@@ -140,7 +140,6 @@ public class ColumnMetadata {
                 return null;
 
             IndexMetadata index = new IndexMetadata(column, type, row.getString(INDEX_NAME));
-            // TODO: handle options
             return index;
         }
     }

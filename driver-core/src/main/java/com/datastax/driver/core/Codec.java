@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.exceptions.DriverInternalError;
 
 import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.db.marshal.*;
@@ -105,12 +106,10 @@ class Codec {
                     DataType mapValues = rawTypeToDataType(mt.values);
                     return new DataType.Collection.Map(mapKeys, mapValues);
                 default:
-                    throw new RuntimeException("Unknown collection type");
+                    throw new DriverInternalError("Unknown collection type");
             }
         }
-
-        // TODO: handle custom
-        return null;
+        throw new DriverInternalError("Unknown type: " + rawType);
     }
 
     public static boolean isCompatible(DataType.Native type, Class klass) {

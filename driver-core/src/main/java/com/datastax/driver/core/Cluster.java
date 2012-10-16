@@ -392,10 +392,11 @@ public class Cluster {
                 s.manager.onRemove(host);
         }
 
-        public void addHost(InetSocketAddress address, boolean signal) {
+        public Host addHost(InetSocketAddress address, boolean signal) {
             Host newHost = metadata.add(address);
             if (newHost != null && signal)
                 onAdd(newHost);
+            return newHost;
         }
 
         public void removeHost(Host host) {

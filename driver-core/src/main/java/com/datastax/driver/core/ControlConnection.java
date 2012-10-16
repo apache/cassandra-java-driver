@@ -24,7 +24,9 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
 
-    private static final String SELECT_PEERS = "SELECT peer FROM system.peers";
+    private static final String SELECT_PEERS = "SELECT peer, data_center, rack FROM system.peers";
+    // TODO: We need to be able to fetch the local datacenter
+    //private static final String SELECT_LOCAL = "SELECT peer, data_center, rack FROM system.peers";
 
     private final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
 
@@ -167,28 +169,36 @@ class ControlConnection implements Host.StateListener {
         // Make sure we're up to date on node list
         try {
             ResultSet.Future peersFuture = new ResultSet.Future(null, new QueryMessage(SELECT_PEERS));
+            //ResultSet.Future localFuture = new ResultSet.Future(null, new QueryMessage(SELECT_LOCAL));
             connection.write(peersFuture.callback);
 
-            Set<InetSocketAddress> knownHosts = new HashSet<InetSocketAddress>();
-            for (Host host : cluster.metadata.allHosts())
-                knownHosts.add(host.getAddress());
+            List<InetSocketAddress> foundHosts = new ArrayList<InetSocketAddress>();
+            List<String> dcs = new ArrayList<String>();
+            List<String> racks = new ArrayList<String>();
 
-            Set<InetSocketAddress> foundHosts = new HashSet<InetSocketAddress>();
-            // The node on which we're connected won't be in the peer table, so let's just add it manually
-            foundHosts.add(connection.address);
             for (CQLRow row : peersFuture.get()) {
-                if (!row.isNull("peer"))
+                if (!row.isNull("peer")) {
                     // TODO: find what port people are using
                     foundHosts.add(new InetSocketAddress(row.getInet("peer"), Cluster.DEFAULT_PORT));
+                    dcs.add(row.getString("data_center"));
+                    dcs.add(row.getString("rack"));
+                }
             }
 
-            // Adds all those we don't know about
-            for (InetSocketAddress address : Sets.difference(foundHosts, knownHosts))
-                cluster.addHost(address, true);
+            for (int i = 0; i < foundHosts.size(); i++) {
+                Host host = cluster.metadata.getHost(foundHosts.get(i));
+                if (host == null) {
+                    // We don't know that node, add it.
+                    host = cluster.addHost(foundHosts.get(i), true);
+                }
+                host.setLocationInfo(dcs.get(i), racks.get(i));
+            }
 
             // Removes all those that seems to have been removed (since we lost the control connection)
-            for (InetSocketAddress address : Sets.difference(knownHosts, foundHosts))
-                cluster.removeHost(cluster.metadata.getHost(address));
+            Set<InetSocketAddress> foundHostsSet = new HashSet<InetSocketAddress>(foundHosts);
+            for (Host host : cluster.metadata.allHosts())
+                if (!host.getAddress().equals(connection.address) && !foundHostsSet.contains(host.getAddress()))
+                    cluster.removeHost(host);
 
         } catch (ConnectionException e) {
             logger.debug(String.format("[Control connection] Connection error when refeshing hosts list (%s)", e.getMessage()));

@@ -16,6 +16,9 @@ public class Host {
     private final InetSocketAddress address;
     private final HealthMonitor monitor;
 
+    private volatile String datacenter;
+    private volatile String rack;
+
     // Tracks reconnection attempts to that host so we avoid adding multiple tasks
     final AtomicReference<ScheduledFuture> reconnectionAttempt = new AtomicReference<ScheduledFuture>();
 
@@ -29,6 +32,11 @@ public class Host {
         this.monitor = new HealthMonitor(policy.create(this));
     }
 
+    void setLocationInfo(String datacenter, String rack) {
+        this.datacenter = datacenter;
+        this.rack = rack;
+    }
+
     /**
      * Returns the node address.
      *
@@ -36,6 +44,34 @@ public class Host {
      */
     public InetSocketAddress getAddress() {
         return address;
+    }
+
+    /**
+     * Returns the name of the datacenter this host is part of.
+     *
+     * The returned datacenter name is the one as known by Cassandra. Also note
+     * that it is possible for this information to not be available. In that
+     * case this method returns {@code null} and caller should always expect
+     * that possibility.
+     *
+     * @return the Cassandra datacenter name.
+     */
+    public String getDatacenter() {
+        return datacenter;
+    }
+
+    /**
+     * Returns the name of the rack this host is part of.
+     *
+     * The returned rack name is the one as known by Cassandra. Also note that
+     * it is possible for this information to not be available. In that case
+     * this method returns {@code null} and caller should always expect that
+     * possibility.
+     *
+     * @return the Cassandra rack name.
+     */
+    public String getRack() {
+        return rack;
     }
 
     /**
