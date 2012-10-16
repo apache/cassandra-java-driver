@@ -121,16 +121,14 @@ public class Session {
      *
      * @param query the CQL query to prepare
      * @return the prepared statement corresponding to {@code query}.
+     *
+     * @throws NoHostAvailableException if no host in the cluster can be
+     * contacted successfully to execute this query.
      */
-    public PreparedStatement prepare(String query) {
-        // TODO: Deal with exceptions
-        try {
-            Connection.Future future = new Connection.Future(new PrepareMessage(query));
-            manager.execute(future);
-            return toPreparedStatement(query, future);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public PreparedStatement prepare(String query) throws NoHostAvailableException {
+        Connection.Future future = new Connection.Future(new PrepareMessage(query));
+        manager.execute(future);
+        return toPreparedStatement(query, future);
     }
 
     /**
@@ -139,9 +137,12 @@ public class Session {
      * @param query the CQL query to prepare
      * @return the prepared statement corresponding to {@code query}.
      *
+     * @throws NoHostAvailableException if no host in the cluster can be
+     * contacted successfully to execute this query.
+     *
      * @see #prepare(String)
      */
-    public PreparedStatement prepare(CQLQuery query) {
+    public PreparedStatement prepare(CQLQuery query) throws NoHostAvailableException {
         return prepare(query.toString());
     }
 
@@ -184,9 +185,24 @@ public class Session {
         return manager.executeQuery(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values)));
     }
 
-    private PreparedStatement toPreparedStatement(String query, Connection.Future future) {
+    private PreparedStatement toPreparedStatement(String query, Connection.Future future) throws NoHostAvailableException {
+
         try {
-            Message.Response response = future.get();
+            Message.Response response = null;
+            try {
+                while (response == null) {
+                    try {
+                        response = future.get();
+                    } catch (InterruptedException e) {
+                        // TODO: decide wether we want to expose Interrupted exceptions or not
+                    }
+                }
+            } catch (ExecutionException e) {
+                ResultSet.Future.extractCauseFromExecutionException(e);
+                throw new AssertionError();
+            }
+
+            assert response != null;
             switch (response.type) {
                 case RESULT:
                     ResultMessage rm = (ResultMessage)response;
@@ -196,20 +212,18 @@ public class Session {
                             manager.cluster.manager.prepare(pmsg.statementId, query, future.getAddress());
                             return PreparedStatement.fromMessage(pmsg);
                         default:
-                            throw new DriverInternalError(String.format("%s response received when prepared statement received was expected", rm.kind));
+                            throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
                     }
                 case ERROR:
-                    // TODO: handle errors
-                    logger.info("Got " + response);
-                    return null;
+                    ResultSet.Future.extractCause(ResultSet.Future.convertException(((ErrorMessage)response).error));
+                    break;
                 default:
-                    // TODO: handle errors (set the connection to defunct as this mean it is in a bad state)
-                    logger.info("Got " + response);
-                    return null;
+                    throw new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type));
             }
-        } catch (Exception e) {
-            // TODO: do better
-            throw new RuntimeException(e);
+            throw new AssertionError();
+        } catch (QueryExecutionException e) {
+            // Preparing a statement cannot throw any of the QueryExecutionException
+            throw new DriverInternalError("Received unexpected QueryExecutionException while preparing statement", e);
         }
     }
 

@@ -250,7 +250,7 @@ public class ResultSet implements Iterable<CQLRow> {
                     }
                 }
             } catch (ExecutionException e) {
-                extractCause(e);
+                extractCauseFromExecutionException(e);
                 throw new AssertionError();
             }
         }
@@ -293,13 +293,16 @@ public class ResultSet implements Iterable<CQLRow> {
                     }
                 }
             } catch (ExecutionException e) {
-                extractCause(e);
+                extractCauseFromExecutionException(e);
                 throw new AssertionError();
             }
         }
 
-        private static void extractCause(ExecutionException e) throws NoHostAvailableException, QueryExecutionException {
-            Throwable cause = e.getCause();
+        static void extractCauseFromExecutionException(ExecutionException e) throws NoHostAvailableException, QueryExecutionException {
+            extractCause(e.getCause());
+        }
+
+        static void extractCause(Throwable cause) throws NoHostAvailableException, QueryExecutionException {
             if (cause instanceof NoHostAvailableException)
                 throw (NoHostAvailableException)cause;
             else if (cause instanceof QueryExecutionException)
@@ -310,8 +313,9 @@ public class ResultSet implements Iterable<CQLRow> {
                 throw new DriverInternalError("Unexpected exception thrown", cause);
         }
 
+
         // TODO: Convert to some internal exception
-        private Exception convertException(org.apache.cassandra.exceptions.TransportException te) {
+        static Exception convertException(org.apache.cassandra.exceptions.TransportException te) {
 
             switch (te.code()) {
                 case SERVER_ERROR:
