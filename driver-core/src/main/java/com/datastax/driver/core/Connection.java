@@ -326,7 +326,7 @@ class Connection extends org.apache.cassandra.transport.Connection
     // dispatcher that assume synchronous?
     private class Dispatcher extends SimpleChannelUpstreamHandler {
 
-        public final StreamIdHandler streamIdHandler = new StreamIdHandler();
+        public final StreamIdGenerator streamIdHandler = new StreamIdGenerator();
         private final ConcurrentMap<Integer, ResponseHandler> pending = new ConcurrentHashMap<Integer, ResponseHandler>();
 
         public void add(ResponseHandler handler) {
