@@ -151,7 +151,7 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         try {
             logger.trace(String.format("[%s] Setting keyspace %s", name, keyspace));
-            Message.Response response = write(new QueryMessage("USE " + keyspace)).get();
+            Message.Response response = write(new QueryMessage("USE " + keyspace, ConsistencyLevel.DEFAULT_CASSANDRA_CL)).get();
             switch (response.type) {
                 case RESULT:
                     this.keyspace = keyspace;

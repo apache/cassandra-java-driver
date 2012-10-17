@@ -141,10 +141,10 @@ class ControlConnection implements Host.StateListener {
             }
 
             ResultSet.Future ksFuture = table == null
-                                      ? new ResultSet.Future(null, new QueryMessage(SELECT_KEYSPACES + whereClause))
+                                      ? new ResultSet.Future(null, new QueryMessage(SELECT_KEYSPACES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL))
                                       : null;
-            ResultSet.Future cfFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMN_FAMILIES + whereClause));
-            ResultSet.Future colsFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMNS + whereClause));
+            ResultSet.Future cfFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMN_FAMILIES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+            ResultSet.Future colsFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMNS + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
 
             if (ksFuture != null)
                 connection.write(ksFuture.callback);
@@ -168,7 +168,7 @@ class ControlConnection implements Host.StateListener {
     private void refreshNodeList(Connection connection) {
         // Make sure we're up to date on node list
         try {
-            ResultSet.Future peersFuture = new ResultSet.Future(null, new QueryMessage(SELECT_PEERS));
+            ResultSet.Future peersFuture = new ResultSet.Future(null, new QueryMessage(SELECT_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
             //ResultSet.Future localFuture = new ResultSet.Future(null, new QueryMessage(SELECT_LOCAL));
             connection.write(peersFuture.callback);
 

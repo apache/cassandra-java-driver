@@ -38,16 +38,11 @@ public class Session {
     /**
      * Execute the provided query.
      *
-     * This method blocks until at least some result has been received from the
-     * database. However, for SELECT queries, it does not guarantee that the
-     * result has been received in full. But it does guarantee that some
-     * response has been received from the database, and in particular
-     * guarantee that if the request is invalid, an exception will be thrown
-     * by this method.
+     * This method is a shortcut for {@code execute(query, null)}.
      *
-     * @param query the CQL query to execute
-     * @return the result of the query. That result will never be null be can
-     * be empty and will be for any non SELECT query.
+     * @param query the CQL query to execute.
+     * @return the result of the query. That result will never be null but can
+     * be empty (and will be for any non SELECT query).
      *
      * @throws NoHostAvailableException if no host in the cluster can be
      * contacted successfully to execute this query.
@@ -56,28 +51,49 @@ public class Session {
      * the query with the requested consistency level successfully.
      */
     public ResultSet execute(String query) throws NoHostAvailableException, QueryExecutionException {
-        return executeAsync(query).getUninterruptibly();
+        return execute(query, null);
     }
 
     /**
      * Execute the provided query.
      *
-     * This method works exactly as {@link #execute(String)}.
+     * This method blocks until at least some result has been received from the
+     * database. However, for SELECT queries, it does not guarantee that the
+     * result has been received in full. But it does guarantee that some
+     * response has been received from the database, and in particular
+     * guarantee that if the request is invalid, an exception will be thrown
+     * by this method.
      *
-     * @param query the CQL query to execute
-     * @return the result of the query. That result will never be null be can
-     * be empty and will be for any non SELECT query.
+     * @param query the CQL query to execute.
+     * @param consistency the consistency level for the operation. If the query
+     * doesn't need a consistency level (USE, CREATE, ALTER, DROP and TRUNCATE
+     * queries for instance), this argument is ignored and null can be
+     * provided. However, if null is provided while the query requires a
+     * consistency level, the default consistency level of ONE is used.
+     * @return the result of the query. That result will never be null but can
+     * be empty (and will be for any non SELECT query).
      *
      * @throws NoHostAvailableException if no host in the cluster can be
      * contacted successfully to execute this query.
      * @throws QueryExecutionException if the query triggered an execution
      * exception, i.e. an exception thrown by Cassandra when it cannot execute
      * the query with the requested consistency level successfully.
-     *
-     * @see #execute(String)
      */
-    public ResultSet execute(CQLQuery query) throws NoHostAvailableException, QueryExecutionException {
-        return execute(query.toString());
+    public ResultSet execute(String query, ConsistencyLevel consistency) throws NoHostAvailableException, QueryExecutionException {
+        return executeAsync(query, consistency).getUninterruptibly();
+    }
+
+    /**
+     * Execute the provided query asynchronously.
+     *
+     * This method is a shortcut for {@code executeAsync(query, null)}.
+     *
+     * @param query the CQL query to execute.
+     * @return the result of the query. That result will never be null but can
+     * be empty (and will be for any non SELECT query).
+     */
+    public ResultSet.Future executeAsync(String query) {
+        return executeAsync(query, null);
     }
 
     /**
@@ -93,27 +109,17 @@ public class Session {
      * DELETE), you will need to access the ResultSet (i.e. call any of its
      * method) to make sure the query was successful.
      *
-     * @param query the CQL query to execute
-     * @return the result of the query. That result will never be null be can
-     * be empty and will be for any non SELECT query.
+     * @param query the CQL query to execute.
+     * @param consistency the consistency level for the operation. If the query
+     * doesn't need a consistency level (USE, CREATE, ALTER, DROP and TRUNCATE
+     * queries for instance), this argument is ignored and null can be
+     * provided. However, if null is provided while the query requires a
+     * consistency level, the default consistency level of ONE is used.
+     * @return the result of the query. That result will never be null but can
+     * be empty (and will be for any non SELECT query).
      */
-    public ResultSet.Future executeAsync(String query) {
-        return manager.executeQuery(new QueryMessage(query));
-    }
-
-    /**
-     * Execute the provided query asynchronously.
-     *
-     * This method works exactly as {@link #executeAsync(String)}.
-     *
-     * @param query the CQL query to execute
-     * @return the result of the query. That result will never be null be can
-     * be empty and will be for any non SELECT query.
-     *
-     * @see #executeAsync(String)
-     */
-    public ResultSet.Future executeAsync(CQLQuery query) {
-        return executeAsync(query.toString());
+    public ResultSet.Future executeAsync(String query, ConsistencyLevel consistency) {
+        return manager.executeQuery(new QueryMessage(query, ConsistencyLevel.toCassandraCL(consistency)));
     }
 
     /**
@@ -132,18 +138,19 @@ public class Session {
     }
 
     /**
-     * Prepare the provided query.
+     * Execute a prepared statement that had values provided for its bound
+     * variables.
      *
-     * @param query the CQL query to prepare
-     * @return the prepared statement corresponding to {@code query}.
+     * This method is a shortcut for {@code executePrepared(stmt, null)}.
      *
-     * @throws NoHostAvailableException if no host in the cluster can be
-     * contacted successfully to execute this query.
+     * @param stmt the prepared statement with values for its bound variables.
+     * @return the result of the query. That result will never be null but can
+     * be empty (and will be for any non SELECT query).
      *
-     * @see #prepare(String)
+     * @throws IllegalStateException if {@code !stmt.ready()}.
      */
-    public PreparedStatement prepare(CQLQuery query) throws NoHostAvailableException {
-        return prepare(query.toString());
+    public ResultSet executePrepared(BoundStatement stmt) throws NoHostAvailableException, QueryExecutionException {
+        return executePrepared(stmt);
     }
 
     /**
@@ -155,13 +162,34 @@ public class Session {
      * database.
      *
      * @param stmt the prepared statement with values for its bound variables.
-     * @return the result of the query. That result will never be null be can
-     * be empty and will be for any non SELECT query.
+     * @param consistency the consistency level for the operation. If the query
+     * doesn't need a consistency level (USE, CREATE, ALTER, DROP and TRUNCATE
+     * queries for instance), this argument is ignored and null can be
+     * provided. However, if null is provided while the query requires a
+     * consistency level, the default consistency level of ONE is used.
+     * @return the result of the query. That result will never be null but can
+     * be empty (and will be for any non SELECT query).
      *
      * @throws IllegalStateException if {@code !stmt.ready()}.
      */
-    public ResultSet executePrepared(BoundStatement stmt) throws NoHostAvailableException, QueryExecutionException {
-        return executePreparedAsync(stmt).getUninterruptibly();
+    public ResultSet executePrepared(BoundStatement stmt, ConsistencyLevel consistency) throws NoHostAvailableException, QueryExecutionException {
+        return executePreparedAsync(stmt, consistency).getUninterruptibly();
+    }
+
+    /**
+     * Execute a prepared statement that had values provided for its bound
+     * variables asynchronously.
+     *
+     * This method is a shortcut for {@code executePreparedAsync(stmt, null)}.
+     *
+     * @param stmt the prepared statement with values for its bound variables.
+     * @return the result of the query. That result will never be null but can
+     * be empty (and will be for any non SELECT query).
+     *
+     * @throws IllegalStateException if {@code !stmt.ready()}.
+     */
+    public ResultSet.Future executePreparedAsync(BoundStatement stmt) {
+        return executePreparedAsync(stmt, null);
     }
 
     /**
@@ -173,16 +201,21 @@ public class Session {
      * the database.
      *
      * @param stmt the prepared statement with values for its bound variables.
-     * @return the result of the query. That result will never be null be can
-     * be empty and will be for any non SELECT query.
+     * @param consistency the consistency level for the operation. If the query
+     * doesn't need a consistency level (USE, CREATE, ALTER, DROP and TRUNCATE
+     * queries for instance), this argument is ignored and null can be
+     * provided. However, if null is provided while the query requires a
+     * consistency level, the default consistency level of ONE is used.
+     * @return the result of the query. That result will never be null but can
+     * be empty (and will be for any non SELECT query).
      *
      * @throws IllegalStateException if {@code !stmt.ready()}.
      */
-    public ResultSet.Future executePreparedAsync(BoundStatement stmt) {
+    public ResultSet.Future executePreparedAsync(BoundStatement stmt, ConsistencyLevel consistency) {
         if (!stmt.isReady())
             throw new IllegalStateException("Some bind variables haven't been bound in the provided statement");
 
-        return manager.executeQuery(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values)));
+        return manager.executeQuery(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values), ConsistencyLevel.toCassandraCL(consistency)));
     }
 
     private PreparedStatement toPreparedStatement(String query, Connection.Future future) throws NoHostAvailableException {
@@ -296,7 +329,7 @@ public class Session {
 
         public void setKeyspace(String keyspace) throws NoHostAvailableException {
             try {
-                executeQuery(new QueryMessage("use " + keyspace)).get();
+                executeQuery(new QueryMessage("use " + keyspace, ConsistencyLevel.DEFAULT_CASSANDRA_CL)).get();
             } catch (InterruptedException e) {
                 // TODO: do we want to handle interrupted exception in a better way?
                 throw new DriverInternalError("Hey! I was waiting!", e);
