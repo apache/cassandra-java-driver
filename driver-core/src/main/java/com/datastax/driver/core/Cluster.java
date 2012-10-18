@@ -297,12 +297,12 @@ public class Cluster {
         private final ControlConnection controlConnection;
 
         // TODO: make configurable
-        final LoadBalancingPolicy.Factory loadBalancingFactory = LoadBalancingPolicy.RoundRobin.Factory.INSTANCE;
+        final LoadBalancingPolicy.Factory loadBalancingFactory = LoadBalancingPolicy.DCAwareRoundRobin.Factory.create("dc1", 1);
+        //final LoadBalancingPolicy.Factory loadBalancingFactory = LoadBalancingPolicy.RoundRobin.Factory.INSTANCE;
 
         final ScheduledExecutorService reconnectionExecutor = Executors.newScheduledThreadPool(2, new NamedThreadFactory("Reconnection"));
         final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("Scheduled Tasks"));
 
-        // TODO: give a name to the threads of this executor
         final ExecutorService executor = Executors.newCachedThreadPool(new NamedThreadFactory("Cassandra Java Driver worker"));
 
         // All the queries that have been prepared (we keep them so we can
@@ -438,7 +438,7 @@ public class Cluster {
             }
         }
 
-        // TODO: take a lot or something so that if a a getSchema() is called,
+        // TODO: take a lock or something so that if a a getSchema() is called,
         // we wait for that to be finished. And maybe avoid multiple refresh at
         // the same time.
         public void submitSchemaRefresh(final String keyspace, final String table) {

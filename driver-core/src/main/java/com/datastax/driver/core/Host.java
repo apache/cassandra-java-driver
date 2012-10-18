@@ -115,15 +115,9 @@ public class Host {
         private Set<Host.StateListener> listeners = new CopyOnWriteArraySet<Host.StateListener>();
         private volatile boolean isUp;
 
-        // This is a hack (I did not find a much cleaner option) to not expose
-        // signalConnectionFailure publicly but still being able to call it
-        // from other packages (typically from HostConnectionPool).
-        final Signaler signaler;
-
         HealthMonitor(ConvictionPolicy policy) {
             this.policy = policy;
             this.isUp = true;
-            this.signaler = new Signaler();
         }
 
         /**
@@ -176,13 +170,11 @@ public class Host {
                 listener.onUp(Host.this);
         }
 
-        public class Signaler {
-            public boolean signalConnectionFailure(ConnectionException exception) {
-                boolean isDown = policy.addFailure(exception);
-                if (isDown)
-                    setDown();
-                return isDown;
-            }
+        boolean signalConnectionFailure(ConnectionException exception) {
+            boolean isDown = policy.addFailure(exception);
+            if (isDown)
+                setDown();
+            return isDown;
         }
     }
 

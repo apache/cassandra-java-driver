@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
 
@@ -68,7 +69,7 @@ class RetryingCallback implements Connection.ResponseCallback {
             return false;
 
         try {
-            Connection connection = pool.borrowConnection(manager.DEFAULT_CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+            Connection connection = pool.borrowConnection(manager.DEFAULT_PER_HOST_CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
             current = host;
             try {
                 connection.write(this);
@@ -78,16 +79,20 @@ class RetryingCallback implements Connection.ResponseCallback {
             }
         } catch (ConnectionException e) {
             // If we have any problem with the connection, move to the next node.
-            logError(e);
+            logError(host.getAddress(), e.getMessage());
+            return false;
+        } catch (TimeoutException e) {
+            // We timeout, log it but move to the next node.
+            logError(host.getAddress(), "Timeout while trying to acquire available connection");
             return false;
         }
     }
 
-    private void logError(ConnectionException e) {
-        logger.debug(String.format("Error querying %s, trying next host (error is: %s)", e.address, e.getMessage()));
+    private void logError(InetSocketAddress address, String msg) {
+        logger.debug(String.format("Error querying %s, trying next host (error is: %s)", address, msg));
         if (errors == null)
             errors = new HashMap<InetSocketAddress, String>();
-        errors.put(e.address, e.getMessage());
+        errors.put(address, msg);
     }
 
     private void retry(final boolean retryCurrent) {
@@ -164,16 +169,16 @@ class RetryingCallback implements Connection.ResponseCallback {
                             // TODO check return ?
                             retry = true;
                         } catch (InterruptedException e) {
-                            logError(new ConnectionException(connection.address, "Interrupted while preparing query to execute"));
+                            logError(connection.address, "Interrupted while preparing query to execute");
                             retry(false);
                             return;
                         } catch (ExecutionException e) {
-                            logError(new ConnectionException(connection.address, "Unexpected problem while preparing query to execute: " + e.getCause().getMessage()));
+                            logError(connection.address, "Unexpected problem while preparing query to execute: " + e.getCause().getMessage());
                             retry(false);
                             return;
                         } catch (ConnectionException e) {
                             logger.debug("Connection exception while preparing missing statement", e);
-                            logError(e);
+                            logError(e.address, e.getMessage());
                             retry(false);
                             return;
                         }
@@ -195,7 +200,8 @@ class RetryingCallback implements Connection.ResponseCallback {
     public void onException(Exception exception) {
 
         if (exception instanceof ConnectionException) {
-            logError((ConnectionException)exception);
+            ConnectionException ce = (ConnectionException)exception;
+            logError(ce.address, ce.getMessage());
             retry(false);
             return;
         }

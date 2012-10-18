@@ -49,7 +49,7 @@ public class CQLRow {
      */
     public boolean isNull(int i) {
         metadata.checkBounds(i);
-        return data.get(i) != null;
+        return data.get(i) == null;
     }
 
     /**

@@ -273,7 +273,7 @@ public class Session {
         final HostConnectionPool.Configuration poolsConfiguration;
 
         // TODO: Make that configurable
-        final long DEFAULT_CONNECTION_TIMEOUT = 3000;
+        final long DEFAULT_PER_HOST_CONNECTION_TIMEOUT = 3000;
 
         public Manager(Cluster cluster, Collection<Host> hosts) {
             this.cluster = cluster;
@@ -288,7 +288,17 @@ public class Session {
         }
 
         private HostConnectionPool addHost(Host host) {
-            return pools.put(host, new HostConnectionPool(host, host.getMonitor().signaler, cluster.manager.connectionFactory, poolsConfiguration));
+            try {
+                HostDistance distance = loadBalancer.distance(host);
+                if (distance == HostDistance.IGNORED)
+                    return pools.get(host);
+                else
+                    return pools.put(host, new HostConnectionPool(host, distance, cluster.manager.connectionFactory, poolsConfiguration, this));
+            } catch (ConnectionException e) {
+                logger.debug(String.format("Error creating pool to %s (%s)", host, e.getMessage()));
+                host.getMonitor().signalConnectionFailure(e);
+                return pools.get(host);
+            }
         }
 
         public void onUp(Host host) {
@@ -307,6 +317,21 @@ public class Session {
             // This should not be necessary but it's harmless
             if (pool != null)
                 pool.shutdown();
+
+            // If we've remove a host, the loadBalancer is allowed to change his mind on host distances.
+            for (Host h : cluster.getMetadata().allHosts()) {
+                if (!h.getMonitor().isUp())
+                    continue;
+
+                HostDistance dist = loadBalancer.distance(h);
+                if (dist != HostDistance.IGNORED) {
+                    HostConnectionPool p = pools.get(h);
+                    if (p == null)
+                        addHost(host);
+                    else
+                        p.hostDistance = dist;
+                }
+            }
         }
 
         public void onAdd(Host host) {
@@ -368,6 +393,8 @@ public class Session {
                     c.write(new PrepareMessage(query)).get();
                 } catch (ConnectionException e) {
                     // Again, not being able to prepare the query right now is no big deal, so just ignore
+                } catch (TimeoutException e) {
+                    // Same as above
                 } catch (InterruptedException e) {
                     // Same as above
                 } catch (ExecutionException e) {

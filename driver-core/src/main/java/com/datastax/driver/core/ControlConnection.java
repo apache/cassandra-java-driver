@@ -25,8 +25,7 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
 
     private static final String SELECT_PEERS = "SELECT peer, data_center, rack FROM system.peers";
-    // TODO: We need to be able to fetch the local datacenter
-    //private static final String SELECT_LOCAL = "SELECT peer, data_center, rack FROM system.peers";
+    private static final String SELECT_LOCAL = "SELECT data_center, rack FROM system.local WHERE key='local'";
 
     private final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
 
@@ -118,7 +117,6 @@ class ControlConnection implements Host.StateListener {
         });
         connection.write(new RegisterMessage(evs));
 
-        logger.trace("[Control connection] Refreshing schema");
         refreshSchema(connection, null, null);
         refreshNodeList(connection);
         return connection;
@@ -169,8 +167,9 @@ class ControlConnection implements Host.StateListener {
         // Make sure we're up to date on node list
         try {
             ResultSet.Future peersFuture = new ResultSet.Future(null, new QueryMessage(SELECT_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-            //ResultSet.Future localFuture = new ResultSet.Future(null, new QueryMessage(SELECT_LOCAL));
+            ResultSet.Future localFuture = new ResultSet.Future(null, new QueryMessage(SELECT_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
             connection.write(peersFuture.callback);
+            connection.write(localFuture.callback);
 
             List<InetSocketAddress> foundHosts = new ArrayList<InetSocketAddress>();
             List<String> dcs = new ArrayList<String>();
@@ -181,7 +180,7 @@ class ControlConnection implements Host.StateListener {
                     // TODO: find what port people are using
                     foundHosts.add(new InetSocketAddress(row.getInet("peer"), Cluster.DEFAULT_PORT));
                     dcs.add(row.getString("data_center"));
-                    dcs.add(row.getString("rack"));
+                    racks.add(row.getString("rack"));
                 }
             }
 
@@ -199,6 +198,15 @@ class ControlConnection implements Host.StateListener {
             for (Host host : cluster.metadata.allHosts())
                 if (!host.getAddress().equals(connection.address) && !foundHostsSet.contains(host.getAddress()))
                     cluster.removeHost(host);
+
+            // Update DC and rack for the one node we are connected to
+            Host host = cluster.metadata.getHost(connection.address);
+            // In theory host can't be null. However there is no point in risking a NPE in case we
+            // have a race between a node removal and this.
+            if (host != null) {
+                for (CQLRow row : localFuture.get())
+                    host.setLocationInfo(row.getString("data_center"), row.getString("rack"));
+            }
 
         } catch (ConnectionException e) {
             logger.debug(String.format("[Control connection] Connection error when refeshing hosts list (%s)", e.getMessage()));

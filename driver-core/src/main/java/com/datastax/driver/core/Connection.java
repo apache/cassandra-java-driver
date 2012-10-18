@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory;
  */
 class Connection extends org.apache.cassandra.transport.Connection
 {
+    public static final int MAX_STREAM_PER_CONNECTION = 128;
+
     private static final Logger logger = LoggerFactory.getLogger(Connection.class);
 
     // TODO: that doesn't belong here
@@ -44,7 +46,10 @@ class Connection extends org.apache.cassandra.transport.Connection
     private final Factory factory;
     private final Dispatcher dispatcher = new Dispatcher();
 
-    private AtomicInteger inFlight = new AtomicInteger(0);
+    // Used by connnection pooling to count how many requests are "in flight" on that connection.
+    public final AtomicInteger inFlight = new AtomicInteger(0);
+
+    private final AtomicInteger writer = new AtomicInteger(0);
     private volatile boolean isClosed;
     private volatile String keyspace;
 
@@ -71,7 +76,7 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         ChannelFuture future = bootstrap.connect(address);
 
-        inFlight.incrementAndGet();
+        writer.incrementAndGet();
         try {
             // Wait until the connection attempt succeeds or fails.
             this.channel = future.awaitUninterruptibly().getChannel();
@@ -81,7 +86,7 @@ class Connection extends org.apache.cassandra.transport.Connection
                 throw new TransportException(address, "Cannot connect", future.getCause());
             }
         } finally {
-            inFlight.decrementAndGet();
+            writer.decrementAndGet();
         }
 
         logger.trace(String.format("[%s] Connection opened successfully", name));
@@ -202,7 +207,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         request.attach(this);
 
         // We only support synchronous mode so far
-        inFlight.incrementAndGet();
+        writer.incrementAndGet();
         try {
 
             ResponseHandler handler = new ResponseHandler(dispatcher, callback);
@@ -231,7 +236,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             logger.trace(String.format("[%s] request sent successfully", name));
 
         } finally {
-            inFlight.decrementAndGet();
+            writer.decrementAndGet();
         }
     }
 
@@ -248,7 +253,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         if (!isDefunct) {
             try {
                 // Busy waiting, we just wait for request to be fully written, shouldn't take long
-                while (inFlight.get() > 0)
+                while (writer.get() > 0)
                     Thread.sleep(10);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -368,7 +373,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             logger.trace(String.format("[%s] connection error", name), e.getCause());
 
             // Ignore exception while writting, this will be handled by write() directly
-            if (inFlight.get() > 0)
+            if (writer.get() > 0)
                 return;
 
             defunct(new TransportException(address, "Unexpected exception triggered", e.getCause()));
