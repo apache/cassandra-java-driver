@@ -313,10 +313,7 @@ public class ResultSet implements Iterable<CQLRow> {
                 throw new DriverInternalError("Unexpected exception thrown", cause);
         }
 
-
-        // TODO: Convert to some internal exception
         static Exception convertException(org.apache.cassandra.exceptions.TransportException te) {
-
             switch (te.code()) {
                 case SERVER_ERROR:
                     return new DriverInternalError("An unexpected error occured server side: " + te.getMessage());
@@ -335,7 +332,7 @@ public class ResultSet implements Iterable<CQLRow> {
                     return new TruncateException(te.getMessage());
                 case WRITE_TIMEOUT:
                     org.apache.cassandra.exceptions.WriteTimeoutException wte = (org.apache.cassandra.exceptions.WriteTimeoutException)te;
-                    return new WriteTimeoutException(ConsistencyLevel.from(wte.consistency), wte.received, wte.blockFor);
+                    return new WriteTimeoutException(ConsistencyLevel.from(wte.consistency), WriteType.from(wte.writeType), wte.received, wte.blockFor);
                 case READ_TIMEOUT:
                     org.apache.cassandra.exceptions.ReadTimeoutException rte = (org.apache.cassandra.exceptions.ReadTimeoutException)te;
                     return new ReadTimeoutException(ConsistencyLevel.from(rte.consistency), rte.received, rte.blockFor, rte.dataPresent);

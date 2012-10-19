@@ -17,6 +17,7 @@ import org.apache.cassandra.transport.messages.ErrorMessage;
 import org.apache.cassandra.transport.messages.ExecuteMessage;
 import org.apache.cassandra.transport.messages.PrepareMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
+import org.apache.cassandra.transport.messages.ResultMessage;
 import org.apache.cassandra.exceptions.UnavailableException;
 import org.apache.cassandra.exceptions.PreparedQueryNotFoundException;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
@@ -40,8 +41,8 @@ class RetryingCallback implements Connection.ResponseCallback {
     private final Iterator<Host> queryPlan;
     private volatile Host current;
 
-    private final boolean isQuery;
     private volatile int queryRetries;
+    private volatile ConsistencyLevel retryConsistencyLevel;
 
     private volatile Map<InetSocketAddress, String> errors;
 
@@ -50,7 +51,6 @@ class RetryingCallback implements Connection.ResponseCallback {
         this.callback = callback;
 
         this.queryPlan = manager.loadBalancer.newQueryPlan();
-        this.isQuery = request() instanceof QueryMessage || request() instanceof ExecuteMessage;
     }
 
     public void sendRequest() {
@@ -95,8 +95,9 @@ class RetryingCallback implements Connection.ResponseCallback {
         errors.put(address, msg);
     }
 
-    private void retry(final boolean retryCurrent) {
+    private void retry(final boolean retryCurrent, ConsistencyLevel newConsistencyLevel) {
         final Host h = current;
+        this.retryConsistencyLevel = newConsistencyLevel;
 
         // We should not retry on the current thread as this will be an IO thread.
         manager.cluster.manager.executor.execute(new Runnable() {
@@ -111,7 +112,22 @@ class RetryingCallback implements Connection.ResponseCallback {
     }
 
     public Message.Request request() {
-        return callback.request();
+
+        Message.Request request = callback.request();
+        if (retryConsistencyLevel != null) {
+            org.apache.cassandra.db.ConsistencyLevel cl = ConsistencyLevel.toCassandraCL(retryConsistencyLevel);
+            if (request instanceof QueryMessage) {
+                QueryMessage qm = (QueryMessage)request;
+                if (qm.consistency != cl)
+                    request = new QueryMessage(qm.query, cl);
+            }
+            else if (request instanceof ExecuteMessage) {
+                ExecuteMessage em = (ExecuteMessage)request;
+                if (em.consistency != cl)
+                    request = new ExecuteMessage(em.statementId, em.values, cl);
+            }
+        }
+        return request;
     }
 
     public void onSet(Connection connection, Message.Response response) {
@@ -121,7 +137,7 @@ class RetryingCallback implements Connection.ResponseCallback {
                 break;
             case ERROR:
                 ErrorMessage err = (ErrorMessage)response;
-                boolean retry = false;
+                RetryPolicy.RetryDecision retry = null;
                 switch (err.error.code()) {
                     case READ_TIMEOUT:
                         assert err.error instanceof ReadTimeoutException;
@@ -133,7 +149,7 @@ class RetryingCallback implements Connection.ResponseCallback {
                         assert err.error instanceof WriteTimeoutException;
                         WriteTimeoutException wte = (WriteTimeoutException)err.error;
                         ConsistencyLevel wcl = ConsistencyLevel.from(wte.consistency);
-                        retry = manager.retryPolicy.onWriteTimeout(wcl, wte.received, wte.blockFor, queryRetries);
+                        retry = manager.retryPolicy.onWriteTimeout(wcl, WriteType.from(wte.writeType), wte.received, wte.blockFor, queryRetries);
                         break;
                     case UNAVAILABLE:
                         assert err.error instanceof UnavailableException;
@@ -142,16 +158,15 @@ class RetryingCallback implements Connection.ResponseCallback {
                         retry = manager.retryPolicy.onUnavailable(ucl, ue.required, ue.alive, queryRetries);
                         break;
                     case OVERLOADED:
-                        // TODO: maybe we could make that part of the retrying policy?
-                        if (queryRetries == 0)
-                            retry = true;
-                        break;
+                        // Try another node
+                        retry(false, null);
+                        return;
                     case IS_BOOTSTRAPPING:
                         // TODO: log error as this shouldn't happen
-                        // retry once
-                        if (queryRetries == 0)
-                            retry = true;
-                        break;
+                        // Try another node
+                        logger.error("Query sent to %s but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
+                        retry(false, null);
+                        return;
                     case UNPREPARED:
                         assert err.error instanceof PreparedQueryNotFoundException;
                         PreparedQueryNotFoundException pqnf = (PreparedQueryNotFoundException)err.error;
@@ -167,29 +182,34 @@ class RetryingCallback implements Connection.ResponseCallback {
                         try {
                             Message.Response prepareResponse = connection.write(new PrepareMessage(toPrepare)).get();
                             // TODO check return ?
-                            retry = true;
+                            retry = RetryPolicy.RetryDecision.retry(null);
                         } catch (InterruptedException e) {
                             logError(connection.address, "Interrupted while preparing query to execute");
-                            retry(false);
+                            retry(false, null);
                             return;
                         } catch (ExecutionException e) {
                             logError(connection.address, "Unexpected problem while preparing query to execute: " + e.getCause().getMessage());
-                            retry(false);
+                            retry(false, null);
                             return;
                         } catch (ConnectionException e) {
                             logger.debug("Connection exception while preparing missing statement", e);
                             logError(e.address, e.getMessage());
-                            retry(false);
+                            retry(false, null);
                             return;
                         }
                 }
-                if (retry) {
-                    ++queryRetries;
-                    retry(true);
-                } else {
-                    callback.onSet(connection, response);
+                switch (retry.type) {
+                    case RETRY:
+                        ++queryRetries;
+                        retry(true, retry.retryCL);
+                        break;
+                    case RETHROW:
+                        callback.onSet(connection, response);
+                        break;
+                    case IGNORE:
+                        callback.onSet(connection, ResultMessage.Void.instance());
+                        break;
                 }
-
                 break;
             default:
                 callback.onSet(connection, response);
@@ -202,7 +222,7 @@ class RetryingCallback implements Connection.ResponseCallback {
         if (exception instanceof ConnectionException) {
             ConnectionException ce = (ConnectionException)exception;
             logError(ce.address, ce.getMessage());
-            retry(false);
+            retry(false, null);
             return;
         }
 

@@ -8,7 +8,7 @@ import com.google.common.collect.AbstractIterator;
 
 /**
  * The policy that decides which Cassandra hosts to contact for each new query.
- *
+ * <p>
  * Two methods need to be implemented:
  * <ul>
  *   <li>{@link LoadBalancingPolicy#distance}: returns the "distance" of an
@@ -16,8 +16,7 @@ import com.google.common.collect.AbstractIterator;
  *   <li>{@link LoadBalancingPolicy#newQueryPlan}: it is used for each query to
  *   find which host to query first, and which hosts to use as failover.</li>
  * </ul>
- * 
- *
+ * <p>
  * The {@code LoadBalancingPolicy} is a {@link Host.StateListener} and is thus
  * informed of hosts up/down events. For efficiency purposes, the policy is
  * expected to exclude down hosts from query plans.
@@ -26,25 +25,25 @@ public interface LoadBalancingPolicy extends Host.StateListener {
 
     /**
      * Returns the distance assigned by this policy to the provided host.
-     *
+     * <p>
      * The distance of an host influence how much connections are kept to the
-     * node (see {@Link HostDistance}). A policy should assign a {@code
+     * node (see {@link HostDistance}). A policy should assign a {@code
      * LOCAL} distance to nodes that are susceptible to be returned first by
      * {@code newQueryPlan} and it is useless for {@code newQueryPlan} to
      * return hosts to which it assigns an {@code IGNORED} distance.
-     *
+     * <p>
      * The host distance is primarily used to prevent keeping too many
      * connections to host in remote datacenters when the policy itself always
      * picks host in the local datacenter first.
      *
-     * @param the host of which to return the distance of.
-     * @return the HostDistance to {@host}.
+     * @param host the host of which to return the distance of.
+     * @return the HostDistance to {@code host}.
      */
     public HostDistance distance(Host host);
 
     /**
      * Returns the hosts to use for a new query.
-     *
+     * <p>
      * Each new query will call this method. The first host in the result will
      * then be used to perform the query. In the event of a connection problem
      * (the queried host is down or appear to be so), the next host will be
@@ -73,11 +72,11 @@ public interface LoadBalancingPolicy extends Host.StateListener {
 
     /**
      * A Round-robin load balancing policy.
-     *
+     * <p>
      * This policy queries nodes in a round-robin fashion. For a given query,
      * if an host fail, the next one (following the round-robin order) is
      * tried, until all hosts have been tried.
-     *
+     * <p>
      * This policy is not datacenter aware and will include every known
      * Cassandra host in its round robin algorithm. If you use multiple
      * datacenter this will be inefficient and you will want to use the
@@ -95,13 +94,13 @@ public interface LoadBalancingPolicy extends Host.StateListener {
 
         /**
          * Return the HostDistance for the provided host.
-         *
+         * <p>
          * This policy consider all nodes as local. This is generally the right
          * thing to do in a single datacenter deployement. If you use multiple
          * datacenter, see {@link DCAwareRoundRobin} instead.
          *
-         * @param the host of which to return the distance of.
-         * @return the HostDistance to {@host}.
+         * @param host the host of which to return the distance of.
+         * @return the HostDistance to {@code host}.
          */
         public HostDistance distance(Host host) {
             return HostDistance.LOCAL;
@@ -109,7 +108,7 @@ public interface LoadBalancingPolicy extends Host.StateListener {
 
         /**
          * Returns the hosts to use for a new query.
-         *
+         * <p>
          * The returned plan will try each known host of the cluster. Upon each
          * call to this method, the ith host of the plans returned will cycle
          * over all the host of the cluster in a round-robin fashion.
@@ -179,14 +178,14 @@ public interface LoadBalancingPolicy extends Host.StateListener {
 
     /**
      * A data-center aware Round-robin load balancing policy.
-     *
+     * <p>
      * This policy provides round-robin queries over the node of the local
      * datacenter. It also includes in the query plans returned a configurable
      * number of hosts in the remote datacenters, but those are always tried
      * after the local nodes. In other words, this policy guarantees that no
      * host in a remote datacenter will be queried unless no host in the local
      * datacenter can be reached.
-     *
+     * <p>
      * If used with a single datacenter, this policy is equivalent to the
      * {@code LoadBalancingPolicy.RoundRobin} policy, but its DC awareness
      * incurs a slight overhead so the {@code LoadBalancingPolicy.RoundRobin}
@@ -221,16 +220,16 @@ public interface LoadBalancingPolicy extends Host.StateListener {
 
         /**
          * Return the HostDistance for the provided host.
-         *
+         * <p>
          * This policy consider nodes in the local datacenter as {@code LOCAL}.
          * For each remote datacenter, it considers a configurable number of
          * hosts as {@code REMOTE} and the rest is {@code IGNORED}.
-         *
+         * <p>
          * To configure how many host in each remote datacenter is considered
          * {@code REMOTE}, see {@link Factory#create(String, int)}.
          *
-         * @param the host of which to return the distance of.
-         * @return the HostDistance to {@host}.
+         * @param host the host of which to return the distance of.
+         * @return the HostDistance to {@code host}.
          */
         public HostDistance distance(Host host) {
             String dc = dc(host);
@@ -250,7 +249,7 @@ public interface LoadBalancingPolicy extends Host.StateListener {
 
         /**
          * Returns the hosts to use for a new query.
-         *
+         * <p>
          * The returned plan will always try each known host in the local
          * datacenter first, and then, if none of the local host is reacheable,
          * will try up to a configurable number of other host per remote datacenter.

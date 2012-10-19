@@ -268,7 +268,7 @@ public class Session {
         final LoadBalancingPolicy loadBalancer;
 
         // TODO: make that configurable
-        final RetryPolicy retryPolicy = RetryPolicy.DefaultPolicy.INSTANCE;
+        final RetryPolicy retryPolicy = RetryPolicy.Default.INSTANCE;
 
         final HostConnectionPool.Configuration poolsConfiguration;
 
