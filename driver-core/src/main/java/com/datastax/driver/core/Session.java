@@ -49,8 +49,10 @@ public class Session {
      * @throws QueryExecutionException if the query triggered an execution
      * exception, i.e. an exception thrown by Cassandra when it cannot execute
      * the query with the requested consistency level successfully.
+     * @throws QueryValidationException if the query if invalid (syntax error,
+     * unauthorized or any other validation problem).
      */
-    public ResultSet execute(String query) throws NoHostAvailableException, QueryExecutionException {
+    public ResultSet execute(String query) throws NoHostAvailableException {
         return execute(query, null);
     }
 
@@ -78,8 +80,10 @@ public class Session {
      * @throws QueryExecutionException if the query triggered an execution
      * exception, i.e. an exception thrown by Cassandra when it cannot execute
      * the query with the requested consistency level successfully.
+     * @throws QueryValidationException if the query if invalid (syntax error,
+     * unauthorized or any other validation problem).
      */
-    public ResultSet execute(String query, ConsistencyLevel consistency) throws NoHostAvailableException, QueryExecutionException {
+    public ResultSet execute(String query, ConsistencyLevel consistency) throws NoHostAvailableException {
         return executeAsync(query, consistency).getUninterruptibly();
     }
 
@@ -148,8 +152,15 @@ public class Session {
      * be empty (and will be for any non SELECT query).
      *
      * @throws IllegalStateException if {@code !stmt.ready()}.
+     * @throws NoHostAvailableException if no host in the cluster can be
+     * contacted successfully to execute this query.
+     * @throws QueryExecutionException if the query triggered an execution
+     * exception, i.e. an exception thrown by Cassandra when it cannot execute
+     * the query with the requested consistency level successfully.
+     * @throws QueryValidationException if the query if invalid (syntax error,
+     * unauthorized or any other validation problem).
      */
-    public ResultSet executePrepared(BoundStatement stmt) throws NoHostAvailableException, QueryExecutionException {
+    public ResultSet executePrepared(BoundStatement stmt) throws NoHostAvailableException {
         return executePrepared(stmt);
     }
 
@@ -171,8 +182,15 @@ public class Session {
      * be empty (and will be for any non SELECT query).
      *
      * @throws IllegalStateException if {@code !stmt.ready()}.
+     * @throws NoHostAvailableException if no host in the cluster can be
+     * contacted successfully to execute this query.
+     * @throws QueryExecutionException if the query triggered an execution
+     * exception, i.e. an exception thrown by Cassandra when it cannot execute
+     * the query with the requested consistency level successfully.
+     * @throws QueryValidationException if the query if invalid (syntax error,
+     * unauthorized or any other validation problem).
      */
-    public ResultSet executePrepared(BoundStatement stmt, ConsistencyLevel consistency) throws NoHostAvailableException, QueryExecutionException {
+    public ResultSet executePrepared(BoundStatement stmt, ConsistencyLevel consistency) throws NoHostAvailableException {
         return executePreparedAsync(stmt, consistency).getUninterruptibly();
     }
 

@@ -239,8 +239,10 @@ public class ResultSet implements Iterable<CQLRow> {
          * @throws QueryExecutionException if the query triggered an execution
          * exception, i.e. an exception thrown by Cassandra when it cannot execute
          * the query with the requested consistency level successfully.
+         * @throws QueryValidationException if the query if invalid (syntax error,
+         * unauthorized or any other validation problem).
          */
-        public ResultSet getUninterruptibly() throws NoHostAvailableException, QueryExecutionException {
+        public ResultSet getUninterruptibly() throws NoHostAvailableException {
             try {
                 while (true) {
                     try {
@@ -273,11 +275,13 @@ public class ResultSet implements Iterable<CQLRow> {
          * @throws QueryExecutionException if the query triggered an execution
          * exception, i.e. an exception thrown by Cassandra when it cannot execute
          * the query with the requested consistency level successfully.
+         * @throws QueryValidationException if the query if invalid (syntax error,
+         * unauthorized or any other validation problem).
          * @throws TimeoutException if the wait timed out (Note that this is
          * different from a Cassandra timeout, which is a {@code
          * QueryExecutionException}).
          */
-        public ResultSet getUninterruptibly(long timeout, TimeUnit unit) throws NoHostAvailableException, QueryExecutionException, TimeoutException {
+        public ResultSet getUninterruptibly(long timeout, TimeUnit unit) throws NoHostAvailableException, TimeoutException {
             long start = System.nanoTime();
             long timeoutNanos = unit.toNanos(timeout);
             try {
@@ -298,11 +302,11 @@ public class ResultSet implements Iterable<CQLRow> {
             }
         }
 
-        static void extractCauseFromExecutionException(ExecutionException e) throws NoHostAvailableException, QueryExecutionException {
+        static void extractCauseFromExecutionException(ExecutionException e) throws NoHostAvailableException {
             extractCause(e.getCause());
         }
 
-        static void extractCause(Throwable cause) throws NoHostAvailableException, QueryExecutionException {
+        static void extractCause(Throwable cause) throws NoHostAvailableException {
             if (cause instanceof NoHostAvailableException)
                 throw (NoHostAvailableException)cause;
             else if (cause instanceof QueryExecutionException)
