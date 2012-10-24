@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.configuration.*;
 
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.*;

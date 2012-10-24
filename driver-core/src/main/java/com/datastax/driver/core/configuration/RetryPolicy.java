@@ -1,8 +1,10 @@
-package com.datastax.driver.core;
+package com.datastax.driver.core.configuration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.log4j.Level;
+
+import com.datastax.driver.core.*;
 
 /**
  * A policy that defines a default behavior to adopt when a request returns
@@ -28,13 +30,36 @@ public interface RetryPolicy {
      * </ul>
      */
     public static class RetryDecision {
-        static enum Type { RETRY, RETHROW, IGNORE };
-        final Type type;
-        final ConsistencyLevel retryCL;
+        /**
+         * The type of retry decisions.
+         */
+        public static enum Type { RETRY, RETHROW, IGNORE };
+
+        private final Type type;
+        private final ConsistencyLevel retryCL;
 
         private RetryDecision(Type type, ConsistencyLevel retryCL) {
             this.type = type;
             this.retryCL = retryCL;
+        }
+
+        /**
+         * The type of this retry decision.
+         *
+         * @return the type of this retry decision.
+         */
+        public Type getType() {
+            return type;
+        }
+
+        /**
+         * The consistency level for a retry decision.
+         *
+         * @return the consistency level for a retry decision or {@code null}
+         * if this retry decision is an {@code IGNORE} or a {@code RETHROW}.
+         */
+        public ConsistencyLevel getRetryConsistencyLevel() {
+            return retryCL;
         }
 
         /**

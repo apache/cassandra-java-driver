@@ -6,6 +6,8 @@ import java.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.configuration.ReconnectionPolicy;
+
 abstract class AbstractReconnectionHandler implements Runnable {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractReconnectionHandler.class);

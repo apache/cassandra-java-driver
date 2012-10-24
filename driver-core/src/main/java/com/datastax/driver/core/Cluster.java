@@ -13,6 +13,7 @@ import org.apache.cassandra.transport.messages.PrepareMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
 
 import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.configuration.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -14,6 +14,7 @@ import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.configuration.*;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 class ControlConnection implements Host.StateListener {

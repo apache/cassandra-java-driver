@@ -9,6 +9,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
 
+import com.datastax.driver.core.configuration.RetryPolicy;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.SimpleFuture;
 
@@ -199,10 +200,10 @@ class RetryingCallback implements Connection.ResponseCallback {
                             return;
                         }
                 }
-                switch (retry.type) {
+                switch (retry.getType()) {
                     case RETRY:
                         ++queryRetries;
-                        retry(true, retry.retryCL);
+                        retry(true, retry.getRetryConsistencyLevel());
                         break;
                     case RETHROW:
                         callback.onSet(connection, response);

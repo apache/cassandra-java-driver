@@ -1,10 +1,12 @@
-package com.datastax.driver.core;
+package com.datastax.driver.core.configuration;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.AbstractIterator;
+
+import com.datastax.driver.core.*;
 
 /**
  * The policy that decides which Cassandra hosts to contact for each new query.

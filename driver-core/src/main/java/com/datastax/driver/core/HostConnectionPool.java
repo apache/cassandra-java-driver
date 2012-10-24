@@ -9,6 +9,8 @@ import java.util.concurrent.locks.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.configuration.*;
+
 // TODO: We should allow changing the core pool size (i.e. have a method that
 // adds new connection or trash existing one)
 class HostConnectionPool {
@@ -49,7 +51,7 @@ class HostConnectionPool {
         logger.trace(String.format("Created connection pool to host %s", host));
     }
 
-    private ConnectionsConfiguration.PoolingOptions options() {
+    private PoolingOptions options() {
         return manager.configuration().getConnectionsConfiguration().getPoolingOptions();
     }
 

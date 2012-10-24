@@ -8,7 +8,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.datastax.driver.core.Host;
+import com.datastax.driver.core.configuration.*;
 import com.datastax.driver.core.utils.SimpleFuture;
 
 import org.apache.cassandra.service.ClientState;
@@ -107,8 +107,8 @@ class Connection extends org.apache.cassandra.transport.Connection
         Map<String, String> options = new HashMap<String, String>() {{
             put(StartupMessage.CQL_VERSION, CQL_VERSION);
         }};
-        ConnectionsConfiguration.ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
-        if (compression != ConnectionsConfiguration.ProtocolOptions.Compression.NONE)
+        ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
+        if (compression != ProtocolOptions.Compression.NONE)
             options.put(StartupMessage.COMPRESSION, compression.toString());
         StartupMessage startup = new StartupMessage(options);
         try {
@@ -320,7 +320,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         private ClientBootstrap bootstrap() {
             ClientBootstrap b = new ClientBootstrap(new NioClientSocketChannelFactory(bossExecutor, workerExecutor));
 
-            ConnectionsConfiguration.SocketOptions options = configuration.getSocketOptions();
+            SocketOptions options = configuration.getSocketOptions();
 
             b.setOption("connectTimeoutMillis", options.getConnectTimeoutMillis());
             Boolean keepAlive = options.getKeepAlive();
