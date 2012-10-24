@@ -86,7 +86,7 @@ class ControlConnection implements Host.StateListener {
 
     private Connection reconnectInternal() throws NoHostAvailableException {
 
-        Iterator<Host> iter = balancingPolicy.newQueryPlan();
+        Iterator<Host> iter = balancingPolicy.newQueryPlan(new QueryOptions());
         Map<InetSocketAddress, String> errors = null;
         while (iter.hasNext()) {
             Host host = iter.next();

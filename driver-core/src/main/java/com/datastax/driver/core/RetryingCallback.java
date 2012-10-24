@@ -47,11 +47,11 @@ class RetryingCallback implements Connection.ResponseCallback {
 
     private volatile Map<InetSocketAddress, String> errors;
 
-    public RetryingCallback(Session.Manager manager, Connection.ResponseCallback callback) {
+    public RetryingCallback(Session.Manager manager, Connection.ResponseCallback callback, QueryOptions queryOptions) {
         this.manager = manager;
         this.callback = callback;
 
-        this.queryPlan = manager.loadBalancer.newQueryPlan();
+        this.queryPlan = manager.loadBalancer.newQueryPlan(queryOptions);
     }
 
     public void sendRequest() {
