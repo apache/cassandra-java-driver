@@ -46,24 +46,24 @@ public class Cluster {
 
     final Manager manager;
 
-    private Cluster(List<InetSocketAddress> contactPoints) throws NoHostAvailableException {
-        this.manager = new Manager(contactPoints);
+    private Cluster(List<InetSocketAddress> contactPoints, Policies policies) throws NoHostAvailableException {
+        this.manager = new Manager(contactPoints, policies);
     }
 
     /**
-     * Build a new cluster based on the provided configuration.
-     *
+     * Build a new cluster based on the provided initializer.
+     * <p>
      * Note that for building a cluster programmatically, Cluster.Builder
      * provides a slightly less verbose shortcut with {@link Builder#build}.
      *
-     * @param config the Cluster.Configuration to use
+     * @param initializer the Cluster.Initializer to use
      * @return the newly created Cluster instance
      *
      * @throws NoHostAvailableException if no host amongst the contact points
      * can be reached.
      */
-    public static Cluster buildFrom(Configuration config) throws NoHostAvailableException {
-        return new Cluster(config.getContactPoints());
+    public static Cluster buildFrom(Initializer initializer) throws NoHostAvailableException {
+        return new Cluster(initializer.getContactPoints(), initializer.getPolicies());
     }
 
     /**
@@ -104,17 +104,17 @@ public class Cluster {
         return session;
     }
 
-    /**
-     * Creates a new session on this cluster and sets a keyspace to use.
-     *
-     * @param authInfo The authorisation credentials to use to connect to
-     * Cassandra nodes.
-     * @return a new session on this cluster sets to keyspace
-     * {@code keyspaceName}.
-     *
-     * @throws NoHostAvailableException if no host can be contacted to set the
-     * {@code keyspace}.
-     */
+    ///**
+    // * Creates a new session on this cluster and sets a keyspace to use.
+    // *
+    // * @param authInfo The authorisation credentials to use to connect to
+    // * Cassandra nodes.
+    // * @return a new session on this cluster sets to keyspace
+    // * {@code keyspaceName}.
+    // *
+    // * @throws NoHostAvailableException if no host can be contacted to set the
+    // * {@code keyspace}.
+    // */
     //    Session session = connect(authInfo);
     //    session.manager.setKeyspace(keyspace);
     //    return session;
@@ -122,7 +122,7 @@ public class Cluster {
 
     /**
      * Returns read-only metadata on the connected cluster.
-     *
+     * <p>
      * This includes the know nodes (with their status as seen by the driver)
      * as well as the schema definitions.
      *
@@ -133,9 +133,9 @@ public class Cluster {
     }
 
     /**
-     * Configuration for {@link Cluster} instances.
+     * Initializer for {@link Cluster} instances.
      */
-    public interface Configuration {
+    public interface Initializer {
 
         /**
          * Returns the initial Cassandra hosts to connect to.
@@ -144,14 +144,25 @@ public class Cluster {
          * for more details on contact points.
          */
         public List<InetSocketAddress> getContactPoints();
+
+        /**
+         * Returns the policies to use for this cluster.
+         *
+         * @return the policies to use for this cluster.
+         */
+        public Policies getPolicies();
     }
 
     /**
      * Helper class to build {@link Cluster} instances.
      */
-    public static class Builder implements Configuration {
+    public static class Builder implements Initializer {
 
-        private List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+        private final List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+
+        private LoadBalancingPolicy.Factory loadBalancingPolicyFactory;
+        private ReconnectionPolicy.Factory reconnectionPolicyFactory;
+        private RetryPolicy retryPolicy;
 
         public List<InetSocketAddress> getContactPoints() {
             return addresses;
@@ -261,7 +272,67 @@ public class Cluster {
         }
 
         /**
-         * Build the cluster with the configured set of initial contact points.
+         * Configure the load balancing policy (factory) to use for the new cluster.
+         * <p>
+         * If no load balancing policy factory is set through this method,
+         * {@link Policies#DEFAULT_LOAD_BALANCING_POLICY_FACTORY} will be used instead.
+         *
+         * @param factory the load balancing policy factory to use
+         * @return this Builder
+         */
+        public Builder withLoadBalancingPolicyFactory(LoadBalancingPolicy.Factory factory) {
+            this.loadBalancingPolicyFactory = factory;
+            return this;
+        }
+
+        /**
+         * Configure the reconnection policy (factory) to use for the new cluster.
+         * <p>
+         * If no reconnection policy factory is set through this method,
+         * {@link Policies#DEFAULT_RECONNECTION_POLICY_FACTORY} will be used instead.
+         *
+         * @param factory the reconnection policy factory to use
+         * @return this Builder
+         */
+        public Builder withReconnectionPolicyFactory(ReconnectionPolicy.Factory factory) {
+            this.reconnectionPolicyFactory = factory;
+            return this;
+        }
+
+        /**
+         * Configure the retry policy to use for the new cluster.
+         * <p>
+         * If no retry policy is set through this method,
+         * {@link Policies#DEFAULT_RETRY_POLICY} will be used instead.
+         *
+         * @param policy the retry policy to use
+         * @return this Builder
+         */
+        public Builder withRetryPolicy(RetryPolicy policy) {
+            this.retryPolicy = policy;
+            return this;
+        }
+
+        /**
+         * Returns the policies to use for this cluster.
+         * <p>
+         * The policies used are the one set by the {@code with*} methods of
+         * this builder, or the default ones defined in {@link Policies} for
+         * the policies that hasn't been explicitely set.
+         *
+         * @return the policies to use for this cluster.
+         */
+        public Policies getPolicies() {
+            return new Policies(
+                loadBalancingPolicyFactory == null ? Policies.DEFAULT_LOAD_BALANCING_POLICY_FACTORY : loadBalancingPolicyFactory,
+                reconnectionPolicyFactory == null ? Policies.DEFAULT_RECONNECTION_POLICY_FACTORY : reconnectionPolicyFactory,
+                retryPolicy == null ? Policies.DEFAULT_RETRY_POLICY : retryPolicy
+            );
+        }
+
+        /**
+         * Build the cluster with the configured set of initial contact points
+         * and policies.
          *
          * This is a shorthand for {@code Cluster.buildFrom(this)}.
          *
@@ -276,6 +347,38 @@ public class Cluster {
     }
 
     /**
+     * The configuration of the cluster.
+     */
+    public static class Configuration {
+
+        private final Policies policies;
+        private final ConnectionsConfiguration connections = new ConnectionsConfiguration();
+
+        private Configuration(Policies policies) {
+            this.policies = policies;
+        }
+
+        /**
+         * The policies set for the cluster.
+         *
+         * @return the policies set for the cluster.
+         */
+        public Policies getPolicies() {
+            return policies;
+        }
+
+        /**
+         * Configuration related to the connections the driver maintains to the
+         * Cassandra hosts.
+         *
+         * @return the configuration of the connections to Cassandra hosts.
+         */
+        public ConnectionsConfiguration getConnectionsConfiguration() {
+            return connections;
+        }
+    }
+
+    /**
      * The sessions and hosts managed by this a Cluster instance.
      *
      * Note: the reason we create a Manager object separate from Cluster is
@@ -286,19 +389,15 @@ public class Cluster {
 
         // Initial contacts point
         final List<InetSocketAddress> contactPoints;
-
         private final Set<Session> sessions = new CopyOnWriteArraySet<Session>();
-        final ClusterMetadata metadata;
 
-        // TODO: Make that configurable
-        final ConvictionPolicy.Factory convictionPolicyFactory = new SimpleConvictionPolicy.Factory();
-        final ReconnectionPolicy.Factory reconnectionPolicyFactory = ReconnectionPolicy.Exponential.makeFactory(2 * 1000, 5 * 60 * 1000);
+        final ClusterMetadata metadata;
+        final Configuration configuration;
+
         final Connection.Factory connectionFactory;
         private final ControlConnection controlConnection;
 
-        // TODO: make configurable
-        final LoadBalancingPolicy.Factory loadBalancingFactory = LoadBalancingPolicy.DCAwareRoundRobin.Factory.create("dc1", 1);
-        //final LoadBalancingPolicy.Factory loadBalancingFactory = LoadBalancingPolicy.RoundRobin.Factory.INSTANCE;
+        final ConvictionPolicy.Factory convictionPolicyFactory = new ConvictionPolicy.Simple.Factory();
 
         final ScheduledExecutorService reconnectionExecutor = Executors.newScheduledThreadPool(2, new NamedThreadFactory("Reconnection"));
         final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("Scheduled Tasks"));
@@ -312,7 +411,8 @@ public class Cluster {
         // less clear behavior.
         final Map<MD5Digest, String> preparedQueries = new ConcurrentHashMap<MD5Digest, String>();
 
-        private Manager(List<InetSocketAddress> contactPoints) throws NoHostAvailableException {
+        private Manager(List<InetSocketAddress> contactPoints, Policies policies) throws NoHostAvailableException {
+            this.configuration = new Configuration(policies);
             this.metadata = new ClusterMetadata(this);
             this.contactPoints = contactPoints;
             this.connectionFactory = new Connection.Factory(this);
@@ -353,7 +453,7 @@ public class Cluster {
 
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug(String.format("%s is down, scheduling connection retries", host));
-            new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicyFactory.create(), host.reconnectionAttempt) {
+            new AbstractReconnectionHandler(reconnectionExecutor, configuration.getPolicies().getReconnectionPolicyFactory().create(), host.reconnectionAttempt) {
 
                 protected Connection tryReconnect() throws ConnectionException {
                     return connectionFactory.open(host);

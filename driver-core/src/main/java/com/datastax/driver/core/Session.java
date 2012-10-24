@@ -285,21 +285,30 @@ public class Session {
         final ConcurrentMap<Host, HostConnectionPool> pools;
         final LoadBalancingPolicy loadBalancer;
 
-        // TODO: make that configurable
-        final RetryPolicy retryPolicy = RetryPolicy.Default.INSTANCE;
-
-        final HostConnectionPool.Configuration poolsConfiguration;
+        final HostConnectionPool.PoolState poolsState;
 
         // TODO: Make that configurable
         final long DEFAULT_PER_HOST_CONNECTION_TIMEOUT = 3000;
+
+        public Connection.Factory connectionFactory() {
+            return cluster.manager.connectionFactory;
+        }
+
+        public Cluster.Configuration configuration() {
+            return cluster.manager.configuration;
+        }
+
+        public ExecutorService executor() {
+            return cluster.manager.executor;
+        }
 
         public Manager(Cluster cluster, Collection<Host> hosts) {
             this.cluster = cluster;
 
             // TODO: consider the use of NonBlockingHashMap
             this.pools = new ConcurrentHashMap<Host, HostConnectionPool>(hosts.size());
-            this.loadBalancer = cluster.manager.loadBalancingFactory.create(hosts);
-            this.poolsConfiguration = new HostConnectionPool.Configuration();
+            this.loadBalancer = cluster.manager.configuration.getPolicies().getLoadBalancingPolicyFactory().create(hosts);
+            this.poolsState = new HostConnectionPool.PoolState();
 
             for (Host host : hosts)
                 addHost(host);
@@ -311,7 +320,7 @@ public class Session {
                 if (distance == HostDistance.IGNORED)
                     return pools.get(host);
                 else
-                    return pools.put(host, new HostConnectionPool(host, distance, cluster.manager.connectionFactory, poolsConfiguration, this));
+                    return pools.put(host, new HostConnectionPool(host, distance, this));
             } catch (ConnectionException e) {
                 logger.debug(String.format("Error creating pool to %s (%s)", host, e.getMessage()));
                 host.getMonitor().signalConnectionFailure(e);

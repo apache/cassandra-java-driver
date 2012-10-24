@@ -175,7 +175,7 @@ public class ResultSet implements Iterable<CQLRow> {
                                     // means we should reset the keyspace to null in that case.
 
                                     // propagate the keyspace change to other connections
-                                    session.poolsConfiguration.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
+                                    session.poolsState.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
                                     break;
                                 case SCHEMA_CHANGE:
                                     ResultMessage.SchemaChange scc = (ResultMessage.SchemaChange)rm;

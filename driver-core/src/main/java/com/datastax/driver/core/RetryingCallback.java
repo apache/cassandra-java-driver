@@ -100,7 +100,7 @@ class RetryingCallback implements Connection.ResponseCallback {
         this.retryConsistencyLevel = newConsistencyLevel;
 
         // We should not retry on the current thread as this will be an IO thread.
-        manager.cluster.manager.executor.execute(new Runnable() {
+        manager.executor().execute(new Runnable() {
             public void run() {
                 if (retryCurrent) {
                     if (query(h))
@@ -138,24 +138,25 @@ class RetryingCallback implements Connection.ResponseCallback {
             case ERROR:
                 ErrorMessage err = (ErrorMessage)response;
                 RetryPolicy.RetryDecision retry = null;
+                RetryPolicy retryPolicy = manager.configuration().getPolicies().getRetryPolicy();
                 switch (err.error.code()) {
                     case READ_TIMEOUT:
                         assert err.error instanceof ReadTimeoutException;
                         ReadTimeoutException rte = (ReadTimeoutException)err.error;
                         ConsistencyLevel rcl = ConsistencyLevel.from(rte.consistency);
-                        retry = manager.retryPolicy.onReadTimeout(rcl, rte.received, rte.blockFor, rte.dataPresent, queryRetries);
+                        retry = retryPolicy.onReadTimeout(rcl, rte.received, rte.blockFor, rte.dataPresent, queryRetries);
                         break;
                     case WRITE_TIMEOUT:
                         assert err.error instanceof WriteTimeoutException;
                         WriteTimeoutException wte = (WriteTimeoutException)err.error;
                         ConsistencyLevel wcl = ConsistencyLevel.from(wte.consistency);
-                        retry = manager.retryPolicy.onWriteTimeout(wcl, WriteType.from(wte.writeType), wte.received, wte.blockFor, queryRetries);
+                        retry = retryPolicy.onWriteTimeout(wcl, WriteType.from(wte.writeType), wte.received, wte.blockFor, queryRetries);
                         break;
                     case UNAVAILABLE:
                         assert err.error instanceof UnavailableException;
                         UnavailableException ue = (UnavailableException)err.error;
                         ConsistencyLevel ucl = ConsistencyLevel.from(ue.consistency);
-                        retry = manager.retryPolicy.onUnavailable(ucl, ue.required, ue.alive, queryRetries);
+                        retry = retryPolicy.onUnavailable(ucl, ue.required, ue.alive, queryRetries);
                         break;
                     case OVERLOADED:
                         // Try another node

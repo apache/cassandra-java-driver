@@ -168,7 +168,7 @@ public class SessionTest {
         Session session = cluster.connect();
 
         try {
-            session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 2 }");
+            session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
             // We should deal with that sleep
             try { Thread.sleep(2000); } catch (Exception e) {}
             session.execute("USE test_ks");

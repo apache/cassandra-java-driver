@@ -16,8 +16,6 @@ class HostConnectionPool {
 
     public final Host host;
     public volatile HostDistance hostDistance;
-    private final Connection.Factory factory;
-    private final Configuration configuration;
     private final Session.Manager manager;
 
     private final List<Connection> connections;
@@ -30,11 +28,9 @@ class HostConnectionPool {
 
     private final Runnable newConnectionTask;
 
-    public HostConnectionPool(Host host, HostDistance hostDistance, Connection.Factory factory, Configuration configuration, Session.Manager manager) throws ConnectionException {
+    public HostConnectionPool(Host host, HostDistance hostDistance, Session.Manager manager) throws ConnectionException {
         this.host = host;
         this.hostDistance = hostDistance;
-        this.factory = factory;
-        this.configuration = configuration;
         this.manager = manager;
 
         this.newConnectionTask = new Runnable() {
@@ -44,13 +40,17 @@ class HostConnectionPool {
         };
 
         // Create initial core connections
-        List<Connection> l = new ArrayList<Connection>(configuration.getCoreConnectionsPerHost(hostDistance));
-        for (int i = 0; i < configuration.getCoreConnectionsPerHost(hostDistance); i++)
-            l.add(factory.open(host));
+        List<Connection> l = new ArrayList<Connection>(options().getCoreConnectionsPerHost(hostDistance));
+        for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
+            l.add(manager.connectionFactory().open(host));
         this.connections = new CopyOnWriteArrayList(l);
         this.open = new AtomicInteger(connections.size());
 
         logger.trace(String.format("Created connection pool to host %s", host));
+    }
+
+    private ConnectionsConfiguration.PoolingOptions options() {
+        return manager.configuration().getConnectionsConfiguration().getPoolingOptions();
     }
 
     public Connection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
@@ -59,7 +59,7 @@ class HostConnectionPool {
             throw new ConnectionException(host.getAddress(), "Pool is shutdown");
 
         if (connections.isEmpty()) {
-            for (int i = 0; i < configuration.getCoreConnectionsPerHost(hostDistance); i++)
+            for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
                 spawnNewConnection();
             return waitForConnection(timeout, unit);
         }
@@ -74,7 +74,7 @@ class HostConnectionPool {
             }
         }
 
-        if (minInFlight >= configuration.getMaxStreamsPerConnectionTreshold(hostDistance) && connections.size() < configuration.getMaxConnectionPerHost(hostDistance))
+        if (minInFlight >= options().getMaxSimultaneousRequestsPerConnectionTreshold(hostDistance) && connections.size() < options().getMaxConnectionPerHost(hostDistance))
             spawnNewConnection();
 
         while (true) {
@@ -88,7 +88,7 @@ class HostConnectionPool {
             if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1))
                 break;
         }
-        leastBusy.setKeyspace(configuration.keyspace);
+        leastBusy.setKeyspace(manager.poolsState.keyspace);
         return leastBusy;
     }
 
@@ -177,7 +177,7 @@ class HostConnectionPool {
                 return;
             }
 
-            if (connections.size() > configuration.getCoreConnectionsPerHost(hostDistance) && inFlight <= configuration.getMinStreamsPerConnectionTreshold(hostDistance)) {
+            if (connections.size() > options().getCoreConnectionsPerHost(hostDistance) && inFlight <= options().getMinSimultaneousRequestsPerConnectionTreshold(hostDistance)) {
                 trashConnection(connection);
             } else {
                 signalAvailableConnection();
@@ -189,7 +189,7 @@ class HostConnectionPool {
         // First, make sure we don't go below core connections
         for(;;) {
             int opened = open.get();
-            if (opened <= configuration.getCoreConnectionsPerHost(hostDistance))
+            if (opened <= options().getCoreConnectionsPerHost(hostDistance))
                 return false;
 
             if (open.compareAndSet(opened, opened - 1))
@@ -208,7 +208,7 @@ class HostConnectionPool {
         // First, make sure we don't cross the allowed limit of open connections
         for(;;) {
             int opened = open.get();
-            if (opened >= configuration.getMaxConnectionPerHost(hostDistance))
+            if (opened >= options().getMaxConnectionPerHost(hostDistance))
                 return false;
 
             if (open.compareAndSet(opened, opened + 1))
@@ -222,7 +222,7 @@ class HostConnectionPool {
 
         // Now really open the connection
         try {
-            connections.add(factory.open(host));
+            connections.add(manager.connectionFactory().open(host));
             signalAvailableConnection();
             return true;
         } catch (ConnectionException e) {
@@ -235,13 +235,13 @@ class HostConnectionPool {
     }
 
     private void spawnNewConnection() {
-        manager.cluster.manager.executor.submit(newConnectionTask);
+        manager.executor().submit(newConnectionTask);
     }
 
     private void replace(final Connection connection) {
         connections.remove(connection);
 
-        manager.cluster.manager.executor.submit(new Runnable() {
+        manager.executor().submit(new Runnable() {
             public void run() {
                 connection.close();
                 addConnectionIfUnderMaximum();
@@ -250,7 +250,7 @@ class HostConnectionPool {
     }
 
     private void close(final Connection connection) {
-        manager.cluster.manager.executor.submit(new Runnable() {
+        manager.executor().submit(new Runnable() {
             public void run() {
                 connection.close();
             }
@@ -279,43 +279,12 @@ class HostConnectionPool {
         }
     }
 
-    // TODO: move that out an make that configurable
-    public static class Configuration {
+    static class PoolState {
 
         private volatile String keyspace;
 
         public void setKeyspace(String keyspace) {
             this.keyspace = keyspace;
-        }
-
-        public int getMinStreamsPerConnectionTreshold(HostDistance distance) {
-            return 25;
-        }
-
-        public int getMaxStreamsPerConnectionTreshold(HostDistance distance) {
-            return 100;
-        }
-
-        public int getCoreConnectionsPerHost(HostDistance distance) {
-            switch (distance) {
-                case LOCAL:
-                    return 2;
-                case REMOTE:
-                    return 1;
-                default:
-                    return 0;
-            }
-        }
-
-        public int getMaxConnectionPerHost(HostDistance distance) {
-            switch (distance) {
-                case LOCAL:
-                    return 10;
-                case REMOTE:
-                    return 3;
-                default:
-                    return 0;
-            }
         }
     }
 }

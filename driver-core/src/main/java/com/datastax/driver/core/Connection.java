@@ -104,10 +104,12 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         // TODO: we will need to get fancy about handling protocol version at
         // some point, but keep it simple for now.
-        // TODO: we need to allow setting the compression to use
         Map<String, String> options = new HashMap<String, String>() {{
             put(StartupMessage.CQL_VERSION, CQL_VERSION);
         }};
+        ConnectionsConfiguration.ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
+        if (compression != ConnectionsConfiguration.ProtocolOptions.Compression.NONE)
+            options.put(StartupMessage.COMPRESSION, compression.toString());
         StartupMessage startup = new StartupMessage(options);
         try {
             Message.Response response = write(startup).get();
@@ -275,15 +277,20 @@ class Connection extends org.apache.cassandra.transport.Connection
 
     public static class Factory {
 
-        // TODO We could share those amongst factories
         private final ExecutorService bossExecutor = Executors.newCachedThreadPool();
         private final ExecutorService workerExecutor = Executors.newCachedThreadPool();
 
         private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
         private final DefaultResponseHandler defaultHandler;
+        private final ConnectionsConfiguration configuration;
 
-        public Factory(DefaultResponseHandler defaultHandler) {
+        public Factory(Cluster.Manager manager) {
+            this(manager, manager.configuration.getConnectionsConfiguration());
+        }
+
+        private Factory(DefaultResponseHandler defaultHandler, ConnectionsConfiguration configuration) {
             this.defaultHandler = defaultHandler;
+            this.configuration = configuration;
         }
 
         /**
@@ -295,7 +302,7 @@ class Connection extends org.apache.cassandra.transport.Connection
          */
         public Connection open(Host host) throws ConnectionException {
             InetSocketAddress address = host.getAddress();
-            String name =address.toString() + "-" + getIdGenerator(host).getAndIncrement();
+            String name = address.toString() + "-" + getIdGenerator(host).getAndIncrement();
             return new Connection(name, address, this);
         }
 
@@ -313,10 +320,27 @@ class Connection extends org.apache.cassandra.transport.Connection
         private ClientBootstrap bootstrap() {
             ClientBootstrap b = new ClientBootstrap(new NioClientSocketChannelFactory(bossExecutor, workerExecutor));
 
-            // TODO: handle this better (use SocketChannelConfig)
-            b.setOption("connectTimeoutMillis", 10000);
-            b.setOption("tcpNoDelay", true);
-            b.setOption("keepAlive", true);
+            ConnectionsConfiguration.SocketOptions options = configuration.getSocketOptions();
+
+            b.setOption("connectTimeoutMillis", options.getConnectTimeoutMillis());
+            Boolean keepAlive = options.getKeepAlive();
+            if (keepAlive != null)
+                b.setOption("keepAlive", keepAlive);
+            Boolean reuseAddress = options.getReuseAddress();
+            if (reuseAddress != null)
+                b.setOption("reuseAddress", reuseAddress);
+            Integer soLinger = options.getSoLinger();
+            if (soLinger != null)
+                b.setOption("soLinger", soLinger);
+            Boolean tcpNoDelay = options.getTcpNoDelay();
+            if (tcpNoDelay != null)
+                b.setOption("tcpNoDelay", tcpNoDelay);
+            Integer receiveBufferSize = options.getReceiveBufferSize();
+            if (receiveBufferSize != null)
+                b.setOption("receiveBufferSize", receiveBufferSize);
+            Integer sendBufferSize = options.getSendBufferSize();
+            if (sendBufferSize != null)
+                b.setOption("sendBufferSize", sendBufferSize);
 
             return b;
         }
