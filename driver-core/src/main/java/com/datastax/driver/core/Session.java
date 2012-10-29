@@ -369,9 +369,6 @@ public class Session {
 
         final HostConnectionPool.PoolState poolsState;
 
-        // TODO: Make that configurable
-        final long DEFAULT_PER_HOST_CONNECTION_TIMEOUT = 3000;
-
         public Connection.Factory connectionFactory() {
             return cluster.manager.connectionFactory;
         }

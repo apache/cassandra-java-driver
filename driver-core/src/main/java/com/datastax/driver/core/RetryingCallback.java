@@ -70,7 +70,9 @@ class RetryingCallback implements Connection.ResponseCallback {
             return false;
 
         try {
-            Connection connection = pool.borrowConnection(manager.DEFAULT_PER_HOST_CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+            // Note: this is not perfectly correct to use getConnectTimeoutMillis(), but
+            // until we provide a more fancy to control query timeouts, it's not a bad solution either
+            Connection connection = pool.borrowConnection(manager.configuration().getSocketOptions().getConnectTimeoutMillis(), TimeUnit.MILLISECONDS);
             current = host;
             try {
                 connection.write(this);

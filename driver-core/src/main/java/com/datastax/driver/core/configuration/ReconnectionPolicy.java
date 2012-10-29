@@ -53,8 +53,10 @@ public interface ReconnectionPolicy {
 
         private final long delayMs;
 
-        // TODO: validate arguments
         private Constant(long delayMs) {
+            if (delayMs < 0)
+                throw new IllegalArgumentException(String.format("Invalid negative delay (got %d) for ReconnectionPolicy", delayMs));
+
             this.delayMs = delayMs;
         }
 
@@ -94,8 +96,12 @@ public interface ReconnectionPolicy {
         private final long maxDelayMs;
         private int attempts;
 
-        // TODO: validate arguments
         private Exponential(long baseDelayMs, long maxDelayMs) {
+            if (baseDelayMs < 0 || maxDelayMs < 0)
+                throw new IllegalArgumentException("Invalid negative delay for ReconnectionPolicy");
+            if (maxDelayMs < baseDelayMs)
+                throw new IllegalArgumentException(String.format("maxDelayMs (got %d) cannot be smaller than baseDelayMs (got %d)", maxDelayMs, baseDelayMs));
+
             this.baseDelayMs = baseDelayMs;
             this.maxDelayMs = maxDelayMs;
         }
