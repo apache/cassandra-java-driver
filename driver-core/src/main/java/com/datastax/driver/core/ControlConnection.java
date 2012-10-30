@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.configuration.*;
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 class ControlConnection implements Host.StateListener {
@@ -26,7 +27,7 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
 
     private static final String SELECT_PEERS = "SELECT peer, data_center, rack FROM system.peers";
-    private static final String SELECT_LOCAL = "SELECT data_center, rack FROM system.local WHERE key='local'";
+    private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack FROM system.local WHERE key='local'";
 
     private final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
 
@@ -110,17 +111,21 @@ class ControlConnection implements Host.StateListener {
     private Connection tryConnect(Host host) throws ConnectionException {
         Connection connection = cluster.connectionFactory.open(host);
 
-        logger.trace("[Control connection] Registering for events");
-        List<Event.Type> evs = Arrays.asList(new Event.Type[]{
-            Event.Type.TOPOLOGY_CHANGE,
-            Event.Type.STATUS_CHANGE,
-            Event.Type.SCHEMA_CHANGE,
-        });
-        connection.write(new RegisterMessage(evs));
+        try {
+            logger.trace("[Control connection] Registering for events");
+            List<Event.Type> evs = Arrays.asList(new Event.Type[]{
+                Event.Type.TOPOLOGY_CHANGE,
+                Event.Type.STATUS_CHANGE,
+                Event.Type.SCHEMA_CHANGE,
+            });
+            connection.write(new RegisterMessage(evs));
 
-        refreshSchema(connection, null, null);
-        refreshNodeList(connection);
-        return connection;
+            refreshNodeList(connection);
+            refreshSchema(connection, null, null);
+            return connection;
+        } catch (BusyConnectionException e) {
+            throw new DriverInternalError("Newly created connection should not be busy");
+        }
     }
 
     public void refreshSchema(String keyspace, String table) {
@@ -155,6 +160,9 @@ class ControlConnection implements Host.StateListener {
         } catch (ConnectionException e) {
             logger.debug(String.format("[Control connection] Connection error when refeshing schema (%s)", e.getMessage()));
             reconnect();
+        } catch (BusyConnectionException e) {
+            logger.info("[Control connection] Connection is busy, reconnecting");
+            reconnect();
         } catch (ExecutionException e) {
             logger.error("[Control connection] Unexpected error while refeshing schema", e);
             reconnect();
@@ -164,13 +172,28 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    private void refreshNodeList(Connection connection) {
+    private void refreshNodeList(Connection connection) throws BusyConnectionException {
         // Make sure we're up to date on node list
         try {
             ResultSet.Future peersFuture = new ResultSet.Future(null, new QueryMessage(SELECT_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
             ResultSet.Future localFuture = new ResultSet.Future(null, new QueryMessage(SELECT_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
             connection.write(peersFuture.callback);
             connection.write(localFuture.callback);
+
+            // Update cluster name, DC and rack for the one node we are connected to
+            CQLRow localRow = localFuture.get().fetchOne();
+            if (localRow != null) {
+                String clusterName = localRow.getString("cluster_name");
+                if (clusterName != null)
+                    cluster.metadata.clusterName = clusterName;
+
+                Host host = cluster.metadata.getHost(connection.address);
+                // In theory host can't be null. However there is no point in risking a NPE in case we
+                // have a race between a node removal and this.
+                if (host != null)
+                    host.setLocationInfo(localRow.getString("data_center"), localRow.getString("rack"));
+            }
+
 
             List<InetSocketAddress> foundHosts = new ArrayList<InetSocketAddress>();
             List<String> dcs = new ArrayList<String>();
@@ -200,20 +223,14 @@ class ControlConnection implements Host.StateListener {
                 if (!host.getAddress().equals(connection.address) && !foundHostsSet.contains(host.getAddress()))
                     cluster.removeHost(host);
 
-            // Update DC and rack for the one node we are connected to
-            Host host = cluster.metadata.getHost(connection.address);
-            // In theory host can't be null. However there is no point in risking a NPE in case we
-            // have a race between a node removal and this.
-            if (host != null) {
-                for (CQLRow row : localFuture.get())
-                    host.setLocationInfo(row.getString("data_center"), row.getString("rack"));
-            }
-
         } catch (ConnectionException e) {
             logger.debug(String.format("[Control connection] Connection error when refeshing hosts list (%s)", e.getMessage()));
             reconnect();
         } catch (ExecutionException e) {
             logger.error("[Control connection] Unexpected error while refeshing hosts list", e);
+            reconnect();
+        } catch (BusyConnectionException e) {
+            logger.info("[Control connection] Connection is busy, reconnecting");
             reconnect();
         } catch (InterruptedException e) {
             // TODO: it's bad to do that but at the same time it's annoying to be interrupted

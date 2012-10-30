@@ -15,15 +15,11 @@ import com.datastax.driver.core.exceptions.*;
 
 public class SessionTest {
 
-    // I really think we should make sure the library doesn't complain about
-    // log4j by default, but for now let's deal with it locally
     @BeforeClass
     public static void classSetUp() {
         Logger rootLogger = Logger.getRootLogger();
-        if (!rootLogger.getAllAppenders().hasMoreElements()) {
-            rootLogger.setLevel(Level.TRACE);
-            rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%-5p [%t]: %m%n")));
-        }
+        rootLogger.setLevel(Level.TRACE);
+        rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%-5p [%t]: %m%n")));
     }
 
     //@Test

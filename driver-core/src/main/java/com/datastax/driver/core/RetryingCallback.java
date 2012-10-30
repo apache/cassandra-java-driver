@@ -41,6 +41,7 @@ class RetryingCallback implements Connection.ResponseCallback {
 
     private final Iterator<Host> queryPlan;
     private volatile Host current;
+    private volatile HostConnectionPool currentPool;
 
     private volatile int queryRetries;
     private volatile ConsistencyLevel retryConsistencyLevel;
@@ -61,32 +62,42 @@ class RetryingCallback implements Connection.ResponseCallback {
             if (query(host))
                 return;
         }
-        callback.onException(new NoHostAvailableException(errors == null ? Collections.<InetSocketAddress, String>emptyMap() : errors));
+        callback.onException(null, new NoHostAvailableException(errors == null ? Collections.<InetSocketAddress, String>emptyMap() : errors));
     }
 
     private boolean query(Host host) {
-        HostConnectionPool pool = manager.pools.get(host);
-        if (pool == null || pool.isShutdown())
+        currentPool = manager.pools.get(host);
+        if (currentPool == null || currentPool.isShutdown())
             return false;
 
+        Connection connection = null;
         try {
             // Note: this is not perfectly correct to use getConnectTimeoutMillis(), but
             // until we provide a more fancy to control query timeouts, it's not a bad solution either
-            Connection connection = pool.borrowConnection(manager.configuration().getSocketOptions().getConnectTimeoutMillis(), TimeUnit.MILLISECONDS);
+            connection = currentPool.borrowConnection(manager.configuration().getConnectionsConfiguration().getSocketOptions().getConnectTimeoutMillis(), TimeUnit.MILLISECONDS);
             current = host;
-            try {
-                connection.write(this);
-                return true;
-            } finally {
-                pool.returnConnection(connection);
-            }
+            connection.write(this);
+            return true;
         } catch (ConnectionException e) {
             // If we have any problem with the connection, move to the next node.
+            currentPool.returnConnection(connection);
+            logError(host.getAddress(), e.getMessage());
+            return false;
+        } catch (BusyConnectionException e) {
+            // The pool shoudln't have give us a busy connection unless we've maxed up the pool, so move on to the next host.
+            currentPool.returnConnection(connection);
             logError(host.getAddress(), e.getMessage());
             return false;
         } catch (TimeoutException e) {
             // We timeout, log it but move to the next node.
+            currentPool.returnConnection(connection);
             logError(host.getAddress(), "Timeout while trying to acquire available connection");
+            currentPool.returnConnection(connection);
+            return false;
+        } catch (RuntimeException e) {
+            currentPool.returnConnection(connection);
+            logger.error("Unexpected error while querying " + host.getAddress(), e);
+            logError(host.getAddress(), e.getMessage());
             return false;
         }
     }
@@ -134,94 +145,120 @@ class RetryingCallback implements Connection.ResponseCallback {
     }
 
     public void onSet(Connection connection, Message.Response response) {
-        switch (response.type) {
-            case RESULT:
-                callback.onSet(connection, response);
-                break;
-            case ERROR:
-                ErrorMessage err = (ErrorMessage)response;
-                RetryPolicy.RetryDecision retry = null;
-                RetryPolicy retryPolicy = manager.configuration().getPolicies().getRetryPolicy();
-                switch (err.error.code()) {
-                    case READ_TIMEOUT:
-                        assert err.error instanceof ReadTimeoutException;
-                        ReadTimeoutException rte = (ReadTimeoutException)err.error;
-                        ConsistencyLevel rcl = ConsistencyLevel.from(rte.consistency);
-                        retry = retryPolicy.onReadTimeout(rcl, rte.received, rte.blockFor, rte.dataPresent, queryRetries);
-                        break;
-                    case WRITE_TIMEOUT:
-                        assert err.error instanceof WriteTimeoutException;
-                        WriteTimeoutException wte = (WriteTimeoutException)err.error;
-                        ConsistencyLevel wcl = ConsistencyLevel.from(wte.consistency);
-                        retry = retryPolicy.onWriteTimeout(wcl, WriteType.from(wte.writeType), wte.received, wte.blockFor, queryRetries);
-                        break;
-                    case UNAVAILABLE:
-                        assert err.error instanceof UnavailableException;
-                        UnavailableException ue = (UnavailableException)err.error;
-                        ConsistencyLevel ucl = ConsistencyLevel.from(ue.consistency);
-                        retry = retryPolicy.onUnavailable(ucl, ue.required, ue.alive, queryRetries);
-                        break;
-                    case OVERLOADED:
-                        // Try another node
-                        retry(false, null);
-                        return;
-                    case IS_BOOTSTRAPPING:
-                        // TODO: log error as this shouldn't happen
-                        // Try another node
-                        logger.error("Query sent to %s but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
-                        retry(false, null);
-                        return;
-                    case UNPREPARED:
-                        assert err.error instanceof PreparedQueryNotFoundException;
-                        PreparedQueryNotFoundException pqnf = (PreparedQueryNotFoundException)err.error;
-                        String toPrepare = manager.cluster.manager.preparedQueries.get(pqnf.id);
-                        if (toPrepare == null) {
-                            // This shouldn't happen
-                            String msg = String.format("Tried to execute unknown prepared query %s", pqnf.id);
-                            logger.error(msg);
-                            callback.onException(new DriverInternalError(msg));
-                            return;
-                        }
 
-                        try {
-                            Message.Response prepareResponse = connection.write(new PrepareMessage(toPrepare)).get();
-                            // TODO check return ?
-                            retry = RetryPolicy.RetryDecision.retry(null);
-                        } catch (InterruptedException e) {
-                            logError(connection.address, "Interrupted while preparing query to execute");
+        if (currentPool == null) {
+            // This should not happen but is probably not reason to fail completely
+            logger.error("No current pool set; this should not happen");
+        } else {
+            currentPool.returnConnection(connection);
+        }
+
+        try {
+            switch (response.type) {
+                case RESULT:
+                    callback.onSet(connection, response);
+                    break;
+                case ERROR:
+                    ErrorMessage err = (ErrorMessage)response;
+                    RetryPolicy.RetryDecision retry = null;
+                    RetryPolicy retryPolicy = manager.configuration().getPolicies().getRetryPolicy();
+                    switch (err.error.code()) {
+                        case READ_TIMEOUT:
+                            assert err.error instanceof ReadTimeoutException;
+                            ReadTimeoutException rte = (ReadTimeoutException)err.error;
+                            ConsistencyLevel rcl = ConsistencyLevel.from(rte.consistency);
+                            retry = retryPolicy.onReadTimeout(rcl, rte.received, rte.blockFor, rte.dataPresent, queryRetries);
+                            break;
+                        case WRITE_TIMEOUT:
+                            assert err.error instanceof WriteTimeoutException;
+                            WriteTimeoutException wte = (WriteTimeoutException)err.error;
+                            ConsistencyLevel wcl = ConsistencyLevel.from(wte.consistency);
+                            retry = retryPolicy.onWriteTimeout(wcl, WriteType.from(wte.writeType), wte.received, wte.blockFor, queryRetries);
+                            break;
+                        case UNAVAILABLE:
+                            assert err.error instanceof UnavailableException;
+                            UnavailableException ue = (UnavailableException)err.error;
+                            ConsistencyLevel ucl = ConsistencyLevel.from(ue.consistency);
+                            retry = retryPolicy.onUnavailable(ucl, ue.required, ue.alive, queryRetries);
+                            break;
+                        case OVERLOADED:
+                            // Try another node
                             retry(false, null);
                             return;
-                        } catch (ExecutionException e) {
-                            logError(connection.address, "Unexpected problem while preparing query to execute: " + e.getCause().getMessage());
+                        case IS_BOOTSTRAPPING:
+                            // TODO: log error as this shouldn't happen
+                            // Try another node
+                            logger.error("Query sent to %s but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
                             retry(false, null);
                             return;
-                        } catch (ConnectionException e) {
-                            logger.debug("Connection exception while preparing missing statement", e);
-                            logError(e.address, e.getMessage());
-                            retry(false, null);
-                            return;
-                        }
-                }
-                switch (retry.getType()) {
-                    case RETRY:
-                        ++queryRetries;
-                        retry(true, retry.getRetryConsistencyLevel());
-                        break;
-                    case RETHROW:
+                        case UNPREPARED:
+                            assert err.error instanceof PreparedQueryNotFoundException;
+                            PreparedQueryNotFoundException pqnf = (PreparedQueryNotFoundException)err.error;
+                            String toPrepare = manager.cluster.manager.preparedQueries.get(pqnf.id);
+                            if (toPrepare == null) {
+                                // This shouldn't happen
+                                String msg = String.format("Tried to execute unknown prepared query %s", pqnf.id);
+                                logger.error(msg);
+                                callback.onException(connection, new DriverInternalError(msg));
+                                return;
+                            }
+
+                            try {
+                                Message.Response prepareResponse = connection.write(new PrepareMessage(toPrepare)).get();
+                                // TODO check return ?
+                                retry = RetryPolicy.RetryDecision.retry(null);
+                            } catch (InterruptedException e) {
+                                logError(connection.address, "Interrupted while preparing query to execute");
+                                retry(false, null);
+                                return;
+                            } catch (ExecutionException e) {
+                                logError(connection.address, "Unexpected problem while preparing query to execute: " + e.getCause().getMessage());
+                                retry(false, null);
+                                return;
+                            } catch (ConnectionException e) {
+                                logger.debug("Connection exception while preparing missing statement", e);
+                                logError(e.address, e.getMessage());
+                                retry(false, null);
+                                return;
+                            }
+                    }
+
+                    if (retry == null)
                         callback.onSet(connection, response);
-                        break;
-                    case IGNORE:
-                        callback.onSet(connection, ResultMessage.Void.instance());
-                        break;
-                }
-                break;
-            default:
-                callback.onSet(connection, response);
-                break;
+                    else {
+                        switch (retry.getType()) {
+                            case RETRY:
+                                ++queryRetries;
+                                retry(true, retry.getRetryConsistencyLevel());
+                                break;
+                            case RETHROW:
+                                callback.onSet(connection, response);
+                                break;
+                            case IGNORE:
+                                callback.onSet(connection, new ResultMessage.Void());
+                                break;
+                        }
+                    }
+                    break;
+                default:
+                    callback.onSet(connection, response);
+                    break;
+            }
+        } catch (Exception e) {
+            callback.onException(connection, e);
         }
     }
 
-    public void onException(Exception exception) {
+    public void onException(Connection connection, Exception exception) {
+
+        if (connection != null) {
+            if (currentPool == null) {
+                // This should not happen but is probably not reason to fail completely
+                logger.error("No current pool set; this should not happen");
+            } else {
+                currentPool.returnConnection(connection);
+            }
+        }
 
         if (exception instanceof ConnectionException) {
             ConnectionException ce = (ConnectionException)exception;
@@ -230,7 +267,7 @@ class RetryingCallback implements Connection.ResponseCallback {
             return;
         }
 
-        callback.onException(exception);
+        callback.onException(connection, exception);
     }
 
 }

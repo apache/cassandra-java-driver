@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.datastax.driver.core.configuration.*;
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.utils.SimpleFuture;
 
 import org.apache.cassandra.service.ClientState;
@@ -20,6 +21,10 @@ import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+// For LoggingHandler
+//import org.jboss.netty.handler.logging.LoggingHandler;
+//import org.jboss.netty.logging.InternalLogLevel;
 
 /**
  * A connection to a Cassandra Node.
@@ -123,10 +128,12 @@ class Connection extends org.apache.cassandra.transport.Connection
                 default:
                     throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type)));
             }
+        } catch (BusyConnectionException e) {
+            throw new DriverInternalError("Newly created connection should not be busy");
         } catch (ExecutionException e) {
             throw defunct(new ConnectionException(address, "Unexpected error during transport initialization", e.getCause()));
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new DriverInternalError(e);
         }
     }
 
@@ -174,6 +181,8 @@ class Connection extends org.apache.cassandra.transport.Connection
             }
         } catch (ConnectionException e) {
             throw defunct(e);
+        } catch (BusyConnectionException e) {
+            logger.error("Tried to set the keyspace on busy connection. This should not happen but is not critical");
         } catch (ExecutionException e) {
             throw defunct(new ConnectionException(address, "Error while setting keyspace", e));
         } catch (InterruptedException e) {
@@ -190,13 +199,13 @@ class Connection extends org.apache.cassandra.transport.Connection
      * @throws ConnectionException if the connection is closed
      * @throws TransportException if an I/O error while sending the request
      */
-    public Future write(Message.Request request) throws ConnectionException {
+    public Future write(Message.Request request) throws ConnectionException, BusyConnectionException {
         Future future = new Future(request);
         write(future);
         return future;
     }
 
-    public void write(ResponseCallback callback) throws ConnectionException {
+    public void write(ResponseCallback callback) throws ConnectionException, BusyConnectionException {
 
         Message.Request request = callback.request();
 
@@ -268,6 +277,11 @@ class Connection extends org.apache.cassandra.transport.Connection
 
     public boolean isClosed() {
         return isClosed;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Connection[%s, inFlight=%d, closed=%b]", name, inFlight.get(), isClosed);
     }
 
     // Cruft needed because we reuse server side classes, but we don't care about it
@@ -365,12 +379,11 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         public void removeHandler(int streamId) {
             pending.remove(streamId);
+            streamIdHandler.release(streamId);
         }
 
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
-            logger.trace(String.format("[%s] received ", e.getMessage()));
-
             if (!(e.getMessage() instanceof Message.Response)) {
                 logger.debug(String.format("[%s] Received unexpected message: %s", name, e.getMessage()));
                 defunct(new TransportException(address, "Unexpected message received: " + e.getMessage()));
@@ -378,6 +391,9 @@ class Connection extends org.apache.cassandra.transport.Connection
             } else {
                 Message.Response response = (Message.Response)e.getMessage();
                 int streamId = response.getStreamId();
+
+                logger.trace(String.format("[%s] received: %s", name, e.getMessage()));
+
                 if (streamId < 0) {
                     factory.defaultHandler().handle(response);
                     return;
@@ -385,9 +401,10 @@ class Connection extends org.apache.cassandra.transport.Connection
 
                 ResponseHandler handler = pending.remove(streamId);
                 streamIdHandler.release(streamId);
-                if (handler == null)
+                if (handler == null) {
                     // TODO: we should handle those with a default handler
                     throw new RuntimeException("No handler set for " + streamId + ", handlers = " + pending);
+                }
                 handler.callback.onSet(Connection.this, response);
             }
         }
@@ -407,7 +424,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             Iterator<ResponseHandler> iter = pending.values().iterator();
             while (iter.hasNext())
             {
-                iter.next().callback.onException(ce);
+                iter.next().callback.onException(Connection.this, ce);
                 iter.remove();
             }
         }
@@ -432,7 +449,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             super.set(response);
         }
 
-        public void onException(Exception exception) {
+        public void onException(Connection connection, Exception exception) {
             super.setException(exception);
         }
 
@@ -444,7 +461,7 @@ class Connection extends org.apache.cassandra.transport.Connection
     interface ResponseCallback {
         public Message.Request request();
         public void onSet(Connection connection, Message.Response response);
-        public void onException(Exception exception);
+        public void onException(Connection connection, Exception exception);
     }
 
     private static class ResponseHandler {
@@ -452,7 +469,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         public final int streamId;
         public final ResponseCallback callback;
 
-        public ResponseHandler(Dispatcher dispatcher, ResponseCallback callback) {
+        public ResponseHandler(Dispatcher dispatcher, ResponseCallback callback) throws BusyConnectionException {
             this.streamId = dispatcher.streamIdHandler.next();
             this.callback = callback;
         }
@@ -494,7 +511,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = Channels.pipeline();
 
-            //pipeline.addLast("debug", new LoggingHandler());
+            //pipeline.addLast("debug", new LoggingHandler(InternalLogLevel.INFO));
 
             pipeline.addLast("frameDecoder", new Frame.Decoder(tracker, cfactory));
             pipeline.addLast("frameEncoder", frameEncoder);

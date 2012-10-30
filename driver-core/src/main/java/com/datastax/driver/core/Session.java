@@ -499,6 +499,8 @@ public class Session {
                     c.write(new PrepareMessage(query)).get();
                 } catch (ConnectionException e) {
                     // Again, not being able to prepare the query right now is no big deal, so just ignore
+                } catch (BusyConnectionException e) {
+                    // Same as above
                 } catch (TimeoutException e) {
                     // Same as above
                 } catch (InterruptedException e) {

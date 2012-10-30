@@ -20,7 +20,7 @@ class StreamIdGenerator {
         bits.set(1, MAX_UNSIGNED_LONG);
     }
 
-    public int next() {
+    public int next() throws BusyConnectionException {
         int id = atomicGetAndSetFirstAvailable(0);
         if (id >= 0)
             return id;
@@ -29,8 +29,7 @@ class StreamIdGenerator {
         if (id >= 0)
             return 64 + id;
 
-        // TODO: Throw a BusyConnectionException and handle it in the connection pool
-        throw new IllegalStateException();
+        throw new BusyConnectionException();
     }
 
     public void release(int streamId) {
@@ -49,7 +48,7 @@ class StreamIdGenerator {
                 return -1;
 
             // Find the position of the right-most 1-bit
-            int id = Long.numberOfTrailingZeros(Long.lowestOneBit(l));
+            int id = Long.numberOfTrailingZeros(l);
             if (bits.compareAndSet(idx, l, l ^ mask(id)))
                 return id;
         }

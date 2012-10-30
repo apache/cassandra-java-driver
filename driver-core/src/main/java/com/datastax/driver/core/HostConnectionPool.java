@@ -14,7 +14,10 @@ import com.datastax.driver.core.configuration.*;
 // TODO: We should allow changing the core pool size (i.e. have a method that
 // adds new connection or trash existing one)
 class HostConnectionPool {
+
     private static final Logger logger = LoggerFactory.getLogger(HostConnectionPool.class);
+
+    private static final int MAX_SIMULTANEOUS_CREATION = 1;
 
     public final Host host;
     public volatile HostDistance hostDistance;
@@ -30,6 +33,8 @@ class HostConnectionPool {
 
     private final Runnable newConnectionTask;
 
+    private final AtomicInteger scheduledForCreation = new AtomicInteger();
+
     public HostConnectionPool(Host host, HostDistance hostDistance, Session.Manager manager) throws ConnectionException {
         this.host = host;
         this.hostDistance = hostDistance;
@@ -38,6 +43,7 @@ class HostConnectionPool {
         this.newConnectionTask = new Runnable() {
             public void run() {
                 addConnectionIfUnderMaximum();
+                scheduledForCreation.decrementAndGet();
             }
         };
 
@@ -62,7 +68,7 @@ class HostConnectionPool {
 
         if (connections.isEmpty()) {
             for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
-                spawnNewConnection();
+                manager.executor().submit(newConnectionTask);
             return waitForConnection(timeout, unit);
         }
 
@@ -77,7 +83,7 @@ class HostConnectionPool {
         }
 
         if (minInFlight >= options().getMaxSimultaneousRequestsPerConnectionTreshold(hostDistance) && connections.size() < options().getMaxConnectionPerHost(hostDistance))
-            spawnNewConnection();
+            maybeSpawnNewConnection();
 
         while (true) {
             int inFlight = leastBusy.inFlight.get();
@@ -126,7 +132,6 @@ class HostConnectionPool {
             waitLock.unlock();
         }
     }
-
 
     private Connection waitForConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
         long start = System.currentTimeMillis();
@@ -236,7 +241,16 @@ class HostConnectionPool {
         }
     }
 
-    private void spawnNewConnection() {
+    private void maybeSpawnNewConnection() {
+        while (true) {
+            int inCreation = scheduledForCreation.get();
+            if (inCreation >= MAX_SIMULTANEOUS_CREATION)
+                return;
+            if (scheduledForCreation.compareAndSet(inCreation, inCreation + 1))
+                break;
+        }
+
+        logger.debug("Creating new connection on busy pool to " + host);
         manager.executor().submit(newConnectionTask);
     }
 

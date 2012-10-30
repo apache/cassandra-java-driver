@@ -15,8 +15,10 @@ import org.apache.cassandra.transport.messages.QueryMessage;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.configuration.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 
 /**
  * Informations and known state of a Cassandra cluster.
@@ -38,7 +40,15 @@ import org.slf4j.LoggerFactory;
  */
 public class Cluster {
 
-    private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
+    private static final Logger logger = Logger.getLogger(Cluster.class);
+
+    static {
+        Logger rootLogger = Logger.getRootLogger();
+        if (!rootLogger.getAllAppenders().hasMoreElements()) {
+            rootLogger.setLevel(Level.DEBUG);
+            rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%-5p [%t]: %m%n")));
+        }
+    }
 
     /**
      * The default cassandra port for the native client protocol.
@@ -131,6 +141,10 @@ public class Cluster {
      */
     public ClusterMetadata getMetadata() {
         return manager.metadata;
+    }
+
+    public Cluster.Configuration getConfiguration() {
+        return manager.configuration;
     }
 
     /**
@@ -535,6 +549,8 @@ public class Cluster {
                     }
                 }
             } catch (ConnectionException e) {
+                // Ignore, not a big deal
+            } catch (BusyConnectionException e) {
                 // Ignore, not a big deal
             }
         }

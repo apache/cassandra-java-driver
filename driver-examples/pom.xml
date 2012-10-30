@@ -1,0 +1,39 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.datastax.cassandra</groupId>
+    <artifactId>cassandra-driver-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <groupId>com.datastax.cassandra</groupId>
+  <artifactId>cassandra-driver-examples-parent</artifactId>
+  <packaging>pom</packaging>
+  <version>0.1.0-SNAPSHOT</version>
+  <name>Cassandra Java Driver Examples</name>
+  <url>http://www.datastax.com</url>
+
+  <modules>
+    <module>stress</module>
+  </modules>
+
+  <dependencies>
+  </dependencies>
+
+  <build>
+      <plugins>
+          <plugin>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <version>2.5.1</version>
+              <configuration>
+                  <source>1.6</source>
+                  <target>1.6</target>
+                  <optimize>true</optimize>
+                  <showDeprecation>true</showDeprecation>
+                  <showWarnings>true</showWarnings>
+              </configuration>
+          </plugin>
+    </plugins>
+  </build>
+
+</project>

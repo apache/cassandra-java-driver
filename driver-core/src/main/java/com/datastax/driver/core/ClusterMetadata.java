@@ -16,6 +16,7 @@ public class ClusterMetadata {
     private static final Logger logger = LoggerFactory.getLogger(ClusterMetadata.class);
 
     private final Cluster.Manager cluster;
+    volatile String clusterName;
     private final ConcurrentMap<InetSocketAddress, Host> hosts = new ConcurrentHashMap<InetSocketAddress, Host>();
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
 
@@ -136,6 +137,15 @@ public class ClusterMetadata {
     // For internal use only
     Collection<Host> allHosts() {
         return hosts.values();
+    }
+
+    /**
+     * The Cassandra name for the cluster connect to.
+     *
+     * @return the Cassandra name for the cluster connect to.
+     */
+    public String getClusterName() {
+        return clusterName;
     }
 
     /**

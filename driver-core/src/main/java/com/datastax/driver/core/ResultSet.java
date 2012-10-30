@@ -217,7 +217,7 @@ public class ResultSet implements Iterable<CQLRow> {
                 }
             }
 
-            public void onException(Exception exception) {
+            public void onException(Connection connection, Exception exception) {
                 setException(exception);
             }
         }

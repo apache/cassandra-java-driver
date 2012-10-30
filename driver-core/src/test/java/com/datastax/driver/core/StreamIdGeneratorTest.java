@@ -6,7 +6,7 @@ import static junit.framework.Assert.*;
 public class StreamIdGeneratorTest {
 
     @Test
-    public void SimpleGenIdTest() {
+    public void SimpleGenIdTest() throws Exception {
 
         StreamIdGenerator generator = new StreamIdGenerator();
 
@@ -29,7 +29,7 @@ public class StreamIdGeneratorTest {
         try {
             generator.next();
             fail("No more streamId should be available");
-        } catch (IllegalStateException e) {
+        } catch (BusyConnectionException e) {
             // Ok, expected
         }
     }
