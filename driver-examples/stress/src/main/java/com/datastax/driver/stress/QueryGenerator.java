@@ -5,14 +5,24 @@ import java.util.Iterator;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.*;
 
-public interface QueryGenerator extends Iterator<QueryGenerator.Request> {
+public abstract class QueryGenerator implements Iterator<QueryGenerator.Request> {
 
     static final Request DONE_MARKER = new Request() {
         public ResultSet execute(Session session) throws NoHostAvailableException { return null; }
         public ResultSet.Future executeAsync(Session session) throws NoHostAvailableException { return null; };
     };
 
-    public void createSchema(Session session) throws NoHostAvailableException;
+    protected final int iterations;
+
+    protected QueryGenerator(int iterations) {
+        this.iterations = iterations;
+    }
+
+    public abstract void createSchema(Session session) throws NoHostAvailableException;
+
+    public interface Builder {
+        public QueryGenerator create(int iterations);
+    }
 
     public interface Request {
 
