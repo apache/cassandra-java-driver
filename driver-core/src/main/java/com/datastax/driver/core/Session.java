@@ -396,10 +396,12 @@ public class Session {
         private HostConnectionPool addHost(Host host) {
             try {
                 HostDistance distance = loadBalancer.distance(host);
-                if (distance == HostDistance.IGNORED)
+                if (distance == HostDistance.IGNORED) {
                     return pools.get(host);
-                else
+                } else {
+                    logger.debug(String.format("Adding %s to list of queried hosts", host));
                     return pools.put(host, new HostConnectionPool(host, distance, this));
+                }
             } catch (ConnectionException e) {
                 logger.debug(String.format("Error creating pool to %s (%s)", host, e.getMessage()));
                 host.getMonitor().signalConnectionFailure(e);

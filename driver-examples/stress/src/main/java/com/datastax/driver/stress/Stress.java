@@ -51,6 +51,7 @@ public class Stress {
 
         parser.accepts("n", "Number of iterations for the query generator (default: 1,000,000)").withRequiredArg().ofType(Integer.class);
         parser.accepts("t", "Number of threads to use (default: 30)").withRequiredArg().ofType(Integer.class);
+        parser.accepts("csv", "Save metrics into csv instead of displaying on stdout");
 
         OptionSet options = parser.parse(opts);
 
@@ -60,6 +61,7 @@ public class Stress {
         QueryGenerator generator = generators.get(action).create(ITERATIONS);
 
         boolean async = false;
+        boolean useCsv = options.has("csv");
 
         BlockingQueue<QueryGenerator.Request> workQueue = new SynchronousQueue<QueryGenerator.Request>(true);
 
@@ -79,7 +81,7 @@ public class Stress {
             System.out.println("Creating schema...");
             generator.createSchema(session);
 
-            Reporter reporter = new Reporter();
+            Reporter reporter = new Reporter(useCsv);
             Producer producer = new Producer(generator, workQueue);
 
             Consumer[] consumers = new Consumer[THREADS];

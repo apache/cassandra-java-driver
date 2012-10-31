@@ -208,7 +208,6 @@ public class ResultSet implements Iterable<CQLRow> {
                             break;
                         default:
                             // TODO: handle errors (set the connection to defunct as this mean it is in a bad state)
-                            logger.info("Got " + response);
                             throw new RuntimeException();
                     }
                 } catch (Exception e) {

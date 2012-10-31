@@ -509,8 +509,10 @@ public class Cluster {
 
         public Host addHost(InetSocketAddress address, boolean signal) {
             Host newHost = metadata.add(address);
-            if (newHost != null && signal)
+            if (newHost != null && signal) {
+                logger.info(String.format("New Cassandra host %s added", newHost));
                 onAdd(newHost);
+            }
             return newHost;
         }
 
@@ -518,8 +520,10 @@ public class Cluster {
             if (host == null)
                 return;
 
-            if (metadata.remove(host))
+            if (metadata.remove(host)) {
+                logger.info(String.format("Cassandra host %s removed", host));
                 onRemove(host);
+            }
         }
 
         // Prepare a query on all nodes

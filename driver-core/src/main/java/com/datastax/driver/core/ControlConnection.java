@@ -161,7 +161,7 @@ class ControlConnection implements Host.StateListener {
             logger.debug(String.format("[Control connection] Connection error when refeshing schema (%s)", e.getMessage()));
             reconnect();
         } catch (BusyConnectionException e) {
-            logger.info("[Control connection] Connection is busy, reconnecting");
+            logger.debug("[Control connection] Connection is busy, reconnecting");
             reconnect();
         } catch (ExecutionException e) {
             logger.error("[Control connection] Unexpected error while refeshing schema", e);
@@ -230,7 +230,7 @@ class ControlConnection implements Host.StateListener {
             logger.error("[Control connection] Unexpected error while refeshing hosts list", e);
             reconnect();
         } catch (BusyConnectionException e) {
-            logger.info("[Control connection] Connection is busy, reconnecting");
+            logger.debug("[Control connection] Connection is busy, reconnecting");
             reconnect();
         } catch (InterruptedException e) {
             // TODO: it's bad to do that but at the same time it's annoying to be interrupted
