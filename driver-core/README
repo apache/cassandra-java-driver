@@ -1,0 +1,50 @@
+Driver Core
+===========
+
+The core module of the Datastax Java Driver for Apache Cassandra (C*). This
+module offers a simple (as in, not abstracted) but complete API to work with
+CQL3. The main goal of this module is to handle all the functionality related
+to managing connections to a Cassandra cluster (but leaving potentially higher
+level abstraction like object mapping to separate modules).
+
+Prerequisite
+------------
+
+This driver uses the binary protocol that will be introduced in C* 1.2.
+This will thus only work with a version of C* >= 1.2. Since at the time of this
+writing C* 1.2 hasn't been released yet, you will have to at least use the
+beta2 release. Furthermore, the binary protocol server is not started with the
+default configuration file coming with Cassandra 1.2, so in the cassandra.yaml
+file, you will have to set at least:
+    start_native_transport: true
+
+
+Installing
+----------
+
+At the time of this writing, the driver has not been released yet, so you will
+have to compile it manually. The build system is maven and should work as any
+other maven project.
+
+Getting Started
+---------------
+
+Suppose you have a Cassandra cluster running on 3 nodes whose hostnames are:
+cass1, cass2 and cass3. A simple example using this core driver could be:
+
+    Cluster cluster = new Cluster.Builder().addContactPoints("cass1", "cass2").build();
+    Session session = cluster.connect("db1");
+
+    for (CQLRow row : session.execute("SELECT * FROM table1"))
+        // do something ...
+
+
+Please note that when we build the Cluster object, we only provide the address
+to 2 Cassandra hosts. We could have provided only one host or the 3 of them,
+this doesn't matter as long as the driver is able to contact one of the host
+provided as "contact points". Even if only one host was provided, the driver
+will use this host to discover the other ones and use the whole cluster
+automtically. This is also true for new nodes joining the cluster.
+
+For now, please refer to the JavaDoc for more informations, more documentation
+will come later.

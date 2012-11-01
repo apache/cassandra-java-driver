@@ -1,0 +1,5 @@
+TODO:
+
+- Add tests
+- Add documentation
+- Clean up dependencies (don't require the full Cassandra jar)
