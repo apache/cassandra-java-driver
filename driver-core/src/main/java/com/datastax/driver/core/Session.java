@@ -54,7 +54,7 @@ public class Session {
      * unauthorized or any other validation problem).
      */
     public ResultSet execute(String query) throws NoHostAvailableException {
-        return execute(query, new QueryOptions());
+        return execute(query, QueryOptions.DEFAULT);
     }
 
     /**
@@ -121,7 +121,7 @@ public class Session {
      * be empty (and will be for any non SELECT query).
      */
     public ResultSet.Future executeAsync(String query) {
-        return executeAsync(query, new QueryOptions());
+        return executeAsync(query, QueryOptions.DEFAULT);
     }
 
     /**
@@ -176,7 +176,7 @@ public class Session {
      */
     public PreparedStatement prepare(String query) throws NoHostAvailableException {
         Connection.Future future = new Connection.Future(new PrepareMessage(query));
-        manager.execute(future, new QueryOptions());
+        manager.execute(future, QueryOptions.DEFAULT);
         return toPreparedStatement(query, future);
     }
 
@@ -519,6 +519,9 @@ public class Session {
         }
 
         public ResultSet.Future executeQuery(Message.Request msg, QueryOptions options) {
+            if (options.isTracing())
+                msg.setTracingRequested();
+
             ResultSet.Future future = new ResultSet.Future(this, msg);
             execute(future.callback, options);
             return future;

@@ -157,31 +157,31 @@ public class SessionTest {
     //    }
     //}
 
-    @Test
-    public void MultiNodeContinuousExecuteTest() throws Exception {
+    //@Test
+    //public void MultiNodeContinuousExecuteTest() throws Exception {
 
-        Cluster cluster = new Cluster.Builder().addContactPoints("127.0.0.1").build();
-        Session session = cluster.connect();
+    //    Cluster cluster = new Cluster.Builder().addContactPoints("127.0.0.1").build();
+    //    Session session = cluster.connect();
 
-        try {
-            session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
-            // We should deal with that sleep
-            try { Thread.sleep(2000); } catch (Exception e) {}
-            session.execute("USE test_ks");
-            session.execute("CREATE TABLE test (k text PRIMARY KEY, i int, f float)");
-        } catch (AlreadyExistsException e) {
-            // Skip if already exists
-            session.execute("USE test_ks");
-        }
+    //    try {
+    //        session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
+    //        // We should deal with that sleep
+    //        try { Thread.sleep(2000); } catch (Exception e) {}
+    //        session.execute("USE test_ks");
+    //        session.execute("CREATE TABLE test (k text PRIMARY KEY, i int, f float)");
+    //    } catch (AlreadyExistsException e) {
+    //        // Skip if already exists
+    //        session.execute("USE test_ks");
+    //    }
 
-        //System.out.println("--- Schema ---\n" + cluster.getMetadata());
+    //    //System.out.println("--- Schema ---\n" + cluster.getMetadata());
 
-        for (int i = 0; i < 10000; ++i) {
-            System.out.println(">> " + i);
-            session.execute(String.format("INSERT INTO test (k, i, f) VALUES ('k%d', %d, %d.2)", i, i, i));
-            Thread.currentThread().sleep(1000);
-        }
-    }
+    //    for (int i = 0; i < 10000; ++i) {
+    //        System.out.println(">> " + i);
+    //        session.execute(String.format("INSERT INTO test (k, i, f) VALUES ('k%d', %d, %d.2)", i, i, i));
+    //        Thread.currentThread().sleep(1000);
+    //    }
+    //}
 
     //@Test
     //public void SchemaTest() throws Exception {
@@ -205,5 +205,31 @@ public class SessionTest {
     //        System.out.println(cluster.getMetadata().getKeyspace("test_ks").exportAsString());
     //        Thread.currentThread().sleep(4000);
     //    }
+    //}
+
+    //@Test
+    //public void TracingTest() throws Exception {
+
+    //    Cluster cluster = new Cluster.Builder().addContactPoints("127.0.0.1").build();
+    //    Session session = cluster.connect();
+
+    //    try {
+    //        session.execute("CREATE KEYSPACE test_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 2 }");
+    //        // We should deal with that sleep
+    //        try { Thread.sleep(1000); } catch (Exception e) {}
+    //        session.execute("USE test_ks");
+    //        session.execute("CREATE TABLE test (k text PRIMARY KEY, c int)");
+    //    } catch (Exception e) {
+    //        // Skip if already created
+    //        session.execute("USE test_ks");
+    //    }
+
+    //    ResultSet rs = session.execute("INSERT INTO test (k, c) VALUES ('k', 1)", new QueryOptions(ConsistencyLevel.QUORUM).setTracing());
+    //    QueryTrace qt = rs.getQueryTrace();
+
+    //    Thread.sleep(100);
+    //    System.out.println("Trace = " + rs.getQueryTrace());
+    //    for (QueryTrace.Event event : qt.getEvents())
+    //        System.out.println("  >> " + event);
     //}
 }

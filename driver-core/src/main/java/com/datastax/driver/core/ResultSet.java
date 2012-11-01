@@ -29,37 +29,48 @@ public class ResultSet implements Iterable<CQLRow> {
 
     private static final Logger logger = LoggerFactory.getLogger(ResultSet.class);
 
-    private static final ResultSet EMPTY = new ResultSet(ColumnDefinitions.EMPTY, new ArrayDeque(0));
+    private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque(0);
+    private static final ResultSet EMPTY = new ResultSet(ColumnDefinitions.EMPTY, EMPTY_QUEUE, null);
 
     private final ColumnDefinitions metadata;
     private final Queue<List<ByteBuffer>> rows;
+    private final QueryTrace trace;
 
-    private ResultSet(ColumnDefinitions metadata, Queue<List<ByteBuffer>> rows) {
+    private ResultSet(ColumnDefinitions metadata, Queue<List<ByteBuffer>> rows, QueryTrace trace) {
 
         this.metadata = metadata;
         this.rows = rows;
+        this.trace = trace;
     }
 
-    private static ResultSet fromMessage(ResultMessage msg) {
+    private static ResultSet fromMessage(ResultMessage msg, Session.Manager session) {
+
+        UUID tracingId = msg.getTracingId();
+        QueryTrace trace = tracingId == null ? null : new QueryTrace(tracingId, session);
+
         switch (msg.kind) {
             case VOID:
-                return EMPTY;
+                return empty(trace);
             case ROWS:
                 ResultMessage.Rows r = (ResultMessage.Rows)msg;
                 ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[r.result.metadata.names.size()];
                 for (int i = 0; i < defs.length; i++)
                     defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(r.result.metadata.names.get(i));
 
-                return new ResultSet(new ColumnDefinitions(defs), new ArrayDeque(r.result.rows));
+                return new ResultSet(new ColumnDefinitions(defs), new ArrayDeque(r.result.rows), trace);
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
-                return EMPTY;
+                return empty(trace);
             case PREPARED:
                 throw new RuntimeException("Prepared statement received when a ResultSet was expected");
             default:
                 logger.error(String.format("Received unknow result type '%s'; returning empty result set", msg.kind));
-                return EMPTY;
+                return empty(trace);
         }
+    }
+
+    private static ResultSet empty(QueryTrace trace) {
+        return trace == null ? EMPTY : new ResultSet(ColumnDefinitions.EMPTY, EMPTY_QUEUE, trace);
     }
 
     /**
@@ -135,6 +146,16 @@ public class ResultSet implements Iterable<CQLRow> {
         };
     }
 
+    /**
+     * The query trace if tracing was enabled on this query.
+     *
+     * @return the {@code QueryTrace} object for this query if tracing was
+     * enable for this query, or {@code null} otherwise.
+     */
+    public QueryTrace getQueryTrace() {
+        return trace;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -201,7 +222,7 @@ public class ResultSet implements Iterable<CQLRow> {
                                     }
                                     break;
                             }
-                            set(ResultSet.fromMessage(rm));
+                            set(ResultSet.fromMessage(rm, session));
                             break;
                         case ERROR:
                             setException(convertException(((ErrorMessage)response).error));
