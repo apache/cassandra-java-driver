@@ -58,8 +58,8 @@ public class Cluster {
 
     final Manager manager;
 
-    private Cluster(List<InetSocketAddress> contactPoints, Policies policies) throws NoHostAvailableException {
-        this.manager = new Manager(contactPoints, policies);
+    private Cluster(List<InetSocketAddress> contactPoints, int port, Policies policies) throws NoHostAvailableException {
+        this.manager = new Manager(contactPoints, port, policies);
     }
 
     /**
@@ -76,11 +76,21 @@ public class Cluster {
      *
      * @throws NoHostAvailableException if no host amongst the contact points
      * can be reached.
-     * @throws IllegalArgumentException if not all the contact points provided
-     * by {@code initiazer} have the same port.
+     * @throws IllegalArgumentException if the list of contact points provided
+     * by {@code initiazer} is empty or if not all those contact points have the same port.
      */
     public static Cluster buildFrom(Initializer initializer) throws NoHostAvailableException {
-        return new Cluster(initializer.getContactPoints(), initializer.getPolicies());
+        List<InetSocketAddress> contactPoints = initializer.getContactPoints();
+        if (contactPoints.isEmpty())
+            throw new IllegalArgumentException("Cannot build a cluster without contact points");
+
+        int port = -1;
+        for (InetSocketAddress a : contactPoints) {
+            if (port != -1 && a.getPort() != port)
+                throw new IllegalArgumentException(String.format("Not all hosts have the same port, found port %d and %d", port, a.getPort()));
+            port = a.getPort();
+        }
+        return new Cluster(contactPoints, port, initializer.getPolicies());
     }
 
     /**
@@ -149,6 +159,11 @@ public class Cluster {
         return manager.metadata;
     }
 
+    /**
+     * The cluster configuration.
+     *
+     * @return the cluster configuration.
+     */
     public Cluster.Configuration getConfiguration() {
         return manager.configuration;
     }
@@ -391,6 +406,7 @@ public class Cluster {
 
         // Initial contacts point
         final List<InetSocketAddress> contactPoints;
+        final int port;
         private final Set<Session> sessions = new CopyOnWriteArraySet<Session>();
 
         final ClusterMetadata metadata;
@@ -413,7 +429,8 @@ public class Cluster {
         // less clear behavior.
         final Map<MD5Digest, String> preparedQueries = new ConcurrentHashMap<MD5Digest, String>();
 
-        private Manager(List<InetSocketAddress> contactPoints, Policies policies) throws NoHostAvailableException {
+        private Manager(List<InetSocketAddress> contactPoints, int port, Policies policies) throws NoHostAvailableException {
+            this.port = port;
             this.configuration = new Configuration(policies);
             this.metadata = new ClusterMetadata(this);
             this.contactPoints = contactPoints;
@@ -561,7 +578,7 @@ public class Cluster {
         public void handle(Message.Response response) {
 
             if (!(response instanceof EventMessage)) {
-                // TODO: log some error
+                logger.error("Received an unexpected message from the server: " + response);
                 return;
             }
 

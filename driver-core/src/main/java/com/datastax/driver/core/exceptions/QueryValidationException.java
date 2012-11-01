@@ -6,7 +6,6 @@ package com.datastax.driver.core.exceptions;
  */
 public class QueryValidationException extends DriverUncheckedException {
 
-    // TODO: return the query with such exception
     protected QueryValidationException(String msg) {
         super(msg);
     }

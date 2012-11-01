@@ -201,8 +201,7 @@ class ControlConnection implements Host.StateListener {
 
             for (CQLRow row : peersFuture.get()) {
                 if (!row.isNull("peer")) {
-                    // TODO: find what port people are using
-                    foundHosts.add(new InetSocketAddress(row.getInet("peer"), Cluster.DEFAULT_PORT));
+                    foundHosts.add(new InetSocketAddress(row.getInet("peer"), cluster.port));
                     dcs.add(row.getString("data_center"));
                     racks.add(row.getString("rack"));
                 }

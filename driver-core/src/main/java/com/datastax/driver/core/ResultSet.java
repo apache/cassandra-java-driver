@@ -347,10 +347,8 @@ public class ResultSet implements Iterable<CQLRow> {
                     org.apache.cassandra.exceptions.UnavailableException ue = (org.apache.cassandra.exceptions.UnavailableException)te;
                     return new UnavailableException(ConsistencyLevel.from(ue.consistency), ue.required, ue.alive);
                 case OVERLOADED:
-                    // TODO: Catch that so that we retry another node
                     return new DriverInternalError("Queried host was overloaded; this shouldn't happen, another node should have been tried");
                 case IS_BOOTSTRAPPING:
-                    // TODO: Catch that so that we retry another node
                     return new DriverInternalError("Queried host was boostrapping; this shouldn't happen, another node should have been tried");
                 case TRUNCATE_ERROR:
                     return new TruncateException(te.getMessage());

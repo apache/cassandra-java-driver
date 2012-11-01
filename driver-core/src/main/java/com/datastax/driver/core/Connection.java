@@ -255,8 +255,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         if (isClosed)
             return;
 
-        // TODO: put that to trace
-        logger.debug(String.format("[%s] closing connection", name));
+        logger.trace(String.format("[%s] closing connection", name));
 
         // Make sure all new writes are rejected
         isClosed = true;
@@ -364,9 +363,6 @@ class Connection extends org.apache.cassandra.transport.Connection
         }
     }
 
-    // TODO: Having a map of Integer -> ResponseHandler might be overkill if we
-    // use the connection synchronously. See if we want to support lighter
-    // dispatcher that assume synchronous?
     private class Dispatcher extends SimpleChannelUpstreamHandler {
 
         public final StreamIdGenerator streamIdHandler = new StreamIdGenerator();
@@ -430,7 +426,6 @@ class Connection extends org.apache.cassandra.transport.Connection
         }
     }
 
-    // TODO: Do we really need that after all?
     static class Future extends SimpleFuture<Message.Response> implements ResponseCallback {
 
         private final Message.Request request;

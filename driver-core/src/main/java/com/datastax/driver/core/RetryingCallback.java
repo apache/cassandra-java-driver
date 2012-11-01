@@ -186,7 +186,6 @@ class RetryingCallback implements Connection.ResponseCallback {
                             retry(false, null);
                             return;
                         case IS_BOOTSTRAPPING:
-                            // TODO: log error as this shouldn't happen
                             // Try another node
                             logger.error("Query sent to %s but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
                             retry(false, null);
