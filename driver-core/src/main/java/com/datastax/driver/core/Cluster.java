@@ -2,6 +2,7 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -26,7 +27,7 @@ import org.apache.log4j.PatternLayout;
  * This is the main entry point of the driver. A simple example of access to a
  * Cassandra cluster would be:
  * <pre>
- *   Cluster cluster = new Cluster.Builder().addContactPoints("192.168.0.1").build();
+ *   Cluster cluster = new Cluster.Builder().addContactPoint("192.168.0.1").build();
  *   Session session = cluster.connect("db1");
  *
  *   for (CQLRow row : session.execute("SELECT * FROM table1"))
@@ -66,12 +67,17 @@ public class Cluster {
      * <p>
      * Note that for building a cluster programmatically, Cluster.Builder
      * provides a slightly less verbose shortcut with {@link Builder#build}.
+     * <p>
+     * Also note that that all the contact points provided by {@code
+     * initializer} must share the same port.
      *
      * @param initializer the Cluster.Initializer to use
      * @return the newly created Cluster instance
      *
      * @throws NoHostAvailableException if no host amongst the contact points
      * can be reached.
+     * @throws IllegalArgumentException if not all the contact points provided
+     * by {@code initiazer} have the same port.
      */
     public static Cluster buildFrom(Initializer initializer) throws NoHostAvailableException {
         return new Cluster(initializer.getContactPoints(), initializer.getPolicies());
@@ -173,14 +179,32 @@ public class Cluster {
      */
     public static class Builder implements Initializer {
 
-        private final List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+        private final List<InetAddress> addresses = new ArrayList<InetAddress>();
+        private int port = DEFAULT_PORT;
 
         private LoadBalancingPolicy.Factory loadBalancingPolicyFactory;
         private ReconnectionPolicy.Factory reconnectionPolicyFactory;
         private RetryPolicy retryPolicy;
 
         public List<InetSocketAddress> getContactPoints() {
-            return addresses;
+            List<InetSocketAddress> cp = new ArrayList<InetSocketAddress>(addresses.size());
+            for (InetAddress address : addresses)
+                cp.add(new InetSocketAddress(address, port));
+            return cp;
+        }
+
+        /**
+         * The port to use to connect to the Cassandra host.
+         *
+         * If not set through this method, the default port (9042) will be used
+         * instead.
+         *
+         * @param port the port to set.
+         * @return this Builder
+         */
+        public Builder withPort(int port) {
+            this.port = port;
+            return this;
         }
 
         /**
@@ -194,40 +218,24 @@ public class Cluster {
          * the driver won't be able to initialize itself correctly.
          *
          * @param address the address of the node to connect to
-         * @param port the port to connect to
          * @return this Builder
          *
-         * @throws IllegalArgumentException if the port parameter is outside
-         * the range of valid port values, or if the hostname parameter is
-         * null.
+         * @throws IllegalArgumentException if no IP address for {@code address}
+         * could be found
          * @throws SecurityException if a security manager is present and
          * permission to resolve the host name is denied.
-         */
-        public Builder addContactPoint(String address, int port) {
-            this.addresses.add(new InetSocketAddress(address, port));
-            return this;
-        }
-
-        /**
-         * Add a contact point using the default Cassandra port.
-         *
-         * See {@link Builder#addContactPoint} for more details on contact
-         * points.
-         *
-         * @param address the address of the node to add as contact point
-         * @return this Builder
-         *
-         * @throws SecurityException if a security manager is present and
-         * permission to resolve the host name is denied.
-         *
-         * @see Builder#addContactPoint
          */
         public Builder addContactPoint(String address) {
-            return addContactPoint(address, DEFAULT_PORT);
+            try {
+                this.addresses.add(InetAddress.getByName(address));
+                return this;
+            } catch (UnknownHostException e) {
+                throw new IllegalArgumentException(e.getMessage());
+            }
         }
 
         /**
-         * Add contact points using the default Cassandra port.
+         * Add contact points.
          *
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
@@ -235,6 +243,8 @@ public class Cluster {
          * @param addresses addresses of the nodes to add as contact point
          * @return this Builder
          *
+         * @throws IllegalArgumentException if no IP address for at least one
+         * of {@code addresses} could be found
          * @throws SecurityException if a security manager is present and
          * permission to resolve the host name is denied.
          *
@@ -242,27 +252,7 @@ public class Cluster {
          */
         public Builder addContactPoints(String... addresses) {
             for (String address : addresses)
-                addContactPoint(address, DEFAULT_PORT);
-            return this;
-        }
-
-        /**
-         * Add contact points using the default Cassandra port.
-         *
-         * See {@link Builder#addContactPoint} for more details on contact
-         * points.
-         *
-         * @param addresses addresses of the nodes to add as contact point
-         * @return this Builder
-         *
-         * @throws SecurityException if a security manager is present and
-         * permission to resolve the host name is denied.
-         *
-         * @see Builder#addContactPoint
-         */
-        public Builder addContactPoints(InetAddress... addresses) {
-            for (InetAddress address : addresses)
-                this.addresses.add(new InetSocketAddress(address, DEFAULT_PORT));
+                addContactPoint(address);
             return this;
         }
 
@@ -272,17 +262,14 @@ public class Cluster {
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
          *
-         * @param addresses the socket addresses of the nodes to add as contact
-         * point
+         * @param addresses addresses of the nodes to add as contact point
          * @return this Builder
-         *
-         * @throws SecurityException if a security manager is present and
-         * permission to resolve the host name is denied.
          *
          * @see Builder#addContactPoint
          */
-        public Builder addContactPoints(InetSocketAddress... addresses) {
-            this.addresses.addAll(Arrays.asList(addresses));
+        public Builder addContactPoints(InetAddress... addresses) {
+            for (InetAddress address : addresses)
+                this.addresses.add(address);
             return this;
         }
 
