@@ -109,7 +109,7 @@ public class BoundStatement {
                             // Ugly? Yes
                             Class klass = l.get(0).getClass();
                             DataType.Native eltType = (DataType.Native)((DataType.Collection.List)columnType).getElementsType();
-                            if (!Codec.isCompatible(eltType, klass))
+                            if (!Codec.isCompatibleSupertype(eltType, klass))
                                 throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but provided list value are %s", i, columnType, klass));
                         }
                         break;
@@ -123,7 +123,7 @@ public class BoundStatement {
                             // Ugly? Yes
                             Class klass = s.iterator().next().getClass();
                             DataType.Native eltType = (DataType.Native)((DataType.Collection.List)columnType).getElementsType();
-                            if (!Codec.isCompatible(eltType, klass))
+                            if (!Codec.isCompatibleSupertype(eltType, klass))
                                 throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but provided set value are %s", i, columnType, klass));
                         }
                         break;
@@ -142,14 +142,14 @@ public class BoundStatement {
                             DataType.Collection.Map mapType = (DataType.Collection.Map)columnType;
                             DataType.Native keysType = (DataType.Native)mapType.getKeysType();
                             DataType.Native valuesType = (DataType.Native)mapType.getValuesType();
-                            if (!Codec.isCompatible(keysType, keysClass) || !Codec.isCompatible(valuesType, valuesClass))
+                            if (!Codec.isCompatibleSupertype(keysType, keysClass) || !Codec.isCompatibleSupertype(valuesType, valuesClass))
                                 throw new InvalidTypeException(String.format("Invalid type for value %d, column type %s conflicts with provided type %s", i, mapType, toSet.getClass()));
                         }
                         break;
 
                 }
             } else {
-                if (!Codec.isCompatible(columnType.asNative(), toSet.getClass()))
+                if (!Codec.isCompatibleSupertype(columnType.asNative(), toSet.getClass()))
                     throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but %s provided", i, columnType, toSet.getClass()));
             }
             setValue(i, Codec.getCodec(columnType).decompose(toSet));
@@ -189,28 +189,12 @@ public class BoundStatement {
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is of neither of the
-     * following types: INT, TIMESTAMP, BIGINT, COUNTER or VARINT.
+     * @throws InvalidTypeException if column {@code i} is not of type INT.
      */
     public BoundStatement setInt(int i, int v) {
-        DataType.Native type = metadata().checkType(i, DataType.Native.INT,
-                                                       DataType.Native.TIMESTAMP,
-                                                       DataType.Native.BIGINT,
-                                                       DataType.Native.COUNTER,
-                                                       DataType.Native.VARINT);
+        DataType.Native type = metadata().checkType(i, DataType.Native.INT);
 
-        switch (type) {
-            case INT:
-                return setValue(i, Int32Type.instance.decompose(v));
-            case TIMESTAMP:
-            case BIGINT:
-            case COUNTER:
-                return setValue(i, LongType.instance.decompose((long)v));
-            case VARINT:
-                return setValue(i, IntegerType.instance.decompose(BigInteger.valueOf((long)v)));
-            default:
-                throw new AssertionError();
-        }
+        return setValue(i, Int32Type.instance.decompose(v));
     }
 
     /**
@@ -220,8 +204,7 @@ public class BoundStatement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is of neither of the
-     * following types: INT, TIMESTAMP, BIGINT, COUNTER or VARINT.
+     * @throws InvalidTypeException if column {@code i} is not of type INT.
      */
     public BoundStatement setInt(String name, int v) {
         return setInt(metadata().getIdx(name), v);
@@ -233,25 +216,11 @@ public class BoundStatement {
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is of neither of the
-     * following types: BIGINT, TIMESTAMP, COUNTER or VARINT.
+     * @throws InvalidTypeException if column {@code i} is of type BIGINT or COUNTER.
      */
     public BoundStatement setLong(int i, long v) {
-        DataType.Native type = metadata().checkType(i, DataType.Native.BIGINT,
-                                                       DataType.Native.TIMESTAMP,
-                                                       DataType.Native.COUNTER,
-                                                       DataType.Native.VARINT);
-
-        switch (type) {
-            case TIMESTAMP:
-            case BIGINT:
-            case COUNTER:
-                return setValue(i, LongType.instance.decompose(v));
-            case VARINT:
-                return setValue(i, IntegerType.instance.decompose(BigInteger.valueOf(v)));
-            default:
-                throw new AssertionError();
-        }
+        DataType.Native type = metadata().checkType(i, DataType.Native.BIGINT, DataType.Native.COUNTER);
+        return setValue(i, LongType.instance.decompose(v));
     }
 
     /**
@@ -261,8 +230,7 @@ public class BoundStatement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is of neither of the
-     * following types: BIGINT, TIMESTAMP, COUNTER or VARINT.
+     * @throws InvalidTypeException if column {@code i} is of type BIGINT or COUNTER.
      */
     public BoundStatement setLong(String name, long v) {
         return setLong(metadata().getIdx(name), v);
@@ -300,24 +268,11 @@ public class BoundStatement {
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is of neither of the
-     * following types: FLOAT, DOUBLE or DECIMAL.
+     * @throws InvalidTypeException if column {@code i} is not of type FLOAT.
      */
     public BoundStatement setFloat(int i, float v) {
-        DataType.Native type = metadata().checkType(i, DataType.Native.FLOAT,
-                                                       DataType.Native.DOUBLE,
-                                                       DataType.Native.DECIMAL);
-
-        switch (type) {
-            case FLOAT:
-                return setValue(i, FloatType.instance.decompose(v));
-            case DOUBLE:
-                return setValue(i, DoubleType.instance.decompose((double)v));
-            case DECIMAL:
-                return setValue(i, DecimalType.instance.decompose(BigDecimal.valueOf((double)v)));
-            default:
-                throw new AssertionError();
-        }
+        DataType.Native type = metadata().checkType(i, DataType.Native.FLOAT);
+        return setValue(i, FloatType.instance.decompose(v));
     }
 
     /**
@@ -327,8 +282,7 @@ public class BoundStatement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is of neither of the
-     * following types: FLOAT, DOUBLE or DECIMAL.
+     * @throws InvalidTypeException if column {@code i} is not of type FLOAT.
      */
     public BoundStatement setFloat(String name, float v) {
         return setFloat(metadata().getIdx(name), v);
@@ -340,20 +294,11 @@ public class BoundStatement {
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is of neither of the
-     * following types: DOUBLE or DECIMAL.
+     * @throws InvalidTypeException if column {@code i} is not of type DOUBLE.
      */
     public BoundStatement setDouble(int i, double v) {
-        DataType.Native type = metadata().checkType(i, DataType.Native.DOUBLE,
-                                                       DataType.Native.DECIMAL);
-        switch (type) {
-            case DOUBLE:
-                return setValue(i, DoubleType.instance.decompose(v));
-            case DECIMAL:
-                return setValue(i, DecimalType.instance.decompose(BigDecimal.valueOf(v)));
-            default:
-                throw new AssertionError();
-        }
+        DataType.Native type = metadata().checkType(i, DataType.Native.DOUBLE);
+        return setValue(i, DoubleType.instance.decompose(v));
     }
 
     /**
@@ -363,8 +308,7 @@ public class BoundStatement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is of neither of the
-     * following types: DOUBLE or DECIMAL.
+     * @throws InvalidTypeException if column {@code i} is not of type DOUBLE.
      */
     public BoundStatement setDouble(String name, double v) {
         return setDouble(metadata().getIdx(name), v);
@@ -413,16 +357,16 @@ public class BoundStatement {
      *
      * This method validate that the type of the column set is BLOB. If you
      * want to insert manually serialized data into columns of another type,
-     * use {@link #setByteBufferUnsafe} instead.
+     * use {@link #setBytesUnsafe} instead.
      *
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type BLOB.
      */
-    public BoundStatement setByteBuffer(int i, ByteBuffer v) {
+    public BoundStatement setBytes(int i, ByteBuffer v) {
         DataType.Native type = metadata().checkType(i, DataType.Native.BLOB);
-        return setByteBufferUnsafe(i, v);
+        return setBytesUnsafe(i, v);
     }
 
     /**
@@ -430,7 +374,7 @@ public class BoundStatement {
      *
      * This method validate that the type of the column set is BLOB. If you
      * want to insert manually serialized data into columns of another type,
-     * use {@link #setByteBufferUnsafe} instead.
+     * use {@link #setBytesUnsafe} instead.
      *
      * @return this BoundStatement.
      *
@@ -438,14 +382,14 @@ public class BoundStatement {
      * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type BLOB.
      */
-    public BoundStatement setByteBuffer(String name, ByteBuffer v) {
-        return setByteBuffer(metadata().getIdx(name), v);
+    public BoundStatement setBytes(String name, ByteBuffer v) {
+        return setBytes(metadata().getIdx(name), v);
     }
 
     /**
      * Set the {@code i}th value to the provided byte buffer.
      *
-     * Contrarily to {@link #setByteBuffer}, this method does not check the
+     * Contrarily to {@link #setBytes}, this method does not check the
      * type of the column set. If you insert data that is not compatible with
      * the type of the column, you will get an {@code InvalidQueryException} at
      * execute time.
@@ -454,14 +398,14 @@ public class BoundStatement {
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      */
-    public BoundStatement setByteBufferUnsafe(int i, ByteBuffer v) {
+    public BoundStatement setBytesUnsafe(int i, ByteBuffer v) {
         return setValue(i, v.duplicate());
     }
 
     /**
      * Set the value for column {@code name} to the provided byte buffer.
      *
-     * Contrarily to {@link #setByteBuffer}, this method does not check the
+     * Contrarily to {@link #setBytes}, this method does not check the
      * type of the column set. If you insert data that is not compatible with
      * the type of the column, you will get an {@code InvalidQueryException} at
      * execute time.
@@ -471,41 +415,8 @@ public class BoundStatement {
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
-    public BoundStatement setByteBufferUnsafe(String name, ByteBuffer v) {
-        return setByteBufferUnsafe(metadata().getIdx(name), v);
-    }
-
-    /**
-     * Set the {@code i}th value to the provided byte array.
-     *
-     * This method validate that the type of the column set is BLOB. If you
-     * want to insert manually serialized data into columns of another type,
-     * use {@link #setByteBufferUnsafe} instead.
-     *
-     * @return this BoundStatement.
-     *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type BLOB.
-     */
-    public BoundStatement setBytes(int i, byte[] v) {
-        return setValue(i, ByteBuffer.wrap(v));
-    }
-
-    /**
-     * Set the value for column {@code name} to the provided byte array.
-     *
-     * This method validate that the type of the column set is BLOB. If you
-     * want to insert manually serialized data into columns of another type,
-     * use {@link #setByteBufferUnsafe} instead.
-     *
-     * @return this BoundStatement.
-     *
-     * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not of type BLOB.
-     */
-    public BoundStatement setBytes(String name, byte[] v) {
-        return setBytes(metadata().getIdx(name), v);
+    public BoundStatement setBytesUnsafe(String name, ByteBuffer v) {
+        return setBytesUnsafe(metadata().getIdx(name), v);
     }
 
     /**
@@ -644,7 +555,7 @@ public class BoundStatement {
             Class klass = v.get(0).getClass();
 
             DataType.Native eltType = (DataType.Native)((DataType.Collection.List)type).getElementsType();
-            if (!Codec.isCompatible(eltType, klass))
+            if (!Codec.isCompatibleSupertype(eltType, klass))
                 throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a list of %s", metadata().getName(i), type, klass));
         }
 
@@ -690,7 +601,7 @@ public class BoundStatement {
             DataType.Collection.Map mapType = (DataType.Collection.Map)type;
             DataType.Native keysType = (DataType.Native)mapType.getKeysType();
             DataType.Native valuesType = (DataType.Native)mapType.getValuesType();
-            if (!Codec.isCompatible(keysType, keysClass) || !Codec.isCompatible(valuesType, valuesClass))
+            if (!Codec.isCompatibleSupertype(keysType, keysClass) || !Codec.isCompatibleSupertype(valuesType, valuesClass))
                 throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a map of %s -> %s", metadata().getName(i), type, keysType, valuesType));
         }
 
@@ -732,7 +643,7 @@ public class BoundStatement {
             Class klass = v.iterator().next().getClass();
 
             DataType.Native eltType = (DataType.Native)((DataType.Collection.Set)type).getElementsType();
-            if (!Codec.isCompatible(eltType, klass))
+            if (!Codec.isCompatibleSupertype(eltType, klass))
                 throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a set of %s", metadata().getName(i), type, klass));
         }
 

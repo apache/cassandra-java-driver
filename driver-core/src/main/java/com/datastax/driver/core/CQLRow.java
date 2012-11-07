@@ -143,22 +143,16 @@ public class CQLRow {
      * value is NULL, {@code 0L} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
-     * @throws InvalidTypeException if column {@code i} type is not one of: BIGINT, TIMESTAMP,
-     * INT or COUNTER.
+     * @throws InvalidTypeException if column {@code i} is not of type BIGINT or COUNTER.
      */
     public long getLong(int i) {
-        DataType type = metadata.checkType(i, DataType.Native.BIGINT,
-                                              DataType.Native.TIMESTAMP,
-                                              DataType.Native.INT,
-                                              DataType.Native.COUNTER);
+        DataType type = metadata.checkType(i, DataType.Native.BIGINT, DataType.Native.COUNTER);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
             return 0L;
 
-        return type == DataType.Native.INT
-             ? (long)Int32Type.instance.compose(value)
-             : LongType.instance.compose(value);
+        return LongType.instance.compose(value);
     }
 
     /**
@@ -170,8 +164,7 @@ public class CQLRow {
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} type is not one of: BIGINT, TIMESTAMP,
-     * INT or COUNTER.
+     * @throws InvalidTypeException if column {@code i} is not of type BIGINT or COUNTER.
      */
     public long getLong(String name) {
         return getLong(metadata.getIdx(name));
@@ -255,20 +248,16 @@ public class CQLRow {
      * value is NULL, {@code 0.0} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type
-     * DOUBLE or FLOAT.
+     * @throws InvalidTypeException if column {@code i} is not of type DOUBLE.
      */
     public double getDouble(int i) {
-        DataType type = metadata.checkType(i, DataType.Native.DOUBLE,
-                                              DataType.Native.FLOAT);
+        DataType type = metadata.checkType(i, DataType.Native.DOUBLE);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
             return 0.0;
 
-        return type == DataType.Native.FLOAT
-             ? (double)FloatType.instance.compose(value)
-             : DoubleType.instance.compose(value);
+        return DoubleType.instance.compose(value);
     }
 
     /**
@@ -280,8 +269,7 @@ public class CQLRow {
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not of type
-     * DOUBLE or FLOAT.
+     * @throws InvalidTypeException if column {@code name} is not of type DOUBLE.
      */
     public double getDouble(String name) {
         return getDouble(metadata.getIdx(name));
@@ -301,7 +289,7 @@ public class CQLRow {
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      */
-    public ByteBuffer getByteBuffer(int i) {
+    public ByteBuffer getBytesUnsafe(int i) {
         metadata.checkBounds(i);
 
         ByteBuffer value = data.get(i);
@@ -326,38 +314,33 @@ public class CQLRow {
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      */
-    public ByteBuffer getByteBuffer(String name) {
-        return getByteBuffer(metadata.getIdx(name));
+    public ByteBuffer getBytesUnsafe(String name) {
+        return getBytesUnsafe(metadata.getIdx(name));
     }
 
     /**
      * Returns the {@code i}th value of this row has a byte array.
-     *
-     * Note: this method always return the bytes composing the value, even if
-     * the column is not of type BLOB. That is, this method never throw an
-     * InvalidTypeException. However, if the type is not BLOB, it is up to the
-     * caller to handle the returned value correctly.
+     * <p>
+     * Note that this method validate that the colum is of type BLOB. If you want to retrieve
+     * the bytes for any type of columns, use {@link #getBytesUnsafe(int)} instead.
      *
      * @param i the index of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a byte array. If the
      * value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
+     * @throws InvalidTypeException if column {@code i} type is not of type BLOB.
      */
-    public byte[] getBytes(int i) {
-        ByteBuffer bb = getByteBuffer(i);
-        byte[] result = new byte[bb.remaining()];
-        bb.get(result);
-        return result;
+    public ByteBuffer getBytes(int i) {
+        DataType type = metadata.checkType(i, DataType.Native.BLOB);
+        return getBytesUnsafe(i);
     }
 
     /**
      * Returns the value of column {@code name} has a byte array.
-     *
-     * Note: this method always return the bytes composing the value, even if
-     * the column is not of type BLOB. That is, this method never throw an
-     * InvalidTypeException. However, if the type is not BLOB, it is up to the
-     * caller to handle the returned value correctly.
+     * <p>
+     * Note that this method validate that the colum is of type BLOB. If you want to retrieve
+     * the bytes for any type of columns, use {@link #getBytesUnsafe(String)} instead.
      *
      * @param name the name of the column to retrieve.
      * @return the value of column {@code name} as a byte array. If the value is NULL,
@@ -365,8 +348,9 @@ public class CQLRow {
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
+     * @throws InvalidTypeException if column {@code i} type is not of type BLOB.
      */
-    public byte[] getBytes(String name) {
+    public ByteBuffer getBytes(String name) {
         return getBytes(metadata.getIdx(name));
     }
 
@@ -571,17 +555,12 @@ public class CQLRow {
      * elements are not of class {@code elementsClass}.
      */
     public <T> List<T> getList(int i, Class<T> elementsClass) {
-        // TODO: this is not as flexible as the methods above. For instance,
-        // with a list<int>, one cannot ask for getList(i, Long.class). We
-        // might want to improve that, though that reach into the
-        // ListType.compose() method.
-
         DataType type = metadata.getType(i);
         if (!(type instanceof DataType.Collection.List))
             throw new InvalidTypeException(String.format("Column %s is not of list type", metadata.getName(i)));
 
         DataType.Native eltType = (DataType.Native)((DataType.Collection.List)type).getElementsType();
-        if (!Codec.isCompatible(eltType, elementsClass))
+        if (!Codec.isCompatibleSubtype(eltType, elementsClass))
             throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a list of %s", metadata.getName(i), type, elementsClass));
 
         ByteBuffer value = data.get(i);
@@ -631,7 +610,7 @@ public class CQLRow {
             throw new InvalidTypeException(String.format("Column %s is not of set type", metadata.getName(i)));
 
         DataType.Native eltType = (DataType.Native)((DataType.Collection.Set)type).getElementsType();
-        if (!Codec.isCompatible(eltType, elementsClass))
+        if (!Codec.isCompatibleSubtype(eltType, elementsClass))
             throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a set of %s", metadata.getName(i), type, elementsClass));
 
         ByteBuffer value = data.get(i);
@@ -684,7 +663,7 @@ public class CQLRow {
         DataType.Collection.Map mapType = (DataType.Collection.Map)type;
         DataType.Native keysType = (DataType.Native)mapType.getKeysType();
         DataType.Native valuesType = (DataType.Native)mapType.getValuesType();
-        if (!Codec.isCompatible(keysType, keysClass) || !Codec.isCompatible(valuesType, valuesClass))
+        if (!Codec.isCompatibleSubtype(keysType, keysClass) || !Codec.isCompatibleSubtype(valuesType, valuesClass))
             throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a map of %s -> %s", metadata.getName(i), type, keysClass, valuesClass));
 
         ByteBuffer value = data.get(i);

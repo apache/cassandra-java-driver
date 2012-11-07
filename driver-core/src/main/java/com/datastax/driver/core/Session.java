@@ -3,6 +3,7 @@ package com.datastax.driver.core;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.configuration.*;
@@ -298,7 +299,7 @@ public class Session {
     /**
      * Execute a prepared statement that had values provided for its bound
      * variables asynchronously.
-     *
+     * <p>
      * This method performs like {@link #executeAsync} but for prepared
      * statements. It return as soon as the query has been successfully sent to
      * the database.
@@ -316,6 +317,20 @@ public class Session {
             throw new IllegalStateException("Some bind variables haven't been bound in the provided statement");
 
         return manager.executeQuery(new ExecuteMessage(stmt.statement.id, Arrays.asList(stmt.values), ConsistencyLevel.toCassandraCL(queryOptions.getConsistencyLevel())), queryOptions);
+    }
+
+    /**
+     * Shutdown this session instance.
+     * <p>
+     * This closes all connections used by this sessions. Note that if you want
+     * to shutdown the full {@code Cluster} instance this session is part of,
+     * you should use {@link Cluster#shutdown} instead (which will call this
+     * method for all session but also release some additional ressources).
+     * <p>
+     * This method has no effect if the session was already shutdown.
+     */
+    public void shutdown() {
+        manager.shutdown();
     }
 
     private PreparedStatement toPreparedStatement(String query, Connection.Future future) throws NoHostAvailableException {
@@ -369,6 +384,8 @@ public class Session {
 
         final HostConnectionPool.PoolState poolsState;
 
+        final AtomicBoolean isShutdown = new AtomicBoolean(false);
+
         public Connection.Factory connectionFactory() {
             return cluster.manager.connectionFactory;
         }
@@ -391,6 +408,15 @@ public class Session {
 
             for (Host host : hosts)
                 addHost(host);
+        }
+
+        private void shutdown() {
+
+            if (!isShutdown.compareAndSet(false, true))
+                return;
+
+            for (HostConnectionPool pool : pools.values())
+                pool.shutdown();
         }
 
         private HostConnectionPool addHost(Host host) {

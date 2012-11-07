@@ -17,7 +17,7 @@ public interface DataType {
      *
      * The {@code COLLECTION} types are the maps, lists and sets.
      */
-    public enum Kind { NATIVE, COLLECTION, CUSTOM }
+    public enum Kind { NATIVE, COLLECTION }
 
     /**
      * Returns whether this type is a collection type.

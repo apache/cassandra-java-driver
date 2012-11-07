@@ -37,6 +37,8 @@ class ControlConnection implements Host.StateListener {
     private final ReconnectionPolicy.Factory reconnectionPolicyFactory = ReconnectionPolicy.Exponential.makeFactory(2 * 1000, 5 * 60 * 1000);
     private final AtomicReference<ScheduledFuture> reconnectionAttempt = new AtomicReference<ScheduledFuture>();
 
+    private volatile boolean isShutdown;
+
     public ControlConnection(Cluster.Manager cluster) {
         this.cluster = cluster;
         this.balancingPolicy = LoadBalancingPolicy.RoundRobin.Factory.INSTANCE.create(cluster.metadata.allHosts());
@@ -44,10 +46,22 @@ class ControlConnection implements Host.StateListener {
 
     // Only for the initial connection. Does not schedule retries if it fails
     public void connect() throws NoHostAvailableException {
+        if (isShutdown)
+            return;
         setNewConnection(reconnectInternal());
     }
 
+    public void shutdown() {
+        isShutdown = true;
+        Connection connection = connectionRef.get();
+        if (connection != null)
+            connection.close();
+    }
+
     private void reconnect() {
+        if (isShutdown)
+            return;
+
         try {
             setNewConnection(reconnectInternal());
         } catch (NoHostAvailableException e) {
@@ -105,7 +119,7 @@ class ControlConnection implements Host.StateListener {
                 }
             }
         }
-        throw new NoHostAvailableException(errors == null ? Collections.<InetSocketAddress, String>emptyMap(): errors);
+        throw new NoHostAvailableException(errors == null ? Collections.<InetSocketAddress, String>emptyMap() : errors);
     }
 
     private Connection tryConnect(Host host) throws ConnectionException {

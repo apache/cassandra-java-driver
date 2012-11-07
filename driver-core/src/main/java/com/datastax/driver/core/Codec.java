@@ -112,7 +112,8 @@ class Codec {
         throw new DriverInternalError("Unknown type: " + rawType);
     }
 
-    public static boolean isCompatible(DataType.Native type, Class klass) {
+    // Returns whether type can be safely subtyped to klass
+    public static boolean isCompatibleSubtype(DataType.Native type, Class klass) {
         switch (type) {
             case ASCII:     return klass.isAssignableFrom(String.class);
             case BIGINT:    return klass.isAssignableFrom(Long.class);
@@ -130,6 +131,29 @@ class Codec {
             case VARCHAR:   return klass.isAssignableFrom(String.class);
             case VARINT:    return klass.isAssignableFrom(BigInteger.class);
             case TIMEUUID:  return klass.isAssignableFrom(UUID.class);
+            default:        throw new RuntimeException("Unknown native type");
+        }
+    }
+
+    // Returns whether klass can be safely subtyped to klass, i.e. if type is a supertype of klass
+    public static boolean isCompatibleSupertype(DataType.Native type, Class klass) {
+        switch (type) {
+            case ASCII:     return String.class.isAssignableFrom(klass);
+            case BIGINT:    return Long.class.isAssignableFrom(klass);
+            case BLOB:      return ByteBuffer.class.isAssignableFrom(klass);
+            case BOOLEAN:   return Boolean.class.isAssignableFrom(klass);
+            case COUNTER:   return Long.class.isAssignableFrom(klass);
+            case DECIMAL:   return BigDecimal.class.isAssignableFrom(klass);
+            case DOUBLE:    return Double.class.isAssignableFrom(klass);
+            case FLOAT:     return Float.class.isAssignableFrom(klass);
+            case INET:      return InetAddress.class.isAssignableFrom(klass);
+            case INT:       return Integer.class.isAssignableFrom(klass);
+            case TEXT:      return String.class.isAssignableFrom(klass);
+            case TIMESTAMP: return Date.class.isAssignableFrom(klass);
+            case UUID:      return UUID.class.isAssignableFrom(klass);
+            case VARCHAR:   return String.class.isAssignableFrom(klass);
+            case VARINT:    return BigInteger.class.isAssignableFrom(klass);
+            case TIMEUUID:  return UUID.class.isAssignableFrom(klass);
             default:        throw new RuntimeException("Unknown native type");
         }
     }

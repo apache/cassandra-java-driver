@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.cassandra.utils.MD5Digest;
 import org.apache.cassandra.transport.Event;
@@ -166,6 +167,18 @@ public class Cluster {
      */
     public Cluster.Configuration getConfiguration() {
         return manager.configuration;
+    }
+
+    /**
+     * Shutdown this cluster instance.
+     *
+     * This closes all connections from all the sessions of this {@code
+     * Cluster} instance and reclam all ressources used by it.
+     * <p>
+     * This method has no effect if the cluster was already shutdown.
+     */
+    public void shutdown() {
+        manager.shutdown();
     }
 
     /**
@@ -397,7 +410,7 @@ public class Cluster {
 
     /**
      * The sessions and hosts managed by this a Cluster instance.
-     *
+     * <p>
      * Note: the reason we create a Manager object separate from Cluster is
      * that Manager is not publicly visible. For instance, we wouldn't want
      * user to be able to call the {@link #onUp} and {@link #onDown} methods.
@@ -421,6 +434,8 @@ public class Cluster {
         final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("Scheduled Tasks"));
 
         final ExecutorService executor = Executors.newCachedThreadPool(new NamedThreadFactory("Cassandra Java Driver worker"));
+
+        final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
         // All the queries that have been prepared (we keep them so we can
         // re-prepared them when a node fail or a new one join the cluster).
@@ -447,6 +462,22 @@ public class Cluster {
             Session session = new Session(Cluster.this, metadata.allHosts());
             sessions.add(session);
             return session;
+        }
+
+        private void shutdown() {
+            if (!isShutdown.compareAndSet(false, true))
+                return;
+
+            logger.debug("Shutting down");
+
+            controlConnection.shutdown();
+
+            for (Session session : sessions)
+                session.shutdown();
+
+            reconnectionExecutor.shutdownNow();
+            scheduledTasksExecutor.shutdownNow();
+            executor.shutdownNow();
         }
 
         public void onUp(Host host) {
@@ -567,6 +598,7 @@ public class Cluster {
         // we wait for that to be finished. And maybe avoid multiple refresh at
         // the same time.
         public void submitSchemaRefresh(final String keyspace, final String table) {
+            logger.trace("Submitting schema refresh");
             executor.submit(new Runnable() {
                 public void run() {
                     controlConnection.refreshSchema(keyspace, table);
@@ -583,6 +615,8 @@ public class Cluster {
             }
 
             final Event event = ((EventMessage)response).event;
+
+            logger.trace(String.format("Received event %s, scheduling delivery", response));
 
             // When handle is called, the current thread is a network I/O  thread, and we don't want to block
             // it (typically addHost() will create the connection pool to the new node, which can take time)

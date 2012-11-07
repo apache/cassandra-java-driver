@@ -43,6 +43,19 @@
     </dependency>
   </dependencies>
 
+  <profiles>
+    <profile>
+        <id>default</id>
+        <properties>
+            <env>default</env>
+            <cassandra.version>cassandra-1.2.0-beta2</cassandra.version>
+        </properties>
+        <activation>
+            <activeByDefault>true</activeByDefault>
+        </activation>
+    </profile>
+  </profiles>
+
   <build>
     <plugins>
       <plugin>
@@ -51,6 +64,9 @@
         <version>2.5</version>
         <configuration>
           <useFile>false</useFile>
+          <systemPropertyVariables>
+              <cassandra.version>${cassandra.version}</cassandra.version>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
     </plugins>
