@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.configuration.ReconnectionPolicy;
+import com.datastax.driver.core.exceptions.AuthenticationException;
 
 abstract class AbstractReconnectionHandler implements Runnable {
 
@@ -30,6 +31,9 @@ abstract class AbstractReconnectionHandler implements Runnable {
 
     protected boolean onConnectionException(ConnectionException e, long nextDelayMs) { return true; }
     protected boolean onUnknownException(Exception e, long nextDelayMs) { return true; }
+
+    // TODO: maybe be shouldn't retry on authentication exception?
+    protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) { return true; }
 
     public void start() {
         executor.schedule(this, policy.nextDelayMs(), TimeUnit.MILLISECONDS);
@@ -64,6 +68,13 @@ abstract class AbstractReconnectionHandler implements Runnable {
         } catch (ConnectionException e) {
             long nextDelay = policy.nextDelayMs();
             if (onConnectionException(e, nextDelay))
+                reschedule(nextDelay);
+            else
+                currentAttempt.compareAndSet(localFuture, null);
+        } catch (AuthenticationException e) {
+            logger.error(e.getMessage());
+            long nextDelay = policy.nextDelayMs();
+            if (onAuthenticationException(e, nextDelay))
                 reschedule(nextDelay);
             else
                 currentAttempt.compareAndSet(localFuture, null);

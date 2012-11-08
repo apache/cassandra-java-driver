@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.configuration.*;
+import com.datastax.driver.core.exceptions.AuthenticationException;
 
 // TODO: We should allow changing the core pool size (i.e. have a method that
 // adds new connection or trash existing one)
@@ -237,6 +238,12 @@ class HostConnectionPool {
             logger.debug("Connection error to " + host + " while creating additional connection");
             if (host.getMonitor().signalConnectionFailure(e))
                 shutdown();
+            return false;
+        } catch (AuthenticationException e) {
+            // This shouldn't really happen in theory
+            open.decrementAndGet();
+            logger.error("Authentication error while creating additional connection (error is: {})", e.getMessage());
+            shutdown();
             return false;
         }
     }

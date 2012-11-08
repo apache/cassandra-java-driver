@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.datastax.driver.core.configuration.*;
+import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.utils.SimpleFuture;
 
@@ -124,7 +125,18 @@ class Connection extends org.apache.cassandra.transport.Connection
                 case ERROR:
                     throw defunct(new TransportException(address, String.format("Error initializing connection", ((ErrorMessage)response).error)));
                 case AUTHENTICATE:
-                    throw new TransportException(address, "Authentication required but not yet supported");
+                    CredentialsMessage creds = new CredentialsMessage();
+                    creds.credentials.putAll(factory.authProvider.getAuthInfos(address.getAddress()));
+                    Message.Response authResponse = write(creds).get();
+                    switch (authResponse.type) {
+                        case READY:
+                            break;
+                        case ERROR:
+                            throw new AuthenticationException(address, (((ErrorMessage)response).error).getMessage());
+                        default:
+                            throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a CREDENTIALS message", authResponse.type)));
+                    }
+                    break;
                 default:
                     throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type)));
             }
@@ -297,13 +309,16 @@ class Connection extends org.apache.cassandra.transport.Connection
         private final DefaultResponseHandler defaultHandler;
         private final ConnectionsConfiguration configuration;
 
-        public Factory(Cluster.Manager manager) {
-            this(manager, manager.configuration.getConnectionsConfiguration());
+        private final AuthInfoProvider authProvider;
+
+        public Factory(Cluster.Manager manager, AuthInfoProvider authProvider) {
+            this(manager, manager.configuration.getConnectionsConfiguration(), authProvider);
         }
 
-        private Factory(DefaultResponseHandler defaultHandler, ConnectionsConfiguration configuration) {
+        private Factory(DefaultResponseHandler defaultHandler, ConnectionsConfiguration configuration, AuthInfoProvider authProvider) {
             this.defaultHandler = defaultHandler;
             this.configuration = configuration;
+            this.authProvider = authProvider;
         }
 
         /**

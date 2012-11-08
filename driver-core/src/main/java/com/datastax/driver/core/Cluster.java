@@ -59,8 +59,8 @@ public class Cluster {
 
     final Manager manager;
 
-    private Cluster(List<InetSocketAddress> contactPoints, int port, Policies policies) throws NoHostAvailableException {
-        this.manager = new Manager(contactPoints, port, policies);
+    private Cluster(List<InetSocketAddress> contactPoints, int port, Policies policies, AuthInfoProvider authProvider) throws NoHostAvailableException {
+        this.manager = new Manager(contactPoints, port, policies, authProvider);
     }
 
     /**
@@ -79,6 +79,8 @@ public class Cluster {
      * can be reached.
      * @throws IllegalArgumentException if the list of contact points provided
      * by {@code initiazer} is empty or if not all those contact points have the same port.
+     * @throws AuthenticationException if while contacting the initial
+     * contact points an authencation error occurs.
      */
     public static Cluster buildFrom(Initializer initializer) throws NoHostAvailableException {
         List<InetSocketAddress> contactPoints = initializer.getContactPoints();
@@ -91,7 +93,7 @@ public class Cluster {
                 throw new IllegalArgumentException(String.format("Not all hosts have the same port, found port %d and %d", port, a.getPort()));
             port = a.getPort();
         }
-        return new Cluster(contactPoints, port, initializer.getPolicies());
+        return new Cluster(contactPoints, port, initializer.getPolicies(), initializer.getAuthInfoProvider());
     }
 
     /**
@@ -102,18 +104,6 @@ public class Cluster {
     public Session connect() {
         return manager.newSession();
     }
-
-    /**
-     * Creates a new session on this cluster.
-     *
-     * @param authInfo The authorisation credentials to use to connect to
-     * Cassandra nodes.
-     * @return a new session on this cluster sets to no keyspace.
-     */
-    // TODO
-    //public Session connect(AuthInfo authInfo) {
-    //    return null;
-    //}
 
     /**
      * Creates a new session on this cluster and sets a keyspace to use.
@@ -131,22 +121,6 @@ public class Cluster {
         session.manager.setKeyspace(keyspace);
         return session;
     }
-
-    ///**
-    // * Creates a new session on this cluster and sets a keyspace to use.
-    // *
-    // * @param authInfo The authorisation credentials to use to connect to
-    // * Cassandra nodes.
-    // * @return a new session on this cluster sets to keyspace
-    // * {@code keyspaceName}.
-    // *
-    // * @throws NoHostAvailableException if no host can be contacted to set the
-    // * {@code keyspace}.
-    // */
-    //    Session session = connect(authInfo);
-    //    session.manager.setKeyspace(keyspace);
-    //    return session;
-    //}
 
     /**
      * Returns read-only metadata on the connected cluster.
@@ -200,6 +174,14 @@ public class Cluster {
          * @return the policies to use for this cluster.
          */
         public Policies getPolicies();
+
+        /**
+         * The authentication provider to use to connect to the Cassandra cluster.
+         *
+         * @return the authentication provider to use. Use
+         * AuthInfoProvider.NONE if authentication is not to be used.
+         */
+        public AuthInfoProvider getAuthInfoProvider();
     }
 
     /**
@@ -209,6 +191,7 @@ public class Cluster {
 
         private final List<InetAddress> addresses = new ArrayList<InetAddress>();
         private int port = DEFAULT_PORT;
+        private AuthInfoProvider authProvider = AuthInfoProvider.NONE;
 
         private LoadBalancingPolicy.Factory loadBalancingPolicyFactory;
         private ReconnectionPolicy.Factory reconnectionPolicyFactory;
@@ -361,6 +344,30 @@ public class Cluster {
         }
 
         /**
+         * Use the provided {@code AuthInfoProvider} to connect to Cassandra hosts.
+         * <p>
+         * This is optional if the Cassandra cluster has been configured to not
+         * require authentication (the default).
+         *
+         * @param authInfoProvider the authentication info provider to use
+         * @return this Builder
+         */
+        public Builder withAuthInfoProvider(AuthInfoProvider authInfoProvider) {
+            this.authProvider = authInfoProvider;
+            return this;
+        }
+
+        /**
+         * The authentication provider to use to connect to the Cassandra cluster.
+         *
+         * @return the authentication provider set through {@link #withAuthInfoProvider}
+         * or AuthInfoProvider.NONE if nothing was set.
+         */
+        public AuthInfoProvider getAuthInfoProvider() {
+            return this.authProvider;
+        }
+
+        /**
          * Build the cluster with the configured set of initial contact points
          * and policies.
          *
@@ -370,6 +377,8 @@ public class Cluster {
          *
          * @throws NoHostAvailableException if none of the contact points
          * provided can be reached.
+         * @throws AuthenticationException if while contacting the initial
+         * contact points an authencation error occurs.
          */
         public Cluster build() throws NoHostAvailableException {
             return Cluster.buildFrom(this);
@@ -444,12 +453,12 @@ public class Cluster {
         // less clear behavior.
         final Map<MD5Digest, String> preparedQueries = new ConcurrentHashMap<MD5Digest, String>();
 
-        private Manager(List<InetSocketAddress> contactPoints, int port, Policies policies) throws NoHostAvailableException {
+        private Manager(List<InetSocketAddress> contactPoints, int port, Policies policies, AuthInfoProvider authProvider) throws NoHostAvailableException {
             this.port = port;
             this.configuration = new Configuration(policies);
             this.metadata = new ClusterMetadata(this);
             this.contactPoints = contactPoints;
-            this.connectionFactory = new Connection.Factory(this);
+            this.connectionFactory = new Connection.Factory(this, authProvider);
 
             for (InetSocketAddress address : contactPoints)
                 addHost(address, false);
@@ -589,6 +598,8 @@ public class Cluster {
                 }
             } catch (ConnectionException e) {
                 // Ignore, not a big deal
+            } catch (AuthenticationException e) {
+                // That's a bad news, but ignore at this point
             } catch (BusyConnectionException e) {
                 // Ignore, not a big deal
             }

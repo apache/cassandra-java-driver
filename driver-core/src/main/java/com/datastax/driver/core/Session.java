@@ -428,6 +428,10 @@ public class Session {
                     logger.debug(String.format("Adding %s to list of queried hosts", host));
                     return pools.put(host, new HostConnectionPool(host, distance, this));
                 }
+            } catch (AuthenticationException e) {
+                logger.error(String.format("Error creating pool to %s (%s)", host, e.getMessage()));
+                host.getMonitor().signalConnectionFailure(new ConnectionException(e.getHost(), e.getMessage()));
+                return pools.get(host);
             } catch (ConnectionException e) {
                 logger.debug(String.format("Error creating pool to %s (%s)", host, e.getMessage()));
                 host.getMonitor().signalConnectionFailure(e);
