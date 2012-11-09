@@ -53,16 +53,16 @@ public class CCMBridge {
     public static CCMBridge create(String name) {
         CCMBridge bridge = new CCMBridge();
         bridge.execute("ccm create %s -b %s", name, CASSANDRA_VERSION);
-        // Small sleep, otherwise the cluster is not always available
-        try { Thread.sleep(200); } catch (InterruptedException e) {}
+        // Small sleep, otherwise the cluster is not always available because ccm create don't wait for the client server to be up
+        //try { Thread.sleep(500); } catch (InterruptedException e) {}
         return bridge;
     }
 
     public static CCMBridge create(String name, int nbNodes) {
         CCMBridge bridge = new CCMBridge();
         bridge.execute("ccm create %s -n %d -s -b %s", name, nbNodes, CASSANDRA_VERSION);
-        // Small sleep, otherwise the cluster is not always available
-        try { Thread.sleep(200); } catch (InterruptedException e) {}
+        // See above
+        //try { Thread.sleep(500); } catch (InterruptedException e) {}
         return bridge;
     }
 

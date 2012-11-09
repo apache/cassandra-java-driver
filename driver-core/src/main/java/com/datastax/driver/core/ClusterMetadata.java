@@ -4,6 +4,8 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +103,7 @@ public class ClusterMetadata {
     private static void buildTableMetadata(KeyspaceMetadata ksm, List<CQLRow> cfRows, Map<String, List<CQLRow>> colsDefs) {
         for (CQLRow cfRow : cfRows) {
             String cfName = cfRow.getString(TableMetadata.CF_NAME);
-            TableMetadata tm = TableMetadata.build(ksm, cfRow);
+            TableMetadata tm = TableMetadata.build(ksm, cfRow, !colsDefs.isEmpty());
 
             if (colsDefs == null || colsDefs.get(cfName) == null)
                 continue;

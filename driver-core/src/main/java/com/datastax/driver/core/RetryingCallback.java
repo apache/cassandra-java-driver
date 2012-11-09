@@ -11,7 +11,6 @@ import java.util.concurrent.ExecutionException;
 
 import com.datastax.driver.core.configuration.RetryPolicy;
 import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.utils.SimpleFuture;
 
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.ErrorMessage;

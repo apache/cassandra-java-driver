@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.datastax.driver.core.configuration.*;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.utils.SimpleFuture;
 
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.transport.*;

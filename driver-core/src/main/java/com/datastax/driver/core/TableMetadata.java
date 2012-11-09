@@ -29,22 +29,67 @@ public class TableMetadata {
 
     private final KeyspaceMetadata keyspace;
     private final String name;
-    // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
-    private final Map<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
-    private final List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>();
-    private final List<ColumnMetadata> clusteringKey = new ArrayList<ColumnMetadata>();
+    private final List<ColumnMetadata> partitionKey;
+    private final List<ColumnMetadata> clusteringKey;
+    private final Map<String, ColumnMetadata> columns;
     private final Options options;
 
-    private TableMetadata(KeyspaceMetadata keyspace, String name, Options options) {
+    private TableMetadata(KeyspaceMetadata keyspace,
+                          String name,
+                          List<ColumnMetadata> partitionKey,
+                          List<ColumnMetadata> clusteringKey,
+                          LinkedHashMap<String, ColumnMetadata> columns,
+                          Options options) {
         this.keyspace = keyspace;
         this.name = name;
+        this.partitionKey = partitionKey;
+        this.clusteringKey = clusteringKey;
+        this.columns = columns;
         this.options = options;
     }
 
-    static TableMetadata build(KeyspaceMetadata ksm, CQLRow row) {
+    static TableMetadata build(KeyspaceMetadata ksm, CQLRow row, boolean hasColumnMetadata) {
         try {
             String name = row.getString(CF_NAME);
-            TableMetadata tm = new TableMetadata(ksm, name, new Options(row));
+
+            List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>();
+            List<ColumnMetadata> clusteringKey = new ArrayList<ColumnMetadata>();
+            // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
+            LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
+
+            // First, figure out which kind of table we are
+            boolean isCompact = false;
+            AbstractType ct = TypeParser.parse(row.getString(COMPARATOR));
+            boolean isComposite = ct instanceof CompositeType;
+            List<AbstractType<?>> columnTypes = isComposite
+                                              ? ((CompositeType)ct).types
+                                              : Collections.<AbstractType<?>>singletonList(ct);
+            List<String> columnAliases = fromJsonList(row.getString(COLUMN_ALIASES));
+            int clusteringSize;
+            boolean hasValue;
+            int last = columnTypes.size() - 1;
+            AbstractType lastType = columnTypes.get(last);
+            if (isComposite) {
+                if (lastType instanceof ColumnToCollectionType || (columnAliases.size() == last && lastType instanceof UTF8Type)) {
+                    hasValue = false;
+                    clusteringSize = lastType instanceof ColumnToCollectionType ? last - 1 : last;
+                } else {
+                    isCompact = true;
+                    hasValue = true;
+                    clusteringSize = columnTypes.size();
+                }
+            } else {
+                isCompact = true;
+                if (!columnAliases.isEmpty() || !hasColumnMetadata) {
+                    hasValue = true;
+                    clusteringSize = columnTypes.size();
+                } else {
+                    hasValue = false;
+                    clusteringSize = 0;
+                }
+            }
+
+            TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringKey, columns, new Options(row, isCompact));
 
             // Partition key
             AbstractType kt = TypeParser.parse(row.getString(KEY_VALIDATOR));
@@ -58,47 +103,17 @@ public class TableMetadata {
                           : (i == 0 ? DEFAULT_KEY_ALIAS : DEFAULT_KEY_ALIAS + (i + 1));
                 DataType dt = Codec.rawTypeToDataType(keyTypes.get(i));
                 ColumnMetadata colMeta = new ColumnMetadata(tm, cn, dt, null);
-                tm.columns.put(cn, colMeta);
-                tm.partitionKey.add(colMeta);
+                columns.put(cn, colMeta);
+                partitionKey.add(colMeta);
             }
 
             // Clustering key
-            // TODO: this is actually more complicated than that ...
-            AbstractType ct = TypeParser.parse(row.getString(COMPARATOR));
-            boolean isComposite = ct instanceof CompositeType;
-            List<AbstractType<?>> columnTypes = isComposite
-                                              ? ((CompositeType)ct).types
-                                              : Collections.<AbstractType<?>>singletonList(ct);
-            List<String> columnAliases = fromJsonList(row.getString(COLUMN_ALIASES));
-            int clusteringSize;
-            boolean hasValue;
-            if (isComposite) {
-                if (columnTypes.size() == columnAliases.size()) {
-                    hasValue = true;
-                    clusteringSize = columnTypes.size();
-                } else {
-                    hasValue = false;
-                    clusteringSize = columnTypes.get(columnTypes.size() - 1) instanceof ColumnToCollectionType
-                                   ? columnTypes.size() - 2
-                                   : columnTypes.size() - 1;
-                }
-            } else {
-                // TODO: this is not a good test to know if it's dynamic vs static. We should also see if there is any column_metadata
-                if (columnAliases.size() > 0) {
-                    hasValue = true;
-                    clusteringSize = columnTypes.size();
-                } else {
-                    hasValue = false;
-                    clusteringSize = 0;
-                }
-            }
-
             for (int i = 0; i < clusteringSize; i++) {
                 String cn = columnAliases.size() > i ? columnAliases.get(i) : DEFAULT_COLUMN_ALIAS + (i + 1);
                 DataType dt = Codec.rawTypeToDataType(columnTypes.get(i));
                 ColumnMetadata colMeta = new ColumnMetadata(tm, cn, dt, null);
-                tm.columns.put(cn, colMeta);
-                tm.clusteringKey.add(colMeta);
+                columns.put(cn, colMeta);
+                clusteringKey.add(colMeta);
             }
 
             // Value alias (if present)
@@ -106,7 +121,7 @@ public class TableMetadata {
                 AbstractType vt = TypeParser.parse(row.getString(VALIDATOR));
                 String valueAlias = row.isNull(KEY_ALIASES) ? DEFAULT_VALUE_ALIAS : row.getString(VALUE_ALIAS);
                 ColumnMetadata vm = new ColumnMetadata(tm, valueAlias, Codec.rawTypeToDataType(vt), null);
-                tm.columns.put(valueAlias, vm);
+                columns.put(valueAlias, vm);
             }
 
             ksm.add(tm);
@@ -282,7 +297,7 @@ public class TableMetadata {
         sb.append("CREATE TABLE ").append(name).append(" (");
         newLine(sb, formatted);
         for (ColumnMetadata cm : columns.values())
-            newLine(sb.append(spaces(4, formatted)).append(cm), formatted);
+            newLine(sb.append(spaces(4, formatted)).append(cm).append(","), formatted);
 
         // PK
         sb.append(spaces(4, formatted)).append("PRIMARY KEY (");
@@ -304,7 +319,12 @@ public class TableMetadata {
         // end PK
 
         // Options
-        sb.append(") WITH read_repair_chance = ").append(options.readRepair);
+        if (options.isCompactStorage) {
+            sb.append(") WITH COMPACT STORAGE");
+            and(sb, formatted).append("read_repair_chance = ").append(options.readRepair);
+        } else {
+            sb.append(") WITH read_repair_chance = ").append(options.readRepair);
+        }
         and(sb, formatted).append("local_read_repair_chance = ").append(options.localReadRepair);
         and(sb, formatted).append("replicate_on_write = ").append(options.replicateOnWrite);
         and(sb, formatted).append("gc_grace_seconds = ").append(options.gcGrace);
@@ -357,6 +377,8 @@ public class TableMetadata {
 
         private static final double DEFAULT_BF_FP_CHANCE = 0.01;
 
+        private final boolean isCompactStorage;
+
         private final String comment;
         private final double readRepair;
         private final double localReadRepair;
@@ -367,7 +389,8 @@ public class TableMetadata {
         private final Map<String, String> compaction = new HashMap<String, String>();
         private final Map<String, String> compression = new HashMap<String, String>();
 
-        Options(CQLRow row) {
+        Options(CQLRow row, boolean isCompactStorage) {
+            this.isCompactStorage = isCompactStorage;
             this.comment = row.isNull(COMMENT) ? "" : row.getString(COMMENT);
             this.readRepair = row.getDouble(READ_REPAIR);
             this.localReadRepair = row.getDouble(LOCAL_READ_REPAIR);
@@ -382,6 +405,15 @@ public class TableMetadata {
 
             // TODO: this should split the parameters
             compression.put("params", row.getString(COMPRESSION_PARAMS));
+        }
+
+        /**
+         * Whether the table uses the {@code COMPACT STORAGE} option.
+         *
+         * @return whether the table uses the {@code COMPACT STORAGE} option.
+         */
+        public boolean isCompactStorage() {
+            return isCompactStorage;
         }
 
         /**

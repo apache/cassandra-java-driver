@@ -2,7 +2,6 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

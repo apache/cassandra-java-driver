@@ -17,9 +17,10 @@ import org.apache.cassandra.transport.messages.QueryMessage;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.configuration.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
 /**
@@ -42,10 +43,10 @@ import org.apache.log4j.PatternLayout;
  */
 public class Cluster {
 
-    private static final Logger logger = Logger.getLogger(Cluster.class);
+    private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
 
     static {
-        Logger rootLogger = Logger.getRootLogger();
+        org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
         if (!rootLogger.getAllAppenders().hasMoreElements()) {
             rootLogger.setLevel(Level.DEBUG);
             rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%-5p [%t]: %m%n")));
@@ -605,14 +606,30 @@ public class Cluster {
             }
         }
 
-        // TODO: take a lock or something so that if a a getSchema() is called,
-        // we wait for that to be finished. And maybe avoid multiple refresh at
-        // the same time.
         public void submitSchemaRefresh(final String keyspace, final String table) {
             logger.trace("Submitting schema refresh");
             executor.submit(new Runnable() {
                 public void run() {
                     controlConnection.refreshSchema(keyspace, table);
+                }
+            });
+        }
+
+        // refresh the schema using the provided connection, and notice the future with the provided resultset once done
+        public void refreshSchema(final Connection connection, final SimpleFuture future, final ResultSet rs, final String keyspace, final String table) {
+            // TODO: figure out why this doesn't work
+            //logger.debug("Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : "." + table);
+            executor.submit(new Runnable() {
+                public void run() {
+                    try {
+                        ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this);
+                    } catch (Exception e) {
+                        logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() migth appear stale. Asynchronously submitting job to fix.", e.getMessage());
+                        submitSchemaRefresh(keyspace, table);
+                    } finally {
+                        // Always sets the result
+                        future.set(rs);
+                    }
                 }
             });
         }

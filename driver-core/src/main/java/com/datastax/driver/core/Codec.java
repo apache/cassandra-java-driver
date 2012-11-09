@@ -31,7 +31,6 @@ class Codec {
         put(UTF8Type.instance,          DataType.Native.TEXT);
         put(DateType.instance,          DataType.Native.TIMESTAMP);
         put(UUIDType.instance,          DataType.Native.UUID);
-        put(UTF8Type.instance,          DataType.Native.VARCHAR);
         put(IntegerType.instance,       DataType.Native.VARINT);
         put(TimeUUIDType.instance,      DataType.Native.TIMEUUID);
     }};

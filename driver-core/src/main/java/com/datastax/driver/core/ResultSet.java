@@ -15,7 +15,6 @@ import org.apache.cassandra.transport.messages.ErrorMessage;
 import org.apache.cassandra.transport.messages.ResultMessage;
 
 import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.utils.SimpleFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -197,32 +196,36 @@ public class ResultSet implements Iterable<CQLRow> {
 
                                     // propagate the keyspace change to other connections
                                     session.poolsState.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
+                                    set(ResultSet.fromMessage(rm, session));
                                     break;
                                 case SCHEMA_CHANGE:
                                     ResultMessage.SchemaChange scc = (ResultMessage.SchemaChange)rm;
+                                    ResultSet rs = ResultSet.fromMessage(rm, session);
                                     switch (scc.change) {
                                         case CREATED:
                                             if (scc.columnFamily.isEmpty())
-                                                session.cluster.manager.submitSchemaRefresh(null, null);
+                                                session.cluster.manager.refreshSchema(connection, Future.this, rs, null, null);
                                             else
-                                                session.cluster.manager.submitSchemaRefresh(scc.keyspace, null);
+                                                session.cluster.manager.refreshSchema(connection, Future.this, rs, scc.keyspace, null);
                                             break;
                                         case DROPPED:
                                             if (scc.columnFamily.isEmpty())
-                                                session.cluster.manager.submitSchemaRefresh(null, null);
+                                                session.cluster.manager.refreshSchema(connection, Future.this, rs, null, null);
                                             else
-                                                session.cluster.manager.submitSchemaRefresh(scc.keyspace, null);
+                                                session.cluster.manager.refreshSchema(connection, Future.this, rs, scc.keyspace, null);
                                             break;
                                         case UPDATED:
                                             if (scc.columnFamily.isEmpty())
-                                                session.cluster.manager.submitSchemaRefresh(scc.keyspace, null);
+                                                session.cluster.manager.refreshSchema(connection, Future.this, rs, scc.keyspace, null);
                                             else
-                                                session.cluster.manager.submitSchemaRefresh(scc.keyspace, scc.columnFamily);
+                                                session.cluster.manager.refreshSchema(connection, Future.this, rs, scc.keyspace, scc.columnFamily);
                                             break;
                                     }
                                     break;
+                                default:
+                                    set(ResultSet.fromMessage(rm, session));
+                                    break;
                             }
-                            set(ResultSet.fromMessage(rm, session));
                             break;
                         case ERROR:
                             setException(convertException(((ErrorMessage)response).error));

@@ -333,6 +333,15 @@ public class Session {
         manager.shutdown();
     }
 
+    /**
+     * The {@code Cluster} object this session is part of.
+     *
+     * @return the {@code Cluster} object this session is part of.
+     */
+    public Cluster getCluster() {
+        return manager.cluster;
+    }
+
     private PreparedStatement toPreparedStatement(String query, Connection.Future future) throws NoHostAvailableException {
 
         try {

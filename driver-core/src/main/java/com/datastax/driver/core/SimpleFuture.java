@@ -1,14 +1,13 @@
-package com.datastax.driver.core.utils;
+package com.datastax.driver.core;
 
 import com.google.common.util.concurrent.AbstractFuture;
 
 /**
  * A simple future that can be set to a value.
  *
- * Note: this is equivalent to guava SettableFuture, but the latter is a final
- * class which is dumb.
+ * Note: this is equivalent to guava SettableFuture, but the latter is a final class.
  */
-public class SimpleFuture<V> extends AbstractFuture<V> {
+class SimpleFuture<V> extends AbstractFuture<V> {
 
   /**
    * Creates a new {@code SimpleFuture}.

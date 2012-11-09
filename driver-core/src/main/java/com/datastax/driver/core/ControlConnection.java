@@ -146,31 +146,10 @@ class ControlConnection implements Host.StateListener {
         refreshSchema(connectionRef.get(), keyspace, table);
     }
 
-    private void refreshSchema(Connection connection, String keyspace, String table) {
-        // Make sure we're up to date on schema
+    public void refreshSchema(Connection connection, String keyspace, String table) {
+        logger.debug(String.format("[Control connection] Refreshing schema for %s.%s", keyspace, table));
         try {
-            logger.trace(String.format("[Control connection] Refreshing schema for %s.%s", keyspace, table));
-
-            String whereClause = "";
-            if (keyspace != null) {
-                whereClause = " WHERE keyspace_name = '" + keyspace + "'";
-                if (table != null)
-                    whereClause += " AND columnfamily_name = '" + table + "'";
-            }
-
-            ResultSet.Future ksFuture = table == null
-                                      ? new ResultSet.Future(null, new QueryMessage(SELECT_KEYSPACES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL))
-                                      : null;
-            ResultSet.Future cfFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMN_FAMILIES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-            ResultSet.Future colsFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMNS + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-
-            if (ksFuture != null)
-                connection.write(ksFuture.callback);
-            connection.write(cfFuture.callback);
-            connection.write(colsFuture.callback);
-
-            // TODO: we should probably do something more fancy, like check if the schema changed and notify whoever wants to be notified
-            cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get());
+            refreshSchema(connection, keyspace, table, cluster);
         } catch (ConnectionException e) {
             logger.debug(String.format("[Control connection] Connection error when refeshing schema (%s)", e.getMessage()));
             reconnect();
@@ -181,13 +160,36 @@ class ControlConnection implements Host.StateListener {
             logger.error("[Control connection] Unexpected error while refeshing schema", e);
             reconnect();
         } catch (InterruptedException e) {
-            // TODO: it's bad to do that but at the same time it's annoying to be interrupted
-            throw new RuntimeException(e);
+            // If we're interrupted, just move on
         }
+    }
+
+    static void refreshSchema(Connection connection, String keyspace, String table, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+        // Make sure we're up to date on schema
+        String whereClause = "";
+        if (keyspace != null) {
+            whereClause = " WHERE keyspace_name = '" + keyspace + "'";
+            if (table != null)
+                whereClause += " AND columnfamily_name = '" + table + "'";
+        }
+
+        ResultSet.Future ksFuture = table == null
+                                  ? new ResultSet.Future(null, new QueryMessage(SELECT_KEYSPACES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL))
+                                  : null;
+        ResultSet.Future cfFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMN_FAMILIES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+        ResultSet.Future colsFuture = new ResultSet.Future(null, new QueryMessage(SELECT_COLUMNS + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+
+        if (ksFuture != null)
+            connection.write(ksFuture.callback);
+        connection.write(cfFuture.callback);
+        connection.write(colsFuture.callback);
+
+        cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get());
     }
 
     private void refreshNodeList(Connection connection) throws BusyConnectionException {
         // Make sure we're up to date on node list
+        logger.debug(String.format("[Control connection] Refreshing node list"));
         try {
             ResultSet.Future peersFuture = new ResultSet.Future(null, new QueryMessage(SELECT_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
             ResultSet.Future localFuture = new ResultSet.Future(null, new QueryMessage(SELECT_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
@@ -207,7 +209,6 @@ class ControlConnection implements Host.StateListener {
                 if (host != null)
                     host.setLocationInfo(localRow.getString("data_center"), localRow.getString("rack"));
             }
-
 
             List<InetSocketAddress> foundHosts = new ArrayList<InetSocketAddress>();
             List<String> dcs = new ArrayList<String>();
@@ -246,8 +247,7 @@ class ControlConnection implements Host.StateListener {
             logger.debug("[Control connection] Connection is busy, reconnecting");
             reconnect();
         } catch (InterruptedException e) {
-            // TODO: it's bad to do that but at the same time it's annoying to be interrupted
-            throw new RuntimeException(e);
+            // Interrupted? Then moving on.
         }
     }
 
