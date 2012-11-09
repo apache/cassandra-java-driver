@@ -583,6 +583,13 @@ public class Cluster {
             }
         }
 
+        public void ensurePoolsSizing() {
+            for (Session session : sessions) {
+                for (HostConnectionPool pool : session.manager.pools.values())
+                    pool.ensureCoreConnections();
+            }
+        }
+
         // Prepare a query on all nodes
         public void prepare(MD5Digest digest, String query, InetAddress toExclude) {
             preparedQueries.put(digest, query);

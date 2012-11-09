@@ -19,9 +19,9 @@ import com.datastax.driver.core.*;
  *   find which host to query first, and which hosts to use as failover.</li>
  * </ul>
  * <p>
- * The {@code LoadBalancingPolicy} is a {@link Host.StateListener} and is thus
- * informed of hosts up/down events. For efficiency purposes, the policy is
- * expected to exclude down hosts from query plans.
+ * The {@code LoadBalancingPolicy} is a {@link com.datastax.driver.core.Host.StateListener}
+ * and is thus informed of hosts up/down events. For efficiency purposes, the
+ * policy is expected to exclude down hosts from query plans.
  */
 public interface LoadBalancingPolicy extends Host.StateListener {
 

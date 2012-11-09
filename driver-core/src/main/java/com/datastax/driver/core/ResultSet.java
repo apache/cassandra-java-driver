@@ -190,10 +190,6 @@ public class ResultSet implements Iterable<CQLRow> {
                             ResultMessage rm = (ResultMessage)response;
                             switch (rm.kind) {
                                 case SET_KEYSPACE:
-                                    // TODO: I think there is a problem if someone set
-                                    // a keyspace, then drop it. But that basically
-                                    // means we should reset the keyspace to null in that case.
-
                                     // propagate the keyspace change to other connections
                                     session.poolsState.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
                                     set(ResultSet.fromMessage(rm, session));
@@ -203,22 +199,28 @@ public class ResultSet implements Iterable<CQLRow> {
                                     ResultSet rs = ResultSet.fromMessage(rm, session);
                                     switch (scc.change) {
                                         case CREATED:
-                                            if (scc.columnFamily.isEmpty())
+                                            if (scc.columnFamily.isEmpty()) {
                                                 session.cluster.manager.refreshSchema(connection, Future.this, rs, null, null);
-                                            else
+                                            } else {
                                                 session.cluster.manager.refreshSchema(connection, Future.this, rs, scc.keyspace, null);
+                                            }
                                             break;
                                         case DROPPED:
-                                            if (scc.columnFamily.isEmpty())
+                                            if (scc.columnFamily.isEmpty()) {
+                                                // If that the one keyspace we are logged in, reset to null (it shouldn't really happen but ...)
+                                                if (scc.keyspace.equals(session.poolsState.keyspace))
+                                                    session.poolsState.setKeyspace(null);
                                                 session.cluster.manager.refreshSchema(connection, Future.this, rs, null, null);
-                                            else
+                                            } else {
                                                 session.cluster.manager.refreshSchema(connection, Future.this, rs, scc.keyspace, null);
+                                            }
                                             break;
                                         case UPDATED:
-                                            if (scc.columnFamily.isEmpty())
+                                            if (scc.columnFamily.isEmpty()) {
                                                 session.cluster.manager.refreshSchema(connection, Future.this, rs, scc.keyspace, null);
-                                            else
+                                            } else {
                                                 session.cluster.manager.refreshSchema(connection, Future.this, rs, scc.keyspace, scc.columnFamily);
+                                            }
                                             break;
                                     }
                                     break;
@@ -231,12 +233,14 @@ public class ResultSet implements Iterable<CQLRow> {
                             setException(convertException(((ErrorMessage)response).error));
                             break;
                         default:
-                            // TODO: handle errors (set the connection to defunct as this mean it is in a bad state)
-                            throw new RuntimeException();
+                            // This mean we have probably have a bad node, so defunct the connection
+                            connection.defunct(new ConnectionException(connection.address, String.format("Got unexpected %s response", response.type)));
+                            setException(new DriverInternalError(String.format("Got unexpected %s response from %s", response.type, connection.address)));
+                            break;
                     }
-                } catch (Exception e) {
-                    // TODO: do better
-                    throw new RuntimeException(e);
+                } catch (RuntimeException e) {
+                    // If we get a bug here, the client will not get it, so better forwarding the error
+                    setException(new DriverInternalError("Unexpected error while processing response from " + connection.address, e));
                 }
             }
 
@@ -368,8 +372,7 @@ public class ResultSet implements Iterable<CQLRow> {
                 case INVALID:
                     return new InvalidQueryException(te.getMessage());
                 case CONFIG_ERROR:
-                    // TODO: I don't know if it's worth having a specific exception for that
-                    return new InvalidQueryException(te.getMessage());
+                    return new InvalidConfigurationInQueryException(te.getMessage());
                 case ALREADY_EXISTS:
                     org.apache.cassandra.exceptions.AlreadyExistsException aee = (org.apache.cassandra.exceptions.AlreadyExistsException)te;
                     return new AlreadyExistsException(aee.ksName, aee.cfName);

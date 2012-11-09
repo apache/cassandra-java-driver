@@ -13,6 +13,8 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final Map<String, String> cql3 = new HashMap<String, String>();
     private static final Map<String, String> compact = new HashMap<String, String>();
 
+    private static String withOptions;
+
     protected Collection<String> getTableDefinitions() {
 
         String sparse = "CREATE TABLE sparse (\n"
@@ -22,7 +24,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                       + "    l list<text>,\n"
                       + "    v int,\n"
                       + "    PRIMARY KEY (k, c1, c2)\n"
-                      + ")";
+                      + ");";
 
         String st = "CREATE TABLE static (\n"
                   + "    k text,\n"
@@ -30,7 +32,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                   + "    m map<text, timeuuid>,\n"
                   + "    v int,\n"
                   + "    PRIMARY KEY (k)\n"
-                  + ")";
+                  + ");";
 
         String compactStatic = "CREATE TABLE compact_static (\n"
                              + "    k text,\n"
@@ -38,14 +40,14 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                              + "    t timeuuid,\n"
                              + "    v int,\n"
                              + "    PRIMARY KEY (k)\n"
-                             + ") WITH COMPACT STORAGE";
+                             + ") WITH COMPACT STORAGE;";
 
         String compactDynamic = "CREATE TABLE compact_dynamic (\n"
                               + "    k text,\n"
                               + "    c int,\n"
                               + "    v timeuuid,\n"
                               + "    PRIMARY KEY (k, c)\n"
-                              + ") WITH COMPACT STORAGE";
+                              + ") WITH COMPACT STORAGE;";
 
         String compactComposite = "CREATE TABLE compact_composite (\n"
                                 + "    k text,\n"
@@ -54,7 +56,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                                 + "    c3 double,\n"
                                 + "    v timeuuid,\n"
                                 + "    PRIMARY KEY (k, c1, c2, c3)\n"
-                                + ") WITH COMPACT STORAGE";
+                                + ") WITH COMPACT STORAGE;";
 
         cql3.put("sparse", sparse);
         cql3.put("static", st);
@@ -62,17 +64,32 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
         compact.put("compact_dynamic", compactDynamic);
         compact.put("compact_composite", compactComposite);
 
+        withOptions = "CREATE TABLE with_options (\n"
+                    + "    k text,\n"
+                    + "    i int,\n"
+                    + "    PRIMARY KEY (k)\n"
+                    + ") WITH read_repair_chance = 0.5\n"
+                    + "   AND dclocal_read_repair_chance = 0.6\n"
+                    + "   AND replicate_on_write = true\n"
+                    + "   AND gc_grace_seconds = 42\n"
+                    + "   AND bloom_filter_fp_chance = 0.01\n"
+                    + "   AND caching = ALL\n"
+                    + "   AND comment = 'My awesome table'\n"
+                    + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
+                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };";
+
         List<String> allDefs = new ArrayList<String>();
         allDefs.addAll(cql3.values());
         allDefs.addAll(compact.values());
+        allDefs.add(withOptions);
         return allDefs;
     }
 
     private static String stripOptions(String def, boolean keepFirst) {
         if (keepFirst)
-            return def.split("\n   AND ")[0];
+            return def.split("\n   AND ")[0] + ";";
         else
-            return def.split(" WITH ")[0];
+            return def.split(" WITH ")[0] + ";";
     }
 
     // Note: this test is a bit fragile in the sense that it rely on the exact
@@ -96,5 +113,12 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
             String def = tableEntry.getValue();
             assertEquals(def, stripOptions(metadata.getTable(table).exportAsString(), true));
         }
+    }
+
+    // Same remark as the preceding test
+    @Test
+    public void schemaExportOptionsTest() {
+        TableMetadata metadata = cluster.getMetadata().getKeyspace(TestUtils.SIMPLE_KEYSPACE).getTable("with_options");
+        assertEquals(withOptions, metadata.exportAsString());
     }
 }

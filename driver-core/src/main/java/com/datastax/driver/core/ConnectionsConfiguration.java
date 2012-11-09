@@ -19,7 +19,7 @@ public class ConnectionsConfiguration {
     ConnectionsConfiguration(Cluster.Manager manager) {
         this.socketOptions = new SocketOptions();
         this.protocolOptions = new ProtocolOptions(manager);
-        this.poolingOptions = new PoolingOptions();
+        this.poolingOptions = new PoolingOptions(manager);
     }
 
     /**

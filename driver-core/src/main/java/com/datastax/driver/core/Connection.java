@@ -158,7 +158,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         return exception;
     }
 
-    private ConnectionException defunct(ConnectionException e) {
+    ConnectionException defunct(ConnectionException e) {
         exception = e;
         isDefunct = true;
         dispatcher.errorOutAllHandler(e);
@@ -395,9 +395,8 @@ class Connection extends org.apache.cassandra.transport.Connection
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
             if (!(e.getMessage() instanceof Message.Response)) {
-                logger.debug("[{}] Received unexpected message: {}", name, e.getMessage());
+                logger.error("[{}] Received unexpected message: {}", name, e.getMessage());
                 defunct(new TransportException(address, "Unexpected message received: " + e.getMessage()));
-                // TODO: we should allow calling some handler for such error
             } else {
                 Message.Response response = (Message.Response)e.getMessage();
                 int streamId = response.getStreamId();
@@ -412,8 +411,10 @@ class Connection extends org.apache.cassandra.transport.Connection
                 ResponseHandler handler = pending.remove(streamId);
                 streamIdHandler.release(streamId);
                 if (handler == null) {
-                    // TODO: we should handle those with a default handler
-                    throw new RuntimeException("No handler set for " + streamId + ", handlers = " + pending);
+                    // Note: this is a bug, either us or cassandra. So log it, but I'm not sure it's worth breaking
+                    // the connection for that.
+                    logger.error("[{}] No handler set for stream {} (this is a bug, either of this driver or of Cassandra, you should report it)", name, streamId);
+                    return;
                 }
                 handler.callback.onSet(Connection.this, response);
             }

@@ -193,9 +193,6 @@ public class ClusterMetadata {
      * @return the CQL queries representing this cluster schema as a {code
      * String}.
      */
-    // TODO: add some boolean arg to deal with thift defs that can't be fully
-    // represented by CQL queries (like either throw an exception or
-    // do-our-best). Or some other way to deal with that.
     public String exportSchemaAsString() {
         StringBuilder sb = new StringBuilder();
 

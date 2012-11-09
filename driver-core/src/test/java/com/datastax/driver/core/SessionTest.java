@@ -6,7 +6,6 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import com.datastax.driver.core.exceptions.*;
-import static com.datastax.driver.core.TestUtils.*;
 
 /**
  * Simple test of the Sessions methods against a one node cluster.
@@ -69,5 +68,17 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals("foo",  row.getString("t"));
         assertEquals(42,     row.getInt("i"));
         assertEquals(24.03f, row.getFloat("f"), 0.1f);
+    }
+
+    @Test
+    public void setAndDropKeyspace() throws Exception {
+        // Check that if someone set a keyspace and then drop it, we recognize
+        // that fact and don't assume he is still set to this keyspace
+
+        session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, "to_drop", 1));
+        session.execute("USE to_drop");
+        session.execute("DROP KEYSPACE to_drop");
+
+        assertEquals(null, session.manager.poolsState.keyspace);
     }
 }

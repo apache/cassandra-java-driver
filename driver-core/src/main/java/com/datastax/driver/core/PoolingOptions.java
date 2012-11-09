@@ -36,6 +36,8 @@ public class PoolingOptions {
     private static final int DEFAULT_MAX_POOL_LOCAL = 8;
     private static final int DEFAULT_MAX_POOL_REMOTE = 2;
 
+    private final Cluster.Manager manager;
+
     private volatile int minSimultaneousRequestsForLocal = DEFAULT_MIN_REQUESTS;
     private volatile int minSimultaneousRequestsForRemote = DEFAULT_MIN_REQUESTS;
 
@@ -47,6 +49,10 @@ public class PoolingOptions {
 
     private volatile int maxConnectionsForLocal = DEFAULT_MAX_POOL_LOCAL;
     private volatile int maxConnectionsForRemote = DEFAULT_MAX_POOL_REMOTE;
+
+    PoolingOptions(Cluster.Manager manager) {
+        this.manager = manager;
+    }
 
     /**
      * Number of simultaneous requests on a connection below which
@@ -183,13 +189,18 @@ public class PoolingOptions {
      * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}.
      */
     public PoolingOptions setCoreConnectionsPerHost(HostDistance distance, int coreConnections) {
-        // TODO: make sure the pools are updated accordingly
         switch (distance) {
             case LOCAL:
+                int oldLocalCore = coreConnectionsForLocal;
                 coreConnectionsForLocal = coreConnections;
+                if (oldLocalCore < coreConnectionsForLocal)
+                    manager.ensurePoolsSizing();
                 break;
             case REMOTE:
+                int oldRemoteCore = coreConnectionsForRemote;
                 coreConnectionsForRemote = coreConnections;
+                if (oldRemoteCore < coreConnectionsForRemote)
+                    manager.ensurePoolsSizing();
                 break;
             default:
                 throw new IllegalArgumentException("Cannot set core connections per host for " + distance + " hosts");
@@ -227,7 +238,6 @@ public class PoolingOptions {
      * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}.
      */
     public PoolingOptions setMaxConnectionsPerHost(HostDistance distance, int maxConnections) {
-        // TODO: make sure the pools are updated accordingly
         switch (distance) {
             case LOCAL:
                 maxConnectionsForLocal = maxConnections;

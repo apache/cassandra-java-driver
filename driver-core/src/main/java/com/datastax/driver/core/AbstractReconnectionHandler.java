@@ -32,8 +32,8 @@ abstract class AbstractReconnectionHandler implements Runnable {
     protected boolean onConnectionException(ConnectionException e, long nextDelayMs) { return true; }
     protected boolean onUnknownException(Exception e, long nextDelayMs) { return true; }
 
-    // TODO: maybe be shouldn't retry on authentication exception?
-    protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) { return true; }
+    // Retrying on authenciation error is unlikely to work
+    protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) { return false; }
 
     public void start() {
         executor.schedule(this, policy.nextDelayMs(), TimeUnit.MILLISECONDS);
@@ -74,10 +74,12 @@ abstract class AbstractReconnectionHandler implements Runnable {
         } catch (AuthenticationException e) {
             logger.error(e.getMessage());
             long nextDelay = policy.nextDelayMs();
-            if (onAuthenticationException(e, nextDelay))
+            if (onAuthenticationException(e, nextDelay)) {
                 reschedule(nextDelay);
-            else
+            } else {
+                logger.error("Retry against {} have been suspended. It won't be retried unless the node is restarted.", e.getHost());
                 currentAttempt.compareAndSet(localFuture, null);
+            }
         } catch (Exception e) {
             long nextDelay = policy.nextDelayMs();
             if (onUnknownException(e, nextDelay))

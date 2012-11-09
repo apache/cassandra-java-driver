@@ -98,7 +98,6 @@ public class CCMBridge {
             int retValue = p.waitFor();
 
             if (retValue != 0) {
-                // TODO: try to gather what the problem was
                 BufferedReader outReader = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader errReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 
@@ -161,7 +160,6 @@ public class CCMBridge {
                 cassandraCluster.ccmDir.delete();
             }
         }
-
 
         @Before
         public void maybeCreateSchema() throws NoHostAvailableException {

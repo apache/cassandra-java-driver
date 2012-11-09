@@ -152,7 +152,6 @@ public class Host {
             return isUp;
         }
 
-        // TODO: Should we bother making sure that multiple calls to this don't inform the listeners twice?
         private void setDown() {
             isUp = false;
             for (Host.StateListener listener : listeners)
@@ -181,6 +180,11 @@ public class Host {
     /**
      * Interface for listener that are interested in hosts add, up, down and
      * remove events.
+     * <p>
+     * Note that particularly for up and down events, it is possible that the
+     * same event be delivered multiple times. Listeners should thus be
+     * resilient and ignore a down (resp. up) event if the node has already
+     * been signaled down (resp. up).
      */
     public interface StateListener {
 

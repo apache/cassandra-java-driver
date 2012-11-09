@@ -2,7 +2,8 @@ package com.datastax.driver.core;
 
 /**
  * The distance to a Cassandra node as assigned by a
- * {@link LoadBalancingPolicy} (through its {@code distance} method).
+ * {@link com.datastax.driver.core.policies.LoadBalancingPolicy} (through its {@code
+ * distance} method).
  *
  * The distance assigned to an host influence how many connections the driver
  * maintains towards this host. If for a given host the assigned {@code HostDistance}

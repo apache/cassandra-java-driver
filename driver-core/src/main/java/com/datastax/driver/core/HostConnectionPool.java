@@ -12,8 +12,6 @@ import org.slf4j.LoggerFactory;
 import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 
-// TODO: We should allow changing the core pool size (i.e. have a method that
-// adds new connection or trash existing one)
 class HostConnectionPool {
 
     private static final Logger logger = LoggerFactory.getLogger(HostConnectionPool.class);
@@ -64,12 +62,17 @@ class HostConnectionPool {
 
     public Connection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
         if (isShutdown.get())
-            // TODO: have a specific exception
+            // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
+            // That being said, maybe having a specific exception could be cleaner.
             throw new ConnectionException(host.getAddress(), "Pool is shutdown");
 
         if (connections.isEmpty()) {
-            for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
+            for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++) {
+                // We don't respect MAX_SIMULTANEOUS_CREATION here because it's  only to
+                // protect against creating connection in excess of core too quickly
+                scheduledForCreation.incrementAndGet();
                 manager.executor().submit(newConnectionTask);
+            }
             return waitForConnection(timeout, unit);
         }
 
@@ -105,12 +108,10 @@ class HostConnectionPool {
         return unit.convert(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS);
     }
 
-    private void awaitAvailableConnection(long timeout, TimeUnit unit) {
+    private void awaitAvailableConnection(long timeout, TimeUnit unit) throws InterruptedException {
         waitLock.lock();
         try {
             hasAvailableConnection.await(timeout, unit);
-        } catch (InterruptedException e) {
-            // TODO: Do we want to stop ignoring that?
         } finally {
             waitLock.unlock();
         }
@@ -138,7 +139,12 @@ class HostConnectionPool {
         long start = System.currentTimeMillis();
         long remaining = timeout;
         do {
-            awaitAvailableConnection(remaining, unit);
+            try {
+                awaitAvailableConnection(remaining, unit);
+            } catch (InterruptedException e) {
+                // If we're interrupted fine, check if there is a connection available but stop waiting otherwise
+                timeout = 0; // this will make us stop the loop if we don't get a connection right away
+            }
 
             if (isShutdown())
                 throw new ConnectionException(host.getAddress(), "Pool is shutdown");
@@ -302,9 +308,27 @@ class HostConnectionPool {
         }
     }
 
+    // This creates connections if we have less than core connections (if we
+    // have more than core, connection will just get trash when we can).
+    public void ensureCoreConnections() {
+        if (isShutdown())
+            return;
+
+        // Note: this process is a bit racy, but it doesn't matter since we're still guaranteed to not create
+        // more connection than maximum (and if we create more than core connection due to a race but this isn't
+        // justified by the load, the connection in excess will be quickly trashed anyway)
+        int opened = open.get();
+        for (int i = opened; i < options().getCoreConnectionsPerHost(hostDistance); i++) {
+            // We don't respect MAX_SIMULTANEOUS_CREATION here because it's only to
+            // protect against creating connection in excess of core too quickly
+            scheduledForCreation.incrementAndGet();
+            manager.executor().submit(newConnectionTask);
+        }
+    }
+
     static class PoolState {
 
-        private volatile String keyspace;
+        volatile String keyspace;
 
         public void setKeyspace(String keyspace) {
             this.keyspace = keyspace;

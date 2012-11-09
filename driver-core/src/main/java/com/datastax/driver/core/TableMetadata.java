@@ -263,14 +263,14 @@ public class TableMetadata {
     public String exportAsString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(asCQLQuery(true)).append("\n");
+        sb.append(asCQLQuery(true));
 
         for (ColumnMetadata column : columns.values()) {
             ColumnMetadata.IndexMetadata index = column.getIndex();
             if (index == null)
                 continue;
 
-            sb.append(index.asCQLQuery()).append("\n");
+            sb.append("\n").append(index.asCQLQuery());
         }
         return sb.toString();
     }
@@ -325,17 +325,34 @@ public class TableMetadata {
         } else {
             sb.append(") WITH read_repair_chance = ").append(options.readRepair);
         }
-        and(sb, formatted).append("local_read_repair_chance = ").append(options.localReadRepair);
+        and(sb, formatted).append("dclocal_read_repair_chance = ").append(options.localReadRepair);
         and(sb, formatted).append("replicate_on_write = ").append(options.replicateOnWrite);
         and(sb, formatted).append("gc_grace_seconds = ").append(options.gcGrace);
         and(sb, formatted).append("bloom_filter_fp_chance = ").append(options.bfFpChance);
         and(sb, formatted).append("caching = ").append(options.caching);
         if (options.comment != null)
             and(sb, formatted).append("comment = '").append(options.comment).append("'");
+        and(sb, formatted).append("compaction = ").append(formatOptionMap(options.compaction));
+        and(sb, formatted).append("compression = ").append(formatOptionMap(options.compression));
+        sb.append(";");
+        return sb.toString();
+    }
 
-        // TODO: finish (compaction and compression)
-        newLine(sb, formatted);
-
+    private static String formatOptionMap(Map<String, String> m) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{ ");
+        boolean first = true;
+        for (Map.Entry<String, String> entry : m.entrySet()) {
+            if (first) first = false; else sb.append(", ");
+            sb.append("'").append(entry.getKey()).append("'");
+            sb.append(" : ");
+            try {
+                sb.append(Integer.parseInt(entry.getValue()));
+            } catch (NumberFormatException e) {
+                sb.append("'").append(entry.getValue()).append("'");
+            }
+        }
+        sb.append(" }");
         return sb.toString();
     }
 
@@ -399,12 +416,10 @@ public class TableMetadata {
             this.bfFpChance = row.isNull(BF_FP_CHANCE) ? DEFAULT_BF_FP_CHANCE : row.getDouble(BF_FP_CHANCE);
             this.caching = row.getString(CACHING);
 
-            // TODO: this should change (split options and handle min/max threshold in particular)
-            compaction.put("class", row.getString(COMPACTION_CLASS));
-            compaction.put("options", row.getString(COMPACTION_OPTIONS));
+            this.compaction.put("class", row.getString(COMPACTION_CLASS));
+            this.compaction.putAll(fromJsonMap(row.getString(COMPACTION_OPTIONS)));
 
-            // TODO: this should split the parameters
-            compression.put("params", row.getString(COMPRESSION_PARAMS));
+            this.compression.putAll(fromJsonMap(row.getString(COMPRESSION_PARAMS)));
         }
 
         /**

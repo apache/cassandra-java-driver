@@ -102,7 +102,7 @@ public class KeyspaceMetadata {
         sb.append(asCQLQuery()).append("\n");
 
         for (TableMetadata tm : tables.values())
-            sb.append("\n").append(tm.exportAsString());
+            sb.append("\n").append(tm.exportAsString()).append("\n");
 
         return sb.toString();
     }

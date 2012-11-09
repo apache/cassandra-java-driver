@@ -95,7 +95,7 @@ public class Session {
      * by this method.
      *
      * @param query the CQL query to execute.
-     * @param queryOptions the options to use for this query. This includes at
+     * @param options the options to use for this query. This includes at
      * least the consistency level for the operation.
      * @return the result of the query. That result will never be null but can
      * be empty (and will be for any non SELECT query).
@@ -157,8 +157,8 @@ public class Session {
      * method) to make sure the query was successful.
      *
      * @param query the CQL query to execute.
-     * @param queryOptions the options to use for this query. This includes at
-     * least the consistency level for the operation.
+     * @param options the options to use for this query. This includes at least
+     * the consistency level for the operation.
      * @return the result of the query. That result will never be null but can
      * be empty (and will be for any non SELECT query).
      */
@@ -241,8 +241,8 @@ public class Session {
      * database.
      *
      * @param stmt the prepared statement with values for its bound variables.
-     * @param queryOptions the options to use for this query. This includes at
-     * least the consistency level for the operation.
+     * @param options the options to use for this query. This includes at least
+     * the consistency level for the operation.
      * @return the result of the query. That result will never be null but can
      * be empty (and will be for any non SELECT query).
      *
@@ -352,6 +352,7 @@ public class Session {
                         response = future.get();
                     } catch (InterruptedException e) {
                         // TODO: decide wether we want to expose Interrupted exceptions or not
+                        throw new RuntimeException(e);
                     }
                 }
             } catch (ExecutionException e) {
@@ -410,7 +411,6 @@ public class Session {
         public Manager(Cluster cluster, Collection<Host> hosts) {
             this.cluster = cluster;
 
-            // TODO: consider the use of NonBlockingHashMap
             this.pools = new ConcurrentHashMap<Host, HostConnectionPool>(hosts.size());
             this.loadBalancer = cluster.manager.configuration.getPolicies().getLoadBalancingPolicyFactory().create(hosts);
             this.poolsState = new HostConnectionPool.PoolState();
@@ -503,8 +503,7 @@ public class Session {
             try {
                 executeQuery(new QueryMessage("use " + keyspace, ConsistencyLevel.DEFAULT_CASSANDRA_CL), new QueryOptions()).get();
             } catch (InterruptedException e) {
-                // TODO: do we want to handle interrupted exception in a better way?
-                throw new DriverInternalError("Hey! I was waiting!", e);
+                // If we're interrupted, then fine, we stop waiting, but the user shouldn't complain if the keyspace is not set.
             } catch (ExecutionException e) {
                 Throwable cause = e.getCause();
                 // A USE query should never fail unless we cannot contact a node
