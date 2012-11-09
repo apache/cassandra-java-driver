@@ -1,6 +1,4 @@
-package com.datastax.driver.core.configuration;
-
-import com.datastax.driver.core.HostDistance;
+package com.datastax.driver.core;
 
 /**
  * Options related to connection pooling.

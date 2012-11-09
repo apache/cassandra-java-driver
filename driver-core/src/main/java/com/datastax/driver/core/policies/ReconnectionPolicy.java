@@ -1,4 +1,4 @@
-package com.datastax.driver.core.configuration;
+package com.datastax.driver.core.policies;
 
 /**
  * Policy that decides how often the reconnection to a dead node is attempted.

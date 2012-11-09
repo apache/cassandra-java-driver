@@ -1,4 +1,4 @@
-package com.datastax.driver.core.configuration;
+package com.datastax.driver.core.policies;
 
 public class Policies {
 

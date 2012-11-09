@@ -1,6 +1,6 @@
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.*;
@@ -14,7 +14,7 @@ import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.configuration.*;
+import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
@@ -102,14 +102,14 @@ class ControlConnection implements Host.StateListener {
     private Connection reconnectInternal() throws NoHostAvailableException {
 
         Iterator<Host> iter = balancingPolicy.newQueryPlan(QueryOptions.DEFAULT);
-        Map<InetSocketAddress, String> errors = null;
+        Map<InetAddress, String> errors = null;
         while (iter.hasNext()) {
             Host host = iter.next();
             try {
                 return tryConnect(host);
             } catch (ConnectionException e) {
                 if (errors == null)
-                    errors = new HashMap<InetSocketAddress, String>();
+                    errors = new HashMap<InetAddress, String>();
                 errors.put(e.address, e.getMessage());
 
                 if (logger.isDebugEnabled()) {
@@ -121,7 +121,7 @@ class ControlConnection implements Host.StateListener {
                 }
             }
         }
-        throw new NoHostAvailableException(errors == null ? Collections.<InetSocketAddress, String>emptyMap() : errors);
+        throw new NoHostAvailableException(errors == null ? Collections.<InetAddress, String>emptyMap() : errors);
     }
 
     private Connection tryConnect(Host host) throws ConnectionException {
@@ -212,13 +212,13 @@ class ControlConnection implements Host.StateListener {
                     host.setLocationInfo(localRow.getString("data_center"), localRow.getString("rack"));
             }
 
-            List<InetSocketAddress> foundHosts = new ArrayList<InetSocketAddress>();
+            List<InetAddress> foundHosts = new ArrayList<InetAddress>();
             List<String> dcs = new ArrayList<String>();
             List<String> racks = new ArrayList<String>();
 
             for (CQLRow row : peersFuture.get()) {
                 if (!row.isNull("peer")) {
-                    foundHosts.add(new InetSocketAddress(row.getInet("peer"), cluster.port));
+                    foundHosts.add(row.getInet("peer"));
                     dcs.add(row.getString("data_center"));
                     racks.add(row.getString("rack"));
                 }
@@ -234,7 +234,7 @@ class ControlConnection implements Host.StateListener {
             }
 
             // Removes all those that seems to have been removed (since we lost the control connection)
-            Set<InetSocketAddress> foundHostsSet = new HashSet<InetSocketAddress>(foundHosts);
+            Set<InetAddress> foundHostsSet = new HashSet<InetAddress>(foundHosts);
             for (Host host : cluster.metadata.allHosts())
                 if (!host.getAddress().equals(connection.address) && !foundHostsSet.contains(host.getAddress()))
                     cluster.removeHost(host);

@@ -9,7 +9,7 @@ import java.util.concurrent.locks.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.configuration.*;
+import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 
 // TODO: We should allow changing the core pool size (i.e. have a method that

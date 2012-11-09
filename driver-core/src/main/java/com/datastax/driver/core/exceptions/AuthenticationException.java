@@ -1,15 +1,15 @@
 package com.datastax.driver.core.exceptions;
 
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 
 /**
  * Indicates an error during the authentication phase while connecting to a node.
  */
 public class AuthenticationException extends DriverUncheckedException {
 
-    private final InetSocketAddress host;
+    private final InetAddress host;
 
-    public AuthenticationException(InetSocketAddress host, String message) {
+    public AuthenticationException(InetAddress host, String message) {
         super(String.format("Authentication error on host %s: %s", host, message));
         this.host = host;
     }
@@ -19,7 +19,7 @@ public class AuthenticationException extends DriverUncheckedException {
      *
      * @return the host for which the authentication failed.
      */
-    public InetSocketAddress getHost() {
+    public InetAddress getHost() {
         return host;
     }
 }

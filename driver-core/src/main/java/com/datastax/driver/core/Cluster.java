@@ -1,7 +1,6 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -15,7 +14,7 @@ import org.apache.cassandra.transport.messages.PrepareMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
 
 import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.configuration.*;
+import com.datastax.driver.core.policies.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +59,7 @@ public class Cluster {
 
     final Manager manager;
 
-    private Cluster(List<InetSocketAddress> contactPoints, int port, Policies policies, AuthInfoProvider authProvider) throws NoHostAvailableException {
+    private Cluster(List<InetAddress> contactPoints, int port, Policies policies, AuthInfoProvider authProvider) throws NoHostAvailableException {
         this.manager = new Manager(contactPoints, port, policies, authProvider);
     }
 
@@ -84,17 +83,11 @@ public class Cluster {
      * contact points an authencation error occurs.
      */
     public static Cluster buildFrom(Initializer initializer) throws NoHostAvailableException {
-        List<InetSocketAddress> contactPoints = initializer.getContactPoints();
+        List<InetAddress> contactPoints = initializer.getContactPoints();
         if (contactPoints.isEmpty())
             throw new IllegalArgumentException("Cannot build a cluster without contact points");
 
-        int port = -1;
-        for (InetSocketAddress a : contactPoints) {
-            if (port != -1 && a.getPort() != port)
-                throw new IllegalArgumentException(String.format("Not all hosts have the same port, found port %d and %d", port, a.getPort()));
-            port = a.getPort();
-        }
-        return new Cluster(contactPoints, port, initializer.getPolicies(), initializer.getAuthInfoProvider());
+        return new Cluster(contactPoints, initializer.getPort(), initializer.getPolicies(), initializer.getAuthInfoProvider());
     }
 
     /**
@@ -167,7 +160,18 @@ public class Cluster {
          * @return the initial Cassandra contact points. See {@link Builder#addContactPoint}
          * for more details on contact points.
          */
-        public List<InetSocketAddress> getContactPoints();
+        public List<InetAddress> getContactPoints();
+
+        /**
+         * The port to use to connect to Cassandra hosts.
+         * <p>
+         * This port will be used to connect to all of the Cassandra cluster
+         * hosts, not only the contact points. This means that all Cassandra
+         * host must be configured to listen on the same port.
+         *
+         * @return the port to use to connect to Cassandra hosts.
+         */
+        public int getPort();
 
         /**
          * Returns the policies to use for this cluster.
@@ -198,11 +202,8 @@ public class Cluster {
         private ReconnectionPolicy.Factory reconnectionPolicyFactory;
         private RetryPolicy retryPolicy;
 
-        public List<InetSocketAddress> getContactPoints() {
-            List<InetSocketAddress> cp = new ArrayList<InetSocketAddress>(addresses.size());
-            for (InetAddress address : addresses)
-                cp.add(new InetSocketAddress(address, port));
-            return cp;
+        public List<InetAddress> getContactPoints() {
+            return addresses;
         }
 
         /**
@@ -217,6 +218,15 @@ public class Cluster {
         public Builder withPort(int port) {
             this.port = port;
             return this;
+        }
+
+        /**
+         * The port to use to connect to Cassandra hosts.
+         *
+         * @return the port to use to connect to Cassandra hosts.
+         */
+        public int getPort() {
+            return port;
         }
 
         /**
@@ -392,10 +402,11 @@ public class Cluster {
     public static class Configuration {
 
         private final Policies policies;
-        private final ConnectionsConfiguration connections = new ConnectionsConfiguration();
+        private final ConnectionsConfiguration connections;
 
-        private Configuration(Policies policies) {
+        private Configuration(Cluster.Manager manager, Policies policies) {
             this.policies = policies;
+            this.connections = new ConnectionsConfiguration(manager);
         }
 
         /**
@@ -428,7 +439,7 @@ public class Cluster {
     class Manager implements Host.StateListener, Connection.DefaultResponseHandler {
 
         // Initial contacts point
-        final List<InetSocketAddress> contactPoints;
+        final List<InetAddress> contactPoints;
         final int port;
         private final Set<Session> sessions = new CopyOnWriteArraySet<Session>();
 
@@ -454,14 +465,14 @@ public class Cluster {
         // less clear behavior.
         final Map<MD5Digest, String> preparedQueries = new ConcurrentHashMap<MD5Digest, String>();
 
-        private Manager(List<InetSocketAddress> contactPoints, int port, Policies policies, AuthInfoProvider authProvider) throws NoHostAvailableException {
+        private Manager(List<InetAddress> contactPoints, int port, Policies policies, AuthInfoProvider authProvider) throws NoHostAvailableException {
             this.port = port;
-            this.configuration = new Configuration(policies);
+            this.configuration = new Configuration(this, policies);
             this.metadata = new ClusterMetadata(this);
             this.contactPoints = contactPoints;
             this.connectionFactory = new Connection.Factory(this, authProvider);
 
-            for (InetSocketAddress address : contactPoints)
+            for (InetAddress address : contactPoints)
                 addHost(address, false);
 
             this.controlConnection = new ControlConnection(this);
@@ -553,7 +564,7 @@ public class Cluster {
                 s.manager.onRemove(host);
         }
 
-        public Host addHost(InetSocketAddress address, boolean signal) {
+        public Host addHost(InetAddress address, boolean signal) {
             Host newHost = metadata.add(address);
             if (newHost != null && signal) {
                 logger.info("New Cassandra host {} added", newHost);
@@ -573,7 +584,7 @@ public class Cluster {
         }
 
         // Prepare a query on all nodes
-        public void prepare(MD5Digest digest, String query, InetSocketAddress toExclude) {
+        public void prepare(MD5Digest digest, String query, InetAddress toExclude) {
             preparedQueries.put(digest, query);
             for (Session s : sessions)
                 s.manager.prepare(query, toExclude);
@@ -659,10 +670,10 @@ public class Cluster {
                             Event.TopologyChange tpc = (Event.TopologyChange)event;
                             switch (tpc.change) {
                                 case NEW_NODE:
-                                    addHost(tpc.node, true);
+                                    addHost(tpc.node.getAddress(), true);
                                     break;
                                 case REMOVED_NODE:
-                                    removeHost(metadata.getHost(tpc.node));
+                                    removeHost(metadata.getHost(tpc.node.getAddress()));
                                     break;
                             }
                             break;
@@ -670,10 +681,10 @@ public class Cluster {
                             Event.StatusChange stc = (Event.StatusChange)event;
                             switch (stc.status) {
                                 case UP:
-                                    Host host = metadata.getHost(stc.node);
+                                    Host host = metadata.getHost(stc.node.getAddress());
                                     if (host == null) {
                                         // first time we heard about that node apparently, add it
-                                        addHost(stc.node, true);
+                                        addHost(stc.node.getAddress(), true);
                                     } else {
                                         onUp(host);
                                     }

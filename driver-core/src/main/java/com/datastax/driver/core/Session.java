@@ -1,12 +1,12 @@
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.configuration.*;
+import com.datastax.driver.core.policies.*;
 
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.*;
@@ -527,7 +527,7 @@ public class Session {
             new RetryingCallback(this, callback, options).sendRequest();
         }
 
-        public void prepare(String query, InetSocketAddress toExclude) {
+        public void prepare(String query, InetAddress toExclude) {
             for (Map.Entry<Host, HostConnectionPool> entry : pools.entrySet()) {
                 if (entry.getKey().getAddress().equals(toExclude))
                     continue;

@@ -1,6 +1,6 @@
 package com.datastax.driver.core.exceptions;
 
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,9 +19,9 @@ import java.util.Map;
  */
 public class NoHostAvailableException extends DriverException {
 
-    private final Map<InetSocketAddress, String> errors;
+    private final Map<InetAddress, String> errors;
 
-    public NoHostAvailableException(Map<InetSocketAddress, String> errors) {
+    public NoHostAvailableException(Map<InetAddress, String> errors) {
         super(makeMessage(errors));
         this.errors = errors;
     }
@@ -33,11 +33,11 @@ public class NoHostAvailableException extends DriverException {
      * @return a map containing for each tried host a description of the error
      * triggered when trying it.
      */
-    public Map<InetSocketAddress, String> getErrors() {
-        return new HashMap<InetSocketAddress, String>(errors);
+    public Map<InetAddress, String> getErrors() {
+        return new HashMap<InetAddress, String>(errors);
     }
 
-    private static String makeMessage(Map<InetSocketAddress, String> errors) {
+    private static String makeMessage(Map<InetAddress, String> errors) {
         return String.format("All host tried for query are in error (tried: %s)", errors.keySet());
     }
 }

@@ -6,7 +6,7 @@ import java.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.configuration.ReconnectionPolicy;
+import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 
 abstract class AbstractReconnectionHandler implements Runnable {

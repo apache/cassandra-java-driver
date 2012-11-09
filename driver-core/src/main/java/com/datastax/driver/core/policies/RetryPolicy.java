@@ -1,4 +1,4 @@
-package com.datastax.driver.core.configuration;
+package com.datastax.driver.core.policies;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

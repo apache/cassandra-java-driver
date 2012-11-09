@@ -1,6 +1,6 @@
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.HashMap;
@@ -9,7 +9,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
 
-import com.datastax.driver.core.configuration.RetryPolicy;
+import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.exceptions.*;
 
 import org.apache.cassandra.transport.Message;
@@ -45,7 +45,7 @@ class RetryingCallback implements Connection.ResponseCallback {
     private volatile int queryRetries;
     private volatile ConsistencyLevel retryConsistencyLevel;
 
-    private volatile Map<InetSocketAddress, String> errors;
+    private volatile Map<InetAddress, String> errors;
 
     public RetryingCallback(Session.Manager manager, Connection.ResponseCallback callback, QueryOptions queryOptions) {
         this.manager = manager;
@@ -61,7 +61,7 @@ class RetryingCallback implements Connection.ResponseCallback {
             if (query(host))
                 return;
         }
-        callback.onException(null, new NoHostAvailableException(errors == null ? Collections.<InetSocketAddress, String>emptyMap() : errors));
+        callback.onException(null, new NoHostAvailableException(errors == null ? Collections.<InetAddress, String>emptyMap() : errors));
     }
 
     private boolean query(Host host) {
@@ -101,10 +101,10 @@ class RetryingCallback implements Connection.ResponseCallback {
         }
     }
 
-    private void logError(InetSocketAddress address, String msg) {
+    private void logError(InetAddress address, String msg) {
         logger.debug("Error querying {}, trying next host (error is: {})", address, msg);
         if (errors == null)
-            errors = new HashMap<InetSocketAddress, String>();
+            errors = new HashMap<InetAddress, String>();
         errors.put(address, msg);
     }
 

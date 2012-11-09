@@ -1,5 +1,6 @@
 package com.datastax.driver.core;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.HashMap;
@@ -8,7 +9,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.datastax.driver.core.configuration.*;
+import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
@@ -43,7 +44,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         public void closeAll() {}
     };
 
-    public final InetSocketAddress address;
+    public final InetAddress address;
     private final String name;
 
     private final ClientBootstrap bootstrap;
@@ -69,7 +70,7 @@ class Connection extends org.apache.cassandra.transport.Connection
      * @throws ConnectionException if the connection attempts fails or is
      * refused by the server.
      */
-    private Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException {
+    private Connection(String name, InetAddress address, Factory factory) throws ConnectionException {
         super(EMPTY_TRACKER);
 
         this.address = address;
@@ -79,7 +80,7 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         bootstrap.setPipelineFactory(new PipelineFactory(this));
 
-        ChannelFuture future = bootstrap.connect(address);
+        ChannelFuture future = bootstrap.connect(new InetSocketAddress(address, factory.port));
 
         writer.incrementAndGet();
         try {
@@ -126,7 +127,7 @@ class Connection extends org.apache.cassandra.transport.Connection
                     throw defunct(new TransportException(address, String.format("Error initializing connection", ((ErrorMessage)response).error)));
                 case AUTHENTICATE:
                     CredentialsMessage creds = new CredentialsMessage();
-                    creds.credentials.putAll(factory.authProvider.getAuthInfos(address.getAddress()));
+                    creds.credentials.putAll(factory.authProvider.getAuthInfos(address));
                     Message.Response authResponse = write(creds).get();
                     switch (authResponse.type) {
                         case READY:
@@ -302,20 +303,22 @@ class Connection extends org.apache.cassandra.transport.Connection
 
     public static class Factory {
 
+        public final int port;
         private final ExecutorService bossExecutor = Executors.newCachedThreadPool();
         private final ExecutorService workerExecutor = Executors.newCachedThreadPool();
 
         private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
-        private final DefaultResponseHandler defaultHandler;
-        private final ConnectionsConfiguration configuration;
+        public final DefaultResponseHandler defaultHandler;
+        public final ConnectionsConfiguration configuration;
 
-        private final AuthInfoProvider authProvider;
+        public final AuthInfoProvider authProvider;
 
         public Factory(Cluster.Manager manager, AuthInfoProvider authProvider) {
-            this(manager, manager.configuration.getConnectionsConfiguration(), authProvider);
+            this(manager.port, manager, manager.configuration.getConnectionsConfiguration(), authProvider);
         }
 
-        private Factory(DefaultResponseHandler defaultHandler, ConnectionsConfiguration configuration, AuthInfoProvider authProvider) {
+        private Factory(int port, DefaultResponseHandler defaultHandler, ConnectionsConfiguration configuration, AuthInfoProvider authProvider) {
+            this.port = port;
             this.defaultHandler = defaultHandler;
             this.configuration = configuration;
             this.authProvider = authProvider;
@@ -329,7 +332,7 @@ class Connection extends org.apache.cassandra.transport.Connection
          * @throws ConnectionException if connection attempt fails.
          */
         public Connection open(Host host) throws ConnectionException {
-            InetSocketAddress address = host.getAddress();
+            InetAddress address = host.getAddress();
             String name = address.toString() + "-" + getIdGenerator(host).getAndIncrement();
             return new Connection(name, address, this);
         }
@@ -372,10 +375,6 @@ class Connection extends org.apache.cassandra.transport.Connection
 
             return b;
         }
-
-        public DefaultResponseHandler defaultHandler() {
-            return defaultHandler;
-        }
     }
 
     private class Dispatcher extends SimpleChannelUpstreamHandler {
@@ -406,7 +405,7 @@ class Connection extends org.apache.cassandra.transport.Connection
                 logger.trace("[{}] received: {}", name, e.getMessage());
 
                 if (streamId < 0) {
-                    factory.defaultHandler().handle(response);
+                    factory.defaultHandler.handle(response);
                     return;
                 }
 
@@ -445,7 +444,7 @@ class Connection extends org.apache.cassandra.transport.Connection
     static class Future extends SimpleFuture<Message.Response> implements ResponseCallback {
 
         private final Message.Request request;
-        private volatile InetSocketAddress address;
+        private volatile InetAddress address;
 
         public Future(Message.Request request) {
             this.request = request;
@@ -464,7 +463,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             super.setException(exception);
         }
 
-        public InetSocketAddress getAddress() {
+        public InetAddress getAddress() {
             return address;
         }
     }

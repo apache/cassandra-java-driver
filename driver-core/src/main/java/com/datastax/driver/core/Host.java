@@ -1,6 +1,6 @@
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -13,7 +13,7 @@ import java.util.concurrent.ScheduledFuture;
  */
 public class Host {
 
-    private final InetSocketAddress address;
+    private final InetAddress address;
     private final HealthMonitor monitor;
 
     private volatile String datacenter;
@@ -24,7 +24,7 @@ public class Host {
 
     // ClusterMetadata keeps one Host object per inet address, so don't use
     // that constructor unless you know what you do (use ClusterMetadata.getHost typically).
-    Host(InetSocketAddress address, ConvictionPolicy.Factory policy) {
+    Host(InetAddress address, ConvictionPolicy.Factory policy) {
         if (address == null || policy == null)
             throw new NullPointerException();
 
@@ -40,9 +40,9 @@ public class Host {
     /**
      * Returns the node address.
      *
-     * @return the node {@link InetSocketAddress}.
+     * @return the node {@link InetAddress}.
      */
-    public InetSocketAddress getAddress() {
+    public InetAddress getAddress() {
         return address;
     }
 

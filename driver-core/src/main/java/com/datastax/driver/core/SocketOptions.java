@@ -1,4 +1,4 @@
-package com.datastax.driver.core.configuration;
+package com.datastax.driver.core;
 
 /**
  * Options to configure low-level socket options for the connections kept

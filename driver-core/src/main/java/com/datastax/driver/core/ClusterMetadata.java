@@ -1,6 +1,6 @@
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -19,7 +19,7 @@ public class ClusterMetadata {
 
     private final Cluster.Manager cluster;
     volatile String clusterName;
-    private final ConcurrentMap<InetSocketAddress, Host> hosts = new ConcurrentHashMap<InetSocketAddress, Host>();
+    private final ConcurrentMap<InetAddress, Host> hosts = new ConcurrentHashMap<InetAddress, Host>();
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
 
     ClusterMetadata(Cluster.Manager cluster) {
@@ -114,7 +114,7 @@ public class ClusterMetadata {
         }
     }
 
-    Host add(InetSocketAddress address) {
+    Host add(InetAddress address) {
         Host newHost = new Host(address, cluster.convictionPolicyFactory);
         Host previous = hosts.putIfAbsent(address, newHost);
         if (previous == null)
@@ -132,7 +132,7 @@ public class ClusterMetadata {
         return hosts.remove(host.getAddress()) != null;
     }
 
-    Host getHost(InetSocketAddress address) {
+    Host getHost(InetAddress address) {
         return hosts.get(address);
     }
 

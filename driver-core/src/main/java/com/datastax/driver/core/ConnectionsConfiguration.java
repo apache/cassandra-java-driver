@@ -1,4 +1,4 @@
-package com.datastax.driver.core.configuration;
+package com.datastax.driver.core;
 
 /**
  * Handle all configuration related of the connections to the Cassandra hosts.
@@ -12,9 +12,15 @@ package com.datastax.driver.core.configuration;
  */
 public class ConnectionsConfiguration {
 
-    private final SocketOptions socketOptions = new SocketOptions();
-    private final ProtocolOptions protocolOptions = new ProtocolOptions();
-    private final PoolingOptions poolingOptions = new PoolingOptions();
+    private final SocketOptions socketOptions;
+    private final ProtocolOptions protocolOptions;
+    private final PoolingOptions poolingOptions;
+
+    ConnectionsConfiguration(Cluster.Manager manager) {
+        this.socketOptions = new SocketOptions();
+        this.protocolOptions = new ProtocolOptions(manager);
+        this.poolingOptions = new PoolingOptions();
+    }
 
     /**
      * The socket options.
