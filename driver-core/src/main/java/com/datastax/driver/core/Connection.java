@@ -87,16 +87,17 @@ class Connection extends org.apache.cassandra.transport.Connection
             this.channel = future.awaitUninterruptibly().getChannel();
             if (!future.isSuccess())
             {
-                logger.debug(String.format("[%s] Error connecting to %s%s", name, address, extractMessage(future.getCause())));
+                if (logger.isDebugEnabled())
+                    logger.debug(String.format("[%s] Error connecting to %s%s", name, address, extractMessage(future.getCause())));
                 throw new TransportException(address, "Cannot connect", future.getCause());
             }
         } finally {
             writer.decrementAndGet();
         }
 
-        logger.trace(String.format("[%s] Connection opened successfully", name));
+        logger.trace("[{}] Connection opened successfully", name);
         initializeTransport();
-        logger.trace(String.format("[%s] Transport initialized and ready", name));
+        logger.trace("[{}] Transport initialized and ready", name);
     }
 
     private static String extractMessage(Throwable t) {
@@ -175,7 +176,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             return;
 
         try {
-            logger.trace(String.format("[%s] Setting keyspace %s", name, keyspace));
+            logger.trace("[{}] Setting keyspace {}", name, keyspace);
             Message.Response response = write(new QueryMessage("USE \"" + keyspace + "\"", ConsistencyLevel.DEFAULT_CASSANDRA_CL)).get();
             switch (response.type) {
                 case RESULT:
@@ -236,12 +237,12 @@ class Connection extends org.apache.cassandra.transport.Connection
             dispatcher.add(handler);
             request.setStreamId(handler.streamId);
 
-            logger.trace(String.format("[%s] writting request %s", name, request));
+            logger.trace("[{}] writting request {}", name, request);
             ChannelFuture writeFuture = channel.write(request);
             writeFuture.awaitUninterruptibly();
             if (!writeFuture.isSuccess())
             {
-                logger.debug(String.format("[%s] Error writting request %s", name, request));
+                logger.debug("[{}] Error writting request {}", name, request);
                 // Remove this handler from the dispatcher so it don't get notified of the error
                 // twice (we will fail that method already)
                 dispatcher.removeHandler(handler.streamId);
@@ -255,7 +256,7 @@ class Connection extends org.apache.cassandra.transport.Connection
                 throw defunct(ce);
             }
 
-            logger.trace(String.format("[%s] request sent successfully", name));
+            logger.trace("[{}] request sent successfully", name);
 
         } finally {
             writer.decrementAndGet();
@@ -266,7 +267,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         if (isClosed)
             return;
 
-        logger.trace(String.format("[%s] closing connection", name));
+        logger.trace("[{}] closing connection", name);
 
         // Make sure all new writes are rejected
         isClosed = true;
@@ -395,14 +396,14 @@ class Connection extends org.apache.cassandra.transport.Connection
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
             if (!(e.getMessage() instanceof Message.Response)) {
-                logger.debug(String.format("[%s] Received unexpected message: %s", name, e.getMessage()));
+                logger.debug("[{}] Received unexpected message: {}", name, e.getMessage());
                 defunct(new TransportException(address, "Unexpected message received: " + e.getMessage()));
                 // TODO: we should allow calling some handler for such error
             } else {
                 Message.Response response = (Message.Response)e.getMessage();
                 int streamId = response.getStreamId();
 
-                logger.trace(String.format("[%s] received: %s", name, e.getMessage()));
+                logger.trace("[{}] received: {}", name, e.getMessage());
 
                 if (streamId < 0) {
                     factory.defaultHandler().handle(response);
@@ -421,7 +422,8 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
-            logger.trace(String.format("[%s] connection error", name), e.getCause());
+            if (logger.isTraceEnabled())
+                logger.trace(String.format("[%s] connection error", name), e.getCause());
 
             // Ignore exception while writting, this will be handled by write() directly
             if (writer.get() > 0)

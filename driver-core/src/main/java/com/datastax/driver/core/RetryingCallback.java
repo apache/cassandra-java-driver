@@ -102,7 +102,7 @@ class RetryingCallback implements Connection.ResponseCallback {
     }
 
     private void logError(InetSocketAddress address, String msg) {
-        logger.debug(String.format("Error querying %s, trying next host (error is: %s)", address, msg));
+        logger.debug("Error querying {}, trying next host (error is: {})", address, msg);
         if (errors == null)
             errors = new HashMap<InetSocketAddress, String>();
         errors.put(address, msg);
@@ -186,7 +186,7 @@ class RetryingCallback implements Connection.ResponseCallback {
                             return;
                         case IS_BOOTSTRAPPING:
                             // Try another node
-                            logger.error("Query sent to %s but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
+                            logger.error("Query sent to {} but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
                             retry(false, null);
                             return;
                         case UNPREPARED:

@@ -63,7 +63,7 @@ public class ResultSet implements Iterable<CQLRow> {
             case PREPARED:
                 throw new RuntimeException("Prepared statement received when a ResultSet was expected");
             default:
-                logger.error(String.format("Received unknow result type '%s'; returning empty result set", msg.kind));
+                logger.error("Received unknow result type '{}'; returning empty result set", msg.kind);
                 return empty(trace);
         }
     }

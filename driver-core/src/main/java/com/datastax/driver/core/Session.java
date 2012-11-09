@@ -434,15 +434,15 @@ public class Session {
                 if (distance == HostDistance.IGNORED) {
                     return pools.get(host);
                 } else {
-                    logger.debug(String.format("Adding %s to list of queried hosts", host));
+                    logger.debug("Adding {} to list of queried hosts", host);
                     return pools.put(host, new HostConnectionPool(host, distance, this));
                 }
             } catch (AuthenticationException e) {
-                logger.error(String.format("Error creating pool to %s (%s)", host, e.getMessage()));
+                logger.error("Error creating pool to {} ({})", host, e.getMessage());
                 host.getMonitor().signalConnectionFailure(new ConnectionException(e.getHost(), e.getMessage()));
                 return pools.get(host);
             } catch (ConnectionException e) {
-                logger.debug(String.format("Error creating pool to %s (%s)", host, e.getMessage()));
+                logger.debug("Error creating pool to {} ({})", host, e.getMessage());
                 host.getMonitor().signalConnectionFailure(e);
                 return pools.get(host);
             }

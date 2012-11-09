@@ -55,7 +55,7 @@ class HostConnectionPool {
         this.connections = new CopyOnWriteArrayList(l);
         this.open = new AtomicInteger(connections.size());
 
-        logger.trace(String.format("Created connection pool to host %s", host));
+        logger.trace("Created connection pool to host {}", host);
     }
 
     private PoolingOptions options() {
@@ -235,7 +235,7 @@ class HostConnectionPool {
             return true;
         } catch (ConnectionException e) {
             open.decrementAndGet();
-            logger.debug("Connection error to " + host + " while creating additional connection");
+            logger.debug("Connection error to {} while creating additional connection", host);
             if (host.getMonitor().signalConnectionFailure(e))
                 shutdown();
             return false;
@@ -257,7 +257,7 @@ class HostConnectionPool {
                 break;
         }
 
-        logger.debug("Creating new connection on busy pool to " + host);
+        logger.debug("Creating new connection on busy pool to {}", host);
         manager.executor().submit(newConnectionTask);
     }
 

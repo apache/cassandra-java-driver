@@ -491,7 +491,7 @@ public class Cluster {
         }
 
         public void onUp(Host host) {
-            logger.trace(String.format("Host %s is UP", host));
+            logger.trace("Host {} is UP", host);
 
             // If there is a reconnection attempt scheduled for that node, cancel it
             ScheduledFuture scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
@@ -506,13 +506,13 @@ public class Cluster {
         }
 
         public void onDown(final Host host) {
-            logger.trace(String.format("Host %s is DOWN", host));
+            logger.trace("Host {} is DOWN", host);
             controlConnection.onDown(host);
             for (Session s : sessions)
                 s.manager.onDown(host);
 
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
-            logger.debug(String.format("%s is down, scheduling connection retries", host));
+            logger.debug("{} is down, scheduling connection retries", host);
             new AbstractReconnectionHandler(reconnectionExecutor, configuration.getPolicies().getReconnectionPolicyFactory().create(), host.reconnectionAttempt) {
 
                 protected Connection tryReconnect() throws ConnectionException {
@@ -520,12 +520,13 @@ public class Cluster {
                 }
 
                 protected void onReconnection(Connection connection) {
-                    logger.debug(String.format("Successful reconnection to %s, setting host UP", host));
+                    logger.debug("Successful reconnection to {}, setting host UP", host);
                     host.getMonitor().reset();
                 }
 
                 protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
-                    logger.debug(String.format("Failed reconnection to %s (%s), scheduling retry in %d milliseconds", host, e.getMessage(), nextDelayMs));
+                    if (logger.isDebugEnabled())
+                        logger.debug("Failed reconnection to {} ({}), scheduling retry in {} milliseconds", new Object[]{ host, e.getMessage(), nextDelayMs});
                     return true;
                 }
 
@@ -538,7 +539,7 @@ public class Cluster {
         }
 
         public void onAdd(Host host) {
-            logger.trace(String.format("Adding new host %s", host));
+            logger.trace("Adding new host {}", host);
             prepareAllQueries(host);
             controlConnection.onAdd(host);
             for (Session s : sessions)
@@ -546,7 +547,7 @@ public class Cluster {
         }
 
         public void onRemove(Host host) {
-            logger.trace(String.format("Removing host %s", host));
+            logger.trace("Removing host {}", host);
             controlConnection.onRemove(host);
             for (Session s : sessions)
                 s.manager.onRemove(host);
@@ -555,7 +556,7 @@ public class Cluster {
         public Host addHost(InetSocketAddress address, boolean signal) {
             Host newHost = metadata.add(address);
             if (newHost != null && signal) {
-                logger.info(String.format("New Cassandra host %s added", newHost));
+                logger.info("New Cassandra host {} added", newHost);
                 onAdd(newHost);
             }
             return newHost;
@@ -566,7 +567,7 @@ public class Cluster {
                 return;
 
             if (metadata.remove(host)) {
-                logger.info(String.format("Cassandra host %s removed", host));
+                logger.info("Cassandra host {} removed", host);
                 onRemove(host);
             }
         }
@@ -617,8 +618,8 @@ public class Cluster {
 
         // refresh the schema using the provided connection, and notice the future with the provided resultset once done
         public void refreshSchema(final Connection connection, final SimpleFuture future, final ResultSet rs, final String keyspace, final String table) {
-            // TODO: figure out why this doesn't work
-            //logger.debug("Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : "." + table);
+            if (logger.isDebugEnabled())
+                logger.debug("Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : "." + table);
             executor.submit(new Runnable() {
                 public void run() {
                     try {
@@ -638,13 +639,13 @@ public class Cluster {
         public void handle(Message.Response response) {
 
             if (!(response instanceof EventMessage)) {
-                logger.error("Received an unexpected message from the server: " + response);
+                logger.error("Received an unexpected message from the server: {}", response);
                 return;
             }
 
             final Event event = ((EventMessage)response).event;
 
-            logger.trace(String.format("Received event %s, scheduling delivery", response));
+            logger.trace("Received event {}, scheduling delivery", response);
 
             // When handle is called, the current thread is a network I/O  thread, and we don't want to block
             // it (typically addHost() will create the connection pool to the new node, which can take time)

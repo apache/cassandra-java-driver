@@ -80,12 +80,12 @@ class ControlConnection implements Host.StateListener {
                 }
 
                 protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
-                    logger.error(String.format("[Control connection] Cannot connect to any host, scheduling retry in %d milliseconds", nextDelayMs));
+                    logger.error("[Control connection] Cannot connect to any host, scheduling retry in {} milliseconds", nextDelayMs);
                     return true;
                 }
 
                 protected boolean onUnknownException(Exception e, long nextDelayMs) {
-                    logger.error(String.format("[Control connection ]Unknown error during reconnection, scheduling retry in %d milliseconds", nextDelayMs), e);
+                    logger.error(String.format("[Control connection] Unknown error during reconnection, scheduling retry in %d milliseconds", nextDelayMs), e);
                     return true;
                 }
             }.start();
@@ -93,7 +93,7 @@ class ControlConnection implements Host.StateListener {
     }
 
     private void setNewConnection(Connection newConnection) {
-        logger.debug(String.format("[Control connection] Successfully connected to %s", newConnection.address));
+        logger.debug("[Control connection] Successfully connected to {}", newConnection.address);
         Connection old = connectionRef.getAndSet(newConnection);
         if (old != null && !old.isClosed())
             old.close();
@@ -112,10 +112,12 @@ class ControlConnection implements Host.StateListener {
                     errors = new HashMap<InetSocketAddress, String>();
                 errors.put(e.address, e.getMessage());
 
-                if (iter.hasNext()) {
-                    logger.debug(String.format("[Control connection] Failed connecting to %s, trying next host", host));
-                } else {
-                    logger.debug(String.format("[Control connection] Failed connecting to %s, no more host to try", host));
+                if (logger.isDebugEnabled()) {
+                    if (iter.hasNext()) {
+                        logger.debug("[Control connection] Failed connecting to {}, trying next host", host);
+                    } else {
+                        logger.debug("[Control connection] Failed connecting to {}, no more host to try", host);
+                    }
                 }
             }
         }
@@ -147,11 +149,11 @@ class ControlConnection implements Host.StateListener {
     }
 
     public void refreshSchema(Connection connection, String keyspace, String table) {
-        logger.debug(String.format("[Control connection] Refreshing schema for %s.%s", keyspace, table));
+        logger.debug("[Control connection] Refreshing schema for {}.{}", keyspace, table);
         try {
             refreshSchema(connection, keyspace, table, cluster);
         } catch (ConnectionException e) {
-            logger.debug(String.format("[Control connection] Connection error when refeshing schema (%s)", e.getMessage()));
+            logger.debug("[Control connection] Connection error when refeshing schema ({})", e.getMessage());
             reconnect();
         } catch (BusyConnectionException e) {
             logger.debug("[Control connection] Connection is busy, reconnecting");
@@ -238,7 +240,7 @@ class ControlConnection implements Host.StateListener {
                     cluster.removeHost(host);
 
         } catch (ConnectionException e) {
-            logger.debug(String.format("[Control connection] Connection error when refeshing hosts list (%s)", e.getMessage()));
+            logger.debug("[Control connection] Connection error when refeshing hosts list ({})", e.getMessage());
             reconnect();
         } catch (ExecutionException e) {
             logger.error("[Control connection] Unexpected error while refeshing hosts list", e);
@@ -260,7 +262,8 @@ class ControlConnection implements Host.StateListener {
 
         // If that's the host we're connected to, and we haven't yet schedul a reconnection, pre-emptively start one
         Connection current = connectionRef.get();
-        logger.trace(String.format("[Control connection] %s is down, currently connected to %s", host, current == null ? "nobody" : current.address));
+        if (logger.isTraceEnabled())
+            logger.trace("[Control connection] %s is down, currently connected to {}", host, current == null ? "nobody" : current.address);
         if (current != null && current.address.equals(host.getAddress()) && reconnectionAttempt.get() == null)
             reconnect();
     }
