@@ -90,7 +90,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             String name = "c_" + type;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_native', ?)", ALL_NATIVE_TABLE, name));
             BoundStatement bs = ps.newBoundStatement();
-            session.executePrepared(setBoundValue(bs, name, type, getFixedValue(type)));
+            session.execute(setBoundValue(bs, name, type, getFixedValue(type)));
 
             CQLRow row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).fetchOne();
             assertEquals("For type " + type, getFixedValue(type), getValue(row, name, type));
@@ -110,7 +110,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             List value = (List)getFixedValue(type);;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_list', ?)", ALL_LIST_TABLE, name));
             BoundStatement bs = ps.newBoundStatement();
-            session.executePrepared(setBoundValue(bs, name, type, value));
+            session.execute(setBoundValue(bs, name, type, value));
 
             CQLRow row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).fetchOne();
             assertEquals("For type " + type, value, getValue(row, name, type));
@@ -130,7 +130,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             Set value = (Set)getFixedValue(type);;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
             BoundStatement bs = ps.newBoundStatement();
-            session.executePrepared(setBoundValue(bs, name, type, value));
+            session.execute(setBoundValue(bs, name, type, value));
 
             CQLRow row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).fetchOne();
             assertEquals("For type " + type, value, getValue(row, name, type));
@@ -155,7 +155,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 Map value = (Map)getFixedValue(type);;
                 PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
                 BoundStatement bs = ps.newBoundStatement();
-                session.executePrepared(setBoundValue(bs, name, type, value));
+                session.execute(setBoundValue(bs, name, type, value));
 
                 CQLRow row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).fetchOne();
                 assertEquals("For type " + type, value, getValue(row, name, type));

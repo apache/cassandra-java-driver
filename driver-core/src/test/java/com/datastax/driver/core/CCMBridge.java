@@ -27,7 +27,7 @@ public class CCMBridge {
 
     private static final Logger logger = Logger.getLogger(CCMBridge.class);
 
-    private static final String CASSANDRA_VERSION_REGEXP = "cassandra-\\d\\.\\d\\.\\d(-\\w+)?";
+    private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d(-\\w+)?";
 
     private static final File CASSANDRA_DIR;
     private static final String CASSANDRA_VERSION;

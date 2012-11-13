@@ -52,12 +52,12 @@ public interface LoadBalancingPolicy extends Host.StateListener {
      * used. If all hosts of the returned {@code Iterator} are down, the query
      * will fail.
      *
-     * @param queryOptions the options used for the query.
+     * @param query the query for which to build a plan.
      * @return an iterator of Host. The query is tried against the hosts
      * returned by this iterator in order, until the query has been sent
      * successfully to one of the host.
      */
-    public Iterator<Host> newQueryPlan(QueryOptions queryOptions);
+    public Iterator<Host> newQueryPlan(Query query);
 
     /**
      * Simple factory interface to allow creating {@link LoadBalancingPolicy} instances.
@@ -119,7 +119,7 @@ public interface LoadBalancingPolicy extends Host.StateListener {
          * @return a new query plan, i.e. an iterator indicating which host to
          * try first for querying, which one to use as failover, etc...
          */
-        public Iterator<Host> newQueryPlan(QueryOptions queryOptions) {
+        public Iterator<Host> newQueryPlan(Query query) {
 
             // We clone liveHosts because we want a version of the list that
             // cannot change concurrently of the query plan iterator (this
@@ -262,7 +262,7 @@ public interface LoadBalancingPolicy extends Host.StateListener {
          * @return a new query plan, i.e. an iterator indicating which host to
          * try first for querying, which one to use as failover, etc...
          */
-        public Iterator<Host> newQueryPlan(QueryOptions queryOptions) {
+        public Iterator<Host> newQueryPlan(Query query) {
 
             CopyOnWriteArrayList<Host> localLiveHosts = perDcLiveHosts.get(localDc);
             final List<Host> hosts = localLiveHosts == null ? Collections.<Host>emptyList() : (List<Host>)localLiveHosts.clone();

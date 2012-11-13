@@ -30,18 +30,17 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // execute
         checkExecuteResultSet(session.execute(String.format(SELECT_ALL_FORMAT, TABLE)), key);
-        checkExecuteResultSet(session.execute(String.format(SELECT_ALL_FORMAT, TABLE), ConsistencyLevel.ONE), key);
-        checkExecuteResultSet(session.execute(String.format(SELECT_ALL_FORMAT, TABLE), new QueryOptions(ConsistencyLevel.ONE)), key);
+        checkExecuteResultSet(session.execute(new SimpleStatement(String.format(SELECT_ALL_FORMAT, TABLE)).setConsistencyLevel(ConsistencyLevel.ONE)), key);
 
         // executeAsync
         checkExecuteResultSet(session.executeAsync(String.format(SELECT_ALL_FORMAT, TABLE)).getUninterruptibly(), key);
-        checkExecuteResultSet(session.executeAsync(String.format(SELECT_ALL_FORMAT, TABLE), ConsistencyLevel.ONE).getUninterruptibly(), key);
-        checkExecuteResultSet(session.executeAsync(String.format(SELECT_ALL_FORMAT, TABLE), new QueryOptions(ConsistencyLevel.ONE)).getUninterruptibly(), key);
+        checkExecuteResultSet(session.executeAsync(new SimpleStatement(String.format(SELECT_ALL_FORMAT, TABLE)).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
     }
 
     @Test
     public void executePreparedTest() throws Exception {
-        // Simple calls to all versions of the executePrepared/executePreparedAsync methods
+        // Simple calls to all versions of the execute/executeAsync methods for prepared statements
+        // Note: the goal is only to exercice the Session methods, PreparedStatementTest have better prepared statement tests.
         String key = "execute_prepared_test";
         ResultSet rs = session.execute(String.format(INSERT_FORMAT, TABLE, key, "foo", 42, 24.03f));
         assertTrue(rs.isExhausted());
@@ -50,14 +49,12 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         BoundStatement bs = p.bind(key);
 
         // executePrepared
-        checkExecuteResultSet(session.executePrepared(bs), key);
-        checkExecuteResultSet(session.executePrepared(bs, ConsistencyLevel.ONE), key);
-        checkExecuteResultSet(session.executePrepared(bs, new QueryOptions(ConsistencyLevel.ONE)), key);
+        checkExecuteResultSet(session.execute(bs), key);
+        checkExecuteResultSet(session.execute(bs.setConsistencyLevel(ConsistencyLevel.ONE)), key);
 
         // executePreparedAsync
-        checkExecuteResultSet(session.executePreparedAsync(bs).getUninterruptibly(), key);
-        checkExecuteResultSet(session.executePreparedAsync(bs, ConsistencyLevel.ONE).getUninterruptibly(), key);
-        checkExecuteResultSet(session.executePreparedAsync(bs, new QueryOptions(ConsistencyLevel.ONE)).getUninterruptibly(), key);
+        checkExecuteResultSet(session.executeAsync(bs).getUninterruptibly(), key);
+        checkExecuteResultSet(session.executeAsync(bs.setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
     }
 
     private static void checkExecuteResultSet(ResultSet rs, String key) {

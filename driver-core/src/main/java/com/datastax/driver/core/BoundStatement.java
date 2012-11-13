@@ -14,9 +14,9 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * A prepared statement with values bound to the bind variables.
  * <p>
  * Once a BoundStatement has values for all the variables of the {@link PreparedStatement}
- * it has been created from, it can executed through {@link Session#executePrepared}.
+ * it has been created from, it can executed (through {@link Session#execute}).
  */
-public class BoundStatement {
+public class BoundStatement extends Query {
 
     final PreparedStatement statement;
     final ByteBuffer[] values;

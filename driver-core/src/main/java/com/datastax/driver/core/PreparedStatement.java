@@ -11,8 +11,8 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
  * <p>
  * A prepared statement can be executed once concrete values has been provided
  * for the bound variables. The pair of a prepared statement and values for its
- * bound variables is a BoundStatement and can be executed by
- * {@link Session#executePrepared}.
+ * bound variables is a BoundStatement and can be executed (by
+ * {@link Session#execute}).
  */
 public class PreparedStatement {
 

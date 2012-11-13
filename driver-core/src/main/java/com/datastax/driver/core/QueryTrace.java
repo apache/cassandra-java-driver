@@ -148,8 +148,8 @@ public class QueryTrace {
 
     private void doFetchTrace() {
         try {
-            ResultSet.Future sessionsFuture = session.executeQuery(new QueryMessage(String.format(SELECT_SESSIONS_FORMAT, traceId), ConsistencyLevel.DEFAULT_CASSANDRA_CL), QueryOptions.DEFAULT);
-            ResultSet.Future eventsFuture = session.executeQuery(new QueryMessage(String.format(SELECT_EVENTS_FORMAT, traceId), ConsistencyLevel.DEFAULT_CASSANDRA_CL), QueryOptions.DEFAULT);
+            ResultSet.Future sessionsFuture = session.executeQuery(new QueryMessage(String.format(SELECT_SESSIONS_FORMAT, traceId), ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT);
+            ResultSet.Future eventsFuture = session.executeQuery(new QueryMessage(String.format(SELECT_EVENTS_FORMAT, traceId), ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT);
 
             CQLRow sessRow = sessionsFuture.get().fetchOne();
             if (sessRow != null) {
