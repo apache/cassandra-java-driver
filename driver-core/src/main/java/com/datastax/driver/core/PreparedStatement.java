@@ -1,5 +1,8 @@
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
+import java.util.List;
+
 import org.apache.cassandra.utils.MD5Digest;
 import org.apache.cassandra.transport.messages.ResultMessage;
 
@@ -19,23 +22,70 @@ public class PreparedStatement {
     final ColumnDefinitions metadata;
     final MD5Digest id;
 
-    private PreparedStatement(ColumnDefinitions metadata, MD5Digest id) {
+    volatile ByteBuffer routingKey;
+    final int[] routingKeyIndexes;
+
+    private PreparedStatement(ColumnDefinitions metadata, MD5Digest id, int[] routingKeyIndexes) {
         this.metadata = metadata;
         this.id = id;
+        this.routingKeyIndexes = routingKeyIndexes;
     }
 
-    static PreparedStatement fromMessage(ResultMessage.Prepared msg) {
+    static PreparedStatement fromMessage(ResultMessage.Prepared msg, ClusterMetadata clusterMetadata) {
         switch (msg.kind) {
             case PREPARED:
                 ResultMessage.Prepared pmsg = (ResultMessage.Prepared)msg;
                 ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[pmsg.metadata.names.size()];
-                for (int i = 0; i < defs.length; i++)
-                    defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(pmsg.metadata.names.get(i));
+                if (defs.length == 0)
+                    return new PreparedStatement(new ColumnDefinitions(defs), pmsg.statementId, null);
 
-                return new PreparedStatement(new ColumnDefinitions(defs), pmsg.statementId);
+                List<ColumnMetadata> partitionKeyColumns = null;
+                int[] pkIndexes = null;
+                KeyspaceMetadata km = clusterMetadata.getKeyspace(pmsg.metadata.names.get(0).ksName);
+                if (km != null) {
+                    TableMetadata tm = km.getTable(pmsg.metadata.names.get(0).cfName);
+                    if (tm != null) {
+                        partitionKeyColumns = tm.getPartitionKey();
+                        pkIndexes = new int[partitionKeyColumns.size()];
+                        for (int i = 0; i < pkIndexes.length; ++i)
+                            pkIndexes[i] = -1;
+                    }
+                }
+
+                // Note: we rely on the fact CQL queries cannot span multiple tables. If that change, we'll have to get smarter.
+                for (int i = 0; i < defs.length; i++) {
+                    defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(pmsg.metadata.names.get(i));
+                    maybeGetIndex(defs[i].getName(), i, partitionKeyColumns, pkIndexes);
+                }
+
+                return new PreparedStatement(new ColumnDefinitions(defs), pmsg.statementId, allSet(pkIndexes) ? pkIndexes : null);
             default:
                 throw new DriverInternalError(String.format("%s response received when prepared statement received was expected", msg.kind));
         }
+    }
+
+    private static void maybeGetIndex(String name, int j, List<ColumnMetadata> pkColumns, int[] pkIndexes) {
+        if (pkColumns == null)
+            return;
+
+        for (int i = 0; i < pkColumns.size(); ++i) {
+            if (name.equals(pkColumns.get(i).getName())) {
+                // We may have the same column prepared multiple times, but only pick the first value
+                pkIndexes[i] = j;
+                return;
+            }
+        }
+    }
+
+    private static boolean allSet(int[] pkColumns) {
+        if (pkColumns == null)
+            return false;
+
+        for (int i = 0; i < pkColumns.length; ++i)
+            if (pkColumns[i] < 0)
+                return false;
+
+        return true;
     }
 
     /**
@@ -77,5 +127,45 @@ public class PreparedStatement {
      */
     public BoundStatement newBoundStatement() {
         return new BoundStatement(this);
+    }
+
+    /**
+     * Set the routing key for this prepared statement.
+     * <p>
+     * This method allows to manually provide a fixed routing key for all
+     * executions of this prepared statement. It is never mandatory to provide
+     * a routing key through this method and this method should only be used
+     * if the partition key of the prepared query is not part of the prepared
+     * variables (i.e. if the partition key is fixed).
+     * <p>
+     * Note that if the partition key is part of the prepared variables, the
+     * routing key will be automatically computed once those variables are bound.
+     *
+     * @param routingKey the raw (binary) value to use as routing key.
+     * @return this {@code PreparedStatement} object.
+     *
+     * @see Query#getRoutingKey
+     */
+    public PreparedStatement setRoutingKey(ByteBuffer routingKey) {
+        this.routingKey = routingKey;
+        return this;
+    }
+
+    /**
+     * Set the routing key for this query.
+     * <p>
+     * See {@link #setRoutingKey(ByteBuffer)} for more information. This
+     * method is a variant for when the query partition key is composite and
+     * thus the routing key must be built from multiple values.
+     *
+     * @param routingKeyComponents the raw (binary) values to compose to obtain
+     * the routing key.
+     * @return this {@code PreparedStatement} object.
+     *
+     * @see Query#getRoutingKey
+     */
+    public PreparedStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
+        this.routingKey = SimpleStatement.compose(routingKeyComponents);
+        return this;
     }
 }

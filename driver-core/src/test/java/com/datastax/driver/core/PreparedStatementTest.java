@@ -162,4 +162,11 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             }
         }
     }
+
+    //@Test
+    //public void prepareAppendListTest() throws NoHostAvailableException {
+    //    PreparedStatement ps = session.prepare(String.format("UPDATE %s SET c_list_int = c_list_int + ? WHERE k = 'prepare_append_list'", ALL_LIST_TABLE));
+    //    BoundStatement bs = ps.newBoundStatement();
+    //    session.execute(bs.setList("c_list_int", Arrays.asList(1, 2, 3)));
+    //}
 }

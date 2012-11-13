@@ -1,5 +1,6 @@
 package com.datastax.driver.core.policies;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -67,10 +68,11 @@ public interface LoadBalancingPolicy extends Host.StateListener {
         /**
          * Creates a new LoadBalancingPolicy instance over the provided (initial) {@code hosts}.
          *
+         * @param cluster the {@code Cluster} instance for which the policy is created.
          * @param hosts the initial hosts to use.
          * @return the newly created {@link LoadBalancingPolicy} instance.
          */
-        public LoadBalancingPolicy create(Collection<Host> hosts);
+        public LoadBalancingPolicy create(Cluster cluster, Collection<Host> hosts);
     }
 
     /**
@@ -173,7 +175,7 @@ public interface LoadBalancingPolicy extends Host.StateListener {
 
             private Factory() {}
 
-            public LoadBalancingPolicy create(Collection<Host> hosts) {
+            public LoadBalancingPolicy create(Cluster cluster, Collection<Host> hosts) {
                 return new RoundRobin(hosts);
             }
         }
@@ -360,10 +362,10 @@ public interface LoadBalancingPolicy extends Host.StateListener {
             /**
              * Creates a new DCAwareRoundRobin policy factory given the name of
              * the local datacenter.
-             *
+             * <p>
              * The name of the local datacenter provided must be the local
              * datacenter name as known by Cassandra.
-             *
+             * <p>
              * The policy created by the returned factory will ignore all
              * remote hosts. In other words, this is equivalent to
              * {@code create(localDc, 0)}.
@@ -380,7 +382,7 @@ public interface LoadBalancingPolicy extends Host.StateListener {
              * Creates a new DCAwareRoundRobin policy factory given the name of
              * the local datacenter that use the provided number of host per
              * remote datacenter as failover for the local hosts.
-             *
+             * <p>
              * The name of the local datacenter provided must be the local
              * datacenter name as known by Cassandra.
              *
@@ -399,8 +401,123 @@ public interface LoadBalancingPolicy extends Host.StateListener {
                 return new Factory(localDc, usedHostsPerRemoteDc);
             }
 
-            public LoadBalancingPolicy create(Collection<Host> hosts) {
+            public LoadBalancingPolicy create(Cluster cluster, Collection<Host> hosts) {
                 return new DCAwareRoundRobin(hosts, localDc, usedHostsPerRemoteDc);
+            }
+        }
+    }
+
+    /**
+     * A wrapper load balancing policy that add token awareness to a child policy.
+     * <p>
+     * This policy encapsulates another policy. The resulting policy works in
+     * the following way:
+     * <ul>
+     *   <li>the {@code distance} method is inherited from the child policy.</li>
+     *   <li>the iterator return by the {@code newQueryPlan} method will first
+     *   return the {@code LOCAL} replicas for the query (based on {@link  Query#getRoutingKey})
+     *   <i>if possible</i> (i.e. if the query {@code getRoutingKey} method
+     *   doesn't return {@code null} and if {@link ClusterMetadata#getReplicas}
+     *   returns a non empty set of replicas for that partition key). If no
+     *   local replica can be either found or successfully contacted, the rest
+     *   of the query plan will fallback to one of the child policy.</li>
+     * </ul>
+     * <p>
+     * Do note that only replica for which the child policy {@code distance}
+     * method returns {@code HostDistance.LOCAL} will be considered having
+     * priority. For example, if you wrap {@link DCAwareRoundRobin} with this
+     * token aware policy, replicas from remote data centers may only be
+     * returned after all the host of the local data center.
+     */
+    public static class TokenAware implements LoadBalancingPolicy {
+
+        private final ClusterMetadata clusterMetadata;
+        private final LoadBalancingPolicy childPolicy;
+
+        private TokenAware(Cluster cluster, LoadBalancingPolicy childPolicy) {
+            this.clusterMetadata = cluster.getMetadata();
+            this.childPolicy = childPolicy;
+        }
+
+        public HostDistance distance(Host host) {
+            return childPolicy.distance(host);
+        }
+
+        public Iterator<Host> newQueryPlan(final Query query) {
+
+            ByteBuffer partitionKey = query.getRoutingKey();
+            if (partitionKey == null)
+                return childPolicy.newQueryPlan(query);
+
+            final Set<Host> replicas = clusterMetadata.getReplicas(partitionKey);
+            if (replicas.isEmpty())
+                return childPolicy.newQueryPlan(query);
+
+            return new AbstractIterator<Host>() {
+
+                private final Iterator<Host> iter = replicas.iterator();
+                private Iterator<Host> childIterator;
+
+                protected Host computeNext() {
+                    while (iter.hasNext()) {
+                        Host host = iter.next();
+                        if (host.getMonitor().isUp() && childPolicy.distance(host) == HostDistance.LOCAL)
+                            return host;
+                    }
+
+                    if (childIterator == null)
+                        childIterator = childPolicy.newQueryPlan(query);
+
+                    while (childIterator.hasNext()) {
+                        Host host = childIterator.next();
+                        // Skip it if it was already a local replica
+                        if (!replicas.contains(host) || childPolicy.distance(host) != HostDistance.LOCAL)
+                            return host;
+                    }
+                    return endOfData();
+                }
+            };
+        }
+
+        public void onUp(Host host) {
+            childPolicy.onUp(host);
+        }
+
+        public void onDown(Host host) {
+            childPolicy.onDown(host);
+        }
+
+        public void onAdd(Host host) {
+            childPolicy.onAdd(host);
+        }
+
+        public void onRemove(Host host) {
+            childPolicy.onRemove(host);
+        }
+
+        public static class Factory implements LoadBalancingPolicy.Factory {
+
+            private final LoadBalancingPolicy.Factory childFactory;
+
+            private Factory(LoadBalancingPolicy.Factory childFactory) {
+                this.childFactory = childFactory;
+            }
+
+            /**
+             * Creates a new {@code TokenAware} policy factory that wraps
+             * policies build by the provided child load balancing policy
+             * factory.
+             *
+             * @param childFactory the factory for the load balancing policy to
+             * wrap with token awareness.
+             * @return the newly created factory.
+             */
+            public static Factory create(LoadBalancingPolicy.Factory childFactory) {
+                return new Factory(childFactory);
+            }
+
+            public LoadBalancingPolicy create(Cluster cluster, Collection<Host> hosts) {
+                return new TokenAware(cluster, childFactory.create(cluster, hosts));
             }
         }
     }

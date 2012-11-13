@@ -26,8 +26,10 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
 
-    private static final String SELECT_PEERS = "SELECT peer, data_center, rack FROM system.peers";
-    private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack FROM system.local WHERE key='local'";
+    private static final String SELECT_PEERS = "SELECT peer, data_center, rack, tokens FROM system.peers";
+    // TODO: fix once we have rc1
+    //private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens, partitioner FROM system.local WHERE key='local'";
+    private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens FROM system.local WHERE key='local'";
 
     private final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
 
@@ -39,9 +41,9 @@ class ControlConnection implements Host.StateListener {
 
     private volatile boolean isShutdown;
 
-    public ControlConnection(Cluster.Manager cluster) {
-        this.cluster = cluster;
-        this.balancingPolicy = LoadBalancingPolicy.RoundRobin.Factory.INSTANCE.create(cluster.metadata.allHosts());
+    public ControlConnection(Cluster.Manager manager, ClusterMetadata metadata) {
+        this.cluster = manager;
+        this.balancingPolicy = LoadBalancingPolicy.RoundRobin.Factory.INSTANCE.create(manager.getCluster(), metadata.allHosts());
     }
 
     // Only for the initial connection. Does not schedule retries if it fails
@@ -108,23 +110,32 @@ class ControlConnection implements Host.StateListener {
             try {
                 return tryConnect(host);
             } catch (ConnectionException e) {
-                if (errors == null)
-                    errors = new HashMap<InetAddress, String>();
-                errors.put(e.address, e.getMessage());
-
-                if (logger.isDebugEnabled()) {
-                    if (iter.hasNext()) {
-                        logger.debug("[Control connection] Failed connecting to {}, trying next host", host);
-                    } else {
-                        logger.debug("[Control connection] Failed connecting to {}, no more host to try", host);
-                    }
-                }
+                errors = logError(host, e.getMessage(), errors, iter);
+            } catch (ExecutionException e) {
+                errors = logError(host, e.getMessage(), errors, iter);
+            } catch (InterruptedException e) {
+                // If we're interrupted, just move on
             }
         }
         throw new NoHostAvailableException(errors == null ? Collections.<InetAddress, String>emptyMap() : errors);
     }
 
-    private Connection tryConnect(Host host) throws ConnectionException {
+    private static Map<InetAddress, String> logError(Host host, String msg, Map<InetAddress, String> errors, Iterator<Host> iter) {
+        if (errors == null)
+            errors = new HashMap<InetAddress, String>();
+        errors.put(host.getAddress(), msg);
+
+        if (logger.isDebugEnabled()) {
+            if (iter.hasNext()) {
+                logger.debug("[Control connection] error on {} connection ({}), trying next host", host, msg);
+            } else {
+                logger.debug("[Control connection] error on {} connection ({}), no more host to try", host, msg);
+            }
+        }
+        return errors;
+    }
+
+    private Connection tryConnect(Host host) throws ConnectionException, ExecutionException, InterruptedException {
         Connection connection = cluster.connectionFactory.open(host);
 
         try {
@@ -136,8 +147,11 @@ class ControlConnection implements Host.StateListener {
             });
             connection.write(new RegisterMessage(evs));
 
-            refreshNodeList(connection);
-            refreshSchema(connection, null, null);
+            logger.debug(String.format("[Control connection] Refreshing node list and token map"));
+            refreshNodeListAndTokenMap(connection);
+
+            logger.debug("[Control connection] Refreshing schema");
+            refreshSchema(connection, null, null, cluster);
             return connection;
         } catch (BusyConnectionException e) {
             throw new DriverInternalError("Newly created connection should not be busy");
@@ -145,24 +159,20 @@ class ControlConnection implements Host.StateListener {
     }
 
     public void refreshSchema(String keyspace, String table) {
-        refreshSchema(connectionRef.get(), keyspace, table);
-    }
-
-    public void refreshSchema(Connection connection, String keyspace, String table) {
         logger.debug("[Control connection] Refreshing schema for {}.{}", keyspace, table);
         try {
-            refreshSchema(connection, keyspace, table, cluster);
+            refreshSchema(connectionRef.get(), keyspace, table, cluster);
         } catch (ConnectionException e) {
-            logger.debug("[Control connection] Connection error when refeshing schema ({})", e.getMessage());
-            reconnect();
-        } catch (BusyConnectionException e) {
-            logger.debug("[Control connection] Connection is busy, reconnecting");
+            logger.debug("[Control connection] Connection error while refeshing schema ({})", e.getMessage());
             reconnect();
         } catch (ExecutionException e) {
             logger.error("[Control connection] Unexpected error while refeshing schema", e);
             reconnect();
+        } catch (BusyConnectionException e) {
+            logger.debug("[Control connection] Connection is busy, reconnecting");
+            reconnect();
         } catch (InterruptedException e) {
-            // If we're interrupted, just move on
+            // Interrupted? Then moving on.
         }
     }
 
@@ -189,68 +199,72 @@ class ControlConnection implements Host.StateListener {
         cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get());
     }
 
-    private void refreshNodeList(Connection connection) throws BusyConnectionException {
-        // Make sure we're up to date on node list
-        logger.debug(String.format("[Control connection] Refreshing node list"));
-        try {
-            ResultSet.Future peersFuture = new ResultSet.Future(null, new QueryMessage(SELECT_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-            ResultSet.Future localFuture = new ResultSet.Future(null, new QueryMessage(SELECT_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-            connection.write(peersFuture.callback);
-            connection.write(localFuture.callback);
+    private void refreshNodeListAndTokenMap(Connection connection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+        // Make sure we're up to date on nodes and tokens
 
-            // Update cluster name, DC and rack for the one node we are connected to
-            CQLRow localRow = localFuture.get().fetchOne();
-            if (localRow != null) {
-                String clusterName = localRow.getString("cluster_name");
-                if (clusterName != null)
-                    cluster.metadata.clusterName = clusterName;
+        ResultSet.Future peersFuture = new ResultSet.Future(null, new QueryMessage(SELECT_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+        ResultSet.Future localFuture = new ResultSet.Future(null, new QueryMessage(SELECT_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+        connection.write(peersFuture.callback);
+        connection.write(localFuture.callback);
 
-                Host host = cluster.metadata.getHost(connection.address);
-                // In theory host can't be null. However there is no point in risking a NPE in case we
-                // have a race between a node removal and this.
-                if (host != null)
-                    host.setLocationInfo(localRow.getString("data_center"), localRow.getString("rack"));
-            }
+        String partitioner = null;
+        Map<Host, Collection<String>> tokenMap = new HashMap<Host, Collection<String>>();
 
-            List<InetAddress> foundHosts = new ArrayList<InetAddress>();
-            List<String> dcs = new ArrayList<String>();
-            List<String> racks = new ArrayList<String>();
+        // Update cluster name, DC and rack for the one node we are connected to
+        CQLRow localRow = localFuture.get().fetchOne();
+        if (localRow != null) {
+            String clusterName = localRow.getString("cluster_name");
+            if (clusterName != null)
+                cluster.metadata.clusterName = clusterName;
 
-            for (CQLRow row : peersFuture.get()) {
-                if (!row.isNull("peer")) {
-                    foundHosts.add(row.getInet("peer"));
-                    dcs.add(row.getString("data_center"));
-                    racks.add(row.getString("rack"));
-                }
-            }
+            Host host = cluster.metadata.getHost(connection.address);
+            // In theory host can't be null. However there is no point in risking a NPE in case we
+            // have a race between a node removal and this.
+            if (host != null)
+                host.setLocationInfo(localRow.getString("data_center"), localRow.getString("rack"));
 
-            for (int i = 0; i < foundHosts.size(); i++) {
-                Host host = cluster.metadata.getHost(foundHosts.get(i));
-                if (host == null) {
-                    // We don't know that node, add it.
-                    host = cluster.addHost(foundHosts.get(i), true);
-                }
-                host.setLocationInfo(dcs.get(i), racks.get(i));
-            }
-
-            // Removes all those that seems to have been removed (since we lost the control connection)
-            Set<InetAddress> foundHostsSet = new HashSet<InetAddress>(foundHosts);
-            for (Host host : cluster.metadata.allHosts())
-                if (!host.getAddress().equals(connection.address) && !foundHostsSet.contains(host.getAddress()))
-                    cluster.removeHost(host);
-
-        } catch (ConnectionException e) {
-            logger.debug("[Control connection] Connection error when refeshing hosts list ({})", e.getMessage());
-            reconnect();
-        } catch (ExecutionException e) {
-            logger.error("[Control connection] Unexpected error while refeshing hosts list", e);
-            reconnect();
-        } catch (BusyConnectionException e) {
-            logger.debug("[Control connection] Connection is busy, reconnecting");
-            reconnect();
-        } catch (InterruptedException e) {
-            // Interrupted? Then moving on.
+            // TODO:Fix once we have rc1
+            //partitioner = localRow.getString("partitioner");
+            partitioner = "org.apache.cassandra.dht.Murmur3Partitioner";
+            Set<String> tokens = localRow.getSet("tokens", String.class);
+            if (partitioner != null && !tokens.isEmpty())
+                tokenMap.put(host, tokens);
         }
+
+        List<InetAddress> foundHosts = new ArrayList<InetAddress>();
+        List<String> dcs = new ArrayList<String>();
+        List<String> racks = new ArrayList<String>();
+        List<Set<String>> allTokens = new ArrayList<Set<String>>();
+
+        for (CQLRow row : peersFuture.get()) {
+            if (!row.isNull("peer")) {
+                foundHosts.add(row.getInet("peer"));
+                dcs.add(row.getString("data_center"));
+                racks.add(row.getString("rack"));
+                allTokens.add(row.getSet("tokens", String.class));
+            }
+        }
+
+        for (int i = 0; i < foundHosts.size(); i++) {
+            Host host = cluster.metadata.getHost(foundHosts.get(i));
+            if (host == null) {
+                // We don't know that node, add it.
+                host = cluster.addHost(foundHosts.get(i), true);
+            }
+            host.setLocationInfo(dcs.get(i), racks.get(i));
+
+            if (partitioner != null && !allTokens.get(i).isEmpty())
+                tokenMap.put(host, allTokens.get(i));
+        }
+
+        // Removes all those that seems to have been removed (since we lost the control connection)
+        Set<InetAddress> foundHostsSet = new HashSet<InetAddress>(foundHosts);
+        for (Host host : cluster.metadata.allHosts())
+            if (!host.getAddress().equals(connection.address) && !foundHostsSet.contains(host.getAddress()))
+                cluster.removeHost(host);
+
+        if (partitioner != null)
+            cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
     }
 
     public void onUp(Host host) {

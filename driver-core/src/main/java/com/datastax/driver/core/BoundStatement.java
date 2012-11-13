@@ -158,6 +158,41 @@ public class BoundStatement extends Query {
     }
 
     /**
+     * The routing key for this bound query.
+     * <p>
+     * This method will return a non-{@code null} value if:
+     * <ul>
+     *   <li>either all the columns composing the partition key are bound
+     *   variables of this {@code BoundStatement}. The routing key will then be
+     *   built using the values provided for these partition key columns.</li>
+     *   <li>or the routing key has been set through {@link PreparedStatement#setRoutingKey}
+     *   for the {@code PreparedStatement} this statement has been built from.</li>
+     * </ul>
+     * Otherwise, {@code null} is returned.
+     * <p>
+     * Note that if the routing key has been set through {@link PreparedStatement#setRoutingKey},
+     * that value takes precedence even if the partition key is part of the bound variables.
+     *
+     * @return the routing key for this statement or {@code null}.
+     */
+    public ByteBuffer getRoutingKey() {
+        if (statement.routingKey != null)
+            return statement.routingKey;
+
+        if (statement.routingKeyIndexes != null) {
+            if (statement.routingKeyIndexes.length == 1) {
+                return values[statement.routingKeyIndexes[0]];
+            } else {
+                ByteBuffer[] components = new ByteBuffer[statement.routingKeyIndexes.length];
+                for (int i = 0; i < components.length; ++i)
+                    components[i] = values[statement.routingKeyIndexes[i]];
+                return SimpleStatement.compose(components);
+            }
+        }
+        return null;
+    }
+
+    /**
      * Set the {@code i}th value to the provided boolean.
      *
      * @return this BoundStatement.

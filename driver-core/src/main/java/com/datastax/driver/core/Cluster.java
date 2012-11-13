@@ -475,8 +475,12 @@ public class Cluster {
             for (InetAddress address : contactPoints)
                 addHost(address, false);
 
-            this.controlConnection = new ControlConnection(this);
+            this.controlConnection = new ControlConnection(this, metadata);
             controlConnection.connect();
+        }
+
+        Cluster getCluster() {
+            return Cluster.this;
         }
 
         private Session newSession() {

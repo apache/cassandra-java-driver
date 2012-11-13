@@ -1,6 +1,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -21,6 +22,8 @@ public class ClusterMetadata {
     volatile String clusterName;
     private final ConcurrentMap<InetAddress, Host> hosts = new ConcurrentHashMap<InetAddress, Host>();
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
+
+    private volatile TokenMap<? extends Token> tokenMap;
 
     ClusterMetadata(Cluster.Manager cluster) {
         this.cluster = cluster;
@@ -114,6 +117,10 @@ public class ClusterMetadata {
         }
     }
 
+    synchronized void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
+        this.tokenMap = TokenMap.build(partitioner, allTokens);
+    }
+
     Host add(InetAddress address) {
         Host newHost = new Host(address, cluster.convictionPolicyFactory);
         Host previous = hosts.putIfAbsent(address, newHost);
@@ -139,6 +146,28 @@ public class ClusterMetadata {
     // For internal use only
     Collection<Host> allHosts() {
         return hosts.values();
+    }
+
+    /**
+     * The set of hosts that are replica for a given partition key.
+     * <p>
+     * Note that this method is a best effort method. Consumers should not rely
+     * too heavily on the result of this method not being stale (or even empty).
+     *
+     * @param partitionKey the partition key for which to find the set of
+     * replica.
+     * @return the (immutable) set of replicas for {@code partitionKey} as know
+     * by the driver. No strong guarantee is provided on the stalelessness of
+     * this information. It is also not guarantee that the returned set won't
+     * be empty (which is then some form of staleness).
+     */
+    public Set<Host> getReplicas(ByteBuffer partitionKey) {
+        TokenMap current = tokenMap;
+        if (current == null) {
+            return Collections.emptySet();
+        } else {
+            return current.getReplicas(current.factory.hash(partitionKey));
+        }
     }
 
     /**
@@ -200,5 +229,64 @@ public class ClusterMetadata {
             sb.append(ksm.exportAsString()).append("\n");
 
         return sb.toString();
+    }
+
+    static class TokenMap<T extends Token<T>> {
+
+        private final Token.Factory<T> factory;
+        private final Map<Token<T>, Set<Host>> tokenToHosts;
+        private final List<Token<T>> ring;
+
+        private TokenMap(Token.Factory<T> factory, Map<Token<T>, Set<Host>> tokenToHosts, List<Token<T>> ring) {
+            this.factory = factory;
+            this.tokenToHosts = tokenToHosts;
+            this.ring = ring;
+        }
+
+        public static <T extends Token<T>> TokenMap<T> build(String partitioner, Map<Host, Collection<String>> allTokens) {
+
+            Token.Factory<T> factory = (Token.Factory<T>)Token.getFactory(partitioner);
+            if (factory == null)
+                return null;
+
+            Map<Token<T>, Set<Host>> tokenToHosts = new HashMap<Token<T>, Set<Host>>();
+            Set<Token<T>> allSorted = new TreeSet<Token<T>>();
+
+            for (Map.Entry<Host, Collection<String>> entry : allTokens.entrySet()) {
+                Host host = entry.getKey();
+                for (String tokenStr : entry.getValue()) {
+                    try {
+                        Token<T> t = factory.fromString(tokenStr);
+                        allSorted.add(t);
+                        Set<Host> hosts = tokenToHosts.get(t);
+                        if (hosts == null) {
+                            hosts = new HashSet<Host>();
+                            tokenToHosts.put(t, hosts);
+                        }
+                        hosts.add(host);
+                    } catch (IllegalArgumentException e) {
+                        // If we failed parsing that token, skip it
+                    }
+                }
+            }
+            // Make all the inet set immutable so we can share them publicly safely
+            for (Map.Entry<Token<T>, Set<Host>> entry: tokenToHosts.entrySet()) {
+                entry.setValue(Collections.unmodifiableSet(entry.getValue()));
+            }
+            return new TokenMap(factory, tokenToHosts, new ArrayList<Token<T>>(allSorted));
+        }
+
+        private Set<Host> getReplicas(T token) {
+
+            // Find the primary replica
+            int i = Collections.binarySearch(ring, token);
+            if (i < 0) {
+                i = (i + 1) * (-1);
+                if (i >= ring.size())
+                    i = 0;
+            }
+
+            return tokenToHosts.get(ring.get(i));
+        }
     }
 }

@@ -204,7 +204,7 @@ public class Session {
                         case PREPARED:
                             ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
                             manager.cluster.manager.prepare(pmsg.statementId, query, future.getAddress());
-                            return PreparedStatement.fromMessage(pmsg);
+                            return PreparedStatement.fromMessage(pmsg, manager.cluster.getMetadata());
                         default:
                             throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
                     }
@@ -248,7 +248,7 @@ public class Session {
             this.cluster = cluster;
 
             this.pools = new ConcurrentHashMap<Host, HostConnectionPool>(hosts.size());
-            this.loadBalancer = cluster.manager.configuration.getPolicies().getLoadBalancingPolicyFactory().create(hosts);
+            this.loadBalancer = cluster.manager.configuration.getPolicies().getLoadBalancingPolicyFactory().create(cluster, hosts);
             this.poolsState = new HostConnectionPool.PoolState();
 
             for (Host host : hosts)

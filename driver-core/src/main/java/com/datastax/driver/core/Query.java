@@ -1,5 +1,7 @@
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
+
 /**
  * An executable query.
  * <p>
@@ -10,7 +12,7 @@ public abstract class Query {
 
     // An exception to the CQLStatement or BoundStatement rule above. This is
     // used when preparing a statement and for other internal queries. Do not expose publicly.
-    static final Query DEFAULT = new Query() {};
+    static final Query DEFAULT = new Query() { public ByteBuffer getRoutingKey() { return null; } };
 
     private volatile ConsistencyLevel consistency;
     private volatile boolean traceQuery;
@@ -75,4 +77,18 @@ public abstract class Query {
         return traceQuery;
     }
 
+    /**
+     * The routing key (in binary raw form) to use for token aware routing of this query.
+     * <p>
+     * The routing key is optional in the sense that implementers are free to
+     * return {@code null}. The routing key is an hint used for token aware routing (see
+     * {@link LoadBalancingPolicy.TokenAware}), and if provided should
+     * correspond to the binary value for the query partition key. However, not
+     * providing a routing key never causes a query to fail and if the load
+     * balancing policy used is not token aware, then the routing key can be
+     * safely ignored.
+     *
+     * @return the routing key for this query or {@code null}.
+     */
+    public abstract ByteBuffer getRoutingKey();
 }

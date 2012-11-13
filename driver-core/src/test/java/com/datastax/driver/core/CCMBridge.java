@@ -1,6 +1,7 @@
 package com.datastax.driver.core;
 
 import java.io.*;
+import java.net.InetAddress;
 import java.util.*;
 
 import org.junit.AfterClass;
@@ -141,6 +142,8 @@ public class CCMBridge {
                 session = cluster.connect();
             } catch (NoHostAvailableException e) {
                 erroredOut = true;
+                for (Map.Entry<InetAddress, String> entry : e.getErrors().entrySet())
+                    logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
                 throw new RuntimeException(e);
             }
         }
