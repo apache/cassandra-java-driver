@@ -667,13 +667,13 @@ public class Cluster {
 
             final Event event = ((EventMessage)response).event;
 
-            logger.trace("Received event {}, scheduling delivery", response);
+            logger.debug("Received event {}, scheduling delivery", response);
 
             // When handle is called, the current thread is a network I/O  thread, and we don't want to block
             // it (typically addHost() will create the connection pool to the new node, which can take time)
-            // Besides, events are usually sent a bit too early (since they're
-            // triggered once gossip is up, but that before the client-side
-            // server is up) so adds a second delay.
+            // Besides, events are usually sent a bit too early (since they're triggered once gossip is up,
+            // but that before the client-side server is up) so adds a 1 second delay.
+            // TODO: this delay is honestly quite random. We should do something on the C* side to fix that.
             scheduledTasksExecutor.schedule(new Runnable() {
                 public void run() {
                     switch (event.type) {

@@ -139,8 +139,9 @@ public class QueryTrace {
         try {
             // If by the time we grab the lock we've fetch the events, it's
             // fine, move on. Otherwise, fetch them.
-            if (duration == Integer.MIN_VALUE)
+            if (duration == Integer.MIN_VALUE) {
                 doFetchTrace();
+            }
         } finally {
             fetchLock.unlock();
         }
@@ -159,7 +160,7 @@ public class QueryTrace {
                 coordinator = sessRow.getInet("coordinator");
                 if (!sessRow.isNull("parameters"))
                     parameters = Collections.unmodifiableMap(sessRow.getMap("parameters", String.class, String.class));
-                startedAt = sessRow.getLong("started_at");
+                startedAt = sessRow.getDate("started_at").getTime();
             }
 
             events = new ArrayList<Event>();

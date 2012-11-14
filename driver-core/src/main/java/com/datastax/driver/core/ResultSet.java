@@ -1,6 +1,6 @@
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -29,47 +29,56 @@ public class ResultSet implements Iterable<CQLRow> {
     private static final Logger logger = LoggerFactory.getLogger(ResultSet.class);
 
     private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque(0);
-    private static final ResultSet EMPTY = new ResultSet(ColumnDefinitions.EMPTY, EMPTY_QUEUE, null);
+    private static final ResultSet EMPTY = new ResultSet(ColumnDefinitions.EMPTY, EMPTY_QUEUE, null, null);
 
     private final ColumnDefinitions metadata;
     private final Queue<List<ByteBuffer>> rows;
     private final QueryTrace trace;
 
-    private ResultSet(ColumnDefinitions metadata, Queue<List<ByteBuffer>> rows, QueryTrace trace) {
+    private final InetAddress queriedHost;
+
+    private ResultSet(ColumnDefinitions metadata, Queue<List<ByteBuffer>> rows, QueryTrace trace, InetAddress queriedHost) {
 
         this.metadata = metadata;
         this.rows = rows;
         this.trace = trace;
+        this.queriedHost = queriedHost;
     }
 
-    private static ResultSet fromMessage(ResultMessage msg, Session.Manager session) {
+    private static ResultSet fromMessage(ResultMessage msg, Session.Manager session, InetAddress queriedHost) {
 
         UUID tracingId = msg.getTracingId();
         QueryTrace trace = tracingId == null ? null : new QueryTrace(tracingId, session);
 
         switch (msg.kind) {
             case VOID:
-                return empty(trace);
+                return empty(trace, queriedHost);
             case ROWS:
                 ResultMessage.Rows r = (ResultMessage.Rows)msg;
                 ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[r.result.metadata.names.size()];
                 for (int i = 0; i < defs.length; i++)
                     defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(r.result.metadata.names.get(i));
 
-                return new ResultSet(new ColumnDefinitions(defs), new ArrayDeque(r.result.rows), trace);
+                return new ResultSet(new ColumnDefinitions(defs), new ArrayDeque(r.result.rows), trace, queriedHost);
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
-                return empty(trace);
+                return empty(trace, queriedHost);
             case PREPARED:
                 throw new RuntimeException("Prepared statement received when a ResultSet was expected");
             default:
                 logger.error("Received unknow result type '{}'; returning empty result set", msg.kind);
-                return empty(trace);
+                return empty(trace, queriedHost);
         }
     }
 
-    private static ResultSet empty(QueryTrace trace) {
-        return trace == null ? EMPTY : new ResultSet(ColumnDefinitions.EMPTY, EMPTY_QUEUE, trace);
+    private static ResultSet empty(QueryTrace trace, InetAddress queriedHost) {
+        return trace == null ? EMPTY : new ResultSet(ColumnDefinitions.EMPTY, EMPTY_QUEUE, trace, queriedHost);
+    }
+
+    // Note: we don't really want to expose this publicly, partly because we don't return it with empty result set.
+    // But for now this is convenient for tests. We'll see later if we want another solution.
+    InetAddress getQueriedHost() {
+        return queriedHost;
     }
 
     /**
@@ -192,11 +201,11 @@ public class ResultSet implements Iterable<CQLRow> {
                                 case SET_KEYSPACE:
                                     // propagate the keyspace change to other connections
                                     session.poolsState.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
-                                    set(ResultSet.fromMessage(rm, session));
+                                    set(ResultSet.fromMessage(rm, session, connection.address));
                                     break;
                                 case SCHEMA_CHANGE:
                                     ResultMessage.SchemaChange scc = (ResultMessage.SchemaChange)rm;
-                                    ResultSet rs = ResultSet.fromMessage(rm, session);
+                                    ResultSet rs = ResultSet.fromMessage(rm, session, connection.address);
                                     switch (scc.change) {
                                         case CREATED:
                                             if (scc.columnFamily.isEmpty()) {
@@ -225,7 +234,7 @@ public class ResultSet implements Iterable<CQLRow> {
                                     }
                                     break;
                                 default:
-                                    set(ResultSet.fromMessage(rm, session));
+                                    set(ResultSet.fromMessage(rm, session, connection.address));
                                     break;
                             }
                             break;

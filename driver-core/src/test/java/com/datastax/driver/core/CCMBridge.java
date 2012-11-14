@@ -23,7 +23,7 @@ public class CCMBridge {
     static {
         Logger rootLogger = Logger.getRootLogger();
         rootLogger.setLevel(Level.INFO);
-        rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%-5p [%t]: %m%n")));
+        rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%d{HH:mm:ss,SSS} %-5p [%t]: %m%n")));
     }
 
     private static final Logger logger = Logger.getLogger(CCMBridge.class);
@@ -54,17 +54,27 @@ public class CCMBridge {
     public static CCMBridge create(String name) {
         CCMBridge bridge = new CCMBridge();
         bridge.execute("ccm create %s -b %s", name, CASSANDRA_VERSION);
-        // Small sleep, otherwise the cluster is not always available because ccm create don't wait for the client server to be up
-        //try { Thread.sleep(500); } catch (InterruptedException e) {}
         return bridge;
     }
 
     public static CCMBridge create(String name, int nbNodes) {
         CCMBridge bridge = new CCMBridge();
         bridge.execute("ccm create %s -n %d -s -b %s", name, nbNodes, CASSANDRA_VERSION);
-        // See above
-        //try { Thread.sleep(500); } catch (InterruptedException e) {}
         return bridge;
+    }
+
+    public static CCMBridge create(String name, int nbNodesDC1, int nbNodesDC2) {
+        CCMBridge bridge = new CCMBridge();
+        bridge.execute("ccm create %s -n %d:%d -s -b %s", name, nbNodesDC1, nbNodesDC2, CASSANDRA_VERSION);
+        return bridge;
+    }
+
+    public static CCMBridge.CCMCluster buildCluster(int nbNodes, Cluster.Builder builder) {
+        return CCMCluster.create(nbNodes, builder);
+    }
+
+    public static CCMBridge.CCMCluster buildCluster(int nbNodesDC1, int nbNodesDC2, Cluster.Builder builder) {
+        return CCMCluster.create(nbNodesDC1, nbNodesDC2, builder);
     }
 
     public void start() {
@@ -89,7 +99,8 @@ public class CCMBridge {
     }
 
     public void bootstrapNode(int n) {
-        execute("ccm add node%d -i 127.0.0.%d -s; ccm start", n, n);
+        execute("ccm add node%d -i 127.0.0.%d -b", n, n);
+        execute("ccm node%d start", n);
     }
 
     private void execute(String command, Object... args) {
@@ -121,6 +132,7 @@ public class CCMBridge {
         }
     }
 
+    // One cluster for the whole test class
     public static abstract class PerClassSingleNodeCluster {
 
         protected static CCMBridge cassandraCluster;
@@ -191,6 +203,62 @@ public class CCMBridge {
             } catch (NoHostAvailableException e) {
                 erroredOut = true;
                 throw e;
+            }
+        }
+    }
+
+    public static class CCMCluster {
+
+        public final Cluster cluster;
+        public final Session session;
+
+        public final CCMBridge bridge;
+
+        private boolean erroredOut;
+
+        public static CCMCluster create(int nbNodes, Cluster.Builder builder) {
+            if (nbNodes == 0)
+                throw new IllegalArgumentException();
+
+            return new CCMCluster(CCMBridge.create("test", nbNodes), builder);
+        }
+
+        public static CCMCluster create(int nbNodesDC1, int nbNodesDC2, Cluster.Builder builder) {
+            if (nbNodesDC1 == 0)
+                throw new IllegalArgumentException();
+
+            return new CCMCluster(CCMBridge.create("test", nbNodesDC1, nbNodesDC2), builder);
+        }
+
+        private CCMCluster(CCMBridge bridge, Cluster.Builder builder) {
+            this.bridge = bridge;
+            try {
+                this.cluster = builder.addContactPoints("127.0.0.1").build();
+                this.session = cluster.connect();
+
+            } catch (NoHostAvailableException e) {
+                for (Map.Entry<InetAddress, String> entry : e.getErrors().entrySet())
+                    logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
+                throw new RuntimeException(e);
+            }
+        }
+
+        public void errorOut() {
+            erroredOut = true;
+        }
+
+        public void discard() {
+            if (cluster != null)
+                cluster.shutdown();
+
+            if (bridge == null) {
+                logger.error("No cluster to discard");
+            } else if (erroredOut) {
+                bridge.stop();
+                logger.info("Error during tests, kept C* logs in " + bridge.ccmDir);
+            } else {
+                bridge.remove();
+                bridge.ccmDir.delete();
             }
         }
     }

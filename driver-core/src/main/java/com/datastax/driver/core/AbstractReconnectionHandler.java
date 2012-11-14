@@ -36,9 +36,9 @@ abstract class AbstractReconnectionHandler implements Runnable {
     protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) { return false; }
 
     public void start() {
-        executor.schedule(this, policy.nextDelayMs(), TimeUnit.MILLISECONDS);
-
-        localFuture = executor.schedule(this, policy.nextDelayMs(), TimeUnit.MILLISECONDS);
+        long firstDelay = policy.nextDelayMs();
+        logger.debug("First reconnection scheduled in {}ms", firstDelay);
+        localFuture = executor.schedule(this, firstDelay, TimeUnit.MILLISECONDS);
 
         // If there a previous task, cancel it, so only one reconnection handler runs.
         while (true) {

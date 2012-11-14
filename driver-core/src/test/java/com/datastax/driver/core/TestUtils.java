@@ -11,6 +11,7 @@ import java.util.*;
 public abstract class TestUtils {
 
     public static final String CREATE_KEYSPACE_SIMPLE_FORMAT = "CREATE KEYSPACE %s WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : %d }";
+    public static final String CREATE_KEYSPACE_GENERIC_FORMAT = "CREATE KEYSPACE %s WITH replication = { 'class' : '%s', %s }";
 
     public static final String SIMPLE_KEYSPACE = "ks";
 
@@ -224,5 +225,37 @@ public abstract class TestUtils {
             throw new RuntimeException(e);
         }
         throw new RuntimeException("Missing handling of " + type);
+    }
+
+    // Wait for a node to be up and running
+    // This is used because there is some delay between when a node has been
+    // added through ccm and when it's actually available for querying
+    public static void waitFor(String node, Cluster cluster, int maxTry) {
+        InetAddress address;
+        try {
+             address = InetAddress.getByName(node);
+        } catch (Exception e) {
+            // That's a problem but that's not *our* problem
+            return;
+        }
+
+        ClusterMetadata metadata = cluster.getMetadata();
+        for (int i = 0; i < maxTry; ++i) {
+            for (Host host : metadata.getAllHosts()) {
+                if (host.getAddress().equals(address) && host.getMonitor().isUp())
+                    return;
+            }
+            try { Thread.sleep(1000); } catch (Exception e) {}
+        }
+
+        for (Host host : metadata.getAllHosts()) {
+            if (host.getAddress().equals(address)) {
+                if (host.getMonitor().isUp())
+                    return;
+                else
+                    throw new IllegalStateException(node + " is part of the cluster but is not UP after " + maxTry + "s");
+            }
+        }
+        throw new IllegalStateException(node + " is not part of the cluster after " + maxTry + "s");
     }
 }

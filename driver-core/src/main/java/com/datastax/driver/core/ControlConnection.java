@@ -199,6 +199,29 @@ class ControlConnection implements Host.StateListener {
         cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get());
     }
 
+    private void refreshNodeListAndTokenMap() {
+        Connection c = connectionRef.get();
+        // At startup, when we add the initial nodes, this will be null, which is ok
+        if (c == null)
+            return;
+
+        logger.debug(String.format("[Control connection] Refreshing node list and token map"));
+        try {
+            refreshNodeListAndTokenMap(connectionRef.get());
+        } catch (ConnectionException e) {
+            logger.debug("[Control connection] Connection error while refeshing node list and token map ({})", e.getMessage());
+            reconnect();
+        } catch (ExecutionException e) {
+            logger.error("[Control connection] Unexpected error while refeshing node list and token map", e);
+            reconnect();
+        } catch (BusyConnectionException e) {
+            logger.debug("[Control connection] Connection is busy, reconnecting");
+            reconnect();
+        } catch (InterruptedException e) {
+            // Interrupted? Then moving on.
+        }
+    }
+
     private void refreshNodeListAndTokenMap(Connection connection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         // Make sure we're up to date on nodes and tokens
 
@@ -284,6 +307,7 @@ class ControlConnection implements Host.StateListener {
 
     public void onAdd(Host host) {
         balancingPolicy.onAdd(host);
+        refreshNodeListAndTokenMap();
     }
 
     public void onRemove(Host host) {
