@@ -101,8 +101,7 @@ public class SimpleStatement extends CQLStatement {
         return out;
     }
 
-    private static void putShortLength(ByteBuffer bb, int length)
-    {
+    private static void putShortLength(ByteBuffer bb, int length) {
         bb.put((byte) ((length >> 8) & 0xFF));
         bb.put((byte) (length & 0xFF));
     }

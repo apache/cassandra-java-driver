@@ -15,4 +15,9 @@ public abstract class CQLStatement extends Query {
      * @return a valid CQL query string.
      */
     public abstract String getQueryString();
+
+    @Override
+    public String toString() {
+        return getQueryString();
+    }
 }

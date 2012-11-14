@@ -1,5 +1,11 @@
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
+
+import org.apache.cassandra.db.marshal.MarshalException;
+
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
 /**
  * Supported data types for columns.
  */
@@ -50,6 +56,18 @@ public interface DataType {
     public Collection asCollection();
 
     /**
+     * Parse a string value for the type this object represent, returning its
+     * Cassandra binary representation.
+     *
+     * @param value the value to parse.
+     * @return the binary representation of {@code value}.
+     *
+     * @throws InvalidTypeException if {@code value} is not a valid string
+     * representation for this type.
+     */
+    public ByteBuffer parseString(String value);
+
+    /**
      * Native types supported by cassandra.
      */
     public enum Native implements DataType {
@@ -78,6 +96,15 @@ public interface DataType {
         @Override
         public String toString() {
             return super.toString().toLowerCase();
+        }
+
+        public ByteBuffer parseString(String value)
+        {
+            try {
+                return Codec.getCodec(this).fromString(value);
+            } catch (MarshalException e) {
+                throw new InvalidTypeException(String.format("Cannot parse '%s' as a %s value (%s)", value, this, e.getMessage()));
+            }
         }
     }
 
@@ -109,6 +136,15 @@ public interface DataType {
 
         public Native asNative()         { throw new IllegalStateException("Not a native type, but a collection one"); }
         public Collection asCollection() { return this; }
+
+        public ByteBuffer parseString(String value)
+        {
+            try {
+                return Codec.getCodec(this).fromString(value);
+            } catch (MarshalException e) {
+                throw new InvalidTypeException(String.format("Cannot parse '%s' as a %s value (%s)", value, this, e.getMessage()));
+            }
+        }
 
         /**
          * The type of lists.
