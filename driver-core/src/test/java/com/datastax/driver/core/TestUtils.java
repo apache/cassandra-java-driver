@@ -5,10 +5,15 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A number of static fields/methods handy for tests.
  */
 public abstract class TestUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger(TestUtils.class);
 
     public static final String CREATE_KEYSPACE_SIMPLE_FORMAT = "CREATE KEYSPACE %s WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : %d }";
     public static final String CREATE_KEYSPACE_GENERIC_FORMAT = "CREATE KEYSPACE %s WITH replication = { 'class' : '%s', %s }";
@@ -250,12 +255,16 @@ public abstract class TestUtils {
 
         for (Host host : metadata.getAllHosts()) {
             if (host.getAddress().equals(address)) {
-                if (host.getMonitor().isUp())
+                if (host.getMonitor().isUp()) {
                     return;
-                else
+                } else {
+                    // logging it because this give use the timestamp of when this happens
+                    logger.info(node + " is part of the cluster but is not UP after " + maxTry + "s");
                     throw new IllegalStateException(node + " is part of the cluster but is not UP after " + maxTry + "s");
+                }
             }
         }
+        logger.info(node + " is not part of the cluster after " + maxTry + "s");
         throw new IllegalStateException(node + " is not part of the cluster after " + maxTry + "s");
     }
 }

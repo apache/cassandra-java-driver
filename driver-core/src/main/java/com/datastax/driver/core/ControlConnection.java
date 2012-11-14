@@ -199,7 +199,7 @@ class ControlConnection implements Host.StateListener {
         cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get());
     }
 
-    private void refreshNodeListAndTokenMap() {
+    public void refreshNodeListAndTokenMap() {
         Connection c = connectionRef.get();
         // At startup, when we add the initial nodes, this will be null, which is ok
         if (c == null)

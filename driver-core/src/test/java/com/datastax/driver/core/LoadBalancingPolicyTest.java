@@ -16,6 +16,7 @@ public class LoadBalancingPolicyTest {
     private static final String TABLE = "test";
 
     private Map<InetAddress, Integer> coordinators = new HashMap<InetAddress, Integer>();
+    private PreparedStatement prepared;
 
     private void createSchema(Session session) throws NoHostAvailableException {
         session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, 1));
@@ -60,13 +61,25 @@ public class LoadBalancingPolicyTest {
         // Also note that we don't use tracing because this would trigger requests that screw up the test
         for (int i = 0; i < n; ++i)
             c.session.execute(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", TABLE));
+
+        prepared = c.session.prepare("SELECT * FROM " + TABLE + " WHERE k = ?");
     }
 
     private void query(CCMBridge.CCMCluster c, int n) throws NoHostAvailableException {
-        ByteBuffer routingKey = ByteBuffer.allocate(4);
-        routingKey.putInt(0, 0);
-        for (int i = 0; i < n; ++i)
-            addCoordinator(c.session.execute(new SimpleStatement(String.format("SELECT * FROM %s WHERE k = 0", TABLE)).setRoutingKey(routingKey)));
+        query(c, n, false);
+    }
+
+    private void query(CCMBridge.CCMCluster c, int n, boolean usePrepared) throws NoHostAvailableException {
+        if (usePrepared) {
+            BoundStatement bs = prepared.bind(0);
+            for (int i = 0; i < n; ++i)
+                addCoordinator(c.session.execute(bs));
+        } else {
+            ByteBuffer routingKey = ByteBuffer.allocate(4);
+            routingKey.putInt(0, 0);
+            for (int i = 0; i < n; ++i)
+                addCoordinator(c.session.execute(new SimpleStatement(String.format("SELECT * FROM %s WHERE k = 0", TABLE)).setRoutingKey(routingKey)));
+        }
     }
 
     @Test
@@ -85,7 +98,7 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.bridge.bootstrapNode(3);
-            waitFor("127.0.0.3", c.cluster, 10);
+            waitFor("127.0.0.3", c.cluster, 20);
 
             query(c, 12);
 
@@ -127,7 +140,15 @@ public class LoadBalancingPolicyTest {
 
     @Test
     public void tokenAwareTest() throws Throwable {
+        tokenAwareTest(false);
+    }
 
+    @Test
+    public void tokenAwarePreparedTest() throws Throwable {
+        tokenAwareTest(true);
+    }
+
+    public void tokenAwareTest(boolean usePrepared) throws Throwable {
         Cluster.Builder builder = new Cluster.Builder().withLoadBalancingPolicyFactory(LoadBalancingPolicy.TokenAware.Factory.create(LoadBalancingPolicy.RoundRobin.Factory.INSTANCE));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
         createSchema(c.session);
@@ -144,9 +165,9 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.bridge.bootstrapNode(3);
-            waitFor("127.0.0.3", c.cluster, 10);
+            waitFor("127.0.0.3", c.cluster, 20);
 
-            query(c, 12);
+            query(c, 12, usePrepared);
 
             // We should still be hitting only one node
             assertQueried("127.0.0.1", 0);

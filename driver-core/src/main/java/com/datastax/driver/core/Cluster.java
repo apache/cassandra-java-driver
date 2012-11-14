@@ -686,6 +686,9 @@ public class Cluster {
                                 case REMOVED_NODE:
                                     removeHost(metadata.getHost(tpc.node.getAddress()));
                                     break;
+                                case MOVED_NODE:
+                                    controlConnection.refreshNodeListAndTokenMap();
+                                    break;
                             }
                             break;
                         case STATUS_CHANGE:
