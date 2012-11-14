@@ -163,10 +163,10 @@ public class Host {
          * registered listener that the node is up.
          */
         void reset() {
-            isUp = true;
             policy.reset();
             for (Host.StateListener listener : listeners)
                 listener.onUp(Host.this);
+            isUp = true;
         }
 
         boolean signalConnectionFailure(ConnectionException exception) {

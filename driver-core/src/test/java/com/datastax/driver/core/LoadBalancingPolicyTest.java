@@ -22,9 +22,6 @@ public class LoadBalancingPolicyTest {
         session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, 1));
         session.execute("USE " + SIMPLE_KEYSPACE);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", TABLE));
-
-        // Let the schema propagate (TODO: add a schema agreement check)
-        try { Thread.sleep(300); } catch (Exception e) {}
     }
 
     private void createMultiDCSchema(Session session) throws NoHostAvailableException {
@@ -32,9 +29,6 @@ public class LoadBalancingPolicyTest {
         session.execute(String.format(CREATE_KEYSPACE_GENERIC_FORMAT, SIMPLE_KEYSPACE, "NetworkTopologyStrategy", "'dc1' : 1, 'dc2' : 1"));
         session.execute("USE " + SIMPLE_KEYSPACE);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", TABLE));
-
-        // Let the schema propagate (TODO: add a schema agreement check)
-        try { Thread.sleep(300); } catch (Exception e) {}
     }
 
     private void addCoordinator(ResultSet rs) {

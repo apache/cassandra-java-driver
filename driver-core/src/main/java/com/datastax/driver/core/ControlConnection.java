@@ -22,6 +22,9 @@ class ControlConnection implements Host.StateListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ControlConnection.class);
 
+    // TODO: we might want to make that configurable
+    private static final long MAX_SCHEMA_AGREEMENT_WAIT_MS = 10000;
+
     private static final String SELECT_KEYSPACES = "SELECT * FROM system.schema_keyspaces";
     private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
@@ -30,6 +33,9 @@ class ControlConnection implements Host.StateListener {
     // TODO: fix once we have rc1
     //private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens, partitioner FROM system.local WHERE key='local'";
     private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens FROM system.local WHERE key='local'";
+
+    private static final String SELECT_SCHEMA_PEERS = "SELECT peer, schema_version FROM system.peers";
+    private static final String SELECT_SCHEMA_LOCAL = "SELECT schema_version FROM system.local WHERE key='local'";
 
     private final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
 
@@ -288,6 +294,44 @@ class ControlConnection implements Host.StateListener {
 
         if (partitioner != null)
             cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
+    }
+
+    static boolean waitForSchemaAgreement(Connection connection, ClusterMetadata metadata) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+
+        long start = System.currentTimeMillis();
+        long elapsed = 0;
+        while (elapsed < MAX_SCHEMA_AGREEMENT_WAIT_MS) {
+            ResultSet.Future peersFuture = new ResultSet.Future(null, new QueryMessage(SELECT_SCHEMA_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+            // TODO: fix once we have rc1
+            //ResultSet.Future localFuture = new ResultSet.Future(null, new QueryMessage(SELECT_SCHEMA_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+            connection.write(peersFuture.callback);
+            //connection.write(localFuture.callback);
+
+            Set<UUID> versions = new HashSet<UUID>();
+
+            //CQLRow localRow = localFuture.get().fetchOne();
+            //if (localRow != null && !localRow.isNull("schema_version"))
+            //    versions.add(row.getUUID("schema_version"));
+
+            for (CQLRow row : peersFuture.get()) {
+                if (row.isNull("peer") || row.isNull("schema_version"))
+                    continue;
+
+                Host peer = metadata.getHost(row.getInet("peer"));
+                if (peer != null && peer.getMonitor().isUp())
+                    versions.add(row.getUUID("schema_version"));
+            }
+
+            if (versions.size() <= 1)
+                return true;
+
+            // let's not flood the node too much
+            try { Thread.sleep(200); } catch (InterruptedException e) {};
+
+            elapsed = System.currentTimeMillis() - start;
+        }
+
+        return false;
     }
 
     public void onUp(Host host) {

@@ -642,9 +642,12 @@ public class Cluster {
         public void refreshSchema(final Connection connection, final SimpleFuture future, final ResultSet rs, final String keyspace, final String table) {
             if (logger.isDebugEnabled())
                 logger.debug("Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : "." + table);
+
             executor.submit(new Runnable() {
                 public void run() {
                     try {
+                        // Before refreshing the schema, wait for schema agreement so that querying a table just after having created it don't fail.
+                        ControlConnection.waitForSchemaAgreement(connection, metadata);
                         ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this);
                     } catch (Exception e) {
                         logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() migth appear stale. Asynchronously submitting job to fix.", e.getMessage());
