@@ -79,7 +79,7 @@ public class LoadBalancingPolicyTest {
     @Test
     public void roundRobinTest() throws Throwable {
 
-        Cluster.Builder builder = new Cluster.Builder().withLoadBalancingPolicyFactory(LoadBalancingPolicy.RoundRobin.Factory.INSTANCE);
+        Cluster.Builder builder = new Cluster.Builder().withLoadBalancingPolicy(new RoundRobinPolicy());
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
         createSchema(c.session);
         try {
@@ -111,7 +111,7 @@ public class LoadBalancingPolicyTest {
     @Test
     public void DCAwareRoundRobinTest() throws Throwable {
 
-        Cluster.Builder builder = new Cluster.Builder().withLoadBalancingPolicyFactory(LoadBalancingPolicy.DCAwareRoundRobin.Factory.create("dc2"));
+        Cluster.Builder builder = new Cluster.Builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc2"));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, 2, builder);
         createMultiDCSchema(c.session);
         try {
@@ -143,7 +143,7 @@ public class LoadBalancingPolicyTest {
     }
 
     public void tokenAwareTest(boolean usePrepared) throws Throwable {
-        Cluster.Builder builder = new Cluster.Builder().withLoadBalancingPolicyFactory(LoadBalancingPolicy.TokenAware.Factory.create(LoadBalancingPolicy.RoundRobin.Factory.INSTANCE));
+        Cluster.Builder builder = new Cluster.Builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
         createSchema(c.session);
         try {

@@ -42,14 +42,15 @@ class ControlConnection implements Host.StateListener {
     private final Cluster.Manager cluster;
     private final LoadBalancingPolicy balancingPolicy;
 
-    private final ReconnectionPolicy.Factory reconnectionPolicyFactory = ReconnectionPolicy.Exponential.makeFactory(2 * 1000, 5 * 60 * 1000);
+    private final ReconnectionPolicy reconnectionPolicy = new ExponentialReconnectionPolicy(2 * 1000, 5 * 60 * 1000);
     private final AtomicReference<ScheduledFuture> reconnectionAttempt = new AtomicReference<ScheduledFuture>();
 
     private volatile boolean isShutdown;
 
     public ControlConnection(Cluster.Manager manager, ClusterMetadata metadata) {
         this.cluster = manager;
-        this.balancingPolicy = LoadBalancingPolicy.RoundRobin.Factory.INSTANCE.create(manager.getCluster(), metadata.allHosts());
+        this.balancingPolicy = new RoundRobinPolicy();
+        this.balancingPolicy.init(manager.getCluster(), metadata.allHosts());
     }
 
     // Only for the initial connection. Does not schedule retries if it fails
@@ -74,7 +75,7 @@ class ControlConnection implements Host.StateListener {
             setNewConnection(reconnectInternal());
         } catch (NoHostAvailableException e) {
             logger.error("[Control connection] Cannot connect to any host, scheduling retry");
-            new AbstractReconnectionHandler(cluster.reconnectionExecutor, reconnectionPolicyFactory.create(), reconnectionAttempt) {
+            new AbstractReconnectionHandler(cluster.reconnectionExecutor, reconnectionPolicy.newSchedule(), reconnectionAttempt) {
                 protected Connection tryReconnect() throws ConnectionException {
                     try {
                         return reconnectInternal();

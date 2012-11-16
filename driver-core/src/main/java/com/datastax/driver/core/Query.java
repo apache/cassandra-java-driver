@@ -82,11 +82,11 @@ public abstract class Query {
      * <p>
      * The routing key is optional in the sense that implementers are free to
      * return {@code null}. The routing key is an hint used for token aware routing (see
-     * {@link LoadBalancingPolicy.TokenAware}), and if provided should
-     * correspond to the binary value for the query partition key. However, not
-     * providing a routing key never causes a query to fail and if the load
-     * balancing policy used is not token aware, then the routing key can be
-     * safely ignored.
+     * {@link com.datastax.driver.core.policies.TokenAwarePolicy}), and
+     * if provided should correspond to the binary value for the query
+     * partition key. However, not providing a routing key never causes a query
+     * to fail and if the load balancing policy used is not token aware, then
+     * the routing key can be safely ignored.
      *
      * @return the routing key for this query or {@code null}.
      */

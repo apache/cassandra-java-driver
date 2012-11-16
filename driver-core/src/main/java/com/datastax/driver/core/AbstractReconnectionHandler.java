@@ -14,15 +14,15 @@ abstract class AbstractReconnectionHandler implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(AbstractReconnectionHandler.class);
 
     private final ScheduledExecutorService executor;
-    private final ReconnectionPolicy policy;
+    private final ReconnectionPolicy.ReconnectionSchedule schedule;
     private final AtomicReference<ScheduledFuture> currentAttempt;
 
     private volatile boolean readyForNext;
     private volatile ScheduledFuture localFuture;
 
-    public AbstractReconnectionHandler(ScheduledExecutorService executor, ReconnectionPolicy policy, AtomicReference<ScheduledFuture> currentAttempt) {
+    public AbstractReconnectionHandler(ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<ScheduledFuture> currentAttempt) {
         this.executor = executor;
-        this.policy = policy;
+        this.schedule = schedule;
         this.currentAttempt = currentAttempt;
     }
 
@@ -36,7 +36,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
     protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) { return false; }
 
     public void start() {
-        long firstDelay = policy.nextDelayMs();
+        long firstDelay = schedule.nextDelayMs();
         logger.debug("First reconnection scheduled in {}ms", firstDelay);
         localFuture = executor.schedule(this, firstDelay, TimeUnit.MILLISECONDS);
 
@@ -66,14 +66,14 @@ abstract class AbstractReconnectionHandler implements Runnable {
             onReconnection(tryReconnect());
             currentAttempt.compareAndSet(localFuture, null);
         } catch (ConnectionException e) {
-            long nextDelay = policy.nextDelayMs();
+            long nextDelay = schedule.nextDelayMs();
             if (onConnectionException(e, nextDelay))
                 reschedule(nextDelay);
             else
                 currentAttempt.compareAndSet(localFuture, null);
         } catch (AuthenticationException e) {
             logger.error(e.getMessage());
-            long nextDelay = policy.nextDelayMs();
+            long nextDelay = schedule.nextDelayMs();
             if (onAuthenticationException(e, nextDelay)) {
                 reschedule(nextDelay);
             } else {
@@ -81,7 +81,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
                 currentAttempt.compareAndSet(localFuture, null);
             }
         } catch (Exception e) {
-            long nextDelay = policy.nextDelayMs();
+            long nextDelay = schedule.nextDelayMs();
             if (onUnknownException(e, nextDelay))
                 reschedule(nextDelay);
             else

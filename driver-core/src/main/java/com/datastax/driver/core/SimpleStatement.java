@@ -53,7 +53,7 @@ public class SimpleStatement extends CQLStatement {
      * load balancing policy but is never mandatory.
      * <p>
      * If the partition key for the query is composite, use the
-     * {@link #setPartitionKey(ByteBuffer...)} method instead to build the
+     * {@link #setRoutingKey(ByteBuffer...)} method instead to build the
      * routing key.
      *
      * @param routingKey the raw (binary) value to use as routing key.

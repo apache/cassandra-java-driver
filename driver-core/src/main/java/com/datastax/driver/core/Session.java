@@ -248,7 +248,7 @@ public class Session {
             this.cluster = cluster;
 
             this.pools = new ConcurrentHashMap<Host, HostConnectionPool>(hosts.size());
-            this.loadBalancer = cluster.manager.configuration.getPolicies().getLoadBalancingPolicyFactory().create(cluster, hosts);
+            this.loadBalancer = cluster.manager.configuration.getPolicies().getLoadBalancingPolicy();
             this.poolsState = new HostConnectionPool.PoolState();
 
             for (Host host : hosts)

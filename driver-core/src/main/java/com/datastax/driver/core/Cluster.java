@@ -61,6 +61,7 @@ public class Cluster {
 
     private Cluster(List<InetAddress> contactPoints, int port, Policies policies, AuthInfoProvider authProvider) throws NoHostAvailableException {
         this.manager = new Manager(contactPoints, port, policies, authProvider);
+        this.manager.init();
     }
 
     /**
@@ -198,8 +199,8 @@ public class Cluster {
         private int port = DEFAULT_PORT;
         private AuthInfoProvider authProvider = AuthInfoProvider.NONE;
 
-        private LoadBalancingPolicy.Factory loadBalancingPolicyFactory;
-        private ReconnectionPolicy.Factory reconnectionPolicyFactory;
+        private LoadBalancingPolicy loadBalancingPolicy;
+        private ReconnectionPolicy reconnectionPolicy;
         private RetryPolicy retryPolicy;
 
         public List<InetAddress> getContactPoints() {
@@ -296,30 +297,30 @@ public class Cluster {
         }
 
         /**
-         * Configure the load balancing policy (factory) to use for the new cluster.
+         * Configure the load balancing policy to use for the new cluster.
          * <p>
-         * If no load balancing policy factory is set through this method,
-         * {@link Policies#DEFAULT_LOAD_BALANCING_POLICY_FACTORY} will be used instead.
+         * If no load balancing policy is set through this method,
+         * {@link Policies#DEFAULT_LOAD_BALANCING_POLICY} will be used instead.
          *
-         * @param factory the load balancing policy factory to use
+         * @param policy the load balancing policy to use
          * @return this Builder
          */
-        public Builder withLoadBalancingPolicyFactory(LoadBalancingPolicy.Factory factory) {
-            this.loadBalancingPolicyFactory = factory;
+        public Builder withLoadBalancingPolicy(LoadBalancingPolicy policy) {
+            this.loadBalancingPolicy = policy;
             return this;
         }
 
         /**
-         * Configure the reconnection policy (factory) to use for the new cluster.
+         * Configure the reconnection policy to use for the new cluster.
          * <p>
-         * If no reconnection policy factory is set through this method,
-         * {@link Policies#DEFAULT_RECONNECTION_POLICY_FACTORY} will be used instead.
+         * If no reconnection policy is set through this method,
+         * {@link Policies#DEFAULT_RECONNECTION_POLICY} will be used instead.
          *
-         * @param factory the reconnection policy factory to use
+         * @param policy the reconnection policy to use
          * @return this Builder
          */
-        public Builder withReconnectionPolicyFactory(ReconnectionPolicy.Factory factory) {
-            this.reconnectionPolicyFactory = factory;
+        public Builder withReconnectionPolicy(ReconnectionPolicy policy) {
+            this.reconnectionPolicy = policy;
             return this;
         }
 
@@ -348,8 +349,8 @@ public class Cluster {
          */
         public Policies getPolicies() {
             return new Policies(
-                loadBalancingPolicyFactory == null ? Policies.DEFAULT_LOAD_BALANCING_POLICY_FACTORY : loadBalancingPolicyFactory,
-                reconnectionPolicyFactory == null ? Policies.DEFAULT_RECONNECTION_POLICY_FACTORY : reconnectionPolicyFactory,
+                loadBalancingPolicy == null ? Policies.DEFAULT_LOAD_BALANCING_POLICY : loadBalancingPolicy,
+                reconnectionPolicy == null ? Policies.DEFAULT_RECONNECTION_POLICY : reconnectionPolicy,
                 retryPolicy == null ? Policies.DEFAULT_RETRY_POLICY : retryPolicy
             );
         }
@@ -476,7 +477,14 @@ public class Cluster {
                 addHost(address, false);
 
             this.controlConnection = new ControlConnection(this, metadata);
-            controlConnection.connect();
+            this.controlConnection.connect();
+        }
+
+        // This is separated from the constructor because this reference the
+        // Cluster object, whose manager won't be properly initialized until
+        // the constructor returns.
+        private void init() {
+            this.configuration.getPolicies().getLoadBalancingPolicy().init(Cluster.this, metadata.getAllHosts());
         }
 
         Cluster getCluster() {
@@ -528,7 +536,7 @@ public class Cluster {
 
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug("{} is down, scheduling connection retries", host);
-            new AbstractReconnectionHandler(reconnectionExecutor, configuration.getPolicies().getReconnectionPolicyFactory().create(), host.reconnectionAttempt) {
+            new AbstractReconnectionHandler(reconnectionExecutor, configuration.getPolicies().getReconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
 
                 protected Connection tryReconnect() throws ConnectionException {
                     return connectionFactory.open(host);
