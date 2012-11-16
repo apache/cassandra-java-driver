@@ -95,10 +95,9 @@ public class Session {
      * This method is a shortcut for {@code executeAsync(new SimpleStatement(query))}.
      *
      * @param query the CQL query to execute.
-     * @return the result of the query. That result will never be null but can
-     * be empty (and will be for any non SELECT query).
+     * @return a future on the result of the query.
      */
-    public ResultSet.Future executeAsync(String query) {
+    public ResultSetFuture executeAsync(String query) {
         return executeAsync(new SimpleStatement(query));
     }
 
@@ -119,13 +118,12 @@ public class Session {
      * CQLStatement} or a {@code BoundStatement}). If it is a {@code
      * BoundStatement}, all variables must have been bound (the statement must
      * be ready).
-     * @return the result of the query. That result will never be null but can
-     * be empty (and will be for any non SELECT query).
+     * @return a future on the result of the query.
      *
      * @throws IllegalStateException if {@code query} is a {@code BoundStatement}
      * but {@code !query.isReady()}.
      */
-    public ResultSet.Future executeAsync(Query query) {
+    public ResultSetFuture executeAsync(Query query) {
 
         if (query instanceof CQLStatement) {
             return manager.executeQuery(new QueryMessage(((CQLStatement)query).getQueryString(), ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
@@ -192,7 +190,7 @@ public class Session {
                     }
                 }
             } catch (ExecutionException e) {
-                ResultSet.Future.extractCauseFromExecutionException(e);
+                ResultSetFuture.extractCauseFromExecutionException(e);
                 throw new AssertionError();
             }
 
@@ -209,7 +207,7 @@ public class Session {
                             throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
                     }
                 case ERROR:
-                    ResultSet.Future.extractCause(ResultSet.Future.convertException(((ErrorMessage)response).error));
+                    ResultSetFuture.extractCause(ResultSetFuture.convertException(((ErrorMessage)response).error));
                     break;
                 default:
                     throw new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type));
@@ -392,11 +390,11 @@ public class Session {
             }
         }
 
-        public ResultSet.Future executeQuery(Message.Request msg, Query query) {
+        public ResultSetFuture executeQuery(Message.Request msg, Query query) {
             if (query.isTracing())
                 msg.setTracingRequested();
 
-            ResultSet.Future future = new ResultSet.Future(this, msg);
+            ResultSetFuture future = new ResultSetFuture(this, msg);
             execute(future.callback, query);
             return future;
         }

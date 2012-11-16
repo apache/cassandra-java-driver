@@ -12,7 +12,7 @@ class SimpleFuture<V> extends AbstractFuture<V> {
   /**
    * Creates a new {@code SimpleFuture}.
    */
-  public static <V> SimpleFuture<V> create() {
+  static <V> SimpleFuture<V> create() {
     return new SimpleFuture<V>();
   }
 

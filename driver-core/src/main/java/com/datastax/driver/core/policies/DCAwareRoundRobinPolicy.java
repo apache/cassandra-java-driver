@@ -99,7 +99,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * hosts as {@code REMOTE} and the rest is {@code IGNORED}.
      * <p>
      * To configure how many host in each remote datacenter is considered
-     * {@code REMOTE}, see {@link Factory#create(String, int)}.
+     * {@code REMOTE}, see {@link #DCAwareRoundRobinPolicy(String, int)}.
      *
      * @param host the host of which to return the distance of.
      * @return the HostDistance to {@code host}.

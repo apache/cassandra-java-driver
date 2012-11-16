@@ -35,7 +35,7 @@ public class Policies {
      * Creates a new {@code Policies} object using the provided policies.
      *
      * @param loadBalancingPolicy the load balancing policy to use.
-     * @param reconnectionPolicyFactory the reconnection policy to use.
+     * @param reconnectionPolicy the reconnection policy to use.
      * @param retryPolicy the retry policy to use.
      */
     public Policies(LoadBalancingPolicy loadBalancingPolicy,

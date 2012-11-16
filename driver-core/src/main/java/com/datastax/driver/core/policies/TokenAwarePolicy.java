@@ -27,7 +27,7 @@ import com.datastax.driver.core.*;
  * <p>
  * Do note that only replica for which the child policy {@code distance}
  * method returns {@code HostDistance.LOCAL} will be considered having
- * priority. For example, if you wrap {@link DCAwareRoundRobin} with this
+ * priority. For example, if you wrap {@link DCAwareRoundRobinPolicy} with this
  * token aware policy, replicas from remote data centers may only be
  * returned after all the host of the local data center.
  */

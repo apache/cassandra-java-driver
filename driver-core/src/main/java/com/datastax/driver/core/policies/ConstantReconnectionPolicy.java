@@ -9,12 +9,9 @@ public class ConstantReconnectionPolicy implements ReconnectionPolicy {
 
     /**
      * Creates a reconnection policy that creates with the provided constant wait
-     * time.
+     * time between reconnection attempts.
      *
      * @param constantDelayMs the constant delay in milliseconds to use.
-     * @return a reconnection policy factory that creates {@code
-     * Reconnection.Constant} policies with a {@code constantDelayMs}
-     * milliseconds delay between reconnection attempts.
      */
     public ConstantReconnectionPolicy(long constantDelayMs) {
         if (constantDelayMs < 0)
