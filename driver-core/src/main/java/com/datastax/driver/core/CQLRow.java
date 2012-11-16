@@ -76,7 +76,7 @@ public class CQLRow {
      * @throws InvalidTypeException if column {@code i} is not of type BOOLEAN.
      */
     public boolean getBool(int i) {
-        metadata.checkType(i, DataType.Native.BOOLEAN);
+        metadata.checkType(i, DataType.Name.BOOLEAN);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -111,7 +111,7 @@ public class CQLRow {
      * @throws InvalidTypeException if column {@code i} is not of type INT.
      */
     public int getInt(int i) {
-        metadata.checkType(i, DataType.Native.INT);
+        metadata.checkType(i, DataType.Name.INT);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -146,7 +146,7 @@ public class CQLRow {
      * @throws InvalidTypeException if column {@code i} is not of type BIGINT or COUNTER.
      */
     public long getLong(int i) {
-        DataType type = metadata.checkType(i, DataType.Native.BIGINT, DataType.Native.COUNTER);
+        metadata.checkType(i, DataType.Name.BIGINT, DataType.Name.COUNTER);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -181,7 +181,7 @@ public class CQLRow {
      * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
      */
     public Date getDate(int i) {
-        metadata.checkType(i, DataType.Native.TIMESTAMP);
+        metadata.checkType(i, DataType.Name.TIMESTAMP);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -216,7 +216,7 @@ public class CQLRow {
      * @throws InvalidTypeException if column {@code i} is not of type FLOAT.
      */
     public float getFloat(int i) {
-        metadata.checkType(i, DataType.Native.FLOAT);
+        metadata.checkType(i, DataType.Name.FLOAT);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -251,7 +251,7 @@ public class CQLRow {
      * @throws InvalidTypeException if column {@code i} is not of type DOUBLE.
      */
     public double getDouble(int i) {
-        DataType type = metadata.checkType(i, DataType.Native.DOUBLE);
+        metadata.checkType(i, DataType.Name.DOUBLE);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -332,7 +332,7 @@ public class CQLRow {
      * @throws InvalidTypeException if column {@code i} type is not of type BLOB.
      */
     public ByteBuffer getBytes(int i) {
-        DataType type = metadata.checkType(i, DataType.Native.BLOB);
+        metadata.checkType(i, DataType.Name.BLOB);
         return getBytesUnsafe(i);
     }
 
@@ -366,15 +366,15 @@ public class CQLRow {
      * VARCHAR, TEXT or ASCII.
      */
     public String getString(int i) {
-        DataType type = metadata.checkType(i, DataType.Native.VARCHAR,
-                                              DataType.Native.TEXT,
-                                              DataType.Native.ASCII);
+        DataType.Name type = metadata.checkType(i, DataType.Name.VARCHAR,
+                                                   DataType.Name.TEXT,
+                                                   DataType.Name.ASCII);
 
         ByteBuffer value = data.get(i);
         if (value == null)
             return null;
 
-        return type == DataType.Native.ASCII
+        return type == DataType.Name.ASCII
              ? AsciiType.instance.compose(value)
              : UTF8Type.instance.compose(value);
     }
@@ -406,7 +406,7 @@ public class CQLRow {
      * @throws InvalidTypeException if column {@code i} is not of type VARINT.
      */
     public BigInteger getVarint(int i) {
-        metadata.checkType(i, DataType.Native.VARINT);
+        metadata.checkType(i, DataType.Name.VARINT);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -441,7 +441,7 @@ public class CQLRow {
      * @throws InvalidTypeException if column {@code i} is not of type DECIMAL.
      */
     public BigDecimal getDecimal(int i) {
-        metadata.checkType(i, DataType.Native.DECIMAL);
+        metadata.checkType(i, DataType.Name.DECIMAL);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -477,13 +477,13 @@ public class CQLRow {
      * or TIMEUUID.
      */
     public UUID getUUID(int i) {
-        DataType type = metadata.checkType(i, DataType.Native.UUID, DataType.Native.TIMEUUID);
+        DataType.Name type = metadata.checkType(i, DataType.Name.UUID, DataType.Name.TIMEUUID);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
             return null;
 
-        return type == DataType.Native.UUID
+        return type == DataType.Name.UUID
              ? UUIDType.instance.compose(value)
              : TimeUUIDType.instance.compose(value);
     }
@@ -515,7 +515,7 @@ public class CQLRow {
      * @throws InvalidTypeException if column {@code i} is not of type INET.
      */
     public InetAddress getInet(int i) {
-        DataType type = metadata.checkType(i, DataType.Native.INET);
+        metadata.checkType(i, DataType.Name.INET);
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -556,11 +556,10 @@ public class CQLRow {
      */
     public <T> List<T> getList(int i, Class<T> elementsClass) {
         DataType type = metadata.getType(i);
-        if (!(type instanceof DataType.Collection.List))
+        if (type.getName() != DataType.Name.LIST)
             throw new InvalidTypeException(String.format("Column %s is not of list type", metadata.getName(i)));
 
-        DataType.Native eltType = (DataType.Native)((DataType.Collection.List)type).getElementsType();
-        if (!Codec.isCompatibleSubtype(eltType, elementsClass))
+        if (!Codec.isCompatibleSubtype(type.getTypeArguments().get(0), elementsClass))
             throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a list of %s", metadata.getName(i), type, elementsClass));
 
         ByteBuffer value = data.get(i);
@@ -606,11 +605,10 @@ public class CQLRow {
      */
     public <T> Set<T> getSet(int i, Class<T> elementsClass) {
         DataType type = metadata.getType(i);
-        if (!(type instanceof DataType.Collection.Set))
+        if (type.getName() != DataType.Name.SET)
             throw new InvalidTypeException(String.format("Column %s is not of set type", metadata.getName(i)));
 
-        DataType.Native eltType = (DataType.Native)((DataType.Collection.Set)type).getElementsType();
-        if (!Codec.isCompatibleSubtype(eltType, elementsClass))
+        if (!Codec.isCompatibleSubtype(type.getTypeArguments().get(0), elementsClass))
             throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a set of %s", metadata.getName(i), type, elementsClass));
 
         ByteBuffer value = data.get(i);
@@ -657,12 +655,11 @@ public class CQLRow {
      */
     public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass) {
         DataType type = metadata.getType(i);
-        if (!(type instanceof DataType.Collection.Map))
+        if (type.getName() != DataType.Name.MAP)
             throw new InvalidTypeException(String.format("Column %s is not of map type", metadata.getName(i)));
 
-        DataType.Collection.Map mapType = (DataType.Collection.Map)type;
-        DataType.Native keysType = (DataType.Native)mapType.getKeysType();
-        DataType.Native valuesType = (DataType.Native)mapType.getValuesType();
+        DataType keysType = type.getTypeArguments().get(0);
+        DataType valuesType = type.getTypeArguments().get(1);
         if (!Codec.isCompatibleSubtype(keysType, keysClass) || !Codec.isCompatibleSubtype(valuesType, valuesClass))
             throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a map of %s -> %s", metadata.getName(i), type, keysClass, valuesClass));
 

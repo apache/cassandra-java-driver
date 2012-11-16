@@ -45,6 +45,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
                         switch (rm.kind) {
                             case SET_KEYSPACE:
                                 // propagate the keyspace change to other connections
+                                session.poolsState.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
                                 set(ResultSet.fromMessage(rm, session, connection.address));
                                 break;
                             case SCHEMA_CHANGE:

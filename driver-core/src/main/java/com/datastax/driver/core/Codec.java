@@ -17,36 +17,32 @@ import org.apache.cassandra.db.marshal.*;
  */
 class Codec {
 
-    private static Map<AbstractType<?>, DataType.Native> rawNativeMap = new HashMap<AbstractType<?>, DataType.Native>() {{
-        put(AsciiType.instance,         DataType.Native.ASCII);
-        put(LongType.instance,          DataType.Native.BIGINT);
-        put(BytesType.instance,         DataType.Native.BLOB);
-        put(BooleanType.instance,       DataType.Native.BOOLEAN);
-        put(CounterColumnType.instance, DataType.Native.COUNTER);
-        put(DecimalType.instance,       DataType.Native.DECIMAL);
-        put(DoubleType.instance,        DataType.Native.DOUBLE);
-        put(FloatType.instance,         DataType.Native.FLOAT);
-        put(InetAddressType.instance,   DataType.Native.INET);
-        put(Int32Type.instance,         DataType.Native.INT);
-        put(UTF8Type.instance,          DataType.Native.TEXT);
-        put(DateType.instance,          DataType.Native.TIMESTAMP);
-        put(UUIDType.instance,          DataType.Native.UUID);
-        put(IntegerType.instance,       DataType.Native.VARINT);
-        put(TimeUUIDType.instance,      DataType.Native.TIMEUUID);
+    private static Map<AbstractType<?>, DataType> rawNativeMap = new HashMap<AbstractType<?>, DataType>() {{
+        put(AsciiType.instance,         DataType.ascii());
+        put(LongType.instance,          DataType.bigint());
+        put(BytesType.instance,         DataType.blob());
+        put(BooleanType.instance,       DataType.cboolean());
+        put(CounterColumnType.instance, DataType.counter());
+        put(DecimalType.instance,       DataType.decimal());
+        put(DoubleType.instance,        DataType.cdouble());
+        put(FloatType.instance,         DataType.cfloat());
+        put(InetAddressType.instance,   DataType.inet());
+        put(Int32Type.instance,         DataType.cint());
+        put(UTF8Type.instance,          DataType.text());
+        put(DateType.instance,          DataType.timestamp());
+        put(UUIDType.instance,          DataType.uuid());
+        put(IntegerType.instance,       DataType.varint());
+        put(TimeUUIDType.instance,      DataType.timeuuid());
     }};
 
     private Codec() {}
 
     public static <T> AbstractType<T> getCodec(DataType type) {
-        if (type.isCollection())
-            return (AbstractType<T>)collectionCodec(type.asCollection());
-        else
-            return (AbstractType<T>)nativeCodec(type.asNative());
+        return (AbstractType<T>)getCodecInternal(type);
     }
 
-    private static AbstractType<?> nativeCodec(DataType.Native type) {
-
-        switch (type) {
+    private static AbstractType getCodecInternal(DataType type) {
+        switch (type.getName()) {
             case ASCII:     return AsciiType.instance;
             case BIGINT:    return LongType.instance;
             case BLOB:      return BytesType.instance;
@@ -63,26 +59,10 @@ class Codec {
             case VARCHAR:   return UTF8Type.instance;
             case VARINT:    return IntegerType.instance;
             case TIMEUUID:  return TimeUUIDType.instance;
-            default:        throw new RuntimeException("Unknown native type");
-        }
-    }
-
-    private static AbstractType<?> collectionCodec(DataType.Collection type) {
-
-        switch (type.getKind()) {
-            case LIST:
-                AbstractType<?> listElts = getCodec(((DataType.Collection.List)type).getElementsType());
-                return ListType.getInstance(listElts);
-            case SET:
-                AbstractType<?> setElts = getCodec(((DataType.Collection.Set)type).getElementsType());
-                return SetType.getInstance(setElts);
-            case MAP:
-                DataType.Collection.Map mt = (DataType.Collection.Map)type;
-                AbstractType<?> mapKeys = getCodec(mt.getKeysType());
-                AbstractType<?> mapValues = getCodec(mt.getValuesType());
-                return MapType.getInstance(mapKeys, mapValues);
-            default:
-                throw new RuntimeException("Unknown collection type");
+            case LIST:      return ListType.getInstance(getCodec(type.getTypeArguments().get(0)));
+            case SET:       return SetType.getInstance(getCodec(type.getTypeArguments().get(0)));
+            case MAP:       return MapType.getInstance(getCodec(type.getTypeArguments().get(0)), getCodec(type.getTypeArguments().get(1)));
+            default:        throw new RuntimeException("Unknown type");
         }
     }
 
@@ -94,26 +74,20 @@ class Codec {
         if (rawType instanceof CollectionType) {
             switch (((CollectionType)rawType).kind) {
                 case LIST:
-                    DataType listElts = rawTypeToDataType(((ListType)rawType).elements);
-                    return new DataType.Collection.List(listElts);
+                    return DataType.list(rawTypeToDataType(((ListType)rawType).elements));
                 case SET:
-                    DataType setElts = rawTypeToDataType(((SetType)rawType).elements);
-                    return new DataType.Collection.Set(setElts);
+                    return DataType.set(rawTypeToDataType(((SetType)rawType).elements));
                 case MAP:
                     MapType mt = (MapType)rawType;
-                    DataType mapKeys = rawTypeToDataType(mt.keys);
-                    DataType mapValues = rawTypeToDataType(mt.values);
-                    return new DataType.Collection.Map(mapKeys, mapValues);
-                default:
-                    throw new DriverInternalError("Unknown collection type");
+                    return DataType.map(rawTypeToDataType(mt.keys), rawTypeToDataType(mt.values));
             }
         }
-        throw new DriverInternalError("Unknown type: " + rawType);
+        throw new DriverInternalError("Unsupported type: " + rawType);
     }
 
     // Returns whether type can be safely subtyped to klass
-    public static boolean isCompatibleSubtype(DataType.Native type, Class klass) {
-        switch (type) {
+    public static boolean isCompatibleSubtype(DataType type, Class klass) {
+        switch (type.getName()) {
             case ASCII:     return klass.isAssignableFrom(String.class);
             case BIGINT:    return klass.isAssignableFrom(Long.class);
             case BLOB:      return klass.isAssignableFrom(ByteBuffer.class);
@@ -130,13 +104,13 @@ class Codec {
             case VARCHAR:   return klass.isAssignableFrom(String.class);
             case VARINT:    return klass.isAssignableFrom(BigInteger.class);
             case TIMEUUID:  return klass.isAssignableFrom(UUID.class);
-            default:        throw new RuntimeException("Unknown native type");
+            default:        throw new RuntimeException("Unknown non-collection type " + type);
         }
     }
 
     // Returns whether klass can be safely subtyped to klass, i.e. if type is a supertype of klass
-    public static boolean isCompatibleSupertype(DataType.Native type, Class klass) {
-        switch (type) {
+    public static boolean isCompatibleSupertype(DataType type, Class klass) {
+        switch (type.getName()) {
             case ASCII:     return String.class.isAssignableFrom(klass);
             case BIGINT:    return Long.class.isAssignableFrom(klass);
             case BLOB:      return ByteBuffer.class.isAssignableFrom(klass);
@@ -153,7 +127,7 @@ class Codec {
             case VARCHAR:   return String.class.isAssignableFrom(klass);
             case VARINT:    return BigInteger.class.isAssignableFrom(klass);
             case TIMEUUID:  return UUID.class.isAssignableFrom(klass);
-            default:        throw new RuntimeException("Unknown native type");
+            default:        throw new RuntimeException("Unknown non-collection type " + type);
         }
     }
 }

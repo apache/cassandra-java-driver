@@ -39,7 +39,7 @@ abstract class BuiltStatement extends CQLStatement {
 
         for (int i = 0; i < partitionKey.size(); i++) {
             if (name.equals(partitionKey.get(i).getName())) {
-                routingKey[i] = partitionKey.get(i).getType().parseString(Utils.toRawString(value));
+                routingKey[i] = partitionKey.get(i).getType().parse(Utils.toRawString(value));
                 return;
             }
         }

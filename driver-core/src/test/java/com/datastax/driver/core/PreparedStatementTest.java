@@ -20,15 +20,18 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final String ALL_SET_TABLE = "all_set";
     private static final String ALL_MAP_TABLE = "all_map";
 
+    private boolean exclude(DataType t) {
+        return t.getName() == DataType.Name.COUNTER;
+    }
+
     protected Collection<String> getTableDefinitions() {
 
         List<String> defs = new ArrayList<String>(4);
 
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE ").append(ALL_NATIVE_TABLE).append(" (k text PRIMARY KEY");
-        for (DataType.Native type : DataType.Native.values()) {
-            // This must be handled separatly
-            if (type == DataType.Native.COUNTER)
+        for (DataType type : DataType.allPrimitiveTypes()) {
+            if (exclude(type))
                 continue;
             sb.append(", c_").append(type).append(" ").append(type);
         }
@@ -37,9 +40,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         sb = new StringBuilder();
         sb.append("CREATE TABLE ").append(ALL_LIST_TABLE).append(" (k text PRIMARY KEY");
-        for (DataType.Native type : DataType.Native.values()) {
-            // This must be handled separatly
-            if (type == DataType.Native.COUNTER)
+        for (DataType type : DataType.allPrimitiveTypes()) {
+            if (exclude(type))
                 continue;
             sb.append(", c_list_").append(type).append(" list<").append(type).append(">");
         }
@@ -48,9 +50,9 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         sb = new StringBuilder();
         sb.append("CREATE TABLE ").append(ALL_SET_TABLE).append(" (k text PRIMARY KEY");
-        for (DataType.Native type : DataType.Native.values()) {
+        for (DataType type : DataType.allPrimitiveTypes()) {
             // This must be handled separatly
-            if (type == DataType.Native.COUNTER)
+            if (exclude(type))
                 continue;
             sb.append(", c_set_").append(type).append(" set<").append(type).append(">");
         }
@@ -59,14 +61,14 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         sb = new StringBuilder();
         sb.append("CREATE TABLE ").append(ALL_MAP_TABLE).append(" (k text PRIMARY KEY");
-        for (DataType.Native keyType : DataType.Native.values()) {
+        for (DataType keyType : DataType.allPrimitiveTypes()) {
             // This must be handled separatly
-            if (keyType == DataType.Native.COUNTER)
+            if (exclude(keyType))
                 continue;
 
-            for (DataType.Native valueType : DataType.Native.values()) {
+            for (DataType valueType : DataType.allPrimitiveTypes()) {
                 // This must be handled separatly
-                if (valueType == DataType.Native.COUNTER)
+                if (exclude(valueType))
                     continue;
                 sb.append(", c_map_").append(keyType).append("_").append(valueType).append(" map<").append(keyType).append(",").append(valueType).append(">");
             }
@@ -80,9 +82,9 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test
     public void preparedNativeTest() throws NoHostAvailableException {
         // Test preparing/bounding for all native types
-        for (DataType.Native type : DataType.Native.values()) {
+        for (DataType type : DataType.allPrimitiveTypes()) {
             // This must be handled separatly
-            if (type == DataType.Native.COUNTER)
+            if (exclude(type))
                 continue;
 
             String name = "c_" + type;
@@ -98,13 +100,13 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test
     public void prepareListTest() throws NoHostAvailableException {
         // Test preparing/bounding for all possible list types
-        for (DataType.Native rawType : DataType.Native.values()) {
+        for (DataType rawType : DataType.allPrimitiveTypes()) {
             // This must be handled separatly
-            if (rawType == DataType.Native.COUNTER)
+            if (exclude(rawType))
                 continue;
 
             String name = "c_list_" + rawType;
-            DataType type = new DataType.Collection.List(rawType);
+            DataType type = DataType.list(rawType);
             List value = (List)getFixedValue(type);;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_list', ?)", ALL_LIST_TABLE, name));
             BoundStatement bs = ps.newBoundStatement();
@@ -118,13 +120,13 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test
     public void prepareSetTest() throws NoHostAvailableException {
         // Test preparing/bounding for all possible set types
-        for (DataType.Native rawType : DataType.Native.values()) {
+        for (DataType rawType : DataType.allPrimitiveTypes()) {
             // This must be handled separatly
-            if (rawType == DataType.Native.COUNTER)
+            if (exclude(rawType))
                 continue;
 
             String name = "c_set_" + rawType;
-            DataType type = new DataType.Collection.Set(rawType);
+            DataType type = DataType.set(rawType);
             Set value = (Set)getFixedValue(type);;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
             BoundStatement bs = ps.newBoundStatement();
@@ -138,18 +140,18 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test
     public void prepareMapTest() throws NoHostAvailableException {
         // Test preparing/bounding for all possible map types
-        for (DataType.Native rawKeyType : DataType.Native.values()) {
+        for (DataType rawKeyType : DataType.allPrimitiveTypes()) {
             // This must be handled separatly
-            if (rawKeyType == DataType.Native.COUNTER)
+            if (exclude(rawKeyType))
                 continue;
 
-            for (DataType.Native rawValueType : DataType.Native.values()) {
+            for (DataType rawValueType : DataType.allPrimitiveTypes()) {
                 // This must be handled separatly
-                if (rawValueType == DataType.Native.COUNTER)
+                if (exclude(rawValueType))
                     continue;
 
                 String name = "c_map_" + rawKeyType + "_" + rawValueType;
-                DataType type = new DataType.Collection.Map(rawKeyType, rawValueType);
+                DataType type = DataType.map(rawKeyType, rawValueType);
                 Map value = (Map)getFixedValue(type);;
                 PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
                 BoundStatement bs = ps.newBoundStatement();

@@ -97,60 +97,55 @@ public class BoundStatement extends Query {
         {
             Object toSet = values[i];
             DataType columnType = statement.getVariables().getType(i);
-            if (columnType.isCollection()) {
-                switch (columnType.asCollection().getKind()) {
-                    case LIST:
-                        if (!(toSet instanceof List))
-                            throw new InvalidTypeException(String.format("Invalid type for value %d, column is a list but %s provided", i, toSet.getClass()));
+            switch (columnType.getName()) {
+                case LIST:
+                    if (!(toSet instanceof List))
+                        throw new InvalidTypeException(String.format("Invalid type for value %d, column is a list but %s provided", i, toSet.getClass()));
 
-                        List l = (List)toSet;
-                        // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
-                        if (!l.isEmpty()) {
-                            // Ugly? Yes
-                            Class klass = l.get(0).getClass();
-                            DataType.Native eltType = (DataType.Native)((DataType.Collection.List)columnType).getElementsType();
-                            if (!Codec.isCompatibleSupertype(eltType, klass))
-                                throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but provided list value are %s", i, columnType, klass));
-                        }
-                        break;
-                    case SET:
-                        if (!(toSet instanceof Set))
-                            throw new InvalidTypeException(String.format("Invalid type for value %d, column is a set but %s provided", i, toSet.getClass()));
+                    List l = (List)toSet;
+                    // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
+                    if (!l.isEmpty()) {
+                        // Ugly? Yes
+                        Class klass = l.get(0).getClass();
+                        if (!Codec.isCompatibleSupertype(columnType.getTypeArguments().get(0), klass))
+                            throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but provided list value are %s", i, columnType, klass));
+                    }
+                    break;
+                case SET:
+                    if (!(toSet instanceof Set))
+                        throw new InvalidTypeException(String.format("Invalid type for value %d, column is a set but %s provided", i, toSet.getClass()));
 
-                        Set s = (Set)toSet;
-                        // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
-                        if (!s.isEmpty()) {
-                            // Ugly? Yes
-                            Class klass = s.iterator().next().getClass();
-                            DataType.Native eltType = (DataType.Native)((DataType.Collection.List)columnType).getElementsType();
-                            if (!Codec.isCompatibleSupertype(eltType, klass))
-                                throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but provided set value are %s", i, columnType, klass));
-                        }
-                        break;
-                    case MAP:
-                        if (!(toSet instanceof Map))
-                            throw new InvalidTypeException(String.format("Invalid type for value %d, column is a map but %s provided", i, toSet.getClass()));
+                    Set s = (Set)toSet;
+                    // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
+                    if (!s.isEmpty()) {
+                        // Ugly? Yes
+                        Class klass = s.iterator().next().getClass();
+                        if (!Codec.isCompatibleSupertype(columnType.getTypeArguments().get(0), klass))
+                            throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but provided set value are %s", i, columnType, klass));
+                    }
+                    break;
+                case MAP:
+                    if (!(toSet instanceof Map))
+                        throw new InvalidTypeException(String.format("Invalid type for value %d, column is a map but %s provided", i, toSet.getClass()));
 
-                        Map m = (Map)toSet;
-                        // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
-                        if (!m.isEmpty()) {
-                            // Ugly? Yes
-                            Map.Entry entry = (Map.Entry)m.entrySet().iterator().next();
-                            Class keysClass = entry.getKey().getClass();
-                            Class valuesClass = entry.getValue().getClass();
+                    Map m = (Map)toSet;
+                    // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
+                    if (!m.isEmpty()) {
+                        // Ugly? Yes
+                        Map.Entry entry = (Map.Entry)m.entrySet().iterator().next();
+                        Class keysClass = entry.getKey().getClass();
+                        Class valuesClass = entry.getValue().getClass();
 
-                            DataType.Collection.Map mapType = (DataType.Collection.Map)columnType;
-                            DataType.Native keysType = (DataType.Native)mapType.getKeysType();
-                            DataType.Native valuesType = (DataType.Native)mapType.getValuesType();
-                            if (!Codec.isCompatibleSupertype(keysType, keysClass) || !Codec.isCompatibleSupertype(valuesType, valuesClass))
-                                throw new InvalidTypeException(String.format("Invalid type for value %d, column type %s conflicts with provided type %s", i, mapType, toSet.getClass()));
-                        }
-                        break;
-
-                }
-            } else {
-                if (!Codec.isCompatibleSupertype(columnType.asNative(), toSet.getClass()))
-                    throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but %s provided", i, columnType, toSet.getClass()));
+                        DataType keysType = columnType.getTypeArguments().get(0);
+                        DataType valuesType = columnType.getTypeArguments().get(1);
+                        if (!Codec.isCompatibleSupertype(keysType, keysClass) || !Codec.isCompatibleSupertype(valuesType, valuesClass))
+                            throw new InvalidTypeException(String.format("Invalid type for value %d, column type %s conflicts with provided type %s", i, columnType, toSet.getClass()));
+                    }
+                    break;
+                default:
+                    if (!Codec.isCompatibleSupertype(columnType, toSet.getClass()))
+                        throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but %s provided", i, columnType, toSet.getClass()));
+                    break;
             }
             setValue(i, Codec.getCodec(columnType).decompose(toSet));
         }
@@ -201,7 +196,7 @@ public class BoundStatement extends Query {
      * @throws InvalidTypeException if column {@code i} is not of type BOOLEAN.
      */
     public BoundStatement setBool(int i, boolean v) {
-        metadata().checkType(i, DataType.Native.BOOLEAN);
+        metadata().checkType(i, DataType.Name.BOOLEAN);
         return setValue(i, BooleanType.instance.decompose(v));
     }
 
@@ -227,8 +222,7 @@ public class BoundStatement extends Query {
      * @throws InvalidTypeException if column {@code i} is not of type INT.
      */
     public BoundStatement setInt(int i, int v) {
-        DataType.Native type = metadata().checkType(i, DataType.Native.INT);
-
+        metadata().checkType(i, DataType.Name.INT);
         return setValue(i, Int32Type.instance.decompose(v));
     }
 
@@ -254,7 +248,7 @@ public class BoundStatement extends Query {
      * @throws InvalidTypeException if column {@code i} is of type BIGINT or COUNTER.
      */
     public BoundStatement setLong(int i, long v) {
-        DataType.Native type = metadata().checkType(i, DataType.Native.BIGINT, DataType.Native.COUNTER);
+        metadata().checkType(i, DataType.Name.BIGINT, DataType.Name.COUNTER);
         return setValue(i, LongType.instance.decompose(v));
     }
 
@@ -280,7 +274,7 @@ public class BoundStatement extends Query {
      * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
      */
     public BoundStatement setDate(int i, Date v) {
-        metadata().checkType(i, DataType.Native.TIMESTAMP);
+        metadata().checkType(i, DataType.Name.TIMESTAMP);
         return setValue(i, DateType.instance.decompose(v));
     }
 
@@ -306,7 +300,7 @@ public class BoundStatement extends Query {
      * @throws InvalidTypeException if column {@code i} is not of type FLOAT.
      */
     public BoundStatement setFloat(int i, float v) {
-        DataType.Native type = metadata().checkType(i, DataType.Native.FLOAT);
+        metadata().checkType(i, DataType.Name.FLOAT);
         return setValue(i, FloatType.instance.decompose(v));
     }
 
@@ -332,7 +326,7 @@ public class BoundStatement extends Query {
      * @throws InvalidTypeException if column {@code i} is not of type DOUBLE.
      */
     public BoundStatement setDouble(int i, double v) {
-        DataType.Native type = metadata().checkType(i, DataType.Native.DOUBLE);
+        metadata().checkType(i, DataType.Name.DOUBLE);
         return setValue(i, DoubleType.instance.decompose(v));
     }
 
@@ -359,9 +353,9 @@ public class BoundStatement extends Query {
      * following types: VARCHAR, TEXT or ASCII.
      */
     public BoundStatement setString(int i, String v) {
-        DataType.Native type = metadata().checkType(i, DataType.Native.VARCHAR,
-                                                       DataType.Native.TEXT,
-                                                       DataType.Native.ASCII);
+        DataType.Name type = metadata().checkType(i, DataType.Name.VARCHAR,
+                                                     DataType.Name.TEXT,
+                                                     DataType.Name.ASCII);
         switch (type) {
             case ASCII:
                 return setValue(i, AsciiType.instance.decompose(v));
@@ -400,7 +394,7 @@ public class BoundStatement extends Query {
      * @throws InvalidTypeException if column {@code i} is not of type BLOB.
      */
     public BoundStatement setBytes(int i, ByteBuffer v) {
-        DataType.Native type = metadata().checkType(i, DataType.Native.BLOB);
+        metadata().checkType(i, DataType.Name.BLOB);
         return setBytesUnsafe(i, v);
     }
 
@@ -463,7 +457,7 @@ public class BoundStatement extends Query {
      * @throws InvalidTypeException if column {@code i} is not of type VARINT.
      */
     public BoundStatement setVarint(int i, BigInteger v) {
-        metadata().checkType(i, DataType.Native.VARINT);
+        metadata().checkType(i, DataType.Name.VARINT);
         return setValue(i, IntegerType.instance.decompose(v));
     }
 
@@ -489,7 +483,7 @@ public class BoundStatement extends Query {
      * @throws InvalidTypeException if column {@code i} is not of type DECIMAL.
      */
     public BoundStatement setDecimal(int i, BigDecimal v) {
-        metadata().checkType(i, DataType.Native.DECIMAL);
+        metadata().checkType(i, DataType.Name.DECIMAL);
         return setValue(i, DecimalType.instance.decompose(v));
     }
 
@@ -517,13 +511,13 @@ public class BoundStatement extends Query {
      * not a type 1 UUID.
      */
     public BoundStatement setUUID(int i, UUID v) {
-        DataType.Native type = metadata().checkType(i, DataType.Native.UUID,
-                                                       DataType.Native.TIMEUUID);
+        DataType.Name type = metadata().checkType(i, DataType.Name.UUID,
+                                                       DataType.Name.TIMEUUID);
 
-        if (type == DataType.Native.TIMEUUID && v.version() != 1)
+        if (type == DataType.Name.TIMEUUID && v.version() != 1)
             throw new InvalidTypeException(String.format("%s is not a Type 1 (time-based) UUID", v));
 
-        return type == DataType.Native.UUID
+        return type == DataType.Name.UUID
              ? setValue(i, UUIDType.instance.decompose(v))
              : setValue(i, TimeUUIDType.instance.decompose(v));
     }
@@ -552,7 +546,7 @@ public class BoundStatement extends Query {
      * @throws InvalidTypeException if column {@code i} is not of type INET.
      */
     public BoundStatement setInet(int i, InetAddress v) {
-        metadata().checkType(i, DataType.Native.INET);
+        metadata().checkType(i, DataType.Name.INET);
         return setValue(i, InetAddressType.instance.decompose(v));
     }
 
@@ -581,7 +575,7 @@ public class BoundStatement extends Query {
      */
     public <T> BoundStatement setList(int i, List<T> v) {
         DataType type = metadata().getType(i);
-        if (!type.isCollection() || type.asCollection().getKind() != DataType.Collection.Kind.LIST)
+        if (type.getName() != DataType.Name.LIST)
             throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a list", metadata().getName(i), type));
 
         // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
@@ -589,8 +583,7 @@ public class BoundStatement extends Query {
             // Ugly? Yes
             Class klass = v.get(0).getClass();
 
-            DataType.Native eltType = (DataType.Native)((DataType.Collection.List)type).getElementsType();
-            if (!Codec.isCompatibleSupertype(eltType, klass))
+            if (!Codec.isCompatibleSupertype(type.getTypeArguments().get(0), klass))
                 throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a list of %s", metadata().getName(i), type, klass));
         }
 
@@ -624,7 +617,7 @@ public class BoundStatement extends Query {
      */
     public <K, V> BoundStatement setMap(int i, Map<K, V> v) {
         DataType type = metadata().getType(i);
-        if (!type.isCollection() || type.asCollection().getKind() != DataType.Collection.Kind.MAP)
+        if (type.getName() != DataType.Name.MAP)
             throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a map", metadata().getName(i), type));
 
         if (!v.isEmpty()) {
@@ -633,9 +626,8 @@ public class BoundStatement extends Query {
             Class keysClass = entry.getKey().getClass();
             Class valuesClass = entry.getValue().getClass();
 
-            DataType.Collection.Map mapType = (DataType.Collection.Map)type;
-            DataType.Native keysType = (DataType.Native)mapType.getKeysType();
-            DataType.Native valuesType = (DataType.Native)mapType.getValuesType();
+            DataType keysType = type.getTypeArguments().get(0);
+            DataType valuesType = type.getTypeArguments().get(1);
             if (!Codec.isCompatibleSupertype(keysType, keysClass) || !Codec.isCompatibleSupertype(valuesType, valuesClass))
                 throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a map of %s -> %s", metadata().getName(i), type, keysType, valuesType));
         }
@@ -670,15 +662,14 @@ public class BoundStatement extends Query {
      */
     public <T> BoundStatement setSet(int i, Set<T> v) {
         DataType type = metadata().getType(i);
-        if (!type.isCollection() || type.asCollection().getKind() != DataType.Collection.Kind.SET)
+        if (type.getName() != DataType.Name.SET)
             throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a set", metadata().getName(i), type));
 
         if (!v.isEmpty()) {
             // Ugly? Yes
             Class klass = v.iterator().next().getClass();
 
-            DataType.Native eltType = (DataType.Native)((DataType.Collection.Set)type).getElementsType();
-            if (!Codec.isCompatibleSupertype(eltType, klass))
+            if (!Codec.isCompatibleSupertype(type.getTypeArguments().get(0), klass))
                 throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a set of %s", metadata().getName(i), type, klass));
         }
 

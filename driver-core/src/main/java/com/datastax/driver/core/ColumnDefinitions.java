@@ -169,13 +169,27 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
             throw new ArrayIndexOutOfBoundsException(i);
     }
 
-    DataType.Native checkType(int i, DataType.Native... types) {
+    // Note: we avoid having a vararg method to avoid the array allocation that comes with it.
+    void checkType(int i, DataType.Name name) {
         DataType defined = getType(i);
-        for (DataType.Native type : types)
-            if (type == defined)
-                return type;
+        if (name != defined.getName())
+            throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
+    }
 
-        throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
+    DataType.Name checkType(int i, DataType.Name name1, DataType.Name name2) {
+        DataType defined = getType(i);
+        if (name1 != defined.getName() && name2 != defined.getName())
+            throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
+
+        return defined.getName();
+    }
+
+    DataType.Name checkType(int i, DataType.Name name1, DataType.Name name2, DataType.Name name3) {
+        DataType defined = getType(i);
+        if (name1 != defined.getName() && name2 != defined.getName() && name3 != defined.getName())
+            throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
+
+        return defined.getName();
     }
 
     /**

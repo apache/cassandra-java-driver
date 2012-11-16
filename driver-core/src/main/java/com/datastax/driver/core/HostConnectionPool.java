@@ -73,7 +73,9 @@ class HostConnectionPool {
                 scheduledForCreation.incrementAndGet();
                 manager.executor().submit(newConnectionTask);
             }
-            return waitForConnection(timeout, unit);
+            Connection c = waitForConnection(timeout, unit);
+            c.setKeyspace(manager.poolsState.keyspace);
+            return c;
         }
 
         int minInFlight = Integer.MAX_VALUE;
