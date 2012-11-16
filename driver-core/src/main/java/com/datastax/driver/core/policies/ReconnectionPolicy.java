@@ -19,6 +19,9 @@ package com.datastax.driver.core.policies;
  */
 public interface ReconnectionPolicy {
 
+    /**
+     * Creates a new schedule for reconnection attempts.
+     */
     public ReconnectionSchedule newSchedule();
 
     /**

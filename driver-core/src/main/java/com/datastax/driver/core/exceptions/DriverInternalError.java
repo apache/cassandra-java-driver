@@ -8,10 +8,6 @@ package com.datastax.driver.core.exceptions;
  */
 public class DriverInternalError extends RuntimeException {
 
-    public DriverInternalError() {
-        super();
-    }
-
     public DriverInternalError(String message) {
         super(message);
     }

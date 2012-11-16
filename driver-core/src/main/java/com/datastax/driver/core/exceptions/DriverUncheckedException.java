@@ -5,19 +5,19 @@ package com.datastax.driver.core.exceptions;
  */
 public class DriverUncheckedException extends RuntimeException {
 
-    public DriverUncheckedException() {
+    DriverUncheckedException() {
         super();
     }
 
-    public DriverUncheckedException(String message) {
+    DriverUncheckedException(String message) {
         super(message);
     }
 
-    public DriverUncheckedException(Throwable cause) {
+    DriverUncheckedException(Throwable cause) {
         super(cause);
     }
 
-    public DriverUncheckedException(String message, Throwable cause) {
+    DriverUncheckedException(String message, Throwable cause) {
         super(message, cause);
     }
 }

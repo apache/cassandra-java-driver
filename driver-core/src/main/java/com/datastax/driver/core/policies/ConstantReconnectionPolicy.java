@@ -20,18 +20,27 @@ public class ConstantReconnectionPolicy implements ReconnectionPolicy {
         this.delayMs = constantDelayMs;
     }
 
-    public ConstantSchedule newSchedule() {
+    /**
+     * The constant delay used by this reconnection policy.
+     *
+     * @return the constant delay used by this reconnection policy.
+     */
+    public long getConstantDelayMs() {
+        return delayMs;
+    }
+
+    /**
+     * A new schedule that uses a constant {@code getConstantDelayMs()} delay
+     * between reconnection attempt.
+     *
+     * @return the newly created schedule.
+     */
+    public ReconnectionSchedule newSchedule() {
         return new ConstantSchedule();
     }
 
-    public class ConstantSchedule implements ReconnectionSchedule {
+    private class ConstantSchedule implements ReconnectionSchedule {
 
-        /**
-         * The delay before the next reconnection.
-         *
-         * @return the fixed delay set by the {@code
-         * ConstantReconnectionPolicy} that created this schedule.
-         */
         public long nextDelayMs() {
             return delayMs;
         }

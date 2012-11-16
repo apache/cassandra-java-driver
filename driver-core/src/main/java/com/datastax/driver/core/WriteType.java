@@ -3,7 +3,7 @@ package com.datastax.driver.core;
 /**
  * The type of a Cassandra write query.
  *
- * This information is returned by Cassandra when a write timout is raised to
+ * This information is returned by Cassandra when a write timeout is raised to
  * indicate what type of write timeouted. This information is useful to decide
  * which retry policy to adopt.
  */

@@ -58,10 +58,25 @@ public class Policies {
         return loadBalancingPolicy;
     }
 
+    /**
+     * The reconnection policy in use.
+     * <p>
+     * The reconnection policy defines how often the driver tries to reconnect to a dead node.
+     *
+     * @return the reconnection policy in use.
+     */
     public ReconnectionPolicy getReconnectionPolicy() {
         return reconnectionPolicy;
     }
 
+    /**
+     * The retry policy in use.
+     * <p>
+     * The retry policy defines in which conditions a query should be
+     * automatically retries by the driver.
+     *
+     * @return the retry policy in use.
+     */
     public RetryPolicy getRetryPolicy() {
         return retryPolicy;
     }

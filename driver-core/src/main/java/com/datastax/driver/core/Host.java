@@ -178,7 +178,7 @@ public class Host {
     }
 
     /**
-     * Interface for listener that are interested in hosts add, up, down and
+     * Interface for listeners that are interested in hosts add, up, down and
      * remove events.
      * <p>
      * Note that particularly for up and down events, it is possible that the
@@ -212,7 +212,7 @@ public class Host {
         public void onDown(Host host);
 
         /**
-         * Called when a node is remove from the cluster.
+         * Called when a node is removed from the cluster.
          *
          * @param host the removed host.
          */

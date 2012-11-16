@@ -27,34 +27,47 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
         this.maxDelayMs = maxDelayMs;
     }
 
-    public ExponentialSchedule newSchedule() {
+    /**
+     * The base delay in milliseconds for this policy (e.g. the delay before
+     * the first reconnection attempt).
+     *
+     * @return the base delay in milliseconds for this policy.
+     */
+    public long getBaseDelayMs() {
+        return baseDelayMs;
+    }
+
+    /**
+     * The maximum delay in milliseconds between reconnection attempts for this policy.
+     *
+     * @return the maximum delay in milliseconds between reconnection attempts for this policy.
+     */
+    public long getMaxDelayMs() {
+        return maxDelayMs;
+    }
+
+    /**
+     * A new schedule that used an exponentially growing delay between reconnection attempts.
+     * <p>
+     * For this schedule, reconnection attempt {@code i} will be tried
+     * {@code Math.min(2^(i-1) * getBaseDelayMs(), getMaxDelayMs())} milliseconds after the previous one.
+     *
+     * @return the newly created schedule.
+     */
+    public ReconnectionSchedule newSchedule() {
         return new ExponentialSchedule();
     }
 
-    public class ExponentialSchedule implements ReconnectionSchedule {
+    private class ExponentialSchedule implements ReconnectionSchedule {
 
         private int attempts;
 
-        /**
-         * The delay before the next reconnection.
-         * <p>
-         * For this schedule, reconnection attempt {@code i} will be tried
-         * {@code 2^i * baseDelayMs} milliseconds after the previous one
-         * (unless {@code maxDelayMs} has been reached, in which case all
-         * following attempts will be done with a delay of {@code maxDelayMs}),
-         * where {@code baseDelayMs} (and {@code maxDelayMs}) are the
-         * delays sets by the {@code ExponentialReconnectionPolicy} from
-         * which this schedule has been created.
-         *
-         * @return the delay before the next reconnection.
-         */
         public long nextDelayMs() {
             // We "overflow" at 64 attempts but I doubt this matter
             if (attempts >= 64)
                 return maxDelayMs;
 
-            long next = baseDelayMs * (1L << attempts++);
-            return next > maxDelayMs ? maxDelayMs : next;
+            return Math.min(baseDelayMs * (1L << attempts++), maxDelayMs);
         }
     }
 }
