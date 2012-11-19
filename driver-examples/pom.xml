@@ -17,9 +17,6 @@
     <module>stress</module>
   </modules>
 
-  <dependencies>
-  </dependencies>
-
   <build>
       <plugins>
           <plugin>

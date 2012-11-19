@@ -44,8 +44,8 @@
 
     <dependency>
      <groupId>org.codehaus.jackson</groupId>
-     <artifactId>jackson-mapper-asl</artifactId>
-     <version>1.9.8</version>
+     <artifactId>jackson-core-asl</artifactId>
+     <version>1.4.0</version>
     </dependency>
   </dependencies>
 

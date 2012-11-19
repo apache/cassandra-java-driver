@@ -1,7 +1,6 @@
 package com.datastax.driver.examples.stress;
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.configuration.*;
 import com.datastax.driver.core.exceptions.*;
 
 public class Generators {
@@ -27,7 +26,7 @@ public class Generators {
                 public QueryGenerator.Request next() {
                     String query = String.format("INSERT INTO stress_cf(k, c, v) VALUES (%d, %d, %d)", i, i, i);
                     ++i;
-                    return new QueryGenerator.Request.SimpleQuery(query, new QueryOptions());
+                    return new QueryGenerator.Request.SimpleQuery(new SimpleStatement(query));
                 }
 
                 public void remove() {
@@ -61,7 +60,7 @@ public class Generators {
                 public QueryGenerator.Request next() {
                     BoundStatement b = stmt.bind(i, i, i);
                     ++i;
-                    return new QueryGenerator.Request.PreparedQuery(b, new QueryOptions());
+                    return new QueryGenerator.Request.PreparedQuery(b);
                 }
 
                 public void remove() {

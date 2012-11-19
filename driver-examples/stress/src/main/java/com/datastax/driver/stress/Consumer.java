@@ -76,11 +76,11 @@ public class Consumer extends Thread {
 
             static final Result END_MARKER = new Result(null, null, null);
 
-            public final ResultSet.Future future;
+            public final ResultSetFuture future;
             public final TimerContext context;
             public final Meter requests;
 
-            public Result(ResultSet.Future future, TimerContext context, Meter requests) {
+            public Result(ResultSetFuture future, TimerContext context, Meter requests) {
                 this.future = future;
                 this.context = context;
                 this.requests = requests;

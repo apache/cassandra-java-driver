@@ -9,7 +9,7 @@ public abstract class QueryGenerator implements Iterator<QueryGenerator.Request>
 
     static final Request DONE_MARKER = new Request() {
         public ResultSet execute(Session session) throws NoHostAvailableException { return null; }
-        public ResultSet.Future executeAsync(Session session) throws NoHostAvailableException { return null; };
+        public ResultSetFuture executeAsync(Session session) throws NoHostAvailableException { return null; };
     };
 
     protected final int iterations;
@@ -28,43 +28,39 @@ public abstract class QueryGenerator implements Iterator<QueryGenerator.Request>
 
         public ResultSet execute(Session session) throws NoHostAvailableException;
 
-        public ResultSet.Future executeAsync(Session session) throws NoHostAvailableException;
+        public ResultSetFuture executeAsync(Session session) throws NoHostAvailableException;
 
         public static class SimpleQuery implements Request {
 
-            private final String query;
-            private final QueryOptions options;
+            private final Query query;
 
-            public SimpleQuery(String query, QueryOptions options) {
+            public SimpleQuery(Query query) {
                 this.query = query;
-                this.options = options;
             }
 
             public ResultSet execute(Session session) throws NoHostAvailableException {
-                return session.execute(query, options);
+                return session.execute(query);
             }
 
-            public ResultSet.Future executeAsync(Session session) throws NoHostAvailableException {
-                return session.executeAsync(query, options);
+            public ResultSetFuture executeAsync(Session session) throws NoHostAvailableException {
+                return session.executeAsync(query);
             }
         }
 
         public static class PreparedQuery implements Request {
 
             private final BoundStatement query;
-            private final QueryOptions options;
 
-            public PreparedQuery(BoundStatement query, QueryOptions options) {
+            public PreparedQuery(BoundStatement query) {
                 this.query = query;
-                this.options = options;
             }
 
             public ResultSet execute(Session session) throws NoHostAvailableException {
-                return session.executePrepared(query, options);
+                return session.execute(query);
             }
 
-            public ResultSet.Future executeAsync(Session session) throws NoHostAvailableException {
-                return session.executePreparedAsync(query, options);
+            public ResultSetFuture executeAsync(Session session) throws NoHostAvailableException {
+                return session.executeAsync(query);
             }
         }
     }

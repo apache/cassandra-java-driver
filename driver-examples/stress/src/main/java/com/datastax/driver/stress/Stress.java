@@ -4,7 +4,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.configuration.*;
 import com.datastax.driver.core.exceptions.*;
 
 import joptsimple.OptionParser;
@@ -33,19 +32,19 @@ public class Stress {
         register("insert", Generators.SIMPLE_INSERTER);
         register("insert_prepared", Generators.SIMPLE_PREPARED_INSERTER);
 
-        if (args.length < 2) {
+        if (args.length < 1) {
             System.err.println("Missing argument, you must at least provide the action to do");
             System.exit(1);
         }
 
-        String action = args[1];
+        String action = args[0];
         if (!generators.containsKey(action)) {
             System.err.println(String.format("Unknown generator '%s' (known generators: %s)", action, generators.keySet()));
             System.exit(1);
         }
 
-        String[] opts = new String[args.length - 2];
-        System.arraycopy(args, 2, opts, 0, opts.length);
+        String[] opts = new String[args.length - 1];
+        System.arraycopy(args, 1, opts, 0, opts.length);
 
         OptionParser parser = new OptionParser();
 
