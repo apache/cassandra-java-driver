@@ -119,7 +119,7 @@ public class Delete extends BuiltStatement {
         /**
          * Adds a WHERE clause to this statement.
          *
-         * @param clause the clause to add.
+         * @param clauses the clause to add.
          * @return the newly built UPDATE statement.
          *
          * @throws IllegalStateException if WHERE clauses have already been

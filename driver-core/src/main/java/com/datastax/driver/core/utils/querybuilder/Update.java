@@ -78,7 +78,7 @@ public class Update extends BuiltStatement {
          * Adds the columns modification/assignement to set with this UPDATE
          * statement.
          *
-         * @param assignements the assigments to set for this statement.
+         * @param assignments the assigments to set for this statement.
          * @return this builder.
          *
          * @throws IllegalStateException if a SET clause has aready been provided.
@@ -94,7 +94,7 @@ public class Update extends BuiltStatement {
         /**
          * Adds a WHERE clause to this statement.
          *
-         * @param clause the clause to add.
+         * @param clauses the clause to add.
          * @return the newly built UPDATE statement.
          *
          * @throws IllegalStateException if WHERE clauses have already been

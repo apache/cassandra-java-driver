@@ -119,7 +119,7 @@ public abstract class QueryBuilder {
      * <p>
      * This variant is most useful when the partition key is composite.
      *
-     * @param columnName the column names to take the token of.
+     * @param columnNames the column names to take the token of.
      * @return a string reprensenting the token of the provided column names.
      */
     public static String token(String... columnNames) {

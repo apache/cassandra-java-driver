@@ -80,5 +80,5 @@ provided as "contact points". Even if only one host was provided, the driver
 would use this host to discover the other ones and use the whole cluster
 automatically. This is also true for new nodes joining the cluster.
 
-For now, please refer to the JavaDoc for more informations, more documentation
-will come later.
+For now, please refer to the JavaDoc (http://www.datastax.com/drivers/java/apidocs/)
+for more informations, more documentation will come later.
