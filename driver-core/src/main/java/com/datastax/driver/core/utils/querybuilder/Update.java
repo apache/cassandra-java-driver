@@ -2,6 +2,9 @@ package com.datastax.driver.core.utils.querybuilder;
 
 import com.datastax.driver.core.TableMetadata;
 
+/**
+ * A built UPDATE statement.
+ */
 public class Update extends BuiltStatement {
 
     Update(String keyspace, String table, Assignment[] assignments, Clause[] clauses, Using[] usings) {
@@ -54,6 +57,15 @@ public class Update extends BuiltStatement {
             this.table = null;
         }
 
+        /**
+         * Adds a USING clause to this statement.
+         *
+         * @param usings the options to use.
+         * @return this builderj.
+         *
+         * @throws IllegalStateException if a USING clause has already been
+         * provided.
+         */
         public Builder using(Using... usings) {
             if (this.usings != null)
                 throw new IllegalStateException("A USING clause has already been provided");
@@ -62,6 +74,15 @@ public class Update extends BuiltStatement {
             return this;
         }
 
+        /**
+         * Adds the columns modification/assignement to set with this UPDATE
+         * statement.
+         *
+         * @param assignements the assigments to set for this statement.
+         * @return this builder.
+         *
+         * @throws IllegalStateException if a SET clause has aready been provided.
+         */
         public Builder set(Assignment... assignments) {
             if (this.assignments != null)
                 throw new IllegalStateException("A SET clause has already been provided");
@@ -70,10 +91,23 @@ public class Update extends BuiltStatement {
             return this;
         }
 
+        /**
+         * Adds a WHERE clause to this statement.
+         *
+         * @param clause the clause to add.
+         * @return the newly built UPDATE statement.
+         *
+         * @throws IllegalStateException if WHERE clauses have already been
+         * provided.
+         */
         public Update where(Clause... clauses) {
-            return table == null
-                 ? new Update(tableMetadata, assignments, clauses, usings)
-                 : new Update(keyspace, table, assignments, clauses, usings);
+
+            if (tableMetadata != null)
+                return new Update(tableMetadata, assignments, clauses, usings);
+            else if (table != null)
+                return new Update(keyspace, table, assignments, clauses, usings);
+            else
+                throw new IllegalStateException("Missing SET clause");
         }
     }
 }

@@ -100,6 +100,12 @@ public abstract class QueryBuilder {
         return sb.toString();
     }
 
+    /**
+     * The token of a column name.
+     *
+     * @param columnName the column name to take the token of.
+     * @return {@code "token(" + columnName + ")"}.
+     */
     public static String token(String columnName) {
         StringBuilder sb = new StringBuilder();
         sb.append("token(");
@@ -108,6 +114,14 @@ public abstract class QueryBuilder {
         return sb.toString();
     }
 
+    /**
+     * The token of column names.
+     * <p>
+     * This variant is most useful when the partition key is composite.
+     *
+     * @param columnName the column names to take the token of.
+     * @return a string reprensenting the token of the provided column names.
+     */
     public static String token(String... columnNames) {
         StringBuilder sb = new StringBuilder();
         sb.append("token(");
@@ -176,12 +190,26 @@ public abstract class QueryBuilder {
         return new Delete.Builder(columns);
     }
 
+    /**
+     * Selects an element of a list by index.
+     *
+     * @param columnName the name of the list column.
+     * @param idx the index to select.
+     * @return {@code columnName[idx]}.
+     */
     public static String listElt(String columnName, int idx) {
         StringBuilder sb = new StringBuilder();
         Utils.appendName(columnName, sb);
         return sb.append("[").append(idx).append("]").toString();
     }
 
+    /**
+     * Selects an element of a map given a key.
+     *
+     * @param columnName the name of the map column.
+     * @param key the key to select with.
+     * @return {@code columnName[key]}.
+     */
     public static String mapElt(String columnName, Object key) {
         StringBuilder sb = new StringBuilder();
         Utils.appendName(columnName, sb);

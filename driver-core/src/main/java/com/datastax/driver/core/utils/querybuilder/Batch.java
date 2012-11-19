@@ -4,6 +4,9 @@ import java.nio.ByteBuffer;
 
 import com.datastax.driver.core.CQLStatement;
 
+/**
+ * A built BATCH statement.
+ */
 public class Batch extends CQLStatement {
 
     private final ByteBuffer routingKey;
@@ -49,6 +52,15 @@ public class Batch extends CQLStatement {
         return builder.toString();
     }
 
+    /**
+     * Adds a USING clause to this statement.
+     *
+     * @param usings the options to use.
+     * @return this statement.
+     *
+     * @throws IllegalStateException if a USING clause has already been
+     * provided.
+     */
     public Batch using(Using... usings) {
         if (this.usings != null)
             throw new IllegalStateException("A USING clause has already been provided");

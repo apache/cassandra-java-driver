@@ -2,6 +2,9 @@ package com.datastax.driver.core.utils.querybuilder;
 
 import com.datastax.driver.core.TableMetadata;
 
+/**
+ * A built DELETE statement.
+ */
 public class Delete extends BuiltStatement {
 
     Delete(String keyspace, String table, String[] columnNames, Clause[] clauses, Using[] usings) {
@@ -47,6 +50,14 @@ public class Delete extends BuiltStatement {
             this.columnNames = columnNames;
         }
 
+        /**
+         * Adds the table to delete from.
+         *
+         * @param table the name of the table to delete from.
+         * @return this builder.
+         *
+         * @throws IllegalStateException if a FROM clause has already been provided.
+         */
         public Builder from(String table) {
             if (table != null && tableMetadata != null)
                 throw new IllegalStateException("A FROM clause has already been provided");
@@ -54,6 +65,15 @@ public class Delete extends BuiltStatement {
             return from(null, table);
         }
 
+        /**
+         * Adds the table to delete from.
+         *
+         * @param keyspace the name of the keyspace to delete from.
+         * @param table the name of the table to delete from.
+         * @return this builder.
+         *
+         * @throws IllegalStateException if a FROM clause has already been provided.
+         */
         public Builder from(String keyspace, String table) {
             if (table != null && tableMetadata != null)
                 throw new IllegalStateException("A FROM clause has already been provided");
@@ -63,6 +83,14 @@ public class Delete extends BuiltStatement {
             return this;
         }
 
+        /**
+         * Adds the table to delete from.
+         *
+         * @param table the table to delete from.
+         * @return this builder.
+         *
+         * @throws IllegalStateException if a FROM clause has already been provided.
+         */
         public Builder from(TableMetadata table) {
             if (table != null && tableMetadata != null)
                 throw new IllegalStateException("A FROM clause has already been provided");
@@ -71,6 +99,15 @@ public class Delete extends BuiltStatement {
             return this;
         }
 
+        /**
+         * Adds a USING clause to this statement.
+         *
+         * @param usings the options to use.
+         * @return this builderj.
+         *
+         * @throws IllegalStateException if a USING clause has already been
+         * provided.
+         */
         public Builder using(Using... usings) {
             if (this.usings != null)
                 throw new IllegalStateException("A USING clause has already been provided");
@@ -79,10 +116,22 @@ public class Delete extends BuiltStatement {
             return this;
         }
 
+        /**
+         * Adds a WHERE clause to this statement.
+         *
+         * @param clause the clause to add.
+         * @return the newly built UPDATE statement.
+         *
+         * @throws IllegalStateException if WHERE clauses have already been
+         * provided.
+         */
         public Delete where(Clause... clauses) {
-            return tableMetadata == null
-                 ? new Delete(keyspace, table, columnNames, clauses, usings)
-                 : new Delete(tableMetadata, columnNames, clauses, usings);
+            if (tableMetadata != null)
+                return new Delete(tableMetadata, columnNames, clauses, usings);
+            else if (table != null)
+                return new Delete(keyspace, table, columnNames, clauses, usings);
+            else
+                throw new IllegalStateException("Missing SET clause");
         }
     }
 }

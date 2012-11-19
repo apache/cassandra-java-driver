@@ -2,6 +2,9 @@ package com.datastax.driver.core.utils.querybuilder;
 
 import com.datastax.driver.core.TableMetadata;
 
+/**
+ * A built INSERT statement.
+ */
 public class Insert extends BuiltStatement {
 
     private boolean usingsProvided;
@@ -31,6 +34,15 @@ public class Insert extends BuiltStatement {
             maybeAddRoutingKey(columnNames[i], values[i]);
     }
 
+    /**
+     * Adds a USING clause to this statement.
+     *
+     * @param usings the options to use.
+     * @return this statement.
+     *
+     * @throws IllegalStateException if a USING clause has already been
+     * provided.
+     */
     public Insert using(Using... usings) {
         if (usingsProvided)
             throw new IllegalStateException("A USING clause has already been provided");
@@ -61,6 +73,12 @@ public class Insert extends BuiltStatement {
             this.columnNames = columnNames;
         }
 
+        /**
+         * Sets the table to insert into.
+         *
+         * @param table the name of the table to insert into.
+         * @return a new in-construction INSERT statement that inserts into {@code table}.
+         */
         public Builder into(String table) {
             if (table != null && tableMetadata != null)
                 throw new IllegalStateException("An INTO clause has already been provided");
@@ -68,6 +86,13 @@ public class Insert extends BuiltStatement {
             return into(null, table);
         }
 
+        /**
+         * Sets the table to insert into.
+         *
+         * @param keyspace the name of the keyspace to insert into.
+         * @param table the name of the table to insert into.
+         * @return a new in-construction INSERT statement that inserts into {@code keyspace.table}.
+         */
         public Builder into(String keyspace, String table) {
             if (table != null && tableMetadata != null)
                 throw new IllegalStateException("An INTO clause has already been provided");
@@ -77,6 +102,12 @@ public class Insert extends BuiltStatement {
             return this;
         }
 
+        /**
+         * Sets the table to insert into.
+         *
+         * @param table the name of the table to insert into.
+         * @return a new in-construction INSERT statement that inserts into {@code table}.
+         */
         public Builder into(TableMetadata table) {
             if (table != null && tableMetadata != null)
                 throw new IllegalStateException("An INTO clause has already been provided");
@@ -85,14 +116,30 @@ public class Insert extends BuiltStatement {
             return this;
         }
 
+        /**
+         * Specify the values to insert for the insert columns.
+         *
+         * @param values the values to insert. The {@code i}th value
+         * corresponds to the {@code i}th column used when constructing this
+         * {@code Insert.Builder object}.
+         * @return the newly built UPDATE statement.
+         *
+         * @throws IllegalArgumentException if the number of provided values
+         * doesn't correspond to the number of columns used when constructing
+         * this {@code Insert.Builder object}.
+         * @throws IllegalStateException if no INTO clause have been defined.
+         */
         public Insert values(Object... values) {
 
             if (values.length != columnNames.length)
                 throw new IllegalArgumentException(String.format("Number of provided values (%d) doesn't match the number of inserted columns (%d)", values.length, columnNames.length));
 
-            return tableMetadata == null
-                 ? new Insert(keyspace, table, columnNames, values)
-                 : new Insert(tableMetadata, columnNames, values);
+            if (tableMetadata != null)
+                return new Insert(tableMetadata, columnNames, values);
+            else if (table != null)
+                return new Insert(keyspace, table, columnNames, values);
+            else
+                throw new IllegalStateException("Missing INTO clause");
         }
     }
 }
