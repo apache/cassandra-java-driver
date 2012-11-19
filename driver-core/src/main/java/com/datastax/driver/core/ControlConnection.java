@@ -357,5 +357,6 @@ class ControlConnection implements Host.StateListener {
 
     public void onRemove(Host host) {
         balancingPolicy.onRemove(host);
+        refreshNodeListAndTokenMap();
     }
 }
