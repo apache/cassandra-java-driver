@@ -11,8 +11,9 @@ relatively low-level, API on top of which higher level layer can build.
 
 The driver contains the following modules:
  - driver-core: the core layer.
- - driver-mapping: ...
  - driver-examples: example applications using the other modules. Those are
    only meant for demonstration purposes.
+
+More modules including a simple object mapper will come shortly.
 
 Please refer to the README of each module for more information.
