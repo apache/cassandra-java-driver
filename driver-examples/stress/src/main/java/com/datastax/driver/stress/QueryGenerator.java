@@ -5,6 +5,8 @@ import java.util.Iterator;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.*;
 
+import joptsimple.OptionSet;
+
 public abstract class QueryGenerator implements Iterator<QueryGenerator.Request> {
 
     static final Request DONE_MARKER = new Request() {
@@ -21,7 +23,7 @@ public abstract class QueryGenerator implements Iterator<QueryGenerator.Request>
     public abstract void createSchema(Session session) throws NoHostAvailableException;
 
     public interface Builder {
-        public QueryGenerator create(int iterations);
+        public QueryGenerator create(int iterations, OptionSet options);
     }
 
     public interface Request {

@@ -47,7 +47,7 @@ public class Cluster {
     static {
         org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
         if (!rootLogger.getAllAppenders().hasMoreElements()) {
-            rootLogger.setLevel(Level.DEBUG);
+            rootLogger.setLevel(Level.INFO);
             rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%-5p [%t]: %m%n")));
         }
     }

@@ -27,37 +27,56 @@ public class Stress {
         generators.put(name, generator);
     }
 
+    private static void printHelp(OptionParser parser, Collection<String> generators) throws Exception {
+
+        System.out.println("Usage: stress <generator> [<option>]*\n");
+        System.out.println("Where <generator> can be one of " + generators);
+        parser.printHelpOn(System.out);
+    }
+
     public static void main(String[] args) throws Exception {
 
-        register("insert", Generators.SIMPLE_INSERTER);
-        register("insert_prepared", Generators.SIMPLE_PREPARED_INSERTER);
+        OptionParser parser = new OptionParser();
+
+        parser.accepts("?", "Show this help message");
+        parser.accepts("n", "Number of iterations for the query generator").withRequiredArg().ofType(Integer.class).defaultsTo(1000000);
+        parser.accepts("t", "Number of threads to use").withRequiredArg().ofType(Integer.class).defaultsTo(50);
+        parser.accepts("csv", "Save metrics into csv instead of displaying on stdout");
+        parser.accepts("columns-per-row", "Number of columns per CQL3 row").withRequiredArg().ofType(Integer.class).defaultsTo(5);
+        parser.accepts("value-size", "The size in bytes for column values").withRequiredArg().ofType(Integer.class).defaultsTo(34);
+
+        register("insert", Generators.CASSANDRA_INSERTER);
+        register("insert_prepared", Generators.CASSANDRA_PREPARED_INSERTER);
 
         if (args.length < 1) {
             System.err.println("Missing argument, you must at least provide the action to do");
+            printHelp(parser, generators.keySet());
             System.exit(1);
         }
 
         String action = args[0];
         if (!generators.containsKey(action)) {
-            System.err.println(String.format("Unknown generator '%s' (known generators: %s)", action, generators.keySet()));
+            System.err.println(String.format("Unknown generator '%s'", action));
+            printHelp(parser, generators.keySet());
             System.exit(1);
         }
 
         String[] opts = new String[args.length - 1];
         System.arraycopy(args, 1, opts, 0, opts.length);
 
-        OptionParser parser = new OptionParser();
+        OptionSet options = null;
+        try {
+            options = parser.parse(opts);
+        } catch (Exception e) {
+            System.err.println("Error parsing options: " + e.getMessage());
+            printHelp(parser, generators.keySet());
+            System.exit(1);
+        }
 
-        parser.accepts("n", "Number of iterations for the query generator (default: 1,000,000)").withRequiredArg().ofType(Integer.class);
-        parser.accepts("t", "Number of threads to use (default: 30)").withRequiredArg().ofType(Integer.class);
-        parser.accepts("csv", "Save metrics into csv instead of displaying on stdout");
+        int iterations = (Integer)options.valueOf("n");
+        int threads = (Integer)options.valueOf("t");
 
-        OptionSet options = parser.parse(opts);
-
-        int ITERATIONS = options.has("n") ? (Integer)options.valueOf("n") : 1000000;
-        int THREADS = options.has("t") ? (Integer)options.valueOf("t") : 30;
-
-        QueryGenerator generator = generators.get(action).create(ITERATIONS);
+        QueryGenerator generator = generators.get(action).create(iterations, options);
 
         boolean async = false;
         boolean useCsv = options.has("csv");
@@ -83,9 +102,9 @@ public class Stress {
             Reporter reporter = new Reporter(useCsv);
             Producer producer = new Producer(generator, workQueue);
 
-            Consumer[] consumers = new Consumer[THREADS];
+            Consumer[] consumers = new Consumer[threads];
             Consumer.Asynchronous.ResultHandler resultHandler = async ? new Consumer.Asynchronous.ResultHandler() : null;
-            for (int i = 0; i < THREADS; i++) {
+            for (int i = 0; i < threads; i++) {
                 consumers[i] = async
                              ? new Consumer.Asynchronous(session, workQueue, reporter, resultHandler)
                              : new Consumer(session, workQueue, reporter);

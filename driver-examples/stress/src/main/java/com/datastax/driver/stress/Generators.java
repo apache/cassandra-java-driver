@@ -1,22 +1,54 @@
 package com.datastax.driver.examples.stress;
 
+import java.nio.ByteBuffer;
+import java.util.Random;
+
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.*;
 
+import joptsimple.OptionSet;
+
+import org.apache.cassandra.utils.ByteBufferUtil;
+
 public class Generators {
 
-    public static final QueryGenerator.Builder SIMPLE_INSERTER = new QueryGenerator.Builder() {
-        public QueryGenerator create(final int iterations) {
+    private static ThreadLocal<Random> random = new ThreadLocal<Random>() {
+        protected Random initialValue() {
+            return new Random();
+        }
+    };
+
+    private static void createCassandraStressTables(Session session, OptionSet options) throws NoHostAvailableException {
+        try {
+            session.execute("CREATE KEYSPACE stress WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
+        } catch (AlreadyExistsException e) { /* It's ok, ignore */ }
+
+        session.execute("USE stress");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("CREATE TABLE Standard1 (key int PRIMARY KEY");
+        for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i)
+            sb.append(", C").append(i).append(" blob");
+        sb.append(")");
+
+        try {
+            session.execute(sb.toString());
+        } catch (AlreadyExistsException e) { /* It's ok, ignore */ }
+    }
+
+    private static ByteBuffer makeValue(OptionSet options) {
+        byte[] value = new byte[(Integer)options.valueOf("value-size")];
+        random.get().nextBytes(value);
+        return ByteBuffer.wrap(value);
+    }
+
+    public static final QueryGenerator.Builder CASSANDRA_INSERTER = new QueryGenerator.Builder() {
+        public QueryGenerator create(final int iterations, final OptionSet options) {
             return new QueryGenerator(iterations) {
                 private int i;
 
                 public void createSchema(Session session) throws NoHostAvailableException {
-                    try { session.execute("CREATE KEYSPACE stress_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }"); } catch (AlreadyExistsException e) { /* It's ok, ignore */ }
-                    session.execute("USE stress_ks");
-
-                    try {
-                        session.execute("CREATE TABLE stress_cf (k int, c int, v int, PRIMARY KEY (k, c))");
-                    } catch (AlreadyExistsException e) { /* It's ok, ignore */ }
+                    createCassandraStressTables(session, options);
                 }
 
                 public boolean hasNext() {
@@ -24,9 +56,15 @@ public class Generators {
                 }
 
                 public QueryGenerator.Request next() {
-                    String query = String.format("INSERT INTO stress_cf(k, c, v) VALUES (%d, %d, %d)", i, i, i);
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("UPDATE Standard1 SET ");
+                    for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i) {
+                        if (i > 0) sb.append(", ");
+                        sb.append("C").append(i).append("='").append(ByteBufferUtil.bytesToHex(makeValue(options))).append("'");
+                    }
+                    sb.append(" WHERE key = ").append(i);
                     ++i;
-                    return new QueryGenerator.Request.SimpleQuery(new SimpleStatement(query));
+                    return new QueryGenerator.Request.SimpleQuery(new SimpleStatement(sb.toString()));
                 }
 
                 public void remove() {
@@ -36,21 +74,23 @@ public class Generators {
         }
     };
 
-    public static final QueryGenerator.Builder SIMPLE_PREPARED_INSERTER = new QueryGenerator.Builder() {
-        public QueryGenerator create(final int iterations) {
+    public static final QueryGenerator.Builder CASSANDRA_PREPARED_INSERTER = new QueryGenerator.Builder() {
+        public QueryGenerator create(final int iterations, final OptionSet options) {
             return new QueryGenerator(iterations) {
                 private int i;
                 private PreparedStatement stmt;
 
                 public void createSchema(Session session) throws NoHostAvailableException {
-                    try { session.execute("CREATE KEYSPACE stress_ks WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }"); } catch (AlreadyExistsException e) { /* It's ok, ignore */ }
-                    session.execute("USE stress_ks");
+                    createCassandraStressTables(session, options);
 
-                    try {
-                        session.execute("CREATE TABLE stress_cf (k int, c int, v int, PRIMARY KEY (k, c))");
-                    } catch (AlreadyExistsException e) { /* It's ok, ignore */ }
-
-                    stmt = session.prepare("INSERT INTO stress_cf(k, c, v) VALUES (?, ?, ?)");
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("UPDATE Standard1 SET ");
+                    for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i) {
+                        if (i > 0) sb.append(", ");
+                        sb.append("C").append(i).append("=?");
+                    }
+                    sb.append(" WHERE key = ?");
+                    stmt = session.prepare(sb.toString());
                 }
 
                 public boolean hasNext() {
@@ -58,7 +98,10 @@ public class Generators {
                 }
 
                 public QueryGenerator.Request next() {
-                    BoundStatement b = stmt.bind(i, i, i);
+                    BoundStatement b = stmt.newBoundStatement();
+                    b.setInt("key", i);
+                    for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i)
+                        b.setBytes("c" + i, makeValue(options));
                     ++i;
                     return new QueryGenerator.Request.PreparedQuery(b);
                 }
