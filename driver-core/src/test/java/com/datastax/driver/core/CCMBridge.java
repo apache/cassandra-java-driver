@@ -150,7 +150,7 @@ public class CCMBridge {
             schemaCreated = false;
             cassandraCluster = CCMBridge.create("test", 1);
             try {
-                cluster = new Cluster.Builder().addContactPoints("127.0.0.1").build();
+                cluster = Cluster.builder().addContactPoints("127.0.0.1").build();
                 session = cluster.connect();
             } catch (NoHostAvailableException e) {
                 erroredOut = true;
