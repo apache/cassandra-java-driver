@@ -85,7 +85,7 @@ public abstract class TestUtils {
         return bs;
     }
 
-    public static Object getValue(CQLRow row, String name, DataType type) {
+    public static Object getValue(Row row, String name, DataType type) {
         switch (type.getName()) {
             case ASCII:
                 return row.getString(name);

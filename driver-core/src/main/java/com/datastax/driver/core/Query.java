@@ -5,19 +5,19 @@ import java.nio.ByteBuffer;
 /**
  * An executable query.
  * <p>
- * This represents either a {@link CQLStatement} or a {@link BoundStatement}
+ * This represents either a {@link Statement} or a {@link BoundStatement}
  * along with the query options (consistency level, whether to trace the query, ...).
  */
 public abstract class Query {
 
-    // An exception to the CQLStatement or BoundStatement rule above. This is
+    // An exception to the Statement or BoundStatement rule above. This is
     // used when preparing a statement and for other internal queries. Do not expose publicly.
     static final Query DEFAULT = new Query() { public ByteBuffer getRoutingKey() { return null; } };
 
     private volatile ConsistencyLevel consistency;
     private volatile boolean traceQuery;
 
-    // We don't want to expose the constructor, because the code rely on this being only subclassed by CQLStatement and BoundStatement
+    // We don't want to expose the constructor, because the code rely on this being only subclassed by Statement and BoundStatement
     Query() {
         this.consistency = ConsistencyLevel.ONE;
     }

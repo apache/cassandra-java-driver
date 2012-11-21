@@ -32,32 +32,32 @@ public class ClusterMetadata {
     // Synchronized to make it easy to detect dropped keyspaces
     synchronized void rebuildSchema(String keyspace, String table, ResultSet ks, ResultSet cfs, ResultSet cols) {
 
-        Map<String, List<CQLRow>> cfDefs = new HashMap<String, List<CQLRow>>();
-        Map<String, Map<String, List<CQLRow>>> colsDefs = new HashMap<String, Map<String, List<CQLRow>>>();
+        Map<String, List<Row>> cfDefs = new HashMap<String, List<Row>>();
+        Map<String, Map<String, List<Row>>> colsDefs = new HashMap<String, Map<String, List<Row>>>();
 
         // Gather cf defs
-        for (CQLRow row : cfs) {
+        for (Row row : cfs) {
             String ksName = row.getString(KeyspaceMetadata.KS_NAME);
-            List<CQLRow> l = cfDefs.get(ksName);
+            List<Row> l = cfDefs.get(ksName);
             if (l == null) {
-                l = new ArrayList<CQLRow>();
+                l = new ArrayList<Row>();
                 cfDefs.put(ksName, l);
             }
             l.add(row);
         }
 
         // Gather columns per Cf
-        for (CQLRow row : cols) {
+        for (Row row : cols) {
             String ksName = row.getString(KeyspaceMetadata.KS_NAME);
             String cfName = row.getString(TableMetadata.CF_NAME);
-            Map<String, List<CQLRow>> colsByCf = colsDefs.get(ksName);
+            Map<String, List<Row>> colsByCf = colsDefs.get(ksName);
             if (colsByCf == null) {
-                colsByCf = new HashMap<String, List<CQLRow>>();
+                colsByCf = new HashMap<String, List<Row>>();
                 colsDefs.put(ksName, colsByCf);
             }
-            List<CQLRow> l = colsByCf.get(cfName);
+            List<Row> l = colsByCf.get(cfName);
             if (l == null) {
-                l = new ArrayList<CQLRow>();
+                l = new ArrayList<Row>();
                 colsByCf.put(cfName, l);
             }
             l.add(row);
@@ -66,7 +66,7 @@ public class ClusterMetadata {
         if (table == null) {
             assert ks != null;
             Set<String> addedKs = new HashSet<String>();
-            for (CQLRow ksRow : ks) {
+            for (Row ksRow : ks) {
                 String ksName = ksRow.getString(KeyspaceMetadata.KS_NAME);
                 KeyspaceMetadata ksm = KeyspaceMetadata.build(ksRow);
 
@@ -103,15 +103,15 @@ public class ClusterMetadata {
         }
     }
 
-    private static void buildTableMetadata(KeyspaceMetadata ksm, List<CQLRow> cfRows, Map<String, List<CQLRow>> colsDefs) {
-        for (CQLRow cfRow : cfRows) {
+    private static void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, List<Row>> colsDefs) {
+        for (Row cfRow : cfRows) {
             String cfName = cfRow.getString(TableMetadata.CF_NAME);
             TableMetadata tm = TableMetadata.build(ksm, cfRow, !colsDefs.isEmpty());
 
             if (colsDefs == null || colsDefs.get(cfName) == null)
                 continue;
 
-            for (CQLRow colRow : colsDefs.get(cfName)) {
+            for (Row colRow : colsDefs.get(cfName)) {
                 ColumnMetadata cm = ColumnMetadata.build(tm, colRow);
             }
         }

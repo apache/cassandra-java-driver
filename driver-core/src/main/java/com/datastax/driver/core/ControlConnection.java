@@ -241,7 +241,7 @@ class ControlConnection implements Host.StateListener {
         Map<Host, Collection<String>> tokenMap = new HashMap<Host, Collection<String>>();
 
         // Update cluster name, DC and rack for the one node we are connected to
-        CQLRow localRow = localFuture.get().fetchOne();
+        Row localRow = localFuture.get().fetchOne();
         if (localRow != null) {
             String clusterName = localRow.getString("cluster_name");
             if (clusterName != null)
@@ -266,7 +266,7 @@ class ControlConnection implements Host.StateListener {
         List<String> racks = new ArrayList<String>();
         List<Set<String>> allTokens = new ArrayList<Set<String>>();
 
-        for (CQLRow row : peersFuture.get()) {
+        for (Row row : peersFuture.get()) {
             if (!row.isNull("peer")) {
                 foundHosts.add(row.getInet("peer"));
                 dcs.add(row.getString("data_center"));
@@ -310,11 +310,11 @@ class ControlConnection implements Host.StateListener {
 
             Set<UUID> versions = new HashSet<UUID>();
 
-            //CQLRow localRow = localFuture.get().fetchOne();
+            //Row localRow = localFuture.get().fetchOne();
             //if (localRow != null && !localRow.isNull("schema_version"))
             //    versions.add(row.getUUID("schema_version"));
 
-            for (CQLRow row : peersFuture.get()) {
+            for (Row row : peersFuture.get()) {
                 if (row.isNull("peer") || row.isNull("schema_version"))
                     continue;
 

@@ -48,7 +48,7 @@ public class TableMetadata {
         this.options = options;
     }
 
-    static TableMetadata build(KeyspaceMetadata ksm, CQLRow row, boolean hasColumnMetadata) {
+    static TableMetadata build(KeyspaceMetadata ksm, Row row, boolean hasColumnMetadata) {
         try {
             String name = row.getString(CF_NAME);
 
@@ -406,7 +406,7 @@ public class TableMetadata {
         private final Map<String, String> compaction = new HashMap<String, String>();
         private final Map<String, String> compression = new HashMap<String, String>();
 
-        Options(CQLRow row, boolean isCompactStorage) {
+        Options(Row row, boolean isCompactStorage) {
             this.isCompactStorage = isCompactStorage;
             this.comment = row.isNull(COMMENT) ? "" : row.getString(COMMENT);
             this.readRepair = row.getDouble(READ_REPAIR);

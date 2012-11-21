@@ -4,10 +4,10 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import com.datastax.driver.core.ColumnMetadata;
-import com.datastax.driver.core.CQLStatement;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TableMetadata;
 
-abstract class BuiltStatement extends CQLStatement {
+abstract class BuiltStatement extends Statement {
 
     private final List<ColumnMetadata> partitionKey;
     private final ByteBuffer[] routingKey;

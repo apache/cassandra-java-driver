@@ -5,9 +5,9 @@ package com.datastax.driver.core;
  * <p>
  * This class represents a query string along with query options. This class
  * can be extended but {@link SimpleStatement} is provided to build a {@code
- * CQLStatement} directly from its query string.
+ * Statement} directly from its query string.
  */
-public abstract class CQLStatement extends Query {
+public abstract class Statement extends Query {
 
     /**
      * The query string for this statement.

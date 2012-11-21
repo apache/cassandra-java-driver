@@ -20,14 +20,14 @@ public class ColumnMetadata {
     private final DataType type;
     private final IndexMetadata index;
 
-    ColumnMetadata(TableMetadata table, String name, DataType type, CQLRow row) {
+    ColumnMetadata(TableMetadata table, String name, DataType type, Row row) {
         this.table = table;
         this.name = name;
         this.type = type;
         this.index = IndexMetadata.build(this, row);
     }
 
-    static ColumnMetadata build(TableMetadata tm, CQLRow row) {
+    static ColumnMetadata build(TableMetadata tm, Row row) {
         try {
             String name = row.getString(COLUMN_NAME);
             AbstractType<?> t = TypeParser.parse(row.getString(VALIDATOR));
@@ -131,7 +131,7 @@ public class ColumnMetadata {
             return String.format("CREATE INDEX %s ON %s.%s (%s)", name, table.getKeyspace().getName(), table.getName(), column.getName());
         }
 
-        private static IndexMetadata build(ColumnMetadata column, CQLRow row) {
+        private static IndexMetadata build(ColumnMetadata column, Row row) {
             if (row == null)
                 return null;
 

@@ -11,7 +11,7 @@ import static com.datastax.driver.core.TestUtils.*;
 /**
  * Prepared statement tests.
  *
- * Note: this class also happens to test all the get methods from CQLRow.
+ * Note: this class also happens to test all the get methods from Row.
  */
 public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -92,7 +92,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             BoundStatement bs = ps.newBoundStatement();
             session.execute(setBoundValue(bs, name, type, getFixedValue(type)));
 
-            CQLRow row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).fetchOne();
+            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).fetchOne();
             assertEquals("For type " + type, getFixedValue(type), getValue(row, name, type));
         }
     }
@@ -112,7 +112,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             BoundStatement bs = ps.newBoundStatement();
             session.execute(setBoundValue(bs, name, type, value));
 
-            CQLRow row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).fetchOne();
+            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).fetchOne();
             assertEquals("For type " + type, value, getValue(row, name, type));
         }
     }
@@ -132,7 +132,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             BoundStatement bs = ps.newBoundStatement();
             session.execute(setBoundValue(bs, name, type, value));
 
-            CQLRow row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).fetchOne();
+            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).fetchOne();
             assertEquals("For type " + type, value, getValue(row, name, type));
         }
     }
@@ -157,7 +157,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 BoundStatement bs = ps.newBoundStatement();
                 session.execute(setBoundValue(bs, name, type, value));
 
-                CQLRow row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).fetchOne();
+                Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).fetchOne();
                 assertEquals("For type " + type, value, getValue(row, name, type));
             }
         }

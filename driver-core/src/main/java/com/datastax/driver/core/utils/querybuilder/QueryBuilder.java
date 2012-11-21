@@ -1,6 +1,6 @@
 package com.datastax.driver.core.utils.querybuilder;
 
-import com.datastax.driver.core.CQLStatement;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -222,9 +222,9 @@ public abstract class QueryBuilder {
      * Built a new BATCH query on the provided statement.
      *
      * @param statements the statements to batch.
-     * @return a new {@code CQLStatement} that batch {@code statements}.
+     * @return a new {@code Statement} that batch {@code statements}.
      */
-    public static Batch batch(CQLStatement... statements) {
+    public static Batch batch(Statement... statements) {
         return new Batch(statements);
     }
 }

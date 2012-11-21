@@ -31,7 +31,7 @@ import org.apache.log4j.PatternLayout;
  *   Cluster cluster = new Cluster.Builder().addContactPoint("192.168.0.1").build();
  *   Session session = cluster.connect("db1");
  *
- *   for (CQLRow row : session.execute("SELECT * FROM table1"))
+ *   for (Row row : session.execute("SELECT * FROM table1"))
  *       // do something ...
  * </pre>
  * <p>
