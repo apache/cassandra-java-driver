@@ -166,13 +166,13 @@ class RetryingCallback implements Connection.ResponseCallback {
                             assert err.error instanceof ReadTimeoutException;
                             ReadTimeoutException rte = (ReadTimeoutException)err.error;
                             ConsistencyLevel rcl = ConsistencyLevel.from(rte.consistency);
-                            retry = retryPolicy.onReadTimeout(rcl, rte.received, rte.blockFor, rte.dataPresent, queryRetries);
+                            retry = retryPolicy.onReadTimeout(rcl, rte.blockFor, rte.received, rte.dataPresent, queryRetries);
                             break;
                         case WRITE_TIMEOUT:
                             assert err.error instanceof WriteTimeoutException;
                             WriteTimeoutException wte = (WriteTimeoutException)err.error;
                             ConsistencyLevel wcl = ConsistencyLevel.from(wte.consistency);
-                            retry = retryPolicy.onWriteTimeout(wcl, WriteType.from(wte.writeType), wte.received, wte.blockFor, queryRetries);
+                            retry = retryPolicy.onWriteTimeout(wcl, WriteType.from(wte.writeType), wte.blockFor, wte.received, queryRetries);
                             break;
                         case UNAVAILABLE:
                             assert err.error instanceof UnavailableException;
