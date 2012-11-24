@@ -124,7 +124,7 @@ class Connection extends org.apache.cassandra.transport.Connection
                 case READY:
                     break;
                 case ERROR:
-                    throw defunct(new TransportException(address, String.format("Error initializing connection", ((ErrorMessage)response).error)));
+                    throw defunct(new TransportException(address, String.format("Error initializing connection: %s", ((ErrorMessage)response).error.getMessage())));
                 case AUTHENTICATE:
                     CredentialsMessage creds = new CredentialsMessage();
                     creds.credentials.putAll(factory.authProvider.getAuthInfos(address));
