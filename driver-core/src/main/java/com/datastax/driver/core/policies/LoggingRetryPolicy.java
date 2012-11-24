@@ -36,11 +36,11 @@ public class LoggingRetryPolicy implements RetryPolicy {
         RetryDecision decision = policy.onReadTimeout(cl, requiredResponses, receivedResponses, dataRetrieved, nbRetry);
         switch (decision.getType()) {
             case IGNORE:
-                String f1 = "Ignoring read timeout (initial consistency: %s, required responses: %i, received responses: %i, data retrieved: %b, retries: %i)";
+                String f1 = "Ignoring read timeout (initial consistency: %s, required responses: %d, received responses: %d, data retrieved: %b, retries: %d)";
                 logger.info(String.format(f1, cl, requiredResponses, receivedResponses, dataRetrieved, nbRetry));
                 break;
             case RETRY:
-                String f2 = "Retrying on read timeout at consistency %s (initial consistency: %s, required responses: %i, received responses: %i, data retrieved: %b, retries: %i)";
+                String f2 = "Retrying on read timeout at consistency %s (initial consistency: %s, required responses: %d, received responses: %d, data retrieved: %b, retries: %d)";
                 logger.info(String.format(f2, cl(cl, decision), cl, requiredResponses, receivedResponses, dataRetrieved, nbRetry));
                 break;
         }
@@ -51,11 +51,11 @@ public class LoggingRetryPolicy implements RetryPolicy {
         RetryDecision decision = policy.onWriteTimeout(cl, writeType, requiredAcks, receivedAcks, nbRetry);
         switch (decision.getType()) {
             case IGNORE:
-                String f1 = "Ignoring write timeout (initial consistency: %s, write type: %s, required acknowledgments: %i, received acknowledgments: %i, retries: %i)";
+                String f1 = "Ignoring write timeout (initial consistency: %s, write type: %s, required acknowledgments: %d, received acknowledgments: %d, retries: %d)";
                 logger.info(String.format(f1, cl, writeType, requiredAcks, receivedAcks, nbRetry));
                 break;
             case RETRY:
-                String f2 = "Retrying on write timeout at consistency %s(initial consistency: %s, write type: %s, required acknowledgments: %i, received acknowledgments: %i, retries: %i)";
+                String f2 = "Retrying on write timeout at consistency %s(initial consistency: %s, write type: %s, required acknowledgments: %d, received acknowledgments: %d, retries: %d)";
                 logger.info(String.format(f2, cl(cl, decision), cl, writeType, requiredAcks, receivedAcks, nbRetry));
                 break;
         }
@@ -66,11 +66,11 @@ public class LoggingRetryPolicy implements RetryPolicy {
         RetryDecision decision = policy.onUnavailable(cl, requiredReplica, aliveReplica, nbRetry);
         switch (decision.getType()) {
             case IGNORE:
-                String f1 = "Ignoring unavailable exception (initial consistency: %s, required replica: %i, alive replica: %i, retries: %i)";
+                String f1 = "Ignoring unavailable exception (initial consistency: %s, required replica: %d, alive replica: %d, retries: %d)";
                 logger.info(String.format(f1, cl, requiredReplica, aliveReplica, nbRetry));
                 break;
             case RETRY:
-                String f2 = "Retrying on unavailable exception at consistency %s (initial consistency: %s, required replica: %i, alive replica: %i, retries: %i)";
+                String f2 = "Retrying on unavailable exception at consistency %s (initial consistency: %s, required replica: %d, alive replica: %d, retries: %d)";
                 logger.info(String.format(f2, cl(cl, decision), cl, requiredReplica, aliveReplica, nbRetry));
                 break;
         }
