@@ -9,6 +9,34 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 /**
  * Metadata describing the columns returned in a {@link ResultSet} or a
  * {@link PreparedStatement}.
+ * <p>
+ * A {@code columnDefinitions}} instance is mainly a list of
+ * {@code ColumnsDefinitions.Definition}. The definition/metadata for a column
+ * can be accessed in one of two ways:
+ * <ul>
+ *   <li>by index</li>
+ *   <li>by name</li>
+ * </ul>
+ * <p>
+ * When accessed by name, column selection is case insentive. In case multiple
+ * columns only differ by the case of their name, then the column returned with
+ * be the one that has been defined in CQL without forcing case sensitivity
+ * (i.e. it has either been defined without quotes, or it is fully lowercase).
+ * If none of the columns have been thus defined, the first column matching
+ * (with case insensitivity) is returned. You can however always force the case
+ * of a selection by double quoting the name.
+ * <p>
+ * So for instance:
+ * <ul>
+ *   <li>If {@code cd} contains column {@code fOO}, then {@code cd.contains("foo")},
+ *   {@code cd.contains("fOO")} and {@code cd.contains("Foo")} will return {@code true}.</li>
+ *   <li>If {@code cd} contains both of {@code foo} and {@code FOO} then:
+ *      <ul>
+ *          <li>{@code cd.getType("foo")}, {@code cd.getType("fOO")} and {@code cd.getType("FOO")}
+ *          will all match column {@code foo}.</li>
+ *          <li>{@code cd.getType("\"FOO\"")} will match column {@code FOO}</li>
+ *      </ul>
+ * </ul>
  */
 public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition> {
 
@@ -22,8 +50,22 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         this.byIdx = defs;
         this.byName = new HashMap<String, Integer>(defs.length);
 
-        for (int i = 0; i < defs.length; i++)
-            this.byName.put(defs[i].name, i);
+        for (int i = 0; i < defs.length; i++) {
+            String name = defs[i].name;
+            String lowerCased = name.toLowerCase();
+            Integer previous = this.byName.put(lowerCased, i);
+            if (previous != null) {
+                // We have 2 columns that only differ by case. If one has been defined with
+                // "case insensitivity", set this one, otherwise keep the first found.
+                if (name.equals(lowerCased)) {
+                    assert !defs[previous].name.equals(lowerCased);
+                    this.byName.put(defs[previous].name, previous);
+                } else {
+                    this.byName.put(lowerCased, previous);
+                    this.byName.put(name, i);
+                }
+            }
+        }
     }
 
     /**
@@ -43,7 +85,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
      * {@code false} otherwise.
      */
     public boolean contains(String name) {
-        return byName.containsKey(name);
+        return findIdx(name) != null;
     }
 
     /**
@@ -156,8 +198,16 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         return sb.toString();
     }
 
+    Integer findIdx(String name) {
+        String trimmed = name.trim();
+        if (trimmed.length() >= 2 && trimmed.charAt(0) == '"' && trimmed.charAt(trimmed.length() - 1) == '"')
+            return byName.get(name.substring(1, trimmed.length() - 1));
+
+        return byName.get(name.toLowerCase());
+    }
+
     int getIdx(String name) {
-        Integer idx = byName.get(name);
+        Integer idx = findIdx(name);
         if (idx == null)
             throw new IllegalArgumentException(name + " is not a column defined in this metadata");
 
@@ -202,8 +252,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         private final String name;
         private final DataType type;
 
-        private Definition(String keyspace, String table, String name, DataType type) {
-
+        Definition(String keyspace, String table, String name, DataType type) {
             this.keyspace = keyspace;
             this.table = table;
             this.name = name;

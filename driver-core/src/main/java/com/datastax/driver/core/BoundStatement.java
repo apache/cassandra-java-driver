@@ -15,6 +15,10 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * <p>
  * Once a BoundStatement has values for all the variables of the {@link PreparedStatement}
  * it has been created from, it can executed (through {@link Session#execute}).
+ * <p>
+ * The values of a BoundStatement can be set by either index or name. When
+ * setting them by name, names follow the case insensitivity rules explained in
+ * {@link ColumnDefinitions}.
  */
 public class BoundStatement extends Query {
 

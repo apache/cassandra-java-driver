@@ -12,6 +12,10 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * A CQL Row returned in a {@link ResultSet}.
+ * <p>
+ * The values of a CQLRow can be retrieve by either index or name. When
+ * setting them by name, names follow the case insensitivity rules explained in
+ * {@link ColumnDefinitions}.
  */
 public class Row {
 

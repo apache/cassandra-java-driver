@@ -1,6 +1,7 @@
 package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -319,6 +320,19 @@ public class DataType {
      */
     public static Set<DataType> allPrimitiveTypes() {
         return primitveTypeSet;
+    }
+
+    @Override
+    public final int hashCode() {
+        return Arrays.hashCode(new Object[]{ name, typeArguments });
+    }
+
+    @Override
+    public final boolean equals(Object o) {
+        if(!(o instanceof DataType))
+            return false;
+
+        return name == ((DataType)o).name && typeArguments.equals(((DataType)o).typeArguments);
     }
 
     @Override
