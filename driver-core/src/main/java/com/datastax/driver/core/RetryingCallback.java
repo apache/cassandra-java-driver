@@ -79,22 +79,25 @@ class RetryingCallback implements Connection.ResponseCallback {
             return true;
         } catch (ConnectionException e) {
             // If we have any problem with the connection, move to the next node.
-            currentPool.returnConnection(connection);
+            if (connection != null)
+                currentPool.returnConnection(connection);
             logError(host.getAddress(), e.getMessage());
             return false;
         } catch (BusyConnectionException e) {
             // The pool shoudln't have give us a busy connection unless we've maxed up the pool, so move on to the next host.
-            currentPool.returnConnection(connection);
+            if (connection != null)
+                currentPool.returnConnection(connection);
             logError(host.getAddress(), e.getMessage());
             return false;
         } catch (TimeoutException e) {
             // We timeout, log it but move to the next node.
-            currentPool.returnConnection(connection);
+            if (connection != null)
+                currentPool.returnConnection(connection);
             logError(host.getAddress(), "Timeout while trying to acquire available connection");
-            currentPool.returnConnection(connection);
             return false;
         } catch (RuntimeException e) {
-            currentPool.returnConnection(connection);
+            if (connection != null)
+                currentPool.returnConnection(connection);
             logger.error("Unexpected error while querying " + host.getAddress(), e);
             logError(host.getAddress(), e.getMessage());
             return false;
