@@ -18,7 +18,7 @@ import com.datastax.driver.core.TableMetadata;
  * <p>
  * Note that it could be convenient to use an 'import static' to use the methods of this class.
  */
-public abstract class QueryBuilder {
+public final class QueryBuilder {
 
     private QueryBuilder() {}
 

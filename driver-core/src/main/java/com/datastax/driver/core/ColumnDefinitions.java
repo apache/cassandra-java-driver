@@ -18,13 +18,13 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  *   <li>by name</li>
  * </ul>
  * <p>
- * When accessed by name, column selection is case insentive. In case multiple
+ * When accessed by name, column selection is case insensitive. In case multiple
  * columns only differ by the case of their name, then the column returned with
- * be the one that has been defined in CQL without forcing case sensitivity
- * (i.e. it has either been defined without quotes, or it is fully lowercase).
+ * be the first column that has been defined in CQL without forcing case sensitivity
+ * (i.e. it has either been defined without quotes or is fully lowercase).
  * If none of the columns have been thus defined, the first column matching
- * (with case insensitivity) is returned. You can however always force the case
- * of a selection by double quoting the name.
+ * (with case insensitivity) is returned. You can force the case of a selection
+ * by double quoting the name.
  * <p>
  * So for instance:
  * <ul>
@@ -37,33 +37,31 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  *          <li>{@code cd.getType("\"FOO\"")} will match column {@code FOO}</li>
  *      </ul>
  * </ul>
+ * Note that the rules above means that if a {@code ColumnDefinitions} object
+ * contains multiple occurences of the exact same name (be it the same column
+ * multiple time, or columns from different tables with the same name), you
+ * will have to use selection by index to disambiguate.
  */
 public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition> {
 
     static final ColumnDefinitions EMPTY = new ColumnDefinitions(new Definition[0]);
 
     private final Definition[] byIdx;
-    private final Map<String, Integer> byName;
+    private final Map<String, int[]> byName;
 
     ColumnDefinitions(Definition[] defs) {
 
         this.byIdx = defs;
-        this.byName = new HashMap<String, Integer>(defs.length);
+        this.byName = new HashMap<String, int[]>(defs.length);
 
         for (int i = 0; i < defs.length; i++) {
-            String name = defs[i].name;
-            String lowerCased = name.toLowerCase();
-            Integer previous = this.byName.put(lowerCased, i);
+            // Be optimistic, 99% of the time, previous will be null.
+            int[] previous = this.byName.put(defs[i].name.toLowerCase(), new int[]{ i });
             if (previous != null) {
-                // We have 2 columns that only differ by case. If one has been defined with
-                // "case insensitivity", set this one, otherwise keep the first found.
-                if (name.equals(lowerCased)) {
-                    assert !defs[previous].name.equals(lowerCased);
-                    this.byName.put(defs[previous].name, previous);
-                } else {
-                    this.byName.put(lowerCased, previous);
-                    this.byName.put(name, i);
-                }
+                int[] indexes = new int[previous.length + 1];
+                System.arraycopy(previous, 0, indexes, 0, previous.length);
+                indexes[indexes.length - 1] = i;
+                this.byName.put(defs[i].name.toLowerCase(), indexes);
             }
         }
     }
@@ -85,7 +83,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
      * {@code false} otherwise.
      */
     public boolean contains(String name) {
-        return findIdx(name) != null;
+        return findIdx(name) > 0;
     }
 
     /**
@@ -198,17 +196,39 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         return sb.toString();
     }
 
-    Integer findIdx(String name) {
-        String trimmed = name.trim();
-        if (trimmed.length() >= 2 && trimmed.charAt(0) == '"' && trimmed.charAt(trimmed.length() - 1) == '"')
-            return byName.get(name.substring(1, trimmed.length() - 1));
+    int findIdx(String name) {
+        boolean caseSensitive = false;
+        if (name.length() >= 2 && name.charAt(0) == '"' && name.charAt(name.length() - 1) == '"') {
+            name = name.substring(1, name.length() - 1);
+            caseSensitive = true;
+        }
 
-        return byName.get(name.toLowerCase());
+        int[] indexes = byName.get(name.toLowerCase());
+        if (indexes == null) {
+            return -1;
+        } else if (indexes.length == 1) {
+            return indexes[0];
+        } else {
+            for (int i = 0; i < indexes.length; i++) {
+                int idx = indexes[i];
+                if (caseSensitive) {
+                    if (name.equals(byIdx[idx].name))
+                        return idx;
+                } else {
+                    if (name.toLowerCase().equals(byIdx[idx].name))
+                        return idx;
+                }
+            }
+            if (caseSensitive)
+                return -1;
+            else
+                return indexes[0];
+        }
     }
 
     int getIdx(String name) {
-        Integer idx = findIdx(name);
-        if (idx == null)
+        int idx = findIdx(name);
+        if (idx < 0)
             throw new IllegalArgumentException(name + " is not a column defined in this metadata");
 
         return idx;
@@ -297,6 +317,23 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
          */
         public DataType getType() {
             return type;
+        }
+
+        @Override
+        public final int hashCode() {
+            return Arrays.hashCode(new Object[]{ keyspace, table, name, type});
+        }
+
+        @Override
+        public final boolean equals(Object o) {
+            if(!(o instanceof Definition))
+                return false;
+
+            Definition other = (Definition)o;
+            return keyspace.equals(other.keyspace)
+                && table.equals(other.table)
+                && name.equals(other.name)
+                && type.equals(other.type);
         }
     }
 }

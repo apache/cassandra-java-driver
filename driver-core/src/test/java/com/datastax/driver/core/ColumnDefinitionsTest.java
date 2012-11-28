@@ -41,4 +41,16 @@ public class ColumnDefinitionsTest {
         assertTrue(defs.getType("\"in quote\"").equals(DataType.cint()));
         assertTrue(defs.getType("\"\"in quote\"\"").equals(DataType.text()));
     }
+
+    @Test
+    public void multiDefinitionTest() {
+
+        ColumnDefinitions defs = new ColumnDefinitions(new ColumnDefinitions.Definition[]{
+            new ColumnDefinitions.Definition("ks", "cf1", "column", DataType.text()),
+            new ColumnDefinitions.Definition("ks", "cf2", "column", DataType.cint()),
+            new ColumnDefinitions.Definition("ks", "cf3", "column", DataType.cfloat())
+        });
+
+        assertTrue(defs.getType("column").equals(DataType.text()));
+    }
 }

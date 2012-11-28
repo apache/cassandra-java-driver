@@ -72,4 +72,3 @@ public class SocketOptions {
         this.sendBufferSize = sendBufferSize;
     }
 }
-

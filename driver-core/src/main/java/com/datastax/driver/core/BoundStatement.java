@@ -18,7 +18,11 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * <p>
  * The values of a BoundStatement can be set by either index or name. When
  * setting them by name, names follow the case insensitivity rules explained in
- * {@link ColumnDefinitions}.
+ * {@link ColumnDefinitions}. Noteworthily, if multiple bind variables
+ * correspond to the same column (as would be the case if you prepare
+ * {@code SELECT * FROM t WHERE x > ? AND x < ?}), you will have to set
+ * values by indexes (or the {@link #bind} method) as the methods to set by
+ * name only allows to set the first prepared occurrence of the column.
  */
 public class BoundStatement extends Query {
 
@@ -205,7 +209,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided boolean.
+     * Set the value for (the first occurrence of) column {@code name} to the provided boolean.
      *
      * @return this BoundStatement.
      *
@@ -231,7 +235,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided integer.
+     * Set the value for (the first occurrence of) column {@code name} to the provided integer.
      *
      * @return this BoundStatement.
      *
@@ -257,7 +261,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided long.
+     * Set the value for (the first occurrence of) column {@code name} to the provided long.
      *
      * @return this BoundStatement.
      *
@@ -283,7 +287,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided date.
+     * Set the value for (the first occurrence of) column {@code name} to the provided date.
      *
      * @return this BoundStatement.
      *
@@ -309,7 +313,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided float.
+     * Set the value for (the first occurrence of) column {@code name} to the provided float.
      *
      * @return this BoundStatement.
      *
@@ -335,7 +339,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided double.
+     * Set the value for (the first occurrence of) column {@code name} to the provided double.
      *
      * @return this BoundStatement.
      *
@@ -372,7 +376,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided string.
+     * Set the value for (the first occurrence of) column {@code name} to the provided string.
      *
      * @return this BoundStatement.
      *
@@ -403,7 +407,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided byte buffer.
+     * Set the value for (the first occurrence of) column {@code name} to the provided byte buffer.
      *
      * This method validate that the type of the column set is BLOB. If you
      * want to insert manually serialized data into columns of another type,
@@ -436,7 +440,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided byte buffer.
+     * Set the value for (the first occurrence of) column {@code name} to the provided byte buffer.
      *
      * Contrarily to {@link #setBytes}, this method does not check the
      * type of the column set. If you insert data that is not compatible with
@@ -466,7 +470,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided big integer.
+     * Set the value for (the first occurrence of) column {@code name} to the provided big integer.
      *
      * @return this BoundStatement.
      *
@@ -492,7 +496,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided big decimal.
+     * Set the value for (the first occurrence of) column {@code name} to the provided big decimal.
      *
      * @return this BoundStatement.
      *
@@ -527,7 +531,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided UUID.
+     * Set the value for (the first occurrence of) column {@code name} to the provided UUID.
      *
      * @return this BoundStatement.
      *
@@ -555,7 +559,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided inet address.
+     * Set the value for (the first occurrence of) column {@code name} to the provided inet address.
      *
      * @return this BoundStatement.
      *
@@ -595,7 +599,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided list.
+     * Set the value for (the first occurrence of) column {@code name} to the provided list.
      *
      * @return this BoundStatement.
      *
@@ -640,7 +644,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided map.
+     * Set the value for (the first occurrence of) column {@code name} to the provided map.
      *
      * @return this BoundStatement.
      *
@@ -681,7 +685,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided set.
+     * Set the value for (the first occurrence of) column {@code name} to the provided set.
      *
      * @return this BoundStatement.
      *
