@@ -103,8 +103,7 @@ public final class UUIDs {
         long node = makeNode();
 
         long lsb = 0;
-        lsb |= (clock & 0x00000000000000FFL) << 48;
-        lsb |= (clock & 0x0000000000003F00L) << 48;
+        lsb |= (clock & 0x0000000000003FFFL) << 48;
         lsb |= 0x8000000000000000L;
         lsb |= node;
         return lsb;

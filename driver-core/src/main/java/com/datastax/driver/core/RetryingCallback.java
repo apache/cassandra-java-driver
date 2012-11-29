@@ -91,8 +91,6 @@ class RetryingCallback implements Connection.ResponseCallback {
             return false;
         } catch (TimeoutException e) {
             // We timeout, log it but move to the next node.
-            if (connection != null)
-                currentPool.returnConnection(connection);
             logError(host.getAddress(), "Timeout while trying to acquire available connection");
             return false;
         } catch (RuntimeException e) {

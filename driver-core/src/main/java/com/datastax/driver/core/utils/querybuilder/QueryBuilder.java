@@ -54,7 +54,7 @@ public final class QueryBuilder {
      * @return an array containing "count(*)" as sole element.
      */
     public static String[] count() {
-        return COUNT_ALL;
+        return Arrays.copyOf(COUNT_ALL, COUNT_ALL.length);
     }
 
     /**

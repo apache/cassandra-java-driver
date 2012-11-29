@@ -173,7 +173,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
                     // We said 'uninterruptibly'
                     long now = System.nanoTime();
                     long elapsedNanos = now - start;
-                    timeout = timeoutNanos - elapsedNanos;
+                    timeoutNanos = timeoutNanos - elapsedNanos;
                     start = now;
                 }
             }
