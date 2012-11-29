@@ -1,5 +1,7 @@
 package com.datastax.driver.core.utils.querybuilder;
 
+import java.util.Arrays;
+
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TableMetadata;
 
