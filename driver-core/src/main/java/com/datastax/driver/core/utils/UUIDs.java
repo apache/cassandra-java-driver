@@ -1,12 +1,17 @@
 package com.datastax.driver.core.utils;
 
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.UnknownHostException;
+import java.net.SocketException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.Random;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
@@ -52,50 +57,45 @@ public final class UUIDs {
 
     private static long makeNode() {
 
-        // ideally, we'd use the MAC address, but java doesn't expose that. So
-        // instead gather a number of local information and hash that.
-        InetAddress local;
+        /*
+         * We don't have access to the MAC address (in pure JAVA at least) but
+         * need to generate a node part that identify this host as uniquely as
+         * possible.
+         * The spec says that one option is to take as many source that
+         * identify this node as possible and hash them together. That's what
+         * we do here by gathering all the ip of this host as well as a few
+         * other sources.
+         */
         try {
-            local = InetAddress.getLocalHost();
-        } catch (UnknownHostException e) {
-            try {
-                local = InetAddress.getByAddress(new byte[]{ 127, 0, 0, 1 });
-            } catch (UnknownHostException uhe) {
-                throw new RuntimeException(uhe);
-            }
-        }
 
-        Properties props = System.getProperties();
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            for (String address : getAllLocalAddresses())
+                update(digest, address);
 
-        byte[] hash = hash(local.toString(),
-                           props.getProperty("java.vendor"),
-                           props.getProperty("java.vendor.url"),
-                           props.getProperty("java.version"),
-                           props.getProperty("os.arch"),
-                           props.getProperty("os.name"),
-                           props.getProperty("os.version"));
+            Properties props = System.getProperties();
+            update(digest, props.getProperty("java.vendor"));
+            update(digest, props.getProperty("java.vendor.url"));
+            update(digest, props.getProperty("java.version"));
+            update(digest, props.getProperty("os.arch"));
+            update(digest, props.getProperty("os.name"));
+            update(digest, props.getProperty("os.version"));
 
-        long node = 0;
-        for (int i = 0; i < 6; i++)
-            node |= (0x00000000000000ffL & (long)hash[i]) << (i*8);
-        // Since we haven't use the mac address, the spec says that the first bit must be 1.
-        return node & 0x8000000000000000L;
-    }
+            byte[] hash = digest.digest();
 
-    private static byte[] hash(String... data) {
-
-        MessageDigest digest;
-        try {
-            digest = MessageDigest.getInstance("MD5");
+            long node = 0;
+            for (int i = 0; i < 6; i++)
+                node |= (0x00000000000000ffL & (long)hash[i]) << (i*8);
+            // Since we don't use the mac address, the spec says that multicast
+            // bit (least significant bit of the first octet of the node ID) must be 1.
+            return node | 0x0000010000000000L;
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
 
-        for (String block : data)
-            if (block != null)
-                digest.update(block.getBytes());
-
-        return digest.digest();
+    private static void update(MessageDigest digest, String value) {
+        if (value != null)
+            digest.update(value.getBytes());
     }
 
     private static long makeClockSeqAndNode() {
@@ -272,5 +272,37 @@ public final class UUIDs {
         msb |= (0x0fff000000000000L & timestamp) >>> 48;
         msb |= 0x0000000000001000L; // sets the version to 1.
         return msb;
+    }
+
+    private static Set<String> getAllLocalAddresses() {
+        Set<String> allIps = new HashSet<String>();
+        try {
+            InetAddress localhost = InetAddress.getLocalHost();
+            allIps.add(localhost.toString());
+            // Also return the hostname if available, it won't hurt (this does a dns lookup, it's only done once at startup)
+            allIps.add(localhost.getCanonicalHostName());
+            InetAddress[] allMyIps = InetAddress.getAllByName(localhost.getCanonicalHostName());
+            if (allMyIps != null) {
+                for (int i = 0; i < allMyIps.length; i++)
+                    allIps.add(allMyIps[i].toString());
+            }
+        } catch (UnknownHostException e) {
+            // Ignore, we'll try the network interfaces anyway
+        }
+
+        try {
+            Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
+            if (en != null) {
+                while (en.hasMoreElements()) {
+                    Enumeration<InetAddress> enumIpAddr = en.nextElement().getInetAddresses();
+                    while (enumIpAddr.hasMoreElements())
+                        allIps.add(enumIpAddr.nextElement().toString());
+                }
+            }
+        } catch (SocketException e) {
+            // Ignore, if we relly go nothing so far, we'll throw an exception
+        }
+
+        return allIps;
     }
 }
