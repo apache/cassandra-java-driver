@@ -104,15 +104,16 @@ public class ClusterMetadata {
     }
 
     private static void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, List<Row>> colsDefs) {
+        boolean hasColumns = (colsDefs != null) && !colsDefs.isEmpty();
         for (Row cfRow : cfRows) {
             String cfName = cfRow.getString(TableMetadata.CF_NAME);
-            TableMetadata tm = TableMetadata.build(ksm, cfRow, !colsDefs.isEmpty());
+            TableMetadata tm = TableMetadata.build(ksm, cfRow, hasColumns);
 
-            if (colsDefs == null || colsDefs.get(cfName) == null)
+            if (!hasColumns || colsDefs.get(cfName) == null)
                 continue;
 
             for (Row colRow : colsDefs.get(cfName)) {
-                ColumnMetadata cm = ColumnMetadata.build(tm, colRow);
+                ColumnMetadata.build(tm, colRow);
             }
         }
     }
