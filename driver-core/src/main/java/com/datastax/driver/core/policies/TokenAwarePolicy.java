@@ -19,7 +19,7 @@ import com.datastax.driver.core.*;
  *   <li>the iterator return by the {@code newQueryPlan} method will first
  *   return the {@code LOCAL} replicas for the query (based on {@link Query#getRoutingKey})
  *   <i>if possible</i> (i.e. if the query {@code getRoutingKey} method
- *   doesn't return {@code null} and if {@link ClusterMetadata#getReplicas}
+ *   doesn't return {@code null} and if {@link Metadata#getReplicas}
  *   returns a non empty set of replicas for that partition key). If no
  *   local replica can be either found or successfully contacted, the rest
  *   of the query plan will fallback to one of the child policy.</li>
@@ -34,7 +34,7 @@ import com.datastax.driver.core.*;
 public class TokenAwarePolicy implements LoadBalancingPolicy {
 
     private final LoadBalancingPolicy childPolicy;
-    private ClusterMetadata clusterMetadata;
+    private Metadata clusterMetadata;
 
     /**
      * Creates a new {@code TokenAware} policy that wraps the provided child

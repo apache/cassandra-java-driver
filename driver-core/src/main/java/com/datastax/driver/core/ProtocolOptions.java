@@ -5,12 +5,6 @@ package com.datastax.driver.core;
  */
 public class ProtocolOptions {
 
-    private final Cluster.Manager manager;
-
-    ProtocolOptions(Cluster.Manager manager) {
-        this.manager = manager;
-    }
-
     /**
      * Compression supported by the Cassandra binary protocol.
      */
@@ -32,18 +26,43 @@ public class ProtocolOptions {
         }
     };
 
+    /**
+     * The default port for Cassandra native binary protocol: 9042.
+     */
+    public static final int DEFAULT_PORT = 9042;
+
+    private final int port;
     private volatile Compression compression = Compression.NONE;
 
+    private volatile Cluster.Manager manager;
+
     /**
-     * The port to use to connect to the Cassandra hosts.
-     * <p>
-     * The port must be set at cluster creation time (using {@link Cluster.Builder#withPort}
-     * for instance) and cannot be changed afterwards.
+     * Creates a new {@code ProtocolOptions} instance using the {@code DEFAULT_PORT}.
+     */
+    public ProtocolOptions() {
+        this(DEFAULT_PORT);
+    }
+
+    /**
+     * Creates a new {@code ProtocolOptions} instance using the provided port.
      *
-     * @return the port to use to connect to the Cassandra hosts.
+     * @param port the port to use for the binary protocol.
+     */
+    public ProtocolOptions(int port) {
+        this.port = port;
+    }
+
+    void register(Cluster.Manager manager) {
+        this.manager = manager;
+    }
+
+    /**
+     * The port used to connect to the Cassandra hosts.
+     *
+     * @return the port used to connect to the Cassandra hosts.
      */
     public int getPort() {
-        return manager.port;
+        return port;
     }
 
     /**

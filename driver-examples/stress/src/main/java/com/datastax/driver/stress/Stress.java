@@ -31,6 +31,7 @@ public class Stress {
 
         System.out.println("Usage: stress <generator> [<option>]*\n");
         System.out.println("Where <generator> can be one of " + generators);
+        System.out.println();
         parser.printHelpOn(System.out);
     }
 
@@ -93,7 +94,7 @@ public class Stress {
 
             Session session = cluster.connect();
 
-            ClusterMetadata metadata = cluster.getMetadata();
+            Metadata metadata = cluster.getMetadata();
             System.out.println(String.format("Connected to cluster '%s' on %s.", metadata.getClusterName(), metadata.getAllHosts()));
 
             System.out.println("Creating schema...");

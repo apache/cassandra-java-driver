@@ -36,7 +36,7 @@ public class PoolingOptions {
     private static final int DEFAULT_MAX_POOL_LOCAL = 8;
     private static final int DEFAULT_MAX_POOL_REMOTE = 2;
 
-    private final Cluster.Manager manager;
+    private volatile Cluster.Manager manager;
 
     private volatile int minSimultaneousRequestsForLocal = DEFAULT_MIN_REQUESTS;
     private volatile int minSimultaneousRequestsForRemote = DEFAULT_MIN_REQUESTS;
@@ -50,7 +50,9 @@ public class PoolingOptions {
     private volatile int maxConnectionsForLocal = DEFAULT_MAX_POOL_LOCAL;
     private volatile int maxConnectionsForRemote = DEFAULT_MAX_POOL_REMOTE;
 
-    PoolingOptions(Cluster.Manager manager) {
+    public PoolingOptions() {}
+
+    void register(Cluster.Manager manager) {
         this.manager = manager;
     }
 
@@ -193,13 +195,13 @@ public class PoolingOptions {
             case LOCAL:
                 int oldLocalCore = coreConnectionsForLocal;
                 coreConnectionsForLocal = coreConnections;
-                if (oldLocalCore < coreConnectionsForLocal)
+                if (oldLocalCore < coreConnectionsForLocal && manager != null)
                     manager.ensurePoolsSizing();
                 break;
             case REMOTE:
                 int oldRemoteCore = coreConnectionsForRemote;
                 coreConnectionsForRemote = coreConnections;
-                if (oldRemoteCore < coreConnectionsForRemote)
+                if (oldRemoteCore < coreConnectionsForRemote && manager != null)
                     manager.ensurePoolsSizing();
                 break;
             default:

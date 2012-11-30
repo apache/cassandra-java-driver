@@ -80,7 +80,7 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         bootstrap.setPipelineFactory(new PipelineFactory(this));
 
-        ChannelFuture future = bootstrap.connect(new InetSocketAddress(address, factory.port));
+        ChannelFuture future = bootstrap.connect(new InetSocketAddress(address, factory.getPort()));
 
         writer.incrementAndGet();
         try {
@@ -303,25 +303,27 @@ class Connection extends org.apache.cassandra.transport.Connection
 
     public static class Factory {
 
-        public final int port;
         private final ExecutorService bossExecutor = Executors.newCachedThreadPool();
         private final ExecutorService workerExecutor = Executors.newCachedThreadPool();
 
         private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
         public final DefaultResponseHandler defaultHandler;
-        public final ConnectionsConfiguration configuration;
+        public final Configuration configuration;
 
         public final AuthInfoProvider authProvider;
 
         public Factory(Cluster.Manager manager, AuthInfoProvider authProvider) {
-            this(manager.port, manager, manager.configuration.getConnectionsConfiguration(), authProvider);
+            this(manager, manager.configuration, authProvider);
         }
 
-        private Factory(int port, DefaultResponseHandler defaultHandler, ConnectionsConfiguration configuration, AuthInfoProvider authProvider) {
-            this.port = port;
+        private Factory(DefaultResponseHandler defaultHandler, Configuration configuration, AuthInfoProvider authProvider) {
             this.defaultHandler = defaultHandler;
             this.configuration = configuration;
             this.authProvider = authProvider;
+        }
+
+        public int getPort() {
+            return configuration.getProtocolOptions().getPort();
         }
 
         /**

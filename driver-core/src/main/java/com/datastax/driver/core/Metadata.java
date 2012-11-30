@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Keeps metadata on the connected cluster, including known nodes and schema definitions.
  */
-public class ClusterMetadata {
+public class Metadata {
 
-    private static final Logger logger = LoggerFactory.getLogger(ClusterMetadata.class);
+    private static final Logger logger = LoggerFactory.getLogger(Metadata.class);
 
     private final Cluster.Manager cluster;
     volatile String clusterName;
@@ -25,7 +25,7 @@ public class ClusterMetadata {
 
     private volatile TokenMap<? extends Token> tokenMap;
 
-    ClusterMetadata(Cluster.Manager cluster) {
+    Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
     }
 

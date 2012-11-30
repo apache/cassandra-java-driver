@@ -57,7 +57,7 @@ class HostConnectionPool {
     }
 
     private PoolingOptions options() {
-        return manager.configuration().getConnectionsConfiguration().getPoolingOptions();
+        return manager.configuration().getPoolingOptions();
     }
 
     public Connection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
@@ -301,6 +301,10 @@ class HostConnectionPool {
         // Wake up all threads that waits
         signalAllAvailableConnection();
         discardAvailableConnections();
+    }
+
+    public int opened() {
+        return open.get();
     }
 
     private void discardAvailableConnections() {

@@ -47,7 +47,7 @@ class ControlConnection implements Host.StateListener {
 
     private volatile boolean isShutdown;
 
-    public ControlConnection(Cluster.Manager manager, ClusterMetadata metadata) {
+    public ControlConnection(Cluster.Manager manager, Metadata metadata) {
         this.cluster = manager;
         this.balancingPolicy = new RoundRobinPolicy();
         this.balancingPolicy.init(manager.getCluster(), metadata.allHosts());
@@ -297,7 +297,7 @@ class ControlConnection implements Host.StateListener {
             cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
     }
 
-    static boolean waitForSchemaAgreement(Connection connection, ClusterMetadata metadata) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    static boolean waitForSchemaAgreement(Connection connection, Metadata metadata) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
 
         long start = System.currentTimeMillis();
         long elapsed = 0;
@@ -333,6 +333,11 @@ class ControlConnection implements Host.StateListener {
         }
 
         return false;
+    }
+
+    boolean isOpen() {
+        Connection c = connectionRef.get();
+        return c != null && !c.isClosed();
     }
 
     public void onUp(Host host) {

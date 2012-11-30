@@ -52,15 +52,10 @@ public class Cluster {
         }
     }
 
-    /**
-     * The default cassandra port for the native client protocol.
-     */
-    public static final int DEFAULT_PORT = 9042;
-
     final Manager manager;
 
-    private Cluster(List<InetAddress> contactPoints, int port, Policies policies, AuthInfoProvider authProvider) throws NoHostAvailableException {
-        this.manager = new Manager(contactPoints, port, policies, authProvider);
+    private Cluster(List<InetAddress> contactPoints, Configuration configuration) throws NoHostAvailableException {
+        this.manager = new Manager(contactPoints, configuration);
         this.manager.init();
     }
 
@@ -88,7 +83,7 @@ public class Cluster {
         if (contactPoints.isEmpty())
             throw new IllegalArgumentException("Cannot build a cluster without contact points");
 
-        return new Cluster(contactPoints, initializer.getPort(), initializer.getPolicies(), initializer.getAuthInfoProvider());
+        return new Cluster(contactPoints, initializer.getConfiguration());
     }
 
     /**
@@ -136,7 +131,7 @@ public class Cluster {
      *
      * @return the cluster metadata.
      */
-    public ClusterMetadata getMetadata() {
+    public Metadata getMetadata() {
         return manager.metadata;
     }
 
@@ -145,15 +140,27 @@ public class Cluster {
      *
      * @return the cluster configuration.
      */
-    public Cluster.Configuration getConfiguration() {
+    public Configuration getConfiguration() {
         return manager.configuration;
+    }
+
+    /**
+     * The cluster metrics.
+     *
+     * @return the cluster metrics, or {@code null} if metrics collection has
+     * been disabled (see {@link Configuration#isMetricsEnabled}).
+     */
+    public Metrics getMetrics() {
+        return manager.configuration.isMetricsEnabled()
+             ? manager.metrics
+             : null;
     }
 
     /**
      * Shutdown this cluster instance.
      *
      * This closes all connections from all the sessions of this {@code
-     * Cluster} instance and reclam all ressources used by it.
+     * Cluster} instance and reclaim all resources used by it.
      * <p>
      * This method has no effect if the cluster was already shutdown.
      */
@@ -163,6 +170,14 @@ public class Cluster {
 
     /**
      * Initializer for {@link Cluster} instances.
+     * <p>
+     * If you want to create a new {@code Cluster} instance programmatically,
+     * then it is advised to use {@link Cluster.Builder} (obtained through the
+     * {@link Cluster#builder} method).
+     * <p>
+     * But it is also possible to implement a custom {@code Initializer} that
+     * retrieve initialization from a web-service or from a configuration file
+     * for instance.
      */
     public interface Initializer {
 
@@ -175,30 +190,21 @@ public class Cluster {
         public List<InetAddress> getContactPoints();
 
         /**
-         * The port to use to connect to Cassandra hosts.
+         * The configuration to use for the new cluster.
          * <p>
-         * This port will be used to connect to all of the Cassandra cluster
-         * hosts, not only the contact points. This means that all Cassandra
-         * host must be configured to listen on the same port.
+         * Note that some configuration can be modified after the cluster
+         * initialization but some other cannot. In particular, the ones that
+         * cannot be change afterwards includes:
+         * <ul>
+         *   <li>the port use to connect to Cassandra nodes (see {@link ProtocolOptions}).</li>
+         *   <li>the policies used (see {@link Policies}).</li>
+         *   <li>the authentication info provided (see {@link Configuration}).</li>
+         *   <li>whether metrics are enabled (see {@link Configuration}).</li>
+         * </ul>
          *
-         * @return the port to use to connect to Cassandra hosts.
+         * @return the configuration to use for the new cluster.
          */
-        public int getPort();
-
-        /**
-         * Returns the policies to use for this cluster.
-         *
-         * @return the policies to use for this cluster.
-         */
-        public Policies getPolicies();
-
-        /**
-         * The authentication provider to use to connect to the Cassandra cluster.
-         *
-         * @return the authentication provider to use. Use
-         * AuthInfoProvider.NONE if authentication is not to be used.
-         */
-        public AuthInfoProvider getAuthInfoProvider();
+        public Configuration getConfiguration();
     }
 
     /**
@@ -207,12 +213,17 @@ public class Cluster {
     public static class Builder implements Initializer {
 
         private final List<InetAddress> addresses = new ArrayList<InetAddress>();
-        private int port = DEFAULT_PORT;
+        private int port = ProtocolOptions.DEFAULT_PORT;
         private AuthInfoProvider authProvider = AuthInfoProvider.NONE;
 
         private LoadBalancingPolicy loadBalancingPolicy;
         private ReconnectionPolicy reconnectionPolicy;
         private RetryPolicy retryPolicy;
+
+        private ProtocolOptions.Compression compression = ProtocolOptions.Compression.NONE;
+        private boolean metricsEnabled = true;
+        private final PoolingOptions poolingOptions = new PoolingOptions();
+        private final SocketOptions socketOptions = new SocketOptions();
 
         public List<InetAddress> getContactPoints() {
             return addresses;
@@ -230,15 +241,6 @@ public class Cluster {
         public Builder withPort(int port) {
             this.port = port;
             return this;
-        }
-
-        /**
-         * The port to use to connect to Cassandra hosts.
-         *
-         * @return the port to use to connect to Cassandra hosts.
-         */
-        public int getPort() {
-            return port;
         }
 
         /**
@@ -350,23 +352,6 @@ public class Cluster {
         }
 
         /**
-         * Returns the policies to use for this cluster.
-         * <p>
-         * The policies used are the one set by the {@code with*} methods of
-         * this builder, or the default ones defined in {@link Policies} for
-         * the policies that hasn't been explicitely set.
-         *
-         * @return the policies to use for this cluster.
-         */
-        public Policies getPolicies() {
-            return new Policies(
-                loadBalancingPolicy == null ? Policies.DEFAULT_LOAD_BALANCING_POLICY : loadBalancingPolicy,
-                reconnectionPolicy == null ? Policies.DEFAULT_RECONNECTION_POLICY : reconnectionPolicy,
-                retryPolicy == null ? Policies.DEFAULT_RETRY_POLICY : retryPolicy
-            );
-        }
-
-        /**
          * Use the provided {@code AuthInfoProvider} to connect to Cassandra hosts.
          * <p>
          * This is optional if the Cassandra cluster has been configured to not
@@ -381,13 +366,72 @@ public class Cluster {
         }
 
         /**
-         * The authentication provider to use to connect to the Cassandra cluster.
+         * Sets the compression to use for the transport.
          *
-         * @return the authentication provider set through {@link #withAuthInfoProvider}
-         * or AuthInfoProvider.NONE if nothing was set.
+         * @param compression the compression to set
+         * @return this Builder
+         *
+         * @see ProtocolOptions.Compression
          */
-        public AuthInfoProvider getAuthInfoProvider() {
-            return this.authProvider;
+        public Builder withCompression(ProtocolOptions.Compression compression) {
+            this.compression = compression;
+            return this;
+        }
+
+        /**
+         * Disable metrics collection for the created cluster (metrics are
+         * enabled by default otherwise).
+         *
+         * @return this builder
+         */
+        public Builder withoutMetrics() {
+            this.metricsEnabled = false;
+            return this;
+        }
+
+        /**
+         * The pooling options used by this builder.
+         *
+         * @return the pooling options that will be used by this builder. You
+         * can use the returned object to define the initial pooling options
+         * for the built cluster.
+         */
+        public PoolingOptions poolingOptions() {
+            return poolingOptions;
+        }
+
+        /**
+         * The socket options used by this builder.
+         *
+         * @return the socket options that will be used by this builder. You
+         * can use the returned object to define the initial socket options
+         * for the built cluster.
+         */
+        public SocketOptions socketOptions() {
+            return socketOptions;
+        }
+
+        /**
+         * The configuration that will be used for the new cluster.
+         * <p>
+         * You <b>should not</b> modify this object directly as change made
+         * to the returned object may not be used by the cluster build.
+         * Instead, you should use the other methods of this {@code Builder}.
+         *
+         * @return the configuration to use for the new cluster.
+         */
+        public Configuration getConfiguration() {
+            Policies policies = new Policies(
+                loadBalancingPolicy == null ? Policies.DEFAULT_LOAD_BALANCING_POLICY : loadBalancingPolicy,
+                reconnectionPolicy == null ? Policies.DEFAULT_RECONNECTION_POLICY : reconnectionPolicy,
+                retryPolicy == null ? Policies.DEFAULT_RETRY_POLICY : retryPolicy
+            );
+            return new Configuration(policies,
+                                     new ProtocolOptions(port).setCompression(compression),
+                                     poolingOptions,
+                                     socketOptions,
+                                     authProvider,
+                                     metricsEnabled);
         }
 
         /**
@@ -409,39 +453,6 @@ public class Cluster {
     }
 
     /**
-     * The configuration of the cluster.
-     */
-    public static class Configuration {
-
-        private final Policies policies;
-        private final ConnectionsConfiguration connections;
-
-        private Configuration(Cluster.Manager manager, Policies policies) {
-            this.policies = policies;
-            this.connections = new ConnectionsConfiguration(manager);
-        }
-
-        /**
-         * The policies set for the cluster.
-         *
-         * @return the policies set for the cluster.
-         */
-        public Policies getPolicies() {
-            return policies;
-        }
-
-        /**
-         * Configuration related to the connections the driver maintains to the
-         * Cassandra hosts.
-         *
-         * @return the configuration of the connections to Cassandra hosts.
-         */
-        public ConnectionsConfiguration getConnectionsConfiguration() {
-            return connections;
-        }
-    }
-
-    /**
      * The sessions and hosts managed by this a Cluster instance.
      * <p>
      * Note: the reason we create a Manager object separate from Cluster is
@@ -452,14 +463,14 @@ public class Cluster {
 
         // Initial contacts point
         final List<InetAddress> contactPoints;
-        final int port;
-        private final Set<Session> sessions = new CopyOnWriteArraySet<Session>();
+        final Set<Session> sessions = new CopyOnWriteArraySet<Session>();
 
-        final ClusterMetadata metadata;
+        final Metadata metadata;
         final Configuration configuration;
+        final Metrics metrics;
 
         final Connection.Factory connectionFactory;
-        private final ControlConnection controlConnection;
+        final ControlConnection controlConnection;
 
         final ConvictionPolicy.Factory convictionPolicyFactory = new ConvictionPolicy.Simple.Factory();
 
@@ -477,17 +488,20 @@ public class Cluster {
         // less clear behavior.
         final Map<MD5Digest, String> preparedQueries = new ConcurrentHashMap<MD5Digest, String>();
 
-        private Manager(List<InetAddress> contactPoints, int port, Policies policies, AuthInfoProvider authProvider) throws NoHostAvailableException {
-            this.port = port;
-            this.configuration = new Configuration(this, policies);
-            this.metadata = new ClusterMetadata(this);
+        private Manager(List<InetAddress> contactPoints, Configuration configuration) throws NoHostAvailableException {
+            this.configuration = configuration;
+            this.metadata = new Metadata(this);
             this.contactPoints = contactPoints;
-            this.connectionFactory = new Connection.Factory(this, authProvider);
+            this.connectionFactory = new Connection.Factory(this, configuration.getAuthInfoProvider());
 
             for (InetAddress address : contactPoints)
                 addHost(address, false);
 
             this.controlConnection = new ControlConnection(this, metadata);
+
+            this.metrics = new Metrics(this);
+            this.configuration.register(this);
+
             this.controlConnection.connect();
         }
 

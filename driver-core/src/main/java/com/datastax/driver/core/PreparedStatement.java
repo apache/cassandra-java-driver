@@ -31,7 +31,7 @@ public class PreparedStatement {
         this.routingKeyIndexes = routingKeyIndexes;
     }
 
-    static PreparedStatement fromMessage(ResultMessage.Prepared msg, ClusterMetadata clusterMetadata) {
+    static PreparedStatement fromMessage(ResultMessage.Prepared msg, Metadata clusterMetadata) {
         switch (msg.kind) {
             case PREPARED:
                 ResultMessage.Prepared pmsg = (ResultMessage.Prepared)msg;

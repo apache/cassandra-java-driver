@@ -31,6 +31,10 @@ public class Policies {
     private final ReconnectionPolicy reconnectionPolicy;
     private final RetryPolicy retryPolicy;
 
+    public Policies() {
+        this(DEFAULT_LOAD_BALANCING_POLICY, DEFAULT_RECONNECTION_POLICY, DEFAULT_RETRY_POLICY);
+    }
+
     /**
      * Creates a new {@code Policies} object using the provided policies.
      *

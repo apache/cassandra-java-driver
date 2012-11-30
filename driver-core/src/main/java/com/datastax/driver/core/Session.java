@@ -234,7 +234,7 @@ public class Session {
             return cluster.manager.connectionFactory;
         }
 
-        public Cluster.Configuration configuration() {
+        public Configuration configuration() {
             return cluster.manager.configuration;
         }
 

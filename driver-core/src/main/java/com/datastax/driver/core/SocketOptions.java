@@ -16,59 +16,71 @@ public class SocketOptions {
     private volatile Integer receiveBufferSize;
     private volatile Integer sendBufferSize;
 
+    /**
+     * Creates a new {@code SocketOptions} instance with default values.
+     */
+    public SocketOptions() {}
+
     public int getConnectTimeoutMillis() {
         return connectTimeoutMillis;
     }
 
-    public void setConnectTimeoutMillis(int connectTimeoutMillis) {
+    public SocketOptions setConnectTimeoutMillis(int connectTimeoutMillis) {
         this.connectTimeoutMillis = connectTimeoutMillis;
+        return this;
     }
 
     public Boolean getKeepAlive() {
         return keepAlive;
     }
 
-    public void setKeepAlive(boolean keepAlive) {
+    public SocketOptions setKeepAlive(boolean keepAlive) {
         this.keepAlive = keepAlive;
+        return this;
     }
 
     public Boolean getReuseAddress() {
         return reuseAddress;
     }
 
-    public void setReuseAddress(boolean reuseAddress) {
+    public SocketOptions setReuseAddress(boolean reuseAddress) {
         this.reuseAddress = reuseAddress;
+        return this;
     }
 
     public Integer getSoLinger() {
         return soLinger;
     }
 
-    public void setSoLinger(int soLinger) {
+    public SocketOptions setSoLinger(int soLinger) {
         this.soLinger = soLinger;
+        return this;
     }
 
     public Boolean getTcpNoDelay() {
         return tcpNoDelay;
     }
 
-    public void setTcpNoDelay(boolean tcpNoDelay) {
+    public SocketOptions setTcpNoDelay(boolean tcpNoDelay) {
         this.tcpNoDelay = tcpNoDelay;
+        return this;
     }
 
     public Integer getReceiveBufferSize() {
         return receiveBufferSize;
     }
 
-    public void setReceiveBufferSize(int receiveBufferSize) {
+    public SocketOptions setReceiveBufferSize(int receiveBufferSize) {
         this.receiveBufferSize = receiveBufferSize;
+        return this;
     }
 
     public Integer getSendBufferSize() {
         return sendBufferSize;
     }
 
-    public void setSendBufferSize(int sendBufferSize) {
+    public SocketOptions setSendBufferSize(int sendBufferSize) {
         this.sendBufferSize = sendBufferSize;
+        return this;
     }
 }
