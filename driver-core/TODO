@@ -1,5 +1,6 @@
 TODO:
 
-- Add tests
-- Add documentation
-- Clean up dependencies (don't require the full Cassandra jar)
+- More tests
+- Add documentation (other than javadoc)
+- Metrics
+- Clean up dependencies (e.g. don't pull the full Cassandra jar)

@@ -69,7 +69,7 @@ public class Session {
      * by this method.
      *
      * @param query the CQL query to execute (that can be either a {@code
-     * CQLStatement} or a {@code BoundStatement}). If it is a {@code
+     * Statement} or a {@code BoundStatement}). If it is a {@code
      * BoundStatement}, all variables must have been bound (the statement must
      * be ready).
      * @return the result of the query. That result will never be null but can
@@ -115,7 +115,7 @@ public class Session {
      * method) to make sure the query was successful.
      *
      * @param query the CQL query to execute (that can be either a {@code
-     * CQLStatement} or a {@code BoundStatement}). If it is a {@code
+     * Statement} or a {@code BoundStatement}). If it is a {@code
      * BoundStatement}, all variables must have been bound (the statement must
      * be ready).
      * @return a future on the result of the query.
@@ -125,8 +125,8 @@ public class Session {
      */
     public ResultSetFuture executeAsync(Query query) {
 
-        if (query instanceof CQLStatement) {
-            return manager.executeQuery(new QueryMessage(((CQLStatement)query).getQueryString(), ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
+        if (query instanceof Statement) {
+            return manager.executeQuery(new QueryMessage(((Statement)query).getQueryString(), ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
         } else {
             assert query instanceof BoundStatement : query;
 

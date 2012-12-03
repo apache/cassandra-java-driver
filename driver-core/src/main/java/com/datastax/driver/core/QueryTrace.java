@@ -152,7 +152,7 @@ public class QueryTrace {
             ResultSetFuture sessionsFuture = session.executeQuery(new QueryMessage(String.format(SELECT_SESSIONS_FORMAT, traceId), ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT);
             ResultSetFuture eventsFuture = session.executeQuery(new QueryMessage(String.format(SELECT_EVENTS_FORMAT, traceId), ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT);
 
-            CQLRow sessRow = sessionsFuture.get().fetchOne();
+            Row sessRow = sessionsFuture.get().fetchOne();
             if (sessRow != null) {
                 requestType = sessRow.getString("request");
                 if (!sessRow.isNull("duration"))
@@ -164,7 +164,7 @@ public class QueryTrace {
             }
 
             events = new ArrayList<Event>();
-            for (CQLRow evRow : eventsFuture.get()) {
+            for (Row evRow : eventsFuture.get()) {
                 events.add(new Event(evRow.getString("activity"),
                                      evRow.getUUID("event_id").timestamp(),
                                      evRow.getInet("source"),

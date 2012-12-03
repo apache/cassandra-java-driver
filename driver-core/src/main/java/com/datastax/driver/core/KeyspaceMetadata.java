@@ -24,7 +24,7 @@ public class KeyspaceMetadata {
         this.durableWrites = durableWrites;
     }
 
-    static KeyspaceMetadata build(CQLRow row) {
+    static KeyspaceMetadata build(Row row) {
 
         String name = row.getString(KS_NAME);
         boolean durableWrites = row.getBool(DURABLE_WRITES);

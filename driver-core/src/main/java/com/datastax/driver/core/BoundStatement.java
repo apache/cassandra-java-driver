@@ -15,6 +15,14 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * <p>
  * Once a BoundStatement has values for all the variables of the {@link PreparedStatement}
  * it has been created from, it can executed (through {@link Session#execute}).
+ * <p>
+ * The values of a BoundStatement can be set by either index or name. When
+ * setting them by name, names follow the case insensitivity rules explained in
+ * {@link ColumnDefinitions}. Noteworthily, if multiple bind variables
+ * correspond to the same column (as would be the case if you prepare
+ * {@code SELECT * FROM t WHERE x > ? AND x < ?}), you will have to set
+ * values by indexes (or the {@link #bind} method) as the methods to set by
+ * name only allows to set the first prepared occurrence of the column.
  */
 public class BoundStatement extends Query {
 
@@ -50,8 +58,10 @@ public class BoundStatement extends Query {
     /**
      * Returns whether the {@code i}th variable has been bound to a value.
      *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
+     * @param i the index of the variable to check.
      * @return whether the {@code i}th variable has been bound to a value.
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      */
     public boolean isSet(int i) {
         metadata().checkBounds(i);
@@ -59,11 +69,13 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Returns whether the variable {@code name} has been bound to a value.
+     * Returns whether the (first occurrence of) variable {@code name} has been bound to a value.
+     *
+     * @param name the name of the variable to check.
+     * @return whether the (first occurrence of) variable {@code name} has been bound to a value.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @return whether the {@code i}th variable has been bound to a value.
      */
     public boolean isSet(String name) {
         return isSet(metadata().getIdx(name));
@@ -190,6 +202,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided boolean.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -201,8 +215,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided boolean.
+     * Set the value for (the first occurrence of) column {@code name} to the provided boolean.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -216,6 +233,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided integer.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -227,8 +246,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided integer.
+     * Set the value for (the first occurrence of) column {@code name} to the provided integer.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -242,6 +264,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided long.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -253,8 +277,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided long.
+     * Set the value for (the first occurrence of) column {@code name} to the provided long.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -268,6 +295,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided date.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -279,8 +308,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided date.
+     * Set the value for (the first occurrence of) column {@code name} to the provided date.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -294,6 +326,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided float.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -305,8 +339,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided float.
+     * Set the value for (the first occurrence of) column {@code name} to the provided float.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -320,6 +357,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided double.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -331,8 +370,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided double.
+     * Set the value for (the first occurrence of) column {@code name} to the provided double.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -346,6 +388,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided string.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -368,8 +412,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided string.
+     * Set the value for (the first occurrence of) column {@code name} to the provided string.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -388,6 +435,8 @@ public class BoundStatement extends Query {
      * want to insert manually serialized data into columns of another type,
      * use {@link #setBytesUnsafe} instead.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -399,12 +448,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided byte buffer.
+     * Set the value for (the first occurrence of) column {@code name} to the provided byte buffer.
      *
      * This method validate that the type of the column set is BLOB. If you
      * want to insert manually serialized data into columns of another type,
      * use {@link #setBytesUnsafe} instead.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -423,6 +475,8 @@ public class BoundStatement extends Query {
      * the type of the column, you will get an {@code InvalidQueryException} at
      * execute time.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -432,13 +486,16 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided byte buffer.
+     * Set the value for (the first occurrence of) column {@code name} to the provided byte buffer.
      *
      * Contrarily to {@link #setBytes}, this method does not check the
      * type of the column set. If you insert data that is not compatible with
      * the type of the column, you will get an {@code InvalidQueryException} at
      * execute time.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -451,6 +508,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided big integer.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -462,8 +521,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided big integer.
+     * Set the value for (the first occurrence of) column {@code name} to the provided big integer.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -477,6 +539,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided big decimal.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -488,8 +552,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided big decimal.
+     * Set the value for (the first occurrence of) column {@code name} to the provided big decimal.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -503,6 +570,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided UUID.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -523,8 +592,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided UUID.
+     * Set the value for (the first occurrence of) column {@code name} to the provided UUID.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -540,6 +612,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided inet address.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -551,8 +625,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided inet address.
+     * Set the value for (the first occurrence of) column {@code name} to the provided inet address.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -566,6 +643,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided list.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -591,8 +670,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided list.
+     * Set the value for (the first occurrence of) column {@code name} to the provided list.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -608,6 +690,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided map.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -636,8 +720,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided map.
+     * Set the value for (the first occurrence of) column {@code name} to the provided map.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -653,6 +740,8 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided set.
      *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
@@ -677,8 +766,11 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for column {@code name} to the provided set.
+     * Set the value for (the first occurrence of) column {@code name} to the provided set.
      *
+     * @param name the name of the variable to set (if multiple variables
+     * {@code name} are prepared, only the first one is set).
+     * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared

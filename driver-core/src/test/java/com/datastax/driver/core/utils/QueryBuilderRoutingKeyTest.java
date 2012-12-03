@@ -26,7 +26,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
     @Test
     public void textRoutingKeyTest() throws Exception {
 
-        CQLStatement query;
+        Statement query;
         TableMetadata table = cluster.getMetadata().getKeyspace(TestUtils.SIMPLE_KEYSPACE).getTable(TABLE_TEXT);
         assertNotNull(table);
 
@@ -37,7 +37,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
 
         query = select().from(table).where(eq("k", txt));
         assertEquals(ByteBuffer.wrap(txt.getBytes()), query.getRoutingKey());
-        CQLRow row = session.execute(query).fetchOne();
+        Row row = session.execute(query).fetchOne();
         assertEquals(txt, row.getString("k"));
         assertEquals(1, row.getInt("a"));
         assertEquals(2, row.getInt("b"));
@@ -46,7 +46,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
     @Test
     public void intRoutingKeyTest() throws Exception {
 
-        CQLStatement query;
+        Statement query;
         TableMetadata table = cluster.getMetadata().getKeyspace(TestUtils.SIMPLE_KEYSPACE).getTable(TABLE_INT);
         assertNotNull(table);
 
@@ -58,7 +58,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
 
         query = select().from(table).where(eq("k", 42));
         assertEquals(bb, query.getRoutingKey());
-        CQLRow row = session.execute(query).fetchOne();
+        Row row = session.execute(query).fetchOne();
         assertEquals(42, row.getInt("k"));
         assertEquals(1, row.getInt("a"));
         assertEquals(2, row.getInt("b"));

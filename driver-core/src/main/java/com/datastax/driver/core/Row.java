@@ -12,28 +12,32 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * A CQL Row returned in a {@link ResultSet}.
+ * <p>
+ * The values of a CQLRow can be retrieve by either index or name. When
+ * setting them by name, names follow the case insensitivity rules explained in
+ * {@link ColumnDefinitions}.
  */
-public class CQLRow {
+public class Row {
 
     private final ColumnDefinitions metadata;
     private final List<ByteBuffer> data;
 
-    private CQLRow(ColumnDefinitions metadata, List<ByteBuffer> data) {
+    private Row(ColumnDefinitions metadata, List<ByteBuffer> data) {
         this.metadata = metadata;
         this.data = data;
     }
 
-    static CQLRow fromData(ColumnDefinitions metadata, List<ByteBuffer> data) {
+    static Row fromData(ColumnDefinitions metadata, List<ByteBuffer> data) {
         if (data == null)
             return null;
 
-        return new CQLRow(metadata, data);
+        return new Row(metadata, data);
     }
 
     /**
-     * The columns contained in this CQLRow.
+     * The columns contained in this Row.
      *
-     * @return the columns contained in this CQLRow.
+     * @return the columns contained in this Row.
      */
     public ColumnDefinitions getColumnDefinitions() {
         return metadata;
@@ -694,7 +698,7 @@ public class CQLRow {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("CQLRow[");
+        sb.append("Row[");
         for (int i = 0; i < metadata.size(); i++) {
             if (i != 0)
                 sb.append(", ");

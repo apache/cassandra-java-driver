@@ -79,22 +79,23 @@ class RetryingCallback implements Connection.ResponseCallback {
             return true;
         } catch (ConnectionException e) {
             // If we have any problem with the connection, move to the next node.
-            currentPool.returnConnection(connection);
+            if (connection != null)
+                currentPool.returnConnection(connection);
             logError(host.getAddress(), e.getMessage());
             return false;
         } catch (BusyConnectionException e) {
             // The pool shoudln't have give us a busy connection unless we've maxed up the pool, so move on to the next host.
-            currentPool.returnConnection(connection);
+            if (connection != null)
+                currentPool.returnConnection(connection);
             logError(host.getAddress(), e.getMessage());
             return false;
         } catch (TimeoutException e) {
             // We timeout, log it but move to the next node.
-            currentPool.returnConnection(connection);
             logError(host.getAddress(), "Timeout while trying to acquire available connection");
-            currentPool.returnConnection(connection);
             return false;
         } catch (RuntimeException e) {
-            currentPool.returnConnection(connection);
+            if (connection != null)
+                currentPool.returnConnection(connection);
             logger.error("Unexpected error while querying " + host.getAddress(), e);
             logError(host.getAddress(), e.getMessage());
             return false;
@@ -166,13 +167,13 @@ class RetryingCallback implements Connection.ResponseCallback {
                             assert err.error instanceof ReadTimeoutException;
                             ReadTimeoutException rte = (ReadTimeoutException)err.error;
                             ConsistencyLevel rcl = ConsistencyLevel.from(rte.consistency);
-                            retry = retryPolicy.onReadTimeout(rcl, rte.received, rte.blockFor, rte.dataPresent, queryRetries);
+                            retry = retryPolicy.onReadTimeout(rcl, rte.blockFor, rte.received, rte.dataPresent, queryRetries);
                             break;
                         case WRITE_TIMEOUT:
                             assert err.error instanceof WriteTimeoutException;
                             WriteTimeoutException wte = (WriteTimeoutException)err.error;
                             ConsistencyLevel wcl = ConsistencyLevel.from(wte.consistency);
-                            retry = retryPolicy.onWriteTimeout(wcl, WriteType.from(wte.writeType), wte.received, wte.blockFor, queryRetries);
+                            retry = retryPolicy.onWriteTimeout(wcl, WriteType.from(wte.writeType), wte.blockFor, wte.received, queryRetries);
                             break;
                         case UNAVAILABLE:
                             assert err.error instanceof UnavailableException;

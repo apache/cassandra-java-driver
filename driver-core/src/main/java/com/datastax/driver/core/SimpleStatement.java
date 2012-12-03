@@ -3,10 +3,10 @@ package com.datastax.driver.core;
 import java.nio.ByteBuffer;
 
 /**
- * A simple {@code CQLStatement} implementation built directly from a query
+ * A simple {@code Statement} implementation built directly from a query
  * string.
  */
-public class SimpleStatement extends CQLStatement {
+public class SimpleStatement extends Statement {
 
     private final String query;
     private volatile ByteBuffer routingKey;

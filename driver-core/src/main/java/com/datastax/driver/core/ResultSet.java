@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
  *
  * Note that this class is not thread-safe.
  */
-public class ResultSet implements Iterable<CQLRow> {
+public class ResultSet implements Iterable<Row> {
 
     private static final Logger logger = LoggerFactory.getLogger(ResultSet.class);
 
@@ -96,8 +96,8 @@ public class ResultSet implements Iterable<CQLRow> {
      * @return the next row in this resultSet or null if this ResultSet is
      * exhausted.
      */
-    public CQLRow fetchOne() {
-        return CQLRow.fromData(metadata, rows.poll());
+    public Row fetchOne() {
+        return Row.fromData(metadata, rows.poll());
     }
 
     /**
@@ -106,12 +106,12 @@ public class ResultSet implements Iterable<CQLRow> {
      * @return a list containing the remaining results of this ResultSet. The
      * returned list is empty if and only the ResultSet is exhausted.
      */
-    public List<CQLRow> fetchAll() {
+    public List<Row> fetchAll() {
         if (isExhausted())
             return Collections.emptyList();
 
-        List<CQLRow> result = new ArrayList<CQLRow>(rows.size());
-        for (CQLRow row : this)
+        List<Row> result = new ArrayList<Row>(rows.size());
+        for (Row row : this)
             result.add(row);
         return result;
     }
@@ -128,15 +128,15 @@ public class ResultSet implements Iterable<CQLRow> {
      * @return an iterator that will consume and return the remaining rows of
      * this ResultSet.
      */
-    public Iterator<CQLRow> iterator() {
-        return new Iterator<CQLRow>() {
+    public Iterator<Row> iterator() {
+        return new Iterator<Row>() {
 
             public boolean hasNext() {
                 return !rows.isEmpty();
             }
 
-            public CQLRow next() {
-                return CQLRow.fromData(metadata, rows.poll());
+            public Row next() {
+                return Row.fromData(metadata, rows.poll());
             }
 
             public void remove() {

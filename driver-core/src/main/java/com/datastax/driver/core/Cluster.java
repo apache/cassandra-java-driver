@@ -28,10 +28,10 @@ import org.apache.log4j.PatternLayout;
  * This is the main entry point of the driver. A simple example of access to a
  * Cassandra cluster would be:
  * <pre>
- *   Cluster cluster = new Cluster.Builder().addContactPoint("192.168.0.1").build();
+ *   Cluster cluster = Cluster.builder().addContactPoint("192.168.0.1").build();
  *   Session session = cluster.connect("db1");
  *
- *   for (CQLRow row : session.execute("SELECT * FROM table1"))
+ *   for (Row row : session.execute("SELECT * FROM table1"))
  *       // do something ...
  * </pre>
  * <p>
@@ -47,7 +47,7 @@ public class Cluster {
     static {
         org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
         if (!rootLogger.getAllAppenders().hasMoreElements()) {
-            rootLogger.setLevel(Level.DEBUG);
+            rootLogger.setLevel(Level.INFO);
             rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%-5p [%t]: %m%n")));
         }
     }
@@ -89,6 +89,17 @@ public class Cluster {
             throw new IllegalArgumentException("Cannot build a cluster without contact points");
 
         return new Cluster(contactPoints, initializer.getPort(), initializer.getPolicies(), initializer.getAuthInfoProvider());
+    }
+
+    /**
+     * Creates a new {@link Cluster.Builder} instance.
+     * <p>
+     * This is a shortcut for {@code new Cluster.Builder()}.
+     *
+     * @return the new cluster builder.
+     */
+    public static Cluster.Builder builder() {
+        return new Cluster.Builder();
     }
 
     /**

@@ -1,6 +1,8 @@
 package com.datastax.driver.core.utils.querybuilder;
 
-import com.datastax.driver.core.CQLStatement;
+import java.util.Arrays;
+
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -18,7 +20,7 @@ import com.datastax.driver.core.TableMetadata;
  * <p>
  * Note that it could be convenient to use an 'import static' to use the methods of this class.
  */
-public abstract class QueryBuilder {
+public final class QueryBuilder {
 
     private QueryBuilder() {}
 
@@ -54,7 +56,7 @@ public abstract class QueryBuilder {
      * @return an array containing "count(*)" as sole element.
      */
     public static String[] count() {
-        return COUNT_ALL;
+        return Arrays.copyOf(COUNT_ALL, COUNT_ALL.length);
     }
 
     /**
@@ -222,9 +224,9 @@ public abstract class QueryBuilder {
      * Built a new BATCH query on the provided statement.
      *
      * @param statements the statements to batch.
-     * @return a new {@code CQLStatement} that batch {@code statements}.
+     * @return a new {@code Statement} that batch {@code statements}.
      */
-    public static Batch batch(CQLStatement... statements) {
+    public static Batch batch(Statement... statements) {
         return new Batch(statements);
     }
 }

@@ -2,20 +2,20 @@ package com.datastax.driver.core.utils.querybuilder;
 
 import java.nio.ByteBuffer;
 
-import com.datastax.driver.core.CQLStatement;
+import com.datastax.driver.core.Statement;
 
 /**
  * A built BATCH statement.
  */
-public class Batch extends CQLStatement {
+public class Batch extends Statement {
 
     private final ByteBuffer routingKey;
-    private final CQLStatement[] statements;
+    private final Statement[] statements;
     private Using[] usings;
 
     private StringBuilder builder;
 
-    Batch(CQLStatement[] statements) {
+    Batch(Statement[] statements) {
         if (statements.length == 0)
             throw new IllegalArgumentException("Cannot build a BATCH without any statement");
 

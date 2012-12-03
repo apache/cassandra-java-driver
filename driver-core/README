@@ -64,7 +64,7 @@ Getting Started
 Suppose you have a Cassandra cluster running on 3 nodes whose hostnames are:
 cass1, cass2 and cass3. A simple example using this core driver could be:
 
-    Cluster cluster = new Cluster.Builder()
+    Cluster cluster = Cluster.builder()
                         .addContactPoints("cass1", "cass2")
                         .build();
     Session session = cluster.connect("db1");
