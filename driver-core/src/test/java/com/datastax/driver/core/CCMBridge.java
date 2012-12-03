@@ -144,6 +144,10 @@ public class CCMBridge {
 
         protected abstract Collection<String> getTableDefinitions();
 
+        public void errorOut() {
+            erroredOut = true;
+        }
+
         @BeforeClass
         public static void createCluster() {
             erroredOut = false;
