@@ -168,7 +168,7 @@ public class Metrics {
 
         /**
          * The number of write requests that returned a timeout (independently
-         * of the final decision taken by the {@link RetryPolicy}).
+         * of the final decision taken by the {@link com.datastax.driver.core.policies.RetryPolicy}).
          *
          * @return the number of write timeout.
          */
@@ -178,7 +178,7 @@ public class Metrics {
 
         /**
          * The number of read requests that returned a timeout (independently
-         * of the final decision taken by the {@link RetryPolicy}).
+         * of the final decision taken by the {@link com.datastax.driver.core.policies.RetryPolicy}).
          *
          * @return the number of read timeout.
          */
@@ -188,7 +188,7 @@ public class Metrics {
 
         /**
          * The number of requests that returned an unavailable exception
-         * (independently of the final decision taken by the {@link RetryPolicy}).
+         * (independently of the final decision taken by the {@link com.datastax.driver.core.policies.RetryPolicy}).
          *
          * @return the number of unavailable exception.
          */
@@ -208,9 +208,9 @@ public class Metrics {
         }
 
         /**
-         * The number of times a requests was retried due to the {@link RetryPolicy}.
+         * The number of times a requests was retried due to the {@link com.datastax.driver.core.policies.RetryPolicy}.
          *
-         * @return the number of times a requests was retried due to the {@link RetryPolicy}.
+         * @return the number of times a requests was retried due to the {@link com.datastax.driver.core.policies.RetryPolicy}.
          */
         public Counter getRetries() {
             return retries;
@@ -218,10 +218,10 @@ public class Metrics {
 
         /**
          * The number of times a requests timeout/unavailability was ignored
-         * due to the {@link RetryPolicy}.
+         * due to the {@link com.datastax.driver.core.policies.RetryPolicy}.
          *
          * @return the number of times a requests timeout/unavailability was
-         * ignored due to the {@link RetryPolicy}.
+         * ignored due to the {@link com.datastax.driver.core.policies.RetryPolicy}.
          */
         public Counter getIgnores() {
             return ignores;
