@@ -226,7 +226,7 @@ public abstract class TestUtils {
             return;
         }
 
-        ClusterMetadata metadata = cluster.getMetadata();
+        Metadata metadata = cluster.getMetadata();
         for (int i = 0; i < maxTry; ++i) {
             for (Host host : metadata.getAllHosts()) {
                 if (host.getAddress().equals(address) && host.getMonitor().isUp())
