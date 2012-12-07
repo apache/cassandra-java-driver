@@ -21,6 +21,7 @@ public class Configuration {
 
     private final AuthInfoProvider authProvider;
     private final boolean metricsEnabled;
+    private final EncryptionOptions encryptionOptions;
 
     public Configuration() {
         this(new Policies(),
@@ -28,7 +29,8 @@ public class Configuration {
              new PoolingOptions(),
              new SocketOptions(),
              AuthInfoProvider.NONE,
-             true);
+             true,
+             new EncryptionOptions());
     }
 
     public Configuration(Policies policies,
@@ -36,13 +38,15 @@ public class Configuration {
                          PoolingOptions poolingOptions,
                          SocketOptions socketOptions,
                          AuthInfoProvider authProvider,
-                         boolean metricsEnabled) {
+                         boolean metricsEnabled,
+                         EncryptionOptions encryptionOptions) {
         this.policies = policies;
         this.protocolOptions = protocolOptions;
         this.poolingOptions = poolingOptions;
         this.socketOptions = socketOptions;
         this.authProvider = authProvider;
         this.metricsEnabled = metricsEnabled;
+        this.encryptionOptions = encryptionOptions;
     }
 
     void register(Cluster.Manager manager) {
@@ -105,5 +109,15 @@ public class Configuration {
      */
     public boolean isMetricsEnabled() {
         return metricsEnabled;
+    }
+
+    /**
+     * The encryption options to use when communicating with the server (SSL).
+     *
+     * @return SSL options.
+     */
+    public EncryptionOptions getEncryptionOptions()
+    {
+        return encryptionOptions;
     }
 }
