@@ -10,13 +10,13 @@ public abstract class Assignment extends Utils.Appendeable {
 
     private Assignment(String name) {
         this.name = name;
-    };
+    }
 
     String name() {
         return name;
     }
 
-    public static Assignment set(String name, Object value) {
+    public static <T> Assignment set(String name, T value) {
         return new SetAssignment(name, value);
     }
 
@@ -36,55 +36,55 @@ public abstract class Assignment extends Utils.Appendeable {
         return new CounterAssignment(name, value, false);
     }
 
-    public static Assignment prepend(String name, Object value) {
+    public static <T> Assignment prepend(String name, T value) {
         return new ListPrependAssignment(name, Collections.singletonList(value));
     }
 
-    public static Assignment prependAll(String name, List list) {
+    public static <T> Assignment prependAll(String name, List<T> list) {
         return new ListPrependAssignment(name, list);
     }
 
-    public static Assignment append(String name, Object value) {
+    public static <T> Assignment append(String name, T value) {
         return new CollectionAssignment(name, Collections.singletonList(value), true);
     }
 
-    public static Assignment appendAll(String name, List list) {
+    public static <T> Assignment appendAll(String name, List<T> list) {
         return new CollectionAssignment(name, list, true);
     }
 
-    public static Assignment discard(String name, Object value) {
+    public static <T> Assignment discard(String name, T value) {
         return new CollectionAssignment(name, Collections.singletonList(value), false);
     }
 
-    public static Assignment discardAll(String name, List list) {
+    public static <T> Assignment discardAll(String name, List<T> list) {
         return new CollectionAssignment(name, list, false);
     }
 
-    public static Assignment setIdx(String name, int idx, Object value) {
+    public static <T> Assignment setIdx(String name, int idx, T value) {
         return new ListSetIdxAssignment(name, idx, value);
     }
 
-    public static Assignment add(String name, Object value) {
+    public static <T> Assignment add(String name, T value) {
         return new CollectionAssignment(name, Collections.singleton(value), true);
     }
 
-    public static Assignment addAll(String name, Set set) {
+    public static <T> Assignment addAll(String name, Set<T> set) {
         return new CollectionAssignment(name, set, true);
     }
 
-    public static Assignment remove(String name, Object value) {
+    public static <T> Assignment remove(String name, T value) {
         return new CollectionAssignment(name, Collections.singleton(value), false);
     }
 
-    public static Assignment removeAll(String name, Set set) {
+    public static <T> Assignment removeAll(String name, Set<T> set) {
         return new CollectionAssignment(name, set, false);
     }
 
-    public static Assignment put(String name, Object key, Object value) {
+    public static <K,V> Assignment put(String name, K key, V value) {
         return new MapPutAssignment(name, key, value);
     }
 
-    public static Assignment putAll(String name, Map value) {
+    public static <K,V> Assignment putAll(String name, Map<K,V> value) {
         return new CollectionAssignment(name, value, true);
     }
 

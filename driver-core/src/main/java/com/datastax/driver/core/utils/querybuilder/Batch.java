@@ -21,8 +21,8 @@ public class Batch extends Statement {
 
         this.statements = statements;
         ByteBuffer rk = null;
-        for (int i = 0; i < statements.length; i++) {
-            rk = statements[i].getRoutingKey();
+        for (Statement statement : statements) {
+            rk = statement.getRoutingKey();
             if (rk != null)
                 break;
         }
@@ -42,8 +42,8 @@ public class Batch extends Statement {
         }
         builder.append(" ");
 
-        for (int i = 0; i < statements.length; i++) {
-            String str = statements[i].getQueryString();
+        for (Statement statement : statements) {
+            String str = statement.getQueryString();
             builder.append(str);
             if (!str.trim().endsWith(";"))
                 builder.append(";");

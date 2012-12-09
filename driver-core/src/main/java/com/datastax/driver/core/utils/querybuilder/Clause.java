@@ -1,42 +1,38 @@
 package com.datastax.driver.core.utils.querybuilder;
 
-import java.net.InetAddress;
-import java.util.Date;
-import java.util.UUID;
-
 public abstract class Clause extends Utils.Appendeable {
 
     protected final String name;
 
     private Clause(String name) {
         this.name = name;
-    };
+    }
 
     String name() {
         return name;
     }
 
-    public static Clause eq(String name, Object value) {
+    public static <T> Clause eq(String name, T value) {
         return new SimpleClause(name, "=", value);
     }
 
-    public static Clause in(String name, Object... values) {
+    public static <T> Clause in(String name, T... values) {
         return new InClause(name, values);
     }
 
-    public static Clause lt(String name, Object value) {
+    public static <T> Clause lt(String name, T value) {
         return new SimpleClause(name, "<", value);
     }
 
-    public static Clause lte(String name, Object value) {
+    public static <T> Clause lte(String name, T value) {
         return new SimpleClause(name, "<=", value);
     }
 
-    public static Clause gt(String name, Object value) {
+    public static <T> Clause gt(String name, T value) {
         return new SimpleClause(name, ">", value);
     }
 
-    public static Clause gte(String name, Object value) {
+    public static <T> Clause gte(String name, T value) {
         return new SimpleClause(name, ">=", value);
     }
 
