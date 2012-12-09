@@ -59,6 +59,38 @@ public class QueryBuilderTest {
         assertEquals(query, insert.toString());
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void insertTestWithEmptyColumns() {
+        insert().into("foo").values().using(ttl(24), timestamp(42));
+    }
+
+    @Test
+    public void fluentInsertTest() throws Exception {
+
+        String query;
+        Insert insert;
+
+        query = "INSERT INTO foo(a,b,\"C\",d) VALUES (123,127.0.0.1,'foo''bar',{'x':3,'y':2}) USING TIMESTAMP 42 AND TTL 24;";
+        insert = insert().into("foo")
+                .column("a", 123)
+                .and().column("b", InetAddress.getByName("127.0.0.1"))
+                .and().column(quote("C"), "foo'bar")
+                .and().column("d", new TreeMap() {{
+                    put("x", 3);
+                    put("y", 2);
+                }})
+                .using(timestamp(42), ttl(24));
+        assertEquals(query, insert.toString());
+
+        query = "INSERT INTO foo(a,b) VALUES ({2,3,4},3.4) USING TTL 24 AND TIMESTAMP 42;";
+        insert = insert("a", "b").into("foo").column("a", new TreeSet() {{
+            add(2);
+            add(3);
+            add(4);
+        }}).and().column("b", 3.4).using(ttl(24), timestamp(42));
+        assertEquals(query, insert.toString());
+    }
+
     @Test
     public void updateTest() throws Exception {
 
