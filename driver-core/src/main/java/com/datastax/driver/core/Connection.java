@@ -1,18 +1,25 @@
 package com.datastax.driver.core;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.security.KeyStore;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
-import com.datastax.driver.core.policies.*;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManagerFactory;
+
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
+import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.transport.*;
 import org.apache.cassandra.transport.messages.*;
@@ -20,6 +27,8 @@ import org.apache.cassandra.transport.messages.*;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.handler.ssl.SslHandler;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +87,17 @@ class Connection extends org.apache.cassandra.transport.Connection
         this.name = name;
         this.bootstrap = factory.bootstrap();
 
-        bootstrap.setPipelineFactory(new PipelineFactory(this));
+        PipelineFactory pipelineFactory;
+        EncryptionOptions encryptionOptions = factory.configuration.getEncryptionOptions();
+        if(encryptionOptions.isEnabled())
+        {
+            pipelineFactory = new SecurePipelineFactory(this, encryptionOptions);
+        }
+        else
+        {
+            pipelineFactory = new PipelineFactory(this);
+        }
+        bootstrap.setPipelineFactory(pipelineFactory);
 
         ChannelFuture future = bootstrap.connect(new InetSocketAddress(address, factory.getPort()));
 
@@ -538,6 +557,59 @@ class Connection extends org.apache.cassandra.transport.Connection
             pipeline.addLast("dispatcher", connection.dispatcher);
 
             return pipeline;
+        }
+    }
+
+    private static class SecurePipelineFactory extends PipelineFactory
+    {
+        private final EncryptionOptions encryptionOptions;
+
+        public SecurePipelineFactory(final Connection connection, EncryptionOptions encryptionOptions)
+        {
+            super(connection);
+            this.encryptionOptions = encryptionOptions;
+        }
+
+        public ChannelPipeline getPipeline() throws Exception
+        {
+            SSLEngine engine = createSSLContext().createSSLEngine();
+            engine.setUseClientMode(true);
+            ChannelPipeline pipeline = super.getPipeline();
+            pipeline.addFirst("ssl", new SslHandler(engine));
+            return pipeline;
+        }
+
+        SSLContext createSSLContext() throws IOException
+        {
+            FileInputStream tsf = new FileInputStream(encryptionOptions.getTruststore());
+            FileInputStream ksf = new FileInputStream(encryptionOptions.getKeystore());
+            SSLContext ctx;
+            try
+            {
+                ctx = SSLContext.getInstance(encryptionOptions.getProtocol());
+
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance(encryptionOptions.getAlgorithm());
+                KeyStore ts = KeyStore.getInstance(encryptionOptions.getStoreType());
+                ts.load(tsf, encryptionOptions.getTruststorePassword().toCharArray());
+                tmf.init(ts);
+
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance(encryptionOptions.getAlgorithm());
+                KeyStore ks = KeyStore.getInstance(encryptionOptions.getStoreType());
+                char[] pw = encryptionOptions.getKeystorePassword().toCharArray();
+                ks.load(ksf, pw);
+                kmf.init(ks, pw);
+                ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+            }
+            catch (Exception e)
+            {
+                throw new IOException("Error creating the initializing the SSL Context", e);
+            }
+            finally
+            {
+                FileUtils.closeQuietly(tsf);
+                FileUtils.closeQuietly(ksf);
+            }
+            return ctx;
         }
     }
 }

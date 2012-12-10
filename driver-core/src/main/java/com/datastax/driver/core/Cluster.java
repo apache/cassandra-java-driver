@@ -224,6 +224,7 @@ public class Cluster {
         private boolean metricsEnabled = true;
         private final PoolingOptions poolingOptions = new PoolingOptions();
         private final SocketOptions socketOptions = new SocketOptions();
+        private EncryptionOptions encryptionOptions = new EncryptionOptions();
 
         public List<InetAddress> getContactPoints() {
             return addresses;
@@ -337,6 +338,12 @@ public class Cluster {
             return this;
         }
 
+        public Builder withEncryptionOptions(EncryptionOptions encryptionOptions)
+        {
+            this.encryptionOptions = encryptionOptions;
+            return this;
+        }
+
         /**
          * Configure the retry policy to use for the new cluster.
          * <p>
@@ -412,6 +419,18 @@ public class Cluster {
         }
 
         /**
+         * The connection encryption (SSL) options used by this builder.
+         *
+         * @return the connection encryption options that will be used by this builder. You
+         * can use the returned object to define the SSL options (if any)
+         * for the built cluster. Defaults to SSL being disabled.
+         */
+        public EncryptionOptions encryptionOptions()
+        {
+            return encryptionOptions;
+        }
+
+        /**
          * The configuration that will be used for the new cluster.
          * <p>
          * You <b>should not</b> modify this object directly as change made
@@ -431,7 +450,8 @@ public class Cluster {
                                      poolingOptions,
                                      socketOptions,
                                      authProvider,
-                                     metricsEnabled);
+                                     metricsEnabled,
+                                     encryptionOptions);
         }
 
         /**
