@@ -122,7 +122,7 @@ public class Insert extends BuiltStatement {
          * @param values the values to insert. The {@code i}th value
          * corresponds to the {@code i}th column used when constructing this
          * {@code Insert.Builder object}.
-         * @return the newly built UPDATE statement.
+         * @return the newly built INSERT statement.
          *
          * @throws IllegalArgumentException if the number of provided values
          * doesn't correspond to the number of columns used when constructing
