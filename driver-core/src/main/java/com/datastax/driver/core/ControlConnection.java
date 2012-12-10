@@ -30,9 +30,7 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
 
     private static final String SELECT_PEERS = "SELECT peer, data_center, rack, tokens FROM system.peers";
-    // TODO: fix once we have rc1
-    //private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens, partitioner FROM system.local WHERE key='local'";
-    private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens FROM system.local WHERE key='local'";
+    private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens, partitioner FROM system.local WHERE key='local'";
 
     private static final String SELECT_SCHEMA_PEERS = "SELECT peer, schema_version FROM system.peers";
     private static final String SELECT_SCHEMA_LOCAL = "SELECT schema_version FROM system.local WHERE key='local'";
@@ -253,9 +251,7 @@ class ControlConnection implements Host.StateListener {
             if (host != null)
                 host.setLocationInfo(localRow.getString("data_center"), localRow.getString("rack"));
 
-            // TODO:Fix once we have rc1
-            //partitioner = localRow.getString("partitioner");
-            partitioner = "org.apache.cassandra.dht.Murmur3Partitioner";
+            partitioner = localRow.getString("partitioner");
             Set<String> tokens = localRow.getSet("tokens", String.class);
             if (partitioner != null && !tokens.isEmpty())
                 tokenMap.put(host, tokens);
@@ -303,16 +299,15 @@ class ControlConnection implements Host.StateListener {
         long elapsed = 0;
         while (elapsed < MAX_SCHEMA_AGREEMENT_WAIT_MS) {
             ResultSetFuture peersFuture = new ResultSetFuture(null, new QueryMessage(SELECT_SCHEMA_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-            // TODO: fix once we have rc1
-            //ResultSet.Future localFuture = new ResultSet.Future(null, new QueryMessage(SELECT_SCHEMA_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+            ResultSetFuture localFuture = new ResultSetFuture(null, new QueryMessage(SELECT_SCHEMA_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
             connection.write(peersFuture.callback);
-            //connection.write(localFuture.callback);
+            connection.write(localFuture.callback);
 
             Set<UUID> versions = new HashSet<UUID>();
 
-            //Row localRow = localFuture.get().fetchOne();
-            //if (localRow != null && !localRow.isNull("schema_version"))
-            //    versions.add(row.getUUID("schema_version"));
+            Row localRow = localFuture.get().fetchOne();
+            if (localRow != null && !localRow.isNull("schema_version"))
+                versions.add(localRow.getUUID("schema_version"));
 
             for (Row row : peersFuture.get()) {
                 if (row.isNull("peer") || row.isNull("schema_version"))

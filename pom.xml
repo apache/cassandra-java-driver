@@ -17,7 +17,7 @@
     <dependency>
       <groupId>org.apache.cassandra</groupId>
       <artifactId>cassandra-all</artifactId>
-      <version>1.2.0-beta2</version>
+      <version>1.2.0-beta3</version>
     </dependency>
 
     <dependency>
