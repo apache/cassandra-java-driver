@@ -25,6 +25,8 @@ public class PreparedStatement {
     volatile ByteBuffer routingKey;
     final int[] routingKeyIndexes;
 
+    volatile ConsistencyLevel consistency;
+
     private PreparedStatement(ColumnDefinitions metadata, MD5Digest id, int[] routingKeyIndexes) {
         this.metadata = metadata;
         this.id = id;
@@ -117,6 +119,8 @@ public class PreparedStatement {
      */
     public BoundStatement bind(Object... values) {
         BoundStatement bs = new BoundStatement(this);
+        if (consistency != null)
+            bs.setConsistencyLevel(consistency);
         return bs.bind(values);
     }
 
@@ -126,7 +130,10 @@ public class PreparedStatement {
      * @return the newly created {@code BoundStatement}.
      */
     public BoundStatement newBoundStatement() {
-        return new BoundStatement(this);
+        BoundStatement bs = new BoundStatement(this);
+        if (consistency != null)
+            bs.setConsistencyLevel(consistency);
+        return bs;
     }
 
     /**
@@ -167,5 +174,31 @@ public class PreparedStatement {
     public PreparedStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
         this.routingKey = SimpleStatement.compose(routingKeyComponents);
         return this;
+    }
+
+    /**
+     * Sets a default consistency level for all {@code BoundStatement} created
+     * from this object.
+     * <p>
+     * If set, any {@code BoundStatement} created through either {@link #bind} or
+     * {@link #newBoundStatement}.
+     *
+     * @param consistency the default consistency level to set.
+     * @return this {@code PreparedStatement} object.
+     */
+    public PreparedStatement setConsistencyLevel(ConsistencyLevel consistency) {
+        this.consistency = consistency;
+        return this;
+    }
+
+    /**
+     * The default consistency level set through {@link #setConsistencyLevel}.
+     *
+     * @return the default consistency level. Returns {@code null} if no
+     * consistency level has been set through this object {@code setConsistencyLevel}
+     * method.
+     */
+    public ConsistencyLevel getConsistencyLevel() {
+        return consistency;
     }
 }
