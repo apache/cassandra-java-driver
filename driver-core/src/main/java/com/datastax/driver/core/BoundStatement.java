@@ -30,10 +30,19 @@ public class BoundStatement extends Query {
     final ByteBuffer[] values;
     private int remaining;
 
-    BoundStatement(PreparedStatement statement) {
+    /**
+     * Creates a new {@code BoundStatement} from the provided prepared
+     * statement.
+     *
+     * @param statement the prepared statement from which to create a t {@code BoundStatement}.
+     */
+    public BoundStatement(PreparedStatement statement) {
         this.statement = statement;
         this.values = new ByteBuffer[statement.getVariables().size()];
         this.remaining = values.length;
+
+        if (statement.getConsistencyLevel() != null)
+            this.setConsistencyLevel(statement.getConsistencyLevel());
     }
 
     /**

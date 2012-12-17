@@ -102,8 +102,14 @@ public class PreparedStatement {
     /**
      * Creates a new BoundStatement object and bind its variables to the
      * provided values.
-     *
-     * This method is a shortcut for {@code this.newBoundStatement().bind(...)}.
+     * <p>
+     * This method is a shortcut for {@code new BoundStatement(this).bind(...)}.
+     * <p>
+     * Note that while no more {@code values} than bound variables can be
+     * provided, it is allowed to provide less {@code values} that there is
+     * variables. In that case, the remaining variables will have to be bound
+     * to values by another mean because the resulting {@code BoundStatement}
+     * being executable.
      *
      * @param values the values to bind to the variables of the newly created
      * BoundStatement.
@@ -119,21 +125,7 @@ public class PreparedStatement {
      */
     public BoundStatement bind(Object... values) {
         BoundStatement bs = new BoundStatement(this);
-        if (consistency != null)
-            bs.setConsistencyLevel(consistency);
         return bs.bind(values);
-    }
-
-    /**
-     * Creates a new {@code BoundStatement} from this prepared statement.
-     *
-     * @return the newly created {@code BoundStatement}.
-     */
-    public BoundStatement newBoundStatement() {
-        BoundStatement bs = new BoundStatement(this);
-        if (consistency != null)
-            bs.setConsistencyLevel(consistency);
-        return bs;
     }
 
     /**
