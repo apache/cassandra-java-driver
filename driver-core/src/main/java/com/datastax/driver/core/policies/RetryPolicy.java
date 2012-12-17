@@ -95,6 +95,7 @@ public interface RetryPolicy {
      * {@code false} (see
      * {@link com.datastax.driver.core.exceptions.ReadTimeoutException#wasDataRetrieved}).
      *
+     * @param query the original query that timeouted.
      * @param cl the original consistency level of the read that timeouted.
      * @param requiredResponses the number of responses that were required to
      * achieve the requested consistency level.
@@ -107,11 +108,12 @@ public interface RetryPolicy {
      * a {@link com.datastax.driver.core.exceptions.ReadTimeoutException} will
      * be thrown for the operation.
      */
-    public RetryDecision onReadTimeout(ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry);
+    public RetryDecision onReadTimeout(Query query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry);
 
     /**
      * Defines whether to retry and at which consistency level on a write timeout.
      *
+     * @param query the original query that timeouted.
      * @param cl the original consistency level of the write that timeouted.
      * @param writeType the type of the write that timeouted.
      * @param requiredAcks the number of acknowledgments that were required to
@@ -123,12 +125,14 @@ public interface RetryPolicy {
      * a {@link com.datastax.driver.core.exceptions.WriteTimeoutException} will
      * be thrown for the operation.
      */
-    public RetryDecision onWriteTimeout(ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry);
+    public RetryDecision onWriteTimeout(Query query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry);
 
     /**
      * Defines whether to retry and at which consistency level on an
      * unavailable exception.
      *
+     * @param query the original query for which the consistency level cannot
+     * be achieved.
      * @param cl the original consistency level for the operation.
      * @param requiredReplica the number of replica that should have been
      * (known) alive for the operation to be attempted.
@@ -139,5 +143,5 @@ public interface RetryPolicy {
      * an {@link com.datastax.driver.core.exceptions.UnavailableException} will
      * be thrown for the operation.
      */
-    public RetryDecision onUnavailable(ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry);
+    public RetryDecision onUnavailable(Query query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry);
 }

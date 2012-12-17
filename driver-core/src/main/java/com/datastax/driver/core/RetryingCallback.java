@@ -42,6 +42,7 @@ class RetryingCallback implements Connection.ResponseCallback {
     private final TimerContext timerContext;
 
     private final Iterator<Host> queryPlan;
+    private final Query query;
     private volatile Host current;
     private volatile HostConnectionPool currentPool;
 
@@ -55,6 +56,7 @@ class RetryingCallback implements Connection.ResponseCallback {
         this.callback = callback;
 
         this.queryPlan = manager.loadBalancer.newQueryPlan(query);
+        this.query = query;
 
         this.timerContext = manager.configuration().isMetricsEnabled()
                           ? metrics().getRequestsTimer().time()
@@ -186,7 +188,10 @@ class RetryingCallback implements Connection.ResponseCallback {
                 case ERROR:
                     ErrorMessage err = (ErrorMessage)response;
                     RetryPolicy.RetryDecision retry = null;
-                    RetryPolicy retryPolicy = manager.configuration().getPolicies().getRetryPolicy();
+                    RetryPolicy queryRetryPolicy = query.getRetryPolicy();
+                    RetryPolicy retryPolicy = query.getRetryPolicy() == null
+                                            ? manager.configuration().getPolicies().getRetryPolicy()
+                                            : query.getRetryPolicy();
                     switch (err.error.code()) {
                         case READ_TIMEOUT:
                             assert err.error instanceof ReadTimeoutException;
@@ -195,7 +200,7 @@ class RetryingCallback implements Connection.ResponseCallback {
 
                             ReadTimeoutException rte = (ReadTimeoutException)err.error;
                             ConsistencyLevel rcl = ConsistencyLevel.from(rte.consistency);
-                            retry = retryPolicy.onReadTimeout(rcl, rte.blockFor, rte.received, rte.dataPresent, queryRetries);
+                            retry = retryPolicy.onReadTimeout(query, rcl, rte.blockFor, rte.received, rte.dataPresent, queryRetries);
                             break;
                         case WRITE_TIMEOUT:
                             assert err.error instanceof WriteTimeoutException;
@@ -204,7 +209,7 @@ class RetryingCallback implements Connection.ResponseCallback {
 
                             WriteTimeoutException wte = (WriteTimeoutException)err.error;
                             ConsistencyLevel wcl = ConsistencyLevel.from(wte.consistency);
-                            retry = retryPolicy.onWriteTimeout(wcl, WriteType.from(wte.writeType), wte.blockFor, wte.received, queryRetries);
+                            retry = retryPolicy.onWriteTimeout(query, wcl, WriteType.from(wte.writeType), wte.blockFor, wte.received, queryRetries);
                             break;
                         case UNAVAILABLE:
                             assert err.error instanceof UnavailableException;
@@ -213,7 +218,7 @@ class RetryingCallback implements Connection.ResponseCallback {
 
                             UnavailableException ue = (UnavailableException)err.error;
                             ConsistencyLevel ucl = ConsistencyLevel.from(ue.consistency);
-                            retry = retryPolicy.onUnavailable(ucl, ue.required, ue.alive, queryRetries);
+                            retry = retryPolicy.onUnavailable(query, ucl, ue.required, ue.alive, queryRetries);
                             break;
                         case OVERLOADED:
                             // Try another node

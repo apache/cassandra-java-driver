@@ -32,8 +32,8 @@ public class LoggingRetryPolicy implements RetryPolicy {
         return decision.getRetryConsistencyLevel() == null ? cl : decision.getRetryConsistencyLevel();
     }
 
-    public RetryDecision onReadTimeout(ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
-        RetryDecision decision = policy.onReadTimeout(cl, requiredResponses, receivedResponses, dataRetrieved, nbRetry);
+    public RetryDecision onReadTimeout(Query query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
+        RetryDecision decision = policy.onReadTimeout(query, cl, requiredResponses, receivedResponses, dataRetrieved, nbRetry);
         switch (decision.getType()) {
             case IGNORE:
                 String f1 = "Ignoring read timeout (initial consistency: %s, required responses: %d, received responses: %d, data retrieved: %b, retries: %d)";
@@ -47,8 +47,8 @@ public class LoggingRetryPolicy implements RetryPolicy {
         return decision;
     }
 
-    public RetryDecision onWriteTimeout(ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
-        RetryDecision decision = policy.onWriteTimeout(cl, writeType, requiredAcks, receivedAcks, nbRetry);
+    public RetryDecision onWriteTimeout(Query query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
+        RetryDecision decision = policy.onWriteTimeout(query, cl, writeType, requiredAcks, receivedAcks, nbRetry);
         switch (decision.getType()) {
             case IGNORE:
                 String f1 = "Ignoring write timeout (initial consistency: %s, write type: %s, required acknowledgments: %d, received acknowledgments: %d, retries: %d)";
@@ -62,8 +62,8 @@ public class LoggingRetryPolicy implements RetryPolicy {
         return decision;
     }
 
-    public RetryDecision onUnavailable(ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
-        RetryDecision decision = policy.onUnavailable(cl, requiredReplica, aliveReplica, nbRetry);
+    public RetryDecision onUnavailable(Query query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
+        RetryDecision decision = policy.onUnavailable(query, cl, requiredReplica, aliveReplica, nbRetry);
         switch (decision.getType()) {
             case IGNORE:
                 String f1 = "Ignoring unavailable exception (initial consistency: %s, required replica: %d, alive replica: %d, retries: %d)";

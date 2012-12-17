@@ -2,6 +2,8 @@ package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
 
+import com.datastax.driver.core.policies.RetryPolicy;
+
 /**
  * An executable query.
  * <p>
@@ -16,6 +18,8 @@ public abstract class Query {
 
     private volatile ConsistencyLevel consistency;
     private volatile boolean traceQuery;
+
+    private volatile RetryPolicy retryPolicy;
 
     // We don't want to expose the constructor, because the code rely on this being only subclassed by Statement and BoundStatement
     Query() {
@@ -91,4 +95,31 @@ public abstract class Query {
      * @return the routing key for this query or {@code null}.
      */
     public abstract ByteBuffer getRoutingKey();
+
+    /**
+     * Sets the retry policy to use for this query.
+     * <p>
+     * The default retry policy, if this method is not called, is the one returned by
+     * {@link Policies#getRetryPolicy} in the cluster configuration. This
+     * method is thus only useful in case you want to punctually override the
+     * default policy for this request.
+     *
+     * @param policy the retry policy to use for this query.
+     * @return this {@code Query} object.
+     */
+    public Query setRetryPolicy(RetryPolicy policy) {
+        this.retryPolicy = policy;
+        return this;
+    }
+
+    /**
+     * The retry policy sets for this query, if any.
+     *
+     * @return the retry policy sets specifically for this query or {@code null} if no query specific
+     * retry policy has been set through {@link #setRetryPolicy} (in which case
+     * the Cluster retry policy will apply if necessary).
+     */
+    public RetryPolicy getRetryPolicy() {
+        return retryPolicy;
+    }
 }
