@@ -172,8 +172,11 @@ public class PreparedStatement {
      * Sets a default consistency level for all {@code BoundStatement} created
      * from this object.
      * <p>
-     * If set, any {@code BoundStatement} created through either {@link #bind} or
-     * {@link #newBoundStatement}.
+     * If no consistency level is set through this method, the BoundStatement
+     * created from this object will use the default consistency level (ONE).
+     * <p>
+     * Changing the default consistency level is not retroactive, it only
+     * applies to BoundStatement created after the change.
      *
      * @param consistency the default consistency level to set.
      * @return this {@code PreparedStatement} object.

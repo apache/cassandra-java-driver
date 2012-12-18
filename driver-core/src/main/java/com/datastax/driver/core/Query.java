@@ -100,9 +100,9 @@ public abstract class Query {
      * Sets the retry policy to use for this query.
      * <p>
      * The default retry policy, if this method is not called, is the one returned by
-     * {@link Policies#getRetryPolicy} in the cluster configuration. This
-     * method is thus only useful in case you want to punctually override the
-     * default policy for this request.
+     * {@link com.datastax.driver.core.policies.Policies#getRetryPolicy} in the
+     * cluster configuration. This method is thus only useful in case you want
+     * to punctually override the default policy for this request.
      *
      * @param policy the retry policy to use for this query.
      * @return this {@code Query} object.
