@@ -1,4 +1,4 @@
-package com.datastax.driver.examples.stress;
+package com.datastax.driver.stress;
 
 import java.nio.ByteBuffer;
 import java.util.Random;
@@ -98,7 +98,7 @@ public class Generators {
                 }
 
                 public QueryGenerator.Request next() {
-                    BoundStatement b = stmt.newBoundStatement();
+                    BoundStatement b = stmt.bind();
                     b.setInt("key", i);
                     for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i)
                         b.setBytes("c" + i, makeValue(options));

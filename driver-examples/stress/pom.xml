@@ -38,7 +38,7 @@
               <configuration>
                   <archive>
                       <manifest>
-                          <mainClass>com.datastax.driver.examples.stress.Stress</mainClass>
+                          <mainClass>com.datastax.driver.stress.Stress</mainClass>
                       </manifest>
                   </archive>
                   <descriptorRefs>

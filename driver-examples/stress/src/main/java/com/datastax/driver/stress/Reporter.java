@@ -1,4 +1,4 @@
-package com.datastax.driver.examples.stress;
+package com.datastax.driver.stress;
 
 import java.io.File;
 import java.util.concurrent.*;
