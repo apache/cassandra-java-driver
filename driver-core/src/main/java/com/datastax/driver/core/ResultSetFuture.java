@@ -5,6 +5,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Throwables;
+
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.ErrorMessage;
 import org.apache.cassandra.transport.messages.ResultMessage;
@@ -124,17 +126,24 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
      * unauthorized or any other validation problem).
      */
     public ResultSet getUninterruptibly() throws NoHostAvailableException {
+        boolean interrupted = false;
         try {
             while (true) {
                 try {
                     return super.get();
                 } catch (InterruptedException e) {
                     // We said 'uninterruptibly'
+                    interrupted = true;
                 }
             }
         } catch (ExecutionException e) {
             extractCauseFromExecutionException(e);
             throw new AssertionError();
+        } finally {
+            // Restore interrupted state
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -188,14 +197,10 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
     }
 
     static void extractCause(Throwable cause) throws NoHostAvailableException {
-        if (cause instanceof NoHostAvailableException)
-            throw (NoHostAvailableException)cause;
-        else if (cause instanceof QueryExecutionException)
-            throw (QueryExecutionException)cause;
-        else if (cause instanceof DriverUncheckedException)
-            throw (DriverUncheckedException)cause;
-        else
-            throw new DriverInternalError("Unexpected exception thrown", cause);
+        Throwables.propagateIfInstanceOf(cause, NoHostAvailableException.class);
+        Throwables.propagateIfInstanceOf(cause, QueryExecutionException.class);
+        Throwables.propagateIfInstanceOf(cause, DriverUncheckedException.class);
+        throw new DriverInternalError("Unexpected exception thrown", cause);
     }
 
     static Exception convertException(org.apache.cassandra.exceptions.TransportException te) {
