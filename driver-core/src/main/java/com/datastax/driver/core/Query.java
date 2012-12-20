@@ -56,7 +56,7 @@ public abstract class Query {
      *
      * @return this {@code Query} object.
      */
-    public Query setTracing() {
+    public Query enableTracing() {
         this.traceQuery = true;
         return this;
     }
@@ -66,7 +66,7 @@ public abstract class Query {
      *
      * @return this {@code Query} object.
      */
-    public Query unsetTracing() {
+    public Query disableTracing() {
         this.traceQuery = false;
         return this;
     }
