@@ -174,6 +174,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
     public ResultSet getUninterruptibly(long timeout, TimeUnit unit) throws NoHostAvailableException, TimeoutException {
         long start = System.nanoTime();
         long timeoutNanos = unit.toNanos(timeout);
+        boolean interrupted = false;
         try {
             while (true) {
                 try {
@@ -184,11 +185,17 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
                     long elapsedNanos = now - start;
                     timeoutNanos = timeoutNanos - elapsedNanos;
                     start = now;
+                    interrupted = true;
                 }
             }
         } catch (ExecutionException e) {
             extractCauseFromExecutionException(e);
             throw new AssertionError();
+        } finally {
+            // Restore interrupted state
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -198,7 +205,6 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
 
     static void extractCause(Throwable cause) throws NoHostAvailableException {
         Throwables.propagateIfInstanceOf(cause, NoHostAvailableException.class);
-        Throwables.propagateIfInstanceOf(cause, QueryExecutionException.class);
         Throwables.propagateIfInstanceOf(cause, DriverUncheckedException.class);
         throw new DriverInternalError("Unexpected exception thrown", cause);
     }
