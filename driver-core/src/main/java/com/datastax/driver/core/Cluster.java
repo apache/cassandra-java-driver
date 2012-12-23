@@ -683,7 +683,7 @@ public class Cluster {
                         ControlConnection.waitForSchemaAgreement(connection, metadata);
                         ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this);
                     } catch (Exception e) {
-                        logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() migth appear stale. Asynchronously submitting job to fix.", e.getMessage());
+                        logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e);
                         submitSchemaRefresh(keyspace, table);
                     } finally {
                         // Always sets the result
