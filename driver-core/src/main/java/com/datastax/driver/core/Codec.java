@@ -67,6 +67,9 @@ class Codec {
     }
 
     public static DataType rawTypeToDataType(AbstractType<?> rawType) {
+        if (rawType instanceof ReversedType)
+            rawType = ((ReversedType) rawType).baseType;
+
         DataType type = rawNativeMap.get(rawType);
         if (type != null)
             return type;
