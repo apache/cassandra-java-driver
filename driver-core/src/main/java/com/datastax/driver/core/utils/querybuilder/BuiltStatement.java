@@ -11,8 +11,8 @@ abstract class BuiltStatement extends Statement {
 
     private final List<ColumnMetadata> partitionKey;
     private final ByteBuffer[] routingKey;
-
-    protected final StringBuilder builder = new StringBuilder();
+    private boolean dirty;
+    private String cache;
 
     protected BuiltStatement() {
         this.partitionKey = null;
@@ -25,11 +25,18 @@ abstract class BuiltStatement extends Statement {
     }
 
     public String getQueryString() {
-        return builder.append(";").toString();
+        if (dirty || cache == null) {
+            cache = buildQueryString().trim();
+            if (!cache.endsWith(";"))
+                cache += ";";
+        }
+        return cache;
     }
 
-    protected StringBuilder appendName(String name) {
-        return Utils.appendName(name, builder);
+    protected abstract String buildQueryString();
+
+    protected void setDirty() {
+        dirty = true;
     }
 
     // TODO: Correctly document the InvalidTypeException
@@ -78,5 +85,36 @@ abstract class BuiltStatement extends Statement {
     private static void putShortLength(ByteBuffer bb, int length) {
         bb.put((byte) ((length >> 8) & 0xFF));
         bb.put((byte) (length & 0xFF));
+    }
+
+    /**
+     * An utility class to create a BuiltStatement that encapsulate another one.
+     */
+    abstract static class ForwardingStatement<T extends BuiltStatement> extends BuiltStatement {
+
+        protected T statement;
+
+        protected ForwardingStatement(T statement) {
+            this.statement = statement;
+        }
+
+        @Override
+        public String getQueryString() {
+            return statement.getQueryString();
+        }
+
+        protected String buildQueryString() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ByteBuffer getRoutingKey() {
+            return statement.getRoutingKey();
+        }
+
+        @Override
+        protected void setDirty() {
+            statement.setDirty();
+        }
     }
 }

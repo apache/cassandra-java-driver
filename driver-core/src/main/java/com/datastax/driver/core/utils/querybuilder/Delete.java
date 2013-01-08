@@ -1,5 +1,8 @@
 package com.datastax.driver.core.utils.querybuilder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -7,46 +10,164 @@ import com.datastax.driver.core.TableMetadata;
  */
 public class Delete extends BuiltStatement {
 
-    Delete(String keyspace, String table, String[] columnNames, Clause[] clauses, Using[] usings) {
+    private final String keyspace;
+    private final String table;
+    private final List<String> columnNames;
+    private final Where where;
+    private final Options usings;
+
+    Delete(String keyspace, String table, List<String> columnNames) {
         super();
-        init(keyspace, table, columnNames, clauses, usings);
+        this.keyspace = keyspace;
+        this.table = table;
+        this.columnNames = columnNames;
+        this.where = new Where(this);
+        this.usings = new Options(this);
     }
 
-    Delete(TableMetadata table, String[] columnNames, Clause[] clauses, Using[] usings) {
+    Delete(TableMetadata table, List<String> columnNames) {
         super(table);
-        init(table.getKeyspace().getName(), table.getName(), columnNames, clauses, usings);
+        this.keyspace = table.getKeyspace().getName();
+        this.table = table.getName();
+        this.columnNames = columnNames;
+        this.where = new Where(this);
+        this.usings = new Options(this);
     }
 
-    private void init(String keyspaceName, String tableName, String[] columnNames, Clause[] clauses, Using[] usings) {
+    protected String buildQueryString() {
+        StringBuilder builder = new StringBuilder();
+
         builder.append("DELETE ");
         Utils.joinAndAppendNames(builder, ",", columnNames);
 
         builder.append(" FROM ");
-        if (keyspaceName != null)
-            appendName(keyspaceName).append(".");
-        appendName(tableName);
-
-        if (usings != null && usings.length > 0) {
+        if (keyspace != null)
+            Utils.appendName(keyspace, builder).append(".");
+        Utils.appendName(table, builder);
+        if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(null, builder, " AND ", usings);
+            Utils.joinAndAppend(builder, " AND ", usings.usings);
         }
 
-        builder.append(" WHERE ");
-        Utils.joinAndAppend(this, builder, ",", clauses);
+        if (!where.clauses.isEmpty()) {
+            builder.append(" WHERE ");
+            Utils.joinAndAppend(builder, ",", where.clauses);
+        }
+
+        return builder.toString();
     }
 
+    /**
+     * Adds a WHERE clause to this statement.
+     *
+     * This is a shorter/more readable version for {@code where().and(clause)}.
+     *
+     * @param clause the clause to add.
+     * @return the where clause of this query to which more clause can be added.
+     */
+    public Where where(Clause clause) {
+        return where.and(clause);
+    }
+
+    /**
+     * Returns a Where statement for this query without adding clause.
+     *
+     * @return the where clause of this query to which more clause can be added.
+     */
+    public Where where() {
+        return where;
+    }
+
+    /**
+     * Adds a new options for this DELETE statement.
+     *
+     * @param using the option to add.
+     * @return the options of this DELETE statement.
+     */
+    public Options using(Using using) {
+        return usings.and(using);
+    }
+
+    /**
+     * The WHERE clause of a DELETE statement.
+     */
+    public static class Where extends BuiltStatement.ForwardingStatement<Delete> {
+
+        private final List<Clause> clauses = new ArrayList<Clause>();
+
+        Where(Delete statement) {
+            super(statement);
+        }
+
+        /**
+         * Adds the provided clause to this WHERE clause.
+         *
+         * @param clause the clause to add.
+         * @return this WHERE clause.
+         */
+        public Where and(Clause clause)
+        {
+            clauses.add(clause);
+            statement.maybeAddRoutingKey(clause.name(), clause.firstValue());
+            setDirty();
+            return this;
+        }
+
+        /**
+         * Adds an option to the DELETE statement this WHERE clause is part of.
+         *
+         * @param using the using clause to add.
+         * @return the options of the DELETE statement this WHERE clause is part of.
+         */
+        public Options using(Using using) {
+            return statement.using(using);
+        }
+    }
+
+    /**
+     * The options of a DELETE statement.
+     */
+    public static class Options extends BuiltStatement.ForwardingStatement<Delete> {
+
+        private final List<Using> usings = new ArrayList<Using>();
+
+        Options(Delete statement) {
+            super(statement);
+        }
+
+        /**
+         * Adds the provided option.
+         *
+         * @param using a DELETE option.
+         * @return this {@code Options} object.
+         */
+        public Options and(Using using) {
+            usings.add(using);
+            setDirty();
+            return this;
+        }
+
+        /**
+         * Adds a where clause to the DELETE statement these options are part of.
+         *
+         * @param clause clause to add.
+         * @return the WHERE clause of the DELETE statement these options are part of.
+         */
+        public Where where(Clause clause) {
+            return statement.where(clause);
+        }
+    }
+
+    /**
+     * An in-construction DELETE statement.
+     */
     public static class Builder {
 
-        private final String[] columnNames;
+        protected List<String> columnNames;
 
-        private TableMetadata tableMetadata;
+        protected Builder() {}
 
-        private String keyspace;
-        private String table;
-
-        private Using[] usings;
-
-        Builder(String[] columnNames) {
+        Builder(List<String> columnNames) {
             this.columnNames = columnNames;
         }
 
@@ -54,14 +175,9 @@ public class Delete extends BuiltStatement {
          * Adds the table to delete from.
          *
          * @param table the name of the table to delete from.
-         * @return this builder.
-         *
-         * @throws IllegalStateException if a FROM clause has already been provided.
+         * @return a newly built DELETE statement that deletes from {@code table}.
          */
-        public Builder from(String table) {
-            if (table != null && tableMetadata != null)
-                throw new IllegalStateException("A FROM clause has already been provided");
-
+        public Delete from(String table) {
             return from(null, table);
         }
 
@@ -70,68 +186,82 @@ public class Delete extends BuiltStatement {
          *
          * @param keyspace the name of the keyspace to delete from.
          * @param table the name of the table to delete from.
-         * @return this builder.
-         *
-         * @throws IllegalStateException if a FROM clause has already been provided.
+         * @return a newly built DELETE statement that deletes from {@code keyspace.table}.
          */
-        public Builder from(String keyspace, String table) {
-            if (table != null && tableMetadata != null)
-                throw new IllegalStateException("A FROM clause has already been provided");
-
-            this.keyspace = keyspace;
-            this.table = table;
-            return this;
+        public Delete from(String keyspace, String table) {
+            return new Delete(keyspace, table, columnNames);
         }
 
         /**
          * Adds the table to delete from.
          *
          * @param table the table to delete from.
-         * @return this builder.
-         *
-         * @throws IllegalStateException if a FROM clause has already been provided.
+         * @return a newly built DELETE statement that deletes from {@code table}.
          */
-        public Builder from(TableMetadata table) {
-            if (table != null && tableMetadata != null)
-                throw new IllegalStateException("A FROM clause has already been provided");
+        public Delete from(TableMetadata table) {
+            return new Delete(table, columnNames);
+        }
+    }
 
-            this.tableMetadata = table;
+    /**
+     * An column selection clause for an in-construction DELETE statement.
+     */
+    public static class Selection extends Builder {
+
+        /**
+         * Deletes all columns (i.e. "DELETE FROM ...")
+         *
+         * @return an in-build DELETE statement.
+         *
+         * @throws IllegalStateException if some columns had already been selected for this builder.
+         */
+        public Builder all() {
+            if (columnNames != null)
+                throw new IllegalStateException(String.format("Some columns (%s) have already been selected.", columnNames));
+
+            return (Builder)this;
+        }
+
+        /**
+         * Deletes the provided column.
+         *
+         * @param name the column name to select for deletion.
+         * @return this in-build DELETE Selection
+         */
+        public Selection column(String name) {
+            if (columnNames == null)
+                columnNames = new ArrayList<String>();
+
+            columnNames.add(name);
             return this;
         }
 
         /**
-         * Adds a USING clause to this statement.
+         * Deletes the provided list element.
          *
-         * @param usings the options to use.
-         * @return this builderj.
-         *
-         * @throws IllegalStateException if a USING clause has already been
-         * provided.
+         * @param columnName the name of the list column.
+         * @param idx the index of the element to delete.
+         * @return this in-build DELETE Selection
          */
-        public Builder using(Using... usings) {
-            if (this.usings != null)
-                throw new IllegalStateException("A USING clause has already been provided");
-
-            this.usings = usings;
-            return this;
+        public Selection listElt(String columnName, int idx) {
+            StringBuilder sb = new StringBuilder();
+            Utils.appendName(columnName, sb);
+            return column(sb.append("[").append(idx).append("]").toString());
         }
 
         /**
-         * Adds a WHERE clause to this statement.
+         * Deletes a map element given a key.
          *
-         * @param clauses the clause to add.
-         * @return the newly built UPDATE statement.
-         *
-         * @throws IllegalStateException if WHERE clauses have already been
-         * provided.
+         * @param columnName the name of the map column.
+         * @param key the key for the element to delete.
+         * @return this in-build DELETE Selection
          */
-        public Delete where(Clause... clauses) {
-            if (tableMetadata != null)
-                return new Delete(tableMetadata, columnNames, clauses, usings);
-            else if (table != null)
-                return new Delete(keyspace, table, columnNames, clauses, usings);
-            else
-                throw new IllegalStateException("Missing SET clause");
+        public Selection mapElt(String columnName, Object key) {
+            StringBuilder sb = new StringBuilder();
+            Utils.appendName(columnName, sb);
+            sb.append("[");
+            Utils.appendFlatValue(key, sb);
+            return column(sb.append("]").toString());
         }
     }
 }

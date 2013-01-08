@@ -1,7 +1,9 @@
 package com.datastax.driver.core.utils.querybuilder;
 
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 public abstract class Clause extends Utils.Appendeable {
@@ -16,36 +18,14 @@ public abstract class Clause extends Utils.Appendeable {
         return name;
     }
 
-    public static Clause eq(String name, Object value) {
-        return new SimpleClause(name, "=", value);
-    }
+    abstract Object firstValue();
 
-    public static Clause in(String name, Object... values) {
-        return new InClause(name, values);
-    }
-
-    public static Clause lt(String name, Object value) {
-        return new SimpleClause(name, "<", value);
-    }
-
-    public static Clause lte(String name, Object value) {
-        return new SimpleClause(name, "<=", value);
-    }
-
-    public static Clause gt(String name, Object value) {
-        return new SimpleClause(name, ">", value);
-    }
-
-    public static Clause gte(String name, Object value) {
-        return new SimpleClause(name, ">=", value);
-    }
-
-    private static class SimpleClause extends Clause {
+    static class SimpleClause extends Clause {
 
         private final String op;
         private final Object value;
 
-        private SimpleClause(String name, String op, Object value) {
+        SimpleClause(String name, String op, Object value) {
             super(name);
             this.op = op;
             this.value = value;
@@ -61,15 +41,15 @@ public abstract class Clause extends Utils.Appendeable {
         }
     }
 
-    private static class InClause extends Clause {
+    static class InClause extends Clause {
 
-        private final Object[] values;
+        private final List<Object> values;
 
-        private InClause(String name, Object[] values) {
+        InClause(String name, List<Object> values) {
             super(name);
             this.values = values;
 
-            if (values == null || values.length == 0)
+            if (values == null || values.size() == 0)
                 throw new IllegalArgumentException("Missing values for IN clause");
         }
 
@@ -79,7 +59,7 @@ public abstract class Clause extends Utils.Appendeable {
         }
 
         Object firstValue() {
-            return values[0];
+            return values.get(0);
         }
     }
 }

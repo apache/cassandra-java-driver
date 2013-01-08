@@ -1,6 +1,10 @@
 package com.datastax.driver.core.utils.querybuilder;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TableMetadata;
@@ -24,68 +28,124 @@ public final class QueryBuilder {
 
     private QueryBuilder() {}
 
-    private static final String[] ALL = new String[0];
-    private static final String[] COUNT_ALL = new String[]{ "count(*)" };
-
     /**
-     * Start building a new SELECT query.
+     * Start building a new SELECT query that selects the provided names.
+     *
+     * Note that {@code select(c1, c2)} is just a shortcut for {@code select().column(c1).column(c2) }.
      *
      * @param columns the columns names that should be selected by the query.
-     * If empty, all columns are selected (it's a 'SELECT * ...'), but you can
-     * alternatively use {@link #all} to achieve the same effect (select all
-     * columns).
      * @return an in-construction SELECT query (you will need to provide at
      * least a FROM clause to complete the query).
      */
     public static Select.Builder select(String... columns) {
-        return new Select.Builder(columns);
+        return new Select.Builder(Arrays.asList(columns));
     }
 
     /**
-     * Represents the selection of all columns (for either a SELECT or a DELETE query).
+     * Start building a new SELECT query.
      *
-     * @return an empty array.
+     * @return an in-construction SELECT query (you will need to provide a
+     * column selection and at least a FROM clause to complete the query).
      */
-    public static String[] all() {
-        return ALL;
+    public static Select.Selection select() {
+        return new Select.Selection();
     }
 
     /**
-     * Count the returned rows in a SELECT query.
+     * Start building a new INSERT query.
      *
-     * @return an array containing "count(*)" as sole element.
+     * @param table the name of the table in which to insert.
+     * @return an in-construction INSERT query.
      */
-    public static String[] count() {
-        return Arrays.copyOf(COUNT_ALL, COUNT_ALL.length);
+    public static Insert insertInto(String table) {
+        return new Insert(null, table);
     }
 
     /**
-     * Select the write time of the provided column.
+     * Start building a new INSERT query.
      *
-     * @param columnName the name of the column for which to select the write
-     * time.
-     * @return {@code "writeTime(" + columnName + ")"}.
+     * @param keyspace the name of the keyspace to use.
+     * @param table the name of the table to insert into.
+     * @return an in-construction INSERT query.
      */
-    public static String writeTime(String columnName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("writetime(");
-        Utils.appendName(columnName, sb);
-        sb.append(")");
-        return sb.toString();
+    public static Insert insertInto(String keyspace, String table) {
+        return new Insert(keyspace, table);
     }
 
     /**
-     * Select the ttl of the provided column.
+     * Start building a new INSERT query.
      *
-     * @param columnName the name of the column for which to select the ttl.
-     * @return {@code "ttl(" + columnName + ")"}.
+     * @param table the name of the table to insert into.
+     * @return an in-construction INSERT query.
      */
-    public static String ttl(String columnName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("ttl(");
-        Utils.appendName(columnName, sb);
-        sb.append(")");
-        return sb.toString();
+    public static Insert insertInto(TableMetadata table) {
+        return new Insert(table);
+    }
+
+    /**
+     * Start building a new UPDATE query.
+     *
+     * @param table the name of the table to update.
+     * @return an in-construction UPDATE query (at least a SET and a WHERE
+     * clause needs to be provided to complete the query).
+     */
+    public static Update update(String table) {
+        return new Update(null, table);
+    }
+
+    /**
+     * Start building a new UPDATE query.
+     *
+     * @param keyspace the name of the keyspace to use.
+     * @param table the name of the table to update.
+     * @return an in-construction UPDATE query (at least a SET and a WHERE
+     * clause needs to be provided to complete the query).
+     */
+    public static Update update(String keyspace, String table) {
+        return new Update(keyspace, table);
+    }
+
+    /**
+     * Start building a new UPDATE query.
+     *
+     * @param table the name of the table to update.
+     * @return an in-construction UPDATE query (at least a SET and a WHERE
+     * clause needs to be provided to complete the query).
+     */
+    public static Update update(TableMetadata table) {
+        return new Update(table);
+    }
+
+    /**
+     * Start building a new DELETE query that deletes the provided names.
+     *
+     * @param columns the columns names that should be deleted by the query.
+     * @return an in-construction DELETE query (At least a FROM and a WHERE
+     * clause needs to be provided to complete the query).
+     */
+    public static Delete.Builder delete(String... columns) {
+        return new Delete.Builder(Arrays.asList(columns));
+    }
+
+    /**
+     * Start building a new DELETE query.
+     *
+     * @return an in-construction SELECT query (you will need to provide a
+     * column selection and at least a FROM and a WHERE clause to complete the
+     * query).
+     */
+    public static Delete.Selection delete() {
+        return new Delete.Selection();
+    }
+
+    /**
+     * Built a new BATCH query on the provided statement.
+     *
+     * @param statements the statements to batch.
+     * @return a new {@code Statement} that batch {@code statements}.
+     */
+    public static Batch batch(Statement... statements) {
+        return new Batch(statements);
     }
 
     /**
@@ -127,106 +187,364 @@ public final class QueryBuilder {
     public static String token(String... columnNames) {
         StringBuilder sb = new StringBuilder();
         sb.append("token(");
-        Utils.joinAndAppendNames(sb, ",", columnNames);
+        Utils.joinAndAppendNames(sb, ",", Arrays.asList(columnNames));
         sb.append(")");
         return sb.toString();
     }
 
     /**
-     * Start building a new INSERT query.
+     * Creates an "equal" where clause stating the provided column must be
+     * equal to the provided value.
      *
-     * @param columns the columns names that should be inserted by the query.
-     * @return an in-construction INSERT query (At least a FROM and a VALUES
-     * clause needs to be provided to complete the query).
-     *
-     * @throws IllegalArgumentException if {@code columns} is empty.
+     * @param name the column name
+     * @param value the value
+     * @return the corresponding where clause.
      */
-    public static Insert.Builder insert(String... columns) {
-        return new Insert.Builder(columns);
+    public static Clause eq(String name, Object value) {
+        return new Clause.SimpleClause(name, "=", value);
     }
 
     /**
-     * Start building a new UPDATE query.
+     * Create an "in" where clause stating the provided column must be equal
+     * to one of the provided values.
      *
-     * @param table the name of the table to update.
-     * @return an in-construction UPDATE query (At least a SET and a WHERE
-     * clause needs to be provided to complete the query).
+     * @param name the column name
+     * @param values the values
+     * @return the corresponding where clause.
      */
-    public static Update.Builder update(String table) {
-        return new Update.Builder(null, table);
+    public static Clause in(String name, Object... values) {
+        return new Clause.InClause(name, Arrays.asList(values));
     }
 
     /**
-     * Start building a new UPDATE query.
+     * Creates a "lesser than" where clause stating the provided column must be less than
+     * the provided value.
      *
-     * @param keyspace the name of the keyspace to use.
-     * @param table the name of the table to update.
-     * @return an in-construction UPDATE query (At least a SET and a WHERE
-     * clause needs to be provided to complete the query).
+     * @param name the column name
+     * @param value the value
+     * @return the corresponding where clause.
      */
-    public static Update.Builder update(String keyspace, String table) {
-        return new Update.Builder(keyspace, table);
+    public static Clause lt(String name, Object value) {
+        return new Clause.SimpleClause(name, "<", value);
     }
 
     /**
-     * Start building a new UPDATE query.
+     * Creates a "lesser than or equal" where clause stating the provided column must
+     * be lesser than or equal to the provided value.
      *
-     * @param table the name of the table to update.
-     * @return an in-construction UPDATE query (At least a SET and a WHERE
-     * clause needs to be provided to complete the query).
+     * @param name the column name
+     * @param value the value
+     * @return the corresponding where clause.
      */
-    public static Update.Builder update(TableMetadata table) {
-        return new Update.Builder(table);
+    public static Clause lte(String name, Object value) {
+        return new Clause.SimpleClause(name, "<=", value);
     }
 
     /**
-     * Start building a new DELETE query.
+     * Creates a "greater than" where clause stating the provided column must
+     * be greater to the provided value.
      *
-     * @param columns the columns names that should be deleted by the query.
-     * If empty, all columns are deleted, but you can alternatively use {@link #all}
-     * to achieve the same effect (delete all columns).
-     * @return an in-construction DELETE query (At least a FROM and a WHERE
-     * clause needs to be provided to complete the query).
+     * @param name the column name
+     * @param value the value
+     * @return the corresponding where clause.
      */
-    public static Delete.Builder delete(String... columns) {
-        return new Delete.Builder(columns);
+    public static Clause gt(String name, Object value) {
+        return new Clause.SimpleClause(name, ">", value);
     }
 
     /**
-     * Selects an element of a list by index.
+     * Creates a "greater than or equal" where clause stating the provided
+     * column must be greater than or equal to the provided value.
      *
-     * @param columnName the name of the list column.
-     * @param idx the index to select.
-     * @return {@code columnName[idx]}.
+     * @param name the column name
+     * @param value the value
+     * @return the corresponding where clause.
      */
-    public static String listElt(String columnName, int idx) {
-        StringBuilder sb = new StringBuilder();
-        Utils.appendName(columnName, sb);
-        return sb.append("[").append(idx).append("]").toString();
+    public static Clause gte(String name, Object value) {
+        return new Clause.SimpleClause(name, ">=", value);
     }
 
     /**
-     * Selects an element of a map given a key.
+     * Ascending ordering for the provided column.
      *
-     * @param columnName the name of the map column.
-     * @param key the key to select with.
-     * @return {@code columnName[key]}.
+     * @param columnName the column name
+     * @return the corresponding ordering
      */
-    public static String mapElt(String columnName, Object key) {
-        StringBuilder sb = new StringBuilder();
-        Utils.appendName(columnName, sb);
-        sb.append("[");
-        Utils.appendFlatValue(key, sb);
-        return sb.append("]").toString();
+    public static Ordering asc(String columnName) {
+        return new Ordering(columnName, false);
     }
 
     /**
-     * Built a new BATCH query on the provided statement.
+     * Descending ordering for the provided column.
      *
-     * @param statements the statements to batch.
-     * @return a new {@code Statement} that batch {@code statements}.
+     * @param columnName the column name
+     * @return the corresponding ordering
      */
-    public static Batch batch(Statement... statements) {
-        return new Batch(statements);
+    public static Ordering desc(String columnName) {
+        return new Ordering(columnName, true);
+    }
+
+    /**
+     * Option to set the timestamp for a modification query (insert, update or delete).
+     *
+     * @param timestamp the timestamp (in microseconds) to use.
+     * @return the corresponding option
+     *
+     * @throws IllegalArgumentException if {@code timestamp &gt; 0}.
+     */
+    public static Using timestamp(long timestamp) {
+        if (timestamp < 0)
+            throw new IllegalArgumentException("Invalid timestamp, must be positive");
+
+        return new Using("TIMESTAMP", timestamp);
+    }
+
+    /**
+     * Option to set the ttl for a modification query (insert, update or delete).
+     *
+     * @param ttl the ttl (in seconds) to use.
+     * @return the corresponding option
+     *
+     * @throws IllegalArgumentException if {@code ttl &gt; 0}.
+     */
+    public static Using ttl(int ttl) {
+        if (ttl < 0)
+            throw new IllegalArgumentException("Invalid ttl, must be positive");
+
+        return new Using("TTL", ttl);
+    }
+
+    /**
+     * Simple "set" assignement of a value to a column.
+     * <p>
+     * This will generate: {@code name = value}.
+     *
+     * @param name the column name
+     * @param value the value to assign
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment set(String name, Object value) {
+        return new Assignment.SetAssignment(name, value);
+    }
+
+    /**
+     * Incrementation of a counter column.
+     * <p>
+     * This will generate: {@code name = name + 1}.
+     *
+     * @param name the column name to increment
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment incr(String name) {
+        return incr(name, 1L);
+    }
+
+    /**
+     * Incrementation of a counter column by a provided value.
+     * <p>
+     * This will generate: {@code name = name + value}.
+     *
+     * @param name the column name to increment
+     * @param value the value by which to increment
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment incr(String name, long value) {
+        return new Assignment.CounterAssignment(name, value, true);
+    }
+
+    /**
+     * Decrementation of a counter column.
+     * <p>
+     * This will generate: {@code name = name - 1}.
+     *
+     * @param name the column name to decrement
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment decr(String name) {
+        return decr(name, 1L);
+    }
+
+    /**
+     * Decrementation of a counter column by a provided value.
+     * <p>
+     * This will generate: {@code name = name - value}.
+     *
+     * @param name the column name to decrement
+     * @param value the value by which to decrement
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment decr(String name, long value) {
+        return new Assignment.CounterAssignment(name, value, false);
+    }
+
+    /**
+     * Prepend a value to a list column.
+     * <p>
+     * This will generate: {@code name = [ value ] + name}.
+     *
+     * @param name the column name (must be of type list).
+     * @param value the value to prepend
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment prepend(String name, Object value) {
+        return new Assignment.ListPrependAssignment(name, Collections.singletonList(value));
+    }
+
+    /**
+     * Prepend a list of values to a list column.
+     * <p>
+     * This will generate: {@code name = list + name}.
+     *
+     * @param name the column name (must be of type list).
+     * @param list the list of values to prepend
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment prependAll(String name, List list) {
+        return new Assignment.ListPrependAssignment(name, list);
+    }
+
+    /**
+     * Append a value to a list column.
+     * <p>
+     * This will generate: {@code name = name + [value]}.
+     *
+     * @param name the column name (must be of type list).
+     * @param value the value to append
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment append(String name, Object value) {
+        return new Assignment.CollectionAssignment(name, Collections.singletonList(value), true);
+    }
+
+    /**
+     * Append a list of values to a list column.
+     * <p>
+     * This will generate: {@code name = name + list}.
+     *
+     * @param name the column name (must be of type list).
+     * @param list the list of values to append
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment appendAll(String name, List list) {
+        return new Assignment.CollectionAssignment(name, list, true);
+    }
+
+    /**
+     * Discard a value from a list column.
+     * <p>
+     * This will generate: {@code name = name - [value]}.
+     *
+     * @param name the column name (must be of type list).
+     * @param value the value to discard
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment discard(String name, Object value) {
+        return new Assignment.CollectionAssignment(name, Collections.singletonList(value), false);
+    }
+
+    /**
+     * Discard a list of values to a list column.
+     * <p>
+     * This will generate: {@code name = name - list}.
+     *
+     * @param name the column name (must be of type list).
+     * @param list the list of values to discard
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment discardAll(String name, List list) {
+        return new Assignment.CollectionAssignment(name, list, false);
+    }
+
+    /**
+     * Sets a list column value by index.
+     * <p>
+     * This will generate: {@code name[idx] = value}.
+     *
+     * @param name the column name (must be of type list).
+     * @param idx the index to set
+     * @param value the value to set
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment setIdx(String name, int idx, Object value) {
+        return new Assignment.ListSetIdxAssignment(name, idx, value);
+    }
+
+    /**
+     * Adds a value to a set column.
+     * <p>
+     * This will generate: {@code name = name + {value}}.
+     *
+     * @param name the column name (must be of type set).
+     * @param value the value to add
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment add(String name, Object value) {
+        return new Assignment.CollectionAssignment(name, Collections.singleton(value), true);
+    }
+
+    /**
+     * Adds a set of values to a set column.
+     * <p>
+     * This will generate: {@code name = name + set}.
+     *
+     * @param name the column name (must be of type set).
+     * @param set the set of values to append
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment addAll(String name, Set set) {
+        return new Assignment.CollectionAssignment(name, set, true);
+    }
+
+    /**
+     * Remove a value from a set column.
+     * <p>
+     * This will generate: {@code name = name - {value}}.
+     *
+     * @param name the column name (must be of type set).
+     * @param value the value to remove
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment remove(String name, Object value) {
+        return new Assignment.CollectionAssignment(name, Collections.singleton(value), false);
+    }
+
+    /**
+     * Remove a set of values from a set column.
+     * <p>
+     * This will generate: {@code name = name - set}.
+     *
+     * @param name the column name (must be of type set).
+     * @param set the set of values to remove
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment removeAll(String name, Set set) {
+        return new Assignment.CollectionAssignment(name, set, false);
+    }
+
+    /**
+     * Puts a new key/value pair to a map column.
+     * <p>
+     * This will generate: {@code name[key] = value}.
+     *
+     * @param name the column name (must be of type map).
+     * @param key the key to put
+     * @param value the value to put
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment put(String name, Object key, Object value) {
+        return new Assignment.MapPutAssignment(name, key, value);
+    }
+
+    /**
+     * Puts a map of new key/value paris to a map column.
+     * <p>
+     * This will generate: {@code name = name + map}.
+     *
+     * @param name the column name (must be of type map).
+     * @param map the map of key/value pairs to put
+     * @return the correspond assignment (to use in an update query)
+     */
+    public static Assignment putAll(String name, Map map) {
+        return new Assignment.CollectionAssignment(name, map, true);
     }
 }

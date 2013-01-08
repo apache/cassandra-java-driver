@@ -10,40 +10,29 @@ abstract class Utils {
     private static final Pattern cnamePattern = Pattern.compile("\\w+(?:\\[.+\\])?", Pattern.CASE_INSENSITIVE);
     private static final Pattern fctsPattern = Pattern.compile("(?:count|writetime|ttl|token)\\(.*", Pattern.CASE_INSENSITIVE);
 
-    static StringBuilder joinAndAppend(StringBuilder sb, String separator, String[] values) {
-        for (int i = 0; i < values.length; i++) {
+    static StringBuilder joinAndAppend(StringBuilder sb, String separator, List<? extends Appendeable> values) {
+        for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);
-            sb.append(values[i]);
+            values.get(i).appendTo(sb);
         }
         return sb;
     }
 
-    static StringBuilder joinAndAppend(BuiltStatement stmt, StringBuilder sb, String separator, Appendeable[] values) {
-        for (int i = 0; i < values.length; i++) {
+    static StringBuilder joinAndAppendNames(StringBuilder sb, String separator, List<String> values) {
+        for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);
-            values[i].appendTo(sb);
-            if (stmt != null)
-                stmt.maybeAddRoutingKey(values[i].name(), values[i].firstValue());
+            appendName(values.get(i), sb);
         }
         return sb;
     }
 
-    static StringBuilder joinAndAppendNames(StringBuilder sb, String separator, String[] values) {
-        for (int i = 0; i < values.length; i++) {
+    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<Object> values) {
+        for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);
-            appendName(values[i], sb);
-        }
-        return sb;
-    }
-
-    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, Object[] values) {
-        for (int i = 0; i < values.length; i++) {
-            if (i > 0)
-                sb.append(separator);
-            appendValue(values[i], sb);
+            appendValue(values.get(i), sb);
         }
         return sb;
     }
@@ -186,8 +175,5 @@ abstract class Utils {
 
     static abstract class Appendeable {
         abstract void appendTo(StringBuilder sb);
-
-        abstract String name();
-        abstract Object firstValue();
     }
 }

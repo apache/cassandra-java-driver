@@ -12,83 +12,7 @@ public abstract class Assignment extends Utils.Appendeable {
         this.name = name;
     };
 
-    String name() {
-        return name;
-    }
-
-    public static Assignment set(String name, Object value) {
-        return new SetAssignment(name, value);
-    }
-
-    public static Assignment incr(String name) {
-        return incr(name, 1L);
-    }
-
-    public static Assignment incr(String name, long value) {
-        return new CounterAssignment(name, value, true);
-    }
-
-    public static Assignment decr(String name) {
-        return decr(name, 1L);
-    }
-
-    public static Assignment decr(String name, long value) {
-        return new CounterAssignment(name, value, false);
-    }
-
-    public static Assignment prepend(String name, Object value) {
-        return new ListPrependAssignment(name, Collections.singletonList(value));
-    }
-
-    public static Assignment prependAll(String name, List list) {
-        return new ListPrependAssignment(name, list);
-    }
-
-    public static Assignment append(String name, Object value) {
-        return new CollectionAssignment(name, Collections.singletonList(value), true);
-    }
-
-    public static Assignment appendAll(String name, List list) {
-        return new CollectionAssignment(name, list, true);
-    }
-
-    public static Assignment discard(String name, Object value) {
-        return new CollectionAssignment(name, Collections.singletonList(value), false);
-    }
-
-    public static Assignment discardAll(String name, List list) {
-        return new CollectionAssignment(name, list, false);
-    }
-
-    public static Assignment setIdx(String name, int idx, Object value) {
-        return new ListSetIdxAssignment(name, idx, value);
-    }
-
-    public static Assignment add(String name, Object value) {
-        return new CollectionAssignment(name, Collections.singleton(value), true);
-    }
-
-    public static Assignment addAll(String name, Set set) {
-        return new CollectionAssignment(name, set, true);
-    }
-
-    public static Assignment remove(String name, Object value) {
-        return new CollectionAssignment(name, Collections.singleton(value), false);
-    }
-
-    public static Assignment removeAll(String name, Set set) {
-        return new CollectionAssignment(name, set, false);
-    }
-
-    public static Assignment put(String name, Object key, Object value) {
-        return new MapPutAssignment(name, key, value);
-    }
-
-    public static Assignment putAll(String name, Map value) {
-        return new CollectionAssignment(name, value, true);
-    }
-
-    private static class SetAssignment extends Assignment {
+    static class SetAssignment extends Assignment {
 
         private final Object value;
 
@@ -102,30 +26,9 @@ public abstract class Assignment extends Utils.Appendeable {
             sb.append("=");
             appendValue(value, sb);
         }
-
-        Object firstValue() {
-            return value;
-        }
     }
 
-    private static abstract class NoRoutingAssignment extends Assignment {
-
-        NoRoutingAssignment(String name) {
-            super(name);
-        }
-
-        @Override
-        String name() {
-            // This can't be a routing key
-            return null;
-        }
-
-        String firstValue() {
-            return null;
-        }
-    }
-
-    private static class CounterAssignment extends NoRoutingAssignment {
+    static class CounterAssignment extends Assignment {
 
         private final long value;
         private final boolean isIncr;
@@ -148,7 +51,7 @@ public abstract class Assignment extends Utils.Appendeable {
 
     }
 
-    private static class ListPrependAssignment extends NoRoutingAssignment {
+    static class ListPrependAssignment extends Assignment {
 
         private final List value;
 
@@ -165,7 +68,7 @@ public abstract class Assignment extends Utils.Appendeable {
         }
     }
 
-    private static class ListSetIdxAssignment extends NoRoutingAssignment {
+    static class ListSetIdxAssignment extends Assignment {
 
         private final int idx;
         private final Object value;
@@ -182,7 +85,7 @@ public abstract class Assignment extends Utils.Appendeable {
         }
     }
 
-    private static class CollectionAssignment extends NoRoutingAssignment {
+    static class CollectionAssignment extends Assignment {
 
         private final Object collection;
         private final boolean isAdd;
@@ -200,7 +103,7 @@ public abstract class Assignment extends Utils.Appendeable {
         }
     }
 
-    private static class MapPutAssignment extends NoRoutingAssignment {
+    static class MapPutAssignment extends Assignment {
 
         private final Object key;
         private final Object value;

@@ -1,5 +1,8 @@
 package com.datastax.driver.core.utils.querybuilder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -7,107 +10,239 @@ import com.datastax.driver.core.TableMetadata;
  */
 public class Update extends BuiltStatement {
 
-    Update(String keyspace, String table, Assignment[] assignments, Clause[] clauses, Using[] usings) {
+    private final String keyspace;
+    private final String table;
+    private final Assignments assignments;
+    private final Where where;
+    private final Options usings;
+
+    Update(String keyspace, String table) {
         super();
-        init(keyspace, table, assignments, clauses, usings);
+        this.keyspace = keyspace;
+        this.table = table;
+        this.assignments = new Assignments(this);
+        this.where = new Where(this);
+        this.usings = new Options(this);
     }
 
-    Update(TableMetadata table, Assignment[] assignments, Clause[] clauses, Using[] usings) {
+    Update(TableMetadata table) {
         super(table);
-        init(table.getKeyspace().getName(), table.getName(), assignments, clauses, usings);
+        this.keyspace = table.getKeyspace().getName();
+        this.table = table.getName();
+        this.assignments = new Assignments(this);
+        this.where = new Where(this);
+        this.usings = new Options(this);
     }
 
-    private void init(String keyspaceName, String tableName, Assignment[] assignments, Clause[] clauses, Using[] usings) {
+    protected String buildQueryString() {
+        StringBuilder builder = new StringBuilder();
+
         builder.append("UPDATE ");
-        if (keyspaceName != null)
-            appendName(keyspaceName).append(".");
-        appendName(tableName);
+        if (keyspace != null)
+            Utils.appendName(keyspace, builder).append(".");
+        Utils.appendName(table, builder);
 
-        if (usings != null && usings.length > 0) {
+        if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(null, builder, " AND ", usings);
+            Utils.joinAndAppend(builder, " AND ", usings.usings);
         }
 
-        builder.append(" SET ");
-        Utils.joinAndAppend(null, builder, ",", assignments);
+        if (!assignments.assignments.isEmpty()) {
+            builder.append(" SET ");
+            Utils.joinAndAppend(builder, ",", assignments.assignments);
+        }
 
-        builder.append(" WHERE ");
-        Utils.joinAndAppend(this, builder, ",", clauses);
+        if (!where.clauses.isEmpty()) {
+            builder.append(" WHERE ");
+            Utils.joinAndAppend(builder, ",", where.clauses);
+        }
+
+        return builder.toString();
     }
 
-    public static class Builder {
+    /**
+     * Adds an assignment to this UPDATE statement.
+     *
+     * This is a shorter/more readable version for {@code with().and(assignment)}.
+     *
+     * @param assignment the assignment to add.
+     * @return the Assignments of this UPDATE statement.
+     */
+    public Assignments with(Assignment assignment) {
+        return assignments.and(assignment);
+    }
 
-        private final TableMetadata tableMetadata;
+    /**
+     * Returns the assignments of this UPDATE statement.
+     *
+     * @return the assignments of this UPDATE statement.
+     */
+    public Assignments with() {
+        return assignments;
+    }
 
-        private final String keyspace;
-        private final String table;
+    /**
+     * Adds a WHERE clause to this statement.
+     *
+     * This is a shorter/more readable version for {@code where().and(clause)}.
+     *
+     * @param clause the clause to add.
+     * @return the where clause of this query to which more clause can be added.
+     */
+    public Where where(Clause clause) {
+        return where.and(clause);
+    }
 
-        private Assignment[] assignments;
-        private Using[] usings;
+    /**
+     * Returns a Where statement for this query without adding clause.
+     *
+     * @return the where clause of this query to which more clause can be added.
+     */
+    public Where where() {
+        return where;
+    }
 
-        Builder(String keyspace, String table) {
-            this.keyspace = keyspace;
-            this.table = table;
-            this.tableMetadata = null;
-        }
+    /**
+     * Adds a new options for this UPDATE statement.
+     *
+     * @param using the option to add.
+     * @return the options of this UPDATE statement.
+     */
+    public Options using(Using using) {
+        return usings.and(using);
+    }
 
-        Builder(TableMetadata tableMetadata) {
-            this.tableMetadata = tableMetadata;
-            this.keyspace = null;
-            this.table = null;
+    /**
+     * The assignments of an UPDATE statement.
+     */
+    public static class Assignments extends BuiltStatement.ForwardingStatement<Update> {
+
+        private final List<Assignment> assignments = new ArrayList<Assignment>();
+
+        Assignments(Update statement) {
+            super(statement);
         }
 
         /**
-         * Adds a USING clause to this statement.
+         * Adds a new assignment for this UPDATE statement.
          *
-         * @param usings the options to use.
-         * @return this builderj.
-         *
-         * @throws IllegalStateException if a USING clause has already been
-         * provided.
+         * @param assignment the new Assignment to add.
+         * @return these Assignments.
          */
-        public Builder using(Using... usings) {
-            if (this.usings != null)
-                throw new IllegalStateException("A USING clause has already been provided");
-
-            this.usings = usings;
+        public Assignments and(Assignment assignment) {
+            assignments.add(assignment);
+            setDirty();
             return this;
         }
 
         /**
-         * Adds the columns modification/assignement to set with this UPDATE
-         * statement.
+         * Adds a where clause to the UPDATE statement those assignments are part of.
          *
-         * @param assignments the assigments to set for this statement.
-         * @return this builder.
-         *
-         * @throws IllegalStateException if a SET clause has aready been provided.
+         * @param clause the clause to add.
+         * @return the where clause of the UPDATE statement those assignments are part of.
          */
-        public Builder set(Assignment... assignments) {
-            if (this.assignments != null)
-                throw new IllegalStateException("A SET clause has already been provided");
+        public Where where(Clause clause) {
+            return statement.where(clause);
+        }
 
-            this.assignments = assignments;
+        /**
+         * Adds an option to the UPDATE statement those assignments are part of.
+         *
+         * @param using the using clause to add.
+         * @return the options of the UPDATE statement those assignments are part of.
+         */
+        public Options using(Using using) {
+            return statement.using(using);
+        }
+    }
+
+    /**
+     * The WHERE clause of an UPDATE statement.
+     */
+    public static class Where extends BuiltStatement.ForwardingStatement<Update> {
+
+        private final List<Clause> clauses = new ArrayList<Clause>();
+
+        Where(Update statement) {
+            super(statement);
+        }
+
+        /**
+         * Adds the provided clause to this WHERE clause.
+         *
+         * @param clause the clause to add.
+         * @return this WHERE clause.
+         */
+        public Where and(Clause clause)
+        {
+            clauses.add(clause);
+            statement.maybeAddRoutingKey(clause.name(), clause.firstValue());
+            setDirty();
             return this;
         }
 
         /**
-         * Adds a WHERE clause to this statement.
+         * Adds an assignment to the UPDATE statement this WHERE clause is part of.
          *
-         * @param clauses the clause to add.
-         * @return the newly built UPDATE statement.
-         *
-         * @throws IllegalStateException if WHERE clauses have already been
-         * provided.
+         * @param assignment the assignment to add.
+         * @return the assignments of the UPDATE statement this WHERE clause is part of.
          */
-        public Update where(Clause... clauses) {
+        public Assignments with(Assignment assignment) {
+            return statement.with(assignment);
+        }
 
-            if (tableMetadata != null)
-                return new Update(tableMetadata, assignments, clauses, usings);
-            else if (table != null)
-                return new Update(keyspace, table, assignments, clauses, usings);
-            else
-                throw new IllegalStateException("Missing SET clause");
+        /**
+         * Adds an option to the UPDATE statement this WHERE clause is part of.
+         *
+         * @param using the using clause to add.
+         * @return the options of the UPDATE statement this WHERE clause is part of.
+         */
+        public Options using(Using using) {
+            return statement.using(using);
+        }
+    }
+
+    /**
+     * The options of a UDPATE statement.
+     */
+    public static class Options extends BuiltStatement.ForwardingStatement<Update> {
+
+        private final List<Using> usings = new ArrayList<Using>();
+
+        Options(Update statement) {
+            super(statement);
+        }
+
+        /**
+         * Adds the provided option.
+         *
+         * @param using an UPDATE option.
+         * @return this {@code Options} object.
+         */
+        public Options and(Using using) {
+            usings.add(using);
+            setDirty();
+            return this;
+        }
+
+        /**
+         * Adds an assignment to the UPDATE statement those options are part of.
+         *
+         * @param assignment the assignment to add.
+         * @return the assignments of the UPDATE statement those options are part of.
+         */
+        public Assignments with(Assignment assignment) {
+            return statement.with(assignment);
+        }
+
+        /**
+         * Adds a where clause to the UPDATE statement these options are part of.
+         *
+         * @param clause clause to add.
+         * @return the WHERE clause of the UPDATE statement these options are part of.
+         */
+        public Where where(Clause clause) {
+            return statement.where(clause);
         }
     }
 }

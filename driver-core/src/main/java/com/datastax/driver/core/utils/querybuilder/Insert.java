@@ -1,5 +1,9 @@
 package com.datastax.driver.core.utils.querybuilder;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -7,139 +11,142 @@ import com.datastax.driver.core.TableMetadata;
  */
 public class Insert extends BuiltStatement {
 
-    private boolean usingsProvided;
+    private final String keyspace;
+    private final String table;
+    private final List<String> names = new ArrayList<String>();
+    private final List<Object> values = new ArrayList<Object>();
+    private final Options usings;
 
-    Insert(String keyspace, String table, String[] columnNames, Object[] values) {
+    Insert(String keyspace, String table) {
         super();
-        init(keyspace, table, columnNames, values);
+        this.keyspace = keyspace;
+        this.table = table;
+        this.usings = new Options(this);
     }
 
-    Insert(TableMetadata table, String[] columnNames, Object[] values) {
+    Insert(TableMetadata table) {
         super(table);
-        init(table.getKeyspace().getName(), table.getName(), columnNames, values);
+        this.keyspace = table.getKeyspace().getName();
+        this.table = table.getName();
+        this.usings = new Options(this);
     }
 
-    private void init(String keyspaceName, String tableName, String[] columnNames, Object[] values) {
+    protected String buildQueryString() {
+        StringBuilder builder = new StringBuilder();
+
         builder.append("INSERT INTO ");
-        if (keyspaceName != null)
-            appendName(keyspaceName).append(".");
-        appendName(tableName);
+        if (keyspace != null)
+            Utils.appendName(keyspace, builder).append(".");
+        Utils.appendName(table, builder);
         builder.append("(");
-        Utils.joinAndAppendNames(builder, ",", columnNames);
+        Utils.joinAndAppendNames(builder, ",", names);
         builder.append(") VALUES (");
         Utils.joinAndAppendValues(builder, ",", values);
         builder.append(")");
 
-        for (int i = 0; i < columnNames.length; i++)
-            maybeAddRoutingKey(columnNames[i], values[i]);
+        if (!usings.usings.isEmpty()) {
+            builder.append(" USING ");
+            Utils.joinAndAppend(builder, " AND ", usings.usings);
+        }
+
+        return builder.toString();
     }
 
     /**
-     * Adds a USING clause to this statement.
+     * Adds a column/value pair to the values inserted by this INSERT statement.
      *
-     * @param usings the options to use.
-     * @return this statement.
-     *
-     * @throws IllegalStateException if a USING clause has already been
-     * provided.
+     * @param name the name of the column to insert/update.
+     * @param value the value to insert/update for {@code name}.
+     * @return this INSERT statement.
      */
-    public Insert using(Using... usings) {
-        if (usingsProvided)
-            throw new IllegalStateException("A USING clause has already been provided");
-
-        usingsProvided = true;
-
-        if (usings.length == 0)
-            return this;
-
-        builder.append(" USING ");
-        Utils.joinAndAppend(null, builder, " AND ", usings);
+    public Insert value(String name, Object value) {
+        names.add(name);
+        values.add(value);
+        setDirty();
+        maybeAddRoutingKey(name, value);
         return this;
     }
 
-    public static class Builder {
+    /**
+     * Adds multiple column/value pairs to the values inserted by this INSERT statement.
+     *
+     * @param names a list of column names to insert/update.
+     * @param values a list of values to insert/update. The {@code i}th
+     * value in {@code values} will be inserted for the {@code i}th column
+     * in {@code names}.
+     * @return this INSERT statement.
+     *
+     * @throws IllegalArgumentException if {@code names.length != values.length}.
+     */
+    public Insert values(String[] names, Object[] values) {
+        if (names.length != values.length)
+            throw new IllegalArgumentException(String.format("Got %d names but %d values", names.length, values.length));
+        this.names.addAll(Arrays.asList(names));
+        this.values.addAll(Arrays.asList(values));
+        setDirty();
 
-        private final String[] columnNames;
+        for (int i = 0; i < names.length; i++)
+            maybeAddRoutingKey(names[i], values[i]);
+        return this;
+    }
 
-        private TableMetadata tableMetadata;
+    /**
+     * Adds a new options for this INSERT statement.
+     *
+     * @param using the option to add.
+     * @return the options of this INSERT statement.
+     */
+    public Options using(Using using) {
+        return usings.and(using);
+    }
 
-        private String keyspace;
-        private String table;
+    /**
+     * The options of an INSERT statement.
+     */
+    public static class Options extends BuiltStatement.ForwardingStatement<Insert> {
 
-        Builder(String[] columnNames) {
-            if (columnNames.length == 0)
-                throw new IllegalArgumentException("Invalid empty column names");
+        private final List<Using> usings = new ArrayList<Using>();
 
-            this.columnNames = columnNames;
+        Options(Insert st) {
+            super(st);
         }
 
         /**
-         * Sets the table to insert into.
+         * Adds the provided option.
          *
-         * @param table the name of the table to insert into.
-         * @return a new in-construction INSERT statement that inserts into {@code table}.
+         * @param using an INSERT option.
+         * @return this {@code Options} object.
          */
-        public Builder into(String table) {
-            if (table != null && tableMetadata != null)
-                throw new IllegalStateException("An INTO clause has already been provided");
-
-            return into(null, table);
-        }
-
-        /**
-         * Sets the table to insert into.
-         *
-         * @param keyspace the name of the keyspace to insert into.
-         * @param table the name of the table to insert into.
-         * @return a new in-construction INSERT statement that inserts into {@code keyspace.table}.
-         */
-        public Builder into(String keyspace, String table) {
-            if (table != null && tableMetadata != null)
-                throw new IllegalStateException("An INTO clause has already been provided");
-
-            this.keyspace = keyspace;
-            this.table = table;
+        public Options and(Using using) {
+            usings.add(using);
+            setDirty();
             return this;
         }
 
         /**
-         * Sets the table to insert into.
+         * Adds a column/value pair to the values inserted by this INSERT statement.
          *
-         * @param table the name of the table to insert into.
-         * @return a new in-construction INSERT statement that inserts into {@code table}.
+         * @param name the name of the column to insert/update.
+         * @param value the value to insert/update for {@code name}.
+         * @return the INSERT statement those options are part of.
          */
-        public Builder into(TableMetadata table) {
-            if (table != null && tableMetadata != null)
-                throw new IllegalStateException("An INTO clause has already been provided");
-
-            this.tableMetadata = table;
-            return this;
+        public Insert value(String name, Object value) {
+            return statement.value(name, value);
         }
 
         /**
-         * Specify the values to insert for the insert columns.
+         * Adds multiple column/value pairs to the values inserted by this INSERT statement.
          *
-         * @param values the values to insert. The {@code i}th value
-         * corresponds to the {@code i}th column used when constructing this
-         * {@code Insert.Builder object}.
-         * @return the newly built INSERT statement.
+         * @param names a list of column names to insert/update.
+         * @param values a list of values to insert/update. The {@code i}th
+         * value in {@code values} will be inserted for the {@code i}th column
+         * in {@code names}.
+         * @return the INSERT statement those options are part of.
          *
-         * @throws IllegalArgumentException if the number of provided values
-         * doesn't correspond to the number of columns used when constructing
-         * this {@code Insert.Builder object}.
-         * @throws IllegalStateException if no INTO clause have been defined.
+         * @throws IllegalArgumentException if {@code names.length != values.length}.
          */
-        public Insert values(Object... values) {
-
-            if (values.length != columnNames.length)
-                throw new IllegalArgumentException(String.format("Number of provided values (%d) doesn't match the number of inserted columns (%d)", values.length, columnNames.length));
-
-            if (tableMetadata != null)
-                return new Insert(tableMetadata, columnNames, values);
-            else if (table != null)
-                return new Insert(keyspace, table, columnNames, values);
-            else
-                throw new IllegalStateException("Missing INTO clause");
+        public Insert values(String[] names, Object[] values) {
+            return statement.values(names, values);
         }
     }
 }
