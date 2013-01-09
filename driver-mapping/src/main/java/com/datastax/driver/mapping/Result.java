@@ -10,16 +10,15 @@ import com.datastax.driver.core.Row;
 
 
 public class Result<T> implements Iterable<T> {
-	
-	private final ResultSet rs;
-	private final Mapper mapper;
-	
-	Result(ResultSet rs, Mapper mapper) {
-		this.rs = rs;
-		this.mapper = mapper;
-	}
-	
-	
+
+    private final ResultSet rs;
+    private final EntityMapper mapper;
+
+    Result(ResultSet rs, EntityMapper mapper) {
+        this.rs = rs;
+        this.mapper = mapper;
+    }
+
     /**
      * Test whether this ResultSet has more results.
      *
@@ -30,14 +29,14 @@ public class Result<T> implements Iterable<T> {
     }
 
     /**
-     * Returns the the next result from this ResultSet.
+     * Returns the next result.
      *
      * @return the next row in this resultSet or null if this ResultSet is
      * exhausted.
      */
     public T fetchOne() {
-    	Row row = rs.fetchOne();
-    	return map(row);
+        Row row = rs.fetchOne();
+        return row == null ? null : map(row);
     }
 
     /**
@@ -46,20 +45,20 @@ public class Result<T> implements Iterable<T> {
      * @return a list containing the remaining results of this ResultSet. The
      * returned list is empty if and only the ResultSet is exhausted.
      */
-	public List<T> fetchAll() {
-    	List<Row> rows = rs.fetchAll();
-    	List<T> entities = new ArrayList<T>(rows.size());
-    	for (Row row : rows) {
-    		entities.add(map(row));
-    	}
-    	return entities;
+    public List<T> fetchAll() {
+        List<Row> rows = rs.fetchAll();
+        List<T> entities = new ArrayList<T>(rows.size());
+        for (Row row : rows) {
+            entities.add(map(row));
+        }
+        return entities;
     }
-    
+
     @SuppressWarnings("unchecked")
-	private T map(Row row) {
-    	return (T)mapper.rowToEntity(row);
+    private T map(Row row) {
+        return (T)mapper.rowToEntity(row);
     }
-    
+
     /**
      * An iterator over the rows contained in this ResultSet.
      *
@@ -74,8 +73,8 @@ public class Result<T> implements Iterable<T> {
      */
     public Iterator<T> iterator() {
         return new Iterator<T>() {
-        	Iterator<Row> rowIterator;
-        	
+            private final Iterator<Row> rowIterator = rs.iterator();
+
             public boolean hasNext() {
                 return rowIterator.hasNext();
             }

@@ -10,5 +10,5 @@ import com.datastax.driver.mapping.CounterMappingType;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CounterMapping {
-	CounterMappingType value();
+    CounterMappingType value();
 }

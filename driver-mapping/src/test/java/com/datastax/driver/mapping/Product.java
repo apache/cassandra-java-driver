@@ -9,46 +9,46 @@ import com.datastax.driver.mapping.annotations.Table;
 @Inheritance(column = "product_type", subClasses = {Phone.class, TV.class, Computer.class} )
 public abstract class Product {
 
-	@PartitionKey
-	@Column(name = "product_id")
-	private String productId;
-	
-	private float price;
-	
-	private String vendor;
-	
-	private String model;
+    @PartitionKey
+    @Column(name = "product_id")
+    private String productId;
 
-	
-	public String getProductId() {
-		return productId;
-	}
+    private float price;
 
-	public void setProductId(String productId) {
-		this.productId = productId;
-	}
+    private String vendor;
 
-	public float getPrice() {
-		return price;
-	}
+    private String model;
 
-	public void setPrice(float price) {
-		this.price = price;
-	}
 
-	public String getVendor() {
-		return vendor;
-	}
+    public String getProductId() {
+        return productId;
+    }
 
-	public void setVendor(String vendor) {
-		this.vendor = vendor;
-	}
+    public void setProductId(String productId) {
+        this.productId = productId;
+    }
 
-	public String getModel() {
-		return model;
-	}
+    public float getPrice() {
+        return price;
+    }
 
-	public void setModel(String model) {
-		this.model = model;
-	}
+    public void setPrice(float price) {
+        this.price = price;
+    }
+
+    public String getVendor() {
+        return vendor;
+    }
+
+    public void setVendor(String vendor) {
+        this.vendor = vendor;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
 }

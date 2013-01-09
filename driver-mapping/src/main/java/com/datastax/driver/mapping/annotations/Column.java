@@ -17,9 +17,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Column {
-	/**
-	 * Name of the column being mapped in Cassandra.
-	 */
-	String name() default "";
-
+    /**
+     * Name of the column being mapped in Cassandra.
+     */
+    String name() default "";
 }

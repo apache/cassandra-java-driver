@@ -16,29 +16,29 @@ import static com.datastax.driver.core.utils.querybuilder.Clause.*;
  *
  */
 public class FindQuery extends Statement {
-	private final Mapper mapper;
-	private final Map<String, Object> columns;
+    private final EntityMapper mapper;
+    private final Map<String, Object> columns;
 
-	public FindQuery(EntitySession session, Object entity) {
-		mapper = session.getMapper(entity.getClass());
-		columns = mapper.entityToColumns(entity);
-		setConsistencyLevel(mapper.entityDef.defaultReadCL);
-	}
-	
-	@Override
-	public ByteBuffer getRoutingKey() {
-		return null;
-	}
+    public FindQuery(EntityMapper mapper, Object entity) {
+        this.mapper = mapper;
+        this.columns = mapper.entityToColumns(entity);
+        setConsistencyLevel(mapper.entityDef.defaultReadCL);
+    }
 
-	@Override
-	public String getQueryString() {
-		Clause[] clauses = new Clause[columns.size()];
-		int i = 0;
-		for (Entry<String, Object> entry : columns.entrySet()) {
-			clauses[i++] = eq(entry.getKey(), entry.getValue());
-		}
-		Select select = select(all()).from(mapper.entityDef.tableName).where(clauses);
-		return select.getQueryString();
-	}
+    @Override
+    public ByteBuffer getRoutingKey() {
+        return null;
+    }
+
+    @Override
+    public String getQueryString() {
+        Clause[] clauses = new Clause[columns.size()];
+        int i = 0;
+        for (Entry<String, Object> entry : columns.entrySet()) {
+            clauses[i++] = eq(entry.getKey(), entry.getValue());
+        }
+        Select select = select(all()).from(mapper.entityDef.tableName).where(clauses);
+        return select.getQueryString();
+    }
 
 }

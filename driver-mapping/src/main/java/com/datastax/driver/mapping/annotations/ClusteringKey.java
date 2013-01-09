@@ -14,9 +14,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ClusteringKey {
-	/**
-	 * Ordinal to add when several clustering keys are declared within a single
-	 * entity.
-	 */
-	int value() default 1;
+    /**
+     * Ordinal to add when several clustering keys are declared within a single
+     * entity.
+     */
+    int value() default 1;
 }

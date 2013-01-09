@@ -10,5 +10,5 @@ import com.datastax.driver.mapping.EnumMappingType;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EnumMapping {
-	EnumMappingType value();
+    EnumMappingType value();
 }
