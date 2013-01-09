@@ -51,7 +51,7 @@ public class Delete extends BuiltStatement {
 
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
-            Utils.joinAndAppend(builder, ",", where.clauses);
+            Utils.joinAndAppend(builder, " AND ", where.clauses);
         }
 
         return builder.toString();
