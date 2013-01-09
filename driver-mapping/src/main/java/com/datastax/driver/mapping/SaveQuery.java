@@ -11,7 +11,7 @@ import com.datastax.driver.core.utils.querybuilder.Insert;
 /**
  * A query that performs an insert for the provided entity.
  */
-public class SaveQuery extends Statement {
+class SaveQuery extends Statement {
     private final EntityMapper mapper;
     private final Map<String, Object> columns;
 

@@ -20,7 +20,7 @@ import com.datastax.driver.mapping.EntityDefinition.SubEntityDefinition;
  * An {@link EntityMapper} implementation that use reflection to read and write fields
  * of an entity.
  */
-public class ReflectionMapper extends EntityMapper {
+class ReflectionMapper extends EntityMapper {
     /* TODO: a more efficient implementation should be added but would be overkill
      * for now as queries are currently moved around as Statements rather than 
      * as PS.

@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.datastax.driver.core.Row;
 
-public abstract class EntityMapper {
+abstract class EntityMapper {
     final EntityDefinition entityDef;
 
     EntityMapper(EntityDefinition entityDef) {

@@ -13,7 +13,7 @@ import com.datastax.driver.core.utils.querybuilder.Clause;
 import com.datastax.driver.core.utils.querybuilder.Delete;
 import com.datastax.driver.core.utils.querybuilder.Select;
 
-public class DeleteQuery extends Statement{
+class DeleteQuery extends Statement{
     private final EntityMapper mapper;
     private final Map<String, Object> columns;
 

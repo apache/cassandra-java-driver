@@ -20,7 +20,8 @@ import com.datastax.driver.mapping.annotations.Transcient;
 /**
  * Parses entities for Cassandra mapping annotation and build an {@link EntityDefinition} from it. 
  */
-public class AnnotationParser {
+class AnnotationParser {
+
     public static EntityDefinition parseEntity(Class<?> entityClass) {
         EntityDefinition entityDef = new EntityDefinition();
 
@@ -88,7 +89,6 @@ public class AnnotationParser {
         return subEntityDef;
 
     }
-
 
     private static ColumnDefinition parseColumn(Field field) {
         Class<?> type = field.getType();

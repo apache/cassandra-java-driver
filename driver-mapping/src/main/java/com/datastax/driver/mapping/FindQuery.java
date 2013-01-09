@@ -15,7 +15,7 @@ import static com.datastax.driver.core.utils.querybuilder.Clause.*;
  * A query that performs a find by example using the entity provided as constructor.
  *
  */
-public class FindQuery extends Statement {
+class FindQuery extends Statement {
     private final EntityMapper mapper;
     private final Map<String, Object> columns;
 

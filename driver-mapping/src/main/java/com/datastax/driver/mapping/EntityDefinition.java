@@ -14,7 +14,7 @@ import com.datastax.driver.core.ConsistencyLevel;
  * Holds the definition of an entity mapping between a Java class and a 
  * Cassandra table.
  */
-public class EntityDefinition {
+class EntityDefinition {
 
     Class<?> entityClass;
     String tableName;
@@ -27,7 +27,6 @@ public class EntityDefinition {
 
     String inheritanceColumn;
     final List<SubEntityDefinition> subEntities = new ArrayList<EntityDefinition.SubEntityDefinition>();
-
 
     static class ColumnDefinition {
         String columnName;
