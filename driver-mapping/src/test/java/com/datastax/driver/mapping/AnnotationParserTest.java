@@ -12,10 +12,10 @@ public class AnnotationParserTest {
     @Test
     public void testBasicEntity() {
 
-        EntityDefinition entityDef = AnnotationParser.parseEntity(A.class);
+        EntityDefinition<A> entityDef = AnnotationParser.parseEntity(A.class);
         assertNotNull(entityDef);
         assertEquals("a", entityDef.tableName);
-        assertEquals("test", entityDef.keyspaceName);
+        assertEquals("ks", entityDef.keyspaceName);
 
         assertEquals(1, entityDef.columns.size());
 
@@ -26,11 +26,10 @@ public class AnnotationParserTest {
         assertEquals("setP1", columnDef.writeMethod.getName());
     }
 
-
     @Test
     public void testInheritance() {
 
-        EntityDefinition entityDef = AnnotationParser.parseEntity(Product.class);
+        EntityDefinition<Product> entityDef = AnnotationParser.parseEntity(Product.class);
         assertNotNull(entityDef);
         assertEquals("product", entityDef.tableName);
         assertEquals("product_type", entityDef.inheritanceColumn);

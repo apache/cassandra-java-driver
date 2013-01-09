@@ -7,7 +7,7 @@ import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.Table;
 
 @Table(
-    keyspace = "test",
+    keyspace = "ks",
     name = "a",
     defaultReadConsistencyLevel = ConsistencyLevel.QUORUM,
     defaultWriteConsistencyLevel = ConsistencyLevel.QUORUM

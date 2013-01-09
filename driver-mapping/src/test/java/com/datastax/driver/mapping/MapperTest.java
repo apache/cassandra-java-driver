@@ -3,18 +3,23 @@ package com.datastax.driver.mapping;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import org.junit.Test;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.CCMBridge;
 
-public class MapperTest {
+public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
+
+    protected Collection<String> getTableDefinitions() {
+        return Collections.singleton("CREATE TABLE a (c1 text PRIMARY KEY)");
+    }
 
     @Test
     public void testBasicEntity() throws Exception {
-
-        Cluster cluster = Cluster.builder().addContactPoint("127.0.0.1").build();
-        Session session = cluster.connect("test");
         Mapper m = new Mapper();
 
         A a = new A();
@@ -23,6 +28,5 @@ public class MapperTest {
 
         a = m.map(session.execute(m.find(a)), A.class).fetchOne();
         assertEquals("abc", a.getP1());
-        session.shutdown();
     }
 }
