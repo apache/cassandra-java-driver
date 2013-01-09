@@ -5,14 +5,14 @@ import java.util.Map;
 
 import com.datastax.driver.core.Row;
 
-abstract class EntityMapper {
-    final EntityDefinition entityDef;
+abstract class EntityMapper<T> {
+    final EntityDefinition<T> entityDef;
 
-    EntityMapper(EntityDefinition entityDef) {
+    EntityMapper(EntityDefinition<T> entityDef) {
         this.entityDef = entityDef;
     }
 
-    abstract Map<String, Object> entityToColumns(Object entity);
+    abstract Map<String, Object> entityToColumns(T entity);
 
-    abstract Object rowToEntity(Row row);
+    abstract T rowToEntity(Row row);
 }

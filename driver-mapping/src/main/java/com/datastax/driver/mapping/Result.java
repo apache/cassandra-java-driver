@@ -14,9 +14,9 @@ import com.datastax.driver.core.Row;
 public class Result<T> implements Iterable<T> {
 
     private final ResultSet rs;
-    private final EntityMapper mapper;
+    private final EntityMapper<T> mapper;
 
-    Result(ResultSet rs, EntityMapper mapper) {
+    Result(ResultSet rs, EntityMapper<T> mapper) {
         this.rs = rs;
         this.mapper = mapper;
     }
@@ -38,7 +38,7 @@ public class Result<T> implements Iterable<T> {
      */
     public T fetchOne() {
         Row row = rs.fetchOne();
-        return row == null ? null : map(row);
+        return row == null ? null : mapper.rowToEntity(row);
     }
 
     /**
@@ -52,14 +52,9 @@ public class Result<T> implements Iterable<T> {
         List<Row> rows = rs.fetchAll();
         List<T> entities = new ArrayList<T>(rows.size());
         for (Row row : rows) {
-            entities.add(map(row));
+            entities.add(mapper.rowToEntity(row));
         }
         return entities;
-    }
-
-    @SuppressWarnings("unchecked")
-    private T map(Row row) {
-        return (T)mapper.rowToEntity(row);
     }
 
     /**
@@ -84,7 +79,7 @@ public class Result<T> implements Iterable<T> {
 
             public T next() {
                 Row row = rowIterator.next();
-                return map(row);
+                return mapper.rowToEntity(row);
             }
 
             public void remove() {

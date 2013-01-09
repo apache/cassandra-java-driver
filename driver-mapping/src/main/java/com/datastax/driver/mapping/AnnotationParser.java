@@ -22,8 +22,9 @@ import com.datastax.driver.mapping.annotations.Transcient;
  */
 class AnnotationParser {
 
-    public static EntityDefinition parseEntity(Class<?> entityClass) {
-        EntityDefinition entityDef = new EntityDefinition();
+    public static <T> EntityDefinition<T> parseEntity(Class<T> entityClass) {
+
+        EntityDefinition<T> entityDef = new EntityDefinition<T>(entityClass);
 
         // @Table
         Table table = entityClass.getAnnotation(Table.class);
@@ -32,30 +33,32 @@ class AnnotationParser {
         }
         entityDef.tableName = table.name();
         entityDef.keyspaceName = table.keyspace();
-        entityDef.entityClass = entityClass;
 
         // @Inheritance
         Inheritance inheritance = entityClass.getAnnotation(Inheritance.class);
         if (inheritance != null) {
             entityDef.inheritanceColumn = inheritance.column();
-            Map<String, SubEntityDefinition> subEntities = new HashMap<String, EntityDefinition.SubEntityDefinition>();
+            Map<String, SubEntityDefinition<T>> subEntities = new HashMap<String, SubEntityDefinition<T>>();
             for (Class<?> subClass : inheritance.subClasses()) {
                 InheritanceValue inheritanceValue = subClass.getAnnotation(InheritanceValue.class);
                 if (inheritanceValue == null) {
                     throw new IllegalArgumentException("Class " + subClass.getName() + " declared as subclass in @Inheritance annotation on "
                             + entityClass.getName() + " but is not annotated with @InheritanceValue.");
                 }
+                if (!entityClass.isAssignableFrom(subClass)) {
+                    throw new IllegalArgumentException("Class " + subClass.getName() + " declared as subclass in @Inheritance annotation on "
+                            + entityClass.getName() + " but is not an actual subclass.");
+                }
                 if (subEntities.containsKey(inheritanceValue.value())) {
-                    Class<?> conflictingClass = subEntities.get(inheritanceValue.value()).javaType;
+                    Class<?> conflictingClass = subEntities.get(inheritanceValue.value()).subEntityClass;
                     throw new IllegalArgumentException(subClass.getName() + " and " + conflictingClass.getName()
                             + " both define '" + inheritanceValue.value() + "' as value in their @InheritanceValue annotation");
                 }
-                SubEntityDefinition subEntityDef = parseSubEntity(subClass, entityDef);
+                SubEntityDefinition<T> subEntityDef = parseSubEntity((Class<? extends T>)subClass, entityDef);
                 subEntities.put(inheritanceValue.value(), subEntityDef);
             }
             entityDef.subEntities.addAll(subEntities.values());
         }
-
 
         for (Field field : entityClass.getDeclaredFields()) {
             Transcient transcient = field.getAnnotation(Transcient.class);
@@ -67,19 +70,16 @@ class AnnotationParser {
         return entityDef;
     }
 
-    private static SubEntityDefinition parseSubEntity(Class<?> entityClass, EntityDefinition entityDef) {
-        SubEntityDefinition subEntityDef = new SubEntityDefinition();
-        subEntityDef.javaType = entityClass;
-        subEntityDef.parentEntity = entityDef;
-
+    private static <T> SubEntityDefinition<T> parseSubEntity(Class<? extends T> subEntityClass, EntityDefinition<T> entityDef) {
+        SubEntityDefinition subEntityDef = new SubEntityDefinition(entityDef, subEntityClass);
 
         // @InheritanceValue
-        InheritanceValue inheritanceValue = entityClass.getAnnotation(InheritanceValue.class);
+        InheritanceValue inheritanceValue = subEntityClass.getAnnotation(InheritanceValue.class);
         if (inheritanceValue == null) {
-            throw new IllegalArgumentException("@InheritanceValue annotation was not found on class" + entityClass.getName());
+            throw new IllegalArgumentException("@InheritanceValue annotation was not found on class" + subEntityClass.getName());
         }
         subEntityDef.inheritanceColumnValue = inheritanceValue.value();
-        for (Field field : entityClass.getDeclaredFields()) {
+        for (Field field : subEntityClass.getDeclaredFields()) {
             Transcient transcient = field.getAnnotation(Transcient.class);
             if (transcient == null) {
                 // Any field annotated as Transcient is ignored

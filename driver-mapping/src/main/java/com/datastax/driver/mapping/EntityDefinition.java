@@ -14,9 +14,9 @@ import com.datastax.driver.core.ConsistencyLevel;
  * Holds the definition of an entity mapping between a Java class and a 
  * Cassandra table.
  */
-class EntityDefinition {
+class EntityDefinition<T> {
 
-    Class<?> entityClass;
+    final Class<T> entityClass;
     String tableName;
     String keyspaceName;
 
@@ -26,7 +26,11 @@ class EntityDefinition {
     final List<ColumnDefinition> columns = new ArrayList<EntityDefinition.ColumnDefinition>();
 
     String inheritanceColumn;
-    final List<SubEntityDefinition> subEntities = new ArrayList<EntityDefinition.SubEntityDefinition>();
+    final List<SubEntityDefinition<T>> subEntities = new ArrayList<EntityDefinition.SubEntityDefinition<T>>();
+
+    EntityDefinition(Class<T> entityClass) {
+        this.entityClass = entityClass;
+    }
 
     static class ColumnDefinition {
         String columnName;
@@ -37,11 +41,16 @@ class EntityDefinition {
         //DataType dbType;
     }
 
-    static class SubEntityDefinition {
-        EntityDefinition parentEntity;
-        Class<?> javaType;
+    static class SubEntityDefinition<T> {
+        final EntityDefinition<T> parentEntity;
+        final Class<? extends T> subEntityClass;
         String inheritanceColumnValue;
         final List<ColumnDefinition> columns = new ArrayList<EntityDefinition.ColumnDefinition>();
+
+        SubEntityDefinition(EntityDefinition<T> parentEntity, Class<? extends T> subEntityClass) {
+            this.parentEntity = parentEntity;
+            this.subEntityClass = subEntityClass;
+        }
     }
 
     static class EnumColumnDefinition extends ColumnDefinition {

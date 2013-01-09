@@ -20,7 +20,7 @@ import com.datastax.driver.mapping.EntityDefinition.SubEntityDefinition;
  * An {@link EntityMapper} implementation that use reflection to read and write fields
  * of an entity.
  */
-class ReflectionMapper extends EntityMapper {
+class ReflectionMapper<T> extends EntityMapper<T> {
     /* TODO: a more efficient implementation should be added but would be overkill
      * for now as queries are currently moved around as Statements rather than 
      * as PS.
@@ -30,8 +30,7 @@ class ReflectionMapper extends EntityMapper {
     final Map<String, SubEntityMapper> valueToMapper;
     final Map<Class, SubEntityMapper> classToMapper;
 
-
-    public ReflectionMapper(EntityDefinition entityDef) {
+    public ReflectionMapper(EntityDefinition<T> entityDef) {
         super(entityDef);
         columnNamesToMapper = new HashMap<String, ColumnMapper>();
         valueToMapper = new HashMap<String, SubEntityMapper>();
@@ -47,15 +46,15 @@ class ReflectionMapper extends EntityMapper {
             columnNamesToMapper.put(columnDef.columnName, columnMapper);
         }
 
-        for (SubEntityDefinition subEntityDef : entityDef.subEntities) {
+        for (SubEntityDefinition<T> subEntityDef : entityDef.subEntities) {
             SubEntityMapper subEntityMapper = new SubEntityMapper(subEntityDef);
             valueToMapper.put(subEntityDef.inheritanceColumnValue, subEntityMapper);
-            classToMapper.put(subEntityDef.javaType, subEntityMapper);
+            classToMapper.put(subEntityDef.subEntityClass, subEntityMapper);
         }
     }
 
     @Override
-    public Map<String, Object> entityToColumns(Object entity) {
+    public Map<String, Object> entityToColumns(T entity) {
         Map<String, Object> columns = new HashMap<String, Object>();
         Map<String, ColumnMapper> columnMappers;
         if (entityDef.inheritanceColumn != null) {
@@ -76,8 +75,8 @@ class ReflectionMapper extends EntityMapper {
     }
 
     @Override
-    public Object rowToEntity(Row row) {
-        Object entity;
+    public T rowToEntity(Row row) {
+        T entity;
         Map<String, ColumnMapper> columnMappers;
         if (entityDef.inheritanceColumn == null) {
             try {
@@ -98,9 +97,9 @@ class ReflectionMapper extends EntityMapper {
                         "' hasn't been defined in any @InheritanceValue annotation on referenced subclasses, can't create an entity");
             }
             try {
-                entity = subEntityMapper.subEntityDef.javaType.newInstance();
+                entity = subEntityMapper.subEntityDef.subEntityClass.newInstance();
             } catch (Exception e) {
-                throw new RuntimeException("Can't create an instance of " + subEntityMapper.subEntityDef.javaType.getName());
+                throw new RuntimeException("Can't create an instance of " + subEntityMapper.subEntityDef.subEntityClass.getName());
             }
             columnMappers = subEntityMapper.columnNamesToMapper;
         }
@@ -234,11 +233,11 @@ class ReflectionMapper extends EntityMapper {
     }
 
     class SubEntityMapper {
-        final SubEntityDefinition subEntityDef;
+        final SubEntityDefinition<T> subEntityDef;
         final Map<String, ColumnMapper> columnNamesToMapper;
         final Map<String, ColumnMapper> fieldNamesToMapper;
 
-        public SubEntityMapper(SubEntityDefinition subEntityDef) {
+        public SubEntityMapper(SubEntityDefinition<T> subEntityDef) {
             this.subEntityDef = subEntityDef;
             columnNamesToMapper = new HashMap<String, ColumnMapper>();
             fieldNamesToMapper = new HashMap<String, ColumnMapper>();

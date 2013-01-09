@@ -15,7 +15,7 @@ import com.datastax.driver.core.ResultSet;
  */
 public class Mapper {
 
-    private volatile Map<Class<?>, EntityMapper> mappers = Collections.<Class<?>, EntityMapper>emptyMap();
+    private volatile Map<Class<?>, EntityMapper<?>> mappers = Collections.<Class<?>, EntityMapper<?>>emptyMap();
 
     /**
      * Creates a new {@code Mapper}.
@@ -54,15 +54,16 @@ public class Mapper {
         return new DeleteQuery(getEntityMapper(entity.getClass()), entity);
     }
 
-    private EntityMapper getEntityMapper(Class<?> clazz) {
-        EntityMapper mapper = mappers.get(clazz);
+    @SuppressWarnings("unchecked")
+    private <T> EntityMapper<T> getEntityMapper(Class<T> clazz) {
+        EntityMapper<T> mapper = (EntityMapper<T>)mappers.get(clazz);
         if (mapper == null) {
             synchronized (mappers) {
-                mapper = mappers.get(clazz);
+                mapper = (EntityMapper<T>)mappers.get(clazz);
                 if (mapper == null) {
-                    EntityDefinition def = AnnotationParser.parseEntity(clazz);
-                    mapper = new ReflectionMapper(def);
-                    Map<Class<?>, EntityMapper> newMappers = new HashMap<Class<?>, EntityMapper>(mappers);
+                    EntityDefinition<T> def = AnnotationParser.parseEntity(clazz);
+                    mapper = new ReflectionMapper<T>(def);
+                    Map<Class<?>, EntityMapper<?>> newMappers = new HashMap<Class<?>, EntityMapper<?>>(mappers);
                     newMappers.put(clazz, mapper);
                     mappers = newMappers;
                 }
