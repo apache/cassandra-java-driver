@@ -41,7 +41,8 @@ It will thus only work with a version of C* >= 1.2. Since at the time of this
 writing C* 1.2 hasn't been released yet, at least the beta2 release needs to be
 used (the beta1 is known to *not* work with this driver). Furthermore, the
 binary protocol server is not started with the default configuration file
-coming with Cassandra 1.2. In the cassandra.yaml file, you need to set:
+coming with Cassandra 1.2. In the cassandra.yaml file, you need to set::
+
     start_native_transport: true
 
 If you want to run the (currently few) unit tests provided with this driver,
@@ -62,7 +63,7 @@ Getting Started
 ---------------
 
 Suppose you have a Cassandra cluster running on 3 nodes whose hostnames are:
-cass1, cass2 and cass3. A simple example using this core driver could be:
+cass1, cass2 and cass3. A simple example using this core driver could be::
 
     Cluster cluster = Cluster.builder()
                         .addContactPoints("cass1", "cass2")
