@@ -1,4 +1,4 @@
-package com.datastax.driver.core.utils;
+package com.datastax.driver.core.querybuilder;
 
 import java.net.InetAddress;
 import java.util.*;
@@ -7,8 +7,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import com.datastax.driver.core.Query;
-import com.datastax.driver.core.utils.querybuilder.*;
-import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class QueryBuilderTest {
 

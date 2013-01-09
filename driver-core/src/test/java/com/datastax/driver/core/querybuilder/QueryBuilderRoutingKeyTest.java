@@ -1,4 +1,4 @@
-package com.datastax.driver.core.utils;
+package com.datastax.driver.core.querybuilder;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -7,7 +7,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import com.datastax.driver.core.*;
-import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeCluster {
 

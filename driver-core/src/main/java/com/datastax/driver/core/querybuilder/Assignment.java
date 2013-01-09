@@ -1,8 +1,8 @@
-package com.datastax.driver.core.utils.querybuilder;
+package com.datastax.driver.core.querybuilder;
 
 import java.util.*;
 
-import static com.datastax.driver.core.utils.querybuilder.Utils.*;
+import static com.datastax.driver.core.querybuilder.Utils.*;
 
 public abstract class Assignment extends Utils.Appendeable {
 

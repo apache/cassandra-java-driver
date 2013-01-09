@@ -1,4 +1,4 @@
-package com.datastax.driver.core.utils.querybuilder;
+package com.datastax.driver.core.querybuilder;
 
 public class Using extends Utils.Appendeable {
 
