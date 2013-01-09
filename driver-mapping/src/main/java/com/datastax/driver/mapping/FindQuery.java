@@ -1,15 +1,14 @@
 package com.datastax.driver.mapping;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.datastax.driver.core.Statement;
-import com.datastax.driver.core.utils.querybuilder.Clause;
-import com.datastax.driver.core.utils.querybuilder.Select;
-
-import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.*;
-import static com.datastax.driver.core.utils.querybuilder.Clause.*;
+import com.datastax.driver.core.querybuilder.Select;
 
 /** 
  * A query that performs a find by example using the entity provided as constructor.
@@ -32,12 +31,11 @@ class FindQuery extends Statement {
 
     @Override
     public String getQueryString() {
-        Clause[] clauses = new Clause[columns.size()];
-        int i = 0;
+        Select select = select().all().from(mapper.entityDef.tableName);
+        Select.Where whereClause = select.where();
         for (Entry<String, Object> entry : columns.entrySet()) {
-            clauses[i++] = eq(entry.getKey(), entry.getValue());
+            whereClause.and(eq(entry.getKey(), entry.getValue()));
         }
-        Select select = select(all()).from(mapper.entityDef.tableName).where(clauses);
         return select.getQueryString();
     }
 

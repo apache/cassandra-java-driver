@@ -1,17 +1,16 @@
 package com.datastax.driver.mapping;
 
-import static com.datastax.driver.core.utils.querybuilder.Clause.eq;
-import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.all;
-import static com.datastax.driver.core.utils.querybuilder.QueryBuilder.delete;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.delete;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.datastax.driver.core.Statement;
-import com.datastax.driver.core.utils.querybuilder.Clause;
-import com.datastax.driver.core.utils.querybuilder.Delete;
-import com.datastax.driver.core.utils.querybuilder.Select;
+import com.datastax.driver.core.querybuilder.Clause;
+import com.datastax.driver.core.querybuilder.Delete;
+import com.datastax.driver.core.querybuilder.Select;
 
 class DeleteQuery extends Statement{
     private final EntityMapper mapper;
@@ -30,12 +29,11 @@ class DeleteQuery extends Statement{
 
     @Override
     public String getQueryString() {
-        Clause[] clauses = new Clause[columns.size()];
-        int i = 0;
+        Delete delete = delete().all().from(mapper.entityDef.tableName);
+        Delete.Where whereClause = delete.where();
         for (Entry<String, Object> entry : columns.entrySet()) {
-            clauses[i++] = eq(entry.getKey(), entry.getValue());
+            whereClause.and(eq(entry.getKey(), entry.getValue()));
         }
-        Delete delete = delete(all()).from(mapper.entityDef.tableName).where(clauses);
         return delete.getQueryString();
     }
 }
