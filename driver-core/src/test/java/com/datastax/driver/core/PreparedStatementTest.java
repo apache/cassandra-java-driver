@@ -92,7 +92,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             BoundStatement bs = ps.bind();
             session.execute(setBoundValue(bs, name, type, getFixedValue(type)));
 
-            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).fetchOne();
+            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).one();
             assertEquals("For type " + type, getFixedValue(type), getValue(row, name, type));
         }
     }
@@ -112,7 +112,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             BoundStatement bs = ps.bind();
             session.execute(setBoundValue(bs, name, type, value));
 
-            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).fetchOne();
+            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).one();
             assertEquals("For type " + type, value, getValue(row, name, type));
         }
     }
@@ -132,7 +132,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             BoundStatement bs = ps.bind();
             session.execute(setBoundValue(bs, name, type, value));
 
-            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).fetchOne();
+            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).one();
             assertEquals("For type " + type, value, getValue(row, name, type));
         }
     }
@@ -157,7 +157,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 BoundStatement bs = ps.bind();
                 session.execute(setBoundValue(bs, name, type, value));
 
-                Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).fetchOne();
+                Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).one();
                 assertEquals("For type " + type, value, getValue(row, name, type));
             }
         }

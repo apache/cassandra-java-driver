@@ -59,7 +59,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private static void checkExecuteResultSet(ResultSet rs, String key) {
         assertTrue(!rs.isExhausted());
-        Row row = rs.fetchOne();
+        Row row = rs.one();
         assertTrue(rs.isExhausted());
         assertEquals(key,    row.getString("k"));
         assertEquals("foo",  row.getString("t"));

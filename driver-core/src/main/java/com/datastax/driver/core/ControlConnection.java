@@ -239,7 +239,7 @@ class ControlConnection implements Host.StateListener {
         Map<Host, Collection<String>> tokenMap = new HashMap<Host, Collection<String>>();
 
         // Update cluster name, DC and rack for the one node we are connected to
-        Row localRow = localFuture.get().fetchOne();
+        Row localRow = localFuture.get().one();
         if (localRow != null) {
             String clusterName = localRow.getString("cluster_name");
             if (clusterName != null)
@@ -305,7 +305,7 @@ class ControlConnection implements Host.StateListener {
 
             Set<UUID> versions = new HashSet<UUID>();
 
-            Row localRow = localFuture.get().fetchOne();
+            Row localRow = localFuture.get().one();
             if (localRow != null && !localRow.isNull("schema_version"))
                 versions.add(localRow.getUUID("schema_version"));
 

@@ -96,7 +96,7 @@ public class ResultSet implements Iterable<Row> {
      * @return the next row in this resultSet or null if this ResultSet is
      * exhausted.
      */
-    public Row fetchOne() {
+    public Row one() {
         return Row.fromData(metadata, rows.poll());
     }
 
@@ -106,7 +106,7 @@ public class ResultSet implements Iterable<Row> {
      * @return a list containing the remaining results of this ResultSet. The
      * returned list is empty if and only the ResultSet is exhausted.
      */
-    public List<Row> fetchAll() {
+    public List<Row> all() {
         if (isExhausted())
             return Collections.emptyList();
 
@@ -119,7 +119,7 @@ public class ResultSet implements Iterable<Row> {
     /**
      * An iterator over the rows contained in this ResultSet.
      *
-     * The {@link Iterator#next} method is equivalent to calling {@link #fetchOne}.
+     * The {@link Iterator#next} method is equivalent to calling {@link #one}.
      * So this iterator will consume results from this ResultSet and after a
      * full iteration, the ResultSet will be empty.
      *

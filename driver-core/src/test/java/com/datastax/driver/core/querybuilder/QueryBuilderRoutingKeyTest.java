@@ -33,7 +33,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
 
         query = select().from(table).where(eq("k", txt));
         assertEquals(ByteBuffer.wrap(txt.getBytes()), query.getRoutingKey());
-        Row row = session.execute(query).fetchOne();
+        Row row = session.execute(query).one();
         assertEquals(txt, row.getString("k"));
         assertEquals(1, row.getInt("a"));
         assertEquals(2, row.getInt("b"));
@@ -54,7 +54,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
 
         query = select().from(table).where(eq("k", 42));
         assertEquals(bb, query.getRoutingKey());
-        Row row = session.execute(query).fetchOne();
+        Row row = session.execute(query).one();
         assertEquals(42, row.getInt("k"));
         assertEquals(1, row.getInt("a"));
         assertEquals(2, row.getInt("b"));
