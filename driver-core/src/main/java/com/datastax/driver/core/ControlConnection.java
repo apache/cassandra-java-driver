@@ -29,10 +29,10 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
 
-    private static final String SELECT_PEERS = "SELECT peer, data_center, rack, tokens FROM system.peers";
+    private static final String SELECT_PEERS = "SELECT peer, data_center, rack, tokens, rpc_address FROM system.peers";
     private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens, partitioner FROM system.local WHERE key='local'";
 
-    private static final String SELECT_SCHEMA_PEERS = "SELECT peer, schema_version FROM system.peers";
+    private static final String SELECT_SCHEMA_PEERS = "SELECT rpc_address, schema_version FROM system.peers";
     private static final String SELECT_SCHEMA_LOCAL = "SELECT schema_version FROM system.local WHERE key='local'";
 
     private final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
@@ -263,12 +263,17 @@ class ControlConnection implements Host.StateListener {
         List<Set<String>> allTokens = new ArrayList<Set<String>>();
 
         for (Row row : peersFuture.get()) {
-            if (!row.isNull("peer")) {
-                foundHosts.add(row.getInet("peer"));
-                dcs.add(row.getString("data_center"));
-                racks.add(row.getString("rack"));
-                allTokens.add(row.getSet("tokens", String.class));
+
+            InetAddress addr = row.getInet("rpc_address");
+            if (addr == null) {
+                addr = row.getInet("peer");
+                logger.error("No rpc_address found for host {} in {}'s peers system table. That should not happen but using address {} instead", addr, connection.address, addr);
             }
+
+            foundHosts.add(addr);
+            dcs.add(row.getString("data_center"));
+            racks.add(row.getString("rack"));
+            allTokens.add(row.getSet("tokens", String.class));
         }
 
         for (int i = 0; i < foundHosts.size(); i++) {
@@ -310,10 +315,10 @@ class ControlConnection implements Host.StateListener {
                 versions.add(localRow.getUUID("schema_version"));
 
             for (Row row : peersFuture.get()) {
-                if (row.isNull("peer") || row.isNull("schema_version"))
+                if (row.isNull("rpc_address") || row.isNull("schema_version"))
                     continue;
 
-                Host peer = metadata.getHost(row.getInet("peer"));
+                Host peer = metadata.getHost(row.getInet("rpc_address"));
                 if (peer != null && peer.getMonitor().isUp())
                     versions.add(row.getUUID("schema_version"));
             }
