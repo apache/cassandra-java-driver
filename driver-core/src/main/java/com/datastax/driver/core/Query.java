@@ -42,7 +42,7 @@ public abstract class Query {
     /**
      * The consistency level.
      *
-     * @return the consistency level. Returns {@code ConsistencyLeve.ONE} if no
+     * @return the consistency level. Returns {@code ConsistencyLevel.ONE} if no
      * consistency level has been specified.
      */
     public ConsistencyLevel getConsistencyLevel() {
