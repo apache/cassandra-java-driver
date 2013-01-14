@@ -18,9 +18,6 @@ import com.datastax.driver.core.policies.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.PatternLayout;
 
 /**
  * Informations and known state of a Cassandra cluster.
@@ -43,14 +40,6 @@ import org.apache.log4j.PatternLayout;
 public class Cluster {
 
     private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
-
-    static {
-        org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
-        if (!rootLogger.getAllAppenders().hasMoreElements()) {
-            rootLogger.setLevel(Level.INFO);
-            rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%-5p [%t]: %m%n")));
-        }
-    }
 
     final Manager manager;
 

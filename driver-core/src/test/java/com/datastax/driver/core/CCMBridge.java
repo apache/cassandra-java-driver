@@ -20,12 +20,6 @@ import org.apache.log4j.PatternLayout;
 
 public class CCMBridge {
 
-    static {
-        Logger rootLogger = Logger.getRootLogger();
-        rootLogger.setLevel(Level.INFO);
-        rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%d{HH:mm:ss,SSS} %-5p [%t]: %m%n")));
-    }
-
     private static final Logger logger = Logger.getLogger(CCMBridge.class);
 
     private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d(-\\w+)?";

@@ -2,7 +2,6 @@ package com.datastax.driver.core.policies;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.log4j.Level;
 
 import com.datastax.driver.core.*;
 
