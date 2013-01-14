@@ -188,7 +188,6 @@ class RetryingCallback implements Connection.ResponseCallback {
                 case ERROR:
                     ErrorMessage err = (ErrorMessage)response;
                     RetryPolicy.RetryDecision retry = null;
-                    RetryPolicy queryRetryPolicy = query.getRetryPolicy();
                     RetryPolicy retryPolicy = query.getRetryPolicy() == null
                                             ? manager.configuration().getPolicies().getRetryPolicy()
                                             : query.getRetryPolicy();

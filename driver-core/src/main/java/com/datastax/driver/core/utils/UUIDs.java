@@ -1,5 +1,7 @@
 package com.datastax.driver.core.utils;
 
+import com.google.common.base.Charsets;
+
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.UnknownHostException;
@@ -95,7 +97,7 @@ public final class UUIDs {
 
     private static void update(MessageDigest digest, String value) {
         if (value != null)
-            digest.update(value.getBytes());
+            digest.update(value.getBytes(Charsets.UTF_8));
     }
 
     private static long makeClockSeqAndNode() {
