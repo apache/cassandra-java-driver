@@ -6,6 +6,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import org.apache.cassandra.utils.MD5Digest;
 import org.apache.cassandra.transport.Event;
 import org.apache.cassandra.transport.Message;
@@ -441,6 +443,10 @@ public class Cluster {
         }
     }
 
+    private static ThreadFactory threadFactory(String nameFormat) {
+        return new ThreadFactoryBuilder().setNameFormat(nameFormat).build();
+    }
+
     /**
      * The sessions and hosts managed by this a Cluster instance.
      * <p>
@@ -463,10 +469,10 @@ public class Cluster {
 
         final ConvictionPolicy.Factory convictionPolicyFactory = new ConvictionPolicy.Simple.Factory();
 
-        final ScheduledExecutorService reconnectionExecutor = Executors.newScheduledThreadPool(2, new NamedThreadFactory("Reconnection"));
-        final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("Scheduled Tasks"));
+        final ScheduledExecutorService reconnectionExecutor = Executors.newScheduledThreadPool(2, threadFactory("Reconnection-%d"));
+        final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, threadFactory("Scheduled Tasks-%d"));
 
-        final ExecutorService executor = Executors.newCachedThreadPool(new NamedThreadFactory("Cassandra Java Driver worker"));
+        final ExecutorService executor = Executors.newCachedThreadPool(threadFactory("Cassandra Java Driver worker-%d"));
 
         final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
