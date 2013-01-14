@@ -399,7 +399,7 @@ public final class QueryBuilder {
      * @param list the list of values to prepend
      * @return the correspond assignment (to use in an update query)
      */
-    public static Assignment prependAll(String name, List list) {
+    public static Assignment prependAll(String name, List<?> list) {
         return new Assignment.ListPrependAssignment(name, list);
     }
 
@@ -425,7 +425,7 @@ public final class QueryBuilder {
      * @param list the list of values to append
      * @return the correspond assignment (to use in an update query)
      */
-    public static Assignment appendAll(String name, List list) {
+    public static Assignment appendAll(String name, List<?> list) {
         return new Assignment.CollectionAssignment(name, list, true);
     }
 
@@ -451,7 +451,7 @@ public final class QueryBuilder {
      * @param list the list of values to discard
      * @return the correspond assignment (to use in an update query)
      */
-    public static Assignment discardAll(String name, List list) {
+    public static Assignment discardAll(String name, List<?> list) {
         return new Assignment.CollectionAssignment(name, list, false);
     }
 
@@ -491,7 +491,7 @@ public final class QueryBuilder {
      * @param set the set of values to append
      * @return the correspond assignment (to use in an update query)
      */
-    public static Assignment addAll(String name, Set set) {
+    public static Assignment addAll(String name, Set<?> set) {
         return new Assignment.CollectionAssignment(name, set, true);
     }
 
@@ -517,7 +517,7 @@ public final class QueryBuilder {
      * @param set the set of values to remove
      * @return the correspond assignment (to use in an update query)
      */
-    public static Assignment removeAll(String name, Set set) {
+    public static Assignment removeAll(String name, Set<?> set) {
         return new Assignment.CollectionAssignment(name, set, false);
     }
 
@@ -544,7 +544,7 @@ public final class QueryBuilder {
      * @param map the map of key/value pairs to put
      * @return the correspond assignment (to use in an update query)
      */
-    public static Assignment putAll(String name, Map map) {
+    public static Assignment putAll(String name, Map<?, ?> map) {
         return new Assignment.CollectionAssignment(name, map, true);
     }
 }

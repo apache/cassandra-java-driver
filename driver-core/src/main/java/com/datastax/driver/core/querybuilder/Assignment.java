@@ -53,9 +53,9 @@ public abstract class Assignment extends Utils.Appendeable {
 
     static class ListPrependAssignment extends Assignment {
 
-        private final List value;
+        private final List<?> value;
 
-        ListPrependAssignment(String name, List value) {
+        ListPrependAssignment(String name, List<?> value) {
             super(name);
             this.value = value;
         }

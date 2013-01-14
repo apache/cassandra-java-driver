@@ -106,11 +106,11 @@ abstract class Utils {
         return sb;
     }
 
-    static StringBuilder appendList(List l, StringBuilder sb) {
+    static StringBuilder appendList(List<?> l, StringBuilder sb) {
         return appendList(l, sb, false);
     }
 
-    private static StringBuilder appendList(List l, StringBuilder sb, boolean rawValue) {
+    private static StringBuilder appendList(List<?> l, StringBuilder sb, boolean rawValue) {
         sb.append("[");
         for (int i = 0; i < l.size(); i++) {
             if (i > 0)
@@ -121,11 +121,11 @@ abstract class Utils {
         return sb;
     }
 
-    static StringBuilder appendSet(Set s, StringBuilder sb) {
+    static StringBuilder appendSet(Set<?> s, StringBuilder sb) {
         return appendSet(s, sb, false);
     }
 
-    private static StringBuilder appendSet(Set s, StringBuilder sb, boolean rawValue) {
+    private static StringBuilder appendSet(Set<?> s, StringBuilder sb, boolean rawValue) {
         sb.append("{");
         boolean first = true;
         for (Object elt : s) {
@@ -136,14 +136,14 @@ abstract class Utils {
         return sb;
     }
 
-    static StringBuilder appendMap(Map<Object, Object> m, StringBuilder sb) {
+    static StringBuilder appendMap(Map<?, ?> m, StringBuilder sb) {
         return appendMap(m, sb, false);
     }
 
-    private static StringBuilder appendMap(Map<Object, Object> m, StringBuilder sb, boolean rawValue) {
+    private static StringBuilder appendMap(Map<?, ?> m, StringBuilder sb, boolean rawValue) {
         sb.append("{");
         boolean first = true;
-        for (Map.Entry entry : m.entrySet()) {
+        for (Map.Entry<?, ?> entry : m.entrySet()) {
             if (first)
                 first = false;
             else

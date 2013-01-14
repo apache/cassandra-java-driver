@@ -123,7 +123,7 @@ public class BoundStatement extends Query {
                     if (!(toSet instanceof List))
                         throw new InvalidTypeException(String.format("Invalid type for value %d, column is a list but %s provided", i, toSet.getClass()));
 
-                    List l = (List)toSet;
+                    List<?> l = (List)toSet;
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
                     if (!l.isEmpty()) {
                         // Ugly? Yes
@@ -136,7 +136,7 @@ public class BoundStatement extends Query {
                     if (!(toSet instanceof Set))
                         throw new InvalidTypeException(String.format("Invalid type for value %d, column is a set but %s provided", i, toSet.getClass()));
 
-                    Set s = (Set)toSet;
+                    Set<?> s = (Set)toSet;
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
                     if (!s.isEmpty()) {
                         // Ugly? Yes
@@ -149,7 +149,7 @@ public class BoundStatement extends Query {
                     if (!(toSet instanceof Map))
                         throw new InvalidTypeException(String.format("Invalid type for value %d, column is a map but %s provided", i, toSet.getClass()));
 
-                    Map m = (Map)toSet;
+                    Map<?, ?> m = (Map)toSet;
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
                     if (!m.isEmpty()) {
                         // Ugly? Yes
