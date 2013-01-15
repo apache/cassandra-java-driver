@@ -48,8 +48,14 @@ class HostConnectionPool {
 
         // Create initial core connections
         List<Connection> l = new ArrayList<Connection>(options().getCoreConnectionsPerHost(hostDistance));
-        for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
-            l.add(manager.connectionFactory().open(host));
+        try {
+            for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
+                l.add(manager.connectionFactory().open(host));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            // If asked to interrupt, we can skip opening core connections, the pool will still work.
+            // But we ignore otherwise cause I'm not sure we can do much better currently.
+        }
         this.connections = new CopyOnWriteArrayList(l);
         this.open = new AtomicInteger(connections.size());
 
@@ -144,6 +150,7 @@ class HostConnectionPool {
             try {
                 awaitAvailableConnection(remaining, unit);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupted();
                 // If we're interrupted fine, check if there is a connection available but stop waiting otherwise
                 timeout = 0; // this will make us stop the loop if we don't get a connection right away
             }
@@ -241,6 +248,11 @@ class HostConnectionPool {
             connections.add(manager.connectionFactory().open(host));
             signalAvailableConnection();
             return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            // Skip the open but ignore otherwise
+            open.decrementAndGet();
+            return false;
         } catch (ConnectionException e) {
             open.decrementAndGet();
             logger.debug("Connection error to {} while creating additional connection", host);

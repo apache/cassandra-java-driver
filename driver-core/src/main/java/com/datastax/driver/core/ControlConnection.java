@@ -10,6 +10,7 @@ import org.apache.cassandra.transport.messages.RegisterMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
 
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,7 @@ class ControlConnection implements Host.StateListener {
     public void connect() throws NoHostAvailableException {
         if (isShutdown)
             return;
+
         setNewConnection(reconnectInternal());
     }
 
@@ -110,17 +112,28 @@ class ControlConnection implements Host.StateListener {
 
         Iterator<Host> iter = balancingPolicy.newQueryPlan(Query.DEFAULT);
         Map<InetAddress, String> errors = null;
-        while (iter.hasNext()) {
-            Host host = iter.next();
-            try {
-                return tryConnect(host);
-            } catch (ConnectionException e) {
-                errors = logError(host, e.getMessage(), errors, iter);
-            } catch (ExecutionException e) {
-                errors = logError(host, e.getMessage(), errors, iter);
-            } catch (InterruptedException e) {
-                // If we're interrupted, just move on
+
+        Host host = null;
+        try {
+            while (iter.hasNext()) {
+                host = iter.next();
+                try {
+                    return tryConnect(host);
+                } catch (ConnectionException e) {
+                    errors = logError(host, e.getMessage(), errors, iter);
+                } catch (ExecutionException e) {
+                    errors = logError(host, e.getMessage(), errors, iter);
+                }
             }
+        } catch (InterruptedException e) {
+            // Sets interrupted status
+            Thread.currentThread().interrupt();
+
+            // Indicates that all remaining hosts are skipped due to the interruption
+            if (host != null)
+                errors = logError(host, "Connection thread interrupted", errors, iter);
+            while (iter.hasNext())
+                errors = logError(iter.next(), "Connection thread interrupted", errors, iter);
         }
         throw new NoHostAvailableException(errors == null ? Collections.<InetAddress, String>emptyMap() : errors);
     }
@@ -163,7 +176,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    public void refreshSchema(String keyspace, String table) {
+    public void refreshSchema(String keyspace, String table) throws InterruptedException {
         logger.debug("[Control connection] Refreshing schema for {}.{}", keyspace, table);
         try {
             refreshSchema(connectionRef.get(), keyspace, table, cluster);
@@ -176,8 +189,6 @@ class ControlConnection implements Host.StateListener {
         } catch (BusyConnectionException e) {
             logger.debug("[Control connection] Connection is busy, reconnecting");
             reconnect();
-        } catch (InterruptedException e) {
-            // Interrupted? Then moving on.
         }
     }
 
@@ -223,7 +234,8 @@ class ControlConnection implements Host.StateListener {
             logger.debug("[Control connection] Connection is busy, reconnecting");
             reconnect();
         } catch (InterruptedException e) {
-            // Interrupted? Then moving on.
+            Thread.currentThread().interrupt();
+            logger.debug("[Control connection] Interrupted while refreshing node list and token map, skipping it.");
         }
     }
 
@@ -327,7 +339,7 @@ class ControlConnection implements Host.StateListener {
                 return true;
 
             // let's not flood the node too much
-            try { Thread.sleep(200); } catch (InterruptedException e) {};
+            Thread.sleep(200);
 
             elapsed = System.currentTimeMillis() - start;
         }

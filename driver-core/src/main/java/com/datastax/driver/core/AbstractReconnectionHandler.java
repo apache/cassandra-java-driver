@@ -3,6 +3,8 @@ package com.datastax.driver.core;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.*;
 
+import com.google.common.util.concurrent.Uninterruptibles;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +28,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
         this.currentAttempt = currentAttempt;
     }
 
-    protected abstract Connection tryReconnect() throws ConnectionException;
+    protected abstract Connection tryReconnect() throws ConnectionException, InterruptedException;
     protected abstract void onReconnection(Connection connection);
 
     protected boolean onConnectionException(ConnectionException e, long nextDelayMs) { return true; }
@@ -58,9 +60,8 @@ abstract class AbstractReconnectionHandler implements Runnable {
             return;
 
         // Don't run before ready, otherwise our cancel business might end up removing all connection attempts.
-        while (!readyForNext) {
-            try { Thread.sleep(5); } catch (InterruptedException e) {};
-        }
+        while (!readyForNext)
+            Uninterruptibles.sleepUninterruptibly(5, TimeUnit.MILLISECONDS);
 
         try {
             onReconnection(tryReconnect());
@@ -80,6 +81,10 @@ abstract class AbstractReconnectionHandler implements Runnable {
                 logger.error("Retry against {} have been suspended. It won't be retried unless the node is restarted.", e.getHost());
                 currentAttempt.compareAndSet(localFuture, null);
             }
+        } catch (InterruptedException e) {
+            // If interrupted, skip this attempt but still skip scheduling reconnections
+            Thread.currentThread().interrupt();
+            reschedule(schedule.nextDelayMs());
         } catch (Exception e) {
             long nextDelay = schedule.nextDelayMs();
             if (onUnknownException(e, nextDelay))

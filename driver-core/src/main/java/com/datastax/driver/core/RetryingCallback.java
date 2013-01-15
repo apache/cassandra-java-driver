@@ -9,6 +9,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
 
+import com.google.common.util.concurrent.Uninterruptibles;
+
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.exceptions.*;
 
@@ -246,13 +248,9 @@ class RetryingCallback implements Connection.ResponseCallback {
                             }
 
                             try {
-                                Message.Response prepareResponse = connection.write(new PrepareMessage(toPrepare)).get();
+                                Message.Response prepareResponse = Uninterruptibles.getUninterruptibly(connection.write(new PrepareMessage(toPrepare)));
                                 // TODO check return ?
                                 retry = RetryPolicy.RetryDecision.retry(null);
-                            } catch (InterruptedException e) {
-                                logError(connection.address, "Interrupted while preparing query to execute");
-                                retry(false, null);
-                                return;
                             } catch (ExecutionException e) {
                                 logError(connection.address, "Unexpected problem while preparing query to execute: " + e.getCause().getMessage());
                                 retry(false, null);

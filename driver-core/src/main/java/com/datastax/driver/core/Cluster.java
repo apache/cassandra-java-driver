@@ -541,7 +541,12 @@ public class Cluster {
             if (scheduledAttempt != null)
                 scheduledAttempt.cancel(false);
 
-            prepareAllQueries(host);
+            try {
+                prepareAllQueries(host);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupted();
+                // Don't propagate because we don't want to prevent other listener to run
+            }
 
             controlConnection.onUp(host);
             for (Session s : sessions)
@@ -558,7 +563,7 @@ public class Cluster {
             logger.debug("{} is down, scheduling connection retries", host);
             new AbstractReconnectionHandler(reconnectionExecutor, configuration.getPolicies().getReconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
 
-                protected Connection tryReconnect() throws ConnectionException {
+                protected Connection tryReconnect() throws ConnectionException, InterruptedException {
                     return connectionFactory.open(host);
                 }
 
@@ -583,7 +588,14 @@ public class Cluster {
 
         public void onAdd(Host host) {
             logger.trace("Adding new host {}", host);
-            prepareAllQueries(host);
+
+            try {
+                prepareAllQueries(host);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupted();
+                // Don't propagate because we don't want to prevent other listener to run
+            }
+
             controlConnection.onAdd(host);
             for (Session s : sessions)
                 s.manager.onAdd(host);
@@ -623,18 +635,26 @@ public class Cluster {
         }
 
         // Prepare a query on all nodes
-        public void prepare(MD5Digest digest, String query, InetAddress toExclude) {
+        // Note that this *assumes* the query is valid.
+        public void prepare(MD5Digest digest, String query, InetAddress toExclude) throws InterruptedException {
             preparedQueries.put(digest, query);
             for (Session s : sessions)
                 s.manager.prepare(query, toExclude);
         }
 
-        private void prepareAllQueries(Host host) {
+        private void prepareAllQueries(Host host) throws InterruptedException {
             if (preparedQueries.isEmpty())
                 return;
 
             try {
                 Connection connection = connectionFactory.open(host);
+
+                try {
+                    ControlConnection.waitForSchemaAgreement(connection, metadata);
+                } catch (ExecutionException e) {
+                    // As below, just move on
+                }
+
                 List<Connection.Future> futures = new ArrayList<Connection.Future>(preparedQueries.size());
                 for (String query : preparedQueries.values()) {
                     futures.add(connection.write(new PrepareMessage(query)));
@@ -642,9 +662,10 @@ public class Cluster {
                 for (Connection.Future future : futures) {
                     try {
                         future.get();
-                    } catch (InterruptedException e) {
-                        logger.debug("Interupted while preparing queries on new/newly up host", e);
                     } catch (ExecutionException e) {
+                        // This "might" happen if we drop a CF but haven't removed it's prepared queries (which we don't do
+                        // currently). It's not a big deal however as if it's a more serious problem it'll show up later when
+                        // the query is tried for execution.
                         logger.debug("Unexpected error while preparing queries on new/newly up host", e);
                     }
                 }
@@ -661,7 +682,11 @@ public class Cluster {
             logger.trace("Submitting schema refresh");
             executor.submit(new Runnable() {
                 public void run() {
-                    controlConnection.refreshSchema(keyspace, table);
+                    try {
+                        controlConnection.refreshSchema(keyspace, table);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
             });
         }

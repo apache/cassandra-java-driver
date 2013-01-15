@@ -9,6 +9,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.util.concurrent.Uninterruptibles;
+
 import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
@@ -70,7 +72,7 @@ class Connection extends org.apache.cassandra.transport.Connection
      * @throws ConnectionException if the connection attempts fails or is
      * refused by the server.
      */
-    private Connection(String name, InetAddress address, Factory factory) throws ConnectionException {
+    private Connection(String name, InetAddress address, Factory factory) throws ConnectionException, InterruptedException {
         super(EMPTY_TRACKER);
 
         this.address = address;
@@ -107,7 +109,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         return " (" + t.getMessage() + ")";
     }
 
-    private void initializeTransport() throws ConnectionException {
+    private void initializeTransport() throws ConnectionException, InterruptedException {
 
         // TODO: we will need to get fancy about handling protocol version at
         // some point, but keep it simple for now.
@@ -145,8 +147,6 @@ class Connection extends org.apache.cassandra.transport.Connection
             throw new DriverInternalError("Newly created connection should not be busy");
         } catch (ExecutionException e) {
             throw defunct(new ConnectionException(address, "Unexpected error during transport initialization", e.getCause()));
-        } catch (InterruptedException e) {
-            throw new DriverInternalError(e);
         }
     }
 
@@ -178,7 +178,7 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         try {
             logger.trace("[{}] Setting keyspace {}", name, keyspace);
-            Message.Response response = write(new QueryMessage("USE \"" + keyspace + "\"", ConsistencyLevel.DEFAULT_CASSANDRA_CL)).get();
+            Message.Response response = Uninterruptibles.getUninterruptibly(write(new QueryMessage("USE \"" + keyspace + "\"", ConsistencyLevel.DEFAULT_CASSANDRA_CL)));
             switch (response.type) {
                 case RESULT:
                     this.keyspace = keyspace;
@@ -198,8 +198,6 @@ class Connection extends org.apache.cassandra.transport.Connection
             logger.error("Tried to set the keyspace on busy connection. This should not happen but is not critical");
         } catch (ExecutionException e) {
             throw defunct(new ConnectionException(address, "Error while setting keyspace", e));
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -268,19 +266,19 @@ class Connection extends org.apache.cassandra.transport.Connection
         if (isClosed)
             return;
 
+        // Note: there is no guarantee only one thread will reach that point, but executing this
+        // method multiple time is harmless. If the latter change, we'll have to CAS isClosed to
+        // make sure this gets executed only once.
+
         logger.trace("[{}] closing connection", name);
 
         // Make sure all new writes are rejected
         isClosed = true;
 
         if (!isDefunct) {
-            try {
-                // Busy waiting, we just wait for request to be fully written, shouldn't take long
-                while (writer.get() > 0)
-                    Thread.sleep(10);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            // Busy waiting, we just wait for request to be fully written, shouldn't take long
+            while (writer.get() > 0)
+                Uninterruptibles.sleepUninterruptibly(10, TimeUnit.MILLISECONDS);
         }
 
         channel.close().awaitUninterruptibly();
@@ -333,7 +331,7 @@ class Connection extends org.apache.cassandra.transport.Connection
          *
          * @throws ConnectionException if connection attempt fails.
          */
-        public Connection open(Host host) throws ConnectionException {
+        public Connection open(Host host) throws ConnectionException, InterruptedException {
             InetAddress address = host.getAddress();
             String name = address.toString() + "-" + getIdGenerator(host).getAndIncrement();
             return new Connection(name, address, this);

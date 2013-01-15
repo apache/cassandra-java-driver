@@ -5,6 +5,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.util.concurrent.Uninterruptibles;
+
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
 
@@ -179,29 +181,21 @@ public class Session {
     private PreparedStatement toPreparedStatement(String query, Connection.Future future) throws NoHostAvailableException {
 
         try {
-            Message.Response response = null;
-            try {
-                while (response == null) {
-                    try {
-                        response = future.get();
-                    } catch (InterruptedException e) {
-                        // TODO: decide wether we want to expose Interrupted exceptions or not
-                        throw new RuntimeException(e);
-                    }
-                }
-            } catch (ExecutionException e) {
-                ResultSetFuture.extractCauseFromExecutionException(e);
-                throw new AssertionError();
-            }
-
-            assert response != null;
+            Message.Response response = Uninterruptibles.getUninterruptibly(future);
             switch (response.type) {
                 case RESULT:
                     ResultMessage rm = (ResultMessage)response;
                     switch (rm.kind) {
                         case PREPARED:
                             ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
-                            manager.cluster.manager.prepare(pmsg.statementId, query, future.getAddress());
+                            try {
+                                manager.cluster.manager.prepare(pmsg.statementId, query, future.getAddress());
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                                // This method don't propage interruption, at least not for now. However, if we've
+                                // interrupted preparing queries on other node it's not a problem as we'll re-prepare
+                                // later if need be. So just ignore.
+                            }
                             return PreparedStatement.fromMessage(pmsg, manager.cluster.getMetadata());
                         default:
                             throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
@@ -212,6 +206,9 @@ public class Session {
                 default:
                     throw new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type));
             }
+            throw new AssertionError();
+        } catch (ExecutionException e) {
+            ResultSetFuture.extractCauseFromExecutionException(e);
             throw new AssertionError();
         } catch (QueryExecutionException e) {
             // Preparing a statement cannot throw any of the QueryExecutionException
@@ -335,9 +332,7 @@ public class Session {
 
         public void setKeyspace(String keyspace) throws NoHostAvailableException {
             try {
-                executeQuery(new QueryMessage("use " + keyspace, ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT).get();
-            } catch (InterruptedException e) {
-                // If we're interrupted, then fine, we stop waiting, but the user shouldn't complain if the keyspace is not set.
+                Uninterruptibles.getUninterruptibly(executeQuery(new QueryMessage("use " + keyspace, ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT));
             } catch (ExecutionException e) {
                 Throwable cause = e.getCause();
                 // A USE query should never fail unless we cannot contact a node
@@ -360,7 +355,7 @@ public class Session {
             new RetryingCallback(this, callback, query).sendRequest();
         }
 
-        public void prepare(String query, InetAddress toExclude) {
+        public void prepare(String query, InetAddress toExclude) throws InterruptedException {
             for (Map.Entry<Host, HostConnectionPool> entry : pools.entrySet()) {
                 if (entry.getKey().getAddress().equals(toExclude))
                     continue;
@@ -376,8 +371,6 @@ public class Session {
                 } catch (BusyConnectionException e) {
                     // Same as above
                 } catch (TimeoutException e) {
-                    // Same as above
-                } catch (InterruptedException e) {
                     // Same as above
                 } catch (ExecutionException e) {
                     // We shouldn't really get exception while preparing a
