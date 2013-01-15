@@ -70,7 +70,7 @@ cass1, cass2 and cass3. A simple example using this core driver could be::
                         .build();
     Session session = cluster.connect("db1");
 
-    for (CQLRow row : session.execute("SELECT * FROM table1"))
+    for (Row row : session.execute("SELECT * FROM table1"))
         // do something ...
 
 
