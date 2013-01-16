@@ -38,6 +38,6 @@ public class NoHostAvailableException extends DriverException {
     }
 
     private static String makeMessage(Map<InetAddress, String> errors) {
-        return String.format("All host tried for query are in error (tried: %s)", errors.keySet());
+        return String.format("All host(s) tried for query failed (tried: %s)", errors.keySet());
     }
 }
