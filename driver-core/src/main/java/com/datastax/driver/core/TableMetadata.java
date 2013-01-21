@@ -98,7 +98,7 @@ public class TableMetadata {
                                            : Collections.<AbstractType<?>>singletonList(kt);
 
             // check if key_aliases is null, and set to [] due to CASSANDRA-5101
-            List<String> keyAliases = row.getString(KEY_ALIASES) == null ? new ArrayList<String>() : fromJsonList(row.getString(KEY_ALIASES));
+            List<String> keyAliases = row.getString(KEY_ALIASES) == null ? Collections.<String>emptyList() : fromJsonList(row.getString(KEY_ALIASES));
             for (int i = 0; i < keyTypes.size(); i++) {
                 String cn = keyAliases.size() > i
                           ? keyAliases.get(i)

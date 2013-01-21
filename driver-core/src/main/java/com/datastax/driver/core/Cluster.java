@@ -497,7 +497,12 @@ public class Cluster {
             this.metrics = new Metrics(this);
             this.configuration.register(this);
 
-            this.controlConnection.connect();
+            try {
+                this.controlConnection.connect();
+            } catch (NoHostAvailableException e) {
+                shutdown();
+                throw e;
+            }
         }
 
         // This is separated from the constructor because this reference the
@@ -531,6 +536,10 @@ public class Cluster {
             reconnectionExecutor.shutdownNow();
             scheduledTasksExecutor.shutdownNow();
             executor.shutdownNow();
+            connectionFactory.shutdown();
+
+            if (metrics != null)
+                metrics.shutdown();
         }
 
         public void onUp(Host host) {

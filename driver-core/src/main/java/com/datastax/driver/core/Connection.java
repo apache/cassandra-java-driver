@@ -21,6 +21,8 @@ import org.apache.cassandra.transport.messages.*;
 
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +51,6 @@ class Connection extends org.apache.cassandra.transport.Connection
     public final InetAddress address;
     private final String name;
 
-    private final ClientBootstrap bootstrap;
     private final Channel channel;
     private final Factory factory;
     private final Dispatcher dispatcher = new Dispatcher();
@@ -78,8 +79,8 @@ class Connection extends org.apache.cassandra.transport.Connection
         this.address = address;
         this.factory = factory;
         this.name = name;
-        this.bootstrap = factory.bootstrap();
 
+        ClientBootstrap bootstrap = factory.newBootstrap();
         bootstrap.setPipelineFactory(new PipelineFactory(this));
 
         ChannelFuture future = bootstrap.connect(new InetSocketAddress(address, factory.getPort()));
@@ -88,6 +89,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         try {
             // Wait until the connection attempt succeeds or fails.
             this.channel = future.awaitUninterruptibly().getChannel();
+            this.factory.allChannels.add(this.channel);
             if (!future.isSuccess())
             {
                 if (logger.isDebugEnabled())
@@ -282,7 +284,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         }
 
         channel.close().awaitUninterruptibly();
-        // Note: we must not call releaseExternalResources, because this shutdown the executors, which are shared
+        // Note: we must not call releaseExternalResources on the bootstrap, because this shutdown the executors, which are shared
     }
 
     public boolean isClosed() {
@@ -303,6 +305,10 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         private final ExecutorService bossExecutor = Executors.newCachedThreadPool();
         private final ExecutorService workerExecutor = Executors.newCachedThreadPool();
+
+        private final ChannelFactory channelFactory = new NioClientSocketChannelFactory(bossExecutor, workerExecutor);
+        private final ChannelGroup allChannels = new DefaultChannelGroup();
+
 
         private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
         public final DefaultResponseHandler defaultHandler;
@@ -348,8 +354,8 @@ class Connection extends org.apache.cassandra.transport.Connection
             return g;
         }
 
-        private ClientBootstrap bootstrap() {
-            ClientBootstrap b = new ClientBootstrap(new NioClientSocketChannelFactory(bossExecutor, workerExecutor));
+        private ClientBootstrap newBootstrap() {
+            ClientBootstrap b = new ClientBootstrap(channelFactory);
 
             SocketOptions options = configuration.getSocketOptions();
 
@@ -374,6 +380,11 @@ class Connection extends org.apache.cassandra.transport.Connection
                 b.setOption("sendBufferSize", sendBufferSize);
 
             return b;
+        }
+
+        public void shutdown() {
+            allChannels.close();
+            channelFactory.releaseExternalResources();
         }
     }
 

@@ -133,6 +133,10 @@ public class Metrics {
         return openConnections;
     }
 
+    void shutdown() {
+        jmxReporter.shutdown();
+    }
+
     /**
      * Metrics on errors encountered.
      */
