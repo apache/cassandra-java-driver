@@ -87,18 +87,18 @@ public class LoadBalancingPolicyTest {
             init(c, 12);
             query(c, 12);
 
-            assertQueried("127.0.0.1", 6);
-            assertQueried("127.0.0.2", 6);
+            assertQueried(CCMBridge.IP_PREFIX + "1", 6);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 6);
 
             resetCoordinators();
             c.bridge.bootstrapNode(3);
-            waitFor("127.0.0.3", c.cluster, 20);
+            waitFor(CCMBridge.IP_PREFIX + "3", c.cluster, 20);
 
             query(c, 12);
 
-            assertQueried("127.0.0.1", 4);
-            assertQueried("127.0.0.2", 4);
-            assertQueried("127.0.0.3", 4);
+            assertQueried(CCMBridge.IP_PREFIX + "1", 4);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 4);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 4);
 
         } catch (Throwable e) {
             c.errorOut();
@@ -119,10 +119,10 @@ public class LoadBalancingPolicyTest {
             init(c, 12);
             query(c, 12);
 
-            assertQueried("127.0.0.1", 0);
-            assertQueried("127.0.0.2", 0);
-            assertQueried("127.0.0.3", 6);
-            assertQueried("127.0.0.4", 6);
+            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 6);
+            assertQueried(CCMBridge.IP_PREFIX + "4", 6);
 
         } catch (Throwable e) {
             c.errorOut();
@@ -154,19 +154,19 @@ public class LoadBalancingPolicyTest {
             // Not the best test ever, we should use OPP and check we do it the
             // right nodes. But since M3P is hard-coded for now, let just check
             // we just hit only one node.
-            assertQueried("127.0.0.1", 0);
-            assertQueried("127.0.0.2", 12);
+            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
 
             resetCoordinators();
             c.bridge.bootstrapNode(3);
-            waitFor("127.0.0.3", c.cluster, 20);
+            waitFor(CCMBridge.IP_PREFIX + "3", c.cluster, 20);
 
             query(c, 12, usePrepared);
 
             // We should still be hitting only one node
-            assertQueried("127.0.0.1", 0);
-            assertQueried("127.0.0.2", 12);
-            assertQueried("127.0.0.3", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
 
         } catch (Throwable e) {
             c.errorOut();
