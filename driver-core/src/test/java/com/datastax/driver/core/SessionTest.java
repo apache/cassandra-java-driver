@@ -13,12 +13,14 @@ import com.datastax.driver.core.exceptions.*;
 public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private static final String TABLE = "test";
+    private static final String COUNTER_TABLE = "counters";
 
     private static final String INSERT_FORMAT = "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)";
     private static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
 
     protected Collection<String> getTableDefinitions() {
-        return Collections.singleton(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", TABLE));
+        return Arrays.asList(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", TABLE),
+                             String.format("CREATE TABLE %s (k text PRIMARY KEY, c counter)", COUNTER_TABLE));
     }
 
     @Test
@@ -68,14 +70,64 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test
-    public void setAndDropKeyspace() throws Exception {
+    public void setAndDropKeyspaceTest() throws Exception {
         // Check that if someone set a keyspace and then drop it, we recognize
         // that fact and don't assume he is still set to this keyspace
 
-        session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, "to_drop", 1));
-        session.execute("USE to_drop");
-        session.execute("DROP KEYSPACE to_drop");
+        try {
+            session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, "to_drop", 1));
+            session.execute("USE to_drop");
+            session.execute("DROP KEYSPACE to_drop");
 
-        assertEquals(null, session.manager.poolsState.keyspace);
+            assertEquals(null, session.manager.poolsState.keyspace);
+        } finally {
+            // restore the correct state for remaining states
+            session.execute("USE " + TestUtils.SIMPLE_KEYSPACE);
+        }
     }
+
+    @Test
+    public void executePreparedCounterTest() throws Exception {
+        PreparedStatement p = session.prepare("UPDATE " + COUNTER_TABLE + " SET c = c + ? WHERE k = ?");
+
+        session.execute(p.bind(1L, "row"));
+        session.execute(p.bind(1L, "row"));
+
+        ResultSet rs = session.execute("SELECT * FROM " + COUNTER_TABLE);
+        List<Row> rows = rs.all();
+        assertEquals(1, rows.size());
+        assertEquals(2L, rows.get(0).getLong("c"));
+    }
+
+    @Test
+    public void compressionTest() throws Exception {
+
+        // Same as executeTest, but with compression enabled
+
+        cluster.getConfiguration().getProtocolOptions().setCompression(ProtocolOptions.Compression.SNAPPY);
+
+        try {
+
+            Session compressedSession = cluster.connect(TestUtils.SIMPLE_KEYSPACE);
+
+            // Simple calls to all versions of the execute/executeAsync methods
+            String key = "execute_compressed_test";
+            ResultSet rs = compressedSession.execute(String.format(INSERT_FORMAT, TABLE, key, "foo", 42, 24.03f));
+            assertTrue(rs.isExhausted());
+
+            String SELECT_ALL = String.format(SELECT_ALL_FORMAT + " WHERE k = '%s'", TABLE, key);
+
+            // execute
+            checkExecuteResultSet(compressedSession.execute(SELECT_ALL), key);
+            checkExecuteResultSet(compressedSession.execute(new SimpleStatement(SELECT_ALL).setConsistencyLevel(ConsistencyLevel.ONE)), key);
+
+            // executeAsync
+            checkExecuteResultSet(compressedSession.executeAsync(SELECT_ALL).getUninterruptibly(), key);
+            checkExecuteResultSet(compressedSession.executeAsync(new SimpleStatement(SELECT_ALL).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
+
+        } finally {
+            cluster.getConfiguration().getProtocolOptions().setCompression(ProtocolOptions.Compression.NONE);
+        }
+    }
+
 }

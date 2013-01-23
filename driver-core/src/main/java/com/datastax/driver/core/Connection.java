@@ -120,7 +120,10 @@ class Connection extends org.apache.cassandra.transport.Connection
         }};
         ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
         if (compression != ProtocolOptions.Compression.NONE)
+        {
             options.put(StartupMessage.COMPRESSION, compression.toString());
+            setCompressor(compression.compressor());
+        }
         StartupMessage startup = new StartupMessage(options);
         try {
             Message.Response response = write(startup).get();

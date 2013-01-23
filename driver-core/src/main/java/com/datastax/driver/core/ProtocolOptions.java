@@ -1,5 +1,7 @@
 package com.datastax.driver.core;
 
+import org.apache.cassandra.transport.FrameCompressor;
+
 /**
  * Options of the Cassandra native binary protocol.
  */
@@ -10,14 +12,20 @@ public class ProtocolOptions {
      */
     public enum Compression {
         /** No compression */
-        NONE(""),
+        NONE("", null),
         /** Snappy compression */
-        SNAPPY("snappy");
+        SNAPPY("snappy", FrameCompressor.SnappyCompressor.instance);
 
         final String protocolName;
+        final FrameCompressor compressor;
 
-        private Compression(String protocolName) {
+        private Compression(String protocolName, FrameCompressor compressor) {
             this.protocolName = protocolName;
+            this.compressor = compressor;
+        }
+
+        FrameCompressor compressor() {
+            return compressor;
         }
 
         @Override
