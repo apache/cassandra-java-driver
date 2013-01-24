@@ -45,6 +45,7 @@ public class Stress {
         parser.accepts("csv", "Save metrics into csv instead of displaying on stdout");
         parser.accepts("columns-per-row", "Number of columns per CQL3 row").withRequiredArg().ofType(Integer.class).defaultsTo(5);
         parser.accepts("value-size", "The size in bytes for column values").withRequiredArg().ofType(Integer.class).defaultsTo(34);
+        parser.accepts("ip", "The hosts ip to connect to").withRequiredArg().ofType(String.class).defaultsTo("127.0.0.1");
 
         register("insert", Generators.CASSANDRA_INSERTER);
         register("insert_prepared", Generators.CASSANDRA_PREPARED_INSERTER);
@@ -86,7 +87,7 @@ public class Stress {
 
         try {
             // Create session to hosts
-            Cluster cluster = new Cluster.Builder().addContactPoints("127.0.0.1").build();
+            Cluster cluster = new Cluster.Builder().addContactPoints(String.valueOf(options.valueOf("ip"))).build();
 
             //PoolingOptions pools = cluster.getConfiguration().getConnectionsConfiguration().getPoolingOptions();
             //pools.setCoreConnectionsPerHost(HostDistance.LOCAL, 2);
