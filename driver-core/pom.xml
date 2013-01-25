@@ -80,6 +80,7 @@
           <systemPropertyVariables>
               <cassandra.version>${cassandra.version}</cassandra.version>
               <ipprefix>${ipprefix}</ipprefix>
+              <jmxport>${jmxport}</jmxport>
           </systemPropertyVariables>
         </configuration>
       </plugin>

@@ -24,6 +24,8 @@ public class CCMBridge {
 
     public static final String IP_PREFIX;
 
+    public static final String JMX_PORT;
+
     private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d(-\\w+)?";
 
     private static final File CASSANDRA_DIR;
@@ -43,6 +45,12 @@ public class CCMBridge {
             ip_prefix = "127.0.1.";
         }
         IP_PREFIX = ip_prefix;
+
+        String jmxport = System.getProperty("jmxport");
+        if (jmxport == null || jmxport.equals("")) {
+        	jmxport = "17199";
+        }
+        JMX_PORT = jmxport;
     }
 
     private final Runtime runtime = Runtime.getRuntime();
@@ -101,7 +109,7 @@ public class CCMBridge {
     }
 
     public void bootstrapNode(int n) {
-        execute("ccm add node%d -i %s%d -b", n, IP_PREFIX, n);
+        execute("ccm add node%d -i %s%d -j %s -b", n, IP_PREFIX, n, JMX_PORT);
         execute("ccm node%d start", n);
     }
 
