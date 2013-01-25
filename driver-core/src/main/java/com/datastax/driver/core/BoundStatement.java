@@ -117,6 +117,10 @@ public class BoundStatement extends Query {
         for (int i = 0; i < values.length; i++)
         {
             Object toSet = values[i];
+
+            if (toSet == null)
+                throw new IllegalArgumentException("'null' parameters are not allowed since CQL3 does not (yet) supports them (see https://issues.apache.org/jira/browse/CASSANDRA-3783)");
+
             DataType columnType = statement.getVariables().getType(i);
             switch (columnType.getName()) {
                 case LIST:
@@ -127,9 +131,10 @@ public class BoundStatement extends Query {
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
                     if (!l.isEmpty()) {
                         // Ugly? Yes
-                        Class klass = l.get(0).getClass();
-                        if (!Codec.isCompatibleSupertype(columnType.getTypeArguments().get(0), klass))
-                            throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but provided list value are %s", i, columnType, klass));
+                        Class<?> providedClass = l.get(0).getClass();
+                        Class<?> expectedClass = columnType.getTypeArguments().get(0).asJavaClass();
+                        if (!expectedClass.isAssignableFrom(providedClass))
+                            throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting list of %s but provided list of %s", i, columnType, expectedClass, providedClass));
                     }
                     break;
                 case SET:
@@ -140,9 +145,10 @@ public class BoundStatement extends Query {
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
                     if (!s.isEmpty()) {
                         // Ugly? Yes
-                        Class klass = s.iterator().next().getClass();
-                        if (!Codec.isCompatibleSupertype(columnType.getTypeArguments().get(0), klass))
-                            throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but provided set value are %s", i, columnType, klass));
+                        Class<?> providedClass = s.iterator().next().getClass();
+                        Class<?> expectedClass = columnType.getTypeArguments().get(0).getName().javaType;
+                        if (!expectedClass.isAssignableFrom(providedClass))
+                            throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting set of %s but provided set of %s", i, columnType, expectedClass, providedClass));
                     }
                     break;
                 case MAP:
@@ -154,18 +160,20 @@ public class BoundStatement extends Query {
                     if (!m.isEmpty()) {
                         // Ugly? Yes
                         Map.Entry entry = (Map.Entry)m.entrySet().iterator().next();
-                        Class keysClass = entry.getKey().getClass();
-                        Class valuesClass = entry.getValue().getClass();
+                        Class<?> providedKeysClass = entry.getKey().getClass();
+                        Class<?> providedValuesClass = entry.getValue().getClass();
 
-                        DataType keysType = columnType.getTypeArguments().get(0);
-                        DataType valuesType = columnType.getTypeArguments().get(1);
-                        if (!Codec.isCompatibleSupertype(keysType, keysClass) || !Codec.isCompatibleSupertype(valuesType, valuesClass))
-                            throw new InvalidTypeException(String.format("Invalid type for value %d, column type %s conflicts with provided type %s", i, columnType, toSet.getClass()));
+                        Class<?> expectedKeysClass = columnType.getTypeArguments().get(0).getName().javaType;
+                        Class<?> expectedValuesClass = columnType.getTypeArguments().get(1).getName().javaType;
+                        if (!expectedKeysClass.isAssignableFrom(providedKeysClass) || !expectedValuesClass.isAssignableFrom(providedValuesClass))
+                            throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting map of %s->%s but provided set of %s->%s", i, columnType, expectedKeysClass, expectedValuesClass, providedKeysClass, providedValuesClass));
                     }
                     break;
                 default:
-                    if (!Codec.isCompatibleSupertype(columnType, toSet.getClass()))
-                        throw new InvalidTypeException(String.format("Invalid type for value %d, column type is %s but %s provided", i, columnType, toSet.getClass()));
+                    Class<?> providedClass = toSet.getClass();
+                    Class<?> expectedClass = columnType.getName().javaType;
+                    if (!expectedClass.isAssignableFrom(providedClass))
+                        throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting %s but %s provided", i, columnType, expectedClass, providedClass));
                     break;
             }
             setValue(i, Codec.getCodec(columnType).decompose(toSet));
@@ -669,10 +677,11 @@ public class BoundStatement extends Query {
         // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
         if (!v.isEmpty()) {
             // Ugly? Yes
-            Class klass = v.get(0).getClass();
+            Class<?> providedClass = v.get(0).getClass();
+            Class<?> expectedClass = type.getTypeArguments().get(0).asJavaClass();
 
-            if (!Codec.isCompatibleSupertype(type.getTypeArguments().get(0), klass))
-                throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a list of %s", metadata().getName(i), type, klass));
+            if (!expectedClass.isAssignableFrom(providedClass))
+                throw new InvalidTypeException(String.format("Invalid value for column %d of CQL type %s, expecting list of %s but provided list of %s", metadata().getName(i), type, expectedClass, providedClass));
         }
 
         return setValue(i, Codec.<List<T>>getCodec(type).decompose(v));
@@ -716,13 +725,13 @@ public class BoundStatement extends Query {
         if (!v.isEmpty()) {
             // Ugly? Yes
             Map.Entry<K, V> entry = v.entrySet().iterator().next();
-            Class keysClass = entry.getKey().getClass();
-            Class valuesClass = entry.getValue().getClass();
+            Class<?> providedKeysClass = entry.getKey().getClass();
+            Class<?> providedValuesClass = entry.getValue().getClass();
 
-            DataType keysType = type.getTypeArguments().get(0);
-            DataType valuesType = type.getTypeArguments().get(1);
-            if (!Codec.isCompatibleSupertype(keysType, keysClass) || !Codec.isCompatibleSupertype(valuesType, valuesClass))
-                throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a map of %s -> %s", metadata().getName(i), type, keysType, valuesType));
+            Class<?> expectedKeysClass = type.getTypeArguments().get(0).getName().javaType;
+            Class<?> expectedValuesClass = type.getTypeArguments().get(1).getName().javaType;
+            if (!expectedKeysClass.isAssignableFrom(providedKeysClass) || !expectedValuesClass.isAssignableFrom(providedValuesClass))
+                throw new InvalidTypeException(String.format("Invalid value for column %d of CQL type %s, expecting map of %s->%s but provided map of %s->%s", metadata().getName(i), type, expectedKeysClass, expectedValuesClass, providedKeysClass, providedValuesClass));
         }
 
         return setValue(i, Codec.<Map<K, V>>getCodec(type).decompose(v));
@@ -765,10 +774,11 @@ public class BoundStatement extends Query {
 
         if (!v.isEmpty()) {
             // Ugly? Yes
-            Class klass = v.iterator().next().getClass();
+            Class<?> providedClass = v.iterator().next().getClass();
+            Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
 
-            if (!Codec.isCompatibleSupertype(type.getTypeArguments().get(0), klass))
-                throw new InvalidTypeException(String.format("Column %s is a %s, cannot set to a set of %s", metadata().getName(i), type, klass));
+            if (!expectedClass.isAssignableFrom(providedClass))
+                throw new InvalidTypeException(String.format("Invalid value for column %d of CQL type %s, expecting set of %s but provided set of %s", metadata().getName(i), type, expectedClass, providedClass));
         }
 
         return setValue(i, Codec.<Set<T>>getCodec(type).decompose(v));

@@ -1,12 +1,18 @@
 package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.cassandra.db.marshal.MarshalException;
 import com.google.common.collect.ImmutableList;
@@ -19,27 +25,36 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  */
 public class DataType {
 
+    /**
+     * The CQL type name.
+     */
     public enum Name {
 
-        ASCII,
-        BIGINT,
-        BLOB,
-        BOOLEAN,
-        COUNTER,
-        DECIMAL,
-        DOUBLE,
-        FLOAT,
-        INET,
-        INT,
-        TEXT,
-        TIMESTAMP,
-        UUID,
-        VARCHAR,
-        VARINT,
-        TIMEUUID,
-        LIST,
-        SET,
-        MAP;
+        ASCII     (String.class),
+        BIGINT    (Long.class),
+        BLOB      (ByteBuffer.class),
+        BOOLEAN   (Boolean.class),
+        COUNTER   (Long.class),
+        DECIMAL   (BigDecimal.class),
+        DOUBLE    (Double.class),
+        FLOAT     (Float.class),
+        INET      (InetAddress.class),
+        INT       (Integer.class),
+        TEXT      (String.class),
+        TIMESTAMP (Date.class),
+        UUID      (UUID.class),
+        VARCHAR   (String.class),
+        VARINT    (BigInteger.class),
+        TIMEUUID  (UUID.class),
+        LIST      (List.class),
+        SET       (Set.class),
+        MAP       (Map.class);
+
+        final Class<?> javaType;
+
+        private Name(Class<?> javaType) {
+            this.javaType = javaType;
+        }
 
         /**
          * Whether this data type name represent the name of a collection type (e.g. list, set or map).
@@ -54,6 +69,39 @@ public class DataType {
                     return true;
             }
             return false;
+        }
+
+        /**
+         * The java Class corresponding to this CQL type name.
+         *
+         * The correspondence between CQL types and java ones is as follow:
+         * <table>
+         *   <tr><th>DataType (CQL)</th><th>Java Class</th></tr>
+         *   <tr><td>ASCII         </td><td>String</td></tr>
+         *   <tr><td>BIGINT        </td><td>Long</td></tr>
+         *   <tr><td>BLOB          </td><td>ByteBuffer</td></tr>
+         *   <tr><td>BOOLEAN       </td><td>Boolean</td></tr>
+         *   <tr><td>COUNTER       </td><td>Long</td></tr>
+         *   <tr><td>DECIMAL       </td><td>BigDecimal</td></tr>
+         *   <tr><td>DOUBLE        </td><td>Double</td></tr>
+         *   <tr><td>FLOAT         </td><td>Float</td></tr>
+         *   <tr><td>INET          </td><td>InetAddress</td></tr>
+         *   <tr><td>INT           </td><td>Integer</td></tr>
+         *   <tr><td>LIST          </td><td>List</td></tr>
+         *   <tr><td>MAP           </td><td>Map</td></tr>
+         *   <tr><td>SET           </td><td>Set</td></tr>
+         *   <tr><td>TEXT          </td><td>String</td></tr>
+         *   <tr><td>TIMESTAMP     </td><td>Date</td></tr>
+         *   <tr><td>UUID          </td><td>UUID</td></tr>
+         *   <tr><td>VARCHAR       </td><td>String</td></tr>
+         *   <tr><td>VARINT        </td><td>BigInteger</td></tr>
+         *   <tr><td>TIMEUUID      </td><td>UUID</td></tr>
+         * </table>
+         *
+         * @return the java Class corresponding to this CQL type name.
+         */
+        public Class<?> asJavaClass() {
+            return javaType;
         }
 
         @Override
@@ -309,6 +357,19 @@ public class DataType {
      */
     public boolean isCollection() {
         return name.isCollection();
+    }
+
+    /**
+     * The java Class corresponding to this type.
+     *
+     * This is a shortcut for {@code getName().asJavaClass()}.
+     *
+     * @return the java Class corresponding to this type.
+     *
+     * @see Name#asJavaClass
+     */
+    public Class<?> asJavaClass() {
+        return getName().asJavaClass();
     }
 
     /**

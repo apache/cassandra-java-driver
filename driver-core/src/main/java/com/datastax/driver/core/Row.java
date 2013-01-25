@@ -563,8 +563,9 @@ public class Row {
         if (type.getName() != DataType.Name.LIST)
             throw new InvalidTypeException(String.format("Column %s is not of list type", metadata.getName(i)));
 
-        if (!Codec.isCompatibleSubtype(type.getTypeArguments().get(0), elementsClass))
-            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a list of %s", metadata.getName(i), type, elementsClass));
+        Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
+        if (!elementsClass.isAssignableFrom(expectedClass))
+            throw new InvalidTypeException(String.format("Column %s is a list of %s (CQL type %s), cannot be retrieve as a list of %s", metadata.getName(i), expectedClass, type, elementsClass));
 
         ByteBuffer value = data.get(i);
         if (value == null)
@@ -612,8 +613,9 @@ public class Row {
         if (type.getName() != DataType.Name.SET)
             throw new InvalidTypeException(String.format("Column %s is not of set type", metadata.getName(i)));
 
-        if (!Codec.isCompatibleSubtype(type.getTypeArguments().get(0), elementsClass))
-            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a set of %s", metadata.getName(i), type, elementsClass));
+        Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
+        if (!elementsClass.isAssignableFrom(expectedClass))
+            throw new InvalidTypeException(String.format("Column %s is a set of %s (CQL type %s), cannot be retrieve as a set of %s", metadata.getName(i), expectedClass, type, elementsClass));
 
         ByteBuffer value = data.get(i);
         if (value == null)
@@ -662,10 +664,10 @@ public class Row {
         if (type.getName() != DataType.Name.MAP)
             throw new InvalidTypeException(String.format("Column %s is not of map type", metadata.getName(i)));
 
-        DataType keysType = type.getTypeArguments().get(0);
-        DataType valuesType = type.getTypeArguments().get(1);
-        if (!Codec.isCompatibleSubtype(keysType, keysClass) || !Codec.isCompatibleSubtype(valuesType, valuesClass))
-            throw new InvalidTypeException(String.format("Column %s is a %s, cannot be retrieve as a map of %s -> %s", metadata.getName(i), type, keysClass, valuesClass));
+        Class<?> expectedKeysClass = type.getTypeArguments().get(0).getName().javaType;
+        Class<?> expectedValuesClass = type.getTypeArguments().get(1).getName().javaType;
+        if (!keysClass.isAssignableFrom(expectedKeysClass) || !valuesClass.isAssignableFrom(expectedValuesClass))
+            throw new InvalidTypeException(String.format("Column %s is a map of %s->%s (CQL type %s), cannot be retrieve as a map of %s->%s", metadata.getName(i), expectedKeysClass, expectedValuesClass, type, keysClass, valuesClass));
 
         ByteBuffer value = data.get(i);
         if (value == null)
