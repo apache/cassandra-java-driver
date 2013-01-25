@@ -79,6 +79,7 @@
           <useFile>false</useFile>
           <systemPropertyVariables>
               <cassandra.version>${cassandra.version}</cassandra.version>
+              <ipprefix>${ipprefix}</ipprefix>
           </systemPropertyVariables>
         </configuration>
       </plugin>
