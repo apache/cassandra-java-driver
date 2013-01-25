@@ -106,9 +106,10 @@ public class CCMBridge {
     }
 
     private void execute(String command, Object... args) {
-
         try {
-            Process p = runtime.exec(String.format(command, args) + " --config-dir=" + ccmDir, null, CASSANDRA_DIR);
+            String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
+            logger.debug("Executing: " + fullCommand);
+            Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
             int retValue = p.waitFor();
 
             if (retValue != 0) {
