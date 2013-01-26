@@ -4,9 +4,8 @@ import java.util.*;
 
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.db.marshal.*;
-
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.map.ObjectMapper;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Describes a Table.
@@ -225,12 +224,15 @@ public class TableMetadata {
         return options;
     }
 
-    // :_(
-    private static ObjectMapper jsonMapper = new ObjectMapper(new JsonFactory());
 
     static List<String> fromJsonList(String json) {
         try {
-            return jsonMapper.readValue(json, List.class);
+        	JSONArray array = new JSONArray(json);
+        	List<String> ret = new ArrayList<String>(array.length());
+        	for (int i=0; i<array.length(); i++) {
+        		ret.add(array.getString(i));
+        	}
+        	return ret;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -238,7 +240,16 @@ public class TableMetadata {
 
     static Map<String, String> fromJsonMap(String json) {
         try {
-            return jsonMapper.readValue(json, Map.class);
+        	JSONObject obj = new JSONObject(json);
+        	Map<String, String> ret = new HashMap<String, String>();
+        	String[] names = JSONObject.getNames(obj);
+        	if (names==null || names.length==0) {
+        		return ret;
+        	}
+        	for (String key : JSONObject.getNames(obj)) {
+        		ret.put(key, obj.getString(key));
+        	}
+        	return ret;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
