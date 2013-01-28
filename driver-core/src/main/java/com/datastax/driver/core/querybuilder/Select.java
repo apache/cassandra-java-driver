@@ -58,9 +58,8 @@ public class Select extends BuiltStatement {
         }
 
         if (orderings != null) {
-            builder.append(" ORDER BY (");
+            builder.append(" ORDER BY ");
             Utils.joinAndAppend(builder, ",", orderings);
-            builder.append(")");
         }
 
         if (limit > 0) {

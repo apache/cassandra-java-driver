@@ -15,13 +15,13 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty</artifactId>
-      <version>3.5.9.Final</version>
+      <version>3.6.2.Final</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>12.0</version>
+      <version>13.0.1</version>
     </dependency>
 
     <dependency>

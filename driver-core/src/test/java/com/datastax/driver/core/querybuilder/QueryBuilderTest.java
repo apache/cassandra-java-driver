@@ -21,7 +21,7 @@ public class QueryBuilderTest {
         select = select().all().from("foo").where(eq("k", 4)).and(gt("c", "a")).and(lte("c", "z"));
         assertEquals(query, select.toString());
 
-        query = "SELECT a,b,\"C\" FROM foo WHERE a IN (127.0.0.1,127.0.0.3) AND \"C\"='foo' ORDER BY (a ASC,b DESC) LIMIT 42;";
+        query = "SELECT a,b,\"C\" FROM foo WHERE a IN (127.0.0.1,127.0.0.3) AND \"C\"='foo' ORDER BY a ASC,b DESC LIMIT 42;";
         select = select("a", "b", quote("C")).from("foo")
                    .where(in("a", InetAddress.getByName("127.0.0.1"), InetAddress.getByName("127.0.0.3")))
                       .and(eq(quote("C"), "foo"))
