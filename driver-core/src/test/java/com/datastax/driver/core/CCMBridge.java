@@ -101,7 +101,7 @@ public class CCMBridge {
     }
 
     public void bootstrapNode(int n) {
-        execute("ccm add node%d -i %s%d -b", n, IP_PREFIX, n);
+        execute("ccm add node%d -i %s%d -j %d -b", n, IP_PREFIX, n, 7000 + 100*n);
         execute("ccm node%d start", n);
     }
 
