@@ -31,7 +31,7 @@ class ControlConnection implements Host.StateListener {
     static
     {
         try {
-            bindAllAddress = InetAddress.getByAddress(new byte[0]);
+            bindAllAddress = InetAddress.getByAddress(new byte[4]);
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }
