@@ -29,8 +29,8 @@ public class QueryBuilderTest {
                    .limit(42);
         assertEquals(query, select.toString());
 
-        query = "SELECT writetime(a),ttl(a) FROM foo;";
-        select = select().writeTime("a").ttl("a").from("foo");
+        query = "SELECT writetime(a),ttl(a) FROM foo ALLOW FILTERING;";
+        select = select().writeTime("a").ttl("a").from("foo").allowFiltering();
         assertEquals(query, select.toString());
 
         query = "SELECT count(*) FROM foo;";
@@ -68,8 +68,8 @@ public class QueryBuilderTest {
         update = update("foo", "bar").using(timestamp(42)).with(set("a", 12)).and(set("b", Arrays.asList(3, 2, 1))).and(incr("c", 3)).where(eq("k", 2));
         assertEquals(query, update.toString());
 
-        query = "UPDATE foo SET a[2]='foo',b=[3,2,1]+b,c=c-{'a'} WHERE k=2;";
-        update = update("foo").with(setIdx("a", 2, "foo")).and(prependAll("b", Arrays.asList(3, 2, 1))).and(remove("c", "a")).where(eq("k", 2));
+        query = "UPDATE foo SET a[2]='foo',b=[3,2,1]+b,c=c-{'a'} WHERE k=2 AND l='foo';";
+        update = update("foo").with(setIdx("a", 2, "foo")).and(prependAll("b", Arrays.asList(3, 2, 1))).and(remove("c", "a")).where(eq("k", 2)).and(eq("l", "foo"));
         assertEquals(query, update.toString());
     }
 
