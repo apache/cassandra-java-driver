@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
  * {@link #getTraceId}).
  * <p>
  * This class provides facilities to fetch the traces from Cassandra. Please
- * note that the writting of the trace is done asynchronously in Cassandra. So
+ * note that the writing of the trace is done asynchronously in Cassandra. So
  * accessing the trace too soon after the query may result in the trace being
  * incomplete.
  */
