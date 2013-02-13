@@ -8,7 +8,7 @@ import com.datastax.driver.core.*;
  * This policy retries queries in only two cases:
  * <ul>
  *   <li>On a read timeout, if enough replica replied but data was not retrieved.</li>
- *   <li>On a write timeout, if we timeout while writting the distributed log used by batch statements.</li>
+ *   <li>On a write timeout, if we timeout while writing the distributed log used by batch statements.</li>
  * </ul>
  * <p>
  * This retry policy is conservative in that it will never retry with a

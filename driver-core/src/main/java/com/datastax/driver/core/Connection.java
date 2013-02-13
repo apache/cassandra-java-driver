@@ -241,21 +241,21 @@ class Connection extends org.apache.cassandra.transport.Connection
             dispatcher.add(handler);
             request.setStreamId(handler.streamId);
 
-            logger.trace("[{}] writting request {}", name, request);
+            logger.trace("[{}] writing request {}", name, request);
             ChannelFuture writeFuture = channel.write(request);
             writeFuture.awaitUninterruptibly();
             if (!writeFuture.isSuccess())
             {
-                logger.debug("[{}] Error writting request {}", name, request);
+                logger.debug("[{}] Error writing request {}", name, request);
                 // Remove this handler from the dispatcher so it don't get notified of the error
                 // twice (we will fail that method already)
                 dispatcher.removeHandler(handler.streamId);
 
                 ConnectionException ce;
                 if (writeFuture.getCause() instanceof java.nio.channels.ClosedChannelException) {
-                    ce = new TransportException(address, "Error writting: Closed channel");
+                    ce = new TransportException(address, "Error writing: Closed channel");
                 } else {
-                    ce = new TransportException(address, "Error writting", writeFuture.getCause());
+                    ce = new TransportException(address, "Error writing", writeFuture.getCause());
                 }
                 throw defunct(ce);
             }
@@ -439,7 +439,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             if (logger.isTraceEnabled())
                 logger.trace(String.format("[%s] connection error", name), e.getCause());
 
-            // Ignore exception while writting, this will be handled by write() directly
+            // Ignore exception while writing, this will be handled by write() directly
             if (writer.get() > 0)
                 return;
 

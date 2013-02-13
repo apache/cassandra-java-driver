@@ -1,6 +1,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.*;
@@ -25,6 +26,16 @@ class ControlConnection implements Host.StateListener {
 
     // TODO: we might want to make that configurable
     private static final long MAX_SCHEMA_AGREEMENT_WAIT_MS = 10000;
+
+    private static final InetAddress bindAllAddress;
+    static
+    {
+        try {
+            bindAllAddress = InetAddress.getByAddress(new byte[4]);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private static final String SELECT_KEYSPACES = "SELECT * FROM system.schema_keyspaces";
     private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
@@ -280,6 +291,8 @@ class ControlConnection implements Host.StateListener {
             if (addr == null) {
                 addr = row.getInet("peer");
                 logger.error("No rpc_address found for host {} in {}'s peers system table. That should not happen but using address {} instead", addr, connection.address, addr);
+            } else if (addr.equals(bindAllAddress)) {
+                addr = row.getInet("peer");
             }
 
             foundHosts.add(addr);
@@ -327,10 +340,15 @@ class ControlConnection implements Host.StateListener {
                 versions.add(localRow.getUUID("schema_version"));
 
             for (Row row : peersFuture.get()) {
+
                 if (row.isNull("rpc_address") || row.isNull("schema_version"))
                     continue;
 
-                Host peer = metadata.getHost(row.getInet("rpc_address"));
+                InetAddress rpc = row.getInet("rpc_address");
+                if (rpc.equals(bindAllAddress))
+                    rpc = row.getInet("peer");
+
+                Host peer = metadata.getHost(rpc);
                 if (peer != null && peer.getMonitor().isUp())
                     versions.add(row.getUUID("schema_version"));
             }

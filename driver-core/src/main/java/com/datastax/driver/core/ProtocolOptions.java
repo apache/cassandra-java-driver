@@ -93,8 +93,16 @@ public class ProtocolOptions {
      * @param compression the compression algorithm to use (or {@code
      * Compression.NONE} to disable compression).
      * @return this {@code ProtocolOptions} object.
+     *
+     * @throws IllegalStateException if the compression requested is not
+     * available. Most compression algorithms require that the relevant be
+     * present int the classpath. If not, the compression will not be
+     * available.
      */
     public ProtocolOptions setCompression(Compression compression) {
+        if (compression.compressor == null)
+            throw new IllegalStateException("The requested compression is not available (some compression require a JAR to be found in the classpath)");
+
         this.compression = compression;
         return this;
     }
