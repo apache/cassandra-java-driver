@@ -6,6 +6,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.SetMultimap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.cassandra.utils.MD5Digest;
@@ -476,12 +478,15 @@ public class Cluster {
 
         final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
-        // All the queries that have been prepared (we keep them so we can
-        // re-prepared them when a node fail or a new one join the cluster).
-        // Note: we could move this down to the session level, but since
-        // prepared statement are global to a node, this would yield a slightly
-        // less clear behavior.
-        final Map<MD5Digest, String> preparedQueries = new ConcurrentHashMap<MD5Digest, String>();
+        // All the queries that have been prepared (we keep them so we can re-prepared them when a node fail or a
+        // new one join the cluster).
+        // Note: we could move this down to the session level, but since prepared statement are global to a node,
+        // this would yield a slightly less clear behavior.
+        // Furthermore, along with each prepared query we keep the current keyspace at the time of preparation
+        // as we need to make it is the same when we re-prepare on new/restarted nodes. Most query will use the
+        // same keyspace so keeping it each time is slightly wasteful, but this doesn't really matter and is
+        // simpler. Besides, we do avoid in prepareAllQueries to not set the current keyspace more than needed.
+        final Map<MD5Digest, PreparedQuery> preparedQueries = new ConcurrentHashMap<MD5Digest, PreparedQuery>();
 
         private Manager(List<InetAddress> contactPoints, Configuration configuration) throws NoHostAvailableException {
             this.configuration = configuration;
@@ -645,8 +650,8 @@ public class Cluster {
 
         // Prepare a query on all nodes
         // Note that this *assumes* the query is valid.
-        public void prepare(MD5Digest digest, String query, InetAddress toExclude) throws InterruptedException {
-            preparedQueries.put(digest, query);
+        public void prepare(MD5Digest digest, String keyspace, String query, InetAddress toExclude) throws InterruptedException {
+            preparedQueries.put(digest, new PreparedQuery(keyspace, query));
             for (Session s : sessions)
                 s.manager.prepare(query, toExclude);
         }
@@ -664,18 +669,26 @@ public class Cluster {
                     // As below, just move on
                 }
 
-                List<Connection.Future> futures = new ArrayList<Connection.Future>(preparedQueries.size());
-                for (String query : preparedQueries.values()) {
-                    futures.add(connection.write(new PrepareMessage(query)));
+                SetMultimap<String, String> perKeyspace = HashMultimap.create();
+                for (PreparedQuery pq : preparedQueries.values()) {
+                    perKeyspace.put(pq.keyspace, pq.query);
                 }
-                for (Connection.Future future : futures) {
-                    try {
-                        future.get();
-                    } catch (ExecutionException e) {
-                        // This "might" happen if we drop a CF but haven't removed it's prepared queries (which we don't do
-                        // currently). It's not a big deal however as if it's a more serious problem it'll show up later when
-                        // the query is tried for execution.
-                        logger.debug("Unexpected error while preparing queries on new/newly up host", e);
+
+                for (String keyspace : perKeyspace.keySet())
+                {
+                    List<Connection.Future> futures = new ArrayList<Connection.Future>(preparedQueries.size());
+                    for (String query : perKeyspace.get(keyspace)) {
+                        futures.add(connection.write(new PrepareMessage(query)));
+                    }
+                    for (Connection.Future future : futures) {
+                        try {
+                            future.get();
+                        } catch (ExecutionException e) {
+                            // This "might" happen if we drop a CF but haven't removed it's prepared queries (which we don't do
+                            // currently). It's not a big deal however as if it's a more serious problem it'll show up later when
+                            // the query is tried for execution.
+                            logger.debug("Unexpected error while preparing queries on new/newly up host", e);
+                        }
                     }
                 }
             } catch (ConnectionException e) {
@@ -801,6 +814,19 @@ public class Cluster {
                     }
                 }
             }, 1, TimeUnit.SECONDS);
+        }
+
+    }
+
+    static class PreparedQuery
+    {
+        final String keyspace;
+        final String query;
+
+        PreparedQuery(String currentKeyspace, String query)
+        {
+            this.keyspace = currentKeyspace;
+            this.query = query;
         }
     }
 }

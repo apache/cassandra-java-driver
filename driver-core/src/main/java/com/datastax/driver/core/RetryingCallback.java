@@ -238,7 +238,7 @@ class RetryingCallback implements Connection.ResponseCallback {
                         case UNPREPARED:
                             assert err.error instanceof PreparedQueryNotFoundException;
                             PreparedQueryNotFoundException pqnf = (PreparedQueryNotFoundException)err.error;
-                            String toPrepare = manager.cluster.manager.preparedQueries.get(pqnf.id);
+                            Cluster.PreparedQuery toPrepare = manager.cluster.manager.preparedQueries.get(pqnf.id);
                             if (toPrepare == null) {
                                 // This shouldn't happen
                                 String msg = String.format("Tried to execute unknown prepared query %s", pqnf.id);
@@ -248,7 +248,20 @@ class RetryingCallback implements Connection.ResponseCallback {
                             }
 
                             try {
-                                Message.Response prepareResponse = Uninterruptibles.getUninterruptibly(connection.write(new PrepareMessage(toPrepare)));
+                                String currentKeyspace = connection.keyspace();
+                                // This shouldn't happen in normal use, because a user shouldn't try to execute
+                                // a prepared statement with the wrong keyspace set. However, if it does, we'd rather
+                                // prepare the query correctly and let the query executing return a meaningful error message
+                                if (!currentKeyspace.equals(toPrepare.keyspace))
+                                    connection.setKeyspace(toPrepare.keyspace);
+                                try
+                                {
+                                    Message.Response prepareResponse = Uninterruptibles.getUninterruptibly(connection.write(new PrepareMessage(toPrepare.query)));
+                                } finally {
+                                    // Always reset the previous keyspace if needed
+                                    if (!connection.keyspace().equals(currentKeyspace))
+                                        connection.setKeyspace(currentKeyspace);
+                                }
                                 // TODO check return ?
                                 retry = RetryPolicy.RetryDecision.retry(null);
                             } catch (ExecutionException e) {

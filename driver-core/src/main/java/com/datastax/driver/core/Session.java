@@ -189,7 +189,7 @@ public class Session {
                         case PREPARED:
                             ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
                             try {
-                                manager.cluster.manager.prepare(pmsg.statementId, query, future.getAddress());
+                                manager.cluster.manager.prepare(pmsg.statementId, manager.poolsState.keyspace, query, future.getAddress());
                             } catch (InterruptedException e) {
                                 Thread.currentThread().interrupt();
                                 // This method don't propage interruption, at least not for now. However, if we've
