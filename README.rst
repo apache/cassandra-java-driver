@@ -1,5 +1,5 @@
-Datastax Java Driver for Apache Cassandra
-=========================================
+Datastax Java Driver for Apache Cassandra (Beta)
+================================================
 
 A Java client driver for Apache Cassandra. This driver works exclusively with
 the Cassandra Query Language version 3 (CQL3) and Cassandra's binary protocol.
