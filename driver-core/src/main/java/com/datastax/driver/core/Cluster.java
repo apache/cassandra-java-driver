@@ -30,7 +30,6 @@ import org.apache.cassandra.transport.Event;
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.EventMessage;
 import org.apache.cassandra.transport.messages.PrepareMessage;
-import org.apache.cassandra.transport.messages.QueryMessage;
 
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
@@ -573,7 +572,7 @@ public class Cluster {
             try {
                 prepareAllQueries(host);
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupted();
+                Thread.interrupted();
                 // Don't propagate because we don't want to prevent other listener to run
             }
 
@@ -621,7 +620,7 @@ public class Cluster {
             try {
                 prepareAllQueries(host);
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupted();
+                Thread.interrupted();
                 // Don't propagate because we don't want to prevent other listener to run
             }
 

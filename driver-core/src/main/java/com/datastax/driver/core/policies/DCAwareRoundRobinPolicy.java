@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ConcurrentHashMap;
@@ -180,7 +179,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
                 }
 
                 if (remoteDcs == null) {
-                    Set<String> copy = new HashSet(perDcLiveHosts.keySet());
+                    Set<String> copy = new HashSet<String>(perDcLiveHosts.keySet());
                     copy.remove(localDc);
                     remoteDcs = copy.iterator();
                 }

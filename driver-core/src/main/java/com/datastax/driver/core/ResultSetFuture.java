@@ -15,13 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.ErrorMessage;

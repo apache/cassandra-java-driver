@@ -24,7 +24,6 @@ import java.util.concurrent.locks.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 
 class HostConnectionPool {
@@ -40,7 +39,7 @@ class HostConnectionPool {
     private final List<Connection> connections;
     private final AtomicInteger open;
     private final AtomicBoolean isShutdown = new AtomicBoolean();
-    private final Set<Connection> trash = new CopyOnWriteArraySet();
+    private final Set<Connection> trash = new CopyOnWriteArraySet<Connection>();
 
     private final Lock waitLock = new ReentrantLock(true);
     private final Condition hasAvailableConnection = waitLock.newCondition();
@@ -71,7 +70,7 @@ class HostConnectionPool {
             // If asked to interrupt, we can skip opening core connections, the pool will still work.
             // But we ignore otherwise cause I'm not sure we can do much better currently.
         }
-        this.connections = new CopyOnWriteArrayList(l);
+        this.connections = new CopyOnWriteArrayList<Connection>(l);
         this.open = new AtomicInteger(connections.size());
 
         logger.trace("Created connection pool to host {}", host);
@@ -165,7 +164,7 @@ class HostConnectionPool {
             try {
                 awaitAvailableConnection(remaining, unit);
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupted();
+                Thread.interrupted();
                 // If we're interrupted fine, check if there is a connection available but stop waiting otherwise
                 timeout = 0; // this will make us stop the loop if we don't get a connection right away
             }

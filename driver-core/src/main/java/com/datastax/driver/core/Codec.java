@@ -15,16 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
-import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.db.marshal.*;
 
 /**

@@ -16,7 +16,6 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 

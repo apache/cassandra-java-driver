@@ -25,9 +25,6 @@ import org.apache.cassandra.transport.Event;
 import org.apache.cassandra.transport.messages.RegisterMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
 
-import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.Uninterruptibles;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

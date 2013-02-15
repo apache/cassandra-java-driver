@@ -28,10 +28,7 @@ import static com.datastax.driver.core.TestUtils.*;
 
 import com.google.common.io.Files;
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 
 public class CCMBridge {
 
