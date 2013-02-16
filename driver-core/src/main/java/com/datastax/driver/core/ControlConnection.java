@@ -76,7 +76,7 @@ class ControlConnection implements Host.StateListener {
     }
 
     // Only for the initial connection. Does not schedule retries if it fails
-    public void connect() throws NoHostAvailableException {
+    public void connect() {
         if (isShutdown)
             return;
 
@@ -131,7 +131,7 @@ class ControlConnection implements Host.StateListener {
             old.close();
     }
 
-    private Connection reconnectInternal() throws NoHostAvailableException {
+    private Connection reconnectInternal() {
 
         Iterator<Host> iter = balancingPolicy.newQueryPlan(Query.DEFAULT);
         Map<InetAddress, String> errors = null;

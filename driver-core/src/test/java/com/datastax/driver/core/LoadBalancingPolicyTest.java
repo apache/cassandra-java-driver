@@ -33,13 +33,13 @@ public class LoadBalancingPolicyTest {
     private Map<InetAddress, Integer> coordinators = new HashMap<InetAddress, Integer>();
     private PreparedStatement prepared;
 
-    private void createSchema(Session session) throws NoHostAvailableException {
+    private void createSchema(Session session) {
         session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, 1));
         session.execute("USE " + SIMPLE_KEYSPACE);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", TABLE));
     }
 
-    private void createMultiDCSchema(Session session) throws NoHostAvailableException {
+    private void createMultiDCSchema(Session session) {
 
         session.execute(String.format(CREATE_KEYSPACE_GENERIC_FORMAT, SIMPLE_KEYSPACE, "NetworkTopologyStrategy", "'dc1' : 1, 'dc2' : 1"));
         session.execute("USE " + SIMPLE_KEYSPACE);
@@ -65,7 +65,7 @@ public class LoadBalancingPolicyTest {
         coordinators = new HashMap<InetAddress, Integer>();
     }
 
-    private void init(CCMBridge.CCMCluster c, int n) throws NoHostAvailableException {
+    private void init(CCMBridge.CCMCluster c, int n) {
         // We don't use insert for our test because the resultSet don't ship the queriedHost
         // Also note that we don't use tracing because this would trigger requests that screw up the test
         for (int i = 0; i < n; ++i)
@@ -74,11 +74,11 @@ public class LoadBalancingPolicyTest {
         prepared = c.session.prepare("SELECT * FROM " + TABLE + " WHERE k = ?");
     }
 
-    private void query(CCMBridge.CCMCluster c, int n) throws NoHostAvailableException {
+    private void query(CCMBridge.CCMCluster c, int n) {
         query(c, n, false);
     }
 
-    private void query(CCMBridge.CCMCluster c, int n, boolean usePrepared) throws NoHostAvailableException {
+    private void query(CCMBridge.CCMCluster c, int n, boolean usePrepared) {
         if (usePrepared) {
             BoundStatement bs = prepared.bind(0);
             for (int i = 0; i < n; ++i)

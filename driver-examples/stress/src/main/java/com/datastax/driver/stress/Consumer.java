@@ -21,7 +21,7 @@ import com.yammer.metrics.core.Meter;
 import com.yammer.metrics.core.TimerContext;
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.DriverException;
 
 public class Consumer extends Thread {
 
@@ -52,14 +52,14 @@ public class Consumer extends Thread {
 
         } catch (InterruptedException e) {
             System.err.println("Consumer interrupted" + (e.getMessage() != null ? ": " + e.getMessage() : ""));
-        } catch (NoHostAvailableException e) {
+        } catch (DriverException e) {
             System.err.println("Error during query: " + e.getMessage());
         }
     }
 
     protected void shutdown() {}
 
-    protected void handle(QueryGenerator.Request request) throws NoHostAvailableException {
+    protected void handle(QueryGenerator.Request request) {
         TimerContext context = reporter.latencies.time();
         try {
             request.execute(session);
@@ -78,7 +78,7 @@ public class Consumer extends Thread {
             this.resultQueue = resultHandler.queue;
         }
 
-        protected void handle(QueryGenerator.Request request) throws NoHostAvailableException {
+        protected void handle(QueryGenerator.Request request) {
             TimerContext context = reporter.latencies.time();
             resultQueue.offer(new Result(request.executeAsync(session), context, reporter.requests));
         }
@@ -129,7 +129,7 @@ public class Consumer extends Thread {
 
                 } catch (InterruptedException e) {
                     System.err.println("Consumer interrupted" + (e.getMessage() != null ? ": " + e.getMessage() : ""));
-                } catch (NoHostAvailableException e) {
+                } catch (DriverException e) {
                     System.err.println("Error retrieving result to query: " + e.getMessage());
                 }
             }

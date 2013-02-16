@@ -139,7 +139,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
      * @throws QueryValidationException if the query if invalid (syntax error,
      * unauthorized or any other validation problem).
      */
-    public ResultSet getUninterruptibly() throws NoHostAvailableException {
+    public ResultSet getUninterruptibly() {
         boolean interrupted = false;
         try {
             while (true) {
@@ -185,7 +185,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
      * different from a Cassandra timeout, which is a {@code
      * QueryExecutionException}).
      */
-    public ResultSet getUninterruptibly(long timeout, TimeUnit unit) throws NoHostAvailableException, TimeoutException {
+    public ResultSet getUninterruptibly(long timeout, TimeUnit unit) throws TimeoutException {
         long start = System.nanoTime();
         long timeoutNanos = unit.toNanos(timeout);
         boolean interrupted = false;
@@ -213,13 +213,12 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
         }
     }
 
-    static void extractCauseFromExecutionException(ExecutionException e) throws NoHostAvailableException {
+    static void extractCauseFromExecutionException(ExecutionException e) {
         extractCause(e.getCause());
     }
 
-    static void extractCause(Throwable cause) throws NoHostAvailableException {
-        Throwables.propagateIfInstanceOf(cause, NoHostAvailableException.class);
-        Throwables.propagateIfInstanceOf(cause, DriverUncheckedException.class);
+    static void extractCause(Throwable cause) {
+        Throwables.propagateIfInstanceOf(cause, DriverException.class);
         throw new DriverInternalError("Unexpected exception thrown", cause);
     }
 

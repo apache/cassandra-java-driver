@@ -16,9 +16,9 @@
 package com.datastax.driver.core.exceptions;
 
 /**
- * Top level class for (checked) exceptions thrown by the driver.
+ * Top level class for exceptions thrown by the driver.
  */
-public class DriverException extends Exception {
+public class DriverException extends RuntimeException {
 
     DriverException() {
         super();

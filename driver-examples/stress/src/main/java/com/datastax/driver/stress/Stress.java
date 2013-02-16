@@ -146,12 +146,6 @@ public class Stress {
         } catch (NoHostAvailableException e) {
             System.err.println("No alive hosts to use: " + e.getMessage());
             System.exit(1);
-        } catch (QueryExecutionException e) {
-            System.err.println(e.getMessage());
-            System.exit(1);
-        } catch (QueryValidationException e) {
-            System.err.println("Invalid query: " + e.getMessage());
-            System.exit(1);
         } catch (Exception e) {
             System.err.println("Unexpected error: " + e.getMessage());
             e.printStackTrace();

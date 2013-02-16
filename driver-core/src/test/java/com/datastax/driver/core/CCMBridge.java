@@ -169,7 +169,7 @@ public class CCMBridge {
             schemaCreated = false;
             cassandraCluster = CCMBridge.create("test", 1);
             try {
-            	cluster = Cluster.builder().addContactPoints(IP_PREFIX + "1").build();
+                cluster = Cluster.builder().addContactPoints(IP_PREFIX + "1").build();
                 session = cluster.connect();
             } catch (NoHostAvailableException e) {
                 erroredOut = true;
@@ -196,7 +196,7 @@ public class CCMBridge {
         }
 
         @Before
-        public void maybeCreateSchema() throws NoHostAvailableException {
+        public void maybeCreateSchema() {
 
             try {
                 if (schemaCreated)
@@ -219,7 +219,7 @@ public class CCMBridge {
                 }
 
                 schemaCreated = true;
-            } catch (NoHostAvailableException e) {
+            } catch (DriverException e) {
                 erroredOut = true;
                 throw e;
             }

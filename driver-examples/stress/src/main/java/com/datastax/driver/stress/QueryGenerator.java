@@ -25,8 +25,8 @@ import joptsimple.OptionSet;
 public abstract class QueryGenerator implements Iterator<QueryGenerator.Request> {
 
     static final Request DONE_MARKER = new Request() {
-        public ResultSet execute(Session session) throws NoHostAvailableException { return null; }
-        public ResultSetFuture executeAsync(Session session) throws NoHostAvailableException { return null; };
+        public ResultSet execute(Session session) { return null; }
+        public ResultSetFuture executeAsync(Session session) { return null; };
     };
 
     protected final int iterations;
@@ -35,7 +35,7 @@ public abstract class QueryGenerator implements Iterator<QueryGenerator.Request>
         this.iterations = iterations;
     }
 
-    public abstract void createSchema(Session session) throws NoHostAvailableException;
+    public abstract void createSchema(Session session);
 
     public interface Builder {
         public QueryGenerator create(int iterations, OptionSet options);
@@ -43,9 +43,9 @@ public abstract class QueryGenerator implements Iterator<QueryGenerator.Request>
 
     public interface Request {
 
-        public ResultSet execute(Session session) throws NoHostAvailableException;
+        public ResultSet execute(Session session);
 
-        public ResultSetFuture executeAsync(Session session) throws NoHostAvailableException;
+        public ResultSetFuture executeAsync(Session session);
 
         public static class SimpleQuery implements Request {
 
@@ -55,11 +55,11 @@ public abstract class QueryGenerator implements Iterator<QueryGenerator.Request>
                 this.query = query;
             }
 
-            public ResultSet execute(Session session) throws NoHostAvailableException {
+            public ResultSet execute(Session session) {
                 return session.execute(query);
             }
 
-            public ResultSetFuture executeAsync(Session session) throws NoHostAvailableException {
+            public ResultSetFuture executeAsync(Session session) {
                 return session.executeAsync(query);
             }
         }
@@ -72,11 +72,11 @@ public abstract class QueryGenerator implements Iterator<QueryGenerator.Request>
                 this.query = query;
             }
 
-            public ResultSet execute(Session session) throws NoHostAvailableException {
+            public ResultSet execute(Session session) {
                 return session.execute(query);
             }
 
-            public ResultSetFuture executeAsync(Session session) throws NoHostAvailableException {
+            public ResultSetFuture executeAsync(Session session) {
                 return session.executeAsync(query);
             }
         }

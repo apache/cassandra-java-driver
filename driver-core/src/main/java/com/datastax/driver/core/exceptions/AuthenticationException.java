@@ -20,7 +20,7 @@ import java.net.InetAddress;
 /**
  * Indicates an error during the authentication phase while connecting to a node.
  */
-public class AuthenticationException extends DriverUncheckedException {
+public class AuthenticationException extends DriverException {
 
     private final InetAddress host;
 

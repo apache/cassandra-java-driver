@@ -21,7 +21,7 @@ package com.datastax.driver.core.exceptions;
  * This should never be raise and indicates a bug (either in the driver or in
  * Cassandra).
  */
-public class DriverInternalError extends RuntimeException {
+public class DriverInternalError extends DriverException {
 
     public DriverInternalError(String message) {
         super(message);

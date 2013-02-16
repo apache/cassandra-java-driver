@@ -33,7 +33,7 @@ public class Generators {
         }
     };
 
-    private static void createCassandraStressTables(Session session, OptionSet options) throws NoHostAvailableException {
+    private static void createCassandraStressTables(Session session, OptionSet options) {
         try {
             session.execute("CREATE KEYSPACE stress WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
         } catch (AlreadyExistsException e) { /* It's ok, ignore */ }
@@ -62,7 +62,7 @@ public class Generators {
             return new QueryGenerator(iterations) {
                 private int i;
 
-                public void createSchema(Session session) throws NoHostAvailableException {
+                public void createSchema(Session session) {
                     createCassandraStressTables(session, options);
                 }
 
@@ -95,7 +95,7 @@ public class Generators {
                 private int i;
                 private PreparedStatement stmt;
 
-                public void createSchema(Session session) throws NoHostAvailableException {
+                public void createSchema(Session session) {
                     createCassandraStressTables(session, options);
 
                     StringBuilder sb = new StringBuilder();

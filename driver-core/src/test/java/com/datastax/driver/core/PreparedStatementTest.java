@@ -95,7 +95,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test
-    public void preparedNativeTest() throws NoHostAvailableException {
+    public void preparedNativeTest() {
         // Test preparing/bounding for all native types
         for (DataType type : DataType.allPrimitiveTypes()) {
             // This must be handled separatly
@@ -113,7 +113,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test
-    public void prepareListTest() throws NoHostAvailableException {
+    public void prepareListTest() {
         // Test preparing/bounding for all possible list types
         for (DataType rawType : DataType.allPrimitiveTypes()) {
             // This must be handled separatly
@@ -133,7 +133,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test
-    public void prepareSetTest() throws NoHostAvailableException {
+    public void prepareSetTest() {
         // Test preparing/bounding for all possible set types
         for (DataType rawType : DataType.allPrimitiveTypes()) {
             // This must be handled separatly
@@ -153,7 +153,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test
-    public void prepareMapTest() throws NoHostAvailableException {
+    public void prepareMapTest() {
         // Test preparing/bounding for all possible map types
         for (DataType rawKeyType : DataType.allPrimitiveTypes()) {
             // This must be handled separatly

@@ -71,7 +71,7 @@ public class Session {
      * @throws QueryValidationException if the query if invalid (syntax error,
      * unauthorized or any other validation problem).
      */
-    public ResultSet execute(String query) throws NoHostAvailableException {
+    public ResultSet execute(String query) {
         return execute(new SimpleStatement(query));
     }
 
@@ -102,7 +102,7 @@ public class Session {
      * @throws IllegalStateException if {@code query} is a {@code BoundStatement}
      * but {@code !query.isReady()}.
      */
-    public ResultSet execute(Query query) throws NoHostAvailableException {
+    public ResultSet execute(Query query) {
         return executeAsync(query).getUninterruptibly();
     }
 
@@ -164,7 +164,7 @@ public class Session {
      * @throws NoHostAvailableException if no host in the cluster can be
      * contacted successfully to execute this query.
      */
-    public PreparedStatement prepare(String query) throws NoHostAvailableException {
+    public PreparedStatement prepare(String query) {
         Connection.Future future = new Connection.Future(new PrepareMessage(query));
         manager.execute(future, Query.DEFAULT);
         return toPreparedStatement(query, future);
@@ -193,7 +193,7 @@ public class Session {
         return manager.cluster;
     }
 
-    private PreparedStatement toPreparedStatement(String query, Connection.Future future) throws NoHostAvailableException {
+    private PreparedStatement toPreparedStatement(String query, Connection.Future future) {
 
         try {
             Message.Response response = Uninterruptibles.getUninterruptibly(future);
@@ -225,9 +225,6 @@ public class Session {
         } catch (ExecutionException e) {
             ResultSetFuture.extractCauseFromExecutionException(e);
             throw new AssertionError();
-        } catch (QueryExecutionException e) {
-            // Preparing a statement cannot throw any of the QueryExecutionException
-            throw new DriverInternalError("Received unexpected QueryExecutionException while preparing statement", e);
         }
     }
 
@@ -345,18 +342,11 @@ public class Session {
                 pool.shutdown();
         }
 
-        public void setKeyspace(String keyspace) throws NoHostAvailableException {
+        public void setKeyspace(String keyspace) {
             try {
                 Uninterruptibles.getUninterruptibly(executeQuery(new QueryMessage("use " + keyspace, ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT));
             } catch (ExecutionException e) {
-                Throwable cause = e.getCause();
-                // A USE query should never fail unless we cannot contact a node
-                if (cause instanceof NoHostAvailableException)
-                    throw (NoHostAvailableException)cause;
-                else if (cause instanceof DriverUncheckedException)
-                    throw (DriverUncheckedException)cause;
-                else
-                    throw new DriverInternalError("Unexpected exception thrown", cause);
+                ResultSetFuture.extractCauseFromExecutionException(e);
             }
         }
 

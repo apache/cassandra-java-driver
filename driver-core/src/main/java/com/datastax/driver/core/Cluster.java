@@ -61,7 +61,7 @@ public class Cluster {
 
     final Manager manager;
 
-    private Cluster(List<InetAddress> contactPoints, Configuration configuration) throws NoHostAvailableException {
+    private Cluster(List<InetAddress> contactPoints, Configuration configuration) {
         this.manager = new Manager(contactPoints, configuration);
         this.manager.init();
     }
@@ -85,7 +85,7 @@ public class Cluster {
      * @throws AuthenticationException if while contacting the initial
      * contact points an authencation error occurs.
      */
-    public static Cluster buildFrom(Initializer initializer) throws NoHostAvailableException {
+    public static Cluster buildFrom(Initializer initializer) {
         List<InetAddress> contactPoints = initializer.getContactPoints();
         if (contactPoints.isEmpty())
             throw new IllegalArgumentException("Cannot build a cluster without contact points");
@@ -124,7 +124,7 @@ public class Cluster {
      * @throws NoHostAvailableException if no host can be contacted to set the
      * {@code keyspace}.
      */
-    public Session connect(String keyspace) throws NoHostAvailableException {
+    public Session connect(String keyspace) {
         Session session = connect();
         session.manager.setKeyspace(keyspace);
         return session;
@@ -454,7 +454,7 @@ public class Cluster {
          * @throws AuthenticationException if while contacting the initial
          * contact points an authencation error occurs.
          */
-        public Cluster build() throws NoHostAvailableException {
+        public Cluster build() {
             return Cluster.buildFrom(this);
         }
     }
@@ -502,7 +502,7 @@ public class Cluster {
         // simpler. Besides, we do avoid in prepareAllQueries to not set the current keyspace more than needed.
         final Map<MD5Digest, PreparedQuery> preparedQueries = new ConcurrentHashMap<MD5Digest, PreparedQuery>();
 
-        private Manager(List<InetAddress> contactPoints, Configuration configuration) throws NoHostAvailableException {
+        private Manager(List<InetAddress> contactPoints, Configuration configuration) {
             this.configuration = configuration;
             this.metadata = new Metadata(this);
             this.contactPoints = contactPoints;
