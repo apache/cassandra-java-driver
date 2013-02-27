@@ -37,7 +37,7 @@ public class Row {
     private final ColumnDefinitions metadata;
     private final List<ByteBuffer> data;
 
-    private Row(ColumnDefinitions metadata, List<ByteBuffer> data) {
+    public Row(ColumnDefinitions metadata, List<ByteBuffer> data) {
         this.metadata = metadata;
         this.data = data;
     }
