@@ -25,7 +25,7 @@ import org.apache.cassandra.db.marshal.*;
 /**
  * Static method to code/decode serialized data given their types.
  */
-class Codec {
+public class Codec {
 
     private static Map<AbstractType<?>, DataType> rawNativeMap = new HashMap<AbstractType<?>, DataType>() {{
         put(AsciiType.instance,         DataType.ascii());
