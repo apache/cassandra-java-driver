@@ -64,6 +64,7 @@ public class Stress {
 
         register("insert", Generators.CASSANDRA_INSERTER);
         register("insert_prepared", Generators.CASSANDRA_PREPARED_INSERTER);
+        register("read", Generators.CASSANDRA_READER);
 
         if (args.length < 1) {
             System.err.println("Missing argument, you must at least provide the action to do");

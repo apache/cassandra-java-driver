@@ -89,6 +89,33 @@ public class Generators {
         }
     };
 
+    public static final QueryGenerator.Builder CASSANDRA_READER = new QueryGenerator.Builder() {
+        public QueryGenerator create(final int iterations, final OptionSet options) {
+            return new QueryGenerator(iterations) {
+                private int i = 0;
+
+                public void createSchema(Session session) {
+                    createCassandraStressTables(session, options);
+                }
+
+                public boolean hasNext() {
+                    return i < iterations;
+                }
+
+                public QueryGenerator.Request next() {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("SELECT * FROM Standard1 WHERE key = ").append(i);
+                    ++i;
+                    return new QueryGenerator.Request.SimpleQuery(new SimpleStatement(sb.toString()));
+                }
+
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            };
+        }
+    };
+
     public static final QueryGenerator.Builder CASSANDRA_PREPARED_INSERTER = new QueryGenerator.Builder() {
         public QueryGenerator create(final int iterations, final OptionSet options) {
             return new QueryGenerator(iterations) {
