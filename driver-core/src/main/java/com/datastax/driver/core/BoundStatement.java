@@ -696,7 +696,7 @@ public class BoundStatement extends Query {
             Class<?> expectedClass = type.getTypeArguments().get(0).asJavaClass();
 
             if (!expectedClass.isAssignableFrom(providedClass))
-                throw new InvalidTypeException(String.format("Invalid value for column %d of CQL type %s, expecting list of %s but provided list of %s", metadata().getName(i), type, expectedClass, providedClass));
+                throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting list of %s but provided list of %s", metadata().getName(i), type, expectedClass, providedClass));
         }
 
         return setValue(i, Codec.<List<T>>getCodec(type).decompose(v));
@@ -746,7 +746,7 @@ public class BoundStatement extends Query {
             Class<?> expectedKeysClass = type.getTypeArguments().get(0).getName().javaType;
             Class<?> expectedValuesClass = type.getTypeArguments().get(1).getName().javaType;
             if (!expectedKeysClass.isAssignableFrom(providedKeysClass) || !expectedValuesClass.isAssignableFrom(providedValuesClass))
-                throw new InvalidTypeException(String.format("Invalid value for column %d of CQL type %s, expecting map of %s->%s but provided map of %s->%s", metadata().getName(i), type, expectedKeysClass, expectedValuesClass, providedKeysClass, providedValuesClass));
+                throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting map of %s->%s but provided map of %s->%s", metadata().getName(i), type, expectedKeysClass, expectedValuesClass, providedKeysClass, providedValuesClass));
         }
 
         return setValue(i, Codec.<Map<K, V>>getCodec(type).decompose(v));
@@ -793,7 +793,7 @@ public class BoundStatement extends Query {
             Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
 
             if (!expectedClass.isAssignableFrom(providedClass))
-                throw new InvalidTypeException(String.format("Invalid value for column %d of CQL type %s, expecting set of %s but provided set of %s", metadata().getName(i), type, expectedClass, providedClass));
+                throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting set of %s but provided set of %s", metadata().getName(i), type, expectedClass, providedClass));
         }
 
         return setValue(i, Codec.<Set<T>>getCodec(type).decompose(v));
