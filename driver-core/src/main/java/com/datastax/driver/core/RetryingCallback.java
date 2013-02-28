@@ -253,7 +253,7 @@ class RetryingCallback implements Connection.ResponseCallback {
                         case UNPREPARED:
                             assert err.error instanceof PreparedQueryNotFoundException;
                             PreparedQueryNotFoundException pqnf = (PreparedQueryNotFoundException)err.error;
-                            Cluster.PreparedQuery toPrepare = manager.cluster.manager.preparedQueries.get(pqnf.id);
+                            PreparedStatement toPrepare = manager.cluster.manager.preparedQueries.get(pqnf.id);
                             if (toPrepare == null) {
                                 // This shouldn't happen
                                 String msg = String.format("Tried to execute unknown prepared query %s", pqnf.id);
@@ -262,19 +262,20 @@ class RetryingCallback implements Connection.ResponseCallback {
                                 return;
                             }
 
-                            logger.trace("Preparing required prepared query {}", toPrepare.query);
+                            logger.trace("Preparing required prepared query {}", toPrepare.getQueryString());
                             String currentKeyspace = connection.keyspace();
+                            String prepareKeyspace = toPrepare.getQueryKeyspace();
                             // This shouldn't happen in normal use, because a user shouldn't try to execute
                             // a prepared statement with the wrong keyspace set. However, if it does, we'd rather
                             // prepare the query correctly and let the query executing return a meaningful error message
-                            if (toPrepare.keyspace != null && (currentKeyspace == null || !currentKeyspace.equals(toPrepare.keyspace)))
+                            if (prepareKeyspace != null && (currentKeyspace == null || !currentKeyspace.equals(prepareKeyspace)))
                             {
-                                logger.trace("Setting keyspace for prepared query to {}", toPrepare.keyspace);
-                                connection.setKeyspace(toPrepare.keyspace);
+                                logger.trace("Setting keyspace for prepared query to {}", prepareKeyspace);
+                                connection.setKeyspace(prepareKeyspace);
                             }
 
                             try {
-                                connection.write(prepareAndRetry(toPrepare.query));
+                                connection.write(prepareAndRetry(toPrepare.getQueryString()));
                             } finally {
                                 // Always reset the previous keyspace if needed
                                 if (connection.keyspace() == null || !connection.keyspace().equals(currentKeyspace))

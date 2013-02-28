@@ -203,15 +203,16 @@ public class Session {
                     switch (rm.kind) {
                         case PREPARED:
                             ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
+                            PreparedStatement stmt = PreparedStatement.fromMessage(pmsg, manager.cluster.getMetadata(), query, manager.poolsState.keyspace);
                             try {
-                                manager.cluster.manager.prepare(pmsg.statementId, manager.poolsState.keyspace, query, future.getAddress());
+                                manager.cluster.manager.prepare(pmsg.statementId, stmt, future.getAddress());
                             } catch (InterruptedException e) {
                                 Thread.currentThread().interrupt();
                                 // This method don't propage interruption, at least not for now. However, if we've
                                 // interrupted preparing queries on other node it's not a problem as we'll re-prepare
                                 // later if need be. So just ignore.
                             }
-                            return PreparedStatement.fromMessage(pmsg, manager.cluster.getMetadata());
+                            return stmt;
                         default:
                             throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
                     }

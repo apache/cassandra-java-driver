@@ -36,25 +36,29 @@ public class PreparedStatement {
 
     final ColumnDefinitions metadata;
     final MD5Digest id;
+    final String query;
+    final String queryKeyspace;
 
     volatile ByteBuffer routingKey;
     final int[] routingKeyIndexes;
 
     volatile ConsistencyLevel consistency;
 
-    private PreparedStatement(ColumnDefinitions metadata, MD5Digest id, int[] routingKeyIndexes) {
+    private PreparedStatement(ColumnDefinitions metadata, MD5Digest id, int[] routingKeyIndexes, String query, String queryKeyspace) {
         this.metadata = metadata;
         this.id = id;
         this.routingKeyIndexes = routingKeyIndexes;
+        this.query = query;
+        this.queryKeyspace = queryKeyspace;
     }
 
-    static PreparedStatement fromMessage(ResultMessage.Prepared msg, Metadata clusterMetadata) {
+    static PreparedStatement fromMessage(ResultMessage.Prepared msg, Metadata clusterMetadata, String query, String queryKeyspace) {
         switch (msg.kind) {
             case PREPARED:
                 ResultMessage.Prepared pmsg = (ResultMessage.Prepared)msg;
                 ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[pmsg.metadata.names.size()];
                 if (defs.length == 0)
-                    return new PreparedStatement(new ColumnDefinitions(defs), pmsg.statementId, null);
+                    return new PreparedStatement(new ColumnDefinitions(defs), pmsg.statementId, null, query, queryKeyspace);
 
                 List<ColumnMetadata> partitionKeyColumns = null;
                 int[] pkIndexes = null;
@@ -75,7 +79,7 @@ public class PreparedStatement {
                     maybeGetIndex(defs[i].getName(), i, partitionKeyColumns, pkIndexes);
                 }
 
-                return new PreparedStatement(new ColumnDefinitions(defs), pmsg.statementId, allSet(pkIndexes) ? pkIndexes : null);
+                return new PreparedStatement(new ColumnDefinitions(defs), pmsg.statementId, allSet(pkIndexes) ? pkIndexes : null, query, queryKeyspace);
             default:
                 throw new DriverInternalError(String.format("%s response received when prepared statement received was expected", msg.kind));
         }
@@ -211,4 +215,39 @@ public class PreparedStatement {
     public ConsistencyLevel getConsistencyLevel() {
         return consistency;
     }
+
+    /**
+     * The string of the query that was prepared to yield this {@code
+     * PreparedStatement}.
+     * <p>
+     * Note that a CQL3 query may implicitely apply on the current keyspace
+     * (that is, if the keyspace is not explicity qualified in the query
+     * itself). For prepared queries, the current keyspace used is the one at
+     * the time of the preparation, not the one at execution time. The current
+     * keyspace at the time of the preparation can be retrieved through
+     * {@link #getKeyspaceAtPreparation}.
+     *
+     * @return the query that was prepared to yield this
+     * {@code PreparedStatement}.
+     */
+    public String getQueryString()
+    {
+        return query;
+    }
+
+    /**
+     * The current keyspace at the time this prepared statement was prepared,
+     * i.e. the one on which this statement applies unless it specificy a
+     * keyspace directly.
+     *
+     * @return the current keyspace at the time this statement was prepared, or
+     * {@code null} if no keyspace was set when the query was prepared (which
+     * is possible since keyspaces can be explicitly qualified in queries and
+     * so may not require a current keyspace to be set).
+     */
+    public String getQueryKeyspace()
+    {
+        return queryKeyspace;
+    }
+
 }

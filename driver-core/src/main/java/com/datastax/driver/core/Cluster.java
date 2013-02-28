@@ -496,11 +496,7 @@ public class Cluster {
         // new one join the cluster).
         // Note: we could move this down to the session level, but since prepared statement are global to a node,
         // this would yield a slightly less clear behavior.
-        // Furthermore, along with each prepared query we keep the current keyspace at the time of preparation
-        // as we need to make it is the same when we re-prepare on new/restarted nodes. Most query will use the
-        // same keyspace so keeping it each time is slightly wasteful, but this doesn't really matter and is
-        // simpler. Besides, we do avoid in prepareAllQueries to not set the current keyspace more than needed.
-        final Map<MD5Digest, PreparedQuery> preparedQueries = new ConcurrentHashMap<MD5Digest, PreparedQuery>();
+        final Map<MD5Digest, PreparedStatement> preparedQueries = new ConcurrentHashMap<MD5Digest, PreparedStatement>();
 
         private Manager(List<InetAddress> contactPoints, Configuration configuration) {
             this.configuration = configuration;
@@ -664,10 +660,10 @@ public class Cluster {
 
         // Prepare a query on all nodes
         // Note that this *assumes* the query is valid.
-        public void prepare(MD5Digest digest, String keyspace, String query, InetAddress toExclude) throws InterruptedException {
-            preparedQueries.put(digest, new PreparedQuery(keyspace, query));
+        public void prepare(MD5Digest digest, PreparedStatement stmt, InetAddress toExclude) throws InterruptedException {
+            preparedQueries.put(digest, stmt);
             for (Session s : sessions)
-                s.manager.prepare(query, toExclude);
+                s.manager.prepare(stmt.getQueryString(), toExclude);
         }
 
         private void prepareAllQueries(Host host) throws InterruptedException {
@@ -686,15 +682,26 @@ public class Cluster {
                         // As below, just move on
                     }
 
+                    // Furthermore, along with each prepared query we keep the current keyspace at the time of preparation
+                    // as we need to make it is the same when we re-prepare on new/restarted nodes. Most query will use the
+                    // same keyspace so keeping it each time is slightly wasteful, but this doesn't really matter and is
+                    // simpler. Besides, we do avoid in prepareAllQueries to not set the current keyspace more than needed.
+
+                    // We need to make sure we prepared every query with the right current keyspace, i.e. the one originally
+                    // used for preparing it. However, since we are likely that all prepared query belong to only a handful
+                    // of different keyspace (possibly only one), and to avoid setting the current keyspace more than needed,
+                    // we first sort the query per keyspace.
                     SetMultimap<String, String> perKeyspace = HashMultimap.create();
-                    for (PreparedQuery pq : preparedQueries.values()) {
-                        String keyspace = pq.keyspace == null ? "" : pq.keyspace;
-                        perKeyspace.put(pq.keyspace, pq.query);
+                    for (PreparedStatement ps : preparedQueries.values()) {
+                        // It's possible for a query to not have a current keyspace. But since null doesn't work well as
+                        // map keys, we use the empty string instead (that is not a valid keyspace name).
+                        String keyspace = ps.getQueryKeyspace() == null ? "" : ps.getQueryKeyspace();
+                        perKeyspace.put(ps.getQueryKeyspace(), ps.getQueryString());
                     }
 
                     for (String keyspace : perKeyspace.keySet())
                     {
-                        // We've used the empty string when there was no keyspace so it works as a map key
+                        // Empty string mean no particular keyspace to set
                         if (!keyspace.isEmpty())
                             connection.setKeyspace(keyspace);
 
@@ -841,15 +848,5 @@ public class Cluster {
             }, 1, TimeUnit.SECONDS);
         }
 
-    }
-
-    static class PreparedQuery {
-        final String keyspace;
-        final String query;
-
-        PreparedQuery(String currentKeyspace, String query) {
-            this.keyspace = currentKeyspace;
-            this.query = query;
-        }
     }
 }
