@@ -263,21 +263,30 @@ class RetryingCallback implements Connection.ResponseCallback {
                             }
 
                             try {
+                                logger.trace("Preparing required prepared query {}", toPrepare.query);
                                 String currentKeyspace = connection.keyspace();
                                 // This shouldn't happen in normal use, because a user shouldn't try to execute
                                 // a prepared statement with the wrong keyspace set. However, if it does, we'd rather
                                 // prepare the query correctly and let the query executing return a meaningful error message
-                                if (!currentKeyspace.equals(toPrepare.keyspace))
+                                if (toPrepare.keyspace != null && (currentKeyspace == null || !currentKeyspace.equals(toPrepare.keyspace)))
+                                {
+                                    logger.trace("Setting keyspace for prepared query to {}", toPrepare.keyspace);
                                     connection.setKeyspace(toPrepare.keyspace);
+                                }
+
                                 try
                                 {
                                     Message.Response prepareResponse = Uninterruptibles.getUninterruptibly(connection.write(new PrepareMessage(toPrepare.query)));
                                 } finally {
                                     // Always reset the previous keyspace if needed
-                                    if (!connection.keyspace().equals(currentKeyspace))
+                                    if (connection.keyspace() == null || !connection.keyspace().equals(currentKeyspace))
+                                    {
+                                        logger.trace("Setting back keyspace post query preparation to {}", currentKeyspace);
                                         connection.setKeyspace(currentKeyspace);
+                                    }
                                 }
                                 // TODO check return ?
+                                logger.trace("Scheduling retry now that query is prepared");
                                 retry = RetryPolicy.RetryDecision.retry(null);
                             } catch (ExecutionException e) {
                                 logError(connection.address, "Unexpected problem while preparing query to execute: " + e.getCause().getMessage());
@@ -302,6 +311,8 @@ class RetryingCallback implements Connection.ResponseCallback {
                         switch (retry.getType()) {
                             case RETRY:
                                 ++queryRetries;
+                                if (logger.isTraceEnabled())
+                                    logger.trace("Doing retry {} for query {} at consistency {}", new Object[]{ queryRetries, query, retry.getRetryConsistencyLevel()});
                                 if (manager.configuration().isMetricsEnabled())
                                     metrics().getErrorMetrics().getRetries().inc();
                                 retry(true, retry.getRetryConsistencyLevel());

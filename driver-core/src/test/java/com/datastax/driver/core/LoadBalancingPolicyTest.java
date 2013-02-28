@@ -106,7 +106,7 @@ public class LoadBalancingPolicyTest {
             assertQueried(CCMBridge.IP_PREFIX + "2", 6);
 
             resetCoordinators();
-            c.bridge.bootstrapNode(3);
+            c.cassandraCluster.bootstrapNode(3);
             waitFor(CCMBridge.IP_PREFIX + "3", c.cluster, 20);
 
             query(c, 12);
@@ -173,7 +173,7 @@ public class LoadBalancingPolicyTest {
             assertQueried(CCMBridge.IP_PREFIX + "2", 12);
 
             resetCoordinators();
-            c.bridge.bootstrapNode(3);
+            c.cassandraCluster.bootstrapNode(3);
             waitFor(CCMBridge.IP_PREFIX + "3", c.cluster, 20);
 
             query(c, 12, usePrepared);

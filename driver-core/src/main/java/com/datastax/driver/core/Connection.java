@@ -467,6 +467,17 @@ class Connection extends org.apache.cassandra.transport.Connection
                 iter.remove();
             }
         }
+
+        @Override
+        public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e)
+        {
+            // If we've closed the channel server side then we don't really want to defunct the connection, but
+            // if there is remaining thread waiting on us, we still want to wake them up
+            if (isClosed)
+                errorOutAllHandler(new TransportException(address, "Channel has been closed"));
+            else
+                defunct(new TransportException(address, "Channel has been closed"));
+        }
     }
 
     static class Future extends SimpleFuture<Message.Response> implements ResponseCallback {

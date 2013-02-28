@@ -28,11 +28,12 @@ import static com.datastax.driver.core.TestUtils.*;
 
 import com.google.common.io.Files;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CCMBridge {
 
-    private static final Logger logger = Logger.getLogger(CCMBridge.class);
+    private static final Logger logger = LoggerFactory.getLogger(CCMBridge.class);
 
     public static final String IP_PREFIX;
 
@@ -231,7 +232,7 @@ public class CCMBridge {
         public final Cluster cluster;
         public final Session session;
 
-        public final CCMBridge bridge;
+        public final CCMBridge cassandraCluster;
 
         private boolean erroredOut;
 
@@ -249,8 +250,8 @@ public class CCMBridge {
             return new CCMCluster(CCMBridge.create("test", nbNodesDC1, nbNodesDC2), builder);
         }
 
-        private CCMCluster(CCMBridge bridge, Cluster.Builder builder) {
-            this.bridge = bridge;
+        private CCMCluster(CCMBridge cassandraCluster, Cluster.Builder builder) {
+            this.cassandraCluster = cassandraCluster;
             try {
                 this.cluster = builder.addContactPoints(IP_PREFIX + "1").build();
                 this.session = cluster.connect();
@@ -270,14 +271,14 @@ public class CCMBridge {
             if (cluster != null)
                 cluster.shutdown();
 
-            if (bridge == null) {
+            if (cassandraCluster == null) {
                 logger.error("No cluster to discard");
             } else if (erroredOut) {
-                bridge.stop();
-                logger.info("Error during tests, kept C* logs in " + bridge.ccmDir);
+                cassandraCluster.stop();
+                logger.info("Error during tests, kept C* logs in " + cassandraCluster.ccmDir);
             } else {
-                bridge.remove();
-                bridge.ccmDir.delete();
+                cassandraCluster.remove();
+                cassandraCluster.ccmDir.delete();
             }
         }
     }

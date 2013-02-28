@@ -144,6 +144,7 @@ class ControlConnection implements Host.StateListener {
                     return tryConnect(host);
                 } catch (ConnectionException e) {
                     errors = logError(host, e.getMessage(), errors, iter);
+                    host.getMonitor().signalConnectionFailure(e);
                 } catch (ExecutionException e) {
                     errors = logError(host, e.getMessage(), errors, iter);
                 }
@@ -392,7 +393,7 @@ class ControlConnection implements Host.StateListener {
         // If that's the host we're connected to, and we haven't yet schedul a reconnection, pre-emptively start one
         Connection current = connectionRef.get();
         if (logger.isTraceEnabled())
-            logger.trace("[Control connection] %s is down, currently connected to {}", host, current == null ? "nobody" : current.address);
+            logger.trace("[Control connection] {} is down, currently connected to {}", host, current == null ? "nobody" : current.address);
         if (current != null && current.address.equals(host.getAddress()) && reconnectionAttempt.get() == null)
             reconnect();
     }

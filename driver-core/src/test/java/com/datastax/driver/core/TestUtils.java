@@ -233,6 +233,14 @@ public abstract class TestUtils {
     // This is used because there is some delay between when a node has been
     // added through ccm and when it's actually available for querying
     public static void waitFor(String node, Cluster cluster, int maxTry) {
+        waitFor(node, cluster, maxTry, false);
+    }
+
+    public static void waitForDown(String node, Cluster cluster, int maxTry) {
+        waitFor(node, cluster, maxTry, true);
+    }
+
+    private static void waitFor(String node, Cluster cluster, int maxTry, boolean waitForDead) {
         InetAddress address;
         try {
              address = InetAddress.getByName(node);
@@ -244,7 +252,7 @@ public abstract class TestUtils {
         Metadata metadata = cluster.getMetadata();
         for (int i = 0; i < maxTry; ++i) {
             for (Host host : metadata.getAllHosts()) {
-                if (host.getAddress().equals(address) && host.getMonitor().isUp())
+                if (host.getAddress().equals(address) && testHost(host, waitForDead))
                     return;
             }
             try { Thread.sleep(1000); } catch (Exception e) {}
@@ -252,16 +260,21 @@ public abstract class TestUtils {
 
         for (Host host : metadata.getAllHosts()) {
             if (host.getAddress().equals(address)) {
-                if (host.getMonitor().isUp()) {
+                if (testHost(host, waitForDead)) {
                     return;
                 } else {
                     // logging it because this give use the timestamp of when this happens
-                    logger.info(node + " is part of the cluster but is not UP after " + maxTry + "s");
-                    throw new IllegalStateException(node + " is part of the cluster but is not UP after " + maxTry + "s");
+                    logger.info(node + " is part of the cluster but is not " + (waitForDead ? "DOWN" : "UP") + " after " + maxTry + "s");
+                    throw new IllegalStateException(node + " is part of the cluster but is not " + (waitForDead ? "DOWN" : "UP") + " after " + maxTry + "s");
                 }
             }
         }
         logger.info(node + " is not part of the cluster after " + maxTry + "s");
         throw new IllegalStateException(node + " is not part of the cluster after " + maxTry + "s");
+    }
+
+    private static boolean testHost(Host host, boolean testForDown)
+    {
+        return testForDown ? !host.getMonitor().isUp() : host.getMonitor().isUp();
     }
 }

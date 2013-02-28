@@ -674,36 +674,47 @@ public class Cluster {
             if (preparedQueries.isEmpty())
                 return;
 
+            logger.debug("Preparing {} prepared queries on newly up node {}", preparedQueries.size(), host);
             try {
                 Connection connection = connectionFactory.open(host);
 
-                try {
-                    ControlConnection.waitForSchemaAgreement(connection, metadata);
-                } catch (ExecutionException e) {
-                    // As below, just move on
-                }
-
-                SetMultimap<String, String> perKeyspace = HashMultimap.create();
-                for (PreparedQuery pq : preparedQueries.values()) {
-                    perKeyspace.put(pq.keyspace, pq.query);
-                }
-
-                for (String keyspace : perKeyspace.keySet())
+                try
                 {
-                    List<Connection.Future> futures = new ArrayList<Connection.Future>(preparedQueries.size());
-                    for (String query : perKeyspace.get(keyspace)) {
-                        futures.add(connection.write(new PrepareMessage(query)));
+                    try {
+                        ControlConnection.waitForSchemaAgreement(connection, metadata);
+                    } catch (ExecutionException e) {
+                        // As below, just move on
                     }
-                    for (Connection.Future future : futures) {
-                        try {
-                            future.get();
-                        } catch (ExecutionException e) {
-                            // This "might" happen if we drop a CF but haven't removed it's prepared queries (which we don't do
-                            // currently). It's not a big deal however as if it's a more serious problem it'll show up later when
-                            // the query is tried for execution.
-                            logger.debug("Unexpected error while preparing queries on new/newly up host", e);
+
+                    SetMultimap<String, String> perKeyspace = HashMultimap.create();
+                    for (PreparedQuery pq : preparedQueries.values()) {
+                        String keyspace = pq.keyspace == null ? "" : pq.keyspace;
+                        perKeyspace.put(pq.keyspace, pq.query);
+                    }
+
+                    for (String keyspace : perKeyspace.keySet())
+                    {
+                        // We've used the empty string when there was no keyspace so it works as a map key
+                        if (!keyspace.isEmpty())
+                            connection.setKeyspace(keyspace);
+
+                        List<Connection.Future> futures = new ArrayList<Connection.Future>(preparedQueries.size());
+                        for (String query : perKeyspace.get(keyspace)) {
+                            futures.add(connection.write(new PrepareMessage(query)));
+                        }
+                        for (Connection.Future future : futures) {
+                            try {
+                                future.get();
+                            } catch (ExecutionException e) {
+                                // This "might" happen if we drop a CF but haven't removed it's prepared queries (which we don't do
+                                // currently). It's not a big deal however as if it's a more serious problem it'll show up later when
+                                // the query is tried for execution.
+                                logger.debug("Unexpected error while preparing queries on new/newly up host", e);
+                            }
                         }
                     }
+                } finally {
+                    connection.close();
                 }
             } catch (ConnectionException e) {
                 // Ignore, not a big deal
@@ -832,13 +843,11 @@ public class Cluster {
 
     }
 
-    static class PreparedQuery
-    {
+    static class PreparedQuery {
         final String keyspace;
         final String query;
 
-        PreparedQuery(String currentKeyspace, String query)
-        {
+        PreparedQuery(String currentKeyspace, String query) {
             this.keyspace = currentKeyspace;
             this.query = query;
         }
