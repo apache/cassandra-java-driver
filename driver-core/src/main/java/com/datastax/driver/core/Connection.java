@@ -246,38 +246,40 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         request.attach(this);
 
-        // We only support synchronous mode so far
+        ResponseHandler handler = new ResponseHandler(dispatcher, callback);
+        dispatcher.add(handler);
+        request.setStreamId(handler.streamId);
+
+        logger.trace("[{}] writing request {}", name, request);
         writer.incrementAndGet();
-        try {
+        channel.write(request).addListener(writeHandler(request, handler));
+    }
 
-            ResponseHandler handler = new ResponseHandler(dispatcher, callback);
-            dispatcher.add(handler);
-            request.setStreamId(handler.streamId);
+    private ChannelFutureListener writeHandler(final Message.Request request, final ResponseHandler handler) {
+        return new ChannelFutureListener() {
+            public void operationComplete(ChannelFuture writeFuture) {
 
-            logger.trace("[{}] writing request {}", name, request);
-            ChannelFuture writeFuture = channel.write(request);
-            writeFuture.awaitUninterruptibly();
-            if (!writeFuture.isSuccess())
-            {
-                logger.debug("[{}] Error writing request {}", name, request);
-                // Remove this handler from the dispatcher so it don't get notified of the error
-                // twice (we will fail that method already)
-                dispatcher.removeHandler(handler.streamId);
+                writer.decrementAndGet();
 
-                ConnectionException ce;
-                if (writeFuture.getCause() instanceof java.nio.channels.ClosedChannelException) {
-                    ce = new TransportException(address, "Error writing: Closed channel");
+                if (!writeFuture.isSuccess()) {
+
+                    logger.debug("[{}] Error writing request {}", name, request);
+                    // Remove this handler from the dispatcher so it don't get notified of the error
+                    // twice (we will fail that method already)
+                    dispatcher.removeHandler(handler.streamId);
+
+                    ConnectionException ce;
+                    if (writeFuture.getCause() instanceof java.nio.channels.ClosedChannelException) {
+                        ce = new TransportException(address, "Error writing: Closed channel");
+                    } else {
+                        ce = new TransportException(address, "Error writing", writeFuture.getCause());
+                    }
+                    handler.callback.onException(Connection.this, defunct(ce));
                 } else {
-                    ce = new TransportException(address, "Error writing", writeFuture.getCause());
+                    logger.trace("[{}] request sent successfully", name);
                 }
-                throw defunct(ce);
             }
-
-            logger.trace("[{}] request sent successfully", name);
-
-        } finally {
-            writer.decrementAndGet();
-        }
+        };
     }
 
     public void close() {

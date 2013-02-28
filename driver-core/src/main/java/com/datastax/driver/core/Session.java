@@ -122,14 +122,14 @@ public class Session {
      * Execute the provided query asynchronously.
      *
      * This method does not block. It returns as soon as the query has been
-     * successfully sent to a Cassandra node. In particular, returning from
-     * this method does not guarantee that the query is valid. Any exception
-     * pertaining to the failure of the query will be thrown by the first
-     * access to the {@link ResultSet}.
+     * passed to the underlying network stack. In particular, returning from
+     * this method does not guarantee that the query is valid or have even been
+     * submitted to a live node. Any exception pertaining to the failure of the
+     * query will be thrown when accessing the {@link ResultSetFuture}.
      *
      * Note that for queries that doesn't return a result (INSERT, UPDATE and
-     * DELETE), you will need to access the ResultSet (i.e. call any of its
-     * method) to make sure the query was successful.
+     * DELETE), you will need to access the ResultSetFuture (i.e. call one of
+     * its get method to make sure the query was successful.
      *
      * @param query the CQL query to execute (that can be either a {@code
      * Statement} or a {@code BoundStatement}). If it is a {@code

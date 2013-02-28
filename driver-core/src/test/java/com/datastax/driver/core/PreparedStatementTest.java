@@ -182,8 +182,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test
-    public void reprepareOnNewlyUpNodeTest() throws Exception
-    {
+    public void reprepareOnNewlyUpNodeTest() throws Exception {
+
         session.execute("INSERT INTO test (k, i) VALUES ('123', 17)");
         session.execute("INSERT INTO test (k, i) VALUES ('124', 18)");
 
