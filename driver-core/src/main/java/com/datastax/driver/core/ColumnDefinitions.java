@@ -98,7 +98,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
      * {@code false} otherwise.
      */
     public boolean contains(String name) {
-        return findIdx(name) > 0;
+        return findIdx(name) >= 0;
     }
 
     /**
