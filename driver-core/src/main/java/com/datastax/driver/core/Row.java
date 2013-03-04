@@ -563,7 +563,7 @@ public class Row {
      * Returns the {@code i}th value of this row has a list.
      *
      * @param i the index of the column to retrieve.
-     * @param elementsClass the class for the elements of the list to retrieve.
+     * @param elementsClass the class for the elements of the list to retrieve (or null to skip the check)
      * @return the value of the {@code i}th column in this row as a list of
      * {@code elementsClass} objects. If the value is NULL, an empty list is
      * returned (note that Cassandra makes no difference between an empty list
@@ -578,10 +578,12 @@ public class Row {
         if (type.getName() != DataType.Name.LIST)
             throw new InvalidTypeException(String.format("Column %s is not of list type", metadata.getName(i)));
 
-        Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
-        if (!elementsClass.isAssignableFrom(expectedClass))
-            throw new InvalidTypeException(String.format("Column %s is a list of %s (CQL type %s), cannot be retrieve as a list of %s", metadata.getName(i), expectedClass, type, elementsClass));
-
+        if (elementsClass != null) {
+            Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
+            if (!elementsClass.isAssignableFrom(expectedClass))
+                throw new InvalidTypeException(String.format("Column %s is a list of %s (CQL type %s), cannot be retrieve as a list of %s", metadata.getName(i), expectedClass, type, elementsClass));
+        }
+ 
         ByteBuffer value = data.get(i);
         if (value == null)
             return Collections.<T>emptyList();
@@ -613,7 +615,7 @@ public class Row {
      * Returns the {@code i}th value of this row has a set.
      *
      * @param i the index of the column to retrieve.
-     * @param elementsClass the class for the elements of the set to retrieve.
+     * @param elementsClass the class for the elements of the set to retrieve (or null to skip the check)
      * @return the value of the {@code i}th column in this row as a set of
      * {@code elementsClass} objects. If the value is NULL, an empty set is
      * returned (note that Cassandra makes no difference between an empty set
@@ -628,9 +630,11 @@ public class Row {
         if (type.getName() != DataType.Name.SET)
             throw new InvalidTypeException(String.format("Column %s is not of set type", metadata.getName(i)));
 
-        Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
-        if (!elementsClass.isAssignableFrom(expectedClass))
-            throw new InvalidTypeException(String.format("Column %s is a set of %s (CQL type %s), cannot be retrieve as a set of %s", metadata.getName(i), expectedClass, type, elementsClass));
+        if (elementsClass != null) {
+            Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
+            if (!elementsClass.isAssignableFrom(expectedClass))
+                throw new InvalidTypeException(String.format("Column %s is a set of %s (CQL type %s), cannot be retrieve as a set of %s", metadata.getName(i), expectedClass, type, elementsClass));
+        }
 
         ByteBuffer value = data.get(i);
         if (value == null)
@@ -662,8 +666,8 @@ public class Row {
      * Returns the {@code i}th value of this row has a map.
      *
      * @param i the index of the column to retrieve.
-     * @param keysClass the class for the keys of the map to retrieve.
-     * @param valuesClass the class for the values of the map to retrieve.
+     * @param keysClass the class for the keys of the map to retrieve (or null to skip the check)
+     * @param valuesClass the class for the values of the map to retrieve (or null to skip the check)
      * @return the value of the {@code i}th column in this row as a map of
      * {@code keysClass} to {@code valuesClass} objects. If the value is NULL,
      * an empty map is returned (note that Cassandra makes no difference
@@ -679,10 +683,12 @@ public class Row {
         if (type.getName() != DataType.Name.MAP)
             throw new InvalidTypeException(String.format("Column %s is not of map type", metadata.getName(i)));
 
-        Class<?> expectedKeysClass = type.getTypeArguments().get(0).getName().javaType;
-        Class<?> expectedValuesClass = type.getTypeArguments().get(1).getName().javaType;
-        if (!keysClass.isAssignableFrom(expectedKeysClass) || !valuesClass.isAssignableFrom(expectedValuesClass))
-            throw new InvalidTypeException(String.format("Column %s is a map of %s->%s (CQL type %s), cannot be retrieve as a map of %s->%s", metadata.getName(i), expectedKeysClass, expectedValuesClass, type, keysClass, valuesClass));
+        if (keysClass != null && valuesClass != null) {
+            Class<?> expectedKeysClass = type.getTypeArguments().get(0).getName().javaType;
+            Class<?> expectedValuesClass = type.getTypeArguments().get(1).getName().javaType;
+            if (!keysClass.isAssignableFrom(expectedKeysClass) || !valuesClass.isAssignableFrom(expectedValuesClass))
+                throw new InvalidTypeException(String.format("Column %s is a map of %s->%s (CQL type %s), cannot be retrieve as a map of %s->%s", metadata.getName(i), expectedKeysClass, expectedValuesClass, type, keysClass, valuesClass));
+        }
 
         ByteBuffer value = data.get(i);
         if (value == null)
