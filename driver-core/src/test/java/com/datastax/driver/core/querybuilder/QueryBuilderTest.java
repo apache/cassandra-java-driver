@@ -120,4 +120,16 @@ public class QueryBuilderTest {
             .using(timestamp(42));
         assertEquals(query, batch.toString());
     }
+
+    @Test
+    public void markerTest() throws Exception {
+        String query;
+        Query insert;
+
+        query = "INSERT INTO test(k,c) VALUES (0,?);";
+        insert = insertInto("test")
+                   .value("k", 0)
+                   .value("c", bindMarker());
+        assertEquals(query, insert.toString());
+    }
 }

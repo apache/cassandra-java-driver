@@ -95,6 +95,9 @@ abstract class Utils {
         } else if (value instanceof Date) {
             sb.append(((Date)value).getTime());
             return true;
+        } else if (value == QueryBuilder.BIND_MARKER) {
+            sb.append("?");
+            return true;
         } else {
             return false;
         }

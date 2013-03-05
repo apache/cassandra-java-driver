@@ -41,6 +41,8 @@ import com.datastax.driver.core.TableMetadata;
  */
 public final class QueryBuilder {
 
+    static final Object BIND_MARKER = new Object() {};
+
     private QueryBuilder() {}
 
     /**
@@ -561,5 +563,23 @@ public final class QueryBuilder {
      */
     public static Assignment putAll(String name, Map<?, ?> map) {
         return new Assignment.CollectionAssignment(name, map, true);
+    }
+
+    /**
+     * An object representing a bind marker (a question mark).
+     * <p>
+     * This can be used wherever a value is expected. For instance, one can do:
+     * <pre>
+     * {@code
+     *     Insert i = QueryBuilder.insertInto("test").value("k", 0)
+     *                                               .value("c", QueryBuilder.bindMarker());
+     *     PreparedState p = session.prepare(i.toString());
+     * }
+     * </pre>
+     *
+     * @return an object representing a bind marker.
+     */
+    public static Object bindMarker() {
+        return BIND_MARKER;
     }
 }
