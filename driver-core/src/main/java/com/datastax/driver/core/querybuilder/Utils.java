@@ -89,6 +89,9 @@ abstract class Utils {
         if (value instanceof Integer || value instanceof Long || value instanceof Float || value instanceof Double || value instanceof UUID) {
             sb.append(value);
             return true;
+        } else if (value instanceof BindVariable) {
+            sb.append("?");
+            return true;
         } else if (value instanceof InetAddress) {
             sb.append(((InetAddress)value).getHostAddress());
             return true;
