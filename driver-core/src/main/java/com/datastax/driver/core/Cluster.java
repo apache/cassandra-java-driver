@@ -696,7 +696,7 @@ public class Cluster {
                         // It's possible for a query to not have a current keyspace. But since null doesn't work well as
                         // map keys, we use the empty string instead (that is not a valid keyspace name).
                         String keyspace = ps.getQueryKeyspace() == null ? "" : ps.getQueryKeyspace();
-                        perKeyspace.put(ps.getQueryKeyspace(), ps.getQueryString());
+                        perKeyspace.put(keyspace, ps.getQueryString());
                     }
 
                     for (String keyspace : perKeyspace.keySet())

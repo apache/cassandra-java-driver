@@ -181,13 +181,14 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @Test
-    public void reprepareOnNewlyUpNodeTest() throws Exception {
+    private void reprepareOnNewlyUpNodeTest(String ks, Session session) throws Exception {
 
-        session.execute("INSERT INTO test (k, i) VALUES ('123', 17)");
-        session.execute("INSERT INTO test (k, i) VALUES ('124', 18)");
+        ks = ks == null ? "" : ks + ".";
 
-        PreparedStatement ps = session.prepare("SELECT * FROM test WHERE k = ?");
+        session.execute("INSERT INTO " + ks + "test (k, i) VALUES ('123', 17)");
+        session.execute("INSERT INTO " + ks + "test (k, i) VALUES ('124', 18)");
+
+        PreparedStatement ps = session.prepare("SELECT * FROM " + ks + "test WHERE k = ?");
 
         assertEquals(17, session.execute(ps.bind("123")).one().getInt("i"));
 
@@ -211,5 +212,18 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             System.out.println(">> " + e.getErrors());
             throw e;
         }
+    }
+
+    @Test
+    public void reprepareOnNewlyUpNodeTest() throws Exception {
+        reprepareOnNewlyUpNodeTest(null, session);
+    }
+
+    @Test
+    public void reprepareOnNewlyUpNodeNoKeyspaceTest() throws Exception {
+
+        // This is the same test than reprepareOnNewlyUpNodeTest, except that the
+        // prepared statement is prepared while no current keyspace is used
+        reprepareOnNewlyUpNodeTest(TestUtils.SIMPLE_KEYSPACE, cluster.connect());
     }
 }
