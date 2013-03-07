@@ -17,10 +17,14 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.cassandra.transport.messages.QueryMessage;
+
+import com.datastax.driver.core.exceptions.TraceRetrievalException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,17 +49,20 @@ public class QueryTrace {
     private static final String SELECT_SESSIONS_FORMAT = "SELECT * FROM system_traces.sessions WHERE session_id = %s";
     private static final String SELECT_EVENTS_FORMAT = "SELECT * FROM system_traces.events WHERE session_id = %s";
 
+    private static final int MAX_TRIES = 5;
+    private static final long BASE_SLEEP_BETWEEN_TRIES_IN_MS = 3;
+
     private final UUID traceId;
 
-    private String requestType;
+    private volatile String requestType;
     // We use the duration to figure out if the trace is complete, because
     // that's the last event that is written (and it is written asynchronously
     // so it's possible that a fetch gets all the trace except the duration).
-    private int duration = Integer.MIN_VALUE;
-    private InetAddress coordinator;
-    private Map<String, String> parameters;
-    private long startedAt;
-    private List<Event> events;
+    private volatile int duration = Integer.MIN_VALUE;
+    private volatile InetAddress coordinator;
+    private volatile Map<String, String> parameters;
+    private volatile long startedAt;
+    private volatile List<Event> events;
 
     private final Session.Manager session;
     private final Lock fetchLock = new ReentrantLock();
@@ -67,6 +74,9 @@ public class QueryTrace {
 
     /**
      * The identifier of this trace.
+     * <p>
+     * Note that contrarily to the other methods in this class, this method
+     * does not entail fetching query trace details from Cassandra.
      *
      * @return the identifier of this trace.
      */
@@ -79,6 +89,9 @@ public class QueryTrace {
      *
      * @return the type of request. This method returns {@code null} if the request
      * type is not yet available.
+     *
+     * @throws TraceRetrievalException if the trace details cannot be retrieve
+     * from Cassandra successfully.
      */
     public String getRequestType() {
         maybeFetchTrace();
@@ -91,6 +104,9 @@ public class QueryTrace {
      * @return the (server side) duration of the query in microseconds. This
      * method will return {@code Integer.MIN_VALUE} if the duration is not yet
      * available.
+     *
+     * @throws TraceRetrievalException if the trace details cannot be retrieve
+     * from Cassandra successfully.
      */
     public int getDurationMicros() {
         maybeFetchTrace();
@@ -102,6 +118,9 @@ public class QueryTrace {
      *
      * @return the coordinator host of the query. This method returns {@code null}
      * if the coordinator is not yet available.
+     *
+     * @throws TraceRetrievalException if the trace details cannot be retrieve
+     * from Cassandra successfully.
      */
     public InetAddress getCoordinator() {
         maybeFetchTrace();
@@ -113,6 +132,9 @@ public class QueryTrace {
      *
      * @return the parameters attached to this trace. This method returns
      * {@code null} if the coordinator is not yet available.
+     *
+     * @throws TraceRetrievalException if the trace details cannot be retrieve
+     * from Cassandra successfully.
      */
     public Map<String, String> getParameters() {
         maybeFetchTrace();
@@ -124,6 +146,9 @@ public class QueryTrace {
      *
      * @return the server side timestamp of the start of this query. This
      * method returns 0 if the start timestamp is not available.
+     *
+     * @throws TraceRetrievalException if the trace details cannot be retrieve
+     * from Cassandra successfully.
      */
     public long getStartedAt() {
         maybeFetchTrace();
@@ -132,8 +157,18 @@ public class QueryTrace {
 
     /**
      * The events contained in this trace.
+     * <p>
+     * Please note that query tracing is asynchronous in Cassandra. Hence, it
+     * is possible for the list returned to be missing some events for some of
+     * the replica involved in the query if the query trace is requested just
+     * after the return of the query it is a trace of (the only guarantee being
+     * that the list will contain the events pertaining to the coordinator of
+     * the query).
      *
      * @return the events contained in this trace.
+     *
+     * @throws TraceRetrievalException if the trace details cannot be retrieve
+     * from Cassandra successfully.
      */
     public List<Event> getEvents() {
         maybeFetchTrace();
@@ -152,45 +187,58 @@ public class QueryTrace {
 
         fetchLock.lock();
         try {
-            // If by the time we grab the lock we've fetch the events, it's
-            // fine, move on. Otherwise, fetch them.
-            if (duration == Integer.MIN_VALUE) {
-                doFetchTrace();
-            }
+            doFetchTrace();
         } finally {
             fetchLock.unlock();
         }
     }
 
     private void doFetchTrace() {
+        int tries = 0;
         try {
-            ResultSetFuture sessionsFuture = session.executeQuery(new QueryMessage(String.format(SELECT_SESSIONS_FORMAT, traceId), ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT);
-            ResultSetFuture eventsFuture = session.executeQuery(new QueryMessage(String.format(SELECT_EVENTS_FORMAT, traceId), ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT);
+            // We cannot guarantee the trace is complete. But we cant at least wait until we have all the information
+            // the coordinator log in the trace. Since the duration is the last thing the coordinator log, that's
+            // what we check to know if the trace is "complete" (again, it may not contain the log of replicas).
+            while (duration == Integer.MIN_VALUE && tries <= MAX_TRIES) {
+                ++tries;
 
-            Row sessRow = sessionsFuture.get().one();
-            if (sessRow != null) {
-                requestType = sessRow.getString("request");
-                if (!sessRow.isNull("duration"))
+                ResultSetFuture sessionsFuture = session.executeQuery(new QueryMessage(String.format(SELECT_SESSIONS_FORMAT, traceId), ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT);
+                ResultSetFuture eventsFuture = session.executeQuery(new QueryMessage(String.format(SELECT_EVENTS_FORMAT, traceId), ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT);
+
+                Row sessRow = sessionsFuture.get().one();
+                if (sessRow != null && !sessRow.isNull("duration")) {
+
+                    requestType = sessRow.getString("request");
+                    coordinator = sessRow.getInet("coordinator");
+                    if (!sessRow.isNull("parameters"))
+                        parameters = Collections.unmodifiableMap(sessRow.getMap("parameters", String.class, String.class));
+                    startedAt = sessRow.getDate("started_at").getTime();
+
+                    events = new ArrayList<Event>();
+                    for (Row evRow : eventsFuture.get()) {
+                        events.add(new Event(evRow.getString("activity"),
+                                    evRow.getUUID("event_id").timestamp(),
+                                    evRow.getInet("source"),
+                                    evRow.getInt("source_elapsed"),
+                                    evRow.getString("thread")));
+                    }
+                    events = Collections.unmodifiableList(events);
+
+                    // Set the duration last as it's our test to know if the trace is complete
                     duration = sessRow.getInt("duration");
-                coordinator = sessRow.getInet("coordinator");
-                if (!sessRow.isNull("parameters"))
-                    parameters = Collections.unmodifiableMap(sessRow.getMap("parameters", String.class, String.class));
-                startedAt = sessRow.getDate("started_at").getTime();
+                } else {
+                    // The trace is not ready. Give it a few milliseconds before trying again.
+                    // Notes: granted, sleeping uninterruptibly is bad, but  having all method propagate
+                    // InterruptedException bothers me.
+                    Uninterruptibles.sleepUninterruptibly(tries * BASE_SLEEP_BETWEEN_TRIES_IN_MS, TimeUnit.MILLISECONDS);
+                }
             }
-
-            events = new ArrayList<Event>();
-            for (Row evRow : eventsFuture.get()) {
-                events.add(new Event(evRow.getString("activity"),
-                                     evRow.getUUID("event_id").timestamp(),
-                                     evRow.getInet("source"),
-                                     evRow.getInt("source_elapsed"),
-                                     evRow.getString("thread")));
-            }
-            events = Collections.unmodifiableList(events);
-
         } catch (Exception e) {
-            logger.error("Unexpected exception while fetching query trace", e);
+            throw new TraceRetrievalException("Unexpected exception while fetching query trace", e);
         }
+
+        if (tries > MAX_TRIES)
+            throw new TraceRetrievalException(String.format("Unable to retrieve complete query trace after %d tries", MAX_TRIES));
     }
 
     /**
