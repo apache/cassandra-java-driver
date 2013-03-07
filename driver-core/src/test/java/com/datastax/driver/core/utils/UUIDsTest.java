@@ -65,7 +65,7 @@ public class UUIDsTest {
     @Test
     public void multiThreadUniquenessTest() throws Exception {
         int nbThread = 10;
-        int nbGenerated = 500000;
+        int nbGenerated = 10000;
         Set<UUID> generated = new ConcurrentSkipListSet<UUID>();
 
         UUIDGenerator[] generators = new UUIDGenerator[nbThread];
