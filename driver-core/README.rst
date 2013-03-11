@@ -55,8 +55,15 @@ download/compile the source of C* under the hood, which may require some time
 Installing
 ----------
 
-This driver has not been released yet and will need to be compiled manually.
-The build system is maven and should work as for any other maven project.
+The last release of the driver is available on Maven Central. You can install
+it in your application using the following Maven dependency::
+
+    <dependency>
+      <groupId>com.datastax.cassandra</groupId>
+      <artifactId>cassandra-driver-core</artifactId>
+      <version>1.0.0-beta1</version>
+    </dependency>
+
 
 
 Getting Started
