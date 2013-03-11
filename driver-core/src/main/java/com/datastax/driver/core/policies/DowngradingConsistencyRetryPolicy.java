@@ -28,7 +28,7 @@ import com.datastax.driver.core.*;
  * <b>may not</b> see a preceding write at {@code QUORUM}. Do not use this
  * policy unless you have understood the cases where this can happen and
  * are ok with that. It is also highly recommended to always wrap this
- * policy into {@link LoggingRetryPolicy} to log the occurences of
+ * policy into {@link LoggingRetryPolicy} to log the occurrences of
  * such consistency break.
  * <p>
  * This policy implements the same retries than the {@link DefaultRetryPolicy}
@@ -39,17 +39,17 @@ import com.datastax.driver.core.*;
  *   consistency level, the operation is retried at a lower concistency
  *   level.</li>
  *   <li>On a write timeout: if the operation is an {@code
- *   WriteType.UNLOGGED_BATCH} and at least one replica acknowleged the
+ *   WriteType.UNLOGGED_BATCH} and at least one replica acknowledged the
  *   write, the operation is retried at a lower consistency level.
- *   Furthermore, for other operation, if at least one replica acknowleged
+ *   Furthermore, for other operation, if at least one replica acknowledged
  *   the write, the timeout is ignored.</li>
  *   <li>On an unavailable exception: if at least one replica is alive, the
  *   operation is retried at a lower consistency level.</li>
  * </ul>
  * <p>
- * The reasoning behing this retry policy is the following one. If, based
+ * The reasoning being this retry policy is the following one. If, based
  * on the information the Cassandra coordinator node returns, retrying the
- * operation with the initally requested consistency has a change to
+ * operation with the initially requested consistency has a change to
  * succeed, do it. Otherwise, if based on these informations we know <b>the
  * initially requested consistency level cannot be achieve currently</b>, then:
  * <ul>
