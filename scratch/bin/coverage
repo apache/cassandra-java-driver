@@ -1,0 +1,22 @@
+#!/bin/sh
+
+LOOPBACKS_SET=`ifconfig | grep "inet 127.0.0.1 netmask 0xff000000"`
+test -n "${LOOPBACKS_SET}" || (
+    # For basic ccm
+    sudo ifconfig lo0 alias 127.0.0.2 up
+    sudo ifconfig lo0 alias 127.0.0.3 up
+
+    # Additional loopbacks for the java-driver
+    sudo ifconfig lo0 alias 127.0.1.1 up
+    sudo ifconfig lo0 alias 127.0.1.2 up
+    sudo ifconfig lo0 alias 127.0.1.3 up
+    sudo ifconfig lo0 alias 127.0.1.4 up
+)
+
+test -n "$1" || (
+    mvn cobertura:cobertura && open driver-core/target/site/cobertura/index.html
+)
+
+test -n "$1" && (
+    mvn cobertura:cobertura -Dtest=$1 && open driver-core/target/site/cobertura/index.html
+)
