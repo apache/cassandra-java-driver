@@ -54,9 +54,14 @@ download/compile the source of C* under the hood, which may require some time
 Installing
 ----------
 
-This driver has not been released yet and will need to be compiled manually.
-The build system is Maven and should work as for any other Maven project.
+The last release of the driver is available on Maven Central. You can install
+it in your application using the following Maven dependency::
 
+    <dependency>
+      <groupId>com.datastax.cassandra</groupId>
+      <artifactId>cassandra-driver-core</artifactId>
+      <version>1.0.0-beta1</version>
+    </dependency>
 
 Getting Started
 ---------------
@@ -71,7 +76,6 @@ cass1, cass2 and cass3. A simple example using this core driver could be::
 
     for (Row row : session.execute("SELECT * FROM table1"))
         // do something ...
-
 
 Please note that when we build the Cluster object, we only provide the address
 to 2 Cassandra hosts. We could have provided only one host or the 3 of them,
