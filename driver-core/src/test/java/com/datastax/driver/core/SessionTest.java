@@ -40,6 +40,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test
     public void repeatSchemaDefinition() throws Exception {
+        Session repeatSession = cluster.connect();
         String repeatKeyspace = "RepeatSchemaKS";
         String repeatCF = "RepeatSchemaCF";
 
@@ -50,23 +51,23 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         };
 
         // Create the schema once
-        session.execute(cqlCommands[0]);
-        session.execute(cqlCommands[1]);
-        session.execute(cqlCommands[2]);
+        repeatSession.execute(cqlCommands[0]);
+        repeatSession.execute(cqlCommands[1]);
+        repeatSession.execute(cqlCommands[2]);
 
         // Try creating the keyspace again
         try {
-            session.execute(cqlCommands[0]);
+            repeatSession.execute(cqlCommands[0]);
         } catch (AlreadyExistsException e) {
             String expected = String.format("Keyspace %s already exists", repeatKeyspace.toLowerCase());
             assertEquals(expected, e.getMessage());
         }
 
-        session.execute(cqlCommands[1]);
+        repeatSession.execute(cqlCommands[1]);
 
         // Try creating the table again
         try {
-            session.execute(cqlCommands[2]);
+            repeatSession.execute(cqlCommands[2]);
         } catch (AlreadyExistsException e) {
             String expected = String.format("Table %s.%s already exists", repeatKeyspace.toLowerCase(), repeatCF.toLowerCase());
             assertEquals(expected, e.getMessage());

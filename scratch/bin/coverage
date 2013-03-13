@@ -18,5 +18,5 @@ test -n "$1" || (
 )
 
 test -n "$1" && (
-    mvn cobertura:cobertura -Dtest=$1 && open driver-core/target/site/cobertura/index.html
+    mvn cobertura:cobertura -Dmaven.test.failure.ignore=true -Dtest=$1 && open driver-core/target/site/cobertura/index.html
 )
