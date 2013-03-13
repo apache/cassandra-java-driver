@@ -41,13 +41,13 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test
     public void repeatSchemaDefinition() throws Exception {
         Session repeatSession = cluster.connect();
-        String repeatKeyspace = "RepeatSchemaKS";
-        String repeatCF = "RepeatSchemaCF";
+        String repeatKeyspace = "RepeatSchemaKeyspace";
+        String repeatTable = "RepeatSchemaTable";
 
         String[] cqlCommands = new String[]{
             String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, repeatKeyspace, 1),
             "USE " + repeatKeyspace,
-            String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", repeatCF)
+            String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", repeatTable)
         };
 
         // Create the schema once
@@ -61,6 +61,9 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         } catch (AlreadyExistsException e) {
             String expected = String.format("Keyspace %s already exists", repeatKeyspace.toLowerCase());
             assertEquals(expected, e.getMessage());
+            assertEquals(repeatKeyspace.toLowerCase(), e.getKeyspace());
+            assertEquals(null, e.getTable());
+            assertEquals(false, e.wasTableCreation());
         }
 
         repeatSession.execute(cqlCommands[1]);
@@ -69,8 +72,11 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         try {
             repeatSession.execute(cqlCommands[2]);
         } catch (AlreadyExistsException e) {
-            String expected = String.format("Table %s.%s already exists", repeatKeyspace.toLowerCase(), repeatCF.toLowerCase());
+            String expected = String.format("Table %s.%s already exists", repeatKeyspace.toLowerCase(), repeatTable.toLowerCase());
             assertEquals(expected, e.getMessage());
+            assertEquals(repeatKeyspace.toLowerCase(), e.getKeyspace());
+            assertEquals(repeatTable.toLowerCase(), e.getTable());
+            assertEquals(true, e.wasTableCreation());
         }
     }
 
