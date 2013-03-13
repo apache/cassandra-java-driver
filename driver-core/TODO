@@ -1,6 +1,6 @@
 TODO:
 
 - More tests
-- Add documentation (other than javadoc)
+- Add documentation (other than Javadoc)
 - Metrics
-- Clean up dependencies (e.g. don't pull the full Cassandra jar)
+- Clean up dependencies (for example, don't pull the full Cassandra JAR)
