@@ -14,13 +14,15 @@
  *   limitations under the License.
  */
 package com.datastax.driver.core;
+import com.datastax.driver.core.exceptions.*;
 
 import java.util.*;
+import java.net.InetAddress;
+import java.util.HashMap;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-import com.datastax.driver.core.exceptions.*;
 
 /**
  * Simple test of the Exception classes against a one node cluster.
@@ -33,6 +35,8 @@ public class ExceptionsTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test
     public void alreadyExistsException() throws Exception {
+        // TODO: Remove ExceptionsTest's extention of PerClassSingleNodeCluster
+
         Session aeeSession = cluster.connect();
         String aeeKeyspace = "AEESchemaKeyspace";
         String aeeTable = "AEESchemaTable";
@@ -71,5 +75,39 @@ public class ExceptionsTest extends CCMBridge.PerClassSingleNodeCluster {
             assertEquals(aeeTable.toLowerCase(), e.getTable());
             assertEquals(true, e.wasTableCreation());
         }
+    }
+
+    public void authenticationException() throws Exception {
+        // TODO: Modify CCM to accept authenticated sessions
+    }
+
+    @Test
+    public void noHostAvailableException() throws Exception {
+        String ipAddress = "255.255.255.255";
+
+        try {
+            Cluster nhaeCluster = Cluster.builder().addContactPoints("255.255.255.255").build();
+        } catch (NoHostAvailableException e) {
+            assertEquals(String.format("All host(s) tried for query failed (tried: [/%s])", ipAddress), e.getMessage());
+
+            HashMap<InetAddress, String> hm = new HashMap<InetAddress, String>();
+            hm.put(InetAddress.getByName(ipAddress), "[/255.255.255.255] Cannot connect");
+            assertEquals(hm, e.getErrors());
+        }
+    }
+
+    @Test
+    public void readTimeoutException() throws Exception {
+        // TODO: Launch three nodes, send an async ALL query, kill a node, catch exception
+    }
+
+    @Test
+    public void writeTimeoutException() throws Exception {
+        // TODO: Launch three nodes, send an async ALL query, kill a node, catch exception
+    }
+
+    @Test
+    public void unavailableException() throws Exception {
+        // TODO: Launch three nodes, kill one, send an ALL query, catch exception
     }
 }

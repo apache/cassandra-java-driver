@@ -14,7 +14,11 @@ test -n "${LOOPBACKS_SET}" || (
 )
 
 test -n "$1" || (
-    mvn cobertura:cobertura && open driver-core/target/site/cobertura/index.html
+    mvn cobertura:cobertura && \
+        mkdir -p scratch/cobertura-history && \
+        today=`date +%Y.%m.%d` && \
+        cp -r driver-core/target/site/cobertura scratch/cobertura-history/cobertura-${today} && \
+        open driver-core/target/site/cobertura/index.html
 )
 
 test -n "$1" && (
