@@ -239,6 +239,7 @@ class RetryingCallback implements Connection.ResponseCallback {
                         case OVERLOADED:
                             // Try another node
                             logger.warn("Host {} is overloaded, trying next host.", connection.address);
+                            logError(connection.address, "Host overloaded");
                             if (manager.configuration().isMetricsEnabled())
                                 metrics().getErrorMetrics().getOthers().inc();
                             retry(false, null);
@@ -246,6 +247,7 @@ class RetryingCallback implements Connection.ResponseCallback {
                         case IS_BOOTSTRAPPING:
                             // Try another node
                             logger.error("Query sent to {} but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
+                            logError(connection.address, "Host is boostrapping");
                             if (manager.configuration().isMetricsEnabled())
                                 metrics().getErrorMetrics().getOthers().inc();
                             retry(false, null);
@@ -262,7 +264,7 @@ class RetryingCallback implements Connection.ResponseCallback {
                                 return;
                             }
 
-                            logger.trace("Preparing required prepared query {}", toPrepare.getQueryString());
+                            logger.trace("Preparing required prepared query {} in keyspace {}", toPrepare.getQueryString(), toPrepare.getQueryKeyspace());
                             String currentKeyspace = connection.keyspace();
                             String prepareKeyspace = toPrepare.getQueryKeyspace();
                             // This shouldn't happen in normal use, because a user shouldn't try to execute
@@ -333,8 +335,27 @@ class RetryingCallback implements Connection.ResponseCallback {
 
             public void onSet(Connection connection, Message.Response response) {
                 // TODO should we check the response ?
-                logger.trace("Scheduling retry now that query is prepared");
-                retry(true, null);
+                switch (response.type) {
+                    case RESULT:
+                        if (((ResultMessage)response).kind == ResultMessage.Kind.PREPARED) {
+                            logger.trace("Scheduling retry now that query is prepared");
+                            retry(true, null);
+                        } else {
+                            logError(connection.address, "Got unexpected response to prepare message: " + response);
+                            retry(false, null);
+                        }
+                        break;
+                    case ERROR:
+                        logError(connection.address, "Error preparing query, got " + response);
+                        if (manager.configuration().isMetricsEnabled())
+                            metrics().getErrorMetrics().getOthers().inc();
+                        retry(false, null);
+                        break;
+                    default:
+                        // Something's wrong, so we return but we let setFinalResult propagate the exception
+                        RetryingCallback.this.setFinalResult(connection, response);
+                        break;
+                }
             }
 
             public void onException(Connection connection, Exception exception) {
