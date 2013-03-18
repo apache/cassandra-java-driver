@@ -18,7 +18,7 @@ package com.datastax.driver.core.exceptions;
 /**
  * Top level class for exceptions thrown by the driver.
  */
-public class DriverException extends RuntimeException {
+public abstract class DriverException extends RuntimeException {
 
     DriverException() {
         super();
@@ -35,4 +35,17 @@ public class DriverException extends RuntimeException {
     DriverException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    /**
+     * Copy the exception.
+     * <p>
+     * This return a new exception, equivalent to the original one, except that
+     * because a new object is created in the current thread, the top-most
+     * element in the stacktrace of the exception will refer to the current
+     * thread (this mainly use for internal use by the driver). The cause of
+     * the copied exception will be the original exception.
+     *
+     * @return a copy/clone of this exception.
+     */
+    public abstract DriverException copy();
 }

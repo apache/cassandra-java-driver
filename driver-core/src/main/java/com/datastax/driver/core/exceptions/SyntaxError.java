@@ -23,4 +23,12 @@ public class SyntaxError extends QueryValidationException {
     public SyntaxError(String msg) {
         super(msg);
     }
+
+    private SyntaxError(String msg, Throwable cause) {
+        super(msg, cause);
+    }
+
+    public DriverException copy() {
+        return new SyntaxError(getMessage(), this);
+    }
 }

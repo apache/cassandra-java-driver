@@ -29,4 +29,8 @@ public class TraceRetrievalException extends DriverException {
     public TraceRetrievalException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    public DriverException copy() {
+        return new TraceRetrievalException(getMessage(), this);
+    }
 }

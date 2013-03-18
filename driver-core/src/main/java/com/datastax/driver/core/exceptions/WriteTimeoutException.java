@@ -33,6 +33,11 @@ public class WriteTimeoutException extends QueryTimeoutException {
         this.writeType = writeType;
     }
 
+    private WriteTimeoutException(String msg, Throwable cause, ConsistencyLevel consistency, WriteType writeType, int received, int required) {
+        super(msg, cause, consistency, received, required);
+        this.writeType = writeType;
+    }
+
     /**
      * The type of the write for which a timeout was raised.
      *
@@ -40,5 +45,14 @@ public class WriteTimeoutException extends QueryTimeoutException {
      */
     public WriteType getWriteType() {
         return writeType;
+    }
+
+    public DriverException copy() {
+        return new WriteTimeoutException(getMessage(),
+                                         this,
+                                         getConsistencyLevel(),
+                                         getWriteType(),
+                                         getReceivedAcknowledgements(),
+                                         getRequiredAcknowledgements());
     }
 }

@@ -29,6 +29,12 @@ public class AlreadyExistsException extends QueryValidationException {
         this.table = table;
     }
 
+    private AlreadyExistsException(String msg, Throwable cause, String keyspace, String table) {
+        super(msg, cause);
+        this.keyspace = keyspace;
+        this.table = table;
+    }
+
     private static String makeMsg(String keyspace, String table) {
         if (table.isEmpty())
             return String.format("Keyspace %s already exists", keyspace);
@@ -70,5 +76,9 @@ public class AlreadyExistsException extends QueryValidationException {
      */
     public String getTable() {
         return table.isEmpty() ? null : table;
+    }
+
+    public DriverException copy() {
+        return new AlreadyExistsException(getMessage(), this, keyspace, table);
     }
 }

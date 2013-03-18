@@ -41,6 +41,11 @@ public class NoHostAvailableException extends DriverException {
         this.errors = errors;
     }
 
+    private NoHostAvailableException(String message, Throwable cause, Map<InetAddress, String> errors) {
+        super(message, cause);
+        this.errors = errors;
+    }
+
     /**
      * Return the hosts tried along with descriptions of the error encountered
      * while trying them.
@@ -50,6 +55,10 @@ public class NoHostAvailableException extends DriverException {
      */
     public Map<InetAddress, String> getErrors() {
         return new HashMap<InetAddress, String>(errors);
+    }
+
+    public DriverException copy() {
+        return new NoHostAvailableException(getMessage(), this, errors);
     }
 
     private static String makeMessage(Map<InetAddress, String> errors) {
