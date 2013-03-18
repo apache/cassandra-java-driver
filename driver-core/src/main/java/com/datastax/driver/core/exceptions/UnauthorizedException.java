@@ -24,4 +24,12 @@ public class UnauthorizedException extends QueryValidationException {
     public UnauthorizedException(String msg) {
         super(msg);
     }
+
+    private UnauthorizedException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
+
+    public DriverException copy() {
+        return new UnauthorizedException(getMessage(), this);
+    }
 }

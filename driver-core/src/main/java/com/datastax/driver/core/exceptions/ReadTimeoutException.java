@@ -32,6 +32,11 @@ public class ReadTimeoutException extends QueryTimeoutException {
         this.dataPresent = dataPresent;
     }
 
+    private ReadTimeoutException(String msg, Throwable cause, ConsistencyLevel consistency, int received, int required, boolean dataPresent) {
+        super(msg, cause, consistency, received, required);
+        this.dataPresent = dataPresent;
+    }
+
     private static String formatDetails(int received, int required, boolean dataPresent) {
         if (received < required)
             return String.format("%d replica responded over %d required", received, required);
@@ -55,5 +60,14 @@ public class ReadTimeoutException extends QueryTimeoutException {
      */
     public boolean wasDataRetrieved() {
         return dataPresent;
+    }
+
+    public DriverException copy() {
+        return new ReadTimeoutException(getMessage(),
+                                        this,
+                                        getConsistencyLevel(),
+                                        getReceivedAcknowledgements(),
+                                        getRequiredAcknowledgements(),
+                                        wasDataRetrieved());
     }
 }

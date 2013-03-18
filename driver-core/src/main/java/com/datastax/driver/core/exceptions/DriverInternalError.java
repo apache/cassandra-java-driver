@@ -35,4 +35,7 @@ public class DriverInternalError extends DriverException {
         super(message, cause);
     }
 
+    public DriverException copy() {
+        return new DriverInternalError(getMessage(), this);
+    }
 }

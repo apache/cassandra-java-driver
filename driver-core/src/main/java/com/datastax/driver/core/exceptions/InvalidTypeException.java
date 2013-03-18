@@ -20,4 +20,12 @@ public class InvalidTypeException extends DriverException {
     public InvalidTypeException(String msg) {
         super(msg);
     }
+
+    private InvalidTypeException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
+
+    public DriverException copy() {
+        return new InvalidTypeException(getMessage(), this);
+    }
 }
