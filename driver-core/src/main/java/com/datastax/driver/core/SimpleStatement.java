@@ -36,7 +36,7 @@ public class SimpleStatement extends Statement {
     }
 
     /**
-     * The query string.
+     * Returns the query string.
      *
      * @return the query string;
      */
@@ -45,11 +45,11 @@ public class SimpleStatement extends Statement {
     }
 
     /**
-     * The routing key for the query.
+     * Returns the routing key for the query.
      * <p>
-     * Note that unless the routing key has been explicitly set through
-     * {@link #setRoutingKey}, this will method will return {@code null} (to
-     * avoid having to parse the query string to retrieve the partition key).
+     * Unless the routing key has been explicitly set through
+     * {@link #setRoutingKey}, this method will return {@code null} to
+     * avoid having to parse the query string to retrieve the partition key.
      *
      * @return the routing key set through {@link #setRoutingKey} is such a key
      * was set, {@code null} otherwise.
@@ -61,9 +61,9 @@ public class SimpleStatement extends Statement {
     }
 
     /**
-     * Set the routing key for this query.
+     * Sets the routing key for this query.
      * <p>
-     * This method allows to manually provide a routing key for this query. It
+     * This method allows you to manually provide a routing key for this query. It
      * is thus optional since the routing key is only an hint for token aware
      * load balancing policy but is never mandatory.
      * <p>
@@ -82,7 +82,7 @@ public class SimpleStatement extends Statement {
     }
 
     /**
-     * Set the routing key for this query.
+     * Sets the routing key for this query.
      * <p>
      * See {@link #setRoutingKey(ByteBuffer)} for more information. This
      * method is a variant for when the query partition key is composite and

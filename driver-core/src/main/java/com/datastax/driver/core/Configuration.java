@@ -19,11 +19,11 @@ import com.datastax.driver.core.policies.*;
 
 /**
  * The configuration of the cluster.
- * This handle setting:
+ * It configures the following:
  * <ul>
  *   <li>Cassandra binary protocol level configuration (compression).</li>
  *   <li>Connection pooling configurations.</li>
- *   <li>low-level tcp configuration options (tcpNoDelay, keepAlive, ...).</li>
+ *   <li>low-level TCP configuration options (tcpNoDelay, keepAlive, ...).</li>
  * </ul>
  */
 public class Configuration {
@@ -37,6 +37,9 @@ public class Configuration {
     private final AuthInfoProvider authProvider;
     private final boolean metricsEnabled;
 
+    /*
+     * Creates a configuration object.
+     */
     public Configuration() {
         this(new Policies(),
              new ProtocolOptions(),
@@ -46,6 +49,16 @@ public class Configuration {
              true);
     }
 
+    /**
+     * Creates a configuration with the specified parameters.
+     * 
+     * @param policies the policies to use
+     * @param protocolOptions the protocol options to use
+     * @param poolingOptions the pooling options to use
+     * @param socketOptions the socket options to use
+     * @param authProvider the authentication provider to use
+     * @param metricsEnabled whether to enable metrics or not
+     */
     public Configuration(Policies policies,
                          ProtocolOptions protocolOptions,
                          PoolingOptions poolingOptions,
@@ -66,7 +79,7 @@ public class Configuration {
     }
 
     /**
-     * The policies set for the cluster.
+     * Returns the policies set for the cluster.
      *
      * @return the policies set for the cluster.
      */
@@ -75,7 +88,7 @@ public class Configuration {
     }
 
     /**
-     * The low-level tcp configuration options used (tcpNoDelay, keepAlive, ...).
+     * Returns the low-level TCP configuration options used (tcpNoDelay, keepAlive, ...).
      *
      * @return the socket options.
      */
@@ -84,7 +97,7 @@ public class Configuration {
     }
 
     /**
-     * The Cassandra binary protocol level configuration (compression).
+     * Returns the Cassandra binary protocol level configuration (compression).
      *
      * @return the protocol options.
      */
@@ -93,7 +106,7 @@ public class Configuration {
     }
 
     /**
-     * The connection pooling configuration.
+     * Returns the connection pooling configuration.
      *
      * @return the pooling options.
      */
@@ -102,7 +115,7 @@ public class Configuration {
     }
 
     /**
-     * The authentication provider used to connect to the Cassandra cluster.
+     * Returns the authentication provider used to connect to the Cassandra cluster.
      *
      * @return the authentication provider in use.
      */
@@ -111,7 +124,7 @@ public class Configuration {
     }
 
     /**
-     * Whether metrics collection is enabled for the cluster instance.
+     * Returns whether metrics collection is enabled for the cluster instance.
      * <p>
      * Metrics collection is enabled by default but can be disabled at cluster
      * construction time through {@link Cluster.Builder#withoutMetrics}.

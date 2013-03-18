@@ -99,7 +99,7 @@ public class KeyspaceMetadata {
     }
 
     /**
-     * Return a {@code String} containing CQL queries representing this
+     * Returns a {@code String} containing CQL queries representing this
      * keyspace and the table it contains.
      *
      * In other words, this method returns the queries that would allow to

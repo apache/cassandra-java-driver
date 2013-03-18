@@ -18,21 +18,21 @@ package com.datastax.driver.core;
 /**
  * Options related to connection pooling.
  * <p>
- * The driver uses connections in an asynchronous way. Meaning that
+ * The driver uses connections in an asynchronous manner. Meaning that
  * multiple requests can be submitted on the same connection at the same
  * time. This means that the driver only needs to maintain a relatively
  * small number of connections to each Cassandra host. These options allow
- * to control how many connections are kept exactly.
+ * the driver to control how many connections are kept exactly.
  * <p>
- * For each host, the driver keeps a core amount of connections open at all
- * time ({@link PoolingOptions#getCoreConnectionsPerHost}). If the
- * utilisation of those connections reaches a configurable threshold
- * ({@link PoolingOptions#getMaxSimultaneousRequestsPerConnectionTreshold}),
- * more connections are created up to a configurable maximum number of
- * connections ({@link PoolingOptions#getMaxConnectionPerHost}). Once more
- * than core connections have been created, connections in excess are
- * reclaimed if the utilisation of opened connections drops below the
- * configured threshold ({@link PoolingOptions#getMinSimultaneousRequestsPerConnectionTreshold}).
+ * For each host, the driver keeps a core pool of connections open at all
+ * times determined by calling ({@link #getCoreConnectionsPerHost}).
+ * If the use of those connections reaches a configurable threshold
+ * ({@link #getMaxSimultaneousRequestsPerConnectionTreshold}),
+ * more connections are created up to the configurable maximum number of
+ * connections ({@link #getMaxConnectionPerHost}). When the pool exceeds
+ * the maximum number of connections, connections in excess are
+ * reclaimed if the use of opened connections drops below the
+ * configured threshold ({@link #getMinSimultaneousRequestsPerConnectionTreshold}).
  * <p>
  * Each of these parameters can be separately set for {@code LOCAL} and
  * {@code REMOTE} hosts ({@link HostDistance}). For {@code IGNORED} hosts,
@@ -72,7 +72,7 @@ public class PoolingOptions {
     }
 
     /**
-     * Number of simultaneous requests on a connection below which
+     * Returns the number of simultaneous requests on a connection below which
      * connections in excess are reclaimed.
      * <p>
      * If an opened connection to an host at distance {@code distance}
@@ -122,7 +122,7 @@ public class PoolingOptions {
     }
 
     /**
-     * Number of simultaneous requests on all connections to an host after
+     * Returns the number of simultaneous requests on all connections to an host after
      * which more connections are created.
      * <p>
      * If all the connections opened to an host at distance {@code
@@ -176,7 +176,7 @@ public class PoolingOptions {
     }
 
     /**
-     * The core number of connections per host.
+     * Returns the core number of connections per host.
      * <p>
      * For the provided {@code distance}, this correspond to the number of
      * connections initially created and kept open to each host of that
@@ -226,7 +226,7 @@ public class PoolingOptions {
     }
 
     /**
-     * The maximum number of connections per host.
+     * Returns the maximum number of connections per host.
      * <p>
      * For the provided {@code distance}, this correspond to the maximum
      * number of connections that can be created per host at that distance.

@@ -26,35 +26,35 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * {@link PreparedStatement}.
  * <p>
  * A {@code columnDefinitions}} instance is mainly a list of
- * {@code ColumnsDefinitions.Definition}. The definition/metadata for a column
- * can be accessed in one of two ways:
+ * {@code ColumnsDefinitions.Definition}. The definitions or metadata for a column
+ * can be accessed either by:
  * <ul>
- *   <li>by index</li>
- *   <li>by name</li>
+ *   <li>index</li>
+ *   <li>name</li>
  * </ul>
  * <p>
  * When accessed by name, column selection is case insensitive. In case multiple
  * columns only differ by the case of their name, then the column returned with
  * be the first column that has been defined in CQL without forcing case sensitivity
- * (i.e. it has either been defined without quotes or is fully lowercase).
- * If none of the columns have been thus defined, the first column matching
+ * (that is, it has either been defined without quotes or is fully lowercase).
+ * If none of the columns have been defined in this manner, the first column matching
  * (with case insensitivity) is returned. You can force the case of a selection
  * by double quoting the name.
  * <p>
- * So for instance:
+ * For example:
  * <ul>
  *   <li>If {@code cd} contains column {@code fOO}, then {@code cd.contains("foo")},
  *   {@code cd.contains("fOO")} and {@code cd.contains("Foo")} will return {@code true}.</li>
- *   <li>If {@code cd} contains both of {@code foo} and {@code FOO} then:
+ *   <li>If {@code cd} contains both {@code foo} and {@code FOO} then:
  *      <ul>
  *          <li>{@code cd.getType("foo")}, {@code cd.getType("fOO")} and {@code cd.getType("FOO")}
  *          will all match column {@code foo}.</li>
  *          <li>{@code cd.getType("\"FOO\"")} will match column {@code FOO}</li>
  *      </ul>
  * </ul>
- * Note that the rules above means that if a {@code ColumnDefinitions} object
- * contains multiple occurences of the exact same name (be it the same column
- * multiple time, or columns from different tables with the same name), you
+ * Note that the preceding rules mean that if a {@code ColumnDefinitions} object
+ * contains multiple occurrences of the exact same name (be it the same column
+ * multiple times or columns from different tables with the same name), you
  * will have to use selection by index to disambiguate.
  */
 public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition> {
@@ -308,7 +308,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         }
 
         /**
-         * The name of the table this column is part of.
+         * Returns the name of the table this column is part of.
          *
          * @return the name of the table this column is part of.
          */
@@ -317,7 +317,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         }
 
         /**
-         * The name of the column.
+         * Returns the name of the column.
          *
          * @return the name of the column.
          */
@@ -326,7 +326,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         }
 
         /**
-         * The type of the column.
+         * Returns the type of the column.
          *
          * @return the type of the column.
          */
