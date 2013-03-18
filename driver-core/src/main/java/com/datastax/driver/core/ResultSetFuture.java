@@ -78,8 +78,10 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
                                     case DROPPED:
                                         if (scc.columnFamily.isEmpty()) {
                                             // If that the one keyspace we are logged in, reset to null (it shouldn't really happen but ...)
-                                            if (scc.keyspace.equals(session.poolsState.keyspace))
-                                                session.poolsState.setKeyspace(null);
+                                            // Note: Actually, Cassandra doesn't do that so we don't either as this could confuse prepared statements.
+                                            // We'll add it back if CASSANDRA-5358 changes that behavior
+                                            //if (scc.keyspace.equals(session.poolsState.keyspace))
+                                            //    session.poolsState.setKeyspace(null);
                                             session.cluster.manager.refreshSchema(connection, ResultSetFuture.this, rs, null, null);
                                         } else {
                                             session.cluster.manager.refreshSchema(connection, ResultSetFuture.this, rs, scc.keyspace, null);
