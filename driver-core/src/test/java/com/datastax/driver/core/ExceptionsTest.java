@@ -27,53 +27,55 @@ import static org.junit.Assert.*;
 /**
  * Simple test of the Exception classes against a one node cluster.
  */
-public class ExceptionsTest extends CCMBridge.PerClassSingleNodeCluster {
-
-    protected Collection<String> getTableDefinitions() {
-        return Arrays.asList("CREATE TABLE null (k text PRIMARY KEY, t text, i int, f float)");
-    }
+public class ExceptionsTest{
 
     @Test
-    public void alreadyExistsException() throws Exception {
-        // TODO: Remove ExceptionsTest's extention of PerClassSingleNodeCluster
-
-        Session aeeSession = cluster.connect();
-        String aeeKeyspace = "AEESchemaKeyspace";
-        String aeeTable = "AEESchemaTable";
-
-        String[] cqlCommands = new String[]{
-            String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, aeeKeyspace, 1),
-            "USE " + aeeKeyspace,
-            String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", aeeTable)
-        };
-
-        // Create the schema once
-        aeeSession.execute(cqlCommands[0]);
-        aeeSession.execute(cqlCommands[1]);
-        aeeSession.execute(cqlCommands[2]);
-
-        // Try creating the keyspace again
+    public void alreadyExistsException() throws Throwable {
+        Cluster.Builder builder = Cluster.builder();
+        CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(1, builder);
         try {
-            aeeSession.execute(cqlCommands[0]);
-        } catch (AlreadyExistsException e) {
-            String expected = String.format("Keyspace %s already exists", aeeKeyspace.toLowerCase());
-            assertEquals(expected, e.getMessage());
-            assertEquals(aeeKeyspace.toLowerCase(), e.getKeyspace());
-            assertEquals(null, e.getTable());
-            assertEquals(false, e.wasTableCreation());
-        }
+            Session session = cluster.session;
+            String keyspace = "TestKeyspace";
+            String table = "TestTable";
 
-        aeeSession.execute(cqlCommands[1]);
+            String[] cqlCommands = new String[]{
+                String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1),
+                "USE " + keyspace,
+                String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table)
+            };
 
-        // Try creating the table again
-        try {
-            aeeSession.execute(cqlCommands[2]);
-        } catch (AlreadyExistsException e) {
-            String expected = String.format("Table %s.%s already exists", aeeKeyspace.toLowerCase(), aeeTable.toLowerCase());
-            assertEquals(expected, e.getMessage());
-            assertEquals(aeeKeyspace.toLowerCase(), e.getKeyspace());
-            assertEquals(aeeTable.toLowerCase(), e.getTable());
-            assertEquals(true, e.wasTableCreation());
+            // Create the schema once
+            session.execute(cqlCommands[0]);
+            session.execute(cqlCommands[1]);
+            session.execute(cqlCommands[2]);
+
+            // Try creating the keyspace again
+            try {
+                session.execute(cqlCommands[0]);
+            } catch (AlreadyExistsException e) {
+                String expected = String.format("Keyspace %s already exists", keyspace.toLowerCase());
+                assertEquals(expected, e.getMessage());
+                assertEquals(keyspace.toLowerCase(), e.getKeyspace());
+                assertEquals(null, e.getTable());
+                assertEquals(false, e.wasTableCreation());
+            }
+
+            session.execute(cqlCommands[1]);
+
+            // Try creating the table again
+            try {
+                session.execute(cqlCommands[2]);
+            } catch (AlreadyExistsException e) {
+                String expected = String.format("Table %s.%s already exists", keyspace.toLowerCase(), table.toLowerCase());
+                assertEquals(expected, e.getMessage());
+                assertEquals(keyspace.toLowerCase(), e.getKeyspace());
+                assertEquals(table.toLowerCase(), e.getTable());
+                assertEquals(true, e.wasTableCreation());
+            }
+        } catch (Throwable e) {
+            throw e;
+        } finally {
+            cluster.discard();
         }
     }
 
@@ -86,7 +88,7 @@ public class ExceptionsTest extends CCMBridge.PerClassSingleNodeCluster {
         String ipAddress = "255.255.255.255";
 
         try {
-            Cluster nhaeCluster = Cluster.builder().addContactPoints("255.255.255.255").build();
+            Cluster cluster = Cluster.builder().addContactPoints("255.255.255.255").build();
         } catch (NoHostAvailableException e) {
             assertEquals(String.format("All host(s) tried for query failed (tried: [/%s])", ipAddress), e.getMessage());
 
@@ -107,7 +109,49 @@ public class ExceptionsTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test
-    public void unavailableException() throws Exception {
-        // TODO: Launch three nodes, kill one, send an ALL query, catch exception
+    public void unavailableException() throws Throwable {
+        Cluster.Builder builder = Cluster.builder();
+        CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(3, builder);
+        try {
+            Session session = cluster.session;
+            CCMBridge bridge = cluster.cassandraCluster;
+
+            String keyspace = "TestKeyspace";
+            String table = "TestTable";
+            int replicationFactor = 3;
+            String key = "1";
+
+            session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, replicationFactor));
+            session.execute("USE " + keyspace);
+            session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
+
+            session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
+
+            bridge.stop(2);
+            try{
+                session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            } catch (UnavailableException e) {
+                String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
+                assertEquals(expectedError, e.getMessage());
+                assertEquals(ConsistencyLevel.ALL, e.getConsistency());
+                assertEquals(replicationFactor, e.getRequiredReplicas());
+                assertEquals(replicationFactor - 1, e.getAliveReplicas());
+            }
+
+            try{
+                session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
+            } catch (UnavailableException e) {
+                String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
+                assertEquals(expectedError, e.getMessage());
+                assertEquals(ConsistencyLevel.ALL, e.getConsistency());
+                assertEquals(replicationFactor, e.getRequiredReplicas());
+                assertEquals(replicationFactor - 1, e.getAliveReplicas());
+            }
+        } catch (Throwable e) {
+            throw e;
+        } finally {
+            cluster.discard();
+        }
     }
 }

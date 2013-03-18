@@ -35,6 +35,11 @@ public abstract class TestUtils {
 
     public static final String SIMPLE_KEYSPACE = "ks";
 
+    public static final String CREATE_TABLE_SIMPLE_FORMAT = "CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)";
+
+    public static final String INSERT_FORMAT = "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)";
+    public static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
+
     public static BoundStatement setBoundValue(BoundStatement bs, String name, DataType type, Object value) {
         switch (type.getName()) {
             case ASCII:

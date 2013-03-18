@@ -1,7 +1,8 @@
 #!/bin/sh
 
-LOOPBACKS_SET=`ifconfig | grep "inet 127.0.0.1 netmask 0xff000000"`
+LOOPBACKS_SET=`ifconfig | grep "inet 127.0.1.4 netmask 0xff000000"`
 test -n "${LOOPBACKS_SET}" || (
+    echo "Setting up CCM loopbacks..."
     # For basic ccm
     sudo ifconfig lo0 alias 127.0.0.2 up
     sudo ifconfig lo0 alias 127.0.0.3 up
