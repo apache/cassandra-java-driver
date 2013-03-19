@@ -81,22 +81,25 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(24.03f, row.getFloat("f"), 0.1f);
     }
 
-    @Test
-    public void setAndDropKeyspaceTest() throws Exception {
-        // Check that if someone set a keyspace and then drop it, we recognize
-        // that fact and don't assume he is still set to this keyspace
+    // That test is currently disabled because we actually want to assume drop
+    // doesn't "delog" from a keyspace as this is what Cassandra does. We
+    // may change that depending on the resulotion of CASSANDRA-5358
+    //@Test
+    //public void setAndDropKeyspaceTest() throws Exception {
+    //    // Check that if someone set a keyspace and then drop it, we recognize
+    //    // that fact and don't assume he is still set to this keyspace
 
-        try {
-            session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, "to_drop", 1));
-            session.execute("USE to_drop");
-            session.execute("DROP KEYSPACE to_drop");
+    //    try {
+    //        session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, "to_drop", 1));
+    //        session.execute("USE to_drop");
+    //        session.execute("DROP KEYSPACE to_drop");
 
-            assertEquals(null, session.manager.poolsState.keyspace);
-        } finally {
-            // restore the correct state for remaining states
-            session.execute("USE " + TestUtils.SIMPLE_KEYSPACE);
-        }
-    }
+    //        assertEquals(null, session.manager.poolsState.keyspace);
+    //    } finally {
+    //        // restore the correct state for remaining states
+    //        session.execute("USE " + TestUtils.SIMPLE_KEYSPACE);
+    //    }
+    //}
 
     @Test
     public void executePreparedCounterTest() throws Exception {
