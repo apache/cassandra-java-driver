@@ -191,6 +191,9 @@ public class ExceptionsTest{
             session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
 
             bridge.stop(2);
+            // Ensure that gossip has reported the node as down.
+            Thread.sleep(1000);
+
             try{
                 session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (UnavailableException e) {
