@@ -1,27 +1,142 @@
-#!/bin/sh
+#!/usr/bin/env python
 
-LOOPBACKS_SET=`ifconfig | grep "inet 127.0.1.4 netmask 0xff000000"`
-test -n "${LOOPBACKS_SET}" || (
-    echo "Setting up CCM loopbacks..."
-    # For basic ccm
-    sudo ifconfig lo0 alias 127.0.0.2 up
-    sudo ifconfig lo0 alias 127.0.0.3 up
+import argparse
+import ConfigParser
+import datetime
+import os
+import platform
+import shlex
+import subprocess
+import sys
 
-    # Additional loopbacks for the java-driver
-    sudo ifconfig lo0 alias 127.0.1.1 up
-    sudo ifconfig lo0 alias 127.0.1.2 up
-    sudo ifconfig lo0 alias 127.0.1.3 up
-    sudo ifconfig lo0 alias 127.0.1.4 up
-)
+USER_CONFIG = '~/.java_driver_tests.conf'
 
-test -n "$1" || (
-    mvn cobertura:cobertura && \
-        mkdir -p scratch/cobertura-history && \
-        today=`date +%Y.%m.%d` && \
-        cp -r driver-core/target/site/cobertura scratch/cobertura-history/cobertura-${today} && \
-        open driver-core/target/site/cobertura/index.html
-)
+def read_config(section, option, data_type='string', default=None):
+    '''Read configs as stored in the above defined USER_CONFIG.'''
 
-test -n "$1" && (
-    mvn cobertura:cobertura -Dmaven.test.failure.ignore=true -Dtest=$1 && open driver-core/target/site/cobertura/index.html
-)
+    config = ConfigParser.ConfigParser()
+    config.read([os.path.expanduser(USER_CONFIG)])
+
+    if config.has_option(section, option):
+        if data_type == 'string':
+            to_return = config.get(section, option)
+        elif data_type == 'boolean':
+            to_return = config.getboolean(section, option)
+        return default if default else to_return
+
+    return default if default else False
+
+def read_commandline(command):
+    '''Simple shell read access.'''
+
+    return subprocess.check_output(command, shell=True)
+
+def execute(command):
+    '''Simple shell execute access.'''
+
+    print 'Running command:\n\t%s\n' % command
+    subprocess.call(shlex.split(command))
+
+def parse():
+    '''Creates the argument parser for this tool.'''
+
+    parser = argparse.ArgumentParser(description='command line tool for quick testing commands.')
+    parser.add_argument('--test', help='run a specific unit test')
+    parser.add_argument('--cassandra-version', help='run tests on a specific Cassandra version')
+    parser.add_argument('--upload', action="store_true", help='upload cobertura site to configured server')
+    args = parser.parse_args()
+    return args
+
+def check_path():
+    '''Ensures this tool is run from the java-driver home directory.'''
+
+    if not 'driver-core' in read_commandline('ls'):
+        sys.exit('Execute this command from your java-driver root directory.')
+
+
+def maybe_setup_loopbacks():
+    '''Currently only setting loopbacks for Mac OSX, but feel free to contribute for other setups.'''
+
+    if platform.system() == 'Darwin' and not read_config('general', 'no_loopbacks', data_type='boolean'):
+        print 'Setting up CCM loopbacks...'
+        loopbacks_enabled = read_commandline('ifconfig | grep "inet 127.0.1.4 netmask 0xff000000"')
+        if not loopbacks_enabled:
+            # For basic ccm
+            execute('sudo ifconfig lo0 alias 127.0.0.2 up')
+            execute('sudo ifconfig lo0 alias 127.0.0.3 up')
+
+            # Additional loopbacks for the java-driver
+            execute('sudo ifconfig lo0 alias 127.0.1.1 up')
+            execute('sudo ifconfig lo0 alias 127.0.1.2 up')
+            execute('sudo ifconfig lo0 alias 127.0.1.3 up')
+            execute('sudo ifconfig lo0 alias 127.0.1.4 up')
+
+def maybe_upload_cobertura_site():
+    '''
+    The following must be set in the above defined USER_CONFIG:
+    [general]
+    cobertura_server = xxx
+    cobertura_directory = xxx
+
+    If defined, the cobertura site will be rsync'd to a remote location.
+    '''
+
+    cobertura_server = read_config('general', 'cobertura_server')
+    cobertura_directory = read_config('general', 'cobertura_directory')
+
+    if cobertura_server and cobertura_directory:
+        print 'rsync-ing cobertura site to %s:%s...' % (
+                cobertura_server,
+                cobertura_directory)
+        execute('rsync -avz scratch/cobertura-history %s:%s' % (
+                cobertura_server,
+                cobertura_directory))
+
+def save_cobertura_site():
+    '''Save cobertura site folders by date'''
+
+    execute('mkdir -p scratch/cobertura-history')
+    today = datetime.date.today()
+    execute('cp -r driver-core/target/site/cobertura scratch/cobertura-history/cobertura-%s' % today)
+    execute('cp -r driver-core/target/site/cobertura scratch/cobertura-history/current')
+
+def main():
+    check_path()
+    args = parse()
+
+    # Check if an upload is all that is required
+    if args.upload:
+        maybe_upload_cobertura_site()
+        sys.exit()
+
+    # Setup required ccm loopbacks
+    maybe_setup_loopbacks()
+
+    # Start building the mvn command
+    cobertura_build_command = 'mvn cobertura:cobertura'
+    if args.cassandra_version:
+        cobertura_build_command += ' -Dcassandra.version=%s' % args.cassandra_version
+
+    if args.test:
+        # Run against a single mvn test
+        execute('%s -Dmaven.test.failure.ignore=true -Dtest=%s' % (cobertura_build_command, args.test))
+    else:
+        # Run against the entire integration suite
+        execute('%s' % cobertura_build_command)
+
+        # Save out cobertura site files
+        save_cobertura_site()
+
+        # Perhaps move cobertura site files to a central location
+        maybe_upload_cobertura_site()
+
+    # Optionally, open coverage report when done building
+    if read_config('general', 'open_cobertura_site_after_build', 'boolean'):
+        execute('open driver-core/target/site/cobertura/index.html')
+    else:
+        print '\nTo view Cobertura report:'
+        print '\topen driver-core/target/site/cobertura/index.html'
+
+
+if __name__ == "__main__":
+    main()
