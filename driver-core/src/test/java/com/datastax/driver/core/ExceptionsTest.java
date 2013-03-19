@@ -99,13 +99,75 @@ public class ExceptionsTest{
     }
 
     @Test
-    public void readTimeoutException() throws Exception {
-        // TODO: Launch three nodes, send an async ALL query, kill a node, catch exception
+    public void readTimeoutException() throws Throwable {
+        Cluster.Builder builder = Cluster.builder();
+        CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(3, builder);
+        try {
+            Session session = cluster.session;
+            CCMBridge bridge = cluster.cassandraCluster;
+
+            String keyspace = "TestKeyspace";
+            String table = "TestTable";
+            int replicationFactor = 3;
+            String key = "1";
+
+            session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, replicationFactor));
+            session.execute("USE " + keyspace);
+            session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
+
+            session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
+
+            bridge.force_stop(2);
+            try{
+                session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
+            } catch (ReadTimeoutException e) {
+                String expectedError = String.format("Cassandra timeout during read query at consistency %s (%d replica responded, over %d required)", "ALL", 2, 3);
+                assertEquals(expectedError, e.getMessage());
+                assertEquals(e.wasDataRetrieved(), true);
+            } finally {
+                bridge.start(2);
+            }
+        } catch (Throwable e) {
+            throw e;
+        } finally {
+            cluster.discard();
+        }
     }
 
     @Test
-    public void writeTimeoutException() throws Exception {
-        // TODO: Launch three nodes, send an async ALL query, kill a node, catch exception
+    public void writeTimeoutException() throws Throwable {
+        Cluster.Builder builder = Cluster.builder();
+        CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(3, builder);
+        try {
+            Session session = cluster.session;
+            CCMBridge bridge = cluster.cassandraCluster;
+
+            String keyspace = "TestKeyspace";
+            String table = "TestTable";
+            int replicationFactor = 3;
+            String key = "1";
+
+            session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, replicationFactor));
+            session.execute("USE " + keyspace);
+            session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
+
+            session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
+
+            bridge.force_stop(2);
+            try{
+                session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            } catch (WriteTimeoutException e) {
+                String expectedError = String.format("Cassandra timeout during write query at consistency %s (%d replica acknowledged the write, over %d required)", "ALL", 2, 3);
+                assertEquals(expectedError, e.getMessage());
+                assertEquals(WriteType.SIMPLE, e.getWriteType());
+            }
+        } catch (Throwable e) {
+            throw e;
+        } finally {
+            cluster.discard();
+        }
     }
 
     @Test

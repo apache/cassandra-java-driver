@@ -39,7 +39,7 @@ public class ReadTimeoutException extends QueryTimeoutException {
 
     private static String formatDetails(int received, int required, boolean dataPresent) {
         if (received < required)
-            return String.format("%d replica responded over %d required", received, required);
+            return String.format("%d replica responded, over %d required", received, required);
         else if (!dataPresent)
             return String.format("the replica queried for data didn't responded");
         else

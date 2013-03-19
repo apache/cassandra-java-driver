@@ -39,6 +39,7 @@ public abstract class TestUtils {
 
     public static final String INSERT_FORMAT = "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)";
     public static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
+    public static final String SELECT_WHERE_FORMAT = "SELECT * FROM %s WHERE %s";
 
     public static BoundStatement setBoundValue(BoundStatement bs, String name, DataType type, Object value) {
         switch (type.getName()) {
