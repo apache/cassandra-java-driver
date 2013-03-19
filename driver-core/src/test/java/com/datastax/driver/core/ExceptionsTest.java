@@ -23,12 +23,16 @@ import java.util.HashMap;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-
 /**
- * Simple test of the Exception classes against a one node cluster.
+ * Tests testable Exception classes with seperate clusters per test
  */
 public class ExceptionsTest{
 
+    /**
+     * Tests the AlreadyExistsException.
+     * Create a keyspace twice and a table twice.
+     * Catch and test all the exception methods.
+     */
     @Test
     public void alreadyExistsException() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
@@ -79,25 +83,43 @@ public class ExceptionsTest{
         }
     }
 
+    /**
+     * Placeholder test for the AuthenticationException.
+     * Testing pending CCM authenticated sessions integration.
+     */
     public void authenticationException() throws Exception {
         // TODO: Modify CCM to accept authenticated sessions
     }
 
+    /**
+     * Tests the NoHostAvailableException.
+     * by attempting to build a cluster using the IP address "255.255.255.255"
+     * and test all available exception methods.
+     */
     @Test
     public void noHostAvailableException() throws Exception {
         String ipAddress = "255.255.255.255";
+        HashMap<InetAddress, String> errorsHashMap = new HashMap<InetAddress, String>();
+        errorsHashMap.put(InetAddress.getByName(ipAddress), "[/255.255.255.255] Cannot connect");
 
         try {
             Cluster cluster = Cluster.builder().addContactPoints("255.255.255.255").build();
         } catch (NoHostAvailableException e) {
             assertEquals(String.format("All host(s) tried for query failed (tried: [/%s])", ipAddress), e.getMessage());
+            assertEquals(errorsHashMap, e.getErrors());
 
-            HashMap<InetAddress, String> hm = new HashMap<InetAddress, String>();
-            hm.put(InetAddress.getByName(ipAddress), "[/255.255.255.255] Cannot connect");
-            assertEquals(hm, e.getErrors());
+            NoHostAvailableException copy = (NoHostAvailableException) e.copy();
+            assertEquals(e.getMessage(), copy.getMessage());
+            assertEquals(e.getErrors(), copy.getErrors());
         }
     }
 
+    /**
+     * Tests the ReadTimeoutException.
+     * Create a 3 node cluster and write out a single key at CL.ALL.
+     * Then forcibly kill single node and attempt a read of the key at CL.ALL.
+     * Catch and test all available exception methods.
+     */
     @Test
     public void readTimeoutException() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
@@ -125,8 +147,10 @@ public class ExceptionsTest{
                 String expectedError = String.format("Cassandra timeout during read query at consistency %s (%d replica responded, over %d required)", "ALL", 2, 3);
                 assertEquals(expectedError, e.getMessage());
                 assertEquals(e.wasDataRetrieved(), true);
-            } finally {
-                bridge.start(2);
+
+                ReadTimeoutException copy = (ReadTimeoutException) e.copy();
+                assertEquals(e.getMessage(), copy.getMessage());
+                assertEquals(e.wasDataRetrieved(), copy.wasDataRetrieved());
             }
         } catch (Throwable e) {
             throw e;
@@ -135,6 +159,12 @@ public class ExceptionsTest{
         }
     }
 
+    /**
+     * Tests the WriteTimeoutException.
+     * Create a 3 node cluster and write out a single key at CL.ALL.
+     * Then forcibly kill single node and attempt to write the same key at CL.ALL.
+     * Catch and test all available exception methods.
+     */
     @Test
     public void writeTimeoutException() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
@@ -170,6 +200,13 @@ public class ExceptionsTest{
         }
     }
 
+    /**
+     * Tests the UnavailableException.
+     * Create a 3 node cluster and write out a single key at CL.ALL.
+     * Then kill single node, wait for gossip to propogate the new state,
+     * and attempt to read and write the same key at CL.ALL.
+     * Catch and test all available exception methods.
+     */
     @Test
     public void unavailableException() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
@@ -195,7 +232,7 @@ public class ExceptionsTest{
             Thread.sleep(1000);
 
             try{
-                session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+                session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (UnavailableException e) {
                 String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
                 assertEquals(expectedError, e.getMessage());
@@ -205,7 +242,7 @@ public class ExceptionsTest{
             }
 
             try{
-                session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
+                session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (UnavailableException e) {
                 String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
                 assertEquals(expectedError, e.getMessage());
