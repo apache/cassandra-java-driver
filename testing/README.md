@@ -74,4 +74,4 @@ site to a remote machine, if applicable:
 
 Runs a single integration test along with the Cobertura report for that test:
 
-    testing/bin/coverage --test < ExceptionsTest | SessionTest | ... >
+    testing/bin/coverage --test TestClass[#optionalTestMethod]
