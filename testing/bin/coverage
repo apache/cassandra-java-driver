@@ -88,17 +88,17 @@ def maybe_upload_cobertura_site():
         print 'rsync-ing cobertura site to %s:%s...' % (
                 cobertura_server,
                 cobertura_directory)
-        execute('rsync -avz scratch/cobertura-history %s:%s' % (
+        execute('rsync -avz testing/cobertura-history %s:%s' % (
                 cobertura_server,
                 cobertura_directory))
 
 def save_cobertura_site():
     '''Save cobertura site folders by date'''
 
-    execute('mkdir -p scratch/cobertura-history')
+    execute('mkdir -p testing/cobertura-history')
     today = datetime.date.today()
-    execute('cp -r driver-core/target/site/cobertura scratch/cobertura-history/cobertura-%s' % today)
-    execute('cp -r driver-core/target/site/cobertura scratch/cobertura-history/current')
+    execute('cp -r driver-core/target/site/cobertura testing/cobertura-history/cobertura-%s' % today)
+    execute('cp -r driver-core/target/site/cobertura testing/cobertura-history/current')
 
 def main():
     check_path()
