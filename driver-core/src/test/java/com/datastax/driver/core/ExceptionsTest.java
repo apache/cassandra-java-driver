@@ -25,7 +25,7 @@ import org.junit.matchers.JUnitMatchers;
 import static org.junit.Assert.*;
 
 /**
- * Tests testable Exception classes with seperate clusters per test
+ * Tests Exception classes with seperate clusters per test, when applicable
  */
 public class ExceptionsTest{
 
