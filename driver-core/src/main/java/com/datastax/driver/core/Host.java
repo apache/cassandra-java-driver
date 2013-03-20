@@ -155,7 +155,7 @@ public class Host {
          * @param listener the {@link Host.StateListener} to unregister.
          */
         public void unregister(StateListener listener) {
-            listeners.add(listener);
+            listeners.remove(listener);
         }
 
         /**
