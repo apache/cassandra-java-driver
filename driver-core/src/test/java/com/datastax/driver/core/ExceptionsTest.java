@@ -71,10 +71,10 @@ public class ExceptionsTest{
             try {
                 session.execute(cqlCommands[2]);
             } catch (AlreadyExistsException e) {
-                String expected = String.format("Table %s.%s already exists", keyspace.toLowerCase(), table.toLowerCase());
-                assertEquals(expected, e.getMessage());
-                assertEquals(keyspace.toLowerCase(), e.getKeyspace());
-                assertEquals(table.toLowerCase(), e.getTable());
+                // TODO: Pending CASSANDRA-5362 this won't work. So let's re-enable this once C* 1.2.4
+                // is released
+                //assertEquals(keyspace.toLowerCase(), e.getKeyspace());
+                //assertEquals(table.toLowerCase(), e.getTable());
                 assertEquals(true, e.wasTableCreation());
             }
         } catch (Throwable e) {
@@ -218,8 +218,9 @@ public class ExceptionsTest{
             try{
                 session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (ReadTimeoutException e) {
-                String expectedError = String.format("Cassandra timeout during read query at consistency %s (%d replica responded, over %d required)", "ALL", 2, 3);
-                assertEquals(expectedError, e.getMessage());
+                assertEquals(ConsistencyLevel.ALL, e.getConsistencyLevel());
+                assertEquals(2, e.getReceivedAcknowledgements());
+                assertEquals(3, e.getRequiredAcknowledgements());
                 assertEquals(e.wasDataRetrieved(), true);
 
                 ReadTimeoutException copy = (ReadTimeoutException) e.copy();
@@ -392,8 +393,9 @@ public class ExceptionsTest{
             try{
                 session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (WriteTimeoutException e) {
-                String expectedError = String.format("Cassandra timeout during write query at consistency %s (%d replica acknowledged the write, over %d required)", "ALL", 2, 3);
-                assertEquals(expectedError, e.getMessage());
+                assertEquals(ConsistencyLevel.ALL, e.getConsistencyLevel());
+                assertEquals(2, e.getReceivedAcknowledgements());
+                assertEquals(3, e.getRequiredAcknowledgements());
                 assertEquals(WriteType.SIMPLE, e.getWriteType());
             }
         } catch (Throwable e) {
