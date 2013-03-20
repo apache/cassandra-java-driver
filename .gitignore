@@ -1,4 +1,5 @@
 target/
+cobertura-history/
 .settings
 .classpath
 .project

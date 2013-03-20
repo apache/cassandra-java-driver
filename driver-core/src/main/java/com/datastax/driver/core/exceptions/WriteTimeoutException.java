@@ -26,7 +26,7 @@ public class WriteTimeoutException extends QueryTimeoutException {
     private final WriteType writeType;
 
     public WriteTimeoutException(ConsistencyLevel consistency, WriteType writeType, int received, int required) {
-        super(String.format("Cassandra timeout during write query at consitency %s (%d replica acknowledged the write over %d required)", consistency, received, required),
+        super(String.format("Cassandra timeout during write query at consistency %s (%d replica acknowledged the write, over %d required)", consistency, received, required),
               consistency,
               received,
               required);
