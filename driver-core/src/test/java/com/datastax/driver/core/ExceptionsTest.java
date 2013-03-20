@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.util.HashMap;
 
 import org.junit.Test;
+import org.junit.matchers.JUnitMatchers;
 import static org.junit.Assert.*;
 
 /**
@@ -92,6 +93,79 @@ public class ExceptionsTest{
     }
 
     /**
+     * Tests DriverInternalError.
+     * Tests basic message, rethrow, and copy abilities.
+     */
+    @Test
+    public void driverInternalError() throws Exception {
+        String errorMessage = "Test Message";
+
+        try {
+            throw new DriverInternalError(errorMessage);
+        } catch (DriverInternalError e1) {
+            try {
+                throw new DriverInternalError(e1);
+            } catch (DriverInternalError e2) {
+                assertThat(e2.getMessage(), JUnitMatchers.containsString(errorMessage));
+
+                DriverInternalError copy = (DriverInternalError) e2.copy();
+                assertEquals(e2.getMessage(), copy.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Tests InvalidConfigurationInQueryException.
+     * Tests basic message abilities.
+     */
+    @Test
+    public void invalidConfigurationInQueryException() throws Exception {
+        String errorMessage = "Test Message";
+
+        try {
+            throw new InvalidConfigurationInQueryException(errorMessage);
+        } catch (InvalidConfigurationInQueryException e) {
+            assertEquals(errorMessage, e.getMessage());
+        }
+    }
+
+    /**
+     * Tests InvalidQueryException.
+     * Tests basic message and copy abilities.
+     */
+    @Test
+    public void invalidQueryException() throws Exception {
+        String errorMessage = "Test Message";
+
+        try {
+            throw new InvalidQueryException(errorMessage);
+        } catch (InvalidQueryException e) {
+            assertEquals(errorMessage, e.getMessage());
+
+            InvalidQueryException copy = (InvalidQueryException) e.copy();
+            assertEquals(e.getMessage(), copy.getMessage());
+        }
+    }
+
+    /**
+     * Tests InvalidTypeException.
+     * Tests basic message and copy abilities.
+     */
+    @Test
+    public void invalidTypeException() throws Exception {
+        String errorMessage = "Test Message";
+
+        try {
+            throw new InvalidTypeException(errorMessage);
+        } catch (InvalidTypeException e) {
+            assertEquals(errorMessage, e.getMessage());
+
+            InvalidTypeException copy = (InvalidTypeException) e.copy();
+            assertEquals(e.getMessage(), copy.getMessage());
+        }
+    }
+
+    /**
      * Tests the NoHostAvailableException.
      * by attempting to build a cluster using the IP address "255.255.255.255"
      * and test all available exception methods.
@@ -160,43 +234,74 @@ public class ExceptionsTest{
     }
 
     /**
-     * Tests the WriteTimeoutException.
-     * Create a 3 node cluster and write out a single key at CL.ALL.
-     * Then forcibly kill single node and attempt to write the same key at CL.ALL.
-     * Catch and test all available exception methods.
+     * Tests SyntaxError.
+     * Tests basic message and copy abilities.
      */
     @Test
-    public void writeTimeoutException() throws Throwable {
-        Cluster.Builder builder = Cluster.builder();
-        CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(3, builder);
+    public void syntaxError() throws Exception {
+        String errorMessage = "Test Message";
+
         try {
-            Session session = cluster.session;
-            CCMBridge bridge = cluster.cassandraCluster;
+            throw new SyntaxError(errorMessage);
+        } catch (SyntaxError e) {
+            assertEquals(errorMessage, e.getMessage());
 
-            String keyspace = "TestKeyspace";
-            String table = "TestTable";
-            int replicationFactor = 3;
-            String key = "1";
+            SyntaxError copy = (SyntaxError) e.copy();
+            assertEquals(e.getMessage(), copy.getMessage());
+        }
+    }
 
-            session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, replicationFactor));
-            session.execute("USE " + keyspace);
-            session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
+    /**
+     * Tests TraceRetrievalException.
+     * Tests basic message and copy abilities.
+     */
+    @Test
+    public void traceRetrievalException() throws Exception {
+        String errorMessage = "Test Message";
 
-            session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
-            session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
+        try {
+            throw new TraceRetrievalException(errorMessage);
+        } catch (TraceRetrievalException e) {
+            assertEquals(errorMessage, e.getMessage());
 
-            bridge.force_stop(2);
-            try{
-                session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
-            } catch (WriteTimeoutException e) {
-                String expectedError = String.format("Cassandra timeout during write query at consistency %s (%d replica acknowledged the write, over %d required)", "ALL", 2, 3);
-                assertEquals(expectedError, e.getMessage());
-                assertEquals(WriteType.SIMPLE, e.getWriteType());
-            }
-        } catch (Throwable e) {
-            throw e;
-        } finally {
-            cluster.discard();
+            TraceRetrievalException copy = (TraceRetrievalException) e.copy();
+            assertEquals(e.getMessage(), copy.getMessage());
+        }
+    }
+
+    /**
+     * Tests TruncateException.
+     * Tests basic message and copy abilities.
+     */
+    @Test
+    public void truncateException() throws Exception {
+        String errorMessage = "Test Message";
+
+        try {
+            throw new TruncateException(errorMessage);
+        } catch (TruncateException e) {
+            assertEquals(errorMessage, e.getMessage());
+
+            TruncateException copy = (TruncateException) e.copy();
+            assertEquals(e.getMessage(), copy.getMessage());
+        }
+    }
+
+    /**
+     * Tests UnauthorizedException.
+     * Tests basic message and copy abilities.
+     */
+    @Test
+    public void unauthorizedException() throws Exception {
+        String errorMessage = "Test Message";
+
+        try {
+            throw new UnauthorizedException(errorMessage);
+        } catch (UnauthorizedException e) {
+            assertEquals(errorMessage, e.getMessage());
+
+            UnauthorizedException copy = (UnauthorizedException) e.copy();
+            assertEquals(e.getMessage(), copy.getMessage());
         }
     }
 
@@ -249,6 +354,47 @@ public class ExceptionsTest{
                 assertEquals(ConsistencyLevel.ALL, e.getConsistency());
                 assertEquals(replicationFactor, e.getRequiredReplicas());
                 assertEquals(replicationFactor - 1, e.getAliveReplicas());
+            }
+        } catch (Throwable e) {
+            throw e;
+        } finally {
+            cluster.discard();
+        }
+    }
+
+    /**
+     * Tests the WriteTimeoutException.
+     * Create a 3 node cluster and write out a single key at CL.ALL.
+     * Then forcibly kill single node and attempt to write the same key at CL.ALL.
+     * Catch and test all available exception methods.
+     */
+    @Test
+    public void writeTimeoutException() throws Throwable {
+        Cluster.Builder builder = Cluster.builder();
+        CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(3, builder);
+        try {
+            Session session = cluster.session;
+            CCMBridge bridge = cluster.cassandraCluster;
+
+            String keyspace = "TestKeyspace";
+            String table = "TestTable";
+            int replicationFactor = 3;
+            String key = "1";
+
+            session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, replicationFactor));
+            session.execute("USE " + keyspace);
+            session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
+
+            session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
+
+            bridge.force_stop(2);
+            try{
+                session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            } catch (WriteTimeoutException e) {
+                String expectedError = String.format("Cassandra timeout during write query at consistency %s (%d replica acknowledged the write, over %d required)", "ALL", 2, 3);
+                assertEquals(expectedError, e.getMessage());
+                assertEquals(WriteType.SIMPLE, e.getWriteType());
             }
         } catch (Throwable e) {
             throw e;
