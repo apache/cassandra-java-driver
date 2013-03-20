@@ -59,8 +59,11 @@ def maybe_setup_loopbacks():
 
     if platform.system() == 'Darwin' and not read_config('general', 'no_loopbacks', data_type='boolean'):
         print 'Setting up CCM loopbacks...'
-        loopbacks_enabled = read_commandline('ifconfig | grep "inet 127.0.1.4 netmask 0xff000000"')
-        if not loopbacks_enabled:
+        try:
+            loopbacks_enabled = read_commandline('ifconfig | grep "inet 127.0.1.4 netmask 0xff000000"')
+            if not loopbacks_enabled:
+                raise subprocess.CalledProcessError
+        except subprocess.CalledProcessError:
             # For basic ccm
             execute('sudo ifconfig lo0 alias 127.0.0.2 up')
             execute('sudo ifconfig lo0 alias 127.0.0.3 up')
