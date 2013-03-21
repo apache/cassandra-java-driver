@@ -2,3 +2,6 @@ target/
 .settings
 .classpath
 .project
+doc
+notes
+.DS_Store
