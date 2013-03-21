@@ -225,7 +225,7 @@ public class PreparedStatement {
      * itself). For prepared queries, the current keyspace used is the one at
      * the time of the preparation, not the one at execution time. The current
      * keyspace at the time of the preparation can be retrieved through
-     * {@link #getKeyspaceAtPreparation}.
+     * {@link #getQueryKeyspace}.
      *
      * @return the query that was prepared to yield this
      * {@code PreparedStatement}.

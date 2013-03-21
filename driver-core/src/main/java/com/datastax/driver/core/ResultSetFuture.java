@@ -78,8 +78,10 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
                                     case DROPPED:
                                         if (scc.columnFamily.isEmpty()) {
                                             // If that the one keyspace we are logged in, reset to null (it shouldn't really happen but ...)
-                                            if (scc.keyspace.equals(session.poolsState.keyspace))
-                                                session.poolsState.setKeyspace(null);
+                                            // Note: Actually, Cassandra doesn't do that so we don't either as this could confuse prepared statements.
+                                            // We'll add it back if CASSANDRA-5358 changes that behavior
+                                            //if (scc.keyspace.equals(session.poolsState.keyspace))
+                                            //    session.poolsState.setKeyspace(null);
                                             session.cluster.manager.refreshSchema(connection, ResultSetFuture.this, rs, null, null);
                                         } else {
                                             session.cluster.manager.refreshSchema(connection, ResultSetFuture.this, rs, scc.keyspace, null);
@@ -214,7 +216,15 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
     }
 
     static void extractCauseFromExecutionException(ExecutionException e) {
-        extractCause(e.getCause());
+        // We could just rethrow e.getCause(). However, the cause of the ExecutionException has likely been
+        // created on the I/O thread receiving the response. Which means that the stacktrace associated
+        // with said cause will make no mention of the current thread. This is painful for say, finding
+        // out which execute() statement actually raised the exception. So instead, we re-create the
+        // exception.
+        if (e.getCause() instanceof DriverException)
+            throw ((DriverException)e.getCause()).copy();
+        else
+            throw new DriverInternalError("Unexpected exception thrown", e.getCause());
     }
 
     static void extractCause(Throwable cause) {
