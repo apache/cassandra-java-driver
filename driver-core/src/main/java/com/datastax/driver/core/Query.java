@@ -31,20 +31,18 @@ public abstract class Query {
     // used when preparing a statement and for other internal queries. Do not expose publicly.
     static final Query DEFAULT = new Query() { public ByteBuffer getRoutingKey() { return null; } };
 
-    private volatile ConsistencyLevel consistency;
+    private volatile ConsistencyLevel consistency = ConsistencyLevel.ONE;
     private volatile boolean traceQuery;
 
     private volatile RetryPolicy retryPolicy;
 
     // We don't want to expose the constructor, because the code rely on this being only subclassed by Statement and BoundStatement
-    Query() {
-        this.consistency = ConsistencyLevel.ONE;
-    }
+    Query() {}
 
     /**
      * Sets the consistency level for the query.
      * <p>
-     * The default consistency level, if this method is not called, is ConsistencyLevel.ONE.
+     * By default it is set to the consistency level of the session.
      *
      * @param consistency the consistency level to set.
      * @return this {@code Query} object.
@@ -57,8 +55,7 @@ public abstract class Query {
     /**
      * The consistency level.
      *
-     * @return the consistency level. Returns {@code ConsistencyLevel.ONE} if no
-     * consistency level has been specified.
+     * @return the consistency level. By default it is set to the consistency level of the session.
      */
     public ConsistencyLevel getConsistencyLevel() {
         return consistency;

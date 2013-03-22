@@ -61,6 +61,8 @@ public class Cluster {
 
     final Manager manager;
 
+    private volatile ConsistencyLevel consistency = ConsistencyLevel.ONE;
+
     private Cluster(List<InetAddress> contactPoints, Configuration configuration) {
         this.manager = new Manager(contactPoints, configuration);
         this.manager.init();
@@ -105,12 +107,36 @@ public class Cluster {
     }
 
     /**
+     * Sets the default consistency level for the cluster.
+     * <p>
+     * The default consistency level, if this method is not called, is ConsistencyLevel.ONE.
+     *
+     * @param consistency the consistency level to set.
+     * @return this {@code Cluster} object.
+     */
+    public Cluster setDefaultConsistencyLevel(ConsistencyLevel consistency) {
+        this.consistency = consistency;
+        return this;
+    }
+
+    /**
+     * The default consistency level set through {@link #setDefaultConsistencyLevel}.
+     *
+     * @return the default consistency level. Returns {@code ConsistencyLevel.ONE} if no
+     * consistency level has been set through this object {@code setDefaultConsistencyLevel}
+     * method.
+     */
+    public ConsistencyLevel getDefaultConsistencyLevel() {
+        return consistency;
+    }
+
+    /**
      * Creates a new session on this cluster.
      *
      * @return a new session on this cluster sets to no keyspace.
      */
     public Session connect() {
-        return manager.newSession();
+        return manager.newSession().setDefaultConsistencyLevel(consistency);
     }
 
     /**

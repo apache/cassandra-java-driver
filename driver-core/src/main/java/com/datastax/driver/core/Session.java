@@ -49,9 +49,34 @@ public class Session {
 
     final Manager manager;
 
+    private volatile ConsistencyLevel consistency = ConsistencyLevel.ONE;
+
     // Package protected, only Cluster should construct that.
     Session(Cluster cluster, Collection<Host> hosts) {
         this.manager = new Manager(cluster, hosts);
+    }
+
+    /**
+     * Sets the default consistency level for the session.
+     * <p>
+     * By default it is set to the consistency level of the cluster.
+     *
+     * @param consistency the consistency level to set.
+     * @return this {@code Session} object.
+     */
+    public Session setDefaultConsistencyLevel(ConsistencyLevel consistency) {
+        this.consistency = consistency;
+        return this;
+    }
+
+    /**
+     * The default consistency level set through {@link #setDefaultConsistencyLevel}.
+     *
+     * @return the default consistency level. By default it is set to the consistency level of the cluster.
+     * method.
+     */
+    public ConsistencyLevel getDefaultConsistencyLevel() {
+        return consistency;
     }
 
     /**
@@ -72,7 +97,7 @@ public class Session {
      * unauthorized or any other validation problem).
      */
     public ResultSet execute(String query) {
-        return execute(new SimpleStatement(query));
+        return execute(new SimpleStatement(query).setConsistencyLevel(consistency));
     }
 
     /**
@@ -115,7 +140,7 @@ public class Session {
      * @return a future on the result of the query.
      */
     public ResultSetFuture executeAsync(String query) {
-        return executeAsync(new SimpleStatement(query));
+        return executeAsync(new SimpleStatement(query).setConsistencyLevel(consistency));
     }
 
     /**
@@ -203,7 +228,9 @@ public class Session {
                     switch (rm.kind) {
                         case PREPARED:
                             ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
-                            PreparedStatement stmt = PreparedStatement.fromMessage(pmsg, manager.cluster.getMetadata(), query, manager.poolsState.keyspace);
+                            PreparedStatement stmt = PreparedStatement
+                                .fromMessage(pmsg, manager.cluster.getMetadata(), query, manager.poolsState.keyspace)
+                                .setConsistencyLevel(consistency);
                             try {
                                 manager.cluster.manager.prepare(pmsg.statementId, stmt, future.getAddress());
                             } catch (InterruptedException e) {
