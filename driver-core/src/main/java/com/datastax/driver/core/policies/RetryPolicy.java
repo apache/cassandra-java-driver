@@ -100,6 +100,16 @@ public interface RetryPolicy {
         public static RetryDecision ignore() {
             return new RetryDecision(Type.IGNORE, null);
         }
+
+        @Override
+        public String toString() {
+            switch (type) {
+                case RETRY:   return "Retry at " + retryCL;
+                case RETHROW: return "Rethrow";
+                case IGNORE:  return "Ignore";
+            }
+            throw new AssertionError();
+        }
     }
 
     /**
