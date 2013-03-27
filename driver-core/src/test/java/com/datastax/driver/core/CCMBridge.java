@@ -174,10 +174,7 @@ public class CCMBridge {
         public static void createCluster() {
             erroredOut = false;
             schemaCreated = false;
-            System.out.println("[SETUP] Starting 1-node test cluster...");
-            long startTime = System.nanoTime();
             cassandraCluster = CCMBridge.create("test", 1);
-            System.out.println(String.format("[SETUP] Cluster Launched. (%d.2 seconds elapsed)", (System.nanoTime() - startTime) / 1000000000));
             try {
                 cluster = Cluster.builder().addContactPoints(IP_PREFIX + "1").build();
                 session = cluster.connect();
@@ -220,8 +217,6 @@ public class CCMBridge {
 
                 session.execute("USE " + SIMPLE_KEYSPACE);
 
-                System.out.println(String.format("[SETUP] Applying %s table definitions...", getTableDefinitions().size()));
-                long startTime = System.nanoTime();
                 for (String tableDef : getTableDefinitions()) {
                     try {
                         session.execute(tableDef);
@@ -229,7 +224,6 @@ public class CCMBridge {
                         // It's ok, ignore
                     }
                 }
-                System.out.println(String.format("[SETUP] Table definitions complete. (%d.2 seconds elapsed)", (System.nanoTime() - startTime) / 1000000000));
 
                 schemaCreated = true;
             } catch (DriverException e) {
