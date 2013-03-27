@@ -34,6 +34,13 @@ public class UnavailableException extends QueryExecutionException {
         this.alive = alive;
     }
 
+    private UnavailableException(String message, Throwable cause, ConsistencyLevel consistency, int required, int alive) {
+        super(message, cause);
+        this.consistency = consistency;
+        this.required = required;
+        this.alive = alive;
+    }
+
     /**
      * The consistency level of the operation triggering this unavailable exception.
      *
@@ -63,5 +70,9 @@ public class UnavailableException extends QueryExecutionException {
      */
     public int getAliveReplicas() {
         return alive;
+    }
+
+    public DriverException copy() {
+        return new UnavailableException(getMessage(), this, consistency, required, alive);
     }
 }

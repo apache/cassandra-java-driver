@@ -247,7 +247,7 @@ class ControlConnection implements Host.StateListener {
 
         logger.debug(String.format("[Control connection] Refreshing node list and token map"));
         try {
-            refreshNodeListAndTokenMap(connectionRef.get());
+            refreshNodeListAndTokenMap(c);
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refeshing node list and token map ({})", e.getMessage());
             reconnect();

@@ -31,11 +31,8 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final String TABLE = "test";
     private static final String COUNTER_TABLE = "counters";
 
-    private static final String INSERT_FORMAT = "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)";
-    private static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
-
     protected Collection<String> getTableDefinitions() {
-        return Arrays.asList(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", TABLE),
+        return Arrays.asList(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE),
                              String.format("CREATE TABLE %s (k text PRIMARY KEY, c counter)", COUNTER_TABLE));
     }
 
@@ -43,16 +40,16 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
     public void executeTest() throws Exception {
         // Simple calls to all versions of the execute/executeAsync methods
         String key = "execute_test";
-        ResultSet rs = session.execute(String.format(INSERT_FORMAT, TABLE, key, "foo", 42, 24.03f));
+        ResultSet rs = session.execute(String.format(TestUtils.INSERT_FORMAT, TABLE, key, "foo", 42, 24.03f));
         assertTrue(rs.isExhausted());
 
         // execute
-        checkExecuteResultSet(session.execute(String.format(SELECT_ALL_FORMAT, TABLE)), key);
-        checkExecuteResultSet(session.execute(new SimpleStatement(String.format(SELECT_ALL_FORMAT, TABLE)).setConsistencyLevel(ConsistencyLevel.ONE)), key);
+        checkExecuteResultSet(session.execute(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE)), key);
+        checkExecuteResultSet(session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE)).setConsistencyLevel(ConsistencyLevel.ONE)), key);
 
         // executeAsync
-        checkExecuteResultSet(session.executeAsync(String.format(SELECT_ALL_FORMAT, TABLE)).getUninterruptibly(), key);
-        checkExecuteResultSet(session.executeAsync(new SimpleStatement(String.format(SELECT_ALL_FORMAT, TABLE)).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
+        checkExecuteResultSet(session.executeAsync(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE)).getUninterruptibly(), key);
+        checkExecuteResultSet(session.executeAsync(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE)).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
     }
 
     @Test(groups = "integration")
@@ -60,10 +57,10 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         // Simple calls to all versions of the execute/executeAsync methods for prepared statements
         // Note: the goal is only to exercice the Session methods, PreparedStatementTest have better prepared statement tests.
         String key = "execute_prepared_test";
-        ResultSet rs = session.execute(String.format(INSERT_FORMAT, TABLE, key, "foo", 42, 24.03f));
+        ResultSet rs = session.execute(String.format(TestUtils.INSERT_FORMAT, TABLE, key, "foo", 42, 24.03f));
         assertTrue(rs.isExhausted());
 
-        PreparedStatement p = session.prepare(String.format(SELECT_ALL_FORMAT + " WHERE k = ?", TABLE));
+        PreparedStatement p = session.prepare(String.format(TestUtils.SELECT_ALL_FORMAT + " WHERE k = ?", TABLE));
         BoundStatement bs = p.bind(key);
 
         // executePrepared
@@ -85,22 +82,25 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(row.getFloat("f"), 24.03f, 0.1f);
     }
 
-    @Test(groups = "integration")
-    public void setAndDropKeyspaceTest() throws Exception {
-        // Check that if someone set a keyspace and then drop it, we recognize
-        // that fact and don't assume he is still set to this keyspace
+    // That test is currently disabled because we actually want to assume drop
+    // doesn't "delog" from a keyspace as this is what Cassandra does. We
+    // may change that depending on the resulotion of CASSANDRA-5358
+    //@Test(groups = "integration")
+    //public void setAndDropKeyspaceTest() throws Exception {
+    //    // Check that if someone set a keyspace and then drop it, we recognize
+    //    // that fact and don't assume he is still set to this keyspace
 
-        try {
-            session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, "to_drop", 1));
-            session.execute("USE to_drop");
-            session.execute("DROP KEYSPACE to_drop");
+    //    try {
+    //        session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, "to_drop", 1));
+    //        session.execute("USE to_drop");
+    //        session.execute("DROP KEYSPACE to_drop");
 
-            assertEquals(session.manager.poolsState.keyspace, null);
-        } finally {
-            // restore the correct state for remaining states
-            session.execute("USE " + TestUtils.SIMPLE_KEYSPACE);
-        }
-    }
+    //        assertEquals(session.manager.poolsState.keyspace, null);
+    //    } finally {
+    //        // restore the correct state for remaining states
+    //        session.execute("USE " + TestUtils.SIMPLE_KEYSPACE);
+    //    }
+    //}
 
     @Test(groups = "integration")
     public void executePreparedCounterTest() throws Exception {
@@ -128,10 +128,10 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
             // Simple calls to all versions of the execute/executeAsync methods
             String key = "execute_compressed_test";
-            ResultSet rs = compressedSession.execute(String.format(INSERT_FORMAT, TABLE, key, "foo", 42, 24.03f));
+            ResultSet rs = compressedSession.execute(String.format(TestUtils.INSERT_FORMAT, TABLE, key, "foo", 42, 24.03f));
             assertTrue(rs.isExhausted());
 
-            String SELECT_ALL = String.format(SELECT_ALL_FORMAT + " WHERE k = '%s'", TABLE, key);
+            String SELECT_ALL = String.format(TestUtils.SELECT_ALL_FORMAT + " WHERE k = '%s'", TABLE, key);
 
             // execute
             checkExecuteResultSet(compressedSession.execute(SELECT_ALL), key);

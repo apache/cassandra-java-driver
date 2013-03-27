@@ -23,4 +23,12 @@ public class TruncateException extends QueryExecutionException {
     public TruncateException(String msg) {
         super(msg);
     }
+
+    private TruncateException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
+
+    public DriverException copy() {
+        return new TruncateException(getMessage(), this);
+    }
 }

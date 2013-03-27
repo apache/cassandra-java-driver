@@ -98,12 +98,20 @@ public class CCMBridge {
         execute("ccm stop");
     }
 
+    public void force_stop() {
+        execute("ccm stop --not-gently");
+    }
+
     public void start(int n) {
         execute("ccm node%d start", n);
     }
 
     public void stop(int n) {
         execute("ccm node%d stop", n);
+    }
+
+    public void force_stop(int n) {
+        execute("ccm node%d stop --not-gently", n);
     }
 
     public void remove() {

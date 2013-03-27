@@ -29,6 +29,12 @@ public class AuthenticationException extends DriverException {
         this.host = host;
     }
 
+    private AuthenticationException(String message, Throwable cause, InetAddress host)
+    {
+        super(message, cause);
+        this.host = host;
+    }
+
     /**
      * The host for which the authentication failed.
      *
@@ -36,5 +42,9 @@ public class AuthenticationException extends DriverException {
      */
     public InetAddress getHost() {
         return host;
+    }
+
+    public DriverException copy() {
+        return new AuthenticationException(getMessage(), this, host);
     }
 }

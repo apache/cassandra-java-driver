@@ -23,4 +23,12 @@ public class InvalidQueryException extends QueryValidationException {
     public InvalidQueryException(String msg) {
         super(msg);
     }
+
+    private InvalidQueryException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
+
+    public DriverException copy() {
+        return new InvalidQueryException(getMessage(), this);
+    }
 }
