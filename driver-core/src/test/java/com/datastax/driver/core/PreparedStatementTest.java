@@ -116,6 +116,27 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
+    /**
+     * Almost the same as preparedNativeTest, but it uses getFixedValue2() instead.
+     */
+    @Test
+    public void preparedNativeTest2() {
+        // Test preparing/bounding for all native types
+        for (DataType type : DataType.allPrimitiveTypes()) {
+            // This must be handled separatly
+            if (exclude(type))
+                continue;
+
+            String name = "c_" + type;
+            PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_native', ?)", ALL_NATIVE_TABLE, name));
+            BoundStatement bs = ps.bind();
+            session.execute(setBoundValue(bs, name, type, getFixedValue2(type)));
+
+            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).one();
+            assertEquals("For type " + type, getFixedValue2(type), getValue(row, name, type));
+        }
+    }
+
     @Test(groups = "integration")
     public void prepareListTest() {
         // Test preparing/bounding for all possible list types

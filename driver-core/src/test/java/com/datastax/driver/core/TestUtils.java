@@ -235,6 +235,59 @@ public abstract class TestUtils {
         throw new RuntimeException("Missing handling of " + type);
     }
 
+    // Always return the "same" value for each type
+    public static Object getFixedValue2(final DataType type) {
+        try {
+            switch (type.getName()) {
+                case ASCII:
+                    return "A different ascii string";
+                case BIGINT:
+                    return Long.MAX_VALUE;
+                case BLOB:
+                    ByteBuffer bb = ByteBuffer.allocate(64);
+                    bb.putInt(0xCAFE);
+                    bb.putShort((short) 3);
+                    bb.putShort((short) 45);
+                    return bb;
+                case BOOLEAN:
+                    return false;
+                case COUNTER:
+                    throw new UnsupportedOperationException("Cannot 'getSomeValue' for counters");
+                case DECIMAL:
+                    return new BigDecimal("12.3E+7");
+                case DOUBLE:
+                    return Double.POSITIVE_INFINITY;
+                case FLOAT:
+                    return Float.POSITIVE_INFINITY;
+                case INET:
+                    return InetAddress.getByName("123.123.123.123");
+                case INT:
+                    return Integer.MAX_VALUE;
+                case TEXT:
+                    return "A different text string";
+                case TIMESTAMP:
+                    return new Date(872835240000L);
+                case UUID:
+                    return UUID.fromString("067e6162-3b6f-4ae2-a171-2470b63dff00");
+                case VARCHAR:
+                    return "A different varchar string";
+                case VARINT:
+                    return new BigInteger(Integer.toString(Integer.MAX_VALUE) + "000");
+                case TIMEUUID:
+                    return UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66");
+                case LIST:
+                    return new ArrayList(){{ add(getFixedValue2(type.getTypeArguments().get(0))); }};
+                case SET:
+                    return new HashSet(){{ add(getFixedValue2(type.getTypeArguments().get(0))); }};
+                case MAP:
+                    return new HashMap(){{ put(getFixedValue2(type.getTypeArguments().get(0)), getFixedValue2(type.getTypeArguments().get(1))); }};
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        throw new RuntimeException("Missing handling of " + type);
+    }
+
     // Wait for a node to be up and running
     // This is used because there is some delay between when a node has been
     // added through ccm and when it's actually available for querying
