@@ -90,6 +90,10 @@
 
 	<profile>
 		<id>integration</id>
+		<properties>
+            <env>default</env>
+            <cassandra.version>1.2.3</cassandra.version>
+        </properties>
 		<build>
 			<plugins>
 				<plugin>

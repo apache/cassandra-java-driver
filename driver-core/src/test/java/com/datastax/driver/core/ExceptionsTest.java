@@ -20,9 +20,10 @@ import java.util.*;
 import java.net.InetAddress;
 import java.util.HashMap;
 
-import org.junit.Test;
-import org.junit.matchers.JUnitMatchers;
-import static org.junit.Assert.*;
+import org.apache.commons.lang.StringUtils;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.*;
 
 /**
  * Tests Exception classes with seperate clusters per test, when applicable
@@ -34,7 +35,7 @@ public class ExceptionsTest{
      * Create a keyspace twice and a table twice.
      * Catch and test all the exception methods.
      */
-    @Test
+    @Test(groups = "integration")
     public void alreadyExistsException() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(1, builder);
@@ -59,10 +60,10 @@ public class ExceptionsTest{
                 session.execute(cqlCommands[0]);
             } catch (AlreadyExistsException e) {
                 String expected = String.format("Keyspace %s already exists", keyspace.toLowerCase());
-                assertEquals(expected, e.getMessage());
-                assertEquals(keyspace.toLowerCase(), e.getKeyspace());
-                assertEquals(null, e.getTable());
-                assertEquals(false, e.wasTableCreation());
+                assertEquals(e.getMessage(), expected);
+                assertEquals(e.getKeyspace(), keyspace.toLowerCase());
+                assertEquals(e.getTable(), null);
+                assertEquals(e.wasTableCreation(), false);
             }
 
             session.execute(cqlCommands[1]);
@@ -73,9 +74,9 @@ public class ExceptionsTest{
             } catch (AlreadyExistsException e) {
                 // TODO: Pending CASSANDRA-5362 this won't work. So let's re-enable this once C* 1.2.4
                 // is released
-                //assertEquals(keyspace.toLowerCase(), e.getKeyspace());
-                //assertEquals(table.toLowerCase(), e.getTable());
-                assertEquals(true, e.wasTableCreation());
+                //assertEquals(e.getKeyspace(), keyspace.toLowerCase());
+                //assertEquals(e.getTable(), table.toLowerCase());
+                assertEquals(e.wasTableCreation(), true);
             }
         } catch (Throwable e) {
             throw e;
@@ -96,7 +97,7 @@ public class ExceptionsTest{
      * Tests DriverInternalError.
      * Tests basic message, rethrow, and copy abilities.
      */
-    @Test
+    @Test(groups = "integration")
     public void driverInternalError() throws Exception {
         String errorMessage = "Test Message";
 
@@ -106,10 +107,10 @@ public class ExceptionsTest{
             try {
                 throw new DriverInternalError(e1);
             } catch (DriverInternalError e2) {
-                assertThat(e2.getMessage(), JUnitMatchers.containsString(errorMessage));
+                assertTrue(StringUtils.contains(e2.getMessage(), errorMessage));
 
                 DriverInternalError copy = (DriverInternalError) e2.copy();
-                assertEquals(e2.getMessage(), copy.getMessage());
+                assertEquals(copy.getMessage(), e2.getMessage());
             }
         }
     }
@@ -118,14 +119,14 @@ public class ExceptionsTest{
      * Tests InvalidConfigurationInQueryException.
      * Tests basic message abilities.
      */
-    @Test
+    @Test(groups = "integration")
     public void invalidConfigurationInQueryException() throws Exception {
         String errorMessage = "Test Message";
 
         try {
             throw new InvalidConfigurationInQueryException(errorMessage);
         } catch (InvalidConfigurationInQueryException e) {
-            assertEquals(errorMessage, e.getMessage());
+            assertEquals(e.getMessage(), errorMessage);
         }
     }
 
@@ -133,17 +134,17 @@ public class ExceptionsTest{
      * Tests InvalidQueryException.
      * Tests basic message and copy abilities.
      */
-    @Test
+    @Test(groups = "integration")
     public void invalidQueryException() throws Exception {
         String errorMessage = "Test Message";
 
         try {
             throw new InvalidQueryException(errorMessage);
         } catch (InvalidQueryException e) {
-            assertEquals(errorMessage, e.getMessage());
+            assertEquals(e.getMessage(), errorMessage);
 
             InvalidQueryException copy = (InvalidQueryException) e.copy();
-            assertEquals(e.getMessage(), copy.getMessage());
+            assertEquals(copy.getMessage(), e.getMessage());
         }
     }
 
@@ -151,17 +152,17 @@ public class ExceptionsTest{
      * Tests InvalidTypeException.
      * Tests basic message and copy abilities.
      */
-    @Test
+    @Test(groups = "integration")
     public void invalidTypeException() throws Exception {
         String errorMessage = "Test Message";
 
         try {
             throw new InvalidTypeException(errorMessage);
         } catch (InvalidTypeException e) {
-            assertEquals(errorMessage, e.getMessage());
+            assertEquals(e.getMessage(), errorMessage);
 
             InvalidTypeException copy = (InvalidTypeException) e.copy();
-            assertEquals(e.getMessage(), copy.getMessage());
+            assertEquals(copy.getMessage(), e.getMessage());
         }
     }
 
@@ -170,7 +171,7 @@ public class ExceptionsTest{
      * by attempting to build a cluster using the IP address "255.255.255.255"
      * and test all available exception methods.
      */
-    @Test
+    @Test(groups = "integration")
     public void noHostAvailableException() throws Exception {
         String ipAddress = "255.255.255.255";
         HashMap<InetAddress, String> errorsHashMap = new HashMap<InetAddress, String>();
@@ -179,12 +180,12 @@ public class ExceptionsTest{
         try {
             Cluster cluster = Cluster.builder().addContactPoints("255.255.255.255").build();
         } catch (NoHostAvailableException e) {
-            assertEquals(String.format("All host(s) tried for query failed (tried: [/%s])", ipAddress), e.getMessage());
-            assertEquals(errorsHashMap, e.getErrors());
+            assertEquals(e.getMessage(), String.format("All host(s) tried for query failed (tried: [/%s])", ipAddress));
+            assertEquals(e.getErrors(), errorsHashMap);
 
             NoHostAvailableException copy = (NoHostAvailableException) e.copy();
-            assertEquals(e.getMessage(), copy.getMessage());
-            assertEquals(e.getErrors(), copy.getErrors());
+            assertEquals(copy.getMessage(), e.getMessage());
+            assertEquals(copy.getErrors(), e.getErrors());
         }
     }
 
@@ -194,7 +195,7 @@ public class ExceptionsTest{
      * Then forcibly kill single node and attempt a read of the key at CL.ALL.
      * Catch and test all available exception methods.
      */
-    @Test
+    @Test(groups = "integration")
     public void readTimeoutException() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(3, builder);
@@ -218,14 +219,14 @@ public class ExceptionsTest{
             try{
                 session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (ReadTimeoutException e) {
-                assertEquals(ConsistencyLevel.ALL, e.getConsistencyLevel());
-                assertEquals(2, e.getReceivedAcknowledgements());
-                assertEquals(3, e.getRequiredAcknowledgements());
+                assertEquals(e.getConsistencyLevel(), ConsistencyLevel.ALL);
+                assertEquals(e.getReceivedAcknowledgements(), 2);
+                assertEquals(e.getRequiredAcknowledgements(), 3);
                 assertEquals(e.wasDataRetrieved(), true);
 
                 ReadTimeoutException copy = (ReadTimeoutException) e.copy();
-                assertEquals(e.getMessage(), copy.getMessage());
-                assertEquals(e.wasDataRetrieved(), copy.wasDataRetrieved());
+                assertEquals(copy.getMessage(), e.getMessage());
+                assertEquals(copy.wasDataRetrieved(), e.wasDataRetrieved());
             }
         } catch (Throwable e) {
             throw e;
@@ -238,17 +239,17 @@ public class ExceptionsTest{
      * Tests SyntaxError.
      * Tests basic message and copy abilities.
      */
-    @Test
+    @Test(groups = "integration")
     public void syntaxError() throws Exception {
         String errorMessage = "Test Message";
 
         try {
             throw new SyntaxError(errorMessage);
         } catch (SyntaxError e) {
-            assertEquals(errorMessage, e.getMessage());
+            assertEquals(e.getMessage(), errorMessage);
 
             SyntaxError copy = (SyntaxError) e.copy();
-            assertEquals(e.getMessage(), copy.getMessage());
+            assertEquals(copy.getMessage(), e.getMessage());
         }
     }
 
@@ -256,17 +257,17 @@ public class ExceptionsTest{
      * Tests TraceRetrievalException.
      * Tests basic message and copy abilities.
      */
-    @Test
+    @Test(groups = "integration")
     public void traceRetrievalException() throws Exception {
         String errorMessage = "Test Message";
 
         try {
             throw new TraceRetrievalException(errorMessage);
         } catch (TraceRetrievalException e) {
-            assertEquals(errorMessage, e.getMessage());
+            assertEquals(e.getMessage(), errorMessage);
 
             TraceRetrievalException copy = (TraceRetrievalException) e.copy();
-            assertEquals(e.getMessage(), copy.getMessage());
+            assertEquals(copy.getMessage(), e.getMessage());
         }
     }
 
@@ -274,17 +275,17 @@ public class ExceptionsTest{
      * Tests TruncateException.
      * Tests basic message and copy abilities.
      */
-    @Test
+    @Test(groups = "integration")
     public void truncateException() throws Exception {
         String errorMessage = "Test Message";
 
         try {
             throw new TruncateException(errorMessage);
         } catch (TruncateException e) {
-            assertEquals(errorMessage, e.getMessage());
+            assertEquals(e.getMessage(), errorMessage);
 
             TruncateException copy = (TruncateException) e.copy();
-            assertEquals(e.getMessage(), copy.getMessage());
+            assertEquals(copy.getMessage(), e.getMessage());
         }
     }
 
@@ -292,17 +293,17 @@ public class ExceptionsTest{
      * Tests UnauthorizedException.
      * Tests basic message and copy abilities.
      */
-    @Test
+    @Test(groups = "integration")
     public void unauthorizedException() throws Exception {
         String errorMessage = "Test Message";
 
         try {
             throw new UnauthorizedException(errorMessage);
         } catch (UnauthorizedException e) {
-            assertEquals(errorMessage, e.getMessage());
+            assertEquals(e.getMessage(), errorMessage);
 
             UnauthorizedException copy = (UnauthorizedException) e.copy();
-            assertEquals(e.getMessage(), copy.getMessage());
+            assertEquals(copy.getMessage(), e.getMessage());
         }
     }
 
@@ -313,7 +314,7 @@ public class ExceptionsTest{
      * and attempt to read and write the same key at CL.ALL.
      * Catch and test all available exception methods.
      */
-    @Test
+    @Test(groups = "integration")
     public void unavailableException() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(3, builder);
@@ -341,20 +342,20 @@ public class ExceptionsTest{
                 session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (UnavailableException e) {
                 String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
-                assertEquals(expectedError, e.getMessage());
-                assertEquals(ConsistencyLevel.ALL, e.getConsistency());
-                assertEquals(replicationFactor, e.getRequiredReplicas());
-                assertEquals(replicationFactor - 1, e.getAliveReplicas());
+                assertEquals(e.getMessage(), expectedError);
+                assertEquals(e.getConsistency(), ConsistencyLevel.ALL);
+                assertEquals(e.getRequiredReplicas(), replicationFactor);
+                assertEquals(e.getAliveReplicas(), replicationFactor - 1);
             }
 
             try{
                 session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (UnavailableException e) {
                 String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
-                assertEquals(expectedError, e.getMessage());
-                assertEquals(ConsistencyLevel.ALL, e.getConsistency());
-                assertEquals(replicationFactor, e.getRequiredReplicas());
-                assertEquals(replicationFactor - 1, e.getAliveReplicas());
+                assertEquals(e.getMessage(), expectedError);
+                assertEquals(e.getConsistency(), ConsistencyLevel.ALL);
+                assertEquals(e.getRequiredReplicas(), replicationFactor);
+                assertEquals(e.getAliveReplicas(), replicationFactor - 1);
             }
         } catch (Throwable e) {
             throw e;
@@ -369,7 +370,7 @@ public class ExceptionsTest{
      * Then forcibly kill single node and attempt to write the same key at CL.ALL.
      * Catch and test all available exception methods.
      */
-    @Test
+    @Test(groups = "integration")
     public void writeTimeoutException() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(3, builder);
@@ -393,10 +394,10 @@ public class ExceptionsTest{
             try{
                 session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (WriteTimeoutException e) {
-                assertEquals(ConsistencyLevel.ALL, e.getConsistencyLevel());
-                assertEquals(2, e.getReceivedAcknowledgements());
-                assertEquals(3, e.getRequiredAcknowledgements());
-                assertEquals(WriteType.SIMPLE, e.getWriteType());
+                assertEquals(e.getConsistencyLevel(), ConsistencyLevel.ALL);
+                assertEquals(e.getReceivedAcknowledgements(), 2);
+                assertEquals(e.getRequiredAcknowledgements(), 3);
+                assertEquals(e.getWriteType(), WriteType.SIMPLE);
             }
         } catch (Throwable e) {
             throw e;
