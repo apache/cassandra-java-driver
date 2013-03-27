@@ -527,7 +527,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
                 System.out.println(String.format("%1$-30s {%2$s : %3$s}", dataType, mapKey, mapValue));
             } else {
                 DataType typeArgument = sampleValueMap.keySet().iterator().next();
-                Object sampleValue = (Object) sampleValueMap.get(typeArgument);
+                Object sampleValue = sampleValueMap.get(typeArgument);
 
                 System.out.println(String.format("%1$-30s %2$s", dataType, sampleValue));
             }
