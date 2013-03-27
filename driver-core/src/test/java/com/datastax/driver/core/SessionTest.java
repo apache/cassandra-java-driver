@@ -17,8 +17,9 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.*;
 
 import com.datastax.driver.core.exceptions.*;
 
@@ -38,7 +39,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
                              String.format("CREATE TABLE %s (k text PRIMARY KEY, c counter)", COUNTER_TABLE));
     }
 
-    @Test
+    @Test(groups = "integration")
     public void executeTest() throws Exception {
         // Simple calls to all versions of the execute/executeAsync methods
         String key = "execute_test";
@@ -54,7 +55,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         checkExecuteResultSet(session.executeAsync(new SimpleStatement(String.format(SELECT_ALL_FORMAT, TABLE)).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
     }
 
-    @Test
+    @Test(groups = "integration")
     public void executePreparedTest() throws Exception {
         // Simple calls to all versions of the execute/executeAsync methods for prepared statements
         // Note: the goal is only to exercice the Session methods, PreparedStatementTest have better prepared statement tests.
@@ -78,13 +79,13 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         assertTrue(!rs.isExhausted());
         Row row = rs.one();
         assertTrue(rs.isExhausted());
-        assertEquals(key,    row.getString("k"));
-        assertEquals("foo",  row.getString("t"));
-        assertEquals(42,     row.getInt("i"));
-        assertEquals(24.03f, row.getFloat("f"), 0.1f);
+        assertEquals(row.getString("k"), key);
+        assertEquals(row.getString("t"), "foo");
+        assertEquals(row.getInt("i"), 42);
+        assertEquals(row.getFloat("f"), 24.03f, 0.1f);
     }
 
-    @Test
+    @Test(groups = "integration")
     public void setAndDropKeyspaceTest() throws Exception {
         // Check that if someone set a keyspace and then drop it, we recognize
         // that fact and don't assume he is still set to this keyspace
@@ -94,14 +95,14 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute("USE to_drop");
             session.execute("DROP KEYSPACE to_drop");
 
-            assertEquals(null, session.manager.poolsState.keyspace);
+            assertEquals(session.manager.poolsState.keyspace, null);
         } finally {
             // restore the correct state for remaining states
             session.execute("USE " + TestUtils.SIMPLE_KEYSPACE);
         }
     }
 
-    @Test
+    @Test(groups = "integration")
     public void executePreparedCounterTest() throws Exception {
         PreparedStatement p = session.prepare("UPDATE " + COUNTER_TABLE + " SET c = c + ? WHERE k = ?");
 
@@ -110,11 +111,11 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         ResultSet rs = session.execute("SELECT * FROM " + COUNTER_TABLE);
         List<Row> rows = rs.all();
-        assertEquals(1, rows.size());
-        assertEquals(2L, rows.get(0).getLong("c"));
+        assertEquals(rows.size(), 1);
+        assertEquals(rows.get(0).getLong("c"), 2L);
     }
 
-    @Test
+    @Test(groups = "integration")
     public void compressionTest() throws Exception {
 
         // Same as executeTest, but with compression enabled

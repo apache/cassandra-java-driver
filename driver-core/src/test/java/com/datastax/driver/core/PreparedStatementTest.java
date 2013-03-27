@@ -17,8 +17,9 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.*;
 
 import com.datastax.driver.core.exceptions.*;
 import static com.datastax.driver.core.TestUtils.*;
@@ -97,7 +98,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         return defs;
     }
 
-    @Test
+    @Test(groups = "integration")
     public void preparedNativeTest() {
         // Test preparing/bounding for all native types
         for (DataType type : DataType.allPrimitiveTypes()) {
@@ -111,11 +112,11 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(setBoundValue(bs, name, type, getFixedValue(type)));
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).one();
-            assertEquals("For type " + type, getFixedValue(type), getValue(row, name, type));
+            assertEquals(getValue(row, name, type), getFixedValue(type), "For type " + type);
         }
     }
 
-    @Test
+    @Test(groups = "integration")
     public void prepareListTest() {
         // Test preparing/bounding for all possible list types
         for (DataType rawType : DataType.allPrimitiveTypes()) {
@@ -131,11 +132,11 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(setBoundValue(bs, name, type, value));
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).one();
-            assertEquals("For type " + type, value, getValue(row, name, type));
+            assertEquals(getValue(row, name, type), value,"For type " + type);
         }
     }
 
-    @Test
+    @Test(groups = "integration")
     public void prepareSetTest() {
         // Test preparing/bounding for all possible set types
         for (DataType rawType : DataType.allPrimitiveTypes()) {
@@ -151,11 +152,11 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(setBoundValue(bs, name, type, value));
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).one();
-            assertEquals("For type " + type, value, getValue(row, name, type));
+            assertEquals(getValue(row, name, type), value, "For type " + type);
         }
     }
 
-    @Test
+    @Test(groups = "integration")
     public void prepareMapTest() {
         // Test preparing/bounding for all possible map types
         for (DataType rawKeyType : DataType.allPrimitiveTypes()) {
@@ -176,7 +177,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 session.execute(setBoundValue(bs, name, type, value));
 
                 Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).one();
-                assertEquals("For type " + type, value, getValue(row, name, type));
+                assertEquals(getValue(row, name, type), value, "For type " + type);
             }
         }
     }
@@ -190,7 +191,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         PreparedStatement ps = session.prepare("SELECT * FROM " + ks + "test WHERE k = ?");
 
-        assertEquals(17, session.execute(ps.bind("123")).one().getInt("i"));
+        assertEquals(session.execute(ps.bind("123")).one().getInt("i"), 17);
 
         cassandraCluster.stop();
         // We have one node, so if we shut it down and do nothing, the driver
@@ -205,7 +206,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         try
         {
-            assertEquals(18, session.execute(ps.bind("124")).one().getInt("i"));
+            assertEquals(session.execute(ps.bind("124")).one().getInt("i"), 18);
         }
         catch (NoHostAvailableException e)
         {
@@ -214,12 +215,12 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @Test
+    @Test(groups = "integration")
     public void reprepareOnNewlyUpNodeTest() throws Exception {
         reprepareOnNewlyUpNodeTest(null, session);
     }
 
-    @Test
+    @Test(groups = "integration")
     public void reprepareOnNewlyUpNodeNoKeyspaceTest() throws Exception {
 
         // This is the same test than reprepareOnNewlyUpNodeTest, except that the

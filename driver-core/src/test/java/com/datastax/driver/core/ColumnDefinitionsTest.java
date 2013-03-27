@@ -15,12 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import org.junit.Test;
-import static junit.framework.Assert.*;
+import static org.testng.Assert.*;
+
+import org.testng.annotations.Test;
 
 public class ColumnDefinitionsTest {
 
-    @Test
+    @Test(groups = "unit")
     public void caseTest() {
 
         ColumnDefinitions defs;
@@ -57,7 +58,7 @@ public class ColumnDefinitionsTest {
         assertTrue(defs.getType("\"\"in quote\"\"").equals(DataType.text()));
     }
 
-    @Test
+    @Test(groups = "unit")
     public void multiDefinitionTest() {
 
         ColumnDefinitions defs = new ColumnDefinitions(new ColumnDefinitions.Definition[]{

@@ -18,8 +18,9 @@ package com.datastax.driver.core.querybuilder;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.*;
 
 import com.datastax.driver.core.*;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
@@ -34,7 +35,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
                              String.format("CREATE TABLE %s (k int PRIMARY KEY, a int, b int)", TABLE_INT));
     }
 
-    @Test
+    @Test(groups = "integration")
     public void textRoutingKeyTest() throws Exception {
 
         Statement query;
@@ -43,18 +44,18 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
 
         String txt = "If she weighs the same as a duck... she's made of wood.";
         query = insertInto(table).values(new String[]{"k", "a", "b"}, new Object[]{txt, 1, 2});
-        assertEquals(ByteBuffer.wrap(txt.getBytes()), query.getRoutingKey());
+        assertEquals(query.getRoutingKey(), ByteBuffer.wrap(txt.getBytes()));
         session.execute(query);
 
         query = select().from(table).where(eq("k", txt));
-        assertEquals(ByteBuffer.wrap(txt.getBytes()), query.getRoutingKey());
+        assertEquals(query.getRoutingKey(), ByteBuffer.wrap(txt.getBytes()));
         Row row = session.execute(query).one();
-        assertEquals(txt, row.getString("k"));
-        assertEquals(1, row.getInt("a"));
-        assertEquals(2, row.getInt("b"));
+        assertEquals(row.getString("k"), txt);
+        assertEquals(row.getInt("a"), 1);
+        assertEquals(row.getInt("b"), 2);
     }
 
-    @Test
+    @Test(groups = "integration")
     public void intRoutingKeyTest() throws Exception {
 
         Statement query;
@@ -64,14 +65,14 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         query = insertInto(table).values(new String[]{"k", "a", "b"}, new Object[]{42, 1, 2});
         ByteBuffer bb = ByteBuffer.allocate(4);
         bb.putInt(0, 42);
-        assertEquals(bb, query.getRoutingKey());
+        assertEquals(query.getRoutingKey(), bb);
         session.execute(query);
 
         query = select().from(table).where(eq("k", 42));
-        assertEquals(bb, query.getRoutingKey());
+        assertEquals(query.getRoutingKey(), bb);
         Row row = session.execute(query).one();
-        assertEquals(42, row.getInt("k"));
-        assertEquals(1, row.getInt("a"));
-        assertEquals(2, row.getInt("b"));
+        assertEquals(row.getInt("k"), 42);
+        assertEquals(row.getInt("a"), 1);
+        assertEquals(row.getInt("b"), 2);
     }
 }

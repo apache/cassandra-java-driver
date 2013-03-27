@@ -19,8 +19,9 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.*;
 
 import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.exceptions.*;
@@ -55,7 +56,7 @@ public class LoadBalancingPolicyTest {
     private void assertQueried(String host, int n) {
         try {
             Integer queried = coordinators.get(InetAddress.getByName(host));
-            assertEquals("For " + host, n, queried == null ? 0 : queried);
+            assertEquals(queried == null ? 0 : queried, n, "For " + host);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -91,7 +92,7 @@ public class LoadBalancingPolicyTest {
         }
     }
 
-    @Test
+    @Test(groups = "integration")
     public void roundRobinTest() throws Throwable {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy());
@@ -123,7 +124,7 @@ public class LoadBalancingPolicyTest {
         }
     }
 
-    @Test
+    @Test(groups = "integration")
     public void DCAwareRoundRobinTest() throws Throwable {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc2"));
@@ -147,12 +148,12 @@ public class LoadBalancingPolicyTest {
         }
     }
 
-    @Test
+    @Test(groups = "integration")
     public void tokenAwareTest() throws Throwable {
         tokenAwareTest(false);
     }
 
-    @Test
+    @Test(groups = "integration")
     public void tokenAwarePreparedTest() throws Throwable {
         tokenAwareTest(true);
     }

@@ -19,10 +19,6 @@ import java.io.*;
 import java.net.InetAddress;
 import java.util.*;
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-
 import com.datastax.driver.core.exceptions.*;
 import static com.datastax.driver.core.TestUtils.*;
 
@@ -30,6 +26,8 @@ import com.google.common.io.Files;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 
 public class CCMBridge {
 
@@ -196,7 +194,7 @@ public class CCMBridge {
             }
         }
 
-        @Before
+        @BeforeClass
         public void maybeCreateSchema() {
 
             try {
