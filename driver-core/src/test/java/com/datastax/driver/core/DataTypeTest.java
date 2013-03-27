@@ -1,6 +1,3 @@
-// TODO: Check "protected final static"
-// TODO: "DataType typeArgument : sampleValueMap.keySet(..." might not be needed
-//       since it will always be one.
 /*
  *      Copyright (C) 2012 DataStax Inc.
  *
@@ -341,26 +338,22 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
 
                 insertStatements.add(String.format(MAP_INSERT_FORMAT, tableName, key, value));
             } else if (dataType.getName() == DataType.Name.LIST) {
-                for (DataType typeArgument : sampleValueMap.keySet()) {
+                DataType typeArgument = sampleValueMap.keySet().iterator().next();
+                key = helperStringifiedData(typeArgument);
 
-                    key = helperStringifiedData(typeArgument);
+                // Create the value to be a list of the same 5 elements
+                value = "[";
+                for (int i = 0; i < 5; i++)
+                    value += key + ",";
+                value = value.substring(0, value.length() - 1) + "]";
 
-                    // Create the value to be a list of the same 5 elements
-                    value = "[";
-                    for (int i = 0; i < 5; i++)
-                        value += key + ",";
-                    value = value.substring(0, value.length() - 1) + "]";
-
-                    insertStatements.add(String.format(COLLECTION_INSERT_FORMAT, tableName, key, value));
-                }
+                insertStatements.add(String.format(COLLECTION_INSERT_FORMAT, tableName, key, value));
             } else {
-                for (DataType typeArgument : sampleValueMap.keySet()) {
+                DataType typeArgument = sampleValueMap.keySet().iterator().next();
+                key = helperStringifiedData(typeArgument);
+                value = "{" + key + "}";
 
-                    key = helperStringifiedData(typeArgument);
-                    value = "{" + key + "}";
-
-                    insertStatements.add(String.format(COLLECTION_INSERT_FORMAT, tableName, key, value));
-                }
+                insertStatements.add(String.format(COLLECTION_INSERT_FORMAT, tableName, key, value));
             }
         }
 
@@ -533,12 +526,10 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
                 Object mapValue = sampleMap.get(typeArgument);
                 System.out.println(String.format("%1$-30s {%2$s : %3$s}", dataType, mapKey, mapValue));
             } else {
-                for (DataType typeArgument : sampleValueMap.keySet()) {
-                    Object sampleValue = (Object) sampleValueMap.get(typeArgument);
+                DataType typeArgument = sampleValueMap.keySet().iterator().next();
+                Object sampleValue = (Object) sampleValueMap.get(typeArgument);
 
-                    System.out.println(String.format("%1$-30s %2$s", dataType, sampleValue));
-                }
-
+                System.out.println(String.format("%1$-30s %2$s", dataType, sampleValue));
             }
         }
     }
