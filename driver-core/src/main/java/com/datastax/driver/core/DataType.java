@@ -128,15 +128,19 @@ public class DataType {
     private final List<DataType> typeArguments;
 
     private static final Map<Name, DataType> primitiveTypeMap = new EnumMap<Name, DataType>(Name.class);
+    private static final Map<Name, DataType> nonPrimitiveTypeMap = new EnumMap<Name, DataType>(Name.class);
     static {
         for (Name name : Name.values()) {
             if (!name.isCollection())
                 primitiveTypeMap.put(name, new DataType(name, Collections.<DataType>emptyList()));
+            else
+                nonPrimitiveTypeMap.put(name, new DataType(name, Collections.<DataType>emptyList()));
         }
     }
-    private static final Set<DataType> primitveTypeSet = ImmutableSet.copyOf(primitiveTypeMap.values());
+    private static final Set<DataType> primitiveTypeSet = ImmutableSet.copyOf(primitiveTypeMap.values());
+    private static final Set<DataType.Name> nonPrimitiveNameSet = ImmutableSet.copyOf(nonPrimitiveTypeMap.keySet());
 
-    private DataType(DataType.Name name, List<DataType> typeArguments) {
+    DataType(DataType.Name name, List<DataType> typeArguments) {
         this.name = name;
         this.typeArguments = typeArguments;
     }
@@ -394,7 +398,18 @@ public class DataType {
      * @return returns a set of all the primitive types.
      */
     public static Set<DataType> allPrimitiveTypes() {
-        return primitveTypeSet;
+        return primitiveTypeSet;
+    }
+
+    /**
+     * Returns a set of all non primitive names, where primitive types are
+     * defined as the types that don't have type arguments (i.e.
+     * lists, sets and maps).
+     *
+     * @return returns a set of all non primitive names.
+     */
+    public static Set<DataType.Name> allNonPrimitiveNames() {
+        return nonPrimitiveNameSet;
     }
 
     @Override
