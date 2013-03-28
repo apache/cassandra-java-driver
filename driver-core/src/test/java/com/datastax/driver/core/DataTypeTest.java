@@ -61,6 +61,10 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     private final static HashMap<DataType, String> COLLECTION_SELECT_STATEMENTS = getCollectionSelectStatements();
 
 
+    private static boolean exclude(DataType t) {
+        return t.getName() == DataType.Name.COUNTER;
+    }
+
     /**
      * Generates the table definitions that will be used in testing
      */
@@ -69,7 +73,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // Create primitive data type definitions
         for (DataType dataType : DATA_TYPE_PRIMITIVES) {
-            if (dataType.getName() == DataType.Name.COUNTER)
+            if (exclude(dataType))
                 continue;
 
             tableDefinitions.add(String.format("CREATE TABLE %1$s (k %2$s PRIMARY KEY, v %1$s)", dataType, dataType));
@@ -80,11 +84,11 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
             // Create MAP data type definitions
             if (dataTypeName == DataType.Name.MAP) {
                 for (DataType typeArgument1 : DATA_TYPE_PRIMITIVES) {
-                    if (typeArgument1.getName() == DataType.Name.COUNTER)
+                    if (exclude(typeArgument1))
                         continue;
 
                     for (DataType typeArgument2 : DATA_TYPE_PRIMITIVES) {
-                        if (typeArgument2.getName() == DataType.Name.COUNTER)
+                        if (exclude(typeArgument2))
                             continue;
 
                         tableDefinitions.add(String.format("CREATE TABLE %1$s_%2$s_%3$s (k %3$s PRIMARY KEY, v %1$s<%2$s, %3$s>)", dataTypeName, typeArgument1, typeArgument2));
@@ -93,7 +97,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
             // Create SET and LIST data type definitions
             } else {
                 for (DataType typeArgument : DATA_TYPE_PRIMITIVES) {
-                    if (typeArgument.getName() == DataType.Name.COUNTER)
+                    if (exclude(typeArgument))
                         continue;
 
                     tableDefinitions.add(String.format("CREATE TABLE %1$s_%2$s (k %2$s PRIMARY KEY, v %1$s<%2$s>)", dataTypeName, typeArgument));
@@ -190,7 +194,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
             switch (dataTypeName) {
                 case LIST:
                     for (DataType typeArgument : DATA_TYPE_PRIMITIVES) {
-                        if (typeArgument.getName() == DataType.Name.COUNTER)
+                        if (exclude(typeArgument))
                             continue;
 
                         List list = new ArrayList();
@@ -205,7 +209,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
                     break;
                 case SET:
                     for (DataType typeArgument : DATA_TYPE_PRIMITIVES) {
-                        if (typeArgument.getName() == DataType.Name.COUNTER)
+                        if (exclude(typeArgument))
                             continue;
 
                         Set set = new HashSet();
@@ -220,11 +224,11 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
                     break;
                 case MAP:
                     for (DataType typeArgument1 : DATA_TYPE_PRIMITIVES) {
-                        if (typeArgument1.getName() == DataType.Name.COUNTER)
+                        if (exclude(typeArgument1))
                             continue;
 
                         for (DataType typeArgument2 : DATA_TYPE_PRIMITIVES) {
-                            if (typeArgument2.getName() == DataType.Name.COUNTER)
+                            if (exclude(typeArgument2))
                                 continue;
 
                             HashMap<DataType, Object> map = new HashMap<DataType, Object>();
