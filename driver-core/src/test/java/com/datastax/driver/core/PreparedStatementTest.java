@@ -157,6 +157,26 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test
+    public void prepareListTest2() {
+        // Test preparing/bounding for all possible list types
+        for (DataType rawType : DataType.allPrimitiveTypes()) {
+            // This must be handled separatly
+            if (exclude(rawType))
+                continue;
+
+            String name = "c_list_" + rawType;
+            DataType type = DataType.list(rawType);
+            List value = (List)getFixedValue2(type);;
+            PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_list', ?)", ALL_LIST_TABLE, name));
+            BoundStatement bs = ps.bind();
+            session.execute(setBoundValue(bs, name, type, value));
+
+            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).one();
+            assertEquals("For type " + type, value, getValue(row, name, type));
+        }
+    }
+
+    @Test
     public void prepareSetTest() {
         // Test preparing/bounding for all possible set types
         for (DataType rawType : DataType.allPrimitiveTypes()) {
@@ -167,6 +187,26 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             String name = "c_set_" + rawType;
             DataType type = DataType.set(rawType);
             Set value = (Set)getFixedValue(type);;
+            PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
+            BoundStatement bs = ps.bind();
+            session.execute(setBoundValue(bs, name, type, value));
+
+            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).one();
+            assertEquals("For type " + type, value, getValue(row, name, type));
+        }
+    }
+
+    @Test
+    public void prepareSetTest2() {
+        // Test preparing/bounding for all possible set types
+        for (DataType rawType : DataType.allPrimitiveTypes()) {
+            // This must be handled separatly
+            if (exclude(rawType))
+                continue;
+
+            String name = "c_set_" + rawType;
+            DataType type = DataType.set(rawType);
+            Set value = (Set)getFixedValue2(type);;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
             BoundStatement bs = ps.bind();
             session.execute(setBoundValue(bs, name, type, value));
@@ -192,6 +232,32 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 String name = "c_map_" + rawKeyType + "_" + rawValueType;
                 DataType type = DataType.map(rawKeyType, rawValueType);
                 Map value = (Map)getFixedValue(type);;
+                PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
+                BoundStatement bs = ps.bind();
+                session.execute(setBoundValue(bs, name, type, value));
+
+                Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).one();
+                assertEquals("For type " + type, value, getValue(row, name, type));
+            }
+        }
+    }
+
+    @Test
+    public void prepareMapTest2() {
+        // Test preparing/bounding for all possible map types
+        for (DataType rawKeyType : DataType.allPrimitiveTypes()) {
+            // This must be handled separatly
+            if (exclude(rawKeyType))
+                continue;
+
+            for (DataType rawValueType : DataType.allPrimitiveTypes()) {
+                // This must be handled separatly
+                if (exclude(rawValueType))
+                    continue;
+
+                String name = "c_map_" + rawKeyType + "_" + rawValueType;
+                DataType type = DataType.map(rawKeyType, rawValueType);
+                Map value = (Map)getFixedValue2(type);;
                 PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
                 BoundStatement bs = ps.bind();
                 session.execute(setBoundValue(bs, name, type, value));
