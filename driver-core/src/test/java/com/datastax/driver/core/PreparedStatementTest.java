@@ -157,6 +157,9 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
+    /**
+     * Almost the same as prepareListTest, but it uses getFixedValue2() instead.
+     */
     @Test
     public void prepareListTest2() {
         // Test preparing/bounding for all possible list types
@@ -197,6 +200,9 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
+    /**
+     * Almost the same as prepareSetTest, but it uses getFixedValue2() instead.
+     */
     @Test
     public void prepareSetTest2() {
         // Test preparing/bounding for all possible set types
@@ -243,6 +249,9 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
+    /**
+     * Almost the same as prepareMapTest, but it uses getFixedValue2() instead.
+     */
     @Test
     public void prepareMapTest2() {
         // Test preparing/bounding for all possible map types
