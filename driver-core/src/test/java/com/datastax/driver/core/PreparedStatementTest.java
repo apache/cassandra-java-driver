@@ -314,4 +314,15 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         // prepared statement is prepared while no current keyspace is used
         reprepareOnNewlyUpNodeTest(TestUtils.SIMPLE_KEYSPACE, cluster.connect());
     }
+
+    /**
+     * Prints the table definitions that will be used in testing
+     * (for exporting purposes)
+     */
+    // TODO: @Test(groups = { "docs" })
+    public void printTableDefinitions() {
+        for (String definition : getTableDefinitions()) {
+            System.out.println(definition);
+        }
+    }
 }

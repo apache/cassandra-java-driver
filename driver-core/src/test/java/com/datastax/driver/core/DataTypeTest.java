@@ -474,7 +474,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test TTLs.
      */
-    @Test
+    // TODO: @Test
     public void ttlTest() throws Throwable {
 
     }
@@ -482,7 +482,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test tombstones.
      */
-    @Test
+    // TODO: @Test
     public void tombstonesTest() throws Throwable {
 
     }
@@ -496,6 +496,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the table definitions that will be used in testing
      * (for exporting purposes)
      */
+    // TODO: @Test(groups = { "docs" })
     public void printTableDefinitions() {
         // Prints the full list of table definitions
         for (String definition : getTableDefinitions()) {
@@ -507,6 +508,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the sample data that will be used in testing
      * (for exporting purposes)
      */
+    // TODO: @Test(groups = { "docs" })
     public void printSampleData() {
         for (DataType dataType : SAMPLE_DATA.keySet()) {
             Object sampleValue = SAMPLE_DATA.get(dataType);
@@ -518,6 +520,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the sample collections that will be used in testing
      * (for exporting purposes)
      */
+    // TODO: @Test(groups = { "docs" })
     public void printSampleCollections() {
         for (DataType dataType : SAMPLE_COLLECTIONS.keySet()) {
             HashMap<DataType, Object> sampleValueMap = (HashMap<DataType, Object>) SAMPLE_COLLECTIONS.get(dataType);
@@ -542,6 +545,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the simple insert statements that will be used in testing
      * (for exporting purposes)
      */
+    // TODO: @Test(groups = { "docs" })
     public void printPrimitiveInsertStatements() {
         for (String execute_string : PRIMITIVE_INSERT_STATEMENTS) {
             System.out.println(execute_string);
@@ -552,6 +556,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the simple select statements that will be used in testing
      * (for exporting purposes)
      */
+    // TODO: @Test(groups = { "docs" })
     public void printPrimitiveSelectStatements() {
         for (String execute_string : PRIMITIVE_SELECT_STATEMENTS.values()) {
             System.out.println(execute_string);
@@ -562,6 +567,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the simple insert statements that will be used in testing
      * (for exporting purposes)
      */
+    // TODO: @Test(groups = { "docs" })
     public void printCollectionInsertStatements() {
         for (String execute_string : COLLECTION_INSERT_STATEMENTS) {
             System.out.println(execute_string);
@@ -572,6 +578,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the simple insert statements that will be used in testing
      * (for exporting purposes)
      */
+    // TODO: @Test(groups = { "docs" })
     public void printCollectionSelectStatements() {
         for (String execute_string : COLLECTION_SELECT_STATEMENTS.values()) {
             System.out.println(execute_string);
