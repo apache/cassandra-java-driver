@@ -1,17 +1,13 @@
-<!--
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License. See accompanying LICENSE file.
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you 
+  may not use this file except in compliance with the License. You may obtain 
+  a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless 
+  required by applicable law or agreed to in writing, software distributed 
+  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES 
+  OR CONDITIONS OF ANY KIND, either express or implied. See the License for 
+  the specific language governing permissions and limitations under the License. 
+  See accompanying LICENSE file. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.datastax.cassandra</groupId>
@@ -23,7 +19,7 @@
   <name>DataStax Java Driver for Apache Cassandra - Core</name>
   <description>A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's binary protocol.</description>
   <url>https://github.com/datastax/java-driver</url>
-  
+
   <dependencies>
     <dependency>
       <groupId>io.netty</groupId>
@@ -49,108 +45,88 @@
       <version>0.7.0</version>
       <exclusions>
         <exclusion>
-           <groupId>org.slf4j</groupId>
-           <artifactId>slf4j-api</artifactId>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
 
     <dependency>
-     <groupId>org.codehaus.jackson</groupId>
-     <artifactId>jackson-core-asl</artifactId>
-     <version>1.9.2</version>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-core-asl</artifactId>
+      <version>1.9.2</version>
     </dependency>
 
     <dependency>
-        <groupId>com.yammer.metrics</groupId>
-        <artifactId>metrics-core</artifactId>
-        <version>2.2.0</version>
+      <groupId>com.yammer.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <version>2.2.0</version>
     </dependency>
 
-	<dependency>
-	  <groupId>org.testng</groupId>
-	  <artifactId>testng</artifactId>
-	  <version>6.8</version>
-	  <scope>test</scope>
-	</dependency>
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <version>6.8</version>
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
 
   <profiles>
     <profile>
-        <id>default</id>
-        <properties>
-            <env>default</env>
-            <cassandra.version>1.2.3</cassandra.version>
-        </properties>
-        <activation>
-            <activeByDefault>true</activeByDefault>
-        </activation>
+      <id>default</id>
+      <properties>
+        <env>default</env>
+        <cassandra.version>1.2.3</cassandra.version>
+      </properties>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.14</version>
+            <configuration>
+              <groups>unit</groups>
+              <useFile>false</useFile>
+              <systemPropertyVariables>
+                <cassandra.version>${cassandra.version}</cassandra.version>
+                <ipprefix>${ipprefix}</ipprefix>
+              </systemPropertyVariables>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
 
-	<profile>
-		<id>integration</id>
-		<properties>
-            <env>default</env>
-            <cassandra.version>1.2.3</cassandra.version>
-        </properties>
-		<build>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-surefire-plugin</artifactId>
-					<executions>
-						<execution>
-							<id>integration</id>
-							<phase>integration-test</phase>
-							<goals>
-								<goal>test</goal>
-							</goals>
-							<configuration>
-								<groups>integration</groups>
-								<reportsdirectory>target/integration-surefire-reports/</reportsdirectory>
-							</configuration>
-						</execution>
-					</executions>
-				</plugin>
-			</plugins>
-		</build>
-	</profile>
+    <profile>
+      <id>integration</id>
+      <properties>
+        <env>default</env>
+        <cassandra.version>1.2.3</cassandra.version>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.14</version>
+            <configuration>
+              <groups>unit,integration</groups>
+              <reportsdirectory>target/integration-surefire-reports/</reportsdirectory>
+              <useFile>false</useFile>
+              <systemPropertyVariables>
+                <cassandra.version>${cassandra.version}</cassandra.version>
+                <ipprefix>${ipprefix}</ipprefix>
+              </systemPropertyVariables>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.9</version>
-        <configuration>
-   		  <groups>unit</groups>
-          <useFile>false</useFile>
-          <systemPropertyVariables>
-              <cassandra.version>${cassandra.version}</cassandra.version>
-              <ipprefix>${ipprefix}</ipprefix>
-          </systemPropertyVariables>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-
-  <reporting>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>cobertura-maven-plugin</artifactId>
-        <version>2.5.2</version>
-        <configuration>
-          <formats>
-            <format>html</format>
-            <format>xml</format>
-          </formats>
-        </configuration>
-      </plugin>
-    </plugins>
-  </reporting>
 
   <licenses>
     <license>
@@ -160,19 +136,19 @@
       <comments>Apache License Version 2.0</comments>
     </license>
   </licenses>
-  
+
   <scm>
     <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
     <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
     <url>https://github.com/datastax/java-driver</url>
   </scm>
-  
+
   <developers>
     <developer>
       <name>Various</name>
       <organization>DataStax</organization>
     </developer>
   </developers>
-  
+
 </project>
 

@@ -18,6 +18,8 @@ package com.datastax.driver.core.querybuilder;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
@@ -74,5 +76,5 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         assertEquals(row.getInt("k"), 42);
         assertEquals(row.getInt("a"), 1);
         assertEquals(row.getInt("b"), 2);
-    }
+    }  
 }

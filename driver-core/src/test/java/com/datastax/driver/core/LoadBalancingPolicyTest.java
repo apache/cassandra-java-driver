@@ -24,7 +24,6 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 import com.datastax.driver.core.policies.*;
-import com.datastax.driver.core.exceptions.*;
 import static com.datastax.driver.core.TestUtils.*;
 
 public class LoadBalancingPolicyTest {
@@ -120,6 +119,7 @@ public class LoadBalancingPolicyTest {
             c.errorOut();
             throw e;
         } finally {
+        	coordinators.clear();
             c.discard();
         }
     }
@@ -144,6 +144,7 @@ public class LoadBalancingPolicyTest {
             c.errorOut();
             throw e;
         } finally {
+        	coordinators.clear();
             c.discard();
         }
     }
@@ -188,6 +189,7 @@ public class LoadBalancingPolicyTest {
             c.errorOut();
             throw e;
         } finally {
+        	coordinators.clear();
             c.discard();
         }
     }
