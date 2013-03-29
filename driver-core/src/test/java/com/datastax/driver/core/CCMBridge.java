@@ -170,7 +170,6 @@ public class CCMBridge {
             erroredOut = true;
         }
 
-        @BeforeClass
         public static void createCluster() {
             erroredOut = false;
             schemaCreated = false;
@@ -186,7 +185,7 @@ public class CCMBridge {
             }
         }
 
-        @AfterClass
+        @AfterClass(groups = {"integration"})
         public static void discardCluster() {
             if (cluster != null)
                 cluster.shutdown();
@@ -202,7 +201,12 @@ public class CCMBridge {
             }
         }
 
-        @BeforeClass
+        @BeforeClass(groups = {"integration"})
+        public void beforeClass() {
+        	createCluster();
+        	maybeCreateSchema();
+        }
+        
         public void maybeCreateSchema() {
 
             try {
