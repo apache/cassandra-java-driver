@@ -292,14 +292,18 @@ public abstract class TestUtils {
     // This is used because there is some delay between when a node has been
     // added through ccm and when it's actually available for querying
     public static void waitFor(String node, Cluster cluster, int maxTry) {
-        waitFor(node, cluster, maxTry, false);
+        waitFor(node, cluster, maxTry, false, false);
     }
 
     public static void waitForDown(String node, Cluster cluster, int maxTry) {
-        waitFor(node, cluster, maxTry, true);
+        waitFor(node, cluster, maxTry, true, false);
     }
 
-    private static void waitFor(String node, Cluster cluster, int maxTry, boolean waitForDead) {
+    public static void waitForDecommission(String node, Cluster cluster, int maxTry) {
+        waitFor(node, cluster, maxTry, true, true);
+    }
+
+    private static void waitFor(String node, Cluster cluster, int maxTry, boolean waitForDead, boolean waitForOut) {
         InetAddress address;
         try {
              address = InetAddress.getByName(node);
@@ -328,8 +332,13 @@ public abstract class TestUtils {
                 }
             }
         }
-        logger.info(node + " is not part of the cluster after " + maxTry + "s");
-        throw new IllegalStateException(node + " is not part of the cluster after " + maxTry + "s");
+
+        if (waitForOut){
+            return;
+        } else {
+            logger.info(node + " is not part of the cluster after " + maxTry + "s");
+            throw new IllegalStateException(node + " is not part of the cluster after " + maxTry + "s");
+        }
     }
 
     private static boolean testHost(Host host, boolean testForDown)

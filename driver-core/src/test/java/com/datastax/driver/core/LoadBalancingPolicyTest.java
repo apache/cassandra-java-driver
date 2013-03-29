@@ -115,6 +115,14 @@ public class LoadBalancingPolicyTest {
             assertQueried(CCMBridge.IP_PREFIX + "2", 4);
             assertQueried(CCMBridge.IP_PREFIX + "3", 4);
 
+            resetCoordinators();
+            c.cassandraCluster.decommissionNode(1);
+            waitForDecommission(CCMBridge.IP_PREFIX + "1", c.cluster, 20);
+
+            query(c, 12);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 6);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 6);
+
         } catch (Throwable e) {
             c.errorOut();
             throw e;
