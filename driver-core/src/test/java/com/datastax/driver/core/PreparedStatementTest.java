@@ -116,12 +116,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-<<<<<<< HEAD
-    /**
-     * Almost the same as preparedNativeTest, but it uses getFixedValue2() instead.
-     */
-||||||| merged common ancestors
-=======
     /**
      * Almost the same as preparedNativeTest, but it uses getFixedValue2() instead.
      */
@@ -143,7 +137,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
->>>>>>> 8717328118d9c836f0f75e36bac9a25cb6abef45
     @Test
     public void preparedNativeTest2() {
         // Test preparing/bounding for all native types
@@ -182,12 +175,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-<<<<<<< HEAD
-    /**
-     * Almost the same as prepareListTest, but it uses getFixedValue2() instead.
-     */
-||||||| merged common ancestors
-=======
     /**
      * Almost the same as prepareListTest, but it uses getFixedValue2() instead.
      */
@@ -211,7 +198,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
->>>>>>> 8717328118d9c836f0f75e36bac9a25cb6abef45
     @Test
     public void prepareListTest2() {
         // Test preparing/bounding for all possible list types
@@ -252,12 +238,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-<<<<<<< HEAD
-    /**
-     * Almost the same as prepareSetTest, but it uses getFixedValue2() instead.
-     */
-||||||| merged common ancestors
-=======
     /**
      * Almost the same as prepareSetTest, but it uses getFixedValue2() instead.
      */
@@ -281,7 +261,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
->>>>>>> 8717328118d9c836f0f75e36bac9a25cb6abef45
     @Test
     public void prepareSetTest2() {
         // Test preparing/bounding for all possible set types
