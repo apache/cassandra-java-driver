@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,8 +45,7 @@ import static org.testng.Assert.*;
 public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private final static Set<DataType> DATA_TYPE_PRIMITIVES = DataType.allPrimitiveTypes();
-    private final static DataType.Name[] NON_PRIMITIVES = new DataType.Name[] {DataType.Name.MAP, DataType.Name.SET, DataType.Name.LIST};
-    private final static Set<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES = new HashSet<DataType.Name>(Arrays.asList(NON_PRIMITIVES));
+    private final static Set<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES = EnumSet.of(DataType.Name.MAP, DataType.Name.SET, DataType.Name.LIST);
 
     private final static String PRIMITIVE_INSERT_FORMAT = "INSERT INTO %1$s (k, v) VALUES (%2$s, %2$s);";
     private final static String BASIC_SELECT_FORMAT = "SELECT k, v FROM %1$s;";
@@ -109,11 +109,6 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
 
         return tableDefinitions;
     }
-
-
-
-
-
 
     /**
      * Generates the sample data that will be used in testing
@@ -186,8 +181,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
 
     /**
      * Generates the sample collections that will be used in testing
-     */
-    private static HashMap<DataType, Object> getSampleCollections() {
+     */ private static HashMap<DataType, Object> getSampleCollections() {
         HashMap<DataType, Object> sampleCollections = new HashMap<DataType, Object>();
         HashMap<DataType, Object> setAndListCollection;
         HashMap<DataType, HashMap<DataType, Object>> mapCollection;
@@ -206,7 +200,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
 
                         setAndListCollection = new HashMap<DataType, Object>();
                         setAndListCollection.put(typeArgument, list);
-                        sampleCollections.put(new DataType(dataTypeName, Arrays.asList(typeArgument)), setAndListCollection);
+                        sampleCollections.put(DataType.list(typeArgument), setAndListCollection);
                     }
                     break;
                 case SET:
@@ -221,7 +215,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
 
                         setAndListCollection = new HashMap<DataType, Object>();
                         setAndListCollection.put(typeArgument, set);
-                        sampleCollections.put(new DataType(dataTypeName, Arrays.asList(typeArgument)), setAndListCollection);
+                        sampleCollections.put(DataType.set(typeArgument), setAndListCollection);
                     }
                     break;
                 case MAP:
@@ -238,7 +232,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
 
                             mapCollection = new HashMap<DataType, HashMap<DataType, Object>>();
                             mapCollection.put(typeArgument1, map);
-                            sampleCollections.put(new DataType(dataTypeName, Arrays.asList(typeArgument1, typeArgument2)), mapCollection);
+                            sampleCollections.put(DataType.map(typeArgument1, typeArgument2), mapCollection);
                         }
                     }
                     break;

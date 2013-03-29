@@ -72,6 +72,8 @@ class Codec {
             case LIST:      return ListType.getInstance(getCodec(type.getTypeArguments().get(0)));
             case SET:       return SetType.getInstance(getCodec(type.getTypeArguments().get(0)));
             case MAP:       return MapType.getInstance(getCodec(type.getTypeArguments().get(0)), getCodec(type.getTypeArguments().get(1)));
+            // We don't interpret custom values in any way
+            case CUSTOM:    return BytesType.instance;
             default:        throw new RuntimeException("Unknown type");
         }
     }
@@ -95,6 +97,6 @@ class Codec {
                     return DataType.map(rawTypeToDataType(mt.keys), rawTypeToDataType(mt.values));
             }
         }
-        throw new DriverInternalError("Unsupported type: " + rawType);
+        return DataType.custom(rawType.getClass().toString());
     }
 }
