@@ -117,7 +117,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Generates the sample data that will be used in testing
      */
-    private final static HashMap<DataType, Object> getSampleData() {
+    private static HashMap<DataType, Object> getSampleData() {
         HashMap<DataType, Object> sampleData = new HashMap<DataType, Object>();
 
         for (DataType dataType : DATA_TYPE_PRIMITIVES) {
@@ -186,7 +186,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Generates the sample collections that will be used in testing
      */
-    private final static HashMap<DataType, Object> getSampleCollections() {
+    private static HashMap<DataType, Object> getSampleCollections() {
         HashMap<DataType, Object> sampleCollections = new HashMap<DataType, Object>();
         HashMap<DataType, Object> setAndListCollection;
         HashMap<DataType, HashMap<DataType, Object>> mapCollection;
@@ -252,7 +252,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Helper method to stringify SAMPLE_DATA for simple insert statements
      */
-    private final static String helperStringifiedData(DataType dataType) {
+    private static String helperStringifiedData(DataType dataType) {
         String value = SAMPLE_DATA.get(dataType).toString();
 
         switch (dataType.getName()) {
@@ -284,7 +284,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Generates the insert statements that will be used in testing
      */
-    private final static Collection<String> getPrimitiveInsertStatements() {
+    private static Collection<String> getPrimitiveInsertStatements() {
         ArrayList<String> insertStatements = new ArrayList<String>();
 
         for (DataType dataType : SAMPLE_DATA.keySet()) {
@@ -298,7 +298,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Generates the select statements that will be used in testing
      */
-    private final static HashMap<DataType, String> getPrimitiveSelectStatements() {
+    private static HashMap<DataType, String> getPrimitiveSelectStatements() {
         HashMap<DataType, String> selectStatements = new HashMap<DataType, String>();
 
         for (DataType dataType : SAMPLE_DATA.keySet()) {
@@ -312,7 +312,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Helper method to generate table names in the form of:
      * DataType_TypeArgument[_TypeArgument]
      */
-    private final static String helperGenerateTableName(DataType dataType) {
+    private static String helperGenerateTableName(DataType dataType) {
         String tableName = dataType.getName().toString();
         for (DataType typeArgument : dataType.getTypeArguments())
             tableName += "_" + typeArgument;
@@ -323,7 +323,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Generates the insert statements that will be used in testing
      */
-    private final static Collection<String> getCollectionInsertStatements() {
+    private static Collection<String> getCollectionInsertStatements() {
         ArrayList<String> insertStatements = new ArrayList<String>();
 
         String tableName;
@@ -368,7 +368,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Generates the select statements that will be used in testing
      */
-    private final static HashMap<DataType, String> getCollectionSelectStatements() {
+    private static HashMap<DataType, String> getCollectionSelectStatements() {
         HashMap<DataType, String> selectStatements = new HashMap<DataType, String>();
 
         String tableName;
