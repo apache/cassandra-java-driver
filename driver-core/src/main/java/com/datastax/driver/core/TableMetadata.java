@@ -15,11 +15,19 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
+import org.apache.cassandra.db.marshal.AbstractType;
+import org.apache.cassandra.db.marshal.ColumnToCollectionType;
+import org.apache.cassandra.db.marshal.CompositeType;
+import org.apache.cassandra.db.marshal.TypeParser;
+import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.exceptions.RequestValidationException;
-import org.apache.cassandra.db.marshal.*;
-
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -53,7 +61,7 @@ public class TableMetadata {
                           String name,
                           List<ColumnMetadata> partitionKey,
                           List<ColumnMetadata> clusteringKey,
-                          LinkedHashMap<String, ColumnMetadata> columns,
+                          Map<String, ColumnMetadata> columns,
                           Options options) {
         this.keyspace = keyspace;
         this.name = name;
@@ -284,8 +292,9 @@ public class TableMetadata {
 
         for (ColumnMetadata column : columns.values()) {
             ColumnMetadata.IndexMetadata index = column.getIndex();
-            if (index == null)
+            if (index == null){
                 continue;
+            }
 
             sb.append("\n").append(index.asCQLQuery());
         }
@@ -313,8 +322,9 @@ public class TableMetadata {
 
         sb.append("CREATE TABLE ").append(name).append(" (");
         newLine(sb, formatted);
-        for (ColumnMetadata cm : columns.values())
+        for (ColumnMetadata cm : columns.values()){
             newLine(sb.append(spaces(4, formatted)).append(cm).append(","), formatted);
+        }
 
         // PK
         sb.append(spaces(4, formatted)).append("PRIMARY KEY (");
@@ -324,13 +334,19 @@ public class TableMetadata {
             sb.append("(");
             boolean first = true;
             for (ColumnMetadata cm : partitionKey) {
-                if (first) first = false; else sb.append(", ");
+                if (first){ 
+                	first = false;
+                }
+                else{
+                	sb.append(", ");
+                }
                 sb.append(cm.getName());
             }
             sb.append(")");
         }
-        for (ColumnMetadata cm : clusteringKey)
+        for (ColumnMetadata cm : clusteringKey){
             sb.append(", ").append(cm.getName());
+        }
         sb.append(")");
         newLine(sb, formatted);
         // end PK
@@ -347,8 +363,9 @@ public class TableMetadata {
         and(sb, formatted).append("gc_grace_seconds = ").append(options.gcGrace);
         and(sb, formatted).append("bloom_filter_fp_chance = ").append(options.bfFpChance);
         and(sb, formatted).append("caching = ").append(options.caching);
-        if (options.comment != null)
+        if (options.comment != null){
             and(sb, formatted).append("comment = '").append(options.comment).append("'");
+        }
         and(sb, formatted).append("compaction = ").append(formatOptionMap(options.compaction));
         and(sb, formatted).append("compression = ").append(formatOptionMap(options.compression));
         sb.append(";");
@@ -360,7 +377,12 @@ public class TableMetadata {
         sb.append("{ ");
         boolean first = true;
         for (Map.Entry<String, String> entry : m.entrySet()) {
-            if (first) first = false; else sb.append(", ");
+            if (first){ 
+            	first = false; 
+            }
+            else{ 
+            	sb.append(", ");
+            }
             sb.append("'").append(entry.getKey()).append("'");
             sb.append(" : ");
             try {
@@ -378,19 +400,22 @@ public class TableMetadata {
     }
 
     private String spaces(int n, boolean formatted) {
-        if (!formatted)
+        if (!formatted){
             return "";
+        }
 
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < n; i++){
             sb.append(' ');
+        }
 
         return sb.toString();
     }
 
     private StringBuilder newLine(StringBuilder sb, boolean formatted) {
-        if (formatted)
+        if (formatted){
             sb.append('\n');
+        }
         return sb;
     }
 

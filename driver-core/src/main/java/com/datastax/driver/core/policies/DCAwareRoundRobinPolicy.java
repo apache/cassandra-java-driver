@@ -15,15 +15,23 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.Query;
 import com.google.common.collect.AbstractIterator;
-
-import com.datastax.driver.core.*;
 
 /**
  * A data-center aware Round-robin load balancing policy.
@@ -93,10 +101,12 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
         for (Host host : hosts) {
             String dc = dc(host);
             CopyOnWriteArrayList<Host> prev = perDcLiveHosts.get(dc);
-            if (prev == null)
+            if (prev == null){
                 perDcLiveHosts.put(dc, new CopyOnWriteArrayList<Host>(Collections.singletonList(host)));
-            else
+            }
+            else{
                 prev.addIfAbsent(host);
+            }
         }
     }
 
@@ -120,12 +130,14 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      */
     public HostDistance distance(Host host) {
         String dc = dc(host);
-        if (dc.equals(localDc))
+        if (dc.equals(localDc)){
             return HostDistance.LOCAL;
+        }
 
         CopyOnWriteArrayList<Host> dcHosts = perDcLiveHosts.get(dc);
-        if (dcHosts == null || usedHostsPerRemoteDc == 0)
+        if (dcHosts == null || usedHostsPerRemoteDc == 0){
             return HostDistance.IGNORED;
+        }
 
         // We need to clone, otherwise our subList call is not thread safe
         dcHosts = (CopyOnWriteArrayList<Host>)dcHosts.clone();
@@ -154,8 +166,9 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
         final int startIdx = index.getAndIncrement();
 
         // Overflow protection; not theoretically thread safe but should be good enough
-        if (startIdx > Integer.MAX_VALUE - 10000)
+        if (startIdx > Integer.MAX_VALUE - 10000){
             index.set(0);
+        }
 
         return new AbstractIterator<Host>() {
 
@@ -184,8 +197,9 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
                     remoteDcs = copy.iterator();
                 }
 
-                if (!remoteDcs.hasNext())
+                if (!remoteDcs.hasNext()){
                     return endOfData();
+                }
 
                 String nextRemoteDc = remoteDcs.next();
                 CopyOnWriteArrayList<Host> nextDcHosts = perDcLiveHosts.get(nextRemoteDc);
@@ -206,16 +220,18 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
             CopyOnWriteArrayList<Host> newMap = new CopyOnWriteArrayList<Host>(Collections.singletonList(host));
             dcHosts = perDcLiveHosts.putIfAbsent(dc, newMap);
             // If we've successfully put our new host, we're good, otherwise we've been beaten so continue
-            if (dcHosts == null)
+            if (dcHosts == null){
                 return;
+            }
         }
         dcHosts.addIfAbsent(host);
     }
 
     public void onDown(Host host) {
         CopyOnWriteArrayList<Host> dcHosts = perDcLiveHosts.get(dc(host));
-        if (dcHosts != null)
+        if (dcHosts != null){
             dcHosts.remove(host);
+        }
     }
 
     public void onAdd(Host host) {

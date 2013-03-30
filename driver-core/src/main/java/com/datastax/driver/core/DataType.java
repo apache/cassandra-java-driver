@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -29,10 +29,10 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.cassandra.db.marshal.MarshalException;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Data types supported by cassandra.
@@ -130,8 +130,9 @@ public class DataType {
     private static final Map<Name, DataType> primitiveTypeMap = new EnumMap<Name, DataType>(Name.class);
     static {
         for (Name name : Name.values()) {
-            if (!name.isCollection())
+            if (!name.isCollection()){
                 primitiveTypeMap.put(name, new DataType(name, Collections.<DataType>emptyList()));
+            }
         }
     }
     private static final Set<DataType> primitveTypeSet = ImmutableSet.copyOf(primitiveTypeMap.values());
@@ -404,8 +405,9 @@ public class DataType {
 
     @Override
     public final boolean equals(Object o) {
-        if(!(o instanceof DataType))
+        if(!(o instanceof DataType)){
             return false;
+        }
 
         return name == ((DataType)o).name && typeArguments.equals(((DataType)o).typeArguments);
     }

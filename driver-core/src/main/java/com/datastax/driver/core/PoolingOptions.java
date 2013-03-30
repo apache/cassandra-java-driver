@@ -210,14 +210,16 @@ public class PoolingOptions {
             case LOCAL:
                 int oldLocalCore = coreConnectionsForLocal;
                 coreConnectionsForLocal = coreConnections;
-                if (oldLocalCore < coreConnectionsForLocal && manager != null)
+                if (oldLocalCore < coreConnectionsForLocal && manager != null){
                     manager.ensurePoolsSizing();
+                }
                 break;
             case REMOTE:
                 int oldRemoteCore = coreConnectionsForRemote;
                 coreConnectionsForRemote = coreConnections;
-                if (oldRemoteCore < coreConnectionsForRemote && manager != null)
+                if (oldRemoteCore < coreConnectionsForRemote && manager != null){
                     manager.ensurePoolsSizing();
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Cannot set core connections per host for " + distance + " hosts");

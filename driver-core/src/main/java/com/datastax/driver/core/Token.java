@@ -27,23 +27,27 @@ import org.apache.cassandra.utils.MurmurHash;
 abstract class Token<T extends Token<T>> implements Comparable<T> {
 
     public static Token.Factory<?> getFactory(String partitionerName) {
-        if (partitionerName.endsWith("Murmur3Partitioner"))
+        if (partitionerName.endsWith("Murmur3Partitioner")){
             return M3PToken.FACTORY;
-        else if (partitionerName.endsWith("RandomPartitioner"))
+        }
+        else if (partitionerName.endsWith("RandomPartitioner")){
             return RPToken.FACTORY;
-        else if (partitionerName.endsWith("OrderedPartitioner"))
+        }
+        else if (partitionerName.endsWith("OrderedPartitioner")){
             return OPPToken.FACTORY;
-        else
+        }
+        else {
             return null;
+        }
     }
 
     public interface Factory<T extends Token<T>> {
-        public T fromString(String tokenStr);
-        public T hash(ByteBuffer partitionKey);
+        T fromString(String tokenStr);
+        T hash(ByteBuffer partitionKey);
     }
 
     // Murmur3Partitioner tokens
-    static class M3PToken extends Token<M3PToken> {
+    static final class M3PToken extends Token<M3PToken> {
         private final long value;
 
         public static final Factory<M3PToken> FACTORY = new Factory<M3PToken>() {
@@ -69,10 +73,12 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj){
                 return true;
-            if (obj == null || this.getClass() != obj.getClass())
+            }
+            if (obj == null || this.getClass() != obj.getClass()){
                 return false;
+            }
 
             return value == ((M3PToken)obj).value;
         }
@@ -84,7 +90,7 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
     }
 
     // OPPartitioner tokens
-    static class OPPToken extends Token<OPPToken> {
+    static final class OPPToken extends Token<OPPToken> {
         private final ByteBuffer value;
 
         public static final Factory<OPPToken> FACTORY = new Factory<OPPToken>() {
@@ -108,10 +114,12 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj){
                 return true;
-            if (obj == null || this.getClass() != obj.getClass())
+            }
+            if (obj == null || this.getClass() != obj.getClass()){
                 return false;
+            }
 
             return value.equals(((OPPToken)obj).value);
         }
@@ -123,7 +131,7 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
     }
 
     // RandomPartitioner tokens
-    static class RPToken extends Token<RPToken> {
+    static final class RPToken extends Token<RPToken> {
         private final BigInteger value;
 
         public static final Factory<RPToken> FACTORY = new Factory<RPToken>() {
@@ -147,10 +155,12 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj){
                 return true;
-            if (obj == null || this.getClass() != obj.getClass())
+            }
+            if (obj == null || this.getClass() != obj.getClass()){
                 return false;
+            }
 
             return value.equals(((RPToken)obj).value);
         }

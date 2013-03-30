@@ -15,11 +15,12 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.TypeParser;
+import org.apache.cassandra.exceptions.RequestValidationException;
 
 /**
  * Describes a Column.
@@ -28,7 +29,6 @@ public class ColumnMetadata {
 
     private static final String COLUMN_NAME = "column_name";
     private static final String VALIDATOR = "validator";
-    private static final String INDEX = "component_index";
 
     private final TableMetadata table;
     private final String name;
@@ -147,15 +147,17 @@ public class ColumnMetadata {
         }
 
         private static IndexMetadata build(ColumnMetadata column, Row row) {
-            if (row == null)
+            if (row == null){
                 return null;
+            }
 
             String type = row.getString(INDEX_TYPE);
-            if (type == null)
+            if (type == null){
                 return null;
+            }
 
-            IndexMetadata index = new IndexMetadata(column, type, row.getString(INDEX_NAME));
-            return index;
+            return new IndexMetadata(column, type, row.getString(INDEX_NAME));
+
         }
     }
 

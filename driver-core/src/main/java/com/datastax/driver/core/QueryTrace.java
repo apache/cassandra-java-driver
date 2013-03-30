@@ -16,18 +16,22 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.cassandra.transport.messages.QueryMessage;
-
-import com.datastax.driver.core.exceptions.TraceRetrievalException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.exceptions.TraceRetrievalException;
+import com.google.common.util.concurrent.Uninterruptibles;
 
 /**
  * The Cassandra trace for a query.
@@ -182,8 +186,9 @@ public class QueryTrace {
     }
 
     private void maybeFetchTrace() {
-        if (duration != Integer.MIN_VALUE)
+        if (duration != Integer.MIN_VALUE){
             return;
+        }
 
         fetchLock.lock();
         try {
@@ -210,8 +215,9 @@ public class QueryTrace {
 
                     requestType = sessRow.getString("request");
                     coordinator = sessRow.getInet("coordinator");
-                    if (!sessRow.isNull("parameters"))
+                    if (!sessRow.isNull("parameters")){
                         parameters = Collections.unmodifiableMap(sessRow.getMap("parameters", String.class, String.class));
+                    }
                     startedAt = sessRow.getDate("started_at").getTime();
 
                     events = new ArrayList<Event>();
@@ -237,8 +243,9 @@ public class QueryTrace {
             throw new TraceRetrievalException("Unexpected exception while fetching query trace", e);
         }
 
-        if (tries > MAX_TRIES)
+        if (tries > MAX_TRIES){
             throw new TraceRetrievalException(String.format("Unable to retrieve complete query trace after %d tries", MAX_TRIES));
+        }
     }
 
     /**

@@ -19,9 +19,25 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
-import org.apache.cassandra.db.marshal.*;
+import org.apache.cassandra.db.marshal.AsciiType;
+import org.apache.cassandra.db.marshal.BooleanType;
+import org.apache.cassandra.db.marshal.DateType;
+import org.apache.cassandra.db.marshal.DecimalType;
+import org.apache.cassandra.db.marshal.DoubleType;
+import org.apache.cassandra.db.marshal.FloatType;
+import org.apache.cassandra.db.marshal.InetAddressType;
+import org.apache.cassandra.db.marshal.Int32Type;
+import org.apache.cassandra.db.marshal.IntegerType;
+import org.apache.cassandra.db.marshal.LongType;
+import org.apache.cassandra.db.marshal.TimeUUIDType;
+import org.apache.cassandra.db.marshal.UTF8Type;
+import org.apache.cassandra.db.marshal.UUIDType;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
@@ -56,8 +72,9 @@ public class BoundStatement extends Query {
         this.values = new ByteBuffer[statement.getVariables().size()];
         this.remaining = values.length;
 
-        if (statement.getConsistencyLevel() != null)
+        if (statement.getConsistencyLevel() != null){
             this.setConsistencyLevel(statement.getConsistencyLevel());
+        }
     }
 
     /**
@@ -126,21 +143,24 @@ public class BoundStatement extends Query {
      */
     public BoundStatement bind(Object... values) {
 
-        if (values.length > statement.getVariables().size())
+        if (values.length > statement.getVariables().size()){
             throw new IllegalArgumentException(String.format("Prepared statement has only %d variables, %d values provided", statement.getVariables().size(), values.length));
+        }
 
         for (int i = 0; i < values.length; i++)
         {
             Object toSet = values[i];
 
-            if (toSet == null)
+            if (toSet == null){
                 throw new IllegalArgumentException("'null' parameters are not allowed since CQL3 does not (yet) supports them (see https://issues.apache.org/jira/browse/CASSANDRA-3783)");
+            }
 
             DataType columnType = statement.getVariables().getType(i);
             switch (columnType.getName()) {
                 case LIST:
-                    if (!(toSet instanceof List))
+                    if (!(toSet instanceof List)){
                         throw new InvalidTypeException(String.format("Invalid type for value %d, column is a list but %s provided", i, toSet.getClass()));
+                    }
 
                     List<?> l = (List)toSet;
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
@@ -148,13 +168,15 @@ public class BoundStatement extends Query {
                         // Ugly? Yes
                         Class<?> providedClass = l.get(0).getClass();
                         Class<?> expectedClass = columnType.getTypeArguments().get(0).asJavaClass();
-                        if (!expectedClass.isAssignableFrom(providedClass))
+                        if (!expectedClass.isAssignableFrom(providedClass)){
                             throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting list of %s but provided list of %s", i, columnType, expectedClass, providedClass));
+                        }
                     }
                     break;
                 case SET:
-                    if (!(toSet instanceof Set))
+                    if (!(toSet instanceof Set)){
                         throw new InvalidTypeException(String.format("Invalid type for value %d, column is a set but %s provided", i, toSet.getClass()));
+                    }
 
                     Set<?> s = (Set)toSet;
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
@@ -162,13 +184,15 @@ public class BoundStatement extends Query {
                         // Ugly? Yes
                         Class<?> providedClass = s.iterator().next().getClass();
                         Class<?> expectedClass = columnType.getTypeArguments().get(0).getName().javaType;
-                        if (!expectedClass.isAssignableFrom(providedClass))
+                        if (!expectedClass.isAssignableFrom(providedClass)){
                             throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting set of %s but provided set of %s", i, columnType, expectedClass, providedClass));
+                        }
                     }
                     break;
                 case MAP:
-                    if (!(toSet instanceof Map))
+                    if (!(toSet instanceof Map)){
                         throw new InvalidTypeException(String.format("Invalid type for value %d, column is a map but %s provided", i, toSet.getClass()));
+                    }
 
                     Map<?, ?> m = (Map)toSet;
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
@@ -180,15 +204,17 @@ public class BoundStatement extends Query {
 
                         Class<?> expectedKeysClass = columnType.getTypeArguments().get(0).getName().javaType;
                         Class<?> expectedValuesClass = columnType.getTypeArguments().get(1).getName().javaType;
-                        if (!expectedKeysClass.isAssignableFrom(providedKeysClass) || !expectedValuesClass.isAssignableFrom(providedValuesClass))
+                        if (!expectedKeysClass.isAssignableFrom(providedKeysClass) || !expectedValuesClass.isAssignableFrom(providedValuesClass)){
                             throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting map of %s->%s but provided set of %s->%s", i, columnType, expectedKeysClass, expectedValuesClass, providedKeysClass, providedValuesClass));
+                        }
                     }
                     break;
                 default:
                     Class<?> providedClass = toSet.getClass();
                     Class<?> expectedClass = columnType.getName().javaType;
-                    if (!expectedClass.isAssignableFrom(providedClass))
+                    if (!expectedClass.isAssignableFrom(providedClass)){
                         throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting %s but %s provided", i, columnType, expectedClass, providedClass));
+                    }
                     break;
             }
             setValue(i, Codec.getCodec(columnType).decompose(toSet));
@@ -215,16 +241,18 @@ public class BoundStatement extends Query {
      * @return the routing key for this statement or {@code null}.
      */
     public ByteBuffer getRoutingKey() {
-        if (statement.routingKey != null)
+        if (statement.routingKey != null){
             return statement.routingKey;
+        }
 
         if (statement.routingKeyIndexes != null) {
             if (statement.routingKeyIndexes.length == 1) {
                 return values[statement.routingKeyIndexes[0]];
             } else {
                 ByteBuffer[] components = new ByteBuffer[statement.routingKeyIndexes.length];
-                for (int i = 0; i < components.length; ++i)
+                for (int i = 0; i < components.length; ++i){
                     components[i] = values[statement.routingKeyIndexes[i]];
+                }
                 return SimpleStatement.compose(components);
             }
         }
@@ -615,8 +643,9 @@ public class BoundStatement extends Query {
         DataType.Name type = metadata().checkType(i, DataType.Name.UUID,
                                                        DataType.Name.TIMEUUID);
 
-        if (type == DataType.Name.TIMEUUID && v.version() != 1)
+        if (type == DataType.Name.TIMEUUID && v.version() != 1){
             throw new InvalidTypeException(String.format("%s is not a Type 1 (time-based) UUID", v));
+        }
 
         return type == DataType.Name.UUID
              ? setValue(i, UUIDType.instance.decompose(v))
@@ -686,8 +715,9 @@ public class BoundStatement extends Query {
      */
     public <T> BoundStatement setList(int i, List<T> v) {
         DataType type = metadata().getType(i);
-        if (type.getName() != DataType.Name.LIST)
+        if (type.getName() != DataType.Name.LIST){
             throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a list", metadata().getName(i), type));
+        }
 
         // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
         if (!v.isEmpty()) {
@@ -695,8 +725,9 @@ public class BoundStatement extends Query {
             Class<?> providedClass = v.get(0).getClass();
             Class<?> expectedClass = type.getTypeArguments().get(0).asJavaClass();
 
-            if (!expectedClass.isAssignableFrom(providedClass))
+            if (!expectedClass.isAssignableFrom(providedClass)){
                 throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting list of %s but provided list of %s", metadata().getName(i), type, expectedClass, providedClass));
+            }
         }
 
         return setValue(i, Codec.<List<T>>getCodec(type).decompose(v));
@@ -734,8 +765,9 @@ public class BoundStatement extends Query {
      */
     public <K, V> BoundStatement setMap(int i, Map<K, V> v) {
         DataType type = metadata().getType(i);
-        if (type.getName() != DataType.Name.MAP)
+        if (type.getName() != DataType.Name.MAP){
             throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a map", metadata().getName(i), type));
+        }
 
         if (!v.isEmpty()) {
             // Ugly? Yes
@@ -745,8 +777,9 @@ public class BoundStatement extends Query {
 
             Class<?> expectedKeysClass = type.getTypeArguments().get(0).getName().javaType;
             Class<?> expectedValuesClass = type.getTypeArguments().get(1).getName().javaType;
-            if (!expectedKeysClass.isAssignableFrom(providedKeysClass) || !expectedValuesClass.isAssignableFrom(providedValuesClass))
+            if (!expectedKeysClass.isAssignableFrom(providedKeysClass) || !expectedValuesClass.isAssignableFrom(providedValuesClass)){
                 throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting map of %s->%s but provided map of %s->%s", metadata().getName(i), type, expectedKeysClass, expectedValuesClass, providedKeysClass, providedValuesClass));
+            }
         }
 
         return setValue(i, Codec.<Map<K, V>>getCodec(type).decompose(v));
@@ -784,16 +817,18 @@ public class BoundStatement extends Query {
      */
     public <T> BoundStatement setSet(int i, Set<T> v) {
         DataType type = metadata().getType(i);
-        if (type.getName() != DataType.Name.SET)
+        if (type.getName() != DataType.Name.SET){
             throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a set", metadata().getName(i), type));
+        }
 
         if (!v.isEmpty()) {
             // Ugly? Yes
             Class<?> providedClass = v.iterator().next().getClass();
             Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
 
-            if (!expectedClass.isAssignableFrom(providedClass))
+            if (!expectedClass.isAssignableFrom(providedClass)){
                 throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting set of %s but provided set of %s", metadata().getName(i), type, expectedClass, providedClass));
+            }
         }
 
         return setValue(i, Codec.<Set<T>>getCodec(type).decompose(v));
@@ -825,8 +860,9 @@ public class BoundStatement extends Query {
         ByteBuffer previous = values[i];
         values[i] = value;
 
-        if (previous == null)
+        if (previous == null){
             remaining--;
+        }
         return this;
     }
 }

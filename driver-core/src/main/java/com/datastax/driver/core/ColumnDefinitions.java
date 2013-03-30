@@ -15,7 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.cassandra.cql3.ColumnSpecification;
 
@@ -202,8 +206,9 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         StringBuilder sb = new StringBuilder();
         sb.append("Columns[");
         for (int i = 0; i < size(); i++) {
-            if (i != 0)
+            if (i != 0){
                 sb.append(", ");
+            }
             Definition def = byIdx[i];
             sb.append(def.name).append("(").append(def.type).append(")");
         }
@@ -227,52 +232,61 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
             for (int i = 0; i < indexes.length; i++) {
                 int idx = indexes[i];
                 if (caseSensitive) {
-                    if (name.equals(byIdx[idx].name))
+                    if (name.equals(byIdx[idx].name)){
                         return idx;
+                    }
                 } else {
-                    if (name.toLowerCase().equals(byIdx[idx].name))
+                    if (name.toLowerCase().equals(byIdx[idx].name)){
                         return idx;
+                    }
                 }
             }
-            if (caseSensitive)
+            if (caseSensitive){
                 return -1;
-            else
+            }
+            else{ 
                 return indexes[0];
+            }
         }
     }
 
     int getIdx(String name) {
         int idx = findIdx(name);
-        if (idx < 0)
+        if (idx < 0){
             throw new IllegalArgumentException(name + " is not a column defined in this metadata");
+        }
 
         return idx;
     }
 
     void checkBounds(int i) {
-        if (i < 0 || i >= size())
+        if (i < 0 || i >= size()){
             throw new ArrayIndexOutOfBoundsException(i);
+        }
     }
 
     // Note: we avoid having a vararg method to avoid the array allocation that comes with it.
     void checkType(int i, DataType.Name name) {
         DataType defined = getType(i);
-        if (name != defined.getName())
+        if (name != defined.getName()){
             throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
+        }
     }
 
     DataType.Name checkType(int i, DataType.Name name1, DataType.Name name2) {
         DataType defined = getType(i);
-        if (name1 != defined.getName() && name2 != defined.getName())
+        if (name1 != defined.getName() && name2 != defined.getName()){
             throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
+        }
 
         return defined.getName();
     }
 
     DataType.Name checkType(int i, DataType.Name name1, DataType.Name name2, DataType.Name name3) {
         DataType defined = getType(i);
-        if (name1 != defined.getName() && name2 != defined.getName() && name3 != defined.getName())
+        if (name1 != defined.getName() && name2 != defined.getName() && name3 != defined.getName()){
             throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
+        }
 
         return defined.getName();
     }
@@ -341,8 +355,9 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
 
         @Override
         public final boolean equals(Object o) {
-            if(!(o instanceof Definition))
+            if(!(o instanceof Definition)){
                 return false;
+            }
 
             Definition other = (Definition)o;
             return keyspace.equals(other.keyspace)

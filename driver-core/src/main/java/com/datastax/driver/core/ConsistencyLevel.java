@@ -26,7 +26,7 @@ public enum ConsistencyLevel
     LOCAL_QUORUM,
     EACH_QUORUM;
 
-    static org.apache.cassandra.db.ConsistencyLevel DEFAULT_CASSANDRA_CL = org.apache.cassandra.db.ConsistencyLevel.ONE;
+    static final  org.apache.cassandra.db.ConsistencyLevel DEFAULT_CASSANDRA_CL = org.apache.cassandra.db.ConsistencyLevel.ONE;
 
     static ConsistencyLevel from(org.apache.cassandra.db.ConsistencyLevel cl) {
         switch (cl) {
@@ -43,8 +43,9 @@ public enum ConsistencyLevel
     }
 
     static org.apache.cassandra.db.ConsistencyLevel toCassandraCL(ConsistencyLevel cl) {
-        if (cl == null)
+        if (cl == null){
             return org.apache.cassandra.db.ConsistencyLevel.ONE;
+        }
 
         switch (cl) {
             case ANY: return org.apache.cassandra.db.ConsistencyLevel.ANY;

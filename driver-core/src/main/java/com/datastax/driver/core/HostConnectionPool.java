@@ -63,8 +63,9 @@ class HostConnectionPool {
         // Create initial core connections
         List<Connection> l = new ArrayList<Connection>(options().getCoreConnectionsPerHost(hostDistance));
         try {
-            for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
+            for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++){
                 l.add(manager.connectionFactory().open(host));
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             // If asked to interrupt, we can skip opening core connections, the pool will still work.
@@ -81,10 +82,11 @@ class HostConnectionPool {
     }
 
     public Connection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
-        if (isShutdown.get())
+        if (isShutdown.get()){
             // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
             // That being said, maybe having a specific exception could be cleaner.
             throw new ConnectionException(host.getAddress(), "Pool is shutdown");
+        }
 
         if (connections.isEmpty()) {
             for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++) {
@@ -108,8 +110,9 @@ class HostConnectionPool {
             }
         }
 
-        if (minInFlight >= options().getMaxSimultaneousRequestsPerConnectionTreshold(hostDistance) && connections.size() < options().getMaxConnectionPerHost(hostDistance))
+        if (minInFlight >= options().getMaxSimultaneousRequestsPerConnectionTreshold(hostDistance) && connections.size() < options().getMaxConnectionPerHost(hostDistance)){
             maybeSpawnNewConnection();
+        }
 
         while (true) {
             int inFlight = leastBusy.inFlight.get();
@@ -119,8 +122,9 @@ class HostConnectionPool {
                 break;
             }
 
-            if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1))
+            if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1)){
                 break;
+            }
         }
         leastBusy.setKeyspace(manager.poolsState.keyspace);
         return leastBusy;
@@ -169,8 +173,9 @@ class HostConnectionPool {
                 timeout = 0; // this will make us stop the loop if we don't get a connection right away
             }
 
-            if (isShutdown())
+            if (isShutdown()){
                 throw new ConnectionException(host.getAddress(), "Pool is shutdown");
+            }
 
             int minInFlight = Integer.MAX_VALUE;
             Connection leastBusy = null;
@@ -185,11 +190,13 @@ class HostConnectionPool {
             while (true) {
                 int inFlight = leastBusy.inFlight.get();
 
-                if (inFlight >= Connection.MAX_STREAM_PER_CONNECTION)
+                if (inFlight >= Connection.MAX_STREAM_PER_CONNECTION){
                     break;
+                }
 
-                if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1))
+                if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1)){
                     return leastBusy;
+                }
             }
 
             remaining = timeout - elapsed(start, unit);
@@ -202,15 +209,18 @@ class HostConnectionPool {
         int inFlight = connection.inFlight.decrementAndGet();
 
         if (connection.isDefunct()) {
-            if (host.getMonitor().signalConnectionFailure(connection.lastException()))
+            if (host.getMonitor().signalConnectionFailure(connection.lastException())){
                 shutdown();
-            else
+            }
+            else{
                 replace(connection);
+            }
         } else {
 
             if (trash.contains(connection) && inFlight == 0) {
-                if (trash.remove(connection))
+                if (trash.remove(connection)){
                     close(connection);
+                }
                 return;
             }
 
@@ -226,17 +236,20 @@ class HostConnectionPool {
         // First, make sure we don't go below core connections
         for(;;) {
             int opened = open.get();
-            if (opened <= options().getCoreConnectionsPerHost(hostDistance))
+            if (opened <= options().getCoreConnectionsPerHost(hostDistance)){
                 return false;
+            }
 
-            if (open.compareAndSet(opened, opened - 1))
+            if (open.compareAndSet(opened, opened - 1)){
                 break;
+            }
         }
         trash.add(connection);
         connections.remove(connection);
 
-        if (connection.inFlight.get() == 0 && trash.remove(connection))
+        if (connection.inFlight.get() == 0 && trash.remove(connection)){
             close(connection);
+        }
         return true;
     }
 
@@ -245,11 +258,13 @@ class HostConnectionPool {
         // First, make sure we don't cross the allowed limit of open connections
         for(;;) {
             int opened = open.get();
-            if (opened >= options().getMaxConnectionPerHost(hostDistance))
+            if (opened >= options().getMaxConnectionPerHost(hostDistance)){
                 return false;
+            }
 
-            if (open.compareAndSet(opened, opened + 1))
+            if (open.compareAndSet(opened, opened + 1)){
                 break;
+            }
         }
 
         if (isShutdown()) {
@@ -270,8 +285,9 @@ class HostConnectionPool {
         } catch (ConnectionException e) {
             open.decrementAndGet();
             logger.debug("Connection error to {} while creating additional connection", host);
-            if (host.getMonitor().signalConnectionFailure(e))
+            if (host.getMonitor().signalConnectionFailure(e)){
                 shutdown();
+            }
             return false;
         } catch (AuthenticationException e) {
             // This shouldn't really happen in theory
@@ -285,10 +301,12 @@ class HostConnectionPool {
     private void maybeSpawnNewConnection() {
         while (true) {
             int inCreation = scheduledForCreation.get();
-            if (inCreation >= MAX_SIMULTANEOUS_CREATION)
+            if (inCreation >= MAX_SIMULTANEOUS_CREATION){
                 return;
-            if (scheduledForCreation.compareAndSet(inCreation, inCreation + 1))
+            }
+            if (scheduledForCreation.compareAndSet(inCreation, inCreation + 1)){
                 break;
+            }
         }
 
         logger.debug("Creating new connection on busy pool to {}", host);
@@ -319,8 +337,9 @@ class HostConnectionPool {
     }
 
     public void shutdown() {
-        if (!isShutdown.compareAndSet(false, true))
+        if (!isShutdown.compareAndSet(false, true)){
             return;
+        }
 
         logger.debug("Shutting down pool");
 
@@ -343,8 +362,9 @@ class HostConnectionPool {
     // This creates connections if we have less than core connections (if we
     // have more than core, connection will just get trash when we can).
     public void ensureCoreConnections() {
-        if (isShutdown())
+        if (isShutdown()){
             return;
+        }
 
         // Note: this process is a bit racy, but it doesn't matter since we're still guaranteed to not create
         // more connection than maximum (and if we create more than core connection due to a race but this isn't

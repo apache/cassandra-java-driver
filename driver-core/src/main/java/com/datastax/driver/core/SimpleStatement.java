@@ -102,8 +102,9 @@ public class SimpleStatement extends Statement {
     // TODO: we could find that a better place (but it's not expose so it doesn't matter too much)
     static ByteBuffer compose(ByteBuffer... buffers) {
         int totalLength = 0;
-        for (ByteBuffer bb : buffers)
+        for (ByteBuffer bb : buffers){
             totalLength += 2 + bb.remaining() + 1;
+        }
 
         ByteBuffer out = ByteBuffer.allocate(totalLength);
         for (ByteBuffer bb : buffers)

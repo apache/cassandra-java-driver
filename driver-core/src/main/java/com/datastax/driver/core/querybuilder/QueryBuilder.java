@@ -310,8 +310,9 @@ public final class QueryBuilder {
      * @throws IllegalArgumentException if {@code timestamp &gt; 0}.
      */
     public static Using timestamp(long timestamp) {
-        if (timestamp < 0)
+        if (timestamp < 0){
             throw new IllegalArgumentException("Invalid timestamp, must be positive");
+        }
 
         return new Using("TIMESTAMP", timestamp);
     }
@@ -325,8 +326,9 @@ public final class QueryBuilder {
      * @throws IllegalArgumentException if {@code ttl &gt; 0}.
      */
     public static Using ttl(int ttl) {
-        if (ttl < 0)
+        if (ttl < 0){
             throw new IllegalArgumentException("Invalid ttl, must be positive");
+        }
 
         return new Using("TTL", ttl);
     }

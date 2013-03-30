@@ -116,8 +116,9 @@ public class Consumer extends Thread {
 
                     while (true) {
                         Result res = queue.take();
-                        if (res == Result.END_MARKER)
+                        if (res == Result.END_MARKER){
                             return;
+                        }
 
                         try {
                             res.future.getUninterruptibly();

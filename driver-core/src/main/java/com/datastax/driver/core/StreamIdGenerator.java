@@ -36,12 +36,14 @@ class StreamIdGenerator {
 
     public int next() throws BusyConnectionException {
         int id = atomicGetAndSetFirstAvailable(0);
-        if (id >= 0)
+        if (id >= 0){
             return id;
+        }
 
         id = atomicGetAndSetFirstAvailable(1);
-        if (id >= 0)
+        if (id >= 0){
             return 64 + id;
+        }
 
         throw new BusyConnectionException();
     }
@@ -58,21 +60,24 @@ class StreamIdGenerator {
     public int atomicGetAndSetFirstAvailable(int idx) {
         while (true) {
             long l = bits.get(idx);
-            if (l == 0)
+            if (l == 0){
                 return -1;
+            }
 
             // Find the position of the right-most 1-bit
             int id = Long.numberOfTrailingZeros(l);
-            if (bits.compareAndSet(idx, l, l ^ mask(id)))
+            if (bits.compareAndSet(idx, l, l ^ mask(id))){
                 return id;
+            }
         }
     }
 
     public void atomicClear(int idx, int toClear) {
         while (true) {
             long l = bits.get(idx);
-            if (bits.compareAndSet(idx, l, l | mask(toClear)))
+            if (bits.compareAndSet(idx, l, l | mask(toClear))){
                 return;
+            }
         }
     }
 

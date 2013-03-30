@@ -53,8 +53,9 @@ public class Update extends BuiltStatement {
         StringBuilder builder = new StringBuilder();
 
         builder.append("UPDATE ");
-        if (keyspace != null)
+        if (keyspace != null){
             Utils.appendName(keyspace, builder).append(".");
+        }
         Utils.appendName(table, builder);
 
         if (!usings.usings.isEmpty()) {

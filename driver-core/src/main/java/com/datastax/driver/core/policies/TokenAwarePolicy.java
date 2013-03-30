@@ -91,12 +91,14 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
     public Iterator<Host> newQueryPlan(final Query query) {
 
         ByteBuffer partitionKey = query.getRoutingKey();
-        if (partitionKey == null)
+        if (partitionKey == null){
             return childPolicy.newQueryPlan(query);
+        }
 
         final Set<Host> replicas = clusterMetadata.getReplicas(partitionKey);
-        if (replicas.isEmpty())
+        if (replicas.isEmpty()){
             return childPolicy.newQueryPlan(query);
+        }
 
         return new AbstractIterator<Host>() {
 
@@ -106,18 +108,21 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
             protected Host computeNext() {
                 while (iter.hasNext()) {
                     Host host = iter.next();
-                    if (host.getMonitor().isUp() && childPolicy.distance(host) == HostDistance.LOCAL)
+                    if (host.getMonitor().isUp() && childPolicy.distance(host) == HostDistance.LOCAL){
                         return host;
+                    }
                 }
 
-                if (childIterator == null)
+                if (childIterator == null){
                     childIterator = childPolicy.newQueryPlan(query);
+                }
 
                 while (childIterator.hasNext()) {
                     Host host = childIterator.next();
                     // Skip it if it was already a local replica
-                    if (!replicas.contains(host) || childPolicy.distance(host) != HostDistance.LOCAL)
+                    if (!replicas.contains(host) || childPolicy.distance(host) != HostDistance.LOCAL){
                         return host;
+                    }
                 }
                 return endOfData();
             }

@@ -36,10 +36,12 @@ public class AlreadyExistsException extends QueryValidationException {
     }
 
     private static String makeMsg(String keyspace, String table) {
-        if (table.isEmpty())
+        if (table.isEmpty()){
             return String.format("Keyspace %s already exists", keyspace);
-        else
+        }
+        else{
             return String.format("Table %s.%s already exists", keyspace, table);
+        }
     }
 
     /**

@@ -18,10 +18,11 @@ package com.datastax.driver.core;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.apache.cassandra.utils.MD5Digest;
 import org.apache.cassandra.transport.messages.ResultMessage;
+import org.apache.cassandra.utils.MD5Digest;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * Represents a prepared statement, a query with bound variables that has been
@@ -57,8 +58,9 @@ public class PreparedStatement {
             case PREPARED:
                 ResultMessage.Prepared pmsg = (ResultMessage.Prepared)msg;
                 ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[pmsg.metadata.names.size()];
-                if (defs.length == 0)
+                if (defs.length == 0){
                     return new PreparedStatement(new ColumnDefinitions(defs), pmsg.statementId, null, query, queryKeyspace);
+                }
 
                 List<ColumnMetadata> partitionKeyColumns = null;
                 int[] pkIndexes = null;
@@ -68,8 +70,9 @@ public class PreparedStatement {
                     if (tm != null) {
                         partitionKeyColumns = tm.getPartitionKey();
                         pkIndexes = new int[partitionKeyColumns.size()];
-                        for (int i = 0; i < pkIndexes.length; ++i)
+                        for (int i = 0; i < pkIndexes.length; ++i){
                             pkIndexes[i] = -1;
+                        }
                     }
                 }
 
@@ -86,8 +89,9 @@ public class PreparedStatement {
     }
 
     private static void maybeGetIndex(String name, int j, List<ColumnMetadata> pkColumns, int[] pkIndexes) {
-        if (pkColumns == null)
+        if (pkColumns == null){
             return;
+        }
 
         for (int i = 0; i < pkColumns.size(); ++i) {
             if (name.equals(pkColumns.get(i).getName())) {
@@ -99,12 +103,15 @@ public class PreparedStatement {
     }
 
     private static boolean allSet(int[] pkColumns) {
-        if (pkColumns == null)
+        if (pkColumns == null){
             return false;
+        }
 
-        for (int i = 0; i < pkColumns.length; ++i)
-            if (pkColumns[i] < 0)
+        for (int i = 0; i < pkColumns.length; ++i){
+            if (pkColumns[i] < 0){
                 return false;
+            }
+        }
 
         return true;
     }

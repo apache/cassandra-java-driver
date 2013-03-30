@@ -43,14 +43,15 @@ public class Row {
     }
 
     static Row fromData(ColumnDefinitions metadata, List<ByteBuffer> data) {
-        if (data == null)
+        if (data == null){
             return null;
+        }
 
         return new Row(metadata, data);
     }
 
     /**
-     * The columns contained in this Row.
+     * lThe columns contained in this Row.
      *
      * @return the columns contained in this Row.
      */
@@ -98,8 +99,9 @@ public class Row {
         metadata.checkType(i, DataType.Name.BOOLEAN);
 
         ByteBuffer value = data.get(i);
-        if (value == null || value.remaining() == 0)
+        if (value == null || value.remaining() == 0){
             return false;
+        }
 
         return BooleanType.instance.compose(value);
     }
@@ -133,8 +135,9 @@ public class Row {
         metadata.checkType(i, DataType.Name.INT);
 
         ByteBuffer value = data.get(i);
-        if (value == null || value.remaining() == 0)
+        if (value == null || value.remaining() == 0){
             return 0;
+        }
 
         return Int32Type.instance.compose(value);
     }
@@ -168,8 +171,9 @@ public class Row {
         metadata.checkType(i, DataType.Name.BIGINT, DataType.Name.COUNTER);
 
         ByteBuffer value = data.get(i);
-        if (value == null || value.remaining() == 0)
+        if (value == null || value.remaining() == 0){
             return 0L;
+        }
 
         return LongType.instance.compose(value);
     }
@@ -203,8 +207,9 @@ public class Row {
         metadata.checkType(i, DataType.Name.TIMESTAMP);
 
         ByteBuffer value = data.get(i);
-        if (value == null || value.remaining() == 0)
+        if (value == null || value.remaining() == 0){
             return null;
+        }
 
         return DateType.instance.compose(value);
     }
@@ -238,8 +243,9 @@ public class Row {
         metadata.checkType(i, DataType.Name.FLOAT);
 
         ByteBuffer value = data.get(i);
-        if (value == null || value.remaining() == 0)
+        if (value == null || value.remaining() == 0){
             return 0.0f;
+        }
 
         return FloatType.instance.compose(value);
     }
@@ -273,8 +279,9 @@ public class Row {
         metadata.checkType(i, DataType.Name.DOUBLE);
 
         ByteBuffer value = data.get(i);
-        if (value == null || value.remaining() == 0)
+        if (value == null || value.remaining() == 0){
             return 0.0;
+        }
 
         return DoubleType.instance.compose(value);
     }
@@ -312,8 +319,9 @@ public class Row {
         metadata.checkBounds(i);
 
         ByteBuffer value = data.get(i);
-        if (value == null)
+        if (value == null){
             return null;
+        }
 
         return value.duplicate();
     }
@@ -390,8 +398,9 @@ public class Row {
                                                    DataType.Name.ASCII);
 
         ByteBuffer value = data.get(i);
-        if (value == null)
+        if (value == null){
             return null;
+        }
 
         return type == DataType.Name.ASCII
              ? AsciiType.instance.compose(value)
@@ -428,8 +437,9 @@ public class Row {
         metadata.checkType(i, DataType.Name.VARINT);
 
         ByteBuffer value = data.get(i);
-        if (value == null || value.remaining() == 0)
+        if (value == null || value.remaining() == 0){
             return null;
+        }
 
         return IntegerType.instance.compose(value);
     }
@@ -463,8 +473,9 @@ public class Row {
         metadata.checkType(i, DataType.Name.DECIMAL);
 
         ByteBuffer value = data.get(i);
-        if (value == null || value.remaining() == 0)
+        if (value == null || value.remaining() == 0){
             return null;
+        }
 
         return DecimalType.instance.compose(value);
     }
@@ -499,8 +510,9 @@ public class Row {
         DataType.Name type = metadata.checkType(i, DataType.Name.UUID, DataType.Name.TIMEUUID);
 
         ByteBuffer value = data.get(i);
-        if (value == null || value.remaining() == 0)
+        if (value == null || value.remaining() == 0){
             return null;
+        }
 
         return type == DataType.Name.UUID
              ? UUIDType.instance.compose(value)
@@ -537,8 +549,9 @@ public class Row {
         metadata.checkType(i, DataType.Name.INET);
 
         ByteBuffer value = data.get(i);
-        if (value == null || value.remaining() == 0)
+        if (value == null || value.remaining() == 0){
             return null;
+        }
 
         return InetAddressType.instance.compose(value);
     }
@@ -575,17 +588,18 @@ public class Row {
      */
     public <T> List<T> getList(int i, Class<T> elementsClass) {
         DataType type = metadata.getType(i);
-        if (type.getName() != DataType.Name.LIST)
+        if (type.getName() != DataType.Name.LIST){
             throw new InvalidTypeException(String.format("Column %s is not of list type", metadata.getName(i)));
+        }
 
         Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
-        if (!elementsClass.isAssignableFrom(expectedClass))
+        if (!elementsClass.isAssignableFrom(expectedClass)){
             throw new InvalidTypeException(String.format("Column %s is a list of %s (CQL type %s), cannot be retrieve as a list of %s", metadata.getName(i), expectedClass, type, elementsClass));
-
+        }
         ByteBuffer value = data.get(i);
-        if (value == null)
+        if (value == null){
             return Collections.<T>emptyList();
-
+        }
         // TODO: we could avoid the getCodec call if we kept a reference to the original message.
         return (List<T>)Codec.getCodec(type).compose(value);
     }
@@ -625,16 +639,19 @@ public class Row {
      */
     public <T> Set<T> getSet(int i, Class<T> elementsClass) {
         DataType type = metadata.getType(i);
-        if (type.getName() != DataType.Name.SET)
+        if (type.getName() != DataType.Name.SET){
             throw new InvalidTypeException(String.format("Column %s is not of set type", metadata.getName(i)));
+        }
 
         Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
-        if (!elementsClass.isAssignableFrom(expectedClass))
+        if (!elementsClass.isAssignableFrom(expectedClass)){
             throw new InvalidTypeException(String.format("Column %s is a set of %s (CQL type %s), cannot be retrieve as a set of %s", metadata.getName(i), expectedClass, type, elementsClass));
+        }
 
         ByteBuffer value = data.get(i);
-        if (value == null)
+        if (value == null){
             return Collections.<T>emptySet();
+        }
 
         return (Set<T>)Codec.getCodec(type).compose(value);
     }
@@ -676,17 +693,19 @@ public class Row {
      */
     public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass) {
         DataType type = metadata.getType(i);
-        if (type.getName() != DataType.Name.MAP)
+        if (type.getName() != DataType.Name.MAP){
             throw new InvalidTypeException(String.format("Column %s is not of map type", metadata.getName(i)));
+        }
 
         Class<?> expectedKeysClass = type.getTypeArguments().get(0).getName().javaType;
         Class<?> expectedValuesClass = type.getTypeArguments().get(1).getName().javaType;
-        if (!keysClass.isAssignableFrom(expectedKeysClass) || !valuesClass.isAssignableFrom(expectedValuesClass))
+        if (!keysClass.isAssignableFrom(expectedKeysClass) || !valuesClass.isAssignableFrom(expectedValuesClass)){
             throw new InvalidTypeException(String.format("Column %s is a map of %s->%s (CQL type %s), cannot be retrieve as a map of %s->%s", metadata.getName(i), expectedKeysClass, expectedValuesClass, type, keysClass, valuesClass));
-
+        }
         ByteBuffer value = data.get(i);
-        if (value == null)
+        if (value == null){
             return Collections.<K, V>emptyMap();
+        }
 
         return (Map<K, V>)Codec.getCodec(type).compose(value);
     }
@@ -717,13 +736,16 @@ public class Row {
         StringBuilder sb = new StringBuilder();
         sb.append("Row[");
         for (int i = 0; i < metadata.size(); i++) {
-            if (i != 0)
+            if (i != 0){
                 sb.append(", ");
+            }
             ByteBuffer bb = data.get(i);
-            if (bb == null)
+            if (bb == null){
                 sb.append("NULL");
-            else
+            }
+            else{
                 sb.append(Codec.getCodec(metadata.getType(i)).getString(bb));
+            }
         }
         sb.append("]");
         return sb.toString();

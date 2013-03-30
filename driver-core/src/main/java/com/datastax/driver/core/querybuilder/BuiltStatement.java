@@ -42,8 +42,9 @@ abstract class BuiltStatement extends Statement {
     public String getQueryString() {
         if (dirty || cache == null) {
             cache = buildQueryString().trim();
-            if (!cache.endsWith(";"))
+            if (!cache.endsWith(";")){
                 cache += ";";
+            }
         }
         return cache;
     }
@@ -56,8 +57,9 @@ abstract class BuiltStatement extends Statement {
 
     // TODO: Correctly document the InvalidTypeException
     void maybeAddRoutingKey(String name, Object value) {
-        if (routingKey == null || name == null)
+        if (routingKey == null || name == null){
             return;
+        }
 
         for (int i = 0; i < partitionKey.size(); i++) {
             if (name.equals(partitionKey.get(i).getName())) {
@@ -68,13 +70,15 @@ abstract class BuiltStatement extends Statement {
     }
 
     public ByteBuffer getRoutingKey() {
-        if (routingKey == null)
+        if (routingKey == null){
             return null;
+        }
 
-        for (ByteBuffer bb : routingKey)
-            if (bb == null)
+        for (ByteBuffer bb : routingKey){
+            if (bb == null){
                 return null;
-
+            }
+        }
         return routingKey.length == 1
              ? routingKey[0]
              : compose(routingKey);
@@ -83,8 +87,9 @@ abstract class BuiltStatement extends Statement {
     // This is a duplicate of the one in SimpleStatement, but I don't want to expose this publicly so...
     static ByteBuffer compose(ByteBuffer... buffers) {
         int totalLength = 0;
-        for (ByteBuffer bb : buffers)
+        for (ByteBuffer bb : buffers){
             totalLength += 2 + bb.remaining() + 1;
+        }
 
         ByteBuffer out = ByteBuffer.allocate(totalLength);
         for (ByteBuffer bb : buffers)

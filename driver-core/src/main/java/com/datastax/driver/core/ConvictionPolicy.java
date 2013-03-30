@@ -50,7 +50,7 @@ abstract class ConvictionPolicy {
          * @param host the host this policy applies to
          * @return the newly created {@link ConvictionPolicy} instance.
          */
-        public ConvictionPolicy create(Host host);
+        ConvictionPolicy create(Host host);
     }
 
     public static class Simple extends ConvictionPolicy {

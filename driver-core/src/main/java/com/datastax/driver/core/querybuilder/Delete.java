@@ -53,12 +53,14 @@ public class Delete extends BuiltStatement {
         StringBuilder builder = new StringBuilder();
 
         builder.append("DELETE ");
-		if (columnNames != null)
+		if (columnNames != null){
         	Utils.joinAndAppendNames(builder, ",", columnNames);
+		}
 
         builder.append(" FROM ");
-        if (keyspace != null)
+        if (keyspace != null){
             Utils.appendName(keyspace, builder).append(".");
+        }
         Utils.appendName(table, builder);
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
@@ -232,8 +234,9 @@ public class Delete extends BuiltStatement {
          * @throws IllegalStateException if some columns had already been selected for this builder.
          */
         public Builder all() {
-            if (columnNames != null)
+            if (columnNames != null){
                 throw new IllegalStateException(String.format("Some columns (%s) have already been selected.", columnNames));
+            }
 
             return (Builder)this;
         }
@@ -245,8 +248,9 @@ public class Delete extends BuiltStatement {
          * @return this in-build DELETE Selection
          */
         public Selection column(String name) {
-            if (columnNames == null)
+            if (columnNames == null){
                 columnNames = new ArrayList<String>();
+            }
 
             columnNames.add(name);
             return this;

@@ -15,16 +15,17 @@
  */
 package com.datastax.driver.core;
 
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.*;
-
-import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.policies.ReconnectionPolicy;
+import com.google.common.util.concurrent.Uninterruptibles;
 
 abstract class AbstractReconnectionHandler implements Runnable {
 
@@ -61,8 +62,9 @@ abstract class AbstractReconnectionHandler implements Runnable {
         while (true) {
             ScheduledFuture previous = currentAttempt.get();
             if (currentAttempt.compareAndSet(previous, localFuture)) {
-                if (previous != null)
+                if (previous != null){
                     previous.cancel(false);
+                }
                 break;
             }
         }
@@ -71,22 +73,26 @@ abstract class AbstractReconnectionHandler implements Runnable {
 
     public void run() {
         // We shouldn't arrive here if the future is cancelled but better safe than sorry
-        if (localFuture.isCancelled())
+        if (localFuture.isCancelled()){
             return;
+        }
 
         // Don't run before ready, otherwise our cancel business might end up removing all connection attempts.
-        while (!readyForNext)
+        while (!readyForNext){
             Uninterruptibles.sleepUninterruptibly(5, TimeUnit.MILLISECONDS);
+        }
 
         try {
             onReconnection(tryReconnect());
             currentAttempt.compareAndSet(localFuture, null);
         } catch (ConnectionException e) {
             long nextDelay = schedule.nextDelayMs();
-            if (onConnectionException(e, nextDelay))
+            if (onConnectionException(e, nextDelay)){
                 reschedule(nextDelay);
-            else
+            }
+            else{
                 currentAttempt.compareAndSet(localFuture, null);
+            }
         } catch (AuthenticationException e) {
             logger.error(e.getMessage());
             long nextDelay = schedule.nextDelayMs();
@@ -102,10 +108,12 @@ abstract class AbstractReconnectionHandler implements Runnable {
             reschedule(schedule.nextDelayMs());
         } catch (Exception e) {
             long nextDelay = schedule.nextDelayMs();
-            if (onUnknownException(e, nextDelay))
+            if (onUnknownException(e, nextDelay)){
                 reschedule(nextDelay);
-            else
+            }
+            else{
                 currentAttempt.compareAndSet(localFuture, null);
+            }
         }
     }
 

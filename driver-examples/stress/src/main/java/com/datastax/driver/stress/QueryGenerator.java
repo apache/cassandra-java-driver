@@ -38,14 +38,14 @@ public abstract class QueryGenerator implements Iterator<QueryGenerator.Request>
     public abstract void createSchema(Session session);
 
     public interface Builder {
-        public QueryGenerator create(int iterations, OptionSet options);
+        QueryGenerator create(int iterations, OptionSet options);
     }
 
     public interface Request {
 
-        public ResultSet execute(Session session);
+        ResultSet execute(Session session);
 
-        public ResultSetFuture executeAsync(Session session);
+        ResultSetFuture executeAsync(Session session);
 
         public static class SimpleQuery implements Request {
 

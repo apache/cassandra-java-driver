@@ -50,8 +50,9 @@ public class Insert extends BuiltStatement {
         StringBuilder builder = new StringBuilder();
 
         builder.append("INSERT INTO ");
-        if (keyspace != null)
+        if (keyspace != null){
             Utils.appendName(keyspace, builder).append(".");
+        }
         Utils.appendName(table, builder);
         builder.append("(");
         Utils.joinAndAppendNames(builder, ",", names);
@@ -94,14 +95,16 @@ public class Insert extends BuiltStatement {
      * @throws IllegalArgumentException if {@code names.length != values.length}.
      */
     public Insert values(String[] names, Object[] values) {
-        if (names.length != values.length)
+        if (names.length != values.length){
             throw new IllegalArgumentException(String.format("Got %d names but %d values", names.length, values.length));
+        }
         this.names.addAll(Arrays.asList(names));
         this.values.addAll(Arrays.asList(values));
         setDirty();
 
-        for (int i = 0; i < names.length; i++)
+        for (int i = 0; i < names.length; i++){
             maybeAddRoutingKey(names[i], values[i]);
+        }
         return this;
     }
 

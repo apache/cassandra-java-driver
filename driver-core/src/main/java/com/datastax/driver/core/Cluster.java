@@ -17,25 +17,38 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.SetMultimap;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
-import org.apache.cassandra.utils.MD5Digest;
 import org.apache.cassandra.transport.Event;
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.EventMessage;
 import org.apache.cassandra.transport.messages.PrepareMessage;
-
-import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.policies.*;
-
+import org.apache.cassandra.utils.MD5Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import com.datastax.driver.core.policies.Policies;
+import com.datastax.driver.core.policies.ReconnectionPolicy;
+import com.datastax.driver.core.policies.RetryPolicy;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.SetMultimap;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * Informations and known state of a Cassandra cluster.
@@ -87,8 +100,9 @@ public class Cluster {
      */
     public static Cluster buildFrom(Initializer initializer) {
         List<InetAddress> contactPoints = initializer.getContactPoints();
-        if (contactPoints.isEmpty())
+        if (contactPoints.isEmpty()){
             throw new IllegalArgumentException("Cannot build a cluster without contact points");
+        }
 
         return new Cluster(contactPoints, initializer.getConfiguration());
     }
@@ -194,7 +208,7 @@ public class Cluster {
          * @return the initial Cassandra contact points. See {@link Builder#addContactPoint}
          * for more details on contact points.
          */
-        public List<InetAddress> getContactPoints();
+        List<InetAddress> getContactPoints();
 
         /**
          * The configuration to use for the new cluster.
@@ -211,7 +225,7 @@ public class Cluster {
          *
          * @return the configuration to use for the new cluster.
          */
-        public Configuration getConfiguration();
+        Configuration getConfiguration();
     }
 
     /**
@@ -294,8 +308,9 @@ public class Cluster {
          * @see Builder#addContactPoint
          */
         public Builder addContactPoints(String... addresses) {
-            for (String address : addresses)
+            for (String address : addresses){
                 addContactPoint(address);
+            }
             return this;
         }
 
@@ -311,8 +326,9 @@ public class Cluster {
          * @see Builder#addContactPoint
          */
         public Builder addContactPoints(InetAddress... addresses) {
-            for (InetAddress address : addresses)
+            for (InetAddress address : addresses){
                 this.addresses.add(address);
+            }
             return this;
         }
 
@@ -504,8 +520,9 @@ public class Cluster {
             this.contactPoints = contactPoints;
             this.connectionFactory = new Connection.Factory(this, configuration.getAuthInfoProvider());
 
-            for (InetAddress address : contactPoints)
+            for (InetAddress address : contactPoints){
                 addHost(address, false);
+            }
 
             this.controlConnection = new ControlConnection(this, metadata);
 
@@ -538,23 +555,26 @@ public class Cluster {
         }
 
         private void shutdown() {
-            if (!isShutdown.compareAndSet(false, true))
+            if (!isShutdown.compareAndSet(false, true)){
                 return;
+            }
 
             logger.debug("Shutting down");
 
             controlConnection.shutdown();
 
-            for (Session session : sessions)
+            for (Session session : sessions){
                 session.shutdown();
+            }
 
             reconnectionExecutor.shutdownNow();
             scheduledTasksExecutor.shutdownNow();
             executor.shutdownNow();
             connectionFactory.shutdown();
 
-            if (metrics != null)
+            if (metrics != null){
                 metrics.shutdown();
+            }
         }
 
         public void onUp(Host host) {
@@ -562,8 +582,9 @@ public class Cluster {
 
             // If there is a reconnection attempt scheduled for that node, cancel it
             ScheduledFuture scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
-            if (scheduledAttempt != null)
+            if (scheduledAttempt != null){
                 scheduledAttempt.cancel(false);
+            }
 
             try {
                 prepareAllQueries(host);
@@ -573,15 +594,17 @@ public class Cluster {
             }
 
             controlConnection.onUp(host);
-            for (Session s : sessions)
+            for (Session s : sessions){
                 s.manager.onUp(host);
+            }
         }
 
         public void onDown(final Host host) {
             logger.trace("Host {} is DOWN", host);
             controlConnection.onDown(host);
-            for (Session s : sessions)
+            for (Session s : sessions){
                 s.manager.onDown(host);
+            }
 
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug("{} is down, scheduling connection retries", host);
@@ -597,8 +620,9 @@ public class Cluster {
                 }
 
                 protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
-                    if (logger.isDebugEnabled())
+                    if (logger.isDebugEnabled()){
                         logger.debug("Failed reconnection to {} ({}), scheduling retry in {} milliseconds", new Object[]{ host, e.getMessage(), nextDelayMs});
+                    }
                     return true;
                 }
 
@@ -621,15 +645,17 @@ public class Cluster {
             }
 
             controlConnection.onAdd(host);
-            for (Session s : sessions)
+            for (Session s : sessions){
                 s.manager.onAdd(host);
+            }
         }
 
         public void onRemove(Host host) {
             logger.trace("Removing host {}", host);
             controlConnection.onRemove(host);
-            for (Session s : sessions)
+            for (Session s : sessions){
                 s.manager.onRemove(host);
+            }
         }
 
         public Host addHost(InetAddress address, boolean signal) {
@@ -642,8 +668,9 @@ public class Cluster {
         }
 
         public void removeHost(Host host) {
-            if (host == null)
+            if (host == null){
                 return;
+            }
 
             if (metadata.remove(host)) {
                 logger.info("Cassandra host {} removed", host);
@@ -653,8 +680,9 @@ public class Cluster {
 
         public void ensurePoolsSizing() {
             for (Session session : sessions) {
-                for (HostConnectionPool pool : session.manager.pools.values())
+                for (HostConnectionPool pool : session.manager.pools.values()){
                     pool.ensureCoreConnections();
+                }
             }
         }
 
@@ -662,13 +690,15 @@ public class Cluster {
         // Note that this *assumes* the query is valid.
         public void prepare(MD5Digest digest, PreparedStatement stmt, InetAddress toExclude) throws InterruptedException {
             preparedQueries.put(digest, stmt);
-            for (Session s : sessions)
+            for (Session s : sessions){
                 s.manager.prepare(stmt.getQueryString(), toExclude);
+            }
         }
 
         private void prepareAllQueries(Host host) throws InterruptedException {
-            if (preparedQueries.isEmpty())
+            if (preparedQueries.isEmpty()){
                 return;
+            }
 
             logger.debug("Preparing {} prepared queries on newly up node {}", preparedQueries.size(), host);
             try {
@@ -702,8 +732,9 @@ public class Cluster {
                     for (String keyspace : perKeyspace.keySet())
                     {
                         // Empty string mean no particular keyspace to set
-                        if (!keyspace.isEmpty())
+                        if (!keyspace.isEmpty()){
                             connection.setKeyspace(keyspace);
+                        }
 
                         List<Connection.Future> futures = new ArrayList<Connection.Future>(preparedQueries.size());
                         for (String query : perKeyspace.get(keyspace)) {
@@ -747,8 +778,9 @@ public class Cluster {
 
         // refresh the schema using the provided connection, and notice the future with the provided resultset once done
         public void refreshSchema(final Connection connection, final SimpleFuture future, final ResultSet rs, final String keyspace, final String table) {
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()){
                 logger.debug("Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : "." + table);
+            }
 
             executor.submit(new Runnable() {
                 public void run() {
@@ -824,22 +856,28 @@ public class Cluster {
                             Event.SchemaChange scc = (Event.SchemaChange)event;
                             switch (scc.change) {
                                 case CREATED:
-                                    if (scc.table.isEmpty())
+                                    if (scc.table.isEmpty()){
                                         submitSchemaRefresh(null, null);
-                                    else
+                                    }
+                                    else{
                                         submitSchemaRefresh(scc.keyspace, null);
+                                    }
                                     break;
                                 case DROPPED:
-                                    if (scc.table.isEmpty())
+                                    if (scc.table.isEmpty()){
                                         submitSchemaRefresh(null, null);
-                                    else
+                                    }
+                                    else{
                                         submitSchemaRefresh(scc.keyspace, null);
+                                    }
                                     break;
                                 case UPDATED:
-                                    if (scc.table.isEmpty())
+                                    if (scc.table.isEmpty()){
                                         submitSchemaRefresh(scc.keyspace, null);
-                                    else
+                                    }
+                                    else {
                                         submitSchemaRefresh(scc.keyspace, scc.table);
+                                    }
                                     break;
                             }
                             break;

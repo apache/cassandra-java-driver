@@ -30,8 +30,9 @@ abstract class Utils {
 
     static StringBuilder joinAndAppend(StringBuilder sb, String separator, List<? extends Appendeable> values) {
         for (int i = 0; i < values.size(); i++) {
-            if (i > 0)
+            if (i > 0){
                 sb.append(separator);
+            }
             values.get(i).appendTo(sb);
         }
         return sb;
@@ -39,8 +40,9 @@ abstract class Utils {
 
     static StringBuilder joinAndAppendNames(StringBuilder sb, String separator, List<String> values) {
         for (int i = 0; i < values.size(); i++) {
-            if (i > 0)
+            if (i > 0){
                 sb.append(separator);
+            }
             appendName(values.get(i), sb);
         }
         return sb;
@@ -48,8 +50,9 @@ abstract class Utils {
 
     static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<Object> values) {
         for (int i = 0; i < values.size(); i++) {
-            if (i > 0)
+            if (i > 0){
                 sb.append(separator);
+            }
             appendValue(values.get(i), sb);
         }
         return sb;
@@ -66,26 +69,33 @@ abstract class Utils {
 
     private static StringBuilder appendValue(Object value, StringBuilder sb, boolean rawValue) {
         // That is kind of lame but lacking a better solution
-        if (appendValueIfLiteral(value, sb))
+        if (appendValueIfLiteral(value, sb)){
             return sb;
+        }
 
-        if (appendValueIfCollection(value, sb, rawValue))
+        if (appendValueIfCollection(value, sb, rawValue)){
             return sb;
+        }
 
-        if (rawValue)
+        if (rawValue){
             return sb.append(value.toString());
-        else
+        }
+        else {
             return appendValueString(value.toString(), sb);
+        }
     }
 
     private static void appendFlatValue(Object value, StringBuilder sb, boolean rawValue) {
-        if (appendValueIfLiteral(value, sb))
+        if (appendValueIfLiteral(value, sb)){
             return;
+        }
 
-        if (rawValue)
+        if (rawValue){
             sb.append(value.toString());
-        else
+        }
+        else {
             appendValueString(value.toString(), sb);
+        }
     }
 
     private static boolean appendValueIfLiteral(Object value, StringBuilder sb) {
@@ -138,8 +148,9 @@ abstract class Utils {
     private static StringBuilder appendList(List<?> l, StringBuilder sb, boolean rawValue) {
         sb.append("[");
         for (int i = 0; i < l.size(); i++) {
-            if (i > 0)
+            if (i > 0){
                 sb.append(",");
+            }
             appendFlatValue(l.get(i), sb, rawValue);
         }
         sb.append("]");
@@ -154,7 +165,11 @@ abstract class Utils {
         sb.append("{");
         boolean first = true;
         for (Object elt : s) {
-            if (first) first = false; else sb.append(",");
+            if (first){ 
+            	first = false;
+            } else { 
+            	sb.append(","); 
+            }
             appendFlatValue(elt, sb, rawValue);
         }
         sb.append("}");
@@ -169,10 +184,12 @@ abstract class Utils {
         sb.append("{");
         boolean first = true;
         for (Map.Entry<?, ?> entry : m.entrySet()) {
-            if (first)
+            if (first){
                 first = false;
-            else
+            }
+            else {
                 sb.append(",");
+            }
             appendFlatValue(entry.getKey(), sb, rawValue);
             sb.append(":");
             appendFlatValue(entry.getValue(), sb, rawValue);
@@ -191,10 +208,12 @@ abstract class Utils {
 
     static StringBuilder appendName(String name, StringBuilder sb) {
         name = name.trim();
-        if (cnamePattern.matcher(name).matches() || name.startsWith("\"") || fctsPattern.matcher(name).matches())
+        if (cnamePattern.matcher(name).matches() || name.startsWith("\"") || fctsPattern.matcher(name).matches()){
             sb.append(name);
-        else
+        }
+        else {
             sb.append("\"").append(name).append("\"");
+        }
         return sb;
     }
 

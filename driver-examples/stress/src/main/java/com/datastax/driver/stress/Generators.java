@@ -42,8 +42,9 @@ public class Generators {
 
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE Standard1 (key int PRIMARY KEY");
-        for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i)
+        for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i){
             sb.append(", C").append(i).append(" blob");
+        }
         sb.append(")");
 
         try {
@@ -74,7 +75,9 @@ public class Generators {
                     StringBuilder sb = new StringBuilder();
                     sb.append("UPDATE Standard1 SET ");
                     for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i) {
-                        if (i > 0) sb.append(", ");
+                        if (i > 0){
+                        	sb.append(", ");
+                        }
                         sb.append("C").append(i).append("='").append(ByteBufferUtil.bytesToHex(makeValue(options))).append("'");
                     }
                     sb.append(" WHERE key = ").append(i);
@@ -101,7 +104,9 @@ public class Generators {
                     StringBuilder sb = new StringBuilder();
                     sb.append("UPDATE Standard1 SET ");
                     for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i) {
-                        if (i > 0) sb.append(", ");
+                        if (i > 0){
+                        	sb.append(", ");
+                        }
                         sb.append("C").append(i).append("=?");
                     }
                     sb.append(" WHERE key = ?");
@@ -115,8 +120,9 @@ public class Generators {
                 public QueryGenerator.Request next() {
                     BoundStatement b = stmt.bind();
                     b.setInt("key", i);
-                    for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i)
+                    for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i){
                         b.setBytes("c" + i, makeValue(options));
+                    }
                     ++i;
                     return new QueryGenerator.Request.PreparedQuery(b);
                 }
