@@ -388,7 +388,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test simple statement inserts for all primitive data types
      */
-    @Test
+    @Test(groups = "integration")
     public void primitiveInsertTest() throws Throwable {
         ResultSet rs;
         for (String execute_string : PRIMITIVE_INSERT_STATEMENTS) {
@@ -402,7 +402,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Validate simple statement selects for all primitive data types
      */
-    @Test
+    @Test(groups = "integration")
     public void primitiveSelectTest() throws Throwable {
         String execute_string;
         Object value;
@@ -422,7 +422,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test simple statement inserts for all collection data types
      */
-    @Test
+    @Test(groups = "integration")
     public void collectionInsertTest() throws Throwable {
         ResultSet rs;
         for (String execute_string : COLLECTION_INSERT_STATEMENTS) {
@@ -436,7 +436,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test simple statement selects for all collection data types
      */
-    @Test
+    @Test(groups = "integration")
     public void collectionSelectTest() throws Throwable {
         HashMap<DataType, Object> sampleValueMap;
         String execute_string;

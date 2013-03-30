@@ -117,13 +117,16 @@ def main():
     maybe_setup_loopbacks()
 
     # Start building the mvn command
-    cobertura_build_command = 'mvn cobertura:cobertura'
+    cobertura_build_command = 'mvn cobertura:cobertura -Pintegration'
     if args.cassandra_version:
         cobertura_build_command += ' -Dcassandra.version=%s' % args.cassandra_version
 
     if args.test:
         # Run against a single mvn test
-        execute('%s -Dmaven.test.failure.ignore=true -DfailIfNoTests=false -Dtest=%s' % (cobertura_build_command, args.test))
+        execute('%s '
+                '-Dmaven.test.failure.ignore=true '
+                '-DfailIfNoTests=false '
+                '-Dtest=%s' % (cobertura_build_command, args.test))
     else:
         # Run against the entire integration suite
         execute('%s' % cobertura_build_command)
