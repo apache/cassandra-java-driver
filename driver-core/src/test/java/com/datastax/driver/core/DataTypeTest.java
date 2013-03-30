@@ -388,7 +388,6 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test simple statement inserts for all primitive data types
      */
-    @Test(groups = "integration")
     public void primitiveInsertTest() throws Throwable {
         ResultSet rs;
         for (String execute_string : PRIMITIVE_INSERT_STATEMENTS) {
@@ -402,7 +401,6 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Validate simple statement selects for all primitive data types
      */
-    @Test(groups = "integration")
     public void primitiveSelectTest() throws Throwable {
         String execute_string;
         Object value;
@@ -420,9 +418,17 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     /**
-     * Test simple statement inserts for all collection data types
+     * Test simple statement inserts and selects for all primitive data types
      */
     @Test(groups = "integration")
+    public void primitiveTests() throws Throwable {
+        primitiveInsertTest();
+        primitiveSelectTest();
+    }
+
+    /**
+     * Test simple statement inserts for all collection data types
+     */
     public void collectionInsertTest() throws Throwable {
         ResultSet rs;
         for (String execute_string : COLLECTION_INSERT_STATEMENTS) {
@@ -436,7 +442,6 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test simple statement selects for all collection data types
      */
-    @Test(groups = "integration")
     public void collectionSelectTest() throws Throwable {
         HashMap<DataType, Object> sampleValueMap;
         String execute_string;
@@ -473,9 +478,18 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     /**
+     * Test simple statement inserts and selects for all collection data types
+     */
+    @Test(groups = "integration")
+    public void collectionTest() throws Throwable {
+        collectionInsertTest();
+        collectionSelectTest();
+    }
+
+    /**
      * Test TTLs.
      */
-    // TODO: @Test
+    // TODO: @Test(groups = "integration")
     public void ttlTest() throws Throwable {
 
     }
@@ -483,7 +497,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test Counters in an isolated format.
      */
-    // TODO: @Test
+    // TODO: @Test(groups = "integration")
     public void countersTest() throws Throwable {
 
     }
@@ -491,7 +505,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test tombstones.
      */
-    // TODO: @Test
+    // TODO: @Test(groups = "integration")
     public void tombstonesTest() throws Throwable {
 
     }
