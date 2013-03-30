@@ -133,7 +133,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(setBoundValue(bs, name, type, getFixedValue2(type)));
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).one();
-            assertEquals("For type " + type, getFixedValue2(type), getValue(row, name, type));
+            assertEquals(getValue(row, name, type), getFixedValue2(type), "For type " + type);
         }
     }
 
@@ -153,7 +153,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(setBoundValue(bs, name, type, value));
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).one();
-            assertEquals(getValue(row, name, type), value,"For type " + type);
+            assertEquals(getValue(row, name, type), value, "For type " + type);
         }
     }
 
@@ -176,7 +176,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(setBoundValue(bs, name, type, value));
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).one();
-            assertEquals("For type " + type, value, getValue(row, name, type));
+            assertEquals(getValue(row, name, type), value, "For type " + type);
         }
     }
 
@@ -219,7 +219,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(setBoundValue(bs, name, type, value));
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).one();
-            assertEquals("For type " + type, value, getValue(row, name, type));
+            assertEquals(getValue(row, name, type), value, "For type " + type);
         }
     }
 
@@ -273,7 +273,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 session.execute(setBoundValue(bs, name, type, value));
 
                 Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).one();
-                assertEquals("For type " + type, value, getValue(row, name, type));
+                assertEquals(getValue(row, name, type), value, "For type " + type);
             }
         }
     }
@@ -328,7 +328,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the table definitions that will be used in testing
      * (for exporting purposes)
      */
-    // TODO: @Test(groups = { "docs" })
+    @Test(groups = { "docs" })
     public void printTableDefinitions() {
         for (String definition : getTableDefinitions()) {
             System.out.println(definition);

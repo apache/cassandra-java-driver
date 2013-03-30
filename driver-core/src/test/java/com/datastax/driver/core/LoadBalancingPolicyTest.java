@@ -127,7 +127,7 @@ public class LoadBalancingPolicyTest {
             c.errorOut();
             throw e;
         } finally {
-        	coordinators.clear();
+            coordinators.clear();
             c.discard();
         }
     }
@@ -152,7 +152,7 @@ public class LoadBalancingPolicyTest {
             c.errorOut();
             throw e;
         } finally {
-        	coordinators.clear();
+            coordinators.clear();
             c.discard();
         }
     }
@@ -197,7 +197,7 @@ public class LoadBalancingPolicyTest {
             c.errorOut();
             throw e;
         } finally {
-        	coordinators.clear();
+            coordinators.clear();
             c.discard();
         }
     }

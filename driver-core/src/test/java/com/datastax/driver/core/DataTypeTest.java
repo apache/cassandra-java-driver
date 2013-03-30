@@ -31,8 +31,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 /**
  * Tests DataType class to ensure data sent in is the same as data received
@@ -395,8 +395,8 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
             rs = session.execute(execute_string);
             assertTrue(rs.isExhausted());
         }
-        assertEquals(15, SAMPLE_DATA.size());
-        assertEquals(SAMPLE_DATA.size(), PRIMITIVE_INSERT_STATEMENTS.size());
+        assertEquals(SAMPLE_DATA.size(), 15);
+        assertEquals(PRIMITIVE_INSERT_STATEMENTS.size(), SAMPLE_DATA.size());
     }
 
     /**
@@ -412,11 +412,11 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
             row = session.execute(execute_string).one();
 
             value = SAMPLE_DATA.get(dataType);
-            assertEquals(value, TestUtils.getValue(row, "k", dataType));
-            assertEquals(value, TestUtils.getValue(row, "v", dataType));
+            assertEquals(TestUtils.getValue(row, "k", dataType), value);
+            assertEquals(TestUtils.getValue(row, "v", dataType), value);
         }
-        assertEquals(15, SAMPLE_DATA.size());
-        assertEquals(SAMPLE_DATA.size(), PRIMITIVE_SELECT_STATEMENTS.keySet().size());
+        assertEquals(SAMPLE_DATA.size(), 15);
+        assertEquals(PRIMITIVE_SELECT_STATEMENTS.keySet().size(), SAMPLE_DATA.size());
     }
 
     /**
@@ -429,8 +429,8 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
             rs = session.execute(execute_string);
             assertTrue(rs.isExhausted());
         }
-        assertEquals(255, SAMPLE_COLLECTIONS.size());
-        assertEquals(SAMPLE_COLLECTIONS.size(), COLLECTION_INSERT_STATEMENTS.size());
+        assertEquals(SAMPLE_COLLECTIONS.size(), 255);
+        assertEquals(COLLECTION_INSERT_STATEMENTS.size(), SAMPLE_COLLECTIONS.size());
     }
 
     /**
@@ -459,17 +459,17 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
                 HashMap expectedMap = new HashMap();
                 expectedMap.put(mapKey, mapValue);
 
-                assertEquals(SAMPLE_DATA.get(typeArgument2), TestUtils.getValue(row, "k", typeArgument2));
-                assertEquals(expectedMap, TestUtils.getValue(row, "v", dataType));
+                assertEquals(TestUtils.getValue(row, "k", typeArgument2), SAMPLE_DATA.get(typeArgument2));
+                assertEquals(TestUtils.getValue(row, "v", dataType), expectedMap);
             } else {
                 Object expectedValue = sampleValueMap.get(typeArgument1);
 
-                assertEquals(SAMPLE_DATA.get(typeArgument1), TestUtils.getValue(row, "k", typeArgument1));
-                assertEquals(expectedValue, TestUtils.getValue(row, "v", dataType));
+                assertEquals(TestUtils.getValue(row, "k", typeArgument1), SAMPLE_DATA.get(typeArgument1));
+                assertEquals(TestUtils.getValue(row, "v", dataType), expectedValue);
             }
         }
-        assertEquals(255, SAMPLE_COLLECTIONS.size());
-        assertEquals(SAMPLE_COLLECTIONS.size(), COLLECTION_SELECT_STATEMENTS.keySet().size());
+        assertEquals(SAMPLE_COLLECTIONS.size(), 255);
+        assertEquals(COLLECTION_SELECT_STATEMENTS.keySet().size(), SAMPLE_COLLECTIONS.size());
     }
 
     /**
@@ -505,7 +505,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the table definitions that will be used in testing
      * (for exporting purposes)
      */
-    // TODO: @Test(groups = { "docs" })
+    @Test(groups = { "docs" })
     public void printTableDefinitions() {
         // Prints the full list of table definitions
         for (String definition : getTableDefinitions()) {
@@ -517,7 +517,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the sample data that will be used in testing
      * (for exporting purposes)
      */
-    // TODO: @Test(groups = { "docs" })
+    @Test(groups = { "docs" })
     public void printSampleData() {
         for (DataType dataType : SAMPLE_DATA.keySet()) {
             Object sampleValue = SAMPLE_DATA.get(dataType);
@@ -529,7 +529,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the sample collections that will be used in testing
      * (for exporting purposes)
      */
-    // TODO: @Test(groups = { "docs" })
+    @Test(groups = { "docs" })
     public void printSampleCollections() {
         for (DataType dataType : SAMPLE_COLLECTIONS.keySet()) {
             HashMap<DataType, Object> sampleValueMap = (HashMap<DataType, Object>) SAMPLE_COLLECTIONS.get(dataType);
@@ -554,7 +554,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the simple insert statements that will be used in testing
      * (for exporting purposes)
      */
-    // TODO: @Test(groups = { "docs" })
+    @Test(groups = { "docs" })
     public void printPrimitiveInsertStatements() {
         for (String execute_string : PRIMITIVE_INSERT_STATEMENTS) {
             System.out.println(execute_string);
@@ -565,7 +565,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the simple select statements that will be used in testing
      * (for exporting purposes)
      */
-    // TODO: @Test(groups = { "docs" })
+    @Test(groups = { "docs" })
     public void printPrimitiveSelectStatements() {
         for (String execute_string : PRIMITIVE_SELECT_STATEMENTS.values()) {
             System.out.println(execute_string);
@@ -576,7 +576,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the simple insert statements that will be used in testing
      * (for exporting purposes)
      */
-    // TODO: @Test(groups = { "docs" })
+    @Test(groups = { "docs" })
     public void printCollectionInsertStatements() {
         for (String execute_string : COLLECTION_INSERT_STATEMENTS) {
             System.out.println(execute_string);
@@ -587,7 +587,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the simple insert statements that will be used in testing
      * (for exporting purposes)
      */
-    // TODO: @Test(groups = { "docs" })
+    @Test(groups = { "docs" })
     public void printCollectionSelectStatements() {
         for (String execute_string : COLLECTION_SELECT_STATEMENTS.values()) {
             System.out.println(execute_string);
