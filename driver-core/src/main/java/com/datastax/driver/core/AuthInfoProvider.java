@@ -33,7 +33,7 @@ public interface AuthInfoProvider {
      * <p>
      * This is only useful for when no authentication is to be used.
      */
-    public static final AuthInfoProvider NONE = new AuthInfoProvider() {
+     AuthInfoProvider NONE = new AuthInfoProvider() {
         public Map<String, String> getAuthInfos(InetAddress host) {
             return Collections.<String, String>emptyMap();
         }
@@ -50,5 +50,5 @@ public interface AuthInfoProvider {
      * are requested.
      * @return The authentication informations to use.
      */
-    public Map<String, String> getAuthInfos(InetAddress host);
+    Map<String, String> getAuthInfos(InetAddress host);
 }

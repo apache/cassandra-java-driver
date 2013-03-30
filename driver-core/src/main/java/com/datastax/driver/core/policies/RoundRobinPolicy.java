@@ -15,13 +15,18 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.Query;
 import com.google.common.collect.AbstractIterator;
-
-import com.datastax.driver.core.*;
 
 /**
  * A Round-robin load balancing policy.
@@ -86,8 +91,9 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
         final int startIdx = index.getAndIncrement();
 
         // Overflow protection; not theoretically thread safe but should be good enough
-        if (startIdx > Integer.MAX_VALUE - 10000)
+        if (startIdx > Integer.MAX_VALUE - 10000){
             index.set(0);
+        }
 
         return new AbstractIterator<Host>() {
 
@@ -95,8 +101,9 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
             private int remaining = hosts.size();
 
             protected Host computeNext() {
-                if (remaining <= 0)
+                if (remaining <= 0){
                     return endOfData();
+                }
 
                 remaining--;
                 return hosts.get(idx++ % hosts.size());

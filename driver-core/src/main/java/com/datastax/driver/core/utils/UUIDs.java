@@ -15,12 +15,10 @@
  */
 package com.datastax.driver.core.utils;
 
-import com.google.common.base.Charsets;
-
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.UnknownHostException;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
@@ -32,6 +30,8 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+
+import com.google.common.base.Charsets;
 
 /**
  * Utility methods to work with UUID and most specifically with time-based ones
@@ -86,8 +86,9 @@ public final class UUIDs {
         try {
 
             MessageDigest digest = MessageDigest.getInstance("MD5");
-            for (String address : getAllLocalAddresses())
+            for (String address : getAllLocalAddresses()){
                 update(digest, address);
+            }
 
             Properties props = System.getProperties();
             update(digest, props.getProperty("java.vendor"));
@@ -100,8 +101,9 @@ public final class UUIDs {
             byte[] hash = digest.digest();
 
             long node = 0;
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 6; i++){
                 node |= (0x00000000000000ffL & (long)hash[i]) << (i*8);
+            }
             // Since we don't use the mac address, the spec says that multicast
             // bit (least significant bit of the first octet of the node ID) must be 1.
             return node | 0x0000010000000000L;
@@ -111,8 +113,9 @@ public final class UUIDs {
     }
 
     private static void update(MessageDigest digest, String value) {
-        if (value != null)
+        if (value != null){
             digest.update(value.getBytes(Charsets.UTF_8));
+        }
     }
 
     private static long makeClockSeqAndNode() {
@@ -230,8 +233,9 @@ public final class UUIDs {
      * @throws IllegalArgumentException if {@code uuid} is not a version 1 UUID.
      */
     public static long unixTimestamp(UUID uuid) {
-        if (uuid.version() != 1)
+        if (uuid.version() != 1){
             throw new IllegalArgumentException(String.format("Can only retrieve the unix timestamp for version 1 uuid (provided version %d)", uuid.version()));
+        }
 
         long timestamp = uuid.timestamp();
         return (timestamp / 10000) + START_EPOCH;
@@ -253,21 +257,24 @@ public final class UUIDs {
             long now = fromUnixTimestamp(System.currentTimeMillis());
             long last = lastTimestamp.get();
             if (now > last) {
-                if (lastTimestamp.compareAndSet(last, now))
+                if (lastTimestamp.compareAndSet(last, now)){
                     return now;
+                }
             } else {
                 long lastMillis = millisOf(last);
                 // If the clock went back in time, bail out
-                if (millisOf(now) < millisOf(last))
+                if (millisOf(now) < millisOf(last)){
                     return lastTimestamp.incrementAndGet();
+                }
 
                 long candidate = last + 1;
                 // If we've generated more than 10k uuid in that millisecond,
                 // we restart the whole process until we get to the next millis.
                 // Otherwise, we try use our candidate ... unless we've been
                 // beaten by another thread in which case we try again.
-                if (millisOf(candidate) == lastMillis && lastTimestamp.compareAndSet(last, candidate))
+                if (millisOf(candidate) == lastMillis && lastTimestamp.compareAndSet(last, candidate)){
                     return candidate;
+                }
             }
         }
     }
@@ -300,8 +307,9 @@ public final class UUIDs {
             allIps.add(localhost.getCanonicalHostName());
             InetAddress[] allMyIps = InetAddress.getAllByName(localhost.getCanonicalHostName());
             if (allMyIps != null) {
-                for (int i = 0; i < allMyIps.length; i++)
+                for (int i = 0; i < allMyIps.length; i++){
                     allIps.add(allMyIps[i].toString());
+                }
             }
         } catch (UnknownHostException e) {
             // Ignore, we'll try the network interfaces anyway
@@ -312,8 +320,9 @@ public final class UUIDs {
             if (en != null) {
                 while (en.hasMoreElements()) {
                     Enumeration<InetAddress> enumIpAddr = en.nextElement().getInetAddresses();
-                    while (enumIpAddr.hasMoreElements())
+                    while (enumIpAddr.hasMoreElements()){
                         allIps.add(enumIpAddr.nextElement().toString());
+                    }
                 }
             }
         } catch (SocketException e) {

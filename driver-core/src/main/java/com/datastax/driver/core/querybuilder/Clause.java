@@ -60,8 +60,9 @@ public abstract class Clause extends Utils.Appendeable {
             super(name);
             this.values = values;
 
-            if (values == null || values.size() == 0)
+            if (values == null || values.size() == 0){
                 throw new IllegalArgumentException("Missing values for IN clause");
+            }
         }
 
         void appendTo(StringBuilder sb) {

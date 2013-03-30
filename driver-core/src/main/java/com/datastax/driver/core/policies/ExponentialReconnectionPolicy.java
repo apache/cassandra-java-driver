@@ -33,10 +33,12 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
      * @param maxDelayMs the maximum delay to wait between two attempts.
      */
     public ExponentialReconnectionPolicy(long baseDelayMs, long maxDelayMs) {
-        if (baseDelayMs < 0 || maxDelayMs < 0)
+        if (baseDelayMs < 0 || maxDelayMs < 0){
             throw new IllegalArgumentException("Invalid negative delay");
-        if (maxDelayMs < baseDelayMs)
+        }
+        if (maxDelayMs < baseDelayMs){
             throw new IllegalArgumentException(String.format("maxDelayMs (got %d) cannot be smaller than baseDelayMs (got %d)", maxDelayMs, baseDelayMs));
+        }
 
         this.baseDelayMs = baseDelayMs;
         this.maxDelayMs = maxDelayMs;
@@ -79,8 +81,9 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
         public long nextDelayMs() {
             // We "overflow" at 64 attempts but I doubt this matter
-            if (attempts >= 64)
+            if (attempts >= 64){
                 return maxDelayMs;
+            }
 
             return Math.min(baseDelayMs * (1L << attempts++), maxDelayMs);
         }

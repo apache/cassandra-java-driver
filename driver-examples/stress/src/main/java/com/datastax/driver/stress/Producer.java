@@ -33,8 +33,9 @@ public class Producer extends Thread {
 
         try {
 
-            while (generator.hasNext())
+            while (generator.hasNext()){
                 workQueue.put(generator.next());
+            }
 
             workQueue.put(QueryGenerator.DONE_MARKER);
 

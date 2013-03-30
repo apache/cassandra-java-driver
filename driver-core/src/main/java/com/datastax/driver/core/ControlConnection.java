@@ -17,20 +17,33 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.*;
 
 import org.apache.cassandra.transport.Event;
-import org.apache.cassandra.transport.messages.RegisterMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
-
+import org.apache.cassandra.transport.messages.RegisterMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.policies.ExponentialReconnectionPolicy;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import com.datastax.driver.core.policies.ReconnectionPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
 
 class ControlConnection implements Host.StateListener {
 
@@ -77,8 +90,9 @@ class ControlConnection implements Host.StateListener {
 
     // Only for the initial connection. Does not schedule retries if it fails
     public void connect() {
-        if (isShutdown)
+        if (isShutdown){
             return;
+        }
 
         setNewConnection(reconnectInternal());
     }
@@ -86,13 +100,15 @@ class ControlConnection implements Host.StateListener {
     public void shutdown() {
         isShutdown = true;
         Connection connection = connectionRef.get();
-        if (connection != null)
+        if (connection != null){
             connection.close();
+        }
     }
 
     private void reconnect() {
-        if (isShutdown)
+        if (isShutdown){
             return;
+        }
 
         try {
             setNewConnection(reconnectInternal());
@@ -127,8 +143,9 @@ class ControlConnection implements Host.StateListener {
     private void setNewConnection(Connection newConnection) {
         logger.debug("[Control connection] Successfully connected to {}", newConnection.address);
         Connection old = connectionRef.getAndSet(newConnection);
-        if (old != null && !old.isClosed())
+        if (old != null && !old.isClosed()){
             old.close();
+        }
     }
 
     private Connection reconnectInternal() {
@@ -154,17 +171,20 @@ class ControlConnection implements Host.StateListener {
             Thread.currentThread().interrupt();
 
             // Indicates that all remaining hosts are skipped due to the interruption
-            if (host != null)
+            if (host != null){
                 errors = logError(host, "Connection thread interrupted", errors, iter);
-            while (iter.hasNext())
+            }
+            while (iter.hasNext()){
                 errors = logError(iter.next(), "Connection thread interrupted", errors, iter);
+            }
         }
         throw new NoHostAvailableException(errors == null ? Collections.<InetAddress, String>emptyMap() : errors);
     }
 
     private static Map<InetAddress, String> logError(Host host, String msg, Map<InetAddress, String> errors, Iterator<Host> iter) {
-        if (errors == null)
+        if (errors == null){
             errors = new HashMap<InetAddress, String>();
+        }
         errors.put(host.getAddress(), msg);
 
         if (logger.isDebugEnabled()) {
@@ -221,8 +241,9 @@ class ControlConnection implements Host.StateListener {
         String whereClause = "";
         if (keyspace != null) {
             whereClause = " WHERE keyspace_name = '" + keyspace + "'";
-            if (table != null)
+            if (table != null){
                 whereClause += " AND columnfamily_name = '" + table + "'";
+            }
         }
 
         ResultSetFuture ksFuture = table == null
@@ -231,8 +252,9 @@ class ControlConnection implements Host.StateListener {
         ResultSetFuture cfFuture = new ResultSetFuture(null, new QueryMessage(SELECT_COLUMN_FAMILIES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
         ResultSetFuture colsFuture = new ResultSetFuture(null, new QueryMessage(SELECT_COLUMNS + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
 
-        if (ksFuture != null)
+        if (ksFuture != null){
             connection.write(ksFuture.callback);
+        }
         connection.write(cfFuture.callback);
         connection.write(colsFuture.callback);
 
@@ -242,8 +264,9 @@ class ControlConnection implements Host.StateListener {
     public void refreshNodeListAndTokenMap() {
         Connection c = connectionRef.get();
         // At startup, when we add the initial nodes, this will be null, which is ok
-        if (c == null)
+        if (c == null){
             return;
+        }
 
         logger.debug(String.format("[Control connection] Refreshing node list and token map"));
         try {
@@ -278,19 +301,22 @@ class ControlConnection implements Host.StateListener {
         Row localRow = localFuture.get().one();
         if (localRow != null) {
             String clusterName = localRow.getString("cluster_name");
-            if (clusterName != null)
+            if (clusterName != null){
                 cluster.metadata.clusterName = clusterName;
+            }
 
             Host host = cluster.metadata.getHost(connection.address);
             // In theory host can't be null. However there is no point in risking a NPE in case we
             // have a race between a node removal and this.
-            if (host != null)
+            if (host != null){
                 host.setLocationInfo(localRow.getString("data_center"), localRow.getString("rack"));
+            }
 
             partitioner = localRow.getString("partitioner");
             Set<String> tokens = localRow.getSet("tokens", String.class);
-            if (partitioner != null && !tokens.isEmpty())
+            if (partitioner != null && !tokens.isEmpty()){
                 tokenMap.put(host, tokens);
+            }
         }
 
         List<InetAddress> foundHosts = new ArrayList<InetAddress>();
@@ -322,18 +348,21 @@ class ControlConnection implements Host.StateListener {
             }
             host.setLocationInfo(dcs.get(i), racks.get(i));
 
-            if (partitioner != null && !allTokens.get(i).isEmpty())
+            if (partitioner != null && !allTokens.get(i).isEmpty()){
                 tokenMap.put(host, allTokens.get(i));
+            }
         }
 
         // Removes all those that seems to have been removed (since we lost the control connection)
         Set<InetAddress> foundHostsSet = new HashSet<InetAddress>(foundHosts);
-        for (Host host : cluster.metadata.allHosts())
-            if (!host.getAddress().equals(connection.address) && !foundHostsSet.contains(host.getAddress()))
+        for (Host host : cluster.metadata.allHosts()){
+            if (!host.getAddress().equals(connection.address) && !foundHostsSet.contains(host.getAddress())){
                 cluster.removeHost(host);
-
-        if (partitioner != null)
+            }
+        }
+        if (partitioner != null){
             cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
+        }
     }
 
     static boolean waitForSchemaAgreement(Connection connection, Metadata metadata) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
@@ -349,25 +378,30 @@ class ControlConnection implements Host.StateListener {
             Set<UUID> versions = new HashSet<UUID>();
 
             Row localRow = localFuture.get().one();
-            if (localRow != null && !localRow.isNull("schema_version"))
+            if (localRow != null && !localRow.isNull("schema_version")){
                 versions.add(localRow.getUUID("schema_version"));
+            }
 
             for (Row row : peersFuture.get()) {
 
-                if (row.isNull("rpc_address") || row.isNull("schema_version"))
+                if (row.isNull("rpc_address") || row.isNull("schema_version")){
                     continue;
+                }
 
                 InetAddress rpc = row.getInet("rpc_address");
-                if (rpc.equals(bindAllAddress))
+                if (rpc.equals(bindAllAddress)){
                     rpc = row.getInet("peer");
+                }
 
                 Host peer = metadata.getHost(rpc);
-                if (peer != null && peer.getMonitor().isUp())
+                if (peer != null && peer.getMonitor().isUp()){
                     versions.add(row.getUUID("schema_version"));
+                }
             }
 
-            if (versions.size() <= 1)
+            if (versions.size() <= 1){
                 return true;
+            }
 
             // let's not flood the node too much
             Thread.sleep(200);
@@ -392,10 +426,12 @@ class ControlConnection implements Host.StateListener {
 
         // If that's the host we're connected to, and we haven't yet schedul a reconnection, pre-emptively start one
         Connection current = connectionRef.get();
-        if (logger.isTraceEnabled())
+        if (logger.isTraceEnabled()){
             logger.trace("[Control connection] {} is down, currently connected to {}", host, current == null ? "nobody" : current.address);
-        if (current != null && current.address.equals(host.getAddress()) && reconnectionAttempt.get() == null)
+        }
+        if (current != null && current.address.equals(host.getAddress()) && reconnectionAttempt.get() == null){
             reconnect();
+        }
     }
 
     public void onAdd(Host host) {

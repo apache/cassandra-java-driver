@@ -133,7 +133,7 @@ public interface RetryPolicy {
      * a {@link com.datastax.driver.core.exceptions.ReadTimeoutException} will
      * be thrown for the operation.
      */
-    public RetryDecision onReadTimeout(Query query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry);
+     RetryDecision onReadTimeout(Query query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry);
 
     /**
      * Defines whether to retry and at which consistency level on a write timeout.
@@ -150,7 +150,7 @@ public interface RetryPolicy {
      * a {@link com.datastax.driver.core.exceptions.WriteTimeoutException} will
      * be thrown for the operation.
      */
-    public RetryDecision onWriteTimeout(Query query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry);
+    RetryDecision onWriteTimeout(Query query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry);
 
     /**
      * Defines whether to retry and at which consistency level on an
@@ -168,5 +168,5 @@ public interface RetryPolicy {
      * an {@link com.datastax.driver.core.exceptions.UnavailableException} will
      * be thrown for the operation.
      */
-    public RetryDecision onUnavailable(Query query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry);
+    RetryDecision onUnavailable(Query query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry);
 }

@@ -221,10 +221,12 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
         // with said cause will make no mention of the current thread. This is painful for say, finding
         // out which execute() statement actually raised the exception. So instead, we re-create the
         // exception.
-        if (e.getCause() instanceof DriverException)
+        if (e.getCause() instanceof DriverException){
             throw ((DriverException)e.getCause()).copy();
-        else
+        }
+        else{
             throw new DriverInternalError("Unexpected exception thrown", e.getCause());
+        }
     }
 
     static void extractCause(Throwable cause) {

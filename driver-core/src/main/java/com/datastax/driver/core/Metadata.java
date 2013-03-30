@@ -17,11 +17,18 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,8 +104,9 @@ public class Metadata {
             if (keyspace == null) {
                 Iterator<String> iter = keyspaces.keySet().iterator();
                 while (iter.hasNext()) {
-                    if (!addedKs.contains(iter.next()))
+                    if (!addedKs.contains(iter.next())){
                         iter.remove();
+                    }
                 }
             }
         } else {
@@ -113,8 +121,9 @@ public class Metadata {
                 return;
             }
 
-            if (cfDefs.containsKey(keyspace))
+            if (cfDefs.containsKey(keyspace)){
                 buildTableMetadata(ksm, cfDefs.get(keyspace), colsDefs.get(keyspace));
+            }
         }
     }
 
@@ -124,8 +133,9 @@ public class Metadata {
             String cfName = cfRow.getString(TableMetadata.CF_NAME);
             TableMetadata tm = TableMetadata.build(ksm, cfRow, hasColumns);
 
-            if (!hasColumns || colsDefs.get(cfName) == null)
+            if (!hasColumns || colsDefs.get(cfName) == null){
                 continue;
+            }
 
             for (Row colRow : colsDefs.get(cfName)) {
                 ColumnMetadata.build(tm, colRow);
@@ -241,8 +251,9 @@ public class Metadata {
     public String exportSchemaAsString() {
         StringBuilder sb = new StringBuilder();
 
-        for (KeyspaceMetadata ksm : keyspaces.values())
+        for (KeyspaceMetadata ksm : keyspaces.values()){
             sb.append(ksm.exportAsString()).append("\n");
+        }
 
         return sb.toString();
     }
@@ -262,8 +273,9 @@ public class Metadata {
         public static <T extends Token<T>> TokenMap<T> build(String partitioner, Map<Host, Collection<String>> allTokens) {
 
             Token.Factory<T> factory = (Token.Factory<T>)Token.getFactory(partitioner);
-            if (factory == null)
+            if (factory == null){
                 return null;
+            }
 
             Map<Token<T>, Set<Host>> tokenToHosts = new HashMap<Token<T>, Set<Host>>();
             Set<Token<T>> allSorted = new TreeSet<Token<T>>();
@@ -298,8 +310,9 @@ public class Metadata {
             int i = Collections.binarySearch(ring, token);
             if (i < 0) {
                 i = (i + 1) * (-1);
-                if (i >= ring.size())
+                if (i >= ring.size()){
                     i = 0;
+                }
             }
 
             return tokenToHosts.get(ring.get(i));

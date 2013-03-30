@@ -37,12 +37,12 @@ public interface ReconnectionPolicy {
     /**
      * Creates a new schedule for reconnection attempts.
      */
-    public ReconnectionSchedule newSchedule();
+    ReconnectionSchedule newSchedule();
 
     /**
      * Schedules reconnection attempts to a node.
      */
-    public interface ReconnectionSchedule {
+     public interface ReconnectionSchedule {
 
         /**
          * When to attempt the next reconnection.
@@ -55,6 +55,6 @@ public interface ReconnectionPolicy {
          * @return a time in milliseconds to wait before attempting the next
          * reconnection.
          */
-        public long nextDelayMs();
+        long nextDelayMs();
     }
 }

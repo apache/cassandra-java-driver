@@ -63,8 +63,9 @@ public class DefaultRetryPolicy implements RetryPolicy {
      * {@code receivedResponses >= requiredResponses && !dataRetrieved}, {@code RetryDecision.rethrow()} otherwise.
      */
     public RetryDecision onReadTimeout(Query query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
-        if (nbRetry != 0)
+        if (nbRetry != 0){
             return RetryDecision.rethrow();
+        }
 
         return receivedResponses >= requiredResponses && !dataRetrieved ? RetryDecision.retry(cl) : RetryDecision.rethrow();
     }
@@ -94,8 +95,9 @@ public class DefaultRetryPolicy implements RetryPolicy {
      * {@code writeType == WriteType.BATCH_LOG}, {@code RetryDecision.rethrow()} otherwise.
      */
     public RetryDecision onWriteTimeout(Query query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
-        if (nbRetry != 0)
+        if (nbRetry != 0){
             return RetryDecision.rethrow();
+        }
 
         // If the batch log write failed, retry the operation as this might just be we were unlucky at picking candidtes
         return writeType == WriteType.BATCH_LOG ? RetryDecision.retry(cl) : RetryDecision.rethrow();

@@ -63,8 +63,9 @@ public class Select extends BuiltStatement {
             Utils.joinAndAppendNames(builder, ",", columnNames);
         }
         builder.append(" FROM ");
-        if (keyspace != null)
+        if (keyspace != null){
             Utils.appendName(keyspace, builder).append(".");
+        }
         Utils.appendName(table, builder);
 
         if (!where.clauses.isEmpty()) {
@@ -119,8 +120,9 @@ public class Select extends BuiltStatement {
      * provided.
      */
     public Select orderBy(Ordering... orderings) {
-        if (this.orderings != null)
+        if (this.orderings != null){
             throw new IllegalStateException("An ORDER BY clause has already been provided");
+        }
 
         this.orderings = Arrays.asList(orderings);
         setDirty();
@@ -138,11 +140,13 @@ public class Select extends BuiltStatement {
      * provided.
      */
     public Select limit(int limit) {
-        if (limit <= 0)
+        if (limit <= 0){
             throw new IllegalArgumentException("Invalid LIMIT value, must be strictly positive");
+        }
 
-        if (this.limit > 0)
+        if (this.limit > 0){
             throw new IllegalStateException("A LIMIT value has already been provided");
+        }
 
         this.limit = limit;
         setDirty();
@@ -272,8 +276,9 @@ public class Select extends BuiltStatement {
          * @throws IllegalStateException if some columns had already been selected for this builder.
          */
         public Builder all() {
-            if (columnNames != null)
+            if (columnNames != null){
                 throw new IllegalStateException(String.format("Some columns (%s) have already been selected.", columnNames));
+            }
 
             return (Builder)this;
         }
@@ -286,8 +291,9 @@ public class Select extends BuiltStatement {
          * @throws IllegalStateException if some columns had already been selected for this builder.
          */
         public Builder countAll() {
-            if (columnNames != null)
+            if (columnNames != null){
                 throw new IllegalStateException(String.format("Some columns (%s) have already been selected.", columnNames));
+            }
 
             columnNames = COUNT_ALL;
             return (Builder)this;
@@ -300,8 +306,9 @@ public class Select extends BuiltStatement {
          * @return this in-build SELECT statement
          */
         public Selection column(String name) {
-            if (columnNames == null)
+            if (columnNames == null){
                 columnNames = new ArrayList<String>();
+            }
 
             columnNames.add(name);
             return this;

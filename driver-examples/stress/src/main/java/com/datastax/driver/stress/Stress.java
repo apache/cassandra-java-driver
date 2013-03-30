@@ -36,8 +36,9 @@ public class Stress {
     private static final Map<String, QueryGenerator.Builder> generators = new HashMap<String, QueryGenerator.Builder>();
 
     public static void register(String name, QueryGenerator.Builder generator) {
-        if (generators.containsKey(name))
+        if (generators.containsKey(name)){
             throw new IllegalStateException("There is already a generator registered with the name " + name);
+        }
 
         generators.put(name, generator);
     }
@@ -129,16 +130,20 @@ public class Stress {
 
             System.out.println("Starting to stress test...");
             producer.start();
-            if (resultHandler != null)
+            if (resultHandler != null){
                 resultHandler.start();
-            for (Consumer consumer : consumers)
+            }
+            for (Consumer consumer : consumers){
                 consumer.start();
+            }
 
             producer.join();
-            for (Consumer consumer : consumers)
+            for (Consumer consumer : consumers){
                 consumer.join();
-            if (resultHandler != null)
+            }
+            if (resultHandler != null){
                 resultHandler.join();
+            }
 
             System.out.println("Stress test successful.");
             System.exit(0);

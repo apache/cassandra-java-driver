@@ -47,7 +47,7 @@ public interface LoadBalancingPolicy extends Host.StateListener {
      * @param cluster the {@code Cluster} instance for which the policy is created.
      * @param hosts the initial hosts to use.
      */
-    public void init(Cluster cluster, Collection<Host> hosts);
+    void init(Cluster cluster, Collection<Host> hosts);
 
     /**
      * Returns the distance assigned by this policy to the provided host.
@@ -65,7 +65,7 @@ public interface LoadBalancingPolicy extends Host.StateListener {
      * @param host the host of which to return the distance of.
      * @return the HostDistance to {@code host}.
      */
-    public HostDistance distance(Host host);
+    HostDistance distance(Host host);
 
     /**
      * Returns the hosts to use for a new query.
@@ -81,5 +81,5 @@ public interface LoadBalancingPolicy extends Host.StateListener {
      * returned by this iterator in order, until the query has been sent
      * successfully to one of the host.
      */
-    public Iterator<Host> newQueryPlan(Query query);
+    Iterator<Host> newQueryPlan(Query query);
 }

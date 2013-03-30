@@ -36,8 +36,9 @@ public class Batch extends BuiltStatement {
                         : new ArrayList<Statement>(statements.length);
         this.usings = new Options(this);
 
-        for (int i = 0; i < statements.length; i++)
+        for (int i = 0; i < statements.length; i++){
             add(statements[i]);
+        }
     }
 
     protected String buildQueryString() {
@@ -53,8 +54,9 @@ public class Batch extends BuiltStatement {
         for (int i = 0; i < statements.size(); i++) {
             String str = statements.get(i).getQueryString();
             builder.append(str);
-            if (!str.trim().endsWith(";"))
+            if (!str.trim().endsWith(";")){
                 builder.append(";");
+            }
         }
         builder.append("APPLY BATCH;");
         return builder.toString();
@@ -70,8 +72,9 @@ public class Batch extends BuiltStatement {
         this.statements.add(statement);
         setDirty();
 
-        if (routingKey == null && statement.getRoutingKey() != null)
+        if (routingKey == null && statement.getRoutingKey() != null){
             routingKey = statement.getRoutingKey();
+        }
 
         return this;
     }

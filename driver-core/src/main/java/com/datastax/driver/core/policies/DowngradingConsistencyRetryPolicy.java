@@ -15,7 +15,9 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Query;
+import com.datastax.driver.core.WriteType;
 
 /**
  * A retry policy that sometimes retry with a lower consistency level than
@@ -71,14 +73,18 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
     private DowngradingConsistencyRetryPolicy() {}
 
     private RetryDecision maxLikelyToWorkCL(int knownOk) {
-        if (knownOk >= 3)
+        if (knownOk >= 3){
             return RetryDecision.retry(ConsistencyLevel.THREE);
-        else if (knownOk >= 2)
+        }
+        else if (knownOk >= 2){
             return RetryDecision.retry(ConsistencyLevel.TWO);
-        else if (knownOk >= 1)
+        }
+        else if (knownOk >= 1){
             return RetryDecision.retry(ConsistencyLevel.ONE);
-        else
+        }
+        else{
             return RetryDecision.rethrow();
+        }
     }
 
     /**
@@ -103,8 +109,9 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * @return a RetryDecision as defined above.
      */
     public RetryDecision onReadTimeout(Query query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
-        if (nbRetry != 0)
+        if (nbRetry != 0){
             return RetryDecision.rethrow();
+        }
 
         if (receivedResponses < requiredResponses) {
             // Tries the biggest CL that is expected to work
@@ -138,8 +145,9 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * @return a RetryDecision as defined above.
      */
     public RetryDecision onWriteTimeout(Query query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
-        if (nbRetry != 0)
+        if (nbRetry != 0){
             return RetryDecision.rethrow();
+        }
 
         switch (writeType) {
             case SIMPLE:
@@ -178,8 +186,9 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * @return a RetryDecision as defined above.
      */
     public RetryDecision onUnavailable(Query query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
-        if (nbRetry != 0)
+        if (nbRetry != 0){
             return RetryDecision.rethrow();
+        }
 
         // Tries the biggest CL that is expected to work
         return maxLikelyToWorkCL(aliveReplica);

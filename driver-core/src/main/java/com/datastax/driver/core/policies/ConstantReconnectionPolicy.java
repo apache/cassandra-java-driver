@@ -29,8 +29,9 @@ public class ConstantReconnectionPolicy implements ReconnectionPolicy {
      * @param constantDelayMs the constant delay in milliseconds to use.
      */
     public ConstantReconnectionPolicy(long constantDelayMs) {
-        if (constantDelayMs < 0)
+        if (constantDelayMs < 0){
             throw new IllegalArgumentException(String.format("Invalid negative delay (got %d)", constantDelayMs));
+        }
 
         this.delayMs = constantDelayMs;
     }

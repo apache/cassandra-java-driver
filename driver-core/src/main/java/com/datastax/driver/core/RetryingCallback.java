@@ -17,33 +17,29 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
-import com.google.common.util.concurrent.Uninterruptibles;
-
-import com.datastax.driver.core.policies.RetryPolicy;
-import com.datastax.driver.core.exceptions.*;
-
+import org.apache.cassandra.exceptions.PreparedQueryNotFoundException;
+import org.apache.cassandra.exceptions.ReadTimeoutException;
+import org.apache.cassandra.exceptions.UnavailableException;
+import org.apache.cassandra.exceptions.WriteTimeoutException;
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.ErrorMessage;
 import org.apache.cassandra.transport.messages.ExecuteMessage;
 import org.apache.cassandra.transport.messages.PrepareMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
 import org.apache.cassandra.transport.messages.ResultMessage;
-import org.apache.cassandra.exceptions.UnavailableException;
-import org.apache.cassandra.exceptions.PreparedQueryNotFoundException;
-import org.apache.cassandra.exceptions.ReadTimeoutException;
-import org.apache.cassandra.exceptions.WriteTimeoutException;
-
-import com.yammer.metrics.core.TimerContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.policies.RetryPolicy;
+import com.yammer.metrics.core.TimerContext;
 
 /**
  * Connection callback that handle retrying another node if the connection fails.
@@ -88,16 +84,18 @@ class RetryingCallback implements Connection.ResponseCallback {
 
         while (queryPlan.hasNext()) {
             Host host = queryPlan.next();
-            if (query(host))
+            if (query(host)){
                 return;
+            }
         }
         setFinalException(null, new NoHostAvailableException(errors == null ? Collections.<InetAddress, String>emptyMap() : errors));
     }
 
     private boolean query(Host host) {
         currentPool = manager.pools.get(host);
-        if (currentPool == null || currentPool.isShutdown())
+        if (currentPool == null || currentPool.isShutdown()){
             return false;
+        }
 
         Connection connection = null;
         try {
@@ -109,16 +107,19 @@ class RetryingCallback implements Connection.ResponseCallback {
             return true;
         } catch (ConnectionException e) {
             // If we have any problem with the connection, move to the next node.
-            if (manager.configuration().isMetricsEnabled())
+            if (manager.configuration().isMetricsEnabled()){
                 metrics().getErrorMetrics().getConnectionErrors().inc();
-            if (connection != null)
+            }
+            if (connection != null){
                 currentPool.returnConnection(connection);
+            }
             logError(host.getAddress(), e.getMessage());
             return false;
         } catch (BusyConnectionException e) {
             // The pool shoudln't have give us a busy connection unless we've maxed up the pool, so move on to the next host.
-            if (connection != null)
+            if (connection != null){
                 currentPool.returnConnection(connection);
+            }
             logError(host.getAddress(), e.getMessage());
             return false;
         } catch (TimeoutException e) {
@@ -126,8 +127,9 @@ class RetryingCallback implements Connection.ResponseCallback {
             logError(host.getAddress(), "Timeout while trying to acquire available connection");
             return false;
         } catch (RuntimeException e) {
-            if (connection != null)
+            if (connection != null){
                 currentPool.returnConnection(connection);
+            }
             logger.error("Unexpected error while querying " + host.getAddress(), e);
             logError(host.getAddress(), e.getMessage());
             return false;
@@ -136,8 +138,9 @@ class RetryingCallback implements Connection.ResponseCallback {
 
     private void logError(InetAddress address, String msg) {
         logger.debug("Error querying {}, trying next host (error is: {})", address, msg);
-        if (errors == null)
+        if (errors == null){
             errors = new HashMap<InetAddress, String>();
+        }
         errors.put(address, msg);
     }
 
@@ -149,8 +152,9 @@ class RetryingCallback implements Connection.ResponseCallback {
         manager.executor().execute(new Runnable() {
             public void run() {
                 if (retryCurrent) {
-                    if (query(h))
+                    if (query(h)){
                         return;
+                    }
                 }
                 sendRequest();
             }
@@ -164,27 +168,31 @@ class RetryingCallback implements Connection.ResponseCallback {
             org.apache.cassandra.db.ConsistencyLevel cl = ConsistencyLevel.toCassandraCL(retryConsistencyLevel);
             if (request instanceof QueryMessage) {
                 QueryMessage qm = (QueryMessage)request;
-                if (qm.consistency != cl)
+                if (qm.consistency != cl){
                     request = new QueryMessage(qm.query, cl);
+                }
             }
             else if (request instanceof ExecuteMessage) {
                 ExecuteMessage em = (ExecuteMessage)request;
-                if (em.consistency != cl)
+                if (em.consistency != cl){
                     request = new ExecuteMessage(em.statementId, em.values, cl);
+                }
             }
         }
         return request;
     }
 
     private void setFinalResult(Connection connection, Message.Response response) {
-        if (timerContext != null)
+        if (timerContext != null){
             timerContext.stop();
+        }
         callback.onSet(connection, response);
     }
 
     private void setFinalException(Connection connection, Exception exception) {
-        if (timerContext != null)
+        if (timerContext != null){
             timerContext.stop();
+        }
         callback.onException(connection, exception);
     }
 
@@ -211,8 +219,9 @@ class RetryingCallback implements Connection.ResponseCallback {
                     switch (err.error.code()) {
                         case READ_TIMEOUT:
                             assert err.error instanceof ReadTimeoutException;
-                            if (manager.configuration().isMetricsEnabled())
+                            if (manager.configuration().isMetricsEnabled()){
                                 metrics().getErrorMetrics().getReadTimeouts().inc();
+                            }
 
                             ReadTimeoutException rte = (ReadTimeoutException)err.error;
                             ConsistencyLevel rcl = ConsistencyLevel.from(rte.consistency);
@@ -220,8 +229,9 @@ class RetryingCallback implements Connection.ResponseCallback {
                             break;
                         case WRITE_TIMEOUT:
                             assert err.error instanceof WriteTimeoutException;
-                            if (manager.configuration().isMetricsEnabled())
+                            if (manager.configuration().isMetricsEnabled()){
                                 metrics().getErrorMetrics().getWriteTimeouts().inc();
+                            }
 
                             WriteTimeoutException wte = (WriteTimeoutException)err.error;
                             ConsistencyLevel wcl = ConsistencyLevel.from(wte.consistency);
@@ -229,8 +239,9 @@ class RetryingCallback implements Connection.ResponseCallback {
                             break;
                         case UNAVAILABLE:
                             assert err.error instanceof UnavailableException;
-                            if (manager.configuration().isMetricsEnabled())
+                            if (manager.configuration().isMetricsEnabled()){
                                 metrics().getErrorMetrics().getUnavailables().inc();
+                            }
 
                             UnavailableException ue = (UnavailableException)err.error;
                             ConsistencyLevel ucl = ConsistencyLevel.from(ue.consistency);
@@ -240,16 +251,18 @@ class RetryingCallback implements Connection.ResponseCallback {
                             // Try another node
                             logger.warn("Host {} is overloaded, trying next host.", connection.address);
                             logError(connection.address, "Host overloaded");
-                            if (manager.configuration().isMetricsEnabled())
+                            if (manager.configuration().isMetricsEnabled()){
                                 metrics().getErrorMetrics().getOthers().inc();
+                            }
                             retry(false, null);
                             return;
                         case IS_BOOTSTRAPPING:
                             // Try another node
                             logger.error("Query sent to {} but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
                             logError(connection.address, "Host is boostrapping");
-                            if (manager.configuration().isMetricsEnabled())
+                            if (manager.configuration().isMetricsEnabled()){
                                 metrics().getErrorMetrics().getOthers().inc();
+                            }
                             retry(false, null);
                             return;
                         case UNPREPARED:
@@ -289,29 +302,34 @@ class RetryingCallback implements Connection.ResponseCallback {
                             // we're done for now, the prepareAndRetry callback will handle the rest
                             return;
                         default:
-                            if (manager.configuration().isMetricsEnabled())
+                            if (manager.configuration().isMetricsEnabled()){
                                 metrics().getErrorMetrics().getOthers().inc();
+                            }
                             break;
                     }
 
-                    if (retry == null)
+                    if (retry == null){
                         setFinalResult(connection, response);
+                    }
                     else {
                         switch (retry.getType()) {
                             case RETRY:
                                 ++queryRetries;
-                                if (logger.isTraceEnabled())
+                                if (logger.isTraceEnabled()){
                                     logger.trace("Doing retry {} for query {} at consistency {}", new Object[]{ queryRetries, query, retry.getRetryConsistencyLevel()});
-                                if (manager.configuration().isMetricsEnabled())
+                                }
+                                if (manager.configuration().isMetricsEnabled()){
                                     metrics().getErrorMetrics().getRetries().inc();
+                                }
                                 retry(true, retry.getRetryConsistencyLevel());
                                 break;
                             case RETHROW:
                                 setFinalResult(connection, response);
                                 break;
                             case IGNORE:
-                                if (manager.configuration().isMetricsEnabled())
+                                if (manager.configuration().isMetricsEnabled()){
                                     metrics().getErrorMetrics().getIgnores().inc();
+                                }
                                 setFinalResult(connection, new ResultMessage.Void());
                                 break;
                         }
@@ -347,8 +365,9 @@ class RetryingCallback implements Connection.ResponseCallback {
                         break;
                     case ERROR:
                         logError(connection.address, "Error preparing query, got " + response);
-                        if (manager.configuration().isMetricsEnabled())
+                        if (manager.configuration().isMetricsEnabled()){
                             metrics().getErrorMetrics().getOthers().inc();
+                        }
                         retry(false, null);
                         break;
                     default:
@@ -376,8 +395,9 @@ class RetryingCallback implements Connection.ResponseCallback {
         }
 
         if (exception instanceof ConnectionException) {
-            if (manager.configuration().isMetricsEnabled())
+            if (manager.configuration().isMetricsEnabled()){
                 metrics().getErrorMetrics().getConnectionErrors().inc();
+            }
             ConnectionException ce = (ConnectionException)exception;
             logError(ce.address, ce.getMessage());
             retry(false, null);

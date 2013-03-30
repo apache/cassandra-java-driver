@@ -40,8 +40,9 @@ public class Host {
     // ClusterMetadata keeps one Host object per inet address, so don't use
     // that constructor unless you know what you do (use ClusterMetadata.getHost typically).
     Host(InetAddress address, ConvictionPolicy.Factory policy) {
-        if (address == null || policy == null)
+        if (address == null || policy == null){
             throw new NullPointerException();
+        }
 
         this.address = address;
         this.monitor = new HealthMonitor(policy.create(this));
@@ -109,8 +110,9 @@ public class Host {
 
     @Override
     public final boolean equals(Object o) {
-        if(!(o instanceof Host))
+        if(!(o instanceof Host)){
             return false;
+        }
 
         return address.equals(((Host)o).address);
     }
@@ -169,8 +171,9 @@ public class Host {
 
         private void setDown() {
             isUp = false;
-            for (Host.StateListener listener : listeners)
+            for (Host.StateListener listener : listeners){
                 listener.onDown(Host.this);
+            }
         }
 
         /**
@@ -179,15 +182,17 @@ public class Host {
          */
         void reset() {
             policy.reset();
-            for (Host.StateListener listener : listeners)
+            for (Host.StateListener listener : listeners){
                 listener.onUp(Host.this);
+            }
             isUp = true;
         }
 
         boolean signalConnectionFailure(ConnectionException exception) {
             boolean isDown = policy.addFailure(exception);
-            if (isDown)
+            if (isDown){
                 setDown();
+            }
             return isDown;
         }
     }
@@ -210,27 +215,27 @@ public class Host {
          *
          * @param host the host that has been newly added.
          */
-        public void onAdd(Host host);
+        void onAdd(Host host);
 
         /**
          * Called when a node is detected up.
          *
          * @param host the host that has been detected up.
          */
-        public void onUp(Host host);
+        void onUp(Host host);
 
         /**
          * Called when a node is detected down.
          *
          * @param host the host that has been detected down.
          */
-        public void onDown(Host host);
+        void onDown(Host host);
 
         /**
          * Called when a node is removed from the cluster.
          *
          * @param host the removed host.
          */
-        public void onRemove(Host host);
+        void onRemove(Host host);
     }
 }

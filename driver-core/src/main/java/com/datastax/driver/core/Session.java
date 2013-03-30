@@ -148,8 +148,9 @@ public class Session {
             assert query instanceof BoundStatement : query;
 
             BoundStatement bs = (BoundStatement)query;
-            if (!bs.isReady())
+            if (!bs.isReady()){
                 throw new IllegalStateException("Some bind variables haven't been bound in the provided statement");
+            }
 
             return manager.executeQuery(new ExecuteMessage(bs.statement.id, Arrays.asList(bs.values), ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
         }
@@ -259,17 +260,20 @@ public class Session {
             this.loadBalancer = cluster.manager.configuration.getPolicies().getLoadBalancingPolicy();
             this.poolsState = new HostConnectionPool.PoolState();
 
-            for (Host host : hosts)
+            for (Host host : hosts){
                 addHost(host);
+            }
         }
 
         private void shutdown() {
 
-            if (!isShutdown.compareAndSet(false, true))
+            if (!isShutdown.compareAndSet(false, true)){
                 return;
+            }
 
-            for (HostConnectionPool pool : pools.values())
+            for (HostConnectionPool pool : pools.values()){
                 pool.shutdown();
+            }
         }
 
         private HostConnectionPool addHost(Host host) {
@@ -297,8 +301,9 @@ public class Session {
             loadBalancer.onUp(host);
 
             // This should not be necessary but it's harmless
-            if (previous != null)
+            if (previous != null){
                 previous.shutdown();
+            }
         }
 
         public void onDown(Host host) {
@@ -306,21 +311,25 @@ public class Session {
             HostConnectionPool pool = pools.remove(host);
 
             // This should not be necessary but it's harmless
-            if (pool != null)
+            if (pool != null){
                 pool.shutdown();
+            }
 
             // If we've remove a host, the loadBalancer is allowed to change his mind on host distances.
             for (Host h : cluster.getMetadata().allHosts()) {
-                if (!h.getMonitor().isUp())
+                if (!h.getMonitor().isUp()){
                     continue;
+                }
 
                 HostDistance dist = loadBalancer.distance(h);
                 if (dist != HostDistance.IGNORED) {
                     HostConnectionPool p = pools.get(h);
-                    if (p == null)
+                    if (p == null){
                         addHost(host);
-                    else
+                    }
+                    else{
                         p.hostDistance = dist;
+                    }
                 }
             }
         }
@@ -332,15 +341,17 @@ public class Session {
             // This should not be necessary, especially since the host is
             // supposed to be new, but it's safer to make that work correctly
             // if the even is triggered multiple times.
-            if (previous != null)
+            if (previous != null){
                 previous.shutdown();
+            }
         }
 
         public void onRemove(Host host) {
             loadBalancer.onRemove(host);
             HostConnectionPool pool = pools.remove(host);
-            if (pool != null)
+            if (pool != null){
                 pool.shutdown();
+            }
         }
 
         public void setKeyspace(String keyspace) {
@@ -363,8 +374,9 @@ public class Session {
 
         public void prepare(String query, InetAddress toExclude) throws InterruptedException {
             for (Map.Entry<Host, HostConnectionPool> entry : pools.entrySet()) {
-                if (entry.getKey().getAddress().equals(toExclude))
+                if (entry.getKey().getAddress().equals(toExclude)){
                     continue;
+                }
 
                 // Let's not wait too long if we can't get a connection. Things
                 // will fix themselves once the user tries a query anyway.
@@ -383,15 +395,17 @@ public class Session {
                     // query, so log this (but ignore otherwise as it's not a big deal)
                     logger.error(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), e);
                 } finally {
-                    if (c != null)
+                    if (c != null){
                         entry.getValue().returnConnection(c);
+                    }
                 }
             }
         }
 
         public ResultSetFuture executeQuery(Message.Request msg, Query query) {
-            if (query.isTracing())
+            if (query.isTracing()){
                 msg.setTracingRequested();
+            }
 
             ResultSetFuture future = new ResultSetFuture(this, msg);
             execute(future.callback, query);

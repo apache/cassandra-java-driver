@@ -15,9 +15,11 @@
  */
 package com.datastax.driver.core;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import java.util.*;
 
 /**
  * Describes a keyspace defined in this cluster.
@@ -116,8 +118,9 @@ public class KeyspaceMetadata {
 
         sb.append(asCQLQuery()).append("\n");
 
-        for (TableMetadata tm : tables.values())
+        for (TableMetadata tm : tables.values()){
             sb.append("\n").append(tm.exportAsString()).append("\n");
+        }
 
         return sb.toString();
     }
@@ -137,8 +140,9 @@ public class KeyspaceMetadata {
         sb.append("CREATE KEYSPACE ").append(name).append(" WITH ");
         sb.append("REPLICATION = { 'class' : '").append(replication.get("class")).append("'");
         for (Map.Entry<String, String> entry : replication.entrySet()) {
-            if (entry.getKey().equals("class"))
+            if (entry.getKey().equals("class")){
                 continue;
+            }
             sb.append(", '").append(entry.getKey()).append("': '").append(entry.getValue()).append("'");
         }
         sb.append(" } AND DURABLE_WRITES = ").append(durableWrites);

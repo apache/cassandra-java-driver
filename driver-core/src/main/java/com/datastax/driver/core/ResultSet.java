@@ -61,8 +61,9 @@ public class ResultSet implements Iterable<Row> {
             case ROWS:
                 ResultMessage.Rows r = (ResultMessage.Rows)msg;
                 ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[r.result.metadata.names.size()];
-                for (int i = 0; i < defs.length; i++)
+                for (int i = 0; i < defs.length; i++){
                     defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(r.result.metadata.names.get(i));
+                }
 
                 return new ResultSet(new ColumnDefinitions(defs), new ArrayDeque<List<ByteBuffer>>(r.result.rows), trace, queriedHost);
             case SET_KEYSPACE:
@@ -121,12 +122,14 @@ public class ResultSet implements Iterable<Row> {
      * returned list is empty if and only the ResultSet is exhausted.
      */
     public List<Row> all() {
-        if (isExhausted())
+        if (isExhausted()){
             return Collections.emptyList();
+        }
 
         List<Row> result = new ArrayList<Row>(rows.size());
-        for (Row row : this)
+        for (Row row : this){
             result.add(row);
+        }
         return result;
     }
 
