@@ -119,7 +119,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Almost the same as preparedNativeTest, but it uses getFixedValue2() instead.
      */
-    @Test
+    @Test(groups = "integration")
     public void preparedNativeTest2() {
         // Test preparing/bounding for all native types
         for (DataType type : DataType.allPrimitiveTypes()) {
@@ -160,7 +160,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Almost the same as prepareListTest, but it uses getFixedValue2() instead.
      */
-    @Test
+    @Test(groups = "integration")
     public void prepareListTest2() {
         // Test preparing/bounding for all possible list types
         for (DataType rawType : DataType.allPrimitiveTypes()) {
@@ -203,7 +203,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Almost the same as prepareSetTest, but it uses getFixedValue2() instead.
      */
-    @Test
+    @Test(groups = "integration")
     public void prepareSetTest2() {
         // Test preparing/bounding for all possible set types
         for (DataType rawType : DataType.allPrimitiveTypes()) {
@@ -252,7 +252,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Almost the same as prepareMapTest, but it uses getFixedValue2() instead.
      */
-    @Test
+    @Test(groups = "integration")
     public void prepareMapTest2() {
         // Test preparing/bounding for all possible map types
         for (DataType rawKeyType : DataType.allPrimitiveTypes()) {
