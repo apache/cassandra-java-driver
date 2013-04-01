@@ -286,6 +286,8 @@ class ControlConnection implements Host.StateListener {
             // have a race between a node removal and this.
             if (host != null)
                 host.setLocationInfo(localRow.getString("data_center"), localRow.getString("rack"));
+            else
+                logger.warn("Found the host metadata for {} to be null.", connection.address);
 
             partitioner = localRow.getString("partitioner");
             Set<String> tokens = localRow.getSet("tokens", String.class);
