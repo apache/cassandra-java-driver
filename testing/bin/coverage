@@ -117,7 +117,7 @@ def main():
     maybe_setup_loopbacks()
 
     # Start building the mvn command
-    cobertura_build_command = 'mvn cobertura:cobertura -Pintegration'
+    cobertura_build_command = 'mvn clean cobertura:cobertura -Pintegration'
     if args.cassandra_version:
         cobertura_build_command += ' -Dcassandra.version=%s' % args.cassandra_version
 
