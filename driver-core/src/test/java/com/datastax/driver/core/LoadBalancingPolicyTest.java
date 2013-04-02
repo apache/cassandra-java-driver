@@ -47,7 +47,7 @@ public class LoadBalancingPolicyTest {
     }
 
     private void addCoordinator(ResultSet rs) {
-        InetAddress coordinator = rs.getQueriedHost();
+        InetAddress coordinator = rs.getExecutionInfos().getQueriedHost().getAddress();
         Integer n = coordinators.get(coordinator);
         coordinators.put(coordinator, n == null ? 1 : n + 1);
     }

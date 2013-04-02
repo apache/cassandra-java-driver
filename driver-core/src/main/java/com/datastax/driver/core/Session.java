@@ -357,8 +357,8 @@ public class Session {
          * This method will find a suitable node to connect to using the
          * {@link LoadBalancingPolicy} and handle host failover.
          */
-        public void execute(Connection.ResponseCallback callback, Query query) {
-            new RetryingCallback(this, callback, query).sendRequest();
+        public void execute(RequestHandler.Callback callback, Query query) {
+            new RequestHandler(this, callback, query).sendRequest();
         }
 
         public void prepare(String query, InetAddress toExclude) throws InterruptedException {

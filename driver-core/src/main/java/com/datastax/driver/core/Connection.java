@@ -482,7 +482,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         }
     }
 
-    static class Future extends SimpleFuture<Message.Response> implements ResponseCallback {
+    static class Future extends SimpleFuture<Message.Response> implements RequestHandler.Callback {
 
         private final Message.Request request;
         private volatile InetAddress address;
@@ -493,6 +493,10 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         public Message.Request request() {
             return request;
+        }
+
+        public void onSet(Connection connection, Message.Response response, ExecutionInfos infos) {
+            onSet(connection, response);
         }
 
         public void onSet(Connection connection, Message.Response response) {
