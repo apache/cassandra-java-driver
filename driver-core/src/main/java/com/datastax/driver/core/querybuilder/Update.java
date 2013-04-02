@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.querybuilder.Assignment.CounterAssignment;
 
 /**
  * A built UPDATE statement.
@@ -145,6 +146,7 @@ public class Update extends BuiltStatement {
          * @return these Assignments.
          */
         public Assignments and(Assignment assignment) {
+            statement.setCounterOp(assignment instanceof CounterAssignment);
             assignments.add(assignment);
             setDirty();
             return this;
