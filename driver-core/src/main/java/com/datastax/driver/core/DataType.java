@@ -134,9 +134,9 @@ public class DataType {
                 primitiveTypeMap.put(name, new DataType(name, Collections.<DataType>emptyList()));
         }
     }
-    private static final Set<DataType> primitveTypeSet = ImmutableSet.copyOf(primitiveTypeMap.values());
+    private static final Set<DataType> primitiveTypeSet = ImmutableSet.copyOf(primitiveTypeMap.values());
 
-    private DataType(DataType.Name name, List<DataType> typeArguments) {
+    DataType(DataType.Name name, List<DataType> typeArguments) {
         this.name = name;
         this.typeArguments = typeArguments;
     }
@@ -394,7 +394,7 @@ public class DataType {
      * @return returns a set of all the primitive types.
      */
     public static Set<DataType> allPrimitiveTypes() {
-        return primitveTypeSet;
+        return primitiveTypeSet;
     }
 
     @Override

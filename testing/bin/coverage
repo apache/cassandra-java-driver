@@ -59,8 +59,11 @@ def maybe_setup_loopbacks():
 
     if platform.system() == 'Darwin' and not read_config('general', 'no_loopbacks', data_type='boolean'):
         print 'Setting up CCM loopbacks...'
-        loopbacks_enabled = read_commandline('ifconfig | grep "inet 127.0.1.4 netmask 0xff000000"')
-        if not loopbacks_enabled:
+        try:
+            loopbacks_enabled = read_commandline('ifconfig | grep "inet 127.0.1.4 netmask 0xff000000"')
+            if not loopbacks_enabled:
+                raise subprocess.CalledProcessError
+        except subprocess.CalledProcessError:
             # For basic ccm
             execute('sudo ifconfig lo0 alias 127.0.0.2 up')
             execute('sudo ifconfig lo0 alias 127.0.0.3 up')
@@ -98,6 +101,7 @@ def save_cobertura_site():
     execute('mkdir -p testing/cobertura-history')
     today = datetime.date.today()
     execute('cp -r driver-core/target/site/cobertura testing/cobertura-history/cobertura-%s' % today)
+    execute('rm -rf testing/cobertura-history/current')
     execute('cp -r driver-core/target/site/cobertura testing/cobertura-history/current')
 
 def main():
@@ -113,22 +117,30 @@ def main():
     maybe_setup_loopbacks()
 
     # Start building the mvn command
-    cobertura_build_command = 'mvn cobertura:cobertura'
+    cobertura_build_command = 'mvn cobertura:cobertura -Pintegration'
     if args.cassandra_version:
         cobertura_build_command += ' -Dcassandra.version=%s' % args.cassandra_version
 
     if args.test:
         # Run against a single mvn test
-        execute('%s -Dmaven.test.failure.ignore=true -Dtest=%s' % (cobertura_build_command, args.test))
+        execute('%s '
+                '-Dmaven.test.failure.ignore=true '
+                '-DfailIfNoTests=false '
+                '-Dtest=%s' % (cobertura_build_command, args.test))
     else:
         # Run against the entire integration suite
         execute('%s' % cobertura_build_command)
 
-        # Save out cobertura site files
-        save_cobertura_site()
+        try:
+            if raw_input("Save Cobertura Report? [y/N] ").lower() == 'y':
 
-        # Perhaps move cobertura site files to a central location
-        maybe_upload_cobertura_site()
+                # Save out cobertura site files
+                save_cobertura_site()
+
+                # Perhaps move cobertura site files to a central location
+                maybe_upload_cobertura_site()
+        except KeyboardInterrupt:
+            print
 
     # Optionally, open coverage report when done building
     if read_config('general', 'open_cobertura_site_after_build', 'boolean'):

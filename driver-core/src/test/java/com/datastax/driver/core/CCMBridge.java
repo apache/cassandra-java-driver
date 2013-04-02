@@ -98,7 +98,7 @@ public class CCMBridge {
         execute("ccm stop");
     }
 
-    public void force_stop() {
+    public void forceStop() {
         execute("ccm stop --not-gently");
     }
 
@@ -110,7 +110,7 @@ public class CCMBridge {
         execute("ccm node%d stop", n);
     }
 
-    public void force_stop(int n) {
+    public void forceStop(int n) {
         execute("ccm node%d stop --not-gently", n);
     }
 
@@ -122,6 +122,10 @@ public class CCMBridge {
     public void bootstrapNode(int n) {
         execute("ccm add node%d -i %s%d -j %d -b", n, IP_PREFIX, n, 7000 + 100*n);
         execute("ccm node%d start", n);
+    }
+
+    public void decommissionNode(int n) {
+        execute("ccm node%d decommission", n);
     }
 
     private void execute(String command, Object... args) {
