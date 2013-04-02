@@ -44,7 +44,8 @@ import static org.testng.Assert.*;
 public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private final static Set<DataType> DATA_TYPE_PRIMITIVES = DataType.allPrimitiveTypes();
-    private final static Set<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES = DataType.allNonPrimitiveNames();
+    private final static DataType.Name[] NON_PRIMITIVES = new DataType.Name[] {DataType.Name.MAP, DataType.Name.SET, DataType.Name.LIST};
+    private final static Set<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES = new HashSet<DataType.Name>(Arrays.asList(NON_PRIMITIVES));
 
     private final static String PRIMITIVE_INSERT_FORMAT = "INSERT INTO %1$s (k, v) VALUES (%2$s, %2$s);";
     private final static String BASIC_SELECT_FORMAT = "SELECT k, v FROM %1$s;";
