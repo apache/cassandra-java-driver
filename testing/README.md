@@ -15,6 +15,8 @@
     sudo ifconfig lo0 alias 127.0.1.2 up
     sudo ifconfig lo0 alias 127.0.1.3 up
     sudo ifconfig lo0 alias 127.0.1.4 up
+    sudo ifconfig lo0 alias 127.0.1.5 up
+    sudo ifconfig lo0 alias 127.0.1.6 up
 
 
 
