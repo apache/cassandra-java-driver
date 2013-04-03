@@ -140,7 +140,7 @@ public class QueryBuilderTest {
         assertEquals(batch.toString(), query);
     }
 
-    @Test(groups = "unit", expectedExceptions={RuntimeException.class})
+    @Test(groups = "unit", expectedExceptions={IllegalArgumentException.class})
     public void batchMixedCounterTest() throws Exception {
         String query;
         Query batch;
