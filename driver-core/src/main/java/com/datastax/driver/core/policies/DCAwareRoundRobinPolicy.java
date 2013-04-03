@@ -178,6 +178,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
 
                 if (currentDcHosts != null && currentDcRemaining > 0) {
                     currentDcRemaining--;
+                    idx = 0;
                     return currentDcHosts.get(idx++ % currentDcHosts.size());
                 }
 
