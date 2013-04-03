@@ -123,6 +123,36 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
+    public void batchCounterTest() throws Exception {
+        String query;
+        Query batch;
+
+        query = "BEGIN COUNTER BATCH USING TIMESTAMP 42 ";
+        query += "UPDATE foo SET a=a+1;";
+        query += "UPDATE foo SET b=b+2;";
+        query += "UPDATE foo SET c=c+3;";
+        query += "APPLY BATCH;";
+        batch = batch()
+            .add(update("foo").with(incr("a", 1)))
+            .add(update("foo").with(incr("b", 2)))
+            .add(update("foo").with(incr("c", 3)))
+            .using(timestamp(42));
+        assertEquals(batch.toString(), query);
+    }
+
+    @Test(groups = "unit", expectedExceptions={RuntimeException.class})
+    public void batchMixedCounterTest() throws Exception {
+        String query;
+        Query batch;
+
+        batch = batch()
+            .add(update("foo").with(incr("a", 1)))
+            .add(update("foo").with(set("b", 2)))
+            .add(update("foo").with(incr("c", 3)))
+            .using(timestamp(42));
+    }
+
+    @Test(groups = "unit")
     public void markerTest() throws Exception {
         String query;
         Query insert;

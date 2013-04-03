@@ -28,6 +28,7 @@ abstract class BuiltStatement extends Statement {
     private final ByteBuffer[] routingKey;
     private boolean dirty;
     private String cache;
+    protected Boolean isCounterOp;
 
     protected BuiltStatement() {
         this.partitionKey = null;
@@ -52,6 +53,14 @@ abstract class BuiltStatement extends Statement {
 
     protected void setDirty() {
         dirty = true;
+    }
+
+    protected boolean isCounterOp() {
+        return isCounterOp == null ? false : isCounterOp;
+    }
+
+    protected void setCounterOp(boolean isCounterOp) {
+        this.isCounterOp = isCounterOp;
     }
 
     // TODO: Correctly document the InvalidTypeException
@@ -131,5 +140,11 @@ abstract class BuiltStatement extends Statement {
         protected void setDirty() {
             statement.setDirty();
         }
+
+        @Override
+        protected boolean isCounterOp() {
+            return statement.isCounterOp();
+        }
+
     }
 }
