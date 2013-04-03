@@ -31,11 +31,16 @@ def read_commandline(command):
 
     return subprocess.check_output(command, shell=True)
 
-def execute(command):
+def execute(command, cwd=None):
     '''Simple shell execute access.'''
 
-    print 'Running command:\n\t%s\n' % command
-    subprocess.call(shlex.split(command))
+    if cwd:
+        print 'Running command:\n\t%s\nFrom:\n\t%s\n' % (command, cwd)
+        process = subprocess.Popen(shlex.split(command), cwd=cwd)
+        process.communicate()
+    else:
+        print 'Running command:\n\t%s\n' % command
+        subprocess.call(shlex.split(command))
 
 def parse():
     '''Creates the argument parser for this tool.'''
@@ -43,7 +48,10 @@ def parse():
     parser = argparse.ArgumentParser(description='command line tool for quick testing commands.')
     parser.add_argument('--test', help='run a specific unit test')
     parser.add_argument('--cassandra-version', help='run tests on a specific Cassandra version')
-    parser.add_argument('--upload', action="store_true", help='upload cobertura site to configured server')
+    parser.add_argument('--upload', action='store_true', help='upload cobertura site to configured server')
+    parser.add_argument('--clean', action='store_true', help='runs the maven project from a clean environment')
+    parser.add_argument('--testdocs', action='store_true', help='generates the test\'s Javadoc')
+    parser.add_argument('--stress', help='runs stress with the provided parameters')
     args = parser.parse_args()
     return args
 
@@ -73,6 +81,8 @@ def maybe_setup_loopbacks():
             execute('sudo ifconfig lo0 alias 127.0.1.2 up')
             execute('sudo ifconfig lo0 alias 127.0.1.3 up')
             execute('sudo ifconfig lo0 alias 127.0.1.4 up')
+            execute('sudo ifconfig lo0 alias 127.0.1.5 up')
+            execute('sudo ifconfig lo0 alias 127.0.1.6 up')
 
 def maybe_upload_cobertura_site():
     '''
@@ -113,26 +123,49 @@ def main():
         maybe_upload_cobertura_site()
         sys.exit()
 
+    # Generate the test javadocs then exit, if asked
+    if args.testdocs:
+        execute('mvn javadoc:test-javadoc')
+        print '\nTo view test Javadocs:'
+        print '\topen driver-core/target/site/testapidocs/index.html'
+        sys.exit()
+
+    # Run the stress test then exit, if asked
+    if args.stress:
+        execute('mvn install -Dmaven.test.skip=true')
+        execute('mvn assembly:single', cwd='driver-examples/stress')
+        execute('java -jar target/cassandra-driver-examples-stress-1.0.0-beta2-SNAPSHOT-jar-with-dependencies.jar %s' % args.stress, cwd='driver-examples/stress')
+        sys.exit()
+
     # Setup required ccm loopbacks
     maybe_setup_loopbacks()
 
     # Start building the mvn command
-    cobertura_build_command = 'mvn cobertura:cobertura -Pintegration'
+    cobertura_build_command = 'mvn'
+
+    # Add the clean target, if asked or building the entire project
+    if args.clean or not args.test:
+        cobertura_build_command += ' clean'
+
+    # Add the cobertura target for the integration tests
+    cobertura_build_command += ' cobertura:cobertura -Pintegration'
+
+    # Use a specific Cassandra version, if asked
     if args.cassandra_version:
         cobertura_build_command += ' -Dcassandra.version=%s' % args.cassandra_version
 
     if args.test:
         # Run against a single mvn test
-        execute('%s '
-                '-Dmaven.test.failure.ignore=true '
-                '-DfailIfNoTests=false '
-                '-Dtest=%s' % (cobertura_build_command, args.test))
+        execute('%s'
+                ' -Dmaven.test.failure.ignore=true'
+                ' -DfailIfNoTests=false'
+                ' -Dtest=%s' % (cobertura_build_command, args.test))
     else:
         # Run against the entire integration suite
         execute('%s' % cobertura_build_command)
 
         try:
-            if raw_input("Save Cobertura Report? [y/N] ").lower() == 'y':
+            if raw_input('Save Cobertura Report? [y/N] ').lower() == 'y':
 
                 # Save out cobertura site files
                 save_cobertura_site()
@@ -150,5 +183,5 @@ def main():
         print '\topen driver-core/target/site/cobertura/index.html'
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
