@@ -45,6 +45,7 @@ def parse():
     parser.add_argument('--cassandra-version', help='run tests on a specific Cassandra version')
     parser.add_argument('--upload', action='store_true', help='upload cobertura site to configured server')
     parser.add_argument('--clean', action='store_true', help='runs the maven project from a clean environment')
+    parser.add_argument('--testdocs', action='store_true', help='generates the test\'s Javadoc')
     args = parser.parse_args()
     return args
 
@@ -114,6 +115,12 @@ def main():
     # Check if an upload is all that is required
     if args.upload:
         maybe_upload_cobertura_site()
+        sys.exit()
+
+    if args.testdocs:
+        execute('mvn javadoc:test-javadoc')
+        print '\nTo view test Javadocs:'
+        print '\topen driver-core/target/site/testapidocs/index.html'
         sys.exit()
 
     # Setup required ccm loopbacks
