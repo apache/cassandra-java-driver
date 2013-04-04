@@ -309,7 +309,7 @@ public class Session {
             if (pool != null)
                 pool.shutdown();
 
-            // If we've remove a host, the loadBalancer is allowed to change his mind on host distances.
+            // If we've removed a host, the loadBalancer is allowed to change it's mind on host distances.
             for (Host h : cluster.getMetadata().allHosts()) {
                 if (!h.getMonitor().isUp())
                     continue;
@@ -318,7 +318,7 @@ public class Session {
                 if (dist != HostDistance.IGNORED) {
                     HostConnectionPool p = pools.get(h);
                     if (p == null)
-                        addHost(host);
+                        addHost(h);
                     else
                         p.hostDistance = dist;
                 }
@@ -326,21 +326,13 @@ public class Session {
         }
 
         public void onAdd(Host host) {
-            HostConnectionPool previous = addHost(host);;
             loadBalancer.onAdd(host);
-
-            // This should not be necessary, especially since the host is
-            // supposed to be new, but it's safer to make that work correctly
-            // if the even is triggered multiple times.
-            if (previous != null)
-                previous.shutdown();
+            onUp(host);
         }
 
         public void onRemove(Host host) {
             loadBalancer.onRemove(host);
-            HostConnectionPool pool = pools.remove(host);
-            if (pool != null)
-                pool.shutdown();
+            onDown(host);
         }
 
         public void setKeyspace(String keyspace) {

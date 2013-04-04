@@ -102,6 +102,9 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
 
     private String dc(Host host) {
         String dc = host.getDatacenter();
+
+        // In theory host can't be null. However there is no point in risking a NPE in case we
+        // have a race between a node removal and this.
         return dc == null ? localDc : dc;
     }
 
@@ -175,6 +178,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
 
                 if (currentDcHosts != null && currentDcRemaining > 0) {
                     currentDcRemaining--;
+                    idx = 0;
                     return currentDcHosts.get(idx++ % currentDcHosts.size());
                 }
 
