@@ -133,8 +133,9 @@ def main():
     if args.clean or not args.test:
         cobertura_build_command += ' clean'
 
-    # Add the cobertura target for the integration tests
-    cobertura_build_command += ' cobertura:cobertura -Pintegration'
+    cobertura_build_command += ' versions:display-dependency-updates'   # Ensures dependencies are up to date
+    cobertura_build_command += ' cobertura:cobertura'                   # Runs code coverage plugin
+    cobertura_build_command += ' -Pintegration'                         # Runs the integration tests, not just tests
 
     # Use a specific Cassandra version, if asked
     if args.cassandra_version:
