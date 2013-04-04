@@ -26,7 +26,7 @@ import com.google.common.collect.ImmutableList;
 /**
  * A Cassandra node.
  *
- * This class keeps the informations the driver maintain on a given Cassandra node.
+ * This class keeps the information the driver maintain on a given Cassandra node.
  */
 public class Host {
 

@@ -39,7 +39,7 @@ public class SimpleAuthInfoProvider implements AuthInfoProvider {
 
     /**
      * Creates a new simple authentication info provider with the
-     * informations contained in {@code properties}.
+     * information contained in {@code properties}.
      *
      * @param properties a map of authentication information to use.
      */
@@ -48,7 +48,7 @@ public class SimpleAuthInfoProvider implements AuthInfoProvider {
         addAll(properties);
     }
 
-    public Map<String, String> getAuthInfos(InetAddress host) {
+    public Map<String, String> getAuthInfo(InetAddress host) {
         return credentials;
     }
 

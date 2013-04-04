@@ -50,7 +50,7 @@ import com.datastax.driver.core.*;
  * The reasoning being this retry policy is the following one. If, based
  * on the information the Cassandra coordinator node returns, retrying the
  * operation with the initially requested consistency has a change to
- * succeed, do it. Otherwise, if based on these informations we know <b>the
+ * succeed, do it. Otherwise, if based on these information we know <b>the
  * initially requested consistency level cannot be achieve currently</b>, then:
  * <ul>
  *   <li>For writes, ignore the exception (thus silently failing the

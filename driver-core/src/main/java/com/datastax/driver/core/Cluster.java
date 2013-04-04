@@ -38,7 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Informations and known state of a Cassandra cluster.
+ * information and known state of a Cassandra cluster.
  * <p>
  * This is the main entry point of the driver. A simple example of access to a
  * Cassandra cluster would be:
@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * </pre>
  * <p>
  * A cluster object maintains a permanent connection to one of the cluster node
- * that it uses solely to maintain informations on the state and current
+ * that it uses solely to maintain information on the state and current
  * topology of the cluster. Using the connection, the driver will discover all
  * the nodes composing the cluster as well as new nodes joining the cluster.
  */
