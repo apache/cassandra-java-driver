@@ -8,6 +8,7 @@ CHANGELOG
     - [JAVA-65] Add "execution infos" for a result set (this also move the
       query trace in the new ExecutionInfos object, so users of beta1 will have
       to update).
+    - [JAVA-62] Fix failover bug in DCAwareRoundRobinPolicy.
 
 
 * 1.0.0-beta1:

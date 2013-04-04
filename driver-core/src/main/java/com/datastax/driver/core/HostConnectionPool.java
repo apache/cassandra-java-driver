@@ -49,6 +49,7 @@ class HostConnectionPool {
     private final AtomicInteger scheduledForCreation = new AtomicInteger();
 
     public HostConnectionPool(Host host, HostDistance hostDistance, Session.Manager manager) throws ConnectionException {
+        assert hostDistance != HostDistance.IGNORED;
         this.host = host;
         this.hostDistance = hostDistance;
         this.manager = manager;

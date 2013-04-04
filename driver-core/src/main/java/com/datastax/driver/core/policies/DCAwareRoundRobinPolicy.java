@@ -190,8 +190,10 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
                 String nextRemoteDc = remoteDcs.next();
                 CopyOnWriteArrayList<Host> nextDcHosts = perDcLiveHosts.get(nextRemoteDc);
                 if (nextDcHosts != null) {
-                    currentDcHosts = (List<Host>)nextDcHosts.clone();
-                    currentDcRemaining = Math.min(usedHostsPerRemoteDc, currentDcHosts.size());
+                    // Clone for thread safety
+                    List<Host> dcHosts = (List<Host>)nextDcHosts.clone();
+                    currentDcHosts = dcHosts.subList(0, Math.min(dcHosts.size(), usedHostsPerRemoteDc));
+                    currentDcRemaining = currentDcHosts.size();
                 }
 
                 return computeNext();

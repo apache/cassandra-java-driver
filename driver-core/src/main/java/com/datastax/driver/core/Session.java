@@ -240,6 +240,17 @@ public class Session {
 
         final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
+        public Manager(Cluster cluster, Collection<Host> hosts) {
+            this.cluster = cluster;
+
+            this.pools = new ConcurrentHashMap<Host, HostConnectionPool>(hosts.size());
+            this.loadBalancer = cluster.manager.configuration.getPolicies().getLoadBalancingPolicy();
+            this.poolsState = new HostConnectionPool.PoolState();
+
+            for (Host host : hosts)
+                addOrRenewPool(host);
+        }
+
         public Connection.Factory connectionFactory() {
             return cluster.manager.connectionFactory;
         }
@@ -252,17 +263,6 @@ public class Session {
             return cluster.manager.executor;
         }
 
-        public Manager(Cluster cluster, Collection<Host> hosts) {
-            this.cluster = cluster;
-
-            this.pools = new ConcurrentHashMap<Host, HostConnectionPool>(hosts.size());
-            this.loadBalancer = cluster.manager.configuration.getPolicies().getLoadBalancingPolicy();
-            this.poolsState = new HostConnectionPool.PoolState();
-
-            for (Host host : hosts)
-                addHost(host);
-        }
-
         private void shutdown() {
 
             if (!isShutdown.compareAndSet(false, true))
@@ -272,75 +272,81 @@ public class Session {
                 pool.shutdown();
         }
 
-        private HostConnectionPool addHost(Host host) {
+        private void addOrRenewPool(Host host) {
             try {
                 HostDistance distance = loadBalancer.distance(host);
-                if (distance == HostDistance.IGNORED) {
-                    return pools.get(host);
-                } else {
+                if (distance != HostDistance.IGNORED) {
                     logger.debug("Adding {} to list of queried hosts", host);
-                    return pools.put(host, new HostConnectionPool(host, distance, this));
+                    HostConnectionPool previous = pools.put(host, new HostConnectionPool(host, distance, this));
+                    if (previous != null)
+                        previous.shutdown(); // The previous was probably already shutdown but that's ok
                 }
             } catch (AuthenticationException e) {
                 logger.error("Error creating pool to {} ({})", host, e.getMessage());
                 host.getMonitor().signalConnectionFailure(new ConnectionException(e.getHost(), e.getMessage()));
-                return pools.get(host);
             } catch (ConnectionException e) {
                 logger.debug("Error creating pool to {} ({})", host, e.getMessage());
                 host.getMonitor().signalConnectionFailure(e);
-                return pools.get(host);
             }
         }
 
-        public void onUp(Host host) {
-            HostConnectionPool previous = addHost(host);;
-            loadBalancer.onUp(host);
-
-            // This should not be necessary but it's harmless
-            if (previous != null)
-                previous.shutdown();
-        }
-
-        public void onDown(Host host) {
-            loadBalancer.onDown(host);
+        private void removePool(Host host) {
             HostConnectionPool pool = pools.remove(host);
-
-            // This should not be necessary but it's harmless
             if (pool != null)
                 pool.shutdown();
+        }
 
-            // If we've remove a host, the loadBalancer is allowed to change his mind on host distances.
+        /*
+         * When the set of live nodes change, the loadbalancer will change his
+         * mind on host distances. It might change it on the node that came/left
+         * but also on other nodes (for instance, if a node dies, another
+         * previously ignored node may be now considered).
+         *
+         * This method ensures that all hosts for which a pool should exist
+         * have one, and hosts that shouldn't don't.
+         */
+        private void updateCreatedPools() {
             for (Host h : cluster.getMetadata().allHosts()) {
-                if (!h.getMonitor().isUp())
-                    continue;
-
                 HostDistance dist = loadBalancer.distance(h);
-                if (dist != HostDistance.IGNORED) {
-                    HostConnectionPool p = pools.get(h);
-                    if (p == null)
-                        addHost(host);
-                    else
-                        p.hostDistance = dist;
+                HostConnectionPool pool = pools.get(h);
+
+                if (pool == null) {
+                    if (dist != HostDistance.IGNORED && h.getMonitor().isUp())
+                        addOrRenewPool(h);
+                } else if (dist != pool.hostDistance) {
+                    if (dist == HostDistance.IGNORED) {
+                        removePool(h);
+                    } else {
+                        pool.hostDistance = dist;
+                    }
                 }
             }
         }
 
-        public void onAdd(Host host) {
-            HostConnectionPool previous = addHost(host);;
-            loadBalancer.onAdd(host);
+        public void onUp(Host host) {
+            addOrRenewPool(host);
+            loadBalancer.onUp(host);
+            updateCreatedPools();
+        }
 
-            // This should not be necessary, especially since the host is
-            // supposed to be new, but it's safer to make that work correctly
-            // if the even is triggered multiple times.
-            if (previous != null)
-                previous.shutdown();
+        public void onDown(Host host) {
+            loadBalancer.onDown(host);
+            // Note that with well behaved balancing policy (that ignore dead nodes), the removePool call is not necessary
+            // since updateCreatedPools should take care of it. But better protect against non well behaving policies.
+            removePool(host);
+            updateCreatedPools();
+        }
+
+        public void onAdd(Host host) {
+            addOrRenewPool(host);
+            loadBalancer.onAdd(host);
+            updateCreatedPools();
         }
 
         public void onRemove(Host host) {
             loadBalancer.onRemove(host);
-            HostConnectionPool pool = pools.remove(host);
-            if (pool != null)
-                pool.shutdown();
+            removePool(host);
+            updateCreatedPools();
         }
 
         public void setKeyspace(String keyspace) {
