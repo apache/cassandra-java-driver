@@ -37,42 +37,42 @@ public class ResultSet implements Iterable<Row> {
 
     private final ColumnDefinitions metadata;
     private final Queue<List<ByteBuffer>> rows;
-    private final ExecutionInfos infos;
+    private final ExecutionInfo info;
 
-    private ResultSet(ColumnDefinitions metadata, Queue<List<ByteBuffer>> rows, ExecutionInfos infos) {
+    private ResultSet(ColumnDefinitions metadata, Queue<List<ByteBuffer>> rows, ExecutionInfo info) {
         this.metadata = metadata;
         this.rows = rows;
-        this.infos = infos;
+        this.info = info;
     }
 
-    static ResultSet fromMessage(ResultMessage msg, Session.Manager session, ExecutionInfos infos) {
+    static ResultSet fromMessage(ResultMessage msg, Session.Manager session, ExecutionInfo info) {
 
         UUID tracingId = msg.getTracingId();
-        infos = tracingId == null || infos == null ? infos : infos.withTrace(new QueryTrace(tracingId, session));
+        info = tracingId == null || info == null ? info : info.withTrace(new QueryTrace(tracingId, session));
 
         switch (msg.kind) {
             case VOID:
-                return empty(infos);
+                return empty(info);
             case ROWS:
                 ResultMessage.Rows r = (ResultMessage.Rows)msg;
                 ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[r.result.metadata.names.size()];
                 for (int i = 0; i < defs.length; i++)
                     defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(r.result.metadata.names.get(i));
 
-                return new ResultSet(new ColumnDefinitions(defs), new ArrayDeque<List<ByteBuffer>>(r.result.rows), infos);
+                return new ResultSet(new ColumnDefinitions(defs), new ArrayDeque<List<ByteBuffer>>(r.result.rows), info);
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
-                return empty(infos);
+                return empty(info);
             case PREPARED:
                 throw new RuntimeException("Prepared statement received when a ResultSet was expected");
             default:
                 logger.error("Received unknow result type '{}'; returning empty result set", msg.kind);
-                return empty(infos);
+                return empty(info);
         }
     }
 
-    private static ResultSet empty(ExecutionInfos infos) {
-        return new ResultSet(ColumnDefinitions.EMPTY, EMPTY_QUEUE, infos);
+    private static ResultSet empty(ExecutionInfo info) {
+        return new ResultSet(ColumnDefinitions.EMPTY, EMPTY_QUEUE, info);
     }
 
     /**
@@ -154,10 +154,10 @@ public class ResultSet implements Iterable<Row> {
      * The returned object include basic information like the hosts queried,
      * but also the Cassandra query trace if tracing was enabled for the query.
      *
-     * @return the execution infos for this query.
+     * @return the execution info for this query.
      */
-    public ExecutionInfos getExecutionInfos() {
-        return infos;
+    public ExecutionInfo getExecutionInfo() {
+        return info;
     }
 
     @Override

@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * Basic information on the execution of a query.
  * <p>
- * This provides the following informations on the execution of a (successful)
+ * This provides the following information on the execution of a (successful)
  * query:
  * <ul>
  *   <li>The list of Cassandra hosts tried in order (usually just one, unless
@@ -32,28 +32,28 @@ import java.util.List;
  *   query.</li>
  * </ul>
  */
-public class ExecutionInfos
+public class ExecutionInfo
 {
     private final List<Host> triedHosts;
     private final ConsistencyLevel achievedConsistency;
     private final QueryTrace trace;
 
-    private ExecutionInfos(List<Host> triedHosts, ConsistencyLevel achievedConsistency, QueryTrace trace) {
+    private ExecutionInfo(List<Host> triedHosts, ConsistencyLevel achievedConsistency, QueryTrace trace) {
         this.triedHosts = triedHosts;
         this.achievedConsistency = achievedConsistency;
         this.trace = trace;
     }
 
-    ExecutionInfos(List<Host> triedHosts) {
+    ExecutionInfo(List<Host> triedHosts) {
         this(triedHosts, null, null);
     }
 
-    ExecutionInfos withTrace(QueryTrace newTrace) {
-        return new ExecutionInfos(triedHosts, achievedConsistency, newTrace);
+    ExecutionInfo withTrace(QueryTrace newTrace) {
+        return new ExecutionInfo(triedHosts, achievedConsistency, newTrace);
     }
 
-    ExecutionInfos withAchievedConsistency(ConsistencyLevel newConsistency) {
-        return new ExecutionInfos(triedHosts, newConsistency, trace);
+    ExecutionInfo withAchievedConsistency(ConsistencyLevel newConsistency) {
+        return new ExecutionInfo(triedHosts, newConsistency, trace);
     }
 
     /**

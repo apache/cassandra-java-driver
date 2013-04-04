@@ -187,15 +187,15 @@ class RequestHandler implements Connection.ResponseCallback {
         if (timerContext != null)
             timerContext.stop();
 
-        ExecutionInfos infos = current.defaultExecutionInfos;
+        ExecutionInfo info = current.defaultExecutionInfo;
         if (triedHosts != null)
         {
             triedHosts.add(current);
-            infos = new ExecutionInfos(triedHosts);
+            info = new ExecutionInfo(triedHosts);
         }
         if (retryConsistencyLevel != null)
-            infos = infos.withAchievedConsistency(retryConsistencyLevel);
-        callback.onSet(connection, response, infos);
+            info = info.withAchievedConsistency(retryConsistencyLevel);
+        callback.onSet(connection, response, info);
     }
 
     private void setFinalException(Connection connection, Exception exception) {
@@ -404,6 +404,6 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     interface Callback extends Connection.ResponseCallback {
-        public void onSet(Connection connection, Message.Response response, ExecutionInfos infos);
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info);
     }
 }

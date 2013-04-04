@@ -39,7 +39,7 @@ public class Host {
     // Tracks reconnection attempts to that host so we avoid adding multiple tasks
     final AtomicReference<ScheduledFuture> reconnectionAttempt = new AtomicReference<ScheduledFuture>();
 
-    final ExecutionInfos defaultExecutionInfos;
+    final ExecutionInfo defaultExecutionInfo;
 
     // ClusterMetadata keeps one Host object per inet address, so don't use
     // that constructor unless you know what you do (use ClusterMetadata.getHost typically).
@@ -49,7 +49,7 @@ public class Host {
 
         this.address = address;
         this.monitor = new HealthMonitor(policy.create(this));
-        this.defaultExecutionInfos = new ExecutionInfos(ImmutableList.of(this));
+        this.defaultExecutionInfo = new ExecutionInfo(ImmutableList.of(this));
     }
 
     void setLocationInfo(String datacenter, String rack) {

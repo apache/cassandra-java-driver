@@ -57,7 +57,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
             return request;
         }
 
-        public void onSet(Connection connection, Message.Response response, ExecutionInfos infos) {
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info) {
             try {
                 switch (response.type) {
                     case RESULT:
@@ -66,11 +66,11 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
                             case SET_KEYSPACE:
                                 // propagate the keyspace change to other connections
                                 session.poolsState.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
-                                set(ResultSet.fromMessage(rm, session, infos));
+                                set(ResultSet.fromMessage(rm, session, info));
                                 break;
                             case SCHEMA_CHANGE:
                                 ResultMessage.SchemaChange scc = (ResultMessage.SchemaChange)rm;
-                                ResultSet rs = ResultSet.fromMessage(rm, session, infos);
+                                ResultSet rs = ResultSet.fromMessage(rm, session, info);
                                 switch (scc.change) {
                                     case CREATED:
                                         if (scc.columnFamily.isEmpty()) {
@@ -101,7 +101,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
                                 }
                                 break;
                             default:
-                                set(ResultSet.fromMessage(rm, session, infos));
+                                set(ResultSet.fromMessage(rm, session, info));
                                 break;
                         }
                         break;
@@ -120,7 +120,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
             }
         }
 
-        // This is only called for internal calls, so don't bother with ExecutionInfos
+        // This is only called for internal calls, so don't bother with ExecutionInfo
         public void onSet(Connection connection, Message.Response response) {
             onSet(connection, response, null);
         }

@@ -495,7 +495,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             return request;
         }
 
-        public void onSet(Connection connection, Message.Response response, ExecutionInfos infos) {
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info) {
             onSet(connection, response);
         }
 
