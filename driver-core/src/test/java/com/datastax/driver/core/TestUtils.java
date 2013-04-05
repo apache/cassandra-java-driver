@@ -304,6 +304,13 @@ public abstract class TestUtils {
     }
 
     private static void waitFor(String node, Cluster cluster, int maxTry, boolean waitForDead, boolean waitForOut) {
+        // In the case where the we've killed the last node in the cluster, if we haven't
+        // tried doing an actual query, the driver won't realize that last node is dead until
+        // keep alive kicks in, but that's a fairly long time. So we cheat and trigger a force
+        // the detection by forcing a request.
+        if (waitForDead || waitForOut)
+            cluster.manager.submitSchemaRefresh(null, null);
+
         InetAddress address;
         try {
              address = InetAddress.getByName(node);

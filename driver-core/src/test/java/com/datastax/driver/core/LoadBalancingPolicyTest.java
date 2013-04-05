@@ -238,7 +238,6 @@ public class LoadBalancingPolicyTest {
             resetCoordinators();
             c.cassandraCluster.forceStop(1);
 
-            // TODO: This should throw an error and be caught
             try {
                 query(c, 12);
                 assertTrue(false);

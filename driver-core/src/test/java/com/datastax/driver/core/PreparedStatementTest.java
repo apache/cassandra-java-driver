@@ -290,11 +290,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(session.execute(ps.bind("123")).one().getInt("i"), 17);
 
         cassandraCluster.stop();
-        // We have one node, so if we shut it down and do nothing, the driver
-        // won't notice the node is dead (until keep alive kicks in at least,
-        // but that's a fairly long time). So we cheat and just do any request
-        // to force the detection.
-        cluster.manager.submitSchemaRefresh(null, null);
         waitForDown(CCMBridge.IP_PREFIX + "1", cluster, 20);
 
         cassandraCluster.start();
