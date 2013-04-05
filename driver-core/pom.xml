@@ -31,13 +31,13 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty</artifactId>
-      <version>3.6.2.Final</version>
+      <version>3.6.3.Final</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>13.0.1</version>
+      <version>14.0.1</version>
     </dependency>
 
     <dependency>
@@ -49,6 +49,7 @@
     <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
+      <!-- Leave at 0.7.0 for Cassandra compatibility -->
       <version>0.7.0</version>
       <exclusions>
         <exclusion>
@@ -61,6 +62,7 @@
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-core-asl</artifactId>
+      <!-- Leave at 1.9.2 for Cassandra compatibility -->
       <version>1.9.2</version>
     </dependency>
 
@@ -73,7 +75,7 @@
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
-      <version>6.8</version>
+      <version>6.8.1</version>
       <scope>test</scope>
     </dependency>
 
