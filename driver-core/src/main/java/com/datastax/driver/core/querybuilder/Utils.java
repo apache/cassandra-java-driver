@@ -19,6 +19,7 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.regex.Pattern;
+import org.apache.commons.lang.StringUtils;
 
 import org.apache.cassandra.utils.ByteBufferUtil;
 
@@ -182,7 +183,7 @@ abstract class Utils {
     }
 
     private static StringBuilder appendValueString(String value, StringBuilder sb) {
-        return sb.append("'").append(value.replace("'", "''")).append("'");
+        return sb.append("'").append(StringUtils.replace(value, "'", "''")).append("'");
     }
 
     static String toRawString(Object value) {
