@@ -281,18 +281,20 @@ class ControlConnection implements Host.StateListener {
             if (clusterName != null)
                 cluster.metadata.clusterName = clusterName;
 
+            partitioner = localRow.getString("partitioner");
+
             Host host = cluster.metadata.getHost(connection.address);
             // In theory host can't be null. However there is no point in risking a NPE in case we
             // have a race between a node removal and this.
-            if (host != null)
+            if (host == null) {
+                logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
+            } else {
                 host.setLocationInfo(localRow.getString("data_center"), localRow.getString("rack"));
-            else
-                logger.warn("Found the host metadata for {} to be null. Perhaps the node was recently removed?", connection.address);
 
-            partitioner = localRow.getString("partitioner");
-            Set<String> tokens = localRow.getSet("tokens", String.class);
-            if (partitioner != null && !tokens.isEmpty())
-                tokenMap.put(host, tokens);
+                Set<String> tokens = localRow.getSet("tokens", String.class);
+                if (partitioner != null && !tokens.isEmpty())
+                    tokenMap.put(host, tokens);
+            }
         }
 
         List<InetAddress> foundHosts = new ArrayList<InetAddress>();
