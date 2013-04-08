@@ -182,7 +182,7 @@ abstract class Utils {
     }
 
     private static StringBuilder appendValueString(String value, StringBuilder sb) {
-        return sb.append("'").append(value.replace("'", "''")).append("'");
+        return sb.append("'").append(replace(value, '\'', "''")).append("'");
     }
 
     static String toRawString(Object value) {
@@ -200,5 +200,37 @@ abstract class Utils {
 
     static abstract class Appendeable {
         abstract void appendTo(StringBuilder sb);
+    }
+
+    // Simple method to replace a single character. String.replace is a bit too
+    // inefficient (see JAVA-67)
+    static String replace(String text, char search, String replacement) {
+        if (text == null || text.isEmpty())
+            return text;
+
+        int nbMatch = 0;
+        int start = -1;
+        do {
+            start = text.indexOf(search, start+1);
+            if (start != -1)
+                ++nbMatch;
+        } while (start != -1);
+
+        if (nbMatch == 0)
+            return text;
+
+        int newLength = text.length() + nbMatch * (replacement.length() - 1);
+        char[] result = new char[newLength];
+        int newIdx = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == search) {
+                for (int r = 0; r < replacement.length(); r++)
+                    result[newIdx++] = replacement.charAt(r);
+            } else {
+                result[newIdx++] = c;
+            }
+        }
+        return new String(result);
     }
 }
