@@ -280,6 +280,10 @@ public class LoadBalancingPolicyTest {
             assertQueried(CCMBridge.IP_PREFIX + "2", 12);
             assertQueried(CCMBridge.IP_PREFIX + "3", 0);
 
+            resetCoordinators();
+            c.cassandraCluster.stop(2);
+            waitForDown(CCMBridge.IP_PREFIX + "2", c.cluster, 20);
+
         } catch (Throwable e) {
             c.errorOut();
             throw e;

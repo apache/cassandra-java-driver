@@ -172,7 +172,7 @@ public class Host {
             return isUp;
         }
 
-        private void setDown() {
+        void setDown() {
             isUp = false;
             for (Host.StateListener listener : listeners)
                 listener.onDown(Host.this);
@@ -182,7 +182,7 @@ public class Host {
          * Reset the monitor, setting the host as up and informing the
          * registered listener that the node is up.
          */
-        void reset() {
+        void setUp() {
             policy.reset();
             for (Host.StateListener listener : listeners)
                 listener.onUp(Host.this);

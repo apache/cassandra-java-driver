@@ -486,6 +486,8 @@ public class Cluster {
         final ConvictionPolicy.Factory convictionPolicyFactory = new ConvictionPolicy.Simple.Factory();
 
         final ScheduledExecutorService reconnectionExecutor = Executors.newScheduledThreadPool(2, threadFactory("Reconnection-%d"));
+        // scheduledTasksExecutor is used to process C* notifications. So having it mono-threaded ensures notifications are
+        // applied in the order received.
         final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, threadFactory("Scheduled Tasks-%d"));
 
         final ExecutorService executor = Executors.newCachedThreadPool(threadFactory("Cassandra Java Driver worker-%d"));
@@ -593,7 +595,7 @@ public class Cluster {
 
                 protected void onReconnection(Connection connection) {
                     logger.debug("Successful reconnection to {}, setting host UP", host);
-                    host.getMonitor().reset();
+                    host.getMonitor().setUp();
                 }
 
                 protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
@@ -781,8 +783,8 @@ public class Cluster {
 
             // When handle is called, the current thread is a network I/O  thread, and we don't want to block
             // it (typically addHost() will create the connection pool to the new node, which can take time)
-            // Besides, events are usually sent a bit too early (since they're triggered once gossip is up,
-            // but that before the client-side server is up) so adds a 1 second delay.
+            // Besides, up events are usually sent a bit too early (since they're triggered once gossip is up,
+            // but that before the client-side server is up) so adds a 1 second delay in that case.
             // TODO: this delay is honestly quite random. We should do something on the C* side to fix that.
             scheduledTasksExecutor.schedule(new Runnable() {
                 public void run() {
@@ -805,18 +807,23 @@ public class Cluster {
                             Event.StatusChange stc = (Event.StatusChange)event;
                             switch (stc.status) {
                                 case UP:
-                                    Host host = metadata.getHost(stc.node.getAddress());
-                                    if (host == null) {
+                                    Host hostUp = metadata.getHost(stc.node.getAddress());
+                                    if (hostUp == null) {
                                         // first time we heard about that node apparently, add it
                                         addHost(stc.node.getAddress(), true);
                                     } else {
-                                        onUp(host);
+                                        hostUp.getMonitor().setUp();
                                     }
                                     break;
                                 case DOWN:
-                                    // Ignore down event. Connection will realized a node is dead quicly enough when they write to
-                                    // it, and there is no point in taking the risk of marking the node down mistakenly because we
-                                    // didn't received the event in a timely fashion
+                                    // Note that there is a slight risk we can receive the event late and thus
+                                    // mark the host down even though we already had reconnected successfully.
+                                    // But it is unlikely, and don't have too much consequence since we'll try reconnecting
+                                    // right away, so we favor the detection to make the Host.isUp method more reliable.
+                                    Host hostDown = metadata.getHost(stc.node.getAddress());
+                                    if (hostDown != null) {
+                                        hostDown.getMonitor().setDown();
+                                    }
                                     break;
                             }
                             break;
@@ -845,7 +852,21 @@ public class Cluster {
                             break;
                     }
                 }
-            }, 1, TimeUnit.SECONDS);
+            }, delayForEvent(event), TimeUnit.SECONDS);
+        }
+
+        private int delayForEvent(Event event) {
+            switch (event.type) {
+                case TOPOLOGY_CHANGE:
+                    // Could probably be 0 for REMOVED_NODE but it's inconsequential
+                    return 1;
+                case STATUS_CHANGE:
+                    Event.StatusChange stc = (Event.StatusChange)event;
+                    if (stc.status == Event.StatusChange.Status.UP)
+                        return 1;
+                    break;
+            }
+            return 0;
         }
 
     }
