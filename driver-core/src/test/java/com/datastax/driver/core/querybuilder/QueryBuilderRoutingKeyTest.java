@@ -18,8 +18,6 @@ package com.datastax.driver.core.querybuilder;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
@@ -76,5 +74,57 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         assertEquals(row.getInt("k"), 42);
         assertEquals(row.getInt("a"), 1);
         assertEquals(row.getInt("b"), 2);
-    }  
+    }
+
+    @Test(groups = "integration")
+    public void intRoutingBatchKeyTest() throws Exception {
+
+        Statement query;
+        TableMetadata table = cluster.getMetadata().getKeyspace(TestUtils.SIMPLE_KEYSPACE).getTable(TABLE_INT);
+        assertNotNull(table);
+
+        ByteBuffer bb = ByteBuffer.allocate(4);
+        bb.putInt(0, 42);
+
+        String batch_query;
+        Query batch;
+        ResultSet rs;
+
+        query = select().from(table).where(eq("k", 42));
+
+        batch_query = "BEGIN BATCH ";
+        batch_query += "INSERT INTO ks.test_int(k,a) VALUES (42,1);";
+        batch_query += "UPDATE ks.test_int USING TTL 400;";
+        batch_query += "APPLY BATCH;";
+        batch = batch()
+                .add(insertInto(table).values(new String[]{"k", "a"}, new Object[]{42, 1}))
+                .add(update(table).using(ttl(400)));
+        assertEquals(batch.getRoutingKey(), bb);
+        assertEquals(batch.toString(), batch_query);
+        // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
+
+        batch_query = "BEGIN BATCH ";
+        batch_query += "SELECT * FROM ks.test_int WHERE k=42;";
+        batch_query += "APPLY BATCH;";
+        batch = batch(query);
+        assertEquals(batch.getRoutingKey(), bb);
+        assertEquals(batch.toString(), batch_query);
+        // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
+
+        batch_query = "BEGIN BATCH ";
+        batch_query += "SELECT * FROM foo WHERE k=42;";
+        batch_query += "APPLY BATCH;";
+        batch = batch().add(select().from("foo").where(eq("k", 42)));
+        assertEquals(batch.getRoutingKey(), null);
+        assertEquals(batch.toString(), batch_query);
+        // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
+
+        batch_query = "BEGIN BATCH USING TIMESTAMP 42 ";
+        batch_query += "INSERT INTO foo.bar(a) VALUES (123);";
+        batch_query += "APPLY BATCH;";
+        batch = batch().using(timestamp(42)).add(insertInto("foo", "bar").value("a", 123));
+        assertEquals(batch.getRoutingKey(), null);
+        assertEquals(batch.toString(), batch_query);
+        // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
+    }
 }
