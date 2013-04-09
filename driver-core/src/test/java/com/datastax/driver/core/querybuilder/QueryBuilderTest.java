@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.*;
 
@@ -86,6 +88,10 @@ public class QueryBuilderTest {
 
         query = "UPDATE foo SET a[2]='foo',b=[3,2,1]+b,c=c-{'a'} WHERE k=2 AND l='foo';";
         update = update("foo").with(setIdx("a", 2, "foo")).and(prependAll("b", Arrays.asList(3, 2, 1))).and(remove("c", "a")).where(eq("k", 2)).and(eq("l", "foo"));
+        assertEquals(update.toString(), query);
+
+        query = "UPDATE foo SET a="+new BigDecimal(3.2)+",b=42 WHERE k=2;";
+        update = update("foo").with(set("a", new BigDecimal(3.2))).and(set("b", new BigInteger("42"))).where(eq("k", 2));
         assertEquals(update.toString(), query);
     }
 
