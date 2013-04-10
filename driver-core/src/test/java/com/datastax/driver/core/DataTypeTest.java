@@ -514,32 +514,45 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the table definitions that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "docs" })
+    @Test(groups = { "doc" })
     public void printTableDefinitions() {
+        String objective = "Table Definitions";
+        System.out.println(String.format("Printing %s...", objective));
+
         // Prints the full list of table definitions
         for (String definition : getTableDefinitions()) {
             System.out.println(definition);
         }
+
+        System.out.println(String.format("\nEnd of %s\n\n", objective));
     }
 
     /**
      * Prints the sample data that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "docs" })
+    @Test(groups = { "doc" })
     public void printSampleData() {
+        String objective = "Sample Data";
+        System.out.println(String.format("Printing %s...", objective));
+
         for (DataType dataType : SAMPLE_DATA.keySet()) {
             Object sampleValue = SAMPLE_DATA.get(dataType);
             System.out.println(String.format("%1$-10s %2$s", dataType, sampleValue));
         }
+
+        System.out.println(String.format("\nEnd of %s\n\n", objective));
     }
 
     /**
      * Prints the sample collections that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "docs" })
+    @Test(groups = { "doc" })
     public void printSampleCollections() {
+        String objective = "Sample Collections";
+        System.out.println(String.format("Printing %s...", objective));
+
         for (DataType dataType : SAMPLE_COLLECTIONS.keySet()) {
             HashMap<DataType, Object> sampleValueMap = (HashMap<DataType, Object>) SAMPLE_COLLECTIONS.get(dataType);
 
@@ -557,49 +570,71 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
                 System.out.println(String.format("%1$-30s %2$s", dataType, sampleValue));
             }
         }
+
+        System.out.println(String.format("\nEnd of %s\n\n", objective));
     }
 
     /**
      * Prints the simple insert statements that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "docs" })
+    @Test(groups = { "doc" })
     public void printPrimitiveInsertStatements() {
+        String objective = "Primitive Insert Statements";
+        System.out.println(String.format("Printing %s...", objective));
+
         for (String execute_string : PRIMITIVE_INSERT_STATEMENTS) {
             System.out.println(execute_string);
         }
+
+        System.out.println(String.format("\nEnd of %s\n\n", objective));
     }
 
     /**
      * Prints the simple select statements that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "docs" })
+    @Test(groups = { "doc" })
     public void printPrimitiveSelectStatements() {
+        String objective = "Primitive Select Statements";
+        System.out.println(String.format("Printing %s...", objective));
+
         for (String execute_string : PRIMITIVE_SELECT_STATEMENTS.values()) {
             System.out.println(execute_string);
         }
+
+        System.out.println(String.format("\nEnd of %s\n\n", objective));
     }
 
     /**
      * Prints the simple insert statements that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "docs" })
+    @Test(groups = { "doc" })
     public void printCollectionInsertStatements() {
+        String objective = "Collection Insert Statements";
+        System.out.println(String.format("Printing %s...", objective));
+
         for (String execute_string : COLLECTION_INSERT_STATEMENTS) {
             System.out.println(execute_string);
         }
+
+        System.out.println(String.format("\nEnd of %s\n\n", objective));
     }
 
     /**
      * Prints the simple insert statements that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "docs" })
+    @Test(groups = { "doc" })
     public void printCollectionSelectStatements() {
+        String objective = "Collection Select Statements";
+        System.out.println(String.format("Printing %s...", objective));
+
         for (String execute_string : COLLECTION_SELECT_STATEMENTS.values()) {
             System.out.println(execute_string);
         }
+
+        System.out.println(String.format("\nEnd of %s\n\n", objective));
     }
 }

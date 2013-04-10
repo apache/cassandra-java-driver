@@ -334,8 +334,8 @@ public abstract class TestUtils {
                     return;
                 } else {
                     // logging it because this give use the timestamp of when this happens
-                    logger.info(node + " is not " + (waitForDead ? "DOWN" : "UP") + " and is still part of the cluster after " + maxTry + "s");
-                    throw new IllegalStateException(node + " is not " + (waitForDead ? "DOWN" : "UP") + " and is still part of the cluster after " + maxTry + "s");
+                    logger.info(node + " is not " + (waitForDead ? "DOWN" : "UP") + " after " + maxTry + "s");
+                    throw new IllegalStateException(node + " is not " + (waitForDead ? "DOWN" : "UP") + " after " + maxTry + "s");
                 }
             }
         }

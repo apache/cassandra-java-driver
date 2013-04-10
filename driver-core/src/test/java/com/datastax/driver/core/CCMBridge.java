@@ -119,6 +119,10 @@ public class CCMBridge {
         execute("ccm remove");
     }
 
+    public void ring(int n) {
+        executeAndPrint("ccm node%d ring", n);
+    }
+
     public void bootstrapNode(int n) {
         bootstrapNode(n, null);
     }
@@ -157,6 +161,26 @@ public class CCMBridge {
                     line = errReader.readLine();
                 }
                 throw new RuntimeException();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void executeAndPrint(String command, Object... args) {
+        try {
+            String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
+            logger.debug("Executing: " + fullCommand);
+            Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
+            int retValue = p.waitFor();
+
+            BufferedReader outReaderOutput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line = outReaderOutput.readLine();
+            while (line != null) {
+                System.out.println(line);
+                line = outReaderOutput.readLine();
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
