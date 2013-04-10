@@ -48,7 +48,7 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(query.toString(), expected);
         try {
             session.execute(query);
-            assertTrue(false);
+            fail();
         } catch (SyntaxError e) {
             // Missing WHERE clause
         }
