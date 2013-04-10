@@ -79,7 +79,6 @@ public class QueryBuilderTest {
             assertTrue(false);
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Missing values for IN clause");
-            assertTrue(true);
         }
 
         try {
@@ -87,7 +86,6 @@ public class QueryBuilderTest {
             assertTrue(false);
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "An ORDER BY clause has already been provided");
-            assertTrue(true);
         }
 
         try {
@@ -95,7 +93,6 @@ public class QueryBuilderTest {
             assertTrue(false);
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "Some columns ([a]) have already been selected.");
-            assertTrue(true);
         }
 
         try {
@@ -103,7 +100,6 @@ public class QueryBuilderTest {
             assertTrue(false);
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "Some columns ([a]) have already been selected.");
-            assertTrue(true);
         }
 
         try {
@@ -111,7 +107,6 @@ public class QueryBuilderTest {
             assertTrue(false);
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid LIMIT value, must be strictly positive");
-            assertTrue(true);
         }
 
         try {
@@ -119,7 +114,6 @@ public class QueryBuilderTest {
             assertTrue(false);
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "A LIMIT value has already been provided");
-            assertTrue(true);
         }
     }
 
@@ -170,7 +164,6 @@ public class QueryBuilderTest {
             assertTrue(false);
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Got 2 names but 3 values");
-            assertTrue(true);
         }
     }
 
@@ -227,7 +220,6 @@ public class QueryBuilderTest {
             assertTrue(false);
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid ttl, must be positive");
-            assertTrue(true);
         }
     }
 
@@ -265,7 +257,6 @@ public class QueryBuilderTest {
             assertTrue(false);
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "Some columns ([a]) have already been selected.");
-            assertTrue(true);
         }
 
         try {
@@ -273,7 +264,6 @@ public class QueryBuilderTest {
             assertTrue(false);
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid timestamp, must be positive");
-            assertTrue(true);
         }
     }
 

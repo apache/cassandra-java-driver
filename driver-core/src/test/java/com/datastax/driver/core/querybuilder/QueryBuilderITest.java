@@ -51,7 +51,6 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
             assertTrue(false);
         } catch (SyntaxError e) {
             // Missing WHERE clause
-            assertTrue(true);
         }
     }
 }
