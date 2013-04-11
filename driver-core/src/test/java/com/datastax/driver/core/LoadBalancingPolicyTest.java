@@ -143,6 +143,67 @@ public class LoadBalancingPolicyTest {
     }
 
     @Test(groups = "integration")
+    public void roundRobinTestWithRF2() throws Throwable {
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy());
+        CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
+        createSchema(c.session, 2);
+        try {
+
+            init(c, 12);
+            query(c, 12);
+
+            // Not the best test ever, we should use OPP and check we do it the
+            // right nodes. But since M3P is hard-coded for now, let just check
+            // we just hit only one node.
+            assertQueried(CCMBridge.IP_PREFIX + "1", 6);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 6);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+
+            resetCoordinators();
+            c.cassandraCluster.bootstrapNode(3);
+            waitFor(CCMBridge.IP_PREFIX + "3", c.cluster, 20);
+
+            query(c, 12);
+
+            assertQueried(CCMBridge.IP_PREFIX + "1", 4);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 4);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 4);
+
+            resetCoordinators();
+            c.cassandraCluster.stop(2);
+            waitForDown(CCMBridge.IP_PREFIX + "2", c.cluster, 20);
+
+            query(c, 12);
+
+            assertQueried(CCMBridge.IP_PREFIX + "1", 6);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 6);
+
+            resetCoordinators();
+            c.cassandraCluster.stop(1);
+            try {
+                waitForDown(CCMBridge.IP_PREFIX + "1", c.cluster, 20);
+                fail();
+            } catch (IllegalStateException e) {
+                c.cassandraCluster.ring(3);
+            }
+
+            query(c, 12);
+
+            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 12);
+
+        } catch (Throwable e) {
+            c.errorOut();
+            throw e;
+        } finally {
+            resetCoordinators();
+            c.discard();
+        }
+    }
+
+    @Test(groups = "integration")
     public void DCAwareRoundRobinTest() throws Throwable {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc2"));
