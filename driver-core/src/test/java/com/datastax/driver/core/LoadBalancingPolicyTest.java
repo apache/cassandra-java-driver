@@ -29,13 +29,19 @@ import static com.datastax.driver.core.TestUtils.*;
 
 public class LoadBalancingPolicyTest {
 
+    private static final boolean DEBUG = false;
+
     private static final String TABLE = "test";
 
     private Map<InetAddress, Integer> coordinators = new HashMap<InetAddress, Integer>();
     private PreparedStatement prepared;
 
     private void createSchema(Session session) {
-        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, 1));
+        createSchema(session, 1);
+    }
+
+    private void createSchema(Session session, int replicationFactor) {
+        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, replicationFactor));
         session.execute("USE " + SIMPLE_KEYSPACE);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", TABLE));
     }
@@ -56,7 +62,10 @@ public class LoadBalancingPolicyTest {
     private void assertQueried(String host, int n) {
         try {
             Integer queried = coordinators.get(InetAddress.getByName(host));
-            assertEquals(queried == null ? 0 : queried, n, "For " + host);
+            if (DEBUG)
+                System.out.println(String.format("Expected: %s\tReceived: %s", n, queried));
+            else
+                assertEquals(queried == null ? 0 : queried, n, "For " + host);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -159,16 +168,6 @@ public class LoadBalancingPolicyTest {
     }
 
     @Test(groups = "integration")
-    public void tokenAwareTest() throws Throwable {
-        tokenAwareTest(false);
-    }
-
-    @Test(groups = "integration")
-    public void tokenAwarePreparedTest() throws Throwable {
-        tokenAwareTest(true);
-    }
-
-    @Test(groups = "integration")
     public void dcAwareRoundRobinTestWithOneRemoteHost() throws Throwable {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc2", 1));
@@ -237,6 +236,7 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.cassandraCluster.forceStop(1);
+            waitForDown(CCMBridge.IP_PREFIX + "1", c.cluster, 20);
 
             try {
                 query(c, 12);
@@ -254,10 +254,20 @@ public class LoadBalancingPolicyTest {
         }
     }
 
+    @Test(groups = "integration")
+    public void tokenAwareTest() throws Throwable {
+        tokenAwareTest(false);
+    }
+
+    @Test(groups = "integration")
+    public void tokenAwarePreparedTest() throws Throwable {
+        tokenAwareTest(true);
+    }
+
     public void tokenAwareTest(boolean usePrepared) throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
-        createSchema(c.session);
+        createSchema(c.session, 2);
         try {
 
             init(c, 12);
@@ -268,6 +278,7 @@ public class LoadBalancingPolicyTest {
             // we just hit only one node.
             assertQueried(CCMBridge.IP_PREFIX + "1", 0);
             assertQueried(CCMBridge.IP_PREFIX + "2", 12);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
 
             resetCoordinators();
             c.cassandraCluster.bootstrapNode(3);
@@ -283,6 +294,12 @@ public class LoadBalancingPolicyTest {
             resetCoordinators();
             c.cassandraCluster.stop(2);
             waitForDown(CCMBridge.IP_PREFIX + "2", c.cluster, 20);
+
+            query(c, 12, usePrepared);
+
+            assertQueried(CCMBridge.IP_PREFIX + "1", 6);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 6);
 
         } catch (Throwable e) {
             c.errorOut();
