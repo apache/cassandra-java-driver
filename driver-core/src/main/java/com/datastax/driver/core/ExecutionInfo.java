@@ -62,8 +62,9 @@ public class ExecutionInfo
      * In general, this will be a singleton list with the host that coordinated
      * that query. However, if an host is tried by the driver but is dead or in
      * error, that host is recorded and the query is retry. Also, on a timeout
-     * or unavailable exception, some {@link RetryPolicy} may retry the query
-     * on the same host, so the same host might appear twice.
+     * or unavailable exception, some
+     * {@link com.datastax.driver.core.policies.RetryPolicy} may retry the
+     * query on the same host, so the same host might appear twice.
      * <p>
      * If you are only interested in fetching the final (and often only) node
      * coordinating the query, {@link #getQueriedHost} provides a shortcut to
@@ -88,15 +89,17 @@ public class ExecutionInfo
 
     /**
      * If the query returned without achieving the requested consistency level
-     * due to the {@link RetryPolicy}, this return the biggest consistency
-     * level that has been actually achieved by the query.
+     * due to the {@link com.datastax.driver.core.policies.RetryPolicy}, this
+     * return the biggest consistency level that has been actually achieved by
+     * the query.
      * <p>
-     * Note that the default {@code RetryPolicy} ({@link DefaultRetryPolicy})
+     * Note that the default {@code RetryPolicy}
+     * ({@link com.datastax.driver.core.policies.DefaultRetryPolicy})
      * will never allow a query to be successful without achieving the
      * initially requested consistency level and hence with that default
      * policy, this method will <b>always</b> return {@code null}. However, it
      * might occasionally return a non-{@code null} with say,
-     * {@link DowngradingConsistencyRetryPolicy}.
+     * {@link com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy}.
      */
     public ConsistencyLevel getAchievedConsistencyLevel() {
         return achievedConsistency;

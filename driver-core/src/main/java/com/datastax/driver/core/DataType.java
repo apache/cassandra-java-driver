@@ -332,7 +332,7 @@ public class DataType {
      * side to implement it. Note that the support for custom type by the
      * driver is limited: values of a custom type won't be interpreted by the
      * driver in any way.  They will thus be expected (by {@link
-     * BoundStatement#setBytesUnsafe)} and returned (by {@link
+     * BoundStatement#setBytesUnsafe} and returned (by {@link
      * Row#getBytesUnsafe}) as ByteBuffer.
      * <p>
      * The use of custom types is rarely useful and is thus not encouraged.
