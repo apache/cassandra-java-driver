@@ -386,7 +386,7 @@ public class LoadBalancingPolicyTest {
             c.cassandraCluster.bootstrapNode(3);
             waitFor(CCMBridge.IP_PREFIX + "3", c.cluster, 20);
 
-            query(c, 12, usePrepared);
+            query(c, 12);
 
             // We should still be hitting only one node
             assertQueried(CCMBridge.IP_PREFIX + "1", 0);
@@ -397,7 +397,7 @@ public class LoadBalancingPolicyTest {
             c.cassandraCluster.stop(2);
             waitForDown(CCMBridge.IP_PREFIX + "2", c.cluster, 20);
 
-            query(c, 12, usePrepared);
+            query(c, 12);
 
             assertQueried(CCMBridge.IP_PREFIX + "1", 6);
             assertQueried(CCMBridge.IP_PREFIX + "2", 0);
