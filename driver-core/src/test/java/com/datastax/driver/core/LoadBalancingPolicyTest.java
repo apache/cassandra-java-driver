@@ -25,6 +25,7 @@ import static org.testng.Assert.*;
 
 import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.UnavailableException;
 import static com.datastax.driver.core.TestUtils.*;
 
 public class LoadBalancingPolicyTest {
@@ -130,8 +131,48 @@ public class LoadBalancingPolicyTest {
             waitForDecommission(CCMBridge.IP_PREFIX + "1", c.cluster, 20);
 
             query(c, 12);
+
             assertQueried(CCMBridge.IP_PREFIX + "2", 6);
             assertQueried(CCMBridge.IP_PREFIX + "3", 6);
+
+        } catch (Throwable e) {
+            c.errorOut();
+            throw e;
+        } finally {
+            resetCoordinators();
+            c.discard();
+        }
+    }
+
+    @Test(groups = "integration")
+    public void roundRobinWith2DCsTest() throws Throwable {
+
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy());
+        CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, 2, builder);
+        createSchema(c.session);
+        try {
+
+            init(c, 12);
+            query(c, 12);
+
+            assertQueried(CCMBridge.IP_PREFIX + "1", 3);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 3);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 3);
+            assertQueried(CCMBridge.IP_PREFIX + "4", 3);
+
+            resetCoordinators();
+            c.cassandraCluster.bootstrapNode(5, "dc2");
+            c.cassandraCluster.decommissionNode(1);
+            waitFor(CCMBridge.IP_PREFIX + "5", c.cluster, 20);
+            waitForDecommission(CCMBridge.IP_PREFIX + "1", c.cluster, 20);
+
+            query(c, 12);
+
+            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 3);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 3);
+            assertQueried(CCMBridge.IP_PREFIX + "4", 3);
+            assertQueried(CCMBridge.IP_PREFIX + "5", 3);
 
         } catch (Throwable e) {
             c.errorOut();
@@ -240,7 +281,7 @@ public class LoadBalancingPolicyTest {
 
             try {
                 query(c, 12);
-                assertTrue(false);
+                fail();
             } catch (NoHostAvailableException e) {
                 // No more nodes so ...
             }
@@ -265,6 +306,67 @@ public class LoadBalancingPolicyTest {
     }
 
     public void tokenAwareTest(boolean usePrepared) throws Throwable {
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
+        CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
+        createSchema(c.session);
+        try {
+
+            init(c, 12);
+            query(c, 12);
+
+            // Not the best test ever, we should use OPP and check we do it the
+            // right nodes. But since M3P is hard-coded for now, let just check
+            // we just hit only one node.
+            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
+
+            resetCoordinators();
+            query(c, 12);
+
+            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
+
+            resetCoordinators();
+            c.cassandraCluster.forceStop(2);
+            waitForDown(CCMBridge.IP_PREFIX + "2", c.cluster, 20);
+
+            try {
+                query(c, 12, usePrepared);
+                fail();
+            } catch (UnavailableException e) {
+                assertEquals("Not enough replica available for query at consistency ONE (1 required but only 0 alive)",
+                             e.getMessage());
+            }
+
+            resetCoordinators();
+            c.cassandraCluster.start(2);
+            waitFor(CCMBridge.IP_PREFIX + "2", c.cluster, 20);
+
+            query(c, 12);
+
+            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
+
+            resetCoordinators();
+            c.cassandraCluster.decommissionNode(2);
+            waitForDecommission(CCMBridge.IP_PREFIX + "2", c.cluster, 20);
+
+            query(c, 12);
+
+            assertQueried(CCMBridge.IP_PREFIX + "1", 12);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
+
+        } catch (Throwable e) {
+            c.errorOut();
+            throw e;
+        } finally {
+            resetCoordinators();
+            c.discard();
+        }
+    }
+
+    @Test(groups = "integration")
+    public void tokenAwareWithRF2Test(boolean usePrepared) throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
         createSchema(c.session, 2);
