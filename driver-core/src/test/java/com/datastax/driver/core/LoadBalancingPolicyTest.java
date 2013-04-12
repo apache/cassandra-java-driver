@@ -366,7 +366,7 @@ public class LoadBalancingPolicyTest {
     }
 
     @Test(groups = "integration")
-    public void tokenAwareWithRF2Test(boolean usePrepared) throws Throwable {
+    public void tokenAwareWithRF2Test() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
         createSchema(c.session, 2);
