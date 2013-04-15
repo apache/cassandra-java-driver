@@ -143,6 +143,69 @@ public class LoadBalancingPolicyTest {
     }
 
     @Test(groups = "integration")
+    public void noisyRoundRobinTest1() throws Throwable {
+
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy());
+        CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
+        createSchema(c.session);
+        try {
+
+            System.out.println("\n\nnoisyRoundRobinTest1:");
+            c.cassandraCluster.decommissionNode(1);
+            waitForDecommission(CCMBridge.IP_PREFIX + "1", c.cluster, 20);
+
+        } catch (Throwable e) {
+            c.errorOut();
+            throw e;
+        } finally {
+            resetCoordinators();
+            c.discard();
+        }
+    }
+
+    @Test(groups = "integration")
+    public void noisyRoundRobinTest2() throws Throwable {
+
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy());
+        CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
+        createSchema(c.session);
+        try {
+
+            System.out.println("\n\nnoisyRoundRobinTest2:");
+            c.cassandraCluster.stop(1);
+            waitForDown(CCMBridge.IP_PREFIX + "1", c.cluster, 20);
+
+        } catch (Throwable e) {
+            c.errorOut();
+            throw e;
+        } finally {
+            resetCoordinators();
+            c.discard();
+        }
+    }
+
+    @Test(groups = "integration")
+    public void noisyRoundRobinTest3() throws Throwable {
+
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy());
+        CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
+        createSchema(c.session);
+        try {
+
+            System.out.println("\n\nnoisyRoundRobinTest3:");
+            c.cassandraCluster.forceStop(1);
+            waitForDown(CCMBridge.IP_PREFIX + "1", c.cluster, 20);
+
+        } catch (Throwable e) {
+            c.errorOut();
+            throw e;
+        } finally {
+            resetCoordinators();
+            c.discard();
+        }
+    }
+
+    @Test(groups = "integration")
     public void DCAwareRoundRobinTest() throws Throwable {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc2"));
