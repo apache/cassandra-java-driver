@@ -165,7 +165,7 @@ class HostConnectionPool {
             try {
                 awaitAvailableConnection(remaining, unit);
             } catch (InterruptedException e) {
-                Thread.interrupted();
+                Thread.currentThread().interrupt();
                 // If we're interrupted fine, check if there is a connection available but stop waiting otherwise
                 timeout = 0; // this will make us stop the loop if we don't get a connection right away
             }
@@ -320,25 +320,36 @@ class HostConnectionPool {
     }
 
     public void shutdown() {
+        try {
+            shutdown(0, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    public boolean shutdown(long timeout, TimeUnit unit) throws InterruptedException {
         if (!isShutdown.compareAndSet(false, true))
-            return;
+            return true;
 
         logger.debug("Shutting down pool");
 
         // Wake up all threads that waits
         signalAllAvailableConnection();
-        discardAvailableConnections();
+        return discardAvailableConnections(timeout, unit);
     }
 
     public int opened() {
         return open.get();
     }
 
-    private void discardAvailableConnections() {
+    private boolean discardAvailableConnections(long timeout, TimeUnit unit) throws InterruptedException {
+        long start = System.currentTimeMillis();
+        boolean success = true;
         for (Connection connection : connections) {
-            connection.close();
+            success &= connection.close(timeout - Cluster.timeSince(start, unit), unit);
             open.decrementAndGet();
         }
+        return success;
     }
 
     // This creates connections if we have less than core connections (if we

@@ -181,7 +181,33 @@ public class Session {
      * This method has no effect if the session was already shutdown.
      */
     public void shutdown() {
-        manager.shutdown();
+        shutdown(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Shutdown this session instance, only waiting a definite amount of time.
+     * <p>
+     * This closes all connections used by this sessions. Note that if you want
+     * to shutdown the full {@code Cluster} instance this session is part of,
+     * you should use {@link Cluster#shutdown} instead (which will call this
+     * method for all session but also release some additional ressources).
+     * <p>
+     * Note that this method is not thread safe in the sense that if another
+     * shutdown is perform in parallel, it might return {@code true} even if
+     * the instance is not yet fully shutdown.
+     *
+     * @param timeout how long to wait for the session to shutdown.
+     * @param unit the unit for the timeout.
+     * @return {@code true} if the session has been properly shutdown within
+     * the {@code timeout}, {@code false} otherwise.
+     */
+    public boolean shutdown(long timeout, TimeUnit unit) {
+        try {
+            return manager.shutdown(timeout, unit);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 
     /**
@@ -263,13 +289,16 @@ public class Session {
             return cluster.manager.executor;
         }
 
-        private void shutdown() {
+        private boolean shutdown(long timeout, TimeUnit unit) throws InterruptedException {
 
             if (!isShutdown.compareAndSet(false, true))
-                return;
+                return true;
 
+            long start = System.currentTimeMillis();
+            boolean success = true;
             for (HostConnectionPool pool : pools.values())
-                pool.shutdown();
+                success &= pool.shutdown(timeout - Cluster.timeSince(start, unit), unit);
+            return success;
         }
 
         private void addOrRenewPool(Host host) {

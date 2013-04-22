@@ -169,10 +169,36 @@ public class Cluster {
      * This closes all connections from all the sessions of this {@code
      * Cluster} instance and reclaim all resources used by it.
      * <p>
+     * This method waits indefinitively for the driver to shutdown.
+     * <p>
      * This method has no effect if the cluster was already shutdown.
      */
     public void shutdown() {
-        manager.shutdown();
+        shutdown(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Shutdown this cluster instance, only waiting a definite amount of time.
+     *
+     * This closes all connections from all the sessions of this {@code
+     * Cluster} instance and reclaim all resources used by it.
+     * <p>
+     * Note that this method is not thread safe in the sense that if another
+     * shutdown is perform in parallel, it might return {@code true} even if
+     * the instance is not yet fully shutdown.
+     *
+     * @param timeout how long to wait for the cluster instance to shutdown.
+     * @param unit the unit for the timeout.
+     * @return {@code true} if the instance has been properly shutdown within
+     * the {@code timeout}, {@code false} otherwise.
+     */
+    public boolean shutdown(long timeout, TimeUnit unit) {
+        try {
+            return manager.shutdown(timeout, unit);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 
     /**
@@ -463,6 +489,10 @@ public class Cluster {
         return new ThreadFactoryBuilder().setNameFormat(nameFormat).build();
     }
 
+    static long timeSince(long start, TimeUnit unit) {
+        return unit.convert(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS);
+    }
+
     /**
      * The sessions and hosts managed by this a Cluster instance.
      * <p>
@@ -517,7 +547,11 @@ public class Cluster {
             try {
                 this.controlConnection.connect();
             } catch (NoHostAvailableException e) {
-                shutdown();
+                try {
+                    shutdown(0, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
                 throw e;
             }
         }
@@ -539,24 +573,36 @@ public class Cluster {
             return session;
         }
 
-        private void shutdown() {
+        private boolean shutdown(long timeout, TimeUnit unit) throws InterruptedException {
+
             if (!isShutdown.compareAndSet(false, true))
-                return;
+                return true;
 
             logger.debug("Shutting down");
 
-            controlConnection.shutdown();
+            long start = System.currentTimeMillis();
+            boolean success = true;
+
+            success &= controlConnection.shutdown(timeout, unit);
 
             for (Session session : sessions)
-                session.shutdown();
+                success &= session.shutdown(timeout - timeSince(start, unit), unit);
 
-            reconnectionExecutor.shutdownNow();
-            scheduledTasksExecutor.shutdownNow();
-            executor.shutdownNow();
-            connectionFactory.shutdown();
+            reconnectionExecutor.shutdown();
+            scheduledTasksExecutor.shutdown();
+            executor.shutdown();
+
+            success &= connectionFactory.shutdown(timeout - timeSince(start, unit), unit);
 
             if (metrics != null)
                 metrics.shutdown();
+
+            // Note that it's on purpose that we shutdown everything *even* if the timeout
+            // is reached early
+            return success
+                && reconnectionExecutor.awaitTermination(timeout - timeSince(start, unit), unit)
+                && scheduledTasksExecutor.awaitTermination(timeout - timeSince(start, unit), unit)
+                && executor.awaitTermination(timeout - timeSince(start, unit), unit);
         }
 
         public void onUp(Host host) {
@@ -570,7 +616,7 @@ public class Cluster {
             try {
                 prepareAllQueries(host);
             } catch (InterruptedException e) {
-                Thread.interrupted();
+                Thread.currentThread().interrupt();
                 // Don't propagate because we don't want to prevent other listener to run
             }
 
@@ -618,7 +664,7 @@ public class Cluster {
             try {
                 prepareAllQueries(host);
             } catch (InterruptedException e) {
-                Thread.interrupted();
+                Thread.currentThread().interrupt();
                 // Don't propagate because we don't want to prevent other listener to run
             }
 
@@ -723,7 +769,7 @@ public class Cluster {
                         }
                     }
                 } finally {
-                    connection.close();
+                    connection.close(0, TimeUnit.MILLISECONDS);
                 }
             } catch (ConnectionException e) {
                 // Ignore, not a big deal
