@@ -178,6 +178,8 @@ class Connection extends org.apache.cassandra.transport.Connection
     }
 
     ConnectionException defunct(ConnectionException e) {
+        if (logger.isDebugEnabled())
+            logger.debug("Defuncting connection to " + address, e);
         exception = e;
         isDefunct = true;
         dispatcher.errorOutAllHandler(e);
