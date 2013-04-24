@@ -25,8 +25,8 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 // Static utilities private to the query builder
 abstract class Utils {
 
-    private static final Pattern cnamePattern = Pattern.compile("\\w+(?:\\[.+\\])?", Pattern.CASE_INSENSITIVE);
-    private static final Pattern fctsPattern = Pattern.compile("(?:count|writetime|ttl|token)\\(.*", Pattern.CASE_INSENSITIVE);
+    private static final Pattern cnamePattern = Pattern.compile("\\w+(?:\\[.+\\])?");
+    private static final Pattern fctsPattern = Pattern.compile("\\s*[a-zA-Z]\\w*\\(.+");
 
     static StringBuilder joinAndAppend(StringBuilder sb, String separator, List<? extends Appendeable> values) {
         for (int i = 0; i < values.size(); i++) {
@@ -72,17 +72,21 @@ abstract class Utils {
         if (appendValueIfCollection(value, sb, rawValue))
             return sb;
 
-        if (rawValue)
+        if (rawValue || isFunctionCall(value) || value instanceof RawString)
             return sb.append(value.toString());
         else
             return appendValueString(value.toString(), sb);
+    }
+
+    static boolean isFunctionCall(Object value) {
+        return value instanceof String && fctsPattern.matcher((String)value).matches();
     }
 
     private static void appendFlatValue(Object value, StringBuilder sb, boolean rawValue) {
         if (appendValueIfLiteral(value, sb))
             return;
 
-        if (rawValue)
+        if (rawValue || isFunctionCall(value) || value instanceof RawString)
             sb.append(value.toString());
         else
             appendValueString(value.toString(), sb);
@@ -232,5 +236,18 @@ abstract class Utils {
             }
         }
         return new String(result);
+    }
+
+    static class RawString {
+        private final String str;
+
+        RawString(String str) {
+            this.str = str;
+        }
+
+        @Override
+        public String toString() {
+            return "'" + str + "'";
+        }
     }
 }

@@ -68,11 +68,11 @@ public class QueryBuilderTest {
 
         query = "SELECT * FROM foo WHERE token(k)>token(42);";
         select = select().all().from("foo").where(gt(token("k"), token("42")));
-        // TODO: (JAVA-44) assertEquals(select.toString(), query);
+        assertEquals(select.toString(), query);
 
         query = "SELECT * FROM foo2 WHERE token(a,b)>token(42,101);";
         select = select().all().from("foo2").where(gt(token("a", "b"), token("42", "101")));
-        // TODO: (JAVA-44) assertEquals(select.toString(), query);
+        assertEquals(select.toString(), query);
 
         try {
             select = select("a").from("foo").where(in("a"));
@@ -385,5 +385,28 @@ public class QueryBuilderTest {
                    .value("k", 0)
                    .value("c", bindMarker());
         assertEquals(insert.toString(), query);
+    }
+
+    @Test(groups = "unit")
+    public void rawEscapingTest() throws Exception {
+
+        String query;
+        Query select;
+
+        query = "SELECT * FROM t WHERE c='C''est la vie!';";
+        select = select().from("t").where(eq("c", "C'est la vie!"));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM t WHERE c='C'est la vie!';";
+        select = select().from("t").where(eq("c", raw("C'est la vie!")));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM t WHERE c=now();";
+        select = select().from("t").where(eq("c", "now()"));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM t WHERE c='now()';";
+        select = select().from("t").where(eq("c", raw("now()")));
+        assertEquals(select.toString(), query);
     }
 }
