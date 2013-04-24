@@ -420,8 +420,15 @@ class ControlConnection implements Host.StateListener {
         Connection current = connectionRef.get();
         if (logger.isTraceEnabled())
             logger.trace("[Control connection] {} is down, currently connected to {}", host, current == null ? "nobody" : current.address);
-        if (current != null && current.address.equals(host.getAddress()) && reconnectionAttempt.get() == null)
-            reconnect();
+        if (current != null && current.address.equals(host.getAddress()) && reconnectionAttempt.get() == null) {
+            // We might very be on an I/O thread when we reach this so we should not do that on this thread.
+            // Besides, there is no reason to block the onDown method while we try to reconnect.
+            cluster.executor.submit(new Runnable() {
+                public void run() {
+                    reconnect();
+                }
+            });
+        }
     }
 
     public void onAdd(Host host) {

@@ -348,8 +348,7 @@ public abstract class TestUtils {
         }
     }
 
-    private static boolean testHost(Host host, boolean testForDown)
-    {
+    private static boolean testHost(Host host, boolean testForDown) {
         return testForDown ? !host.getMonitor().isUp() : host.getMonitor().isUp();
     }
 }
