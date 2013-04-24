@@ -56,7 +56,7 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_PEERS = "SELECT peer, data_center, rack, tokens, rpc_address FROM system.peers";
     private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens, partitioner FROM system.local WHERE key='local'";
 
-    private static final String SELECT_SCHEMA_PEERS = "SELECT rpc_address, schema_version FROM system.peers";
+    private static final String SELECT_SCHEMA_PEERS = "SELECT peer, rpc_address, schema_version FROM system.peers";
     private static final String SELECT_SCHEMA_LOCAL = "SELECT schema_version FROM system.local WHERE key='local'";
 
     private final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
