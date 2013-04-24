@@ -18,7 +18,6 @@ package com.datastax.driver.core;
 import java.util.*;
 
 import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.exceptions.DriverInternalError;
 
 import org.apache.cassandra.db.marshal.*;
 

@@ -81,9 +81,9 @@ public class Cluster {
      * @throws NoHostAvailableException if no host amongst the contact points
      * can be reached.
      * @throws IllegalArgumentException if the list of contact points provided
-     * by {@code initiazer} is empty or if not all those contact points have the same port.
+     * by {@code initializer} is empty or if not all those contact points have the same port.
      * @throws AuthenticationException if while contacting the initial
-     * contact points an authencation error occurs.
+     * contact points an authentication error occurs.
      */
     public static Cluster buildFrom(Initializer initializer) {
         List<InetAddress> contactPoints = initializer.getContactPoints();
@@ -169,7 +169,7 @@ public class Cluster {
      * This closes all connections from all the sessions of this {@code
      * Cluster} instance and reclaim all resources used by it.
      * <p>
-     * This method waits indefinitively for the driver to shutdown.
+     * This method waits indefinitely for the driver to shutdown.
      * <p>
      * This method has no effect if the cluster was already shutdown.
      */
@@ -478,7 +478,7 @@ public class Cluster {
          * @throws NoHostAvailableException if none of the contact points
          * provided can be reached.
          * @throws AuthenticationException if while contacting the initial
-         * contact points an authencation error occurs.
+         * contact points an authentication error occurs.
          */
         public Cluster build() {
             return Cluster.buildFrom(this);

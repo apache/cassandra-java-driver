@@ -20,8 +20,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -209,7 +207,7 @@ public class Metadata {
      *
      * @param keyspace the name of the keyspace for which metadata should be
      * returned.
-     * @return the metadat of the requested keyspace or {@code null} if {@code
+     * @return the metadata of the requested keyspace or {@code null} if {@code
      * keyspace} is not a known keyspace.
      */
     public KeyspaceMetadata getKeyspace(String keyspace) {
@@ -233,7 +231,7 @@ public class Metadata {
      * recreate the schema of this cluster.
      *
      * Note that the returned String is formatted to be human readable (for
-     * some defintion of human readable at least).
+     * some definition of human readable at least).
      *
      * @return the CQL queries representing this cluster schema as a {code
      * String}.

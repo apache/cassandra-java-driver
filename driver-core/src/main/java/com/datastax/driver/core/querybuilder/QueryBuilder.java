@@ -199,7 +199,7 @@ public final class QueryBuilder {
      * This variant is most useful when the partition key is composite.
      *
      * @param columnNames the column names to take the token of.
-     * @return a string reprensenting the token of the provided column names.
+     * @return a string representing the token of the provided column names.
      */
     public static String token(String... columnNames) {
         StringBuilder sb = new StringBuilder();
@@ -332,7 +332,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Simple "set" assignement of a value to a column.
+     * Simple "set" assignment of a value to a column.
      * <p>
      * This will generate: {@code name = value}.
      *
@@ -553,7 +553,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Puts a map of new key/value paris to a map column.
+     * Puts a map of new key/value pairs to a map column.
      * <p>
      * This will generate: {@code name = name + map}.
      *

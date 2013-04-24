@@ -33,7 +33,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * <p>
  * The values of a BoundStatement can be set by either index or name. When
  * setting them by name, names follow the case insensitivity rules explained in
- * {@link ColumnDefinitions}. Noteworthily, if multiple bind variables
+ * {@link ColumnDefinitions}. Noteworthy, if multiple bind variables
  * correspond to the same column (as would be the case if you prepare
  * {@code SELECT * FROM t WHERE x > ? AND x < ?}), you will have to set
  * values by indexes (or the {@link #bind} method) as the methods to set by
@@ -70,7 +70,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Returns whether all variables have been bound to values in thi
+     * Returns whether all variables have been bound to values in this
      * BoundStatement.
      *
      * @return whether all variables are bound.
@@ -116,7 +116,7 @@ public class BoundStatement extends Query {
      * first bind variable, etc.. It is legal to provide less values than the
      * statement has bound variables. In that case, the remaining variable need
      * to be bound before execution. If more values than variables are provided
-     * however, an IllegalArgumentException wil be raised.
+     * however, an IllegalArgumentException will be raised.
      * @return this bound statement.
      *
      * @throws IllegalArgumentException if more {@code values} are provided
@@ -502,7 +502,7 @@ public class BoundStatement extends Query {
     /**
      * Set the {@code i}th value to the provided byte buffer.
      *
-     * Contrarily to {@link #setBytes}, this method does not check the
+     * Contrary to {@link #setBytes}, this method does not check the
      * type of the column set. If you insert data that is not compatible with
      * the type of the column, you will get an {@code InvalidQueryException} at
      * execute time.
@@ -520,7 +520,7 @@ public class BoundStatement extends Query {
     /**
      * Set the value for (the first occurrence of) column {@code name} to the provided byte buffer.
      *
-     * Contrarily to {@link #setBytes}, this method does not check the
+     * Contrary to {@link #setBytes}, this method does not check the
      * type of the column set. If you insert data that is not compatible with
      * the type of the column, you will get an {@code InvalidQueryException} at
      * execute time.
@@ -608,7 +608,7 @@ public class BoundStatement extends Query {
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type UUID or
-     * TIMEUUID, or if columm {@code i} is of type TIMEUUID but {@code v} is
+     * TIMEUUID, or if column {@code i} is of type TIMEUUID but {@code v} is
      * not a type 1 UUID.
      */
     public BoundStatement setUUID(int i, UUID v) {
@@ -634,7 +634,7 @@ public class BoundStatement extends Query {
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type UUID or
-     * TIMEUUID, or if columm {@code name} is of type TIMEUUID but {@code v} is
+     * TIMEUUID, or if column {@code name} is of type TIMEUUID but {@code v} is
      * not a type 1 UUID.
      */
     public BoundStatement setUUID(String name, UUID v) {

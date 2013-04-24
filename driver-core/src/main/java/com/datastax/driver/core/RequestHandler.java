@@ -24,9 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ExecutionException;
-
-import com.google.common.util.concurrent.Uninterruptibles;
 
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.exceptions.*;

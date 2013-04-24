@@ -49,7 +49,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
     protected boolean onConnectionException(ConnectionException e, long nextDelayMs) { return true; }
     protected boolean onUnknownException(Exception e, long nextDelayMs) { return true; }
 
-    // Retrying on authenciation error is unlikely to work
+    // Retrying on authentication error is unlikely to work
     protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) { return false; }
 
     public void start() {
