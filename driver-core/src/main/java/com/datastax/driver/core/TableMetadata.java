@@ -272,7 +272,7 @@ public class TableMetadata {
      * columns of this table.
      *
      * Note that the returned String is formatted to be human readable (for
-     * some defintion of human readable at least).
+     * some definition of human readable at least).
      *
      * @return the CQL queries representing this table schema as a {code
      * String}.

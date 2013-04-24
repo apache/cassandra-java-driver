@@ -53,7 +53,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  *      </ul>
  * </ul>
  * Note that the rules above means that if a {@code ColumnDefinitions} object
- * contains multiple occurences of the exact same name (be it the same column
+ * contains multiple occurrences of the exact same name (be it the same column
  * multiple time, or columns from different tables with the same name), you
  * will have to use selection by index to disambiguate.
  */

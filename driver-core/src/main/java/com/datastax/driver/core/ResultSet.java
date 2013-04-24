@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 

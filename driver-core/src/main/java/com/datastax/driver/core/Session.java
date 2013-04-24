@@ -176,7 +176,7 @@ public class Session {
      * This closes all connections used by this sessions. Note that if you want
      * to shutdown the full {@code Cluster} instance this session is part of,
      * you should use {@link Cluster#shutdown} instead (which will call this
-     * method for all session but also release some additional ressources).
+     * method for all session but also release some additional resources).
      * <p>
      * This method has no effect if the session was already shutdown.
      */
@@ -190,7 +190,7 @@ public class Session {
      * This closes all connections used by this sessions. Note that if you want
      * to shutdown the full {@code Cluster} instance this session is part of,
      * you should use {@link Cluster#shutdown} instead (which will call this
-     * method for all session but also release some additional ressources).
+     * method for all session but also release some additional resources).
      * <p>
      * Note that this method is not thread safe in the sense that if another
      * shutdown is perform in parallel, it might return {@code true} even if
@@ -234,7 +234,7 @@ public class Session {
                                 manager.cluster.manager.prepare(pmsg.statementId, stmt, future.getAddress());
                             } catch (InterruptedException e) {
                                 Thread.currentThread().interrupt();
-                                // This method don't propage interruption, at least not for now. However, if we've
+                                // This method doesn't propagate interruption, at least not for now. However, if we've
                                 // interrupted preparing queries on other node it's not a problem as we'll re-prepare
                                 // later if need be. So just ignore.
                             }

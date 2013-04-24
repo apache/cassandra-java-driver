@@ -416,7 +416,7 @@ class ControlConnection implements Host.StateListener {
     public void onDown(Host host) {
         balancingPolicy.onDown(host);
 
-        // If that's the host we're connected to, and we haven't yet schedule a reconnection, pre-emptively start one
+        // If that's the host we're connected to, and we haven't yet schedule a reconnection, preemptively start one
         Connection current = connectionRef.get();
         if (logger.isTraceEnabled())
             logger.trace("[Control connection] {} is down, currently connected to {}", host, current == null ? "nobody" : current.address);

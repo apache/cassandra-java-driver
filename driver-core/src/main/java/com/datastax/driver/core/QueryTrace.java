@@ -196,7 +196,7 @@ public class QueryTrace {
     private void doFetchTrace() {
         int tries = 0;
         try {
-            // We cannot guarantee the trace is complete. But we cant at least wait until we have all the information
+            // We cannot guarantee the trace is complete. But we can't at least wait until we have all the information
             // the coordinator log in the trace. Since the duration is the last thing the coordinator log, that's
             // what we check to know if the trace is "complete" (again, it may not contain the log of replicas).
             while (duration == Integer.MIN_VALUE && tries <= MAX_TRIES) {
@@ -301,9 +301,9 @@ public class QueryTrace {
         }
 
         /**
-         * The name of the thread on which this event occured.
+         * The name of the thread on which this event occurred.
          *
-         * @return the name of the thread on which this event occured.
+         * @return the name of the thread on which this event occurred.
          */
         public String getThreadName() {
             return threadName;

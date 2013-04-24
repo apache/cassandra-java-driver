@@ -24,7 +24,7 @@ import com.datastax.driver.core.*;
  * A retry policy that wraps another policy, logging the decision made by its sub-policy.
  * <p>
  * Note that this policy only log the IGNORE and RETRY decisions (since
- * RETHROW decisions just amount to propate the cassandra exception). The
+ * RETHROW decisions are just meant to propagate the cassandra exception). The
  * logging is done at the INFO level.
  */
 public class LoggingRetryPolicy implements RetryPolicy {

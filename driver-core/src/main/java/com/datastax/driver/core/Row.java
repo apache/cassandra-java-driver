@@ -358,7 +358,7 @@ public class Row {
     /**
      * Returns the value of column {@code name} has a byte array.
      * <p>
-     * Note that this method validate that the colum is of type BLOB. If you want to retrieve
+     * Note that this method validate that the column is of type BLOB. If you want to retrieve
      * the bytes for any type of columns, use {@link #getBytesUnsafe(String)} instead.
      *
      * @param name the name of the column to retrieve.

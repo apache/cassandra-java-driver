@@ -99,7 +99,7 @@ public class Host {
      *
      * The health monitor keeps tracks of the known host state (up or down). A
      * class implementing {@link Host.StateListener} can also register against
-     * the healt monitor to be notified when this node is detected down/up.
+     * the health monitor to be notified when this node is detected down/up.
      *
      * @return the host {@link HealthMonitor}.
      */

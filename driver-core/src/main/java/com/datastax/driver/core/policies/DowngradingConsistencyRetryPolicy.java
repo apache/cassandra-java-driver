@@ -36,7 +36,7 @@ import com.datastax.driver.core.*;
  * <ul>
  *   <li>On a read timeout: if the number of replica that responded is
  *   greater than one but lower than is required by the requested
- *   consistency level, the operation is retried at a lower concistency
+ *   consistency level, the operation is retried at a lower consistency
  *   level.</li>
  *   <li>On a write timeout: if the operation is an {@code
  *   WriteType.UNLOGGED_BATCH} and at least one replica acknowledged the
@@ -85,7 +85,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * Defines whether to retry and at which consistency level on a read timeout.
      * <p>
      * This method triggers a maximum of one retry. If less replica
-     * responsed than required by the consistency level (but at least one
+     * responded than required by the consistency level (but at least one
      * replica did respond), the operation is retried at a lower
      * consistency level. If enough replica responded but data was not
      * retrieve, the operation is retried with the initial consistency
@@ -120,7 +120,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * This method triggers a maximum of one retry. If {@code writeType ==
      * WriteType.BATCH_LOG}, the write is retried with the initial
      * consistency level. If {@code writeType == WriteType.UNLOGGED_BATCH}
-     * and at least one replica acknowleged, the write is retried with a
+     * and at least one replica acknowledged, the write is retried with a
      * lower consistency level (with unlogged batch, a write timeout can
      * <b>always</b> mean that part of the batch haven't been persisted at
      * all, even if {@code receivedAcks > 0}). For other {@code writeType},

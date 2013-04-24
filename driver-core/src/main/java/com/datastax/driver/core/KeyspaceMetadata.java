@@ -106,7 +106,7 @@ public class KeyspaceMetadata {
      * recreate the schema of this keyspace, along with all its table.
      *
      * Note that the returned String is formatted to be human readable (for
-     * some defintion of human readable at least).
+     * some definition of human readable at least).
      *
      * @return the CQL queries representing this keyspace schema as a {code
      * String}.

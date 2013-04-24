@@ -26,12 +26,12 @@ package com.datastax.driver.core;
  * <p>
  * For each host, the driver keeps a core amount of connections open at all
  * time ({@link PoolingOptions#getCoreConnectionsPerHost}). If the
- * utilisation of those connections reaches a configurable threshold
+ * utilization of those connections reaches a configurable threshold
  * ({@link PoolingOptions#getMaxSimultaneousRequestsPerConnectionTreshold}),
  * more connections are created up to a configurable maximum number of
  * connections ({@link PoolingOptions#getMaxConnectionPerHost}). Once more
  * than core connections have been created, connections in excess are
- * reclaimed if the utilisation of opened connections drops below the
+ * reclaimed if the utilization of opened connections drops below the
  * configured threshold ({@link PoolingOptions#getMinSimultaneousRequestsPerConnectionTreshold}).
  * <p>
  * Each of these parameters can be separately set for {@code LOCAL} and
