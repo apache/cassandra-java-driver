@@ -36,6 +36,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final String ALL_SET_TABLE = "all_set";
     private static final String ALL_MAP_TABLE = "all_map";
     private static final String SIMPLE_TABLE = "test";
+    private static final String SIMPLE_TABLE2 = "test2";
 
     private boolean exclude(DataType t) {
         return t.getName() == DataType.Name.COUNTER;
@@ -94,6 +95,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         defs.add(sb.toString());
 
         defs.add(String.format("CREATE TABLE %s (k text PRIMARY KEY, i int)", SIMPLE_TABLE));
+        defs.add(String.format("CREATE TABLE %s (k text PRIMARY KEY, v text)", SIMPLE_TABLE2));
 
         return defs;
     }
@@ -317,6 +319,30 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         // This is the same test than reprepareOnNewlyUpNodeTest, except that the
         // prepared statement is prepared while no current keyspace is used
         reprepareOnNewlyUpNodeTest(TestUtils.SIMPLE_KEYSPACE, cluster.connect());
+    }
+
+    @Test(groups = "integration")
+    public void prepareWithNullValuesTest() throws Exception {
+
+        PreparedStatement ps = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, ?)");
+
+        session.execute(ps.bind("prepWithNull1", null));
+
+        BoundStatement bs = ps.bind();
+        bs.setString("k", "prepWithNull2");
+        bs.setString("v", null);
+        session.execute(bs);
+
+        ResultSet rs = session.execute("SELECT * FROM " + SIMPLE_TABLE2 + " WHERE k IN ('prepWithNull1', 'prepWithNull2')");
+        Row r1 = rs.one();
+        Row r2 = rs.one();
+        assertTrue(rs.isExhausted());
+
+        assertEquals(r1.getString("k"), "prepWithNull1");
+        assertEquals(r1.getString("v"), null);
+
+        assertEquals(r2.getString("k"), "prepWithNull2");
+        assertEquals(r2.getString("v"), null);
     }
 
     /**

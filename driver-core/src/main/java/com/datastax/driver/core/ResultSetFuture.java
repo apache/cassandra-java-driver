@@ -237,7 +237,9 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
     }
 
     static void extractCause(Throwable cause) {
-        Throwables.propagateIfInstanceOf(cause, DriverException.class);
+        // Same as above
+        if (cause instanceof DriverException)
+            throw ((DriverException)cause).copy();
         throw new DriverInternalError("Unexpected exception thrown", cause);
     }
 

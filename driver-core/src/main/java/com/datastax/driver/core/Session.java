@@ -148,9 +148,6 @@ public class Session {
             assert query instanceof BoundStatement : query;
 
             BoundStatement bs = (BoundStatement)query;
-            if (!bs.isReady())
-                throw new IllegalStateException("Some bind variables haven't been bound in the provided statement");
-
             return manager.executeQuery(new ExecuteMessage(bs.statement.id, Arrays.asList(bs.values), ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
         }
     }
