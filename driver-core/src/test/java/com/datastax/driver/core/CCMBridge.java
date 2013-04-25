@@ -119,6 +119,10 @@ public class CCMBridge {
         execute("ccm remove");
     }
 
+    public void ring() {
+        ring(1);
+    }
+
     public void ring(int n) {
         executeAndPrint("ccm node%d ring", n);
     }
