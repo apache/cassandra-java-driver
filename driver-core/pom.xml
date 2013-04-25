@@ -42,7 +42,7 @@
     <dependency>
       <groupId>org.apache.cassandra</groupId>
       <artifactId>cassandra-thrift</artifactId>
-      <version>${cassandra.version}</version>
+      <version>${cassandra-dependency.version}</version>
     </dependency>
 
     <dependency>
