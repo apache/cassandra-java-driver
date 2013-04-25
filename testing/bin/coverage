@@ -136,6 +136,7 @@ def main():
 
     cobertura_build_command += ' versions:display-dependency-updates'   # Ensures dependencies are up to date
     cobertura_build_command += ' cobertura:cobertura'                   # Runs code coverage plugin
+    cobertura_build_command += ' --projects driver-core'                # Runs only the main module
 
     if args.samplecode:
         cobertura_build_command += ' -Pdoc'                             # Runs the docs "tests" and prints sample code
