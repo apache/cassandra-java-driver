@@ -30,6 +30,7 @@ public class TestListener extends TestListenerAdapter {
         long elapsedTime = TimeUnit.NANOSECONDS.toSeconds((System.nanoTime() - start_time));
         long testTime = tr.getEndMillis() - tr.getStartMillis();
 
+        tr.getThrowable().printStackTrace();
         System.out.println("FAILED: " + tr.getName());
         System.out.println("Test: " + formatIntoHHMMSS(testTime / 1000) + " seconds");
         System.out.println("Elapsed: " + formatIntoHHMMSS(elapsedTime) + " seconds");
