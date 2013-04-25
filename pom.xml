@@ -35,13 +35,14 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <cassandra.version>1.2.3</cassandra.version>
+    <cassandra-dependency.version>1.2.3</cassandra-dependency.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.apache.cassandra</groupId>
       <artifactId>cassandra-all</artifactId>
-      <version>${cassandra.version}</version>
+      <version>${cassandra-dependency.version}</version>
     </dependency>
 
     <dependency>
