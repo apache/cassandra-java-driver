@@ -32,27 +32,8 @@ public class LoadBalancingPolicyTest {
 
     private static final boolean DEBUG = false;
 
-    private static final String TABLE = "test";
-
     private Map<InetAddress, Integer> coordinators = new HashMap<InetAddress, Integer>();
     private PreparedStatement prepared;
-
-    private void createSchema(Session session) {
-        createSchema(session, 1);
-    }
-
-    private void createSchema(Session session, int replicationFactor) {
-        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, replicationFactor));
-        session.execute("USE " + SIMPLE_KEYSPACE);
-        session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", TABLE));
-    }
-
-    private void createMultiDCSchema(Session session) {
-
-        session.execute(String.format(CREATE_KEYSPACE_GENERIC_FORMAT, SIMPLE_KEYSPACE, "NetworkTopologyStrategy", "'dc1' : 1, 'dc2' : 1"));
-        session.execute("USE " + SIMPLE_KEYSPACE);
-        session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", TABLE));
-    }
 
     private void addCoordinator(ResultSet rs) {
         InetAddress coordinator = rs.getExecutionInfo().getQueriedHost().getAddress();
@@ -80,9 +61,9 @@ public class LoadBalancingPolicyTest {
         // We don't use insert for our test because the resultSet don't ship the queriedHost
         // Also note that we don't use tracing because this would trigger requests that screw up the test
         for (int i = 0; i < n; ++i)
-            c.session.execute(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", TABLE));
+            c.session.execute(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", SIMPLE_TABLE));
 
-        prepared = c.session.prepare("SELECT * FROM " + TABLE + " WHERE k = ?");
+        prepared = c.session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?");
     }
 
     private void query(CCMBridge.CCMCluster c, int n) {
@@ -98,7 +79,7 @@ public class LoadBalancingPolicyTest {
             ByteBuffer routingKey = ByteBuffer.allocate(4);
             routingKey.putInt(0, 0);
             for (int i = 0; i < n; ++i)
-                addCoordinator(c.session.execute(new SimpleStatement(String.format("SELECT * FROM %s WHERE k = 0", TABLE)).setRoutingKey(routingKey)));
+                addCoordinator(c.session.execute(new SimpleStatement(String.format("SELECT * FROM %s WHERE k = 0", SIMPLE_TABLE)).setRoutingKey(routingKey)));
         }
     }
 
