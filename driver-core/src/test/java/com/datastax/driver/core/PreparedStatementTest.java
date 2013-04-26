@@ -292,10 +292,10 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(session.execute(ps.bind("123")).one().getInt("i"), 17);
 
         cassandraCluster.stop();
-        waitForDown(CCMBridge.IP_PREFIX + "1", cluster, 20);
+        waitForDown(CCMBridge.IP_PREFIX + "1", cluster);
 
         cassandraCluster.start();
-        waitFor(CCMBridge.IP_PREFIX + "1", cluster, 20);
+        waitFor(CCMBridge.IP_PREFIX + "1", cluster);
 
         try
         {
