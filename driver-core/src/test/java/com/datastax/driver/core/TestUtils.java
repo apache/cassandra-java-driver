@@ -312,12 +312,24 @@ public abstract class TestUtils {
     // Wait for a node to be up and running
     // This is used because there is some delay between when a node has been
     // added through ccm and when it's actually available for querying
+    public static void waitFor(String node, Cluster cluster) {
+        waitFor(node, cluster, 20, false, false);
+    }
+
     public static void waitFor(String node, Cluster cluster, int maxTry) {
         waitFor(node, cluster, maxTry, false, false);
     }
 
+    public static void waitForDown(String node, Cluster cluster) {
+        waitFor(node, cluster, 20, true, false);
+    }
+
     public static void waitForDown(String node, Cluster cluster, int maxTry) {
         waitFor(node, cluster, maxTry, true, false);
+    }
+
+    public static void waitForDecommission(String node, Cluster cluster) {
+        waitFor(node, cluster, 20, true, true);
     }
 
     public static void waitForDecommission(String node, Cluster cluster, int maxTry) {

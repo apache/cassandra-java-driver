@@ -99,7 +99,7 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.cassandraCluster.bootstrapNode(3);
-            waitFor(CCMBridge.IP_PREFIX + "3", c.cluster, 20);
+            waitFor(CCMBridge.IP_PREFIX + "3", c.cluster);
 
             query(c, 12);
 
@@ -109,7 +109,7 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.cassandraCluster.decommissionNode(1);
-            waitForDecommission(CCMBridge.IP_PREFIX + "1", c.cluster, 20);
+            waitForDecommission(CCMBridge.IP_PREFIX + "1", c.cluster);
 
             query(c, 12);
 
@@ -144,8 +144,8 @@ public class LoadBalancingPolicyTest {
             resetCoordinators();
             c.cassandraCluster.bootstrapNode(5, "dc2");
             c.cassandraCluster.decommissionNode(1);
-            waitFor(CCMBridge.IP_PREFIX + "5", c.cluster, 20);
-            waitForDecommission(CCMBridge.IP_PREFIX + "1", c.cluster, 20);
+            waitFor(CCMBridge.IP_PREFIX + "5", c.cluster);
+            waitForDecommission(CCMBridge.IP_PREFIX + "1", c.cluster);
 
             query(c, 12);
 
@@ -208,7 +208,7 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.cassandraCluster.bootstrapNode(5, "dc3");
-            waitFor(CCMBridge.IP_PREFIX + "5", c.cluster, 20);
+            waitFor(CCMBridge.IP_PREFIX + "5", c.cluster);
 
             query(c, 12);
 
@@ -221,8 +221,8 @@ public class LoadBalancingPolicyTest {
             resetCoordinators();
             c.cassandraCluster.decommissionNode(3);
             c.cassandraCluster.decommissionNode(4);
-            waitForDecommission(CCMBridge.IP_PREFIX + "3", c.cluster, 20);
-            waitForDecommission(CCMBridge.IP_PREFIX + "4", c.cluster, 20);
+            waitForDecommission(CCMBridge.IP_PREFIX + "3", c.cluster);
+            waitForDecommission(CCMBridge.IP_PREFIX + "4", c.cluster);
 
             query(c, 12);
 
@@ -234,7 +234,7 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.cassandraCluster.decommissionNode(5);
-            waitForDecommission(CCMBridge.IP_PREFIX + "5", c.cluster, 20);
+            waitForDecommission(CCMBridge.IP_PREFIX + "5", c.cluster);
 
             query(c, 12);
 
@@ -246,7 +246,7 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.cassandraCluster.decommissionNode(2);
-            waitForDecommission(CCMBridge.IP_PREFIX + "2", c.cluster, 20);
+            waitForDecommission(CCMBridge.IP_PREFIX + "2", c.cluster);
 
             query(c, 12);
 
@@ -258,7 +258,7 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.cassandraCluster.forceStop(1);
-            waitForDown(CCMBridge.IP_PREFIX + "1", c.cluster, 20);
+            waitForDown(CCMBridge.IP_PREFIX + "1", c.cluster);
 
             try {
                 query(c, 12);
@@ -309,7 +309,7 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.cassandraCluster.forceStop(2);
-            waitForDown(CCMBridge.IP_PREFIX + "2", c.cluster, 20);
+            waitForDown(CCMBridge.IP_PREFIX + "2", c.cluster);
 
             try {
                 query(c, 12, usePrepared);
@@ -321,7 +321,7 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.cassandraCluster.start(2);
-            waitFor(CCMBridge.IP_PREFIX + "2", c.cluster, 20);
+            waitFor(CCMBridge.IP_PREFIX + "2", c.cluster);
 
             query(c, 12);
 
@@ -330,7 +330,7 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.cassandraCluster.decommissionNode(2);
-            waitForDecommission(CCMBridge.IP_PREFIX + "2", c.cluster, 20);
+            waitForDecommission(CCMBridge.IP_PREFIX + "2", c.cluster);
 
             query(c, 12);
 
@@ -365,7 +365,7 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.cassandraCluster.bootstrapNode(3);
-            waitFor(CCMBridge.IP_PREFIX + "3", c.cluster, 20);
+            waitFor(CCMBridge.IP_PREFIX + "3", c.cluster);
 
             query(c, 12);
 
@@ -376,7 +376,7 @@ public class LoadBalancingPolicyTest {
 
             resetCoordinators();
             c.cassandraCluster.stop(2);
-            waitForDown(CCMBridge.IP_PREFIX + "2", c.cluster, 20);
+            waitForDown(CCMBridge.IP_PREFIX + "2", c.cluster);
 
             query(c, 12);
 
