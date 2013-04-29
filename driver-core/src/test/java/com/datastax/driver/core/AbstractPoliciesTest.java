@@ -28,7 +28,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
 import static org.testng.Assert.fail;
 
-public abstract class AbstractPolicyUtils {
+public abstract class AbstractPoliciesTest {
     private static final boolean DEBUG = false;
 
     protected Map<InetAddress, Integer> coordinators = new HashMap<InetAddress, Integer>();
