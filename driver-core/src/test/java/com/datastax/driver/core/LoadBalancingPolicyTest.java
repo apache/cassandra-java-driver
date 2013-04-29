@@ -16,7 +16,6 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.testng.annotations.Test;
@@ -28,60 +27,11 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnavailableException;
 import static com.datastax.driver.core.TestUtils.*;
 
-public class LoadBalancingPolicyTest {
-
+public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
     private static final boolean DEBUG = false;
 
     private Map<InetAddress, Integer> coordinators = new HashMap<InetAddress, Integer>();
     private PreparedStatement prepared;
-
-    private void addCoordinator(ResultSet rs) {
-        InetAddress coordinator = rs.getExecutionInfo().getQueriedHost().getAddress();
-        Integer n = coordinators.get(coordinator);
-        coordinators.put(coordinator, n == null ? 1 : n + 1);
-    }
-
-    private void assertQueried(String host, int n) {
-        try {
-            Integer queried = coordinators.get(InetAddress.getByName(host));
-            if (DEBUG)
-                System.out.println(String.format("Expected: %s\tReceived: %s", n, queried));
-            else
-                assertEquals(queried == null ? 0 : queried, n, "For " + host);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void resetCoordinators() {
-        coordinators = new HashMap<InetAddress, Integer>();
-    }
-
-    private void init(CCMBridge.CCMCluster c, int n) {
-        // We don't use insert for our test because the resultSet don't ship the queriedHost
-        // Also note that we don't use tracing because this would trigger requests that screw up the test
-        for (int i = 0; i < n; ++i)
-            c.session.execute(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", SIMPLE_TABLE));
-
-        prepared = c.session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?");
-    }
-
-    private void query(CCMBridge.CCMCluster c, int n) {
-        query(c, n, false);
-    }
-
-    private void query(CCMBridge.CCMCluster c, int n, boolean usePrepared) {
-        if (usePrepared) {
-            BoundStatement bs = prepared.bind(0);
-            for (int i = 0; i < n; ++i)
-                addCoordinator(c.session.execute(bs));
-        } else {
-            ByteBuffer routingKey = ByteBuffer.allocate(4);
-            routingKey.putInt(0, 0);
-            for (int i = 0; i < n; ++i)
-                addCoordinator(c.session.execute(new SimpleStatement(String.format("SELECT * FROM %s WHERE k = 0", SIMPLE_TABLE)).setRoutingKey(routingKey)));
-        }
-    }
 
     @Test(groups = "integration")
     public void roundRobinTest() throws Throwable {
