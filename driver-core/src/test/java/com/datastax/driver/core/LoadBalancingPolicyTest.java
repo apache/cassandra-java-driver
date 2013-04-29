@@ -27,7 +27,7 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnavailableException;
 import static com.datastax.driver.core.TestUtils.*;
 
-public class LoadBalancingPolicyTest extends PolicyUtils {
+public class LoadBalancingPolicyTest extends AbstractPolicyUtils {
     private static final boolean DEBUG = false;
 
     private Map<InetAddress, Integer> coordinators = new HashMap<InetAddress, Integer>();
