@@ -15,6 +15,7 @@ CHANGELOG
     nodes) (JAVA-77).
   - [bug] Fix IllegalStateException thrown due to a reconnection made on an I/O
     thread (JAVA-72).
+  - [bug] Correctly reports errors during authentication phase (JAVA-82).
 
 * 1.0.0-beta2:
   - [new] Support blob constants, BigInteger, BigDecimal and counter batches in

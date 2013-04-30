@@ -154,7 +154,7 @@ class Connection extends org.apache.cassandra.transport.Connection
                         case READY:
                             break;
                         case ERROR:
-                            throw new AuthenticationException(address, (((ErrorMessage)response).error).getMessage());
+                            throw new AuthenticationException(address, (((ErrorMessage)authResponse).error).getMessage());
                         default:
                             throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a CREDENTIALS message", authResponse.type)));
                     }
