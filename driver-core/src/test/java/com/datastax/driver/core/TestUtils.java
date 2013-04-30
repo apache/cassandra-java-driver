@@ -316,6 +316,14 @@ public abstract class TestUtils {
     }
 
     private static void waitFor(String node, Cluster cluster, int maxTry, boolean waitForDead, boolean waitForOut) {
+        if (waitForDead || waitForOut)
+            if (waitForDead)
+                logger.info("Waiting for stopped node: " + node);
+            else if (waitForOut)
+                logger.info("Waiting for decommissioned node: " + node);
+        else
+            logger.info("Waiting for upcoming node: " + node);
+
         // In the case where the we've killed the last node in the cluster, if we haven't
         // tried doing an actual query, the driver won't realize that last node is dead until
         // keep alive kicks in, but that's a fairly long time. So we cheat and trigger a force
