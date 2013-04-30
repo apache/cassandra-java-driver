@@ -40,27 +40,6 @@ public abstract class TestUtils {
 
     public static final String INSERT_FORMAT = "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)";
     public static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
-    public static final String SELECT_WHERE_FORMAT = "SELECT * FROM %s WHERE %s";
-
-    public static void createSchema(Session session) {
-        createSchema(session, 1);
-    }
-
-    public static void createSchema(Session session, int replicationFactor) {
-        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, replicationFactor));
-        session.execute("USE " + SIMPLE_KEYSPACE);
-        session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
-    }
-
-    public static void createMultiDCSchema(Session session) {
-        createMultiDCSchema(session, 1, 1);
-    }
-
-    public static void createMultiDCSchema(Session session, int dc1RF, int dc2RF) {
-        session.execute(String.format(CREATE_KEYSPACE_GENERIC_FORMAT, SIMPLE_KEYSPACE, "NetworkTopologyStrategy", String.format("'dc1' : 1, 'dc2' : 1", dc1RF, dc2RF)));
-        session.execute("USE " + SIMPLE_KEYSPACE);
-        session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
-    }
 
     public static BoundStatement setBoundValue(BoundStatement bs, String name, DataType type, Object value) {
         switch (type.getName()) {
@@ -337,6 +316,14 @@ public abstract class TestUtils {
     }
 
     private static void waitFor(String node, Cluster cluster, int maxTry, boolean waitForDead, boolean waitForOut) {
+        if (waitForDead || waitForOut)
+            if (waitForDead)
+                logger.info("Waiting for stopped node: " + node);
+            else if (waitForOut)
+                logger.info("Waiting for decommissioned node: " + node);
+        else
+            logger.info("Waiting for upcoming node: " + node);
+
         // In the case where the we've killed the last node in the cluster, if we haven't
         // tried doing an actual query, the driver won't realize that last node is dead until
         // keep alive kicks in, but that's a fairly long time. So we cheat and trigger a force

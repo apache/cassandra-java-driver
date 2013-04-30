@@ -103,14 +103,17 @@ public class CCMBridge {
     }
 
     public void start(int n) {
+        logger.info("Starting: " + IP_PREFIX + n);
         execute("ccm node%d start", n);
     }
 
     public void stop(int n) {
+        logger.info("Stopping: " + IP_PREFIX + n);
         execute("ccm node%d stop", n);
     }
 
     public void forceStop(int n) {
+        logger.info("Force stopping: " + IP_PREFIX + n);
         execute("ccm node%d stop --not-gently", n);
     }
 
