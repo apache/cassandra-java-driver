@@ -23,9 +23,14 @@ import java.util.Map;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import static com.datastax.driver.core.TestUtils.SIMPLE_TABLE;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+
+import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_GENERIC_FORMAT;
+import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import static com.datastax.driver.core.TestUtils.SIMPLE_TABLE;
+import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
+
 import static org.testng.Assert.fail;
 
 public abstract class AbstractPoliciesTest {
@@ -34,12 +39,48 @@ public abstract class AbstractPoliciesTest {
     protected Map<InetAddress, Integer> coordinators = new HashMap<InetAddress, Integer>();
     protected PreparedStatement prepared;
 
+
+    /**
+     * Create schemas for the policy tests, depending on replication factors/strategies.
+     */
+    public static void createSchema(Session session) {
+        createSchema(session, 1);
+    }
+
+    public static void createSchema(Session session, int replicationFactor) {
+        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, replicationFactor));
+        session.execute("USE " + SIMPLE_KEYSPACE);
+        session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
+    }
+
+    public static void createMultiDCSchema(Session session) {
+        createMultiDCSchema(session, 1, 1);
+    }
+
+    public static void createMultiDCSchema(Session session, int dc1RF, int dc2RF) {
+        session.execute(String.format(CREATE_KEYSPACE_GENERIC_FORMAT, SIMPLE_KEYSPACE, "NetworkTopologyStrategy", String.format("'dc1' : 1, 'dc2' : 1", dc1RF, dc2RF)));
+        session.execute("USE " + SIMPLE_KEYSPACE);
+        session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
+    }
+
+
+    /**
+     * Coordinator management/count
+     */
     protected void addCoordinator(ResultSet rs) {
         InetAddress coordinator = rs.getExecutionInfo().getQueriedHost().getAddress();
         Integer n = coordinators.get(coordinator);
         coordinators.put(coordinator, n == null ? 1 : n + 1);
     }
 
+    protected void resetCoordinators() {
+        coordinators = new HashMap<InetAddress, Integer>();
+    }
+
+
+    /**
+     * Helper test methods
+     */
     protected void assertQueried(String host, int n) {
         try {
             Integer queried = coordinators.get(InetAddress.getByName(host));
@@ -72,10 +113,10 @@ public abstract class AbstractPoliciesTest {
             fail(message);
     }
 
-    protected void resetCoordinators() {
-        coordinators = new HashMap<InetAddress, Integer>();
-    }
 
+    /**
+     * Init methods that handle writes using batch and consistency options.
+     */
     protected void init(CCMBridge.CCMCluster c, int n) {
         init(c, n, false, ConsistencyLevel.ONE);
     }
@@ -103,6 +144,10 @@ public abstract class AbstractPoliciesTest {
         prepared = c.session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?").setConsistencyLevel(cl);
     }
 
+
+    /**
+     * Query methods that handle reads based on PreparedStatements and/or ConsistencyLevels.
+     */
     protected void query(CCMBridge.CCMCluster c, int n) {
         query(c, n, false, ConsistencyLevel.ONE);
     }
