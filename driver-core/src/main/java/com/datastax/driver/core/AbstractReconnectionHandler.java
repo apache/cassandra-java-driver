@@ -49,24 +49,29 @@ abstract class AbstractReconnectionHandler implements Runnable {
     protected boolean onConnectionException(ConnectionException e, long nextDelayMs) { return true; }
     protected boolean onUnknownException(Exception e, long nextDelayMs) { return true; }
 
-    // Retrying on authenciation error is unlikely to work
+    // Retrying on authentication error is unlikely to work
     protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) { return false; }
 
     public void start() {
         long firstDelay = schedule.nextDelayMs();
         logger.debug("First reconnection scheduled in {}ms", firstDelay);
-        localFuture = executor.schedule(this, firstDelay, TimeUnit.MILLISECONDS);
+        try {
+            localFuture = executor.schedule(this, firstDelay, TimeUnit.MILLISECONDS);
 
-        // If there a previous task, cancel it, so only one reconnection handler runs.
-        while (true) {
-            ScheduledFuture previous = currentAttempt.get();
-            if (currentAttempt.compareAndSet(previous, localFuture)) {
-                if (previous != null)
-                    previous.cancel(false);
-                break;
+            // If there a previous task, cancel it, so only one reconnection handler runs.
+            while (true) {
+                ScheduledFuture previous = currentAttempt.get();
+                if (currentAttempt.compareAndSet(previous, localFuture)) {
+                    if (previous != null)
+                        previous.cancel(false);
+                    break;
+                }
             }
+            readyForNext = true;
+        } catch (RejectedExecutionException e) {
+            // The executor has been shutdown, fair enough, just ignore
+            logger.debug("Aborting reconnection handling since the cluster is shutting down");
         }
-        readyForNext = true;
     }
 
     public void run() {

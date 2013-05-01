@@ -43,7 +43,10 @@ def parse():
     parser = argparse.ArgumentParser(description='command line tool for quick testing commands.')
     parser.add_argument('--test', help='run a specific unit test')
     parser.add_argument('--cassandra-version', help='run tests on a specific Cassandra version')
-    parser.add_argument('--upload', action="store_true", help='upload cobertura site to configured server')
+    parser.add_argument('--upload', action='store_true', help='upload cobertura site to configured server')
+    parser.add_argument('--clean', action='store_true', help='runs the maven project from a clean environment')
+    parser.add_argument('--testdocs', action='store_true', help='generates the test\'s Javadoc')
+    parser.add_argument('--samplecode', action='store_true', help='prints generated sample CQL')
     args = parser.parse_args()
     return args
 
@@ -59,8 +62,11 @@ def maybe_setup_loopbacks():
 
     if platform.system() == 'Darwin' and not read_config('general', 'no_loopbacks', data_type='boolean'):
         print 'Setting up CCM loopbacks...'
-        loopbacks_enabled = read_commandline('ifconfig | grep "inet 127.0.1.4 netmask 0xff000000"')
-        if not loopbacks_enabled:
+        try:
+            loopbacks_enabled = read_commandline('ifconfig | grep "inet 127.0.1.4 netmask 0xff000000"')
+            if not loopbacks_enabled:
+                raise subprocess.CalledProcessError
+        except subprocess.CalledProcessError:
             # For basic ccm
             execute('sudo ifconfig lo0 alias 127.0.0.2 up')
             execute('sudo ifconfig lo0 alias 127.0.0.3 up')
@@ -70,6 +76,8 @@ def maybe_setup_loopbacks():
             execute('sudo ifconfig lo0 alias 127.0.1.2 up')
             execute('sudo ifconfig lo0 alias 127.0.1.3 up')
             execute('sudo ifconfig lo0 alias 127.0.1.4 up')
+            execute('sudo ifconfig lo0 alias 127.0.1.5 up')
+            execute('sudo ifconfig lo0 alias 127.0.1.6 up')
 
 def maybe_upload_cobertura_site():
     '''
@@ -98,6 +106,7 @@ def save_cobertura_site():
     execute('mkdir -p testing/cobertura-history')
     today = datetime.date.today()
     execute('cp -r driver-core/target/site/cobertura testing/cobertura-history/cobertura-%s' % today)
+    execute('rm -rf testing/cobertura-history/current')
     execute('cp -r driver-core/target/site/cobertura testing/cobertura-history/current')
 
 def main():
@@ -109,26 +118,55 @@ def main():
         maybe_upload_cobertura_site()
         sys.exit()
 
+    if args.testdocs:
+        execute('mvn javadoc:test-javadoc')
+        print '\nTo view test Javadocs:'
+        print '\topen driver-core/target/site/testapidocs/index.html'
+        sys.exit()
+
     # Setup required ccm loopbacks
     maybe_setup_loopbacks()
 
     # Start building the mvn command
-    cobertura_build_command = 'mvn cobertura:cobertura'
+    cobertura_build_command = 'mvn'
+
+    # Add the clean target, if asked or building the entire project
+    if args.clean or not args.test:
+        cobertura_build_command += ' clean'
+
+    cobertura_build_command += ' versions:display-dependency-updates'   # Ensures dependencies are up to date
+    cobertura_build_command += ' cobertura:cobertura'                   # Runs code coverage plugin
+    cobertura_build_command += ' --projects driver-core'                # Runs only the main module
+
+    if args.samplecode:
+        cobertura_build_command += ' -Pdoc'                             # Runs the docs "tests" and prints sample code
+    else:
+        cobertura_build_command += ' -Pintegration'                     # Runs the integration tests, not just tests
+
+    # Use a specific Cassandra version, if asked
     if args.cassandra_version:
         cobertura_build_command += ' -Dcassandra.version=%s' % args.cassandra_version
 
     if args.test:
         # Run against a single mvn test
-        execute('%s -Dmaven.test.failure.ignore=true -Dtest=%s' % (cobertura_build_command, args.test))
+        execute('%s'
+                ' -Dmaven.test.failure.ignore=true'
+                ' -DfailIfNoTests=false'
+                ' -Dtest=%s' % (cobertura_build_command, args.test))
     else:
         # Run against the entire integration suite
         execute('%s' % cobertura_build_command)
 
-        # Save out cobertura site files
-        save_cobertura_site()
+        try:
+            if raw_input('Save Cobertura Report? [y/N] ').lower() == 'y':
 
-        # Perhaps move cobertura site files to a central location
-        maybe_upload_cobertura_site()
+                # Save out cobertura site files
+                save_cobertura_site()
+
+                # Perhaps move cobertura site files to a central location
+                maybe_upload_cobertura_site()
+        except KeyboardInterrupt:
+            print
 
     # Optionally, open coverage report when done building
     if read_config('general', 'open_cobertura_site_after_build', 'boolean'):
@@ -138,5 +176,5 @@ def main():
         print '\topen driver-core/target/site/cobertura/index.html'
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

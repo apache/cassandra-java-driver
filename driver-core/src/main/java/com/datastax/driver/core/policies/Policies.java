@@ -30,7 +30,7 @@ public class Policies {
     /**
      * The default reconnection policy.
      * <p>
-     * The default reconnetion policy is an {@link ExponentialReconnectionPolicy}
+     * The default reconnection policy is an {@link ExponentialReconnectionPolicy}
      * where the base delay is 1 second and the max delay is 10 minutes;
      */
     public static final ReconnectionPolicy DEFAULT_RECONNECTION_POLICY = new ExponentialReconnectionPolicy(1000, 10 * 60 * 1000);

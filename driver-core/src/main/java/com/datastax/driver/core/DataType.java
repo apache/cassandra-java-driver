@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.cassandra.db.marshal.MarshalException;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -62,7 +63,8 @@ public class DataType {
         TIMEUUID  (UUID.class),
         LIST      (List.class),
         SET       (Set.class),
-        MAP       (Map.class);
+        MAP       (Map.class),
+        CUSTOM    (ByteBuffer.class);
 
         final Class<?> javaType;
 
@@ -97,6 +99,7 @@ public class DataType {
          *   <tr><td>BLOB          </td><td>ByteBuffer</td></tr>
          *   <tr><td>BOOLEAN       </td><td>Boolean</td></tr>
          *   <tr><td>COUNTER       </td><td>Long</td></tr>
+         *   <tr><td>CUSTOM        </td><td>ByteBuffer</td></tr>
          *   <tr><td>DECIMAL       </td><td>BigDecimal</td></tr>
          *   <tr><td>DOUBLE        </td><td>Double</td></tr>
          *   <tr><td>FLOAT         </td><td>Float</td></tr>
@@ -127,19 +130,25 @@ public class DataType {
 
     private final DataType.Name name;
     private final List<DataType> typeArguments;
+    private final String customClassName;
 
     private static final Map<Name, DataType> primitiveTypeMap = new EnumMap<Name, DataType>(Name.class);
     static {
         for (Name name : Name.values()) {
-            if (!name.isCollection())
+            if (!name.isCollection() && name != Name.CUSTOM)
                 primitiveTypeMap.put(name, new DataType(name, Collections.<DataType>emptyList()));
         }
     }
-    private static final Set<DataType> primitveTypeSet = ImmutableSet.copyOf(primitiveTypeMap.values());
+    private static final Set<DataType> primitiveTypeSet = ImmutableSet.copyOf(primitiveTypeMap.values());
 
     private DataType(DataType.Name name, List<DataType> typeArguments) {
+        this(name, typeArguments, null);
+    }
+
+    private DataType(DataType.Name name, List<DataType> typeArguments, String customClassName) {
         this.name = name;
         this.typeArguments = typeArguments;
+        this.customClassName = customClassName;
     }
 
     /**
@@ -318,6 +327,31 @@ public class DataType {
     }
 
     /**
+     * Returns a Custom type.
+     * <p>
+     * A custom type is defined by the name of the class used on the Cassandra
+     * side to implement it. Note that the support for custom type by the
+     * driver is limited: values of a custom type won't be interpreted by the
+     * driver in any way.  They will thus be expected (by {@link
+     * BoundStatement#setBytesUnsafe} and returned (by {@link
+     * Row#getBytesUnsafe}) as ByteBuffer.
+     * <p>
+     * The use of custom types is rarely useful and is thus not encouraged.
+     * <p>
+     * Also note that currently, the class implementing the custom type server
+     * side must be present in the driver classpath (this restriction should
+     * hopefully lifted at some point).
+     *
+     * @param typeClassName the server-side class name for the type.
+     * @return the custom type for {@code typeClassName}.
+     */
+    public static DataType custom(String typeClassName) {
+        if (typeClassName == null)
+            throw new NullPointerException();
+        return new DataType(Name.CUSTOM, Collections.<DataType>emptyList(), typeClassName);
+    }
+
+    /**
      * Returns the name of that type.
      *
      * @return the name of that type.
@@ -348,16 +382,31 @@ public class DataType {
     }
 
     /**
-     * Parses a string value for the type this object represents, returning its
+     * Returns the server-side class name for a custom type.
+     *
+     * @return the server-side class name for a custom type or {@code null}
+     * for any other type.
+     */
+    public String getCustomTypeClassName() {
+        return customClassName;
+    }
+
+    /**
+     * Parses a string value for the type this object represent, returning its
      * Cassandra binary representation.
      *
      * @param value the value to parse.
      * @return the binary representation of {@code value}.
      *
      * @throws InvalidTypeException if {@code value} is not a valid string
-     * representation for this type.
+     * representation for this type. Please note that values for custom types
+     * can never be parsed and will always return this exception.
      */
     public ByteBuffer parse(String value) {
+        if (name == Name.CUSTOM)
+            throw new InvalidTypeException(String.format("Cannot parse '%s' as value of custom type of class '%s' "
+                                                       + "(values for custom type cannot be parse and must be inputed as bytes directly)", value, customClassName));
+
         try {
             return Codec.getCodec(this).fromString(value);
         } catch (MarshalException e) {
@@ -395,12 +444,12 @@ public class DataType {
      * @return returns a set of all the primitive types.
      */
     public static Set<DataType> allPrimitiveTypes() {
-        return primitveTypeSet;
+        return primitiveTypeSet;
     }
 
     @Override
     public final int hashCode() {
-        return Arrays.hashCode(new Object[]{ name, typeArguments });
+        return Arrays.hashCode(new Object[]{ name, typeArguments, customClassName });
     }
 
     @Override
@@ -408,7 +457,8 @@ public class DataType {
         if(!(o instanceof DataType))
             return false;
 
-        return name == ((DataType)o).name && typeArguments.equals(((DataType)o).typeArguments);
+        DataType d = (DataType)o;
+        return name == d.name && typeArguments.equals(d.typeArguments) && Objects.equal(customClassName, d.customClassName);
     }
 
     @Override
@@ -416,9 +466,11 @@ public class DataType {
         switch (name) {
             case LIST:
             case SET:
-                return name + "<" + typeArguments.get(0) + ">";
+                return String.format("%s<%s>", name, typeArguments.get(0));
             case MAP:
-                return name + "<" + typeArguments.get(0) + ", " + typeArguments.get(1) + ">";
+                return String.format("%s<%s, %s>", name, typeArguments.get(0), typeArguments.get(1));
+            case CUSTOM:
+                return String.format("'%s'", customClassName);
             default:
                 return name.toString();
         }

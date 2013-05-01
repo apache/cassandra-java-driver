@@ -48,7 +48,7 @@ public class SimpleAuthInfoProvider implements AuthInfoProvider {
         addAll(properties);
     }
 
-    public Map<String, String> getAuthInfos(InetAddress host) {
+    public Map<String, String> getAuthInfo(InetAddress host) {
         return credentials;
     }
 

@@ -220,7 +220,7 @@ public class PreparedStatement {
      * Returns the string of the query that was prepared to yield this {@code
      * PreparedStatement}.
      * <p>
-     * Note that a CQL3 query may implicitly applied to the current keyspace
+     * Note that a CQL3 query may be implicitly applied to the current keyspace
      * (that is, if the keyspace is not explicitly qualified in the query
      * itself). For prepared queries, the current keyspace used is the one at
      * the time of the preparation, not the one at execution time. The current
@@ -238,7 +238,7 @@ public class PreparedStatement {
     /**
      * Returns the keyspace at the time that this prepared statement was prepared,
      * (that is the one on which this statement applies unless it specified a
-     * keyspace explicitly.
+     * keyspace explicitly).
      *
      * @return the keyspace at the time that this statement was prepared or
      * {@code null} if no keyspace was set when the query was prepared (which

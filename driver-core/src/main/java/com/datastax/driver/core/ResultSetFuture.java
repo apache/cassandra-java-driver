@@ -36,24 +36,28 @@ import com.datastax.driver.core.exceptions.*;
 public class ResultSetFuture extends SimpleFuture<ResultSet>
 {
     private final Session.Manager session;
-    private final Message.Request request;
-    final ResponseCallback callback = new ResponseCallback();
+    final ResponseCallback callback;
 
     ResultSetFuture(Session.Manager session, Message.Request request) {
         this.session = session;
-        this.request = request;
+        this.callback = new ResponseCallback(request);
     }
 
-    // The only reason this exists is because we don't want to expose its
-    // method publicly (otherwise Future could have implemented
-    // Connection.ResponseCallback directly)
-    class ResponseCallback implements Connection.ResponseCallback {
+    // The reason this exists is because we don't want to expose its method
+    // publicly (otherwise Future could implement RequestHandler.Callback directly)
+    class ResponseCallback implements RequestHandler.Callback {
+
+        private final Message.Request request;
+
+        ResponseCallback(Message.Request request) {
+            this.request = request;
+        }
 
         public Message.Request request() {
             return request;
         }
 
-        public void onSet(Connection connection, Message.Response response) {
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info) {
             try {
                 switch (response.type) {
                     case RESULT:
@@ -62,11 +66,11 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
                             case SET_KEYSPACE:
                                 // propagate the keyspace change to other connections
                                 session.poolsState.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
-                                set(ResultSet.fromMessage(rm, session, connection.address));
+                                set(ResultSet.fromMessage(rm, session, info));
                                 break;
                             case SCHEMA_CHANGE:
                                 ResultMessage.SchemaChange scc = (ResultMessage.SchemaChange)rm;
-                                ResultSet rs = ResultSet.fromMessage(rm, session, connection.address);
+                                ResultSet rs = ResultSet.fromMessage(rm, session, info);
                                 switch (scc.change) {
                                     case CREATED:
                                         if (scc.columnFamily.isEmpty()) {
@@ -97,7 +101,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
                                 }
                                 break;
                             default:
-                                set(ResultSet.fromMessage(rm, session, connection.address));
+                                set(ResultSet.fromMessage(rm, session, info));
                                 break;
                         }
                         break;
@@ -114,6 +118,11 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
                 // If we get a bug here, the client will not get it, so better forwarding the error
                 setException(new DriverInternalError("Unexpected error while processing response from " + connection.address, e));
             }
+        }
+
+        // This is only called for internal calls, so don't bother with ExecutionInfo
+        public void onSet(Connection connection, Message.Response response) {
+            onSet(connection, response, null);
         }
 
         public void onException(Connection connection, Exception exception) {
@@ -228,7 +237,9 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
     }
 
     static void extractCause(Throwable cause) {
-        Throwables.propagateIfInstanceOf(cause, DriverException.class);
+        // Same as above
+        if (cause instanceof DriverException)
+            throw ((DriverException)cause).copy();
         throw new DriverInternalError("Unexpected exception thrown", cause);
     }
 

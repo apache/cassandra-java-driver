@@ -199,7 +199,7 @@ public final class QueryBuilder {
      * This variant is most useful when the partition key is composite.
      *
      * @param columnNames the column names to take the token of.
-     * @return a string reprensenting the token of the provided column names.
+     * @return a string representing the token of the provided column names.
      */
     public static String token(String... columnNames) {
         StringBuilder sb = new StringBuilder();
@@ -332,7 +332,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Simple "set" assignement of a value to a column.
+     * Simple "set" assignment of a value to a column.
      * <p>
      * This will generate: {@code name = value}.
      *
@@ -553,7 +553,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * Puts a map of new key/value paris to a map column.
+     * Puts a map of new key/value pairs to a map column.
      * <p>
      * This will generate: {@code name = name + map}.
      *
@@ -581,5 +581,30 @@ public final class QueryBuilder {
      */
     public static Object bindMarker() {
         return BIND_MARKER;
+    }
+
+    /**
+     * Creates a raw string value.
+     *
+     * This allows inputing a string value that is not interpreted/escapted by
+     * the query builder in any way. By default, the query builder escape
+     * single quotes and recognize function calls in string values. This
+     * function avoid both of those behavior.
+     * <p>
+     * The following table exemplify the behavior of this function:
+     * <table border=1>
+     *   <tr><th>Code</th><th>Resulting query string</th></tr>
+     *   <tr><td>{@code select().from("t").where(eq("c", "C'est la vie!")); }</td><td>{@code "SELECT * FROM t WHERE c='C''est la vie!';"}</td></tr>
+     *   <tr><td>{@code select().from("t").where(eq("c", raw("C'est la vie!"))); }</td><td>{@code "SELECT * FROM t WHERE c='C'est la vie!';"}</td></tr>
+     *   <tr><td>{@code select().from("t").where(eq("c", "now()")); }</td><td>{@code "SELECT * FROM t WHERE c=now();"}</td></tr>
+     *   <tr><td>{@code select().from("t").where(eq("c", raw("now()"))); }</td><td>{@code "SELECT * FROM t WHERE c='now()';"}</td></tr>
+     * </table>
+     * <i>Note: the 2nd example in this table is not a valid CQL3 query as the quote is not correctly escaped.</i>
+     *
+     * @param str the string value to use
+     * @return the value but protected from being interpreted/escaped by the query builder.
+     */
+    public static Object raw(String str) {
+        return new Utils.RawString(str);
     }
 }

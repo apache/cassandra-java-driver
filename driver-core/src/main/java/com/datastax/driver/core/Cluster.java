@@ -38,7 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Informations and known state of a Cassandra cluster.
+ * information and known state of a Cassandra cluster.
  * <p>
  * This is the main entry point of the driver. A simple example of access to a
  * Cassandra cluster would be:
@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * </pre>
  * <p>
  * A cluster object maintains a permanent connection to one of the cluster nodes
- * which it uses solely to maintain informations on the state and current
+ * which it uses solely to maintain information on the state and current
  * topology of the cluster. Using the connection, the driver will discover all
  * the nodes currently in the cluster as well as new nodes joining the cluster
  * subsequently.
@@ -170,10 +170,36 @@ public class Cluster {
      * This closes all connections from all the sessions of this {@code
      * Cluster} instance and reclaims all resources used by it.
      * <p>
+     * This method waits indefinitely for the driver to shut down.
+     * <p>
      * This method has no effect if the cluster was already shut down.
      */
     public void shutdown() {
-        manager.shutdown();
+        shutdown(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Shutdown this cluster instance, only waiting a definite amount of time.
+     *
+     * This closes all connections from all the sessions of this {@code
+     * Cluster} instance and reclaim all resources used by it.
+     * <p>
+     * Note that this method is not thread safe in the sense that if another
+     * shutdown is perform in parallel, it might return {@code true} even if
+     * the instance is not yet fully shutdown.
+     *
+     * @param timeout how long to wait for the cluster instance to shutdown.
+     * @param unit the unit for the timeout.
+     * @return {@code true} if the instance has been properly shutdown within
+     * the {@code timeout}, {@code false} otherwise.
+     */
+    public boolean shutdown(long timeout, TimeUnit unit) {
+        try {
+            return manager.shutdown(timeout, unit);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 
     /**
@@ -463,6 +489,10 @@ public class Cluster {
         return new ThreadFactoryBuilder().setNameFormat(nameFormat).build();
     }
 
+    static long timeSince(long start, TimeUnit unit) {
+        return unit.convert(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS);
+    }
+
     /**
      * The sessions and hosts managed by this a Cluster instance.
      * <p>
@@ -486,6 +516,8 @@ public class Cluster {
         final ConvictionPolicy.Factory convictionPolicyFactory = new ConvictionPolicy.Simple.Factory();
 
         final ScheduledExecutorService reconnectionExecutor = Executors.newScheduledThreadPool(2, threadFactory("Reconnection-%d"));
+        // scheduledTasksExecutor is used to process C* notifications. So having it mono-threaded ensures notifications are
+        // applied in the order received.
         final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, threadFactory("Scheduled Tasks-%d"));
 
         final ExecutorService executor = Executors.newCachedThreadPool(threadFactory("Cassandra Java Driver worker-%d"));
@@ -515,7 +547,11 @@ public class Cluster {
             try {
                 this.controlConnection.connect();
             } catch (NoHostAvailableException e) {
-                shutdown();
+                try {
+                    shutdown(0, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
                 throw e;
             }
         }
@@ -537,24 +573,36 @@ public class Cluster {
             return session;
         }
 
-        private void shutdown() {
+        private boolean shutdown(long timeout, TimeUnit unit) throws InterruptedException {
+
             if (!isShutdown.compareAndSet(false, true))
-                return;
+                return true;
 
             logger.debug("Shutting down");
 
-            controlConnection.shutdown();
+            long start = System.currentTimeMillis();
+            boolean success = true;
+
+            success &= controlConnection.shutdown(timeout, unit);
 
             for (Session session : sessions)
-                session.shutdown();
+                success &= session.shutdown(timeout - timeSince(start, unit), unit);
 
-            reconnectionExecutor.shutdownNow();
-            scheduledTasksExecutor.shutdownNow();
-            executor.shutdownNow();
-            connectionFactory.shutdown();
+            reconnectionExecutor.shutdown();
+            scheduledTasksExecutor.shutdown();
+            executor.shutdown();
+
+            success &= connectionFactory.shutdown(timeout - timeSince(start, unit), unit);
 
             if (metrics != null)
                 metrics.shutdown();
+
+            // Note that it's on purpose that we shutdown everything *even* if the timeout
+            // is reached early
+            return success
+                && reconnectionExecutor.awaitTermination(timeout - timeSince(start, unit), unit)
+                && scheduledTasksExecutor.awaitTermination(timeout - timeSince(start, unit), unit)
+                && executor.awaitTermination(timeout - timeSince(start, unit), unit);
         }
 
         public void onUp(Host host) {
@@ -568,7 +616,7 @@ public class Cluster {
             try {
                 prepareAllQueries(host);
             } catch (InterruptedException e) {
-                Thread.interrupted();
+                Thread.currentThread().interrupt();
                 // Don't propagate because we don't want to prevent other listener to run
             }
 
@@ -593,7 +641,7 @@ public class Cluster {
 
                 protected void onReconnection(Connection connection) {
                     logger.debug("Successful reconnection to {}, setting host UP", host);
-                    host.getMonitor().reset();
+                    host.getMonitor().setUp();
                 }
 
                 protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
@@ -616,7 +664,7 @@ public class Cluster {
             try {
                 prepareAllQueries(host);
             } catch (InterruptedException e) {
-                Thread.interrupted();
+                Thread.currentThread().interrupt();
                 // Don't propagate because we don't want to prevent other listener to run
             }
 
@@ -721,7 +769,7 @@ public class Cluster {
                         }
                     }
                 } finally {
-                    connection.close();
+                    connection.close(0, TimeUnit.MILLISECONDS);
                 }
             } catch (ConnectionException e) {
                 // Ignore, not a big deal
@@ -781,8 +829,8 @@ public class Cluster {
 
             // When handle is called, the current thread is a network I/O  thread, and we don't want to block
             // it (typically addHost() will create the connection pool to the new node, which can take time)
-            // Besides, events are usually sent a bit too early (since they're triggered once gossip is up,
-            // but that before the client-side server is up) so adds a 1 second delay.
+            // Besides, up events are usually sent a bit too early (since they're triggered once gossip is up,
+            // but that before the client-side server is up) so adds a 1 second delay in that case.
             // TODO: this delay is honestly quite random. We should do something on the C* side to fix that.
             scheduledTasksExecutor.schedule(new Runnable() {
                 public void run() {
@@ -805,18 +853,23 @@ public class Cluster {
                             Event.StatusChange stc = (Event.StatusChange)event;
                             switch (stc.status) {
                                 case UP:
-                                    Host host = metadata.getHost(stc.node.getAddress());
-                                    if (host == null) {
+                                    Host hostUp = metadata.getHost(stc.node.getAddress());
+                                    if (hostUp == null) {
                                         // first time we heard about that node apparently, add it
                                         addHost(stc.node.getAddress(), true);
                                     } else {
-                                        onUp(host);
+                                        hostUp.getMonitor().setUp();
                                     }
                                     break;
                                 case DOWN:
-                                    // Ignore down event. Connection will realized a node is dead quicly enough when they write to
-                                    // it, and there is no point in taking the risk of marking the node down mistakenly because we
-                                    // didn't received the event in a timely fashion
+                                    // Note that there is a slight risk we can receive the event late and thus
+                                    // mark the host down even though we already had reconnected successfully.
+                                    // But it is unlikely, and don't have too much consequence since we'll try reconnecting
+                                    // right away, so we favor the detection to make the Host.isUp method more reliable.
+                                    Host hostDown = metadata.getHost(stc.node.getAddress());
+                                    if (hostDown != null) {
+                                        hostDown.getMonitor().setDown();
+                                    }
                                     break;
                             }
                             break;
@@ -845,7 +898,21 @@ public class Cluster {
                             break;
                     }
                 }
-            }, 1, TimeUnit.SECONDS);
+            }, delayForEvent(event), TimeUnit.SECONDS);
+        }
+
+        private int delayForEvent(Event event) {
+            switch (event.type) {
+                case TOPOLOGY_CHANGE:
+                    // Could probably be 0 for REMOVED_NODE but it's inconsequential
+                    return 1;
+                case STATUS_CHANGE:
+                    Event.StatusChange stc = (Event.StatusChange)event;
+                    if (stc.status == Event.StatusChange.Status.UP)
+                        return 1;
+                    break;
+            }
+            return 0;
         }
 
     }

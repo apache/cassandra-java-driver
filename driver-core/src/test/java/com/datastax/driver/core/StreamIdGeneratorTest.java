@@ -15,31 +15,32 @@
  */
 package com.datastax.driver.core;
 
-import org.junit.Test;
-import static junit.framework.Assert.*;
+import static org.testng.Assert.*;
+
+import org.testng.annotations.Test;
 
 public class StreamIdGeneratorTest {
 
-    @Test
+    @Test(groups = "unit")
     public void SimpleGenIdTest() throws Exception {
 
         StreamIdGenerator generator = new StreamIdGenerator();
 
-        assertEquals(0, generator.next());
-        assertEquals(1, generator.next());
+        assertEquals(generator.next(), 0);
+        assertEquals(generator.next(), 1);
         generator.release(0);
-        assertEquals(0, generator.next());
-        assertEquals(2, generator.next());
-        assertEquals(3, generator.next());
+        assertEquals(generator.next(), 0);
+        assertEquals(generator.next(), 2);
+        assertEquals(generator.next(), 3);
         generator.release(1);
-        assertEquals(1, generator.next());
-        assertEquals(4, generator.next());
+        assertEquals(generator.next(), 1);
+        assertEquals(generator.next(), 4);
 
         for (int i = 5; i < 128; i++)
-            assertEquals(i, generator.next());
+            assertEquals(generator.next(), i);
 
         generator.release(100);
-        assertEquals(100, generator.next());
+        assertEquals(generator.next(), 100);
 
         try {
             generator.next();

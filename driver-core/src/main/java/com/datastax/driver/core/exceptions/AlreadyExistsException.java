@@ -16,7 +16,7 @@
 package com.datastax.driver.core.exceptions;
 
 /**
- * Exception thrown when a query attemps to create a keyspace or table that already exists.
+ * Exception thrown when a query attempts to create a keyspace or table that already exists.
  */
 public class AlreadyExistsException extends QueryValidationException {
 

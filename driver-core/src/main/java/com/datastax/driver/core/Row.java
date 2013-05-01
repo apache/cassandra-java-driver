@@ -85,7 +85,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a boolean.
+     * Returns the {@code i}th value of this row as a boolean.
      *
      * @param i the index of the column to retrieve.
      * @return the boolean value of the {@code i}th column in this row. If the
@@ -105,7 +105,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a boolean.
+     * Returns the value of column {@code name} as a boolean.
      *
      * @param name the name of the column to retrieve.
      * @return the boolean value of column {@code name}. If the value is NULL,
@@ -120,7 +120,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has an integer.
+     * Returns the {@code i}th value of this row as an integer.
      *
      * @param i the index of the column to retrieve.
      * @return the value of the {@code i}th column in this row as an integer. If the
@@ -140,7 +140,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has an integer.
+     * Returns the value of column {@code name} as an integer.
      *
      * @param name the name of the column to retrieve.
      * @return the value of column {@code name} as an integer. If the value is NULL,
@@ -155,7 +155,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a long.
+     * Returns the {@code i}th value of this row as a long.
      *
      * @param i the index of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a long. If the
@@ -175,7 +175,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a long.
+     * Returns the value of column {@code name} as a long.
      *
      * @param name the name of the column to retrieve.
      * @return the value of column {@code name} as a long. If the value is NULL,
@@ -190,7 +190,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a date.
+     * Returns the {@code i}th value of this row as a date.
      *
      * @param i the index of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a data. If the
@@ -210,7 +210,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a date.
+     * Returns the value of column {@code name} as a date.
      *
      * @param name the name of the column to retrieve.
      * @return the value of column {@code name} as a date. If the value is NULL,
@@ -225,7 +225,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a float.
+     * Returns the {@code i}th value of this row as a float.
      *
      * @param i the index of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a float. If the
@@ -245,7 +245,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a float.
+     * Returns the value of column {@code name} as a float.
      *
      * @param name the name of the column to retrieve.
      * @return the value of column {@code name} as a float. If the value is NULL,
@@ -260,7 +260,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a double.
+     * Returns the {@code i}th value of this row as a double.
      *
      * @param i the index of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a double. If the
@@ -280,7 +280,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a double.
+     * Returns the value of column {@code name} as a double.
      *
      * @param name the name of the column to retrieve.
      * @return the value of column {@code name} as a double. If the value is NULL,
@@ -295,7 +295,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a ByteBuffer.
+     * Returns the {@code i}th value of this row as a ByteBuffer.
      *
      * Note: this method always return the bytes composing the value, even if
      * the column is not of type BLOB. That is, this method never throw an
@@ -319,7 +319,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a ByteBuffer.
+     * Returns the value of column {@code name} as a ByteBuffer.
      *
      * Note: this method always return the bytes composing the value, even if
      * the column is not of type BLOB. That is, this method never throw an
@@ -338,7 +338,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a byte array.
+     * Returns the {@code i}th value of this row as a byte array.
      * <p>
      * Note that this method validate that the colum is of type BLOB. If you want to retrieve
      * the bytes for any type of columns, use {@link #getBytesUnsafe(int)} instead.
@@ -356,9 +356,9 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a byte array.
+     * Returns the value of column {@code name} as a byte array.
      * <p>
-     * Note that this method validate that the colum is of type BLOB. If you want to retrieve
+     * Note that this method validate that the column is of type BLOB. If you want to retrieve
      * the bytes for any type of columns, use {@link #getBytesUnsafe(String)} instead.
      *
      * @param name the name of the column to retrieve.
@@ -374,7 +374,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a string.
+     * Returns the {@code i}th value of this row as a string.
      *
      * @param i the index of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a string. If the
@@ -399,7 +399,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a string.
+     * Returns the value of column {@code name} as a string.
      *
      * @param name the name of the column to retrieve.
      * @return the value of column {@code name} as a string. If the value is NULL,
@@ -415,7 +415,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a variable length integer.
+     * Returns the {@code i}th value of this row as a variable length integer.
      *
      * @param i the index of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a variable
@@ -435,7 +435,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a variable length integer.
+     * Returns the value of column {@code name} as a variable length integer.
      *
      * @param name the name of the column to retrieve.
      * @return the value of column {@code name} as a variable length integer.
@@ -450,7 +450,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a variable length decimal.
+     * Returns the {@code i}th value of this row as a variable length decimal.
      *
      * @param i the index of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a variable
@@ -470,7 +470,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a variable length decimal.
+     * Returns the value of column {@code name} as a variable length decimal.
      *
      * @param name the name of the column to retrieve.
      * @return the value of column {@code name} as a variable length decimal.
@@ -485,7 +485,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a UUID.
+     * Returns the {@code i}th value of this row as a UUID.
      *
      * @param i the index of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a UUID.
@@ -508,7 +508,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a UUID.
+     * Returns the value of column {@code name} as a UUID.
      *
      * @param name the name of the column to retrieve.
      * @return the value of column {@code name} as a UUID.
@@ -524,7 +524,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has an InetAddress.
+     * Returns the {@code i}th value of this row as an InetAddress.
      *
      * @param i the index of the column to retrieve.
      * @return the value of the {@code i}th column in this row as an InetAddress.
@@ -544,7 +544,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has an InetAddress.
+     * Returns the value of column {@code name} as an InetAddress.
      *
      * @param name the name of the column to retrieve.
      * @return the value of column {@code name} as an InetAddress.
@@ -560,7 +560,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a list.
+     * Returns the {@code i}th value of this row as a list.
      *
      * @param i the index of the column to retrieve.
      * @param elementsClass the class for the elements of the list to retrieve.
@@ -591,7 +591,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a list.
+     * Returns the value of column {@code name} as a list.
      *
      * @param name the name of the column to retrieve.
      * @param elementsClass the class for the elements of the list to retrieve.
@@ -610,7 +610,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a set.
+     * Returns the {@code i}th value of this row as a set.
      *
      * @param i the index of the column to retrieve.
      * @param elementsClass the class for the elements of the set to retrieve.
@@ -640,7 +640,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a set.
+     * Returns the value of column {@code name} as a set.
      *
      * @param name the name of the column to retrieve.
      * @param elementsClass the class for the elements of the set to retrieve.
@@ -659,7 +659,7 @@ public class Row {
     }
 
     /**
-     * Returns the {@code i}th value of this row has a map.
+     * Returns the {@code i}th value of this row as a map.
      *
      * @param i the index of the column to retrieve.
      * @param keysClass the class for the keys of the map to retrieve.
@@ -692,7 +692,7 @@ public class Row {
     }
 
     /**
-     * Returns the value of column {@code name} has a map.
+     * Returns the value of column {@code name} as a map.
      *
      * @param name the name of the column to retrieve.
      * @param keysClass the class for the keys of the map to retrieve.

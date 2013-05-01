@@ -19,10 +19,6 @@ import java.io.*;
 import java.net.InetAddress;
 import java.util.*;
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-
 import com.datastax.driver.core.exceptions.*;
 import static com.datastax.driver.core.TestUtils.*;
 
@@ -30,6 +26,8 @@ import com.google.common.io.Files;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 
 public class CCMBridge {
 
@@ -100,19 +98,22 @@ public class CCMBridge {
         execute("ccm stop");
     }
 
-    public void force_stop() {
+    public void forceStop() {
         execute("ccm stop --not-gently");
     }
 
     public void start(int n) {
+        logger.info("Starting: " + IP_PREFIX + n);
         execute("ccm node%d start", n);
     }
 
     public void stop(int n) {
+        logger.info("Stopping: " + IP_PREFIX + n);
         execute("ccm node%d stop", n);
     }
 
-    public void force_stop(int n) {
+    public void forceStop(int n) {
+        logger.info("Force stopping: " + IP_PREFIX + n);
         execute("ccm node%d stop --not-gently", n);
     }
 
@@ -121,9 +122,28 @@ public class CCMBridge {
         execute("ccm remove");
     }
 
+    public void ring() {
+        ring(1);
+    }
+
+    public void ring(int n) {
+        executeAndPrint("ccm node%d ring", n);
+    }
+
     public void bootstrapNode(int n) {
-        execute("ccm add node%d -i %s%d -j %d -b", n, IP_PREFIX, n, 7000 + 100*n);
+        bootstrapNode(n, null);
+    }
+
+    public void bootstrapNode(int n, String dc) {
+        if (dc == null)
+            execute("ccm add node%d -i %s%d -j %d -b", n, IP_PREFIX, n, 7000 + 100*n);
+        else
+            execute("ccm add node%d -i %s%d -j %d -b -d %s", n, IP_PREFIX, n, 7000 + 100*n, dc);
         execute("ccm node%d start", n);
+    }
+
+    public void decommissionNode(int n) {
+        execute("ccm node%d decommission", n);
     }
 
     private void execute(String command, Object... args) {
@@ -156,6 +176,26 @@ public class CCMBridge {
         }
     }
 
+    private void executeAndPrint(String command, Object... args) {
+        try {
+            String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
+            logger.debug("Executing: " + fullCommand);
+            Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
+            int retValue = p.waitFor();
+
+            BufferedReader outReaderOutput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line = outReaderOutput.readLine();
+            while (line != null) {
+                System.out.println(line);
+                line = outReaderOutput.readLine();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     // One cluster for the whole test class
     public static abstract class PerClassSingleNodeCluster {
 
@@ -172,7 +212,6 @@ public class CCMBridge {
             erroredOut = true;
         }
 
-        @BeforeClass
         public static void createCluster() {
             erroredOut = false;
             schemaCreated = false;
@@ -188,7 +227,7 @@ public class CCMBridge {
             }
         }
 
-        @AfterClass
+        @AfterClass(groups = {"integration"})
         public static void discardCluster() {
             if (cluster != null)
                 cluster.shutdown();
@@ -204,7 +243,12 @@ public class CCMBridge {
             }
         }
 
-        @Before
+        @BeforeClass(groups = {"integration"})
+        public void beforeClass() {
+        	createCluster();
+        	maybeCreateSchema();
+        }
+        
         public void maybeCreateSchema() {
 
             try {

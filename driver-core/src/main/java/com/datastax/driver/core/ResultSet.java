@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -34,56 +33,45 @@ public class ResultSet implements Iterable<Row> {
     private static final Logger logger = LoggerFactory.getLogger(ResultSet.class);
 
     private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque<List<ByteBuffer>>(0);
-    private static final ResultSet EMPTY = new ResultSet(ColumnDefinitions.EMPTY, EMPTY_QUEUE, null, null);
 
     private final ColumnDefinitions metadata;
     private final Queue<List<ByteBuffer>> rows;
-    private final QueryTrace trace;
+    private final ExecutionInfo info;
 
-    private final InetAddress queriedHost;
-
-    private ResultSet(ColumnDefinitions metadata, Queue<List<ByteBuffer>> rows, QueryTrace trace, InetAddress queriedHost) {
-
+    private ResultSet(ColumnDefinitions metadata, Queue<List<ByteBuffer>> rows, ExecutionInfo info) {
         this.metadata = metadata;
         this.rows = rows;
-        this.trace = trace;
-        this.queriedHost = queriedHost;
+        this.info = info;
     }
 
-    static ResultSet fromMessage(ResultMessage msg, Session.Manager session, InetAddress queriedHost) {
+    static ResultSet fromMessage(ResultMessage msg, Session.Manager session, ExecutionInfo info) {
 
         UUID tracingId = msg.getTracingId();
-        QueryTrace trace = tracingId == null ? null : new QueryTrace(tracingId, session);
+        info = tracingId == null || info == null ? info : info.withTrace(new QueryTrace(tracingId, session));
 
         switch (msg.kind) {
             case VOID:
-                return empty(trace, queriedHost);
+                return empty(info);
             case ROWS:
                 ResultMessage.Rows r = (ResultMessage.Rows)msg;
                 ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[r.result.metadata.names.size()];
                 for (int i = 0; i < defs.length; i++)
                     defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(r.result.metadata.names.get(i));
 
-                return new ResultSet(new ColumnDefinitions(defs), new ArrayDeque<List<ByteBuffer>>(r.result.rows), trace, queriedHost);
+                return new ResultSet(new ColumnDefinitions(defs), new ArrayDeque<List<ByteBuffer>>(r.result.rows), info);
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
-                return empty(trace, queriedHost);
+                return empty(info);
             case PREPARED:
                 throw new RuntimeException("Prepared statement received when a ResultSet was expected");
             default:
                 logger.error("Received unknow result type '{}'; returning empty result set", msg.kind);
-                return empty(trace, queriedHost);
+                return empty(info);
         }
     }
 
-    private static ResultSet empty(QueryTrace trace, InetAddress queriedHost) {
-        return trace == null ? EMPTY : new ResultSet(ColumnDefinitions.EMPTY, EMPTY_QUEUE, trace, queriedHost);
-    }
-
-    // Note: we don't really want to expose this publicly, partly because we don't return it with empty result set.
-    // But for now this is convenient for tests. We'll see later if we want another solution.
-    InetAddress getQueriedHost() {
-        return queriedHost;
+    private static ResultSet empty(ExecutionInfo info) {
+        return new ResultSet(ColumnDefinitions.EMPTY, EMPTY_QUEUE, info);
     }
 
     /**
@@ -160,13 +148,15 @@ public class ResultSet implements Iterable<Row> {
     }
 
     /**
-     * Returns the query trace if tracing was enabled on this query.
+     * Returns information on the execution of this query.
+     * <p>
+     * The returned object includes basic information such as the queried hosts,
+     * but also the Cassandra query trace if tracing was enabled for the query.
      *
-     * @return the {@code QueryTrace} object for this query if tracing was
-     * enable for this query, or {@code null} otherwise.
+     * @return the execution info for this query.
      */
-    public QueryTrace getQueryTrace() {
-        return trace;
+    public ExecutionInfo getExecutionInfo() {
+        return info;
     }
 
     @Override

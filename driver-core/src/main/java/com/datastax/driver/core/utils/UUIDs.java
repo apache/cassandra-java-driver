@@ -103,7 +103,7 @@ public final class UUIDs {
             for (int i = 0; i < 6; i++)
                 node |= (0x00000000000000ffL & (long)hash[i]) << (i*8);
             // Since we don't use the mac address, the spec says that multicast
-            // bit (least significant bit of the first octet of the node ID) must be 1.
+            // bit (least significant bit of the first byte of the node ID) must be 1.
             return node | 0x0000010000000000L;
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
@@ -170,7 +170,7 @@ public final class UUIDs {
      * <p>
      * Lastly, please note that Cassandra's timeuuid sorting is not compatible
      * with {@link UUID#compareTo} and hence the UUID created by this method
-     * are not necesssary lower bound for that latter method.
+     * are not necessarily lower bound for that latter method.
      *
      * @param timestamp the unix timestamp for which the created UUID must be a
      * lower bound.
@@ -200,7 +200,7 @@ public final class UUIDs {
      * <p>
      * Lastly, please note that Cassandra's timeuuid sorting is not compatible
      * with {@link UUID#compareTo} and hence the UUID created by this method
-     * are not necesssary upper bound for that latter method.
+     * are not necessarily upper bound for that latter method.
      *
      * @param timestamp the unix timestamp for which the created UUID must be an
      * upper bound.
@@ -317,7 +317,7 @@ public final class UUIDs {
                 }
             }
         } catch (SocketException e) {
-            // Ignore, if we relly go nothing so far, we'll throw an exception
+            // Ignore, if we've really got nothing so far, we'll throw an exception
         }
 
         return allIps;

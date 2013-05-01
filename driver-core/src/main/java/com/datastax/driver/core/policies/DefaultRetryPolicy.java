@@ -45,7 +45,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
      * replica had responded to the read request but data was not retrieved
      * amongst those. Indeed, that case usually means that enough replica
      * are alive to satisfy the consistency but the coordinator picked a
-     * dead one for data retrieval, not having detecte that replica as dead
+     * dead one for data retrieval, not having detected that replica as dead
      * yet. The reasoning for retrying then is that by the time we get the
      * timeout the dead replica will likely have been detected as dead and
      * the retry has a high change of success.

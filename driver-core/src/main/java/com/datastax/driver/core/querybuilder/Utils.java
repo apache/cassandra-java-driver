@@ -25,8 +25,8 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 // Static utilities private to the query builder
 abstract class Utils {
 
-    private static final Pattern cnamePattern = Pattern.compile("\\w+(?:\\[.+\\])?", Pattern.CASE_INSENSITIVE);
-    private static final Pattern fctsPattern = Pattern.compile("(?:count|writetime|ttl|token)\\(.*", Pattern.CASE_INSENSITIVE);
+    private static final Pattern cnamePattern = Pattern.compile("\\w+(?:\\[.+\\])?");
+    private static final Pattern fctsPattern = Pattern.compile("\\s*[a-zA-Z]\\w*\\(.+");
 
     static StringBuilder joinAndAppend(StringBuilder sb, String separator, List<? extends Appendeable> values) {
         for (int i = 0; i < values.size(); i++) {
@@ -72,24 +72,28 @@ abstract class Utils {
         if (appendValueIfCollection(value, sb, rawValue))
             return sb;
 
-        if (rawValue)
+        if (rawValue || isFunctionCall(value) || value instanceof RawString)
             return sb.append(value.toString());
         else
             return appendValueString(value.toString(), sb);
+    }
+
+    static boolean isFunctionCall(Object value) {
+        return value instanceof String && fctsPattern.matcher((String)value).matches();
     }
 
     private static void appendFlatValue(Object value, StringBuilder sb, boolean rawValue) {
         if (appendValueIfLiteral(value, sb))
             return;
 
-        if (rawValue)
+        if (rawValue || isFunctionCall(value) || value instanceof RawString)
             sb.append(value.toString());
         else
             appendValueString(value.toString(), sb);
     }
 
     private static boolean appendValueIfLiteral(Object value, StringBuilder sb) {
-        if (value instanceof Integer || value instanceof Long || value instanceof Float || value instanceof Double || value instanceof UUID || value instanceof Boolean) {
+        if (value instanceof Number || value instanceof UUID || value instanceof Boolean) {
             sb.append(value);
             return true;
         } else if (value instanceof InetAddress) {
@@ -182,7 +186,7 @@ abstract class Utils {
     }
 
     private static StringBuilder appendValueString(String value, StringBuilder sb) {
-        return sb.append("'").append(value.replace("'", "''")).append("'");
+        return sb.append("'").append(replace(value, '\'', "''")).append("'");
     }
 
     static String toRawString(Object value) {
@@ -200,5 +204,50 @@ abstract class Utils {
 
     static abstract class Appendeable {
         abstract void appendTo(StringBuilder sb);
+    }
+
+    // Simple method to replace a single character. String.replace is a bit too
+    // inefficient (see JAVA-67)
+    static String replace(String text, char search, String replacement) {
+        if (text == null || text.isEmpty())
+            return text;
+
+        int nbMatch = 0;
+        int start = -1;
+        do {
+            start = text.indexOf(search, start+1);
+            if (start != -1)
+                ++nbMatch;
+        } while (start != -1);
+
+        if (nbMatch == 0)
+            return text;
+
+        int newLength = text.length() + nbMatch * (replacement.length() - 1);
+        char[] result = new char[newLength];
+        int newIdx = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == search) {
+                for (int r = 0; r < replacement.length(); r++)
+                    result[newIdx++] = replacement.charAt(r);
+            } else {
+                result[newIdx++] = c;
+            }
+        }
+        return new String(result);
+    }
+
+    static class RawString {
+        private final String str;
+
+        RawString(String str) {
+            this.str = str;
+        }
+
+        @Override
+        public String toString() {
+            return "'" + str + "'";
+        }
     }
 }

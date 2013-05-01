@@ -42,7 +42,7 @@ public class Batch extends BuiltStatement {
 
     protected String buildQueryString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("BEGIN BATCH");
+        builder.append(isCounterOp() ? "BEGIN COUNTER BATCH" : "BEGIN BATCH");
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
@@ -65,8 +65,18 @@ public class Batch extends BuiltStatement {
      *
      * @param statement the new statement to add.
      * @return this batch.
+     *
+     * @throws IllegalArgumentException if counter and non-counter operations
+     * are mixed.
      */
     public Batch add(Statement statement) {
+        boolean isCounterOp = statement instanceof BuiltStatement && ((BuiltStatement) statement).isCounterOp();
+
+        if (this.isCounterOp == null)
+            setCounterOp(isCounterOp);
+        else if (isCounterOp() != isCounterOp)
+            throw new IllegalArgumentException("Cannot mix counter operations and non-counter operations in a batch statement");
+
         this.statements.add(statement);
         setDirty();
 

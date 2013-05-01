@@ -21,10 +21,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ScheduledFuture;
 
+import com.google.common.collect.ImmutableList;
+
 /**
  * A Cassandra node.
  *
- * This class keeps the informations the driver maintain on a given Cassandra node.
+ * This class keeps the information the driver maintain on a given Cassandra node.
  */
 public class Host {
 
@@ -37,6 +39,8 @@ public class Host {
     // Tracks reconnection attempts to that host so we avoid adding multiple tasks
     final AtomicReference<ScheduledFuture> reconnectionAttempt = new AtomicReference<ScheduledFuture>();
 
+    final ExecutionInfo defaultExecutionInfo;
+
     // ClusterMetadata keeps one Host object per inet address, so don't use
     // that constructor unless you know what you do (use ClusterMetadata.getHost typically).
     Host(InetAddress address, ConvictionPolicy.Factory policy) {
@@ -45,6 +49,7 @@ public class Host {
 
         this.address = address;
         this.monitor = new HealthMonitor(policy.create(this));
+        this.defaultExecutionInfo = new ExecutionInfo(ImmutableList.of(this));
     }
 
     void setLocationInfo(String datacenter, String rack) {
@@ -94,7 +99,7 @@ public class Host {
      *
      * The health monitor keeps tracks of the known host state (up or down). A
      * class implementing {@link Host.StateListener} can also register against
-     * the health monitor to be notified when this node is detected to be up or down.
+     * the health monitor to be notified when this node is detected to be up or down
      *
      * @return the host {@link HealthMonitor}.
      */
@@ -167,7 +172,7 @@ public class Host {
             return isUp;
         }
 
-        private void setDown() {
+        void setDown() {
             isUp = false;
             for (Host.StateListener listener : listeners)
                 listener.onDown(Host.this);
@@ -177,7 +182,7 @@ public class Host {
          * Resets the monitor, setting the host as up and informing the
          * registered listener that the node is up.
          */
-        void reset() {
+        void setUp() {
             policy.reset();
             for (Host.StateListener listener : listeners)
                 listener.onUp(Host.this);

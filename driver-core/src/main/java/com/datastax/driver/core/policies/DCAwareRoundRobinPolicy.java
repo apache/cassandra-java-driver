@@ -138,7 +138,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * Returns the hosts to use for a new query.
      * <p>
      * The returned plan will always try each known host in the local
-     * datacenter first, and then, if none of the local host is reacheable,
+     * datacenter first, and then, if none of the local host is reachable,
      * will try up to a configurable number of other host per remote datacenter.
      * The order of the local node in the returned query plan will follow a
      * Round-robin algorithm.
@@ -190,8 +190,10 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
                 String nextRemoteDc = remoteDcs.next();
                 CopyOnWriteArrayList<Host> nextDcHosts = perDcLiveHosts.get(nextRemoteDc);
                 if (nextDcHosts != null) {
-                    currentDcHosts = (List<Host>)nextDcHosts.clone();
-                    currentDcRemaining = Math.min(usedHostsPerRemoteDc, currentDcHosts.size());
+                    // Clone for thread safety
+                    List<Host> dcHosts = (List<Host>)nextDcHosts.clone();
+                    currentDcHosts = dcHosts.subList(0, Math.min(dcHosts.size(), usedHostsPerRemoteDc));
+                    currentDcRemaining = currentDcHosts.size();
                 }
 
                 return computeNext();

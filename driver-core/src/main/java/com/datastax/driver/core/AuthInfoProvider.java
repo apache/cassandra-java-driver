@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Authentication informations provider to connect to Cassandra nodes.
+ * Authentication information provider to connect to Cassandra nodes.
  * <p>
  * The authentication information consists of key-value pairs.
  * Which exact key-value pairs are required depends on the authenticator
@@ -29,18 +29,18 @@ import java.util.Map;
 public interface AuthInfoProvider {
 
     /**
-     * A provider that provides no authentication informations.
+     * A provider that provides no authentication information.
      * <p>
      * This is only useful for when no authentication is to be used.
      */
     public static final AuthInfoProvider NONE = new AuthInfoProvider() {
-        public Map<String, String> getAuthInfos(InetAddress host) {
+        public Map<String, String> getAuthInfo(InetAddress host) {
             return Collections.<String, String>emptyMap();
         }
     };
 
     /**
-     * The authentication informations to use to connect to {@code host}.
+     * The authentication information to use to connect to {@code host}.
      *
      * Please note that if authentication is required, this method will be
      * called to initialize each new connection created by the driver. It is
@@ -50,5 +50,5 @@ public interface AuthInfoProvider {
      * is requested.
      * @return The authentication informations to use.
      */
-    public Map<String, String> getAuthInfos(InetAddress host);
+    public Map<String, String> getAuthInfo(InetAddress host);
 }
