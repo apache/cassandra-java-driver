@@ -75,7 +75,7 @@ public class ResultSet implements Iterable<Row> {
     }
 
     /**
-     * The columns returned in this ResultSet.
+     * Returns the columns returned in this ResultSet.
      *
      * @return the columns returned in this ResultSet.
      */
@@ -84,7 +84,7 @@ public class ResultSet implements Iterable<Row> {
     }
 
     /**
-     * Test whether this ResultSet has more results.
+     * Returns whether this ResultSet has more results.
      *
      * @return whether this ResultSet has more results.
      */
@@ -119,7 +119,7 @@ public class ResultSet implements Iterable<Row> {
     }
 
     /**
-     * An iterator over the rows contained in this ResultSet.
+     * Returns an iterator over the rows contained in this ResultSet.
      *
      * The {@link Iterator#next} method is equivalent to calling {@link #one}.
      * So this iterator will consume results from this ResultSet and after a
@@ -148,9 +148,9 @@ public class ResultSet implements Iterable<Row> {
     }
 
     /**
-     * Information on the execution of this query.
+     * Returns information on the execution of this query.
      * <p>
-     * The returned object include basic information like the hosts queried,
+     * The returned object includes basic information such as the queried hosts,
      * but also the Cassandra query trace if tracing was enabled for the query.
      *
      * @return the execution info for this query.

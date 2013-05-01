@@ -55,9 +55,9 @@ public abstract class Query {
     }
 
     /**
-     * The consistency level.
+     * Returns the consistency level.
      *
-     * @return the consistency level. Returns {@code ConsistencyLevel.ONE} if no
+     * @return the consistency level, which is {@code ConsistencyLevel.ONE} if no
      * consistency level has been specified.
      */
     public ConsistencyLevel getConsistencyLevel() {
@@ -65,9 +65,9 @@ public abstract class Query {
     }
 
     /**
-     * Enable tracing for this query.
+     * Enables tracing for this query.
      *
-     * By default (i.e. unless you call this method), tracing is not enabled.
+     * By default (that is unless you call this method), tracing is not enabled.
      *
      * @return this {@code Query} object.
      */
@@ -77,7 +77,7 @@ public abstract class Query {
     }
 
     /**
-     * Disable tracing for this query.
+     * Disables tracing for this query.
      *
      * @return this {@code Query} object.
      */
@@ -87,7 +87,7 @@ public abstract class Query {
     }
 
     /**
-     * Whether tracing is enabled for this query or not.
+     * Returns whether tracing is enabled for this query or not.
      *
      * @return {@code true} if this query has tracing enabled, {@code false}
      * otherwise.
@@ -97,10 +97,11 @@ public abstract class Query {
     }
 
     /**
-     * The routing key (in binary raw form) to use for token aware routing of this query.
+     * Returns the routing key (in binary raw form) to use for token aware 
+     * routing of this query.
      * <p>
-     * The routing key is optional in the sense that implementers are free to
-     * return {@code null}. The routing key is an hint used for token aware routing (see
+     * The routing key is optional in that implementers are free to
+     * return {@code null}. The routing key is an hint used for token-aware routing (see
      * {@link com.datastax.driver.core.policies.TokenAwarePolicy}), and
      * if provided should correspond to the binary value for the query
      * partition key. However, not providing a routing key never causes a query
@@ -128,7 +129,7 @@ public abstract class Query {
     }
 
     /**
-     * The retry policy sets for this query, if any.
+     * Returns the retry policy sets for this query, if any.
      *
      * @return the retry policy sets specifically for this query or {@code null} if no query specific
      * retry policy has been set through {@link #setRetryPolicy} (in which case

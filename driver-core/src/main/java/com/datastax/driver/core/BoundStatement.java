@@ -33,7 +33,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * <p>
  * The values of a BoundStatement can be set by either index or name. When
  * setting them by name, names follow the case insensitivity rules explained in
- * {@link ColumnDefinitions}. Noteworthy, if multiple bind variables
+ * {@link ColumnDefinitions}. If multiple bind variables
  * correspond to the same column (as would be the case if you prepare
  * {@code SELECT * FROM t WHERE x > ? AND x < ?}), you will have to set
  * values by indexes (or the {@link #bind} method) as the methods to set by
@@ -50,7 +50,7 @@ public class BoundStatement extends Query {
      * Creates a new {@code BoundStatement} from the provided prepared
      * statement.
      *
-     * @param statement the prepared statement from which to create a t {@code BoundStatement}.
+     * @param statement the prepared statement from which to create a {@code BoundStatement}.
      */
     public BoundStatement(PreparedStatement statement) {
         this.statement = statement;
@@ -83,15 +83,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Returns whether the (first occurrence of) variable {@code name} has been
-     * bound to a non null value.
+     * Returns whether the first occurrence of variable {@code name} has been
+     * bound to a non-null value.
      *
      * @param name the name of the variable to check.
-     * @return whether the (first occurrence of) variable {@code name} has been
-     * bound to a non null value.
+     * @return whether the first occurrence of variable {@code name} has been 
+     * bound to a non-null value.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
     public boolean isSet(String name) {
         return isSet(metadata().getIdx(name));
@@ -100,14 +100,15 @@ public class BoundStatement extends Query {
     /**
      * Bound values to the variables of this statement.
      *
-     * This method provides a convenience to bound all the variables of the
+     * This is a convenience method to bind all the variables of the
      * {@code BoundStatement} in one call.
      *
      * @param values the values to bind to the variables of the newly created
      * BoundStatement. The first element of {@code values} will be bound to the
-     * first bind variable, etc.. It is legal to provide less values than the
-     * statement has bound variables. In that case, the remaining variables
-     * will be considered {@code null} unless bound afterwards.
+     * first bind variable, etc. It is legal to provide fewer values than the
+     * statement has bound variables. In that case, the remaining variable need
+     * to be bound before execution. If more values than variables are provided
+     * however, an IllegalArgumentException wil be raised.
      * @return this bound statement.
      *
      * @throws IllegalArgumentException if more {@code values} are provided
@@ -192,12 +193,12 @@ public class BoundStatement extends Query {
     /**
      * The routing key for this bound query.
      * <p>
-     * This method will return a non-{@code null} value if:
+     * This method will return a non-{@code null} value if either of the following occur:
      * <ul>
-     *   <li>either all the columns composing the partition key are bound
+     *   <li>All the columns composing the partition key are bound
      *   variables of this {@code BoundStatement}. The routing key will then be
      *   built using the values provided for these partition key columns.</li>
-     *   <li>or the routing key has been set through {@link PreparedStatement#setRoutingKey}
+     *   <li>The routing key has been set through {@link PreparedStatement#setRoutingKey}
      *   for the {@code PreparedStatement} this statement has been built from.</li>
      * </ul>
      * Otherwise, {@code null} is returned.
@@ -244,15 +245,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided boolean.
+     * Set the value for the first occurrence of column {@code name} to the provided boolean.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type BOOLEAN.
      */
     public BoundStatement setBool(String name, boolean v) {
@@ -275,15 +276,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided integer.
+     * Set the value for the first occurrence of column {@code name} to the provided integer.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code i} is not of type INT.
      */
     public BoundStatement setInt(String name, int v) {
@@ -306,15 +307,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided long.
+     * Set the value for the first occurrence of column {@code name} to the provided long.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code i} is of type BIGINT or COUNTER.
      */
     public BoundStatement setLong(String name, long v) {
@@ -337,15 +338,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided date.
+     * Sets the value for the first occurrence of column {@code name} to the provided date.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type TIMESTAMP.
      */
     public BoundStatement setDate(String name, Date v) {
@@ -353,7 +354,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the {@code i}th value to the provided float.
+     * Sets the {@code i}th value to the provided float.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -368,15 +369,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided float.
+     * Sets the value for the first occurrence of column {@code name} to the provided float.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code i} is not of type FLOAT.
      */
     public BoundStatement setFloat(String name, float v) {
@@ -384,7 +385,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the {@code i}th value to the provided double.
+     * Sets the {@code i}th value to the provided double.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -399,15 +400,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided double.
+     * Sets the value for the first occurrence of column {@code name} to the provided double.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code i} is not of type DOUBLE.
      */
     public BoundStatement setDouble(String name, double v) {
@@ -415,7 +416,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the {@code i}th value to the provided string.
+     * Sets the {@code i}th value to the provided string.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -441,15 +442,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided string.
+     * Sets the value for the first occurrence of column {@code name} to the provided string.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is of neither of the
      * following types: VARCHAR, TEXT or ASCII.
      */
@@ -458,7 +459,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the {@code i}th value to the provided byte buffer.
+     * Sets the {@code i}th value to the provided byte buffer.
      *
      * This method validate that the type of the column set is BLOB. If you
      * want to insert manually serialized data into columns of another type,
@@ -477,19 +478,19 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided byte buffer.
+     * Sets the value for the first occurrence of column {@code name} to the provided byte buffer.
      *
      * This method validate that the type of the column set is BLOB. If you
      * want to insert manually serialized data into columns of another type,
      * use {@link #setBytesUnsafe} instead.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type BLOB.
      */
     public BoundStatement setBytes(String name, ByteBuffer v) {
@@ -497,7 +498,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the {@code i}th value to the provided byte buffer.
+     * Sets the {@code i}th value to the provided byte buffer.
      *
      * Contrary to {@link #setBytes}, this method does not check the
      * type of the column set. If you insert data that is not compatible with
@@ -515,27 +516,27 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided byte buffer.
+     * Sets the value for the first occurrence of column {@code name} to the provided byte buffer.
      *
      * Contrary to {@link #setBytes}, this method does not check the
      * type of the column set. If you insert data that is not compatible with
      * the type of the column, you will get an {@code InvalidQueryException} at
      * execute time.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
     public BoundStatement setBytesUnsafe(String name, ByteBuffer v) {
         return setBytesUnsafe(metadata().getIdx(name), v);
     }
 
     /**
-     * Set the {@code i}th value to the provided big integer.
+     * Sets the {@code i}th value to the provided big integer.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -550,15 +551,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided big integer.
+     * Sets the value for the first occurrence of column {@code name} to the provided big integer.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type VARINT.
      */
     public BoundStatement setVarint(String name, BigInteger v) {
@@ -566,7 +567,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the {@code i}th value to the provided big decimal.
+     * Sets the {@code i}th value to the provided big decimal.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -581,15 +582,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided big decimal.
+     * Sets the value for the first occurrence of column {@code name} to the provided big decimal.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type DECIMAL.
      */
     public BoundStatement setDecimal(String name, BigDecimal v) {
@@ -597,7 +598,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the {@code i}th value to the provided UUID.
+     * Sets the {@code i}th value to the provided UUID.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -624,15 +625,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided UUID.
+     * Sets the value for the first occurrence of column {@code name} to the provided UUID.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type UUID or
      * TIMEUUID, or if column {@code name} is of type TIMEUUID but {@code v} is
      * not a type 1 UUID.
@@ -642,7 +643,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the {@code i}th value to the provided inet address.
+     * Sets the {@code i}th value to the provided inet address.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -657,15 +658,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided inet address.
+     * Sets the value for the first occurrence of column {@code name} to the provided inet address.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type INET.
      */
     public BoundStatement setInet(String name, InetAddress v) {
@@ -673,7 +674,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the {@code i}th value to the provided list.
+     * Sets the {@code i}th value to the provided list.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -706,15 +707,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided list.
+     * Sets the value for the first occurrence of column {@code name} to the provided list.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not a list type or
      * if the elements of {@code v} are not of the type of the elements of
      * column {@code name}.
@@ -724,7 +725,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the {@code i}th value to the provided map.
+     * Sets the {@code i}th value to the provided map.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -759,15 +760,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided map.
+     * Sets the value for the first occurrence of column {@code name} to the provided map.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not a map type or
      * if the elements (keys or values) of {@code v} are not of the type of the
      * elements of column {@code name}.
@@ -777,7 +778,7 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the {@code i}th value to the provided set.
+     * Sets the {@code i}th value to the provided set.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -809,15 +810,15 @@ public class BoundStatement extends Query {
     }
 
     /**
-     * Set the value for (the first occurrence of) column {@code name} to the provided set.
+     * Sets the value for the first occurrence of column {@code name} to the provided set.
      *
-     * @param name the name of the variable to set (if multiple variables
-     * {@code name} are prepared, only the first one is set).
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, only the first one is set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, i.e. if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not a set type or
      * if the elements of {@code v} are not of the type of the elements of
      * column {@code name}.

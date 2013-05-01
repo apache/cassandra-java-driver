@@ -32,7 +32,7 @@ import com.yammer.metrics.reporting.JmxReporter;
  * for details on how to handle the exposed metric objects.
  * <p>
  * By default, metrics are exposed through JMX, which is very useful for
- * development and browsing, but for production environment you may want to
+ * development and browsing, but for production environments you may want to
  * have a look at the <a href="http://metrics.codahale.com/manual/core/#reporters">reporters</a>
  * provided by the Metrics library which could be more efficient/adapted.
  */
@@ -77,7 +77,7 @@ public class Metrics {
     }
 
     /**
-     * The registry containing all metrics.
+     * Returns the registry containing all metrics.
      * <p>
      * The metrics registry allows you to easily use the reporters that ships
      * with <a href="http://metrics.codahale.com/manual/core/#reporters">Metrics</a>
@@ -94,7 +94,7 @@ public class Metrics {
     }
 
     /**
-     * Metrics on the user requests performed on the Cluster.
+     * Returns metrics on the user requests performed on the Cluster.
      * <p>
      * This metric exposes
      * <ul>
@@ -111,7 +111,7 @@ public class Metrics {
     }
 
     /**
-     * An object regrouping metrics related to the errors encountered.
+     * Returns an object regrouping metrics related to the errors encountered.
      *
      * @return an object regrouping metrics related to the errors encountered.
      */
@@ -120,8 +120,8 @@ public class Metrics {
     }
 
     /**
-     * The number of Cassandra hosts currently known by the driver (whether
-     * they are currently considered up or down).
+     * Returns the number of Cassandra hosts currently known by the driver (that is 
+     * whether they are currently considered up or down).
      *
      * @return the number of Cassandra hosts currently known by the driver.
      */
@@ -130,8 +130,8 @@ public class Metrics {
     }
 
     /**
-     * The number of Cassandra hosts the driver is currently connected to (i.e.
-     * have at least one connection opened to).
+     * Returns the number of Cassandra hosts the driver is currently connected to
+     * (that is have at least one connection opened to).
      *
      * @return the number of Cassandra hosts the driver is currently connected to.
      */
@@ -140,7 +140,7 @@ public class Metrics {
     }
 
     /**
-     * The total number of currently opened connections to Cassandra hosts.
+     * Returns the total number of currently opened connections to Cassandra hosts.
      *
      * @return The total number of currently opened connections to Cassandra hosts.
      */
@@ -169,14 +169,14 @@ public class Metrics {
         private final Counter ignores = registry.newCounter(Errors.class, "ignores");
 
         /**
-         * The number of connection to Cassandra nodes errors.
+         * Returns the number of connection to Cassandra nodes errors.
          * <p>
-         * This represents the number of times when a requests to a Cassandra
-         * has failed due to a connection problem. This thus also correspond to
+         * This represents the number of times that a request to a Cassandra node
+         * has failed due to a connection problem. This thus also corresponds to
          * how often the driver had to pick a fallback host for a request.
          * <p>
-         * It is expected to get a few connection errors when a Cassandra dies
-         * (or is stopped) but if that value grow continuously you likely have
+         * You can expect a few connection errors when a Cassandra node fails
+         * (or is stopped) ,but if that number grows continuously you likely have
          * a problem.
          *
          * @return the number of connection to Cassandra nodes errors.
@@ -186,7 +186,7 @@ public class Metrics {
         }
 
         /**
-         * The number of write requests that returned a timeout (independently
+         * Returns the number of write requests that returned a timeout (independently
          * of the final decision taken by the {@link com.datastax.driver.core.policies.RetryPolicy}).
          *
          * @return the number of write timeout.
@@ -196,7 +196,7 @@ public class Metrics {
         }
 
         /**
-         * The number of read requests that returned a timeout (independently
+         * Returns the number of read requests that returned a timeout (independently
          * of the final decision taken by the {@link com.datastax.driver.core.policies.RetryPolicy}).
          *
          * @return the number of read timeout.
@@ -206,18 +206,19 @@ public class Metrics {
         }
 
         /**
-         * The number of requests that returned an unavailable exception
-         * (independently of the final decision taken by the {@link com.datastax.driver.core.policies.RetryPolicy}).
+         * Returns the number of requests that returned an unavailable exception
+         * (independently of the final decision taken by the 
+         * {@link com.datastax.driver.core.policies.RetryPolicy}).
          *
-         * @return the number of unavailable exception.
+         * @return the number of unavailable exceptions.
          */
         public Counter getUnavailables() {
             return unavailables;
         }
 
         /**
-         * The number of requests that returned an errors not accounted by
-         * another metric. This includes all type of invalid requests.
+         * Returns the number of requests that returned errors not accounted for by
+         * another metric. This includes all types of invalid requests.
          *
          * @return the number of requests errors not accounted by another
          * metric.
@@ -227,20 +228,23 @@ public class Metrics {
         }
 
         /**
-         * The number of times a requests was retried due to the {@link com.datastax.driver.core.policies.RetryPolicy}.
+         * Returns the number of times a request was retried due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}.
          *
-         * @return the number of times a requests was retried due to the {@link com.datastax.driver.core.policies.RetryPolicy}.
+         * @return the number of times a requests was retried due to the 
+         * {@link com.datastax.driver.core.policies.RetryPolicy}.
          */
         public Counter getRetries() {
             return retries;
         }
 
         /**
-         * The number of times a requests timeout/unavailability was ignored
-         * due to the {@link com.datastax.driver.core.policies.RetryPolicy}.
+         * Returns the number of times a request was ignored
+         * due to the {@link com.datastax.driver.core.policies.RetryPolicy}, for
+         * example due to timeouts or unavailability.
          *
-         * @return the number of times a requests timeout/unavailability was
-         * ignored due to the {@link com.datastax.driver.core.policies.RetryPolicy}.
+         * @return the number of times a request was ignored due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}.
          */
         public Counter getIgnores() {
             return ignores;

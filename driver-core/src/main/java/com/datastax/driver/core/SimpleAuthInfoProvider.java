@@ -25,7 +25,7 @@ import java.util.Map;
  * This provider allows to programmatically define authentication
  * information that will then apply to all hosts.
  * <p>
- * Note that it is <b>not</b> safe to add new info to this provider once a
+ * Note that it is <b>not</b> safe to add new information to this provider once a
  * Cluster instance has been created using this provider.
  */
 public class SimpleAuthInfoProvider implements AuthInfoProvider {
@@ -33,13 +33,13 @@ public class SimpleAuthInfoProvider implements AuthInfoProvider {
     private final Map<String, String> credentials = new HashMap<String, String>();
 
     /**
-     * Creates a new, empty, simple authentication info provider.
+     * Creates a new, empty, simple authentication information provider.
      */
     public SimpleAuthInfoProvider() {}
 
     /**
-     * Creates a new simple authentication info provider with the
-     * information contained in {@code properties}.
+     * Creates a new simple authentication information provider with the
+     * informations contained in {@code properties}.
      *
      * @param properties a map of authentication information to use.
      */
@@ -53,7 +53,7 @@ public class SimpleAuthInfoProvider implements AuthInfoProvider {
     }
 
     /**
-     * Adds a new property to the authentication info returned by this
+     * Adds a new property to the authentication information returned by this
      * provider.
      *
      * @param property the name of the property to add.

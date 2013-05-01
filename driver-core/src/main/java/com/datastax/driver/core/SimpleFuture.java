@@ -20,7 +20,8 @@ import com.google.common.util.concurrent.AbstractFuture;
 /**
  * A simple future that can be set to a value.
  *
- * Note: this is equivalent to Guava's SettableFuture, but the latter is a final class.
+ * Note that this is equivalent to a Guava SettableFuture, but that the latter
+ *  is a final class.
  */
 class SimpleFuture<V> extends AbstractFuture<V> {
 

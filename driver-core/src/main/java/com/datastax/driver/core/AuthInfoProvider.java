@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * Authentication information provider to connect to Cassandra nodes.
  * <p>
- * The authentication information themselves are just a key-value pairs.
+ * The authentication information consists of key-value pairs.
  * Which exact key-value pairs are required depends on the authenticator
  * set for the Cassandra nodes.
  */
@@ -47,8 +47,8 @@ public interface AuthInfoProvider {
      * thus a good idea to make sure this method returns relatively quickly.
      *
      * @param host the Cassandra host for which authentication information
-     * are requested.
-     * @return The authentication information to use.
+     * is requested.
+     * @return The authentication informations to use.
      */
     public Map<String, String> getAuthInfo(InetAddress host);
 }

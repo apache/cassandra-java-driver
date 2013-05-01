@@ -36,10 +36,21 @@ public class SocketOptions {
      */
     public SocketOptions() {}
 
+    /**
+     * Returns the connection timeout in milliseconds.
+     * 
+     * @return the connection timeout in milliseconds
+     */
     public int getConnectTimeoutMillis() {
         return connectTimeoutMillis;
     }
 
+    /**
+     * Sets the connection timeout in milliseconds.
+     *  
+     * @param connectTimeoutMillis the timeout to set
+     * @return
+     */
     public SocketOptions setConnectTimeoutMillis(int connectTimeoutMillis) {
         this.connectTimeoutMillis = connectTimeoutMillis;
         return this;

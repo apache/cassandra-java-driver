@@ -56,7 +56,7 @@ public class ColumnMetadata {
     }
 
     /**
-     * The name of the column.
+     * Returns the name of the column.
      *
      * @return the name of the column.
      */
@@ -65,7 +65,7 @@ public class ColumnMetadata {
     }
 
     /**
-     * The metadata of the table this column is part of.
+     * Returns the metadata of the table this column is part of.
      *
      * @return the {@code TableMetadata} for the table this column is part of.
      */
@@ -74,7 +74,7 @@ public class ColumnMetadata {
     }
 
     /**
-     * The type of the column.
+     * Returns the type of the column.
      *
      * @return the type of the column.
      */
@@ -83,7 +83,7 @@ public class ColumnMetadata {
     }
 
     /**
-     * The indexing metadata on this column if the column is indexed.
+     * Returns the indexing metadata on this column if the column is indexed.
      *
      * @return the metadata on the column index if the column is indexed,
      * {@code null} otherwise.
@@ -116,7 +116,7 @@ public class ColumnMetadata {
         }
 
         /**
-         * The column this index metadata refers to.
+         * Returns the column this index metadata refers to.
          *
          * @return the column this index metadata refers to.
          */
@@ -125,7 +125,7 @@ public class ColumnMetadata {
         }
 
         /**
-         * The index name.
+         * Returns the index name.
          *
          * @return the index name.
          */

@@ -73,7 +73,8 @@ public class DataType {
         }
 
         /**
-         * Whether this data type name represent the name of a collection type (e.g. list, set or map).
+         * Returns whether this data type name represent the name of a collection type
+         * that is a list, set or map.
          *
          * @return whether this data type name represent the name of a collection type.
          */
@@ -88,7 +89,7 @@ public class DataType {
         }
 
         /**
-         * The java Class corresponding to this CQL type name.
+         * Returns the Java Class corresponding to this CQL type name.
          *
          * The correspondence between CQL types and java ones is as follow:
          * <table>
@@ -151,7 +152,7 @@ public class DataType {
     }
 
     /**
-     * The ASCII type.
+     * Returns the ASCII type.
      *
      * @return The ASCII type.
      */
@@ -160,7 +161,7 @@ public class DataType {
     }
 
     /**
-     * The BIGINT type.
+     * Returns the BIGINT type.
      *
      * @return The BIGINT type.
      */
@@ -169,7 +170,7 @@ public class DataType {
     }
 
     /**
-     * The BLOB type.
+     * Returns the BLOB type.
      *
      * @return The BLOB type.
      */
@@ -178,7 +179,7 @@ public class DataType {
     }
 
     /**
-     * The BOOLEAN type.
+     * Returns the BOOLEAN type.
      *
      * @return The BOOLEAN type.
      */
@@ -187,7 +188,7 @@ public class DataType {
     }
 
     /**
-     * The COUNTER type.
+     * Returns the COUNTER type.
      *
      * @return The COUNTER type.
      */
@@ -196,7 +197,7 @@ public class DataType {
     }
 
     /**
-     * The DECIMAL type.
+     * Returns the DECIMAL type.
      *
      * @return The DECIMAL type.
      */
@@ -205,7 +206,7 @@ public class DataType {
     }
 
     /**
-     * The DOUBLE type.
+     * Returns the DOUBLE type.
      *
      * @return The DOUBLE type.
      */
@@ -214,7 +215,7 @@ public class DataType {
     }
 
     /**
-     * The FLOAT type.
+     * Returns the FLOAT type.
      *
      * @return The FLOAT type.
      */
@@ -223,7 +224,7 @@ public class DataType {
     }
 
     /**
-     * The INET type.
+     * Returns the INET type.
      *
      * @return The INET type.
      */
@@ -232,7 +233,7 @@ public class DataType {
     }
 
     /**
-     * The INT type.
+     * Returns the INT type.
      *
      * @return The INT type.
      */
@@ -241,7 +242,7 @@ public class DataType {
     }
 
     /**
-     * The TEXT type.
+     * Returns the TEXT type.
      *
      * @return The TEXT type.
      */
@@ -250,7 +251,7 @@ public class DataType {
     }
 
     /**
-     * The TIMESTAMP type.
+     * Returns the TIMESTAMP type.
      *
      * @return The TIMESTAMP type.
      */
@@ -259,7 +260,7 @@ public class DataType {
     }
 
     /**
-     * The UUID type.
+     * Returns the UUID type.
      *
      * @return The UUID type.
      */
@@ -268,7 +269,7 @@ public class DataType {
     }
 
     /**
-     * The VARCHAR type.
+     * Returns the VARCHAR type.
      *
      * @return The VARCHAR type.
      */
@@ -277,7 +278,7 @@ public class DataType {
     }
 
     /**
-     * The VARINT type.
+     * Returns the VARINT type.
      *
      * @return The VARINT type.
      */
@@ -286,7 +287,7 @@ public class DataType {
     }
 
     /**
-     * The TIMEUUID type.
+     * Returns the TIMEUUID type.
      *
      * @return The TIMEUUID type.
      */
@@ -295,7 +296,7 @@ public class DataType {
     }
 
     /**
-     * The type of lists of {@code elementType} elements.
+     * Returns the type of lists of {@code elementType} elements.
      *
      * @param elementType the type of the list elements.
      * @return the type of lists of {@code elementType} elements.
@@ -305,7 +306,7 @@ public class DataType {
     }
 
     /**
-     * The type of sets of {@code elementType} elements.
+     * Returns the type of sets of {@code elementType} elements.
      *
      * @param elementType the type of the set elements.
      * @return the type of sets of {@code elementType} elements.
@@ -315,7 +316,7 @@ public class DataType {
     }
 
     /**
-     * The type of maps of {@code keyType} to {@code valueType} elements.
+     * Returns the type of maps of {@code keyType} to {@code valueType} elements.
      *
      * @param keyType the type of the map keys.
      * @param valueType the type of the map values.
@@ -326,7 +327,7 @@ public class DataType {
     }
 
     /**
-     * A Custom type.
+     * Returns a Custom type.
      * <p>
      * A custom type is defined by the name of the class used on the Cassandra
      * side to implement it. Note that the support for custom type by the
@@ -351,7 +352,7 @@ public class DataType {
     }
 
     /**
-     * The name of that type.
+     * Returns the name of that type.
      *
      * @return the name of that type.
      */
@@ -360,7 +361,7 @@ public class DataType {
     }
 
     /**
-     * The type arguments of this type.
+     * Returns the type arguments of this type.
      * <p>
      * Note that only the collection types (LIST, MAP, SET) have type
      * arguments. For the other types, this will return an empty list.
@@ -381,9 +382,9 @@ public class DataType {
     }
 
     /**
-     * The server side class name for a custom types.
+     * Returns the server-side class name for a custom type.
      *
-     * @return the server side class name for a custom types or {@code null}
+     * @return the server-side class name for a custom type or {@code null}
      * for any other type.
      */
     public String getCustomTypeClassName() {
@@ -391,7 +392,7 @@ public class DataType {
     }
 
     /**
-     * Parse a string value for the type this object represent, returning its
+     * Parses a string value for the type this object represent, returning its
      * Cassandra binary representation.
      *
      * @param value the value to parse.
@@ -423,7 +424,7 @@ public class DataType {
     }
 
     /**
-     * The java Class corresponding to this type.
+     * Returns the Java Class corresponding to this type.
      *
      * This is a shortcut for {@code getName().asJavaClass()}.
      *
@@ -437,8 +438,8 @@ public class DataType {
 
     /**
      * Returns a set of all the primitive types, where primitive types are
-     * defined as the types that don't have type arguments (i.e. excluding
-     * lists, sets and maps).
+     * defined as the types that don't have type arguments (that is excluding
+     * lists, sets, and maps).
      *
      * @return returns a set of all the primitive types.
      */
