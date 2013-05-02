@@ -30,8 +30,8 @@ import com.datastax.driver.core.exceptions.*;
 /**
  * A future on a {@link ResultSet}.
  *
- * Note that this class implements <a href="http://code.google.com/p/guava-libraries/">guava</a>'s {@code
- * ListenableFuture} and can thus be used with guava's future utilities.
+ * Note that this class implements <a href="http://code.google.com/p/guava-libraries/">Guava</a>'s {@code
+ * ListenableFuture} and can so be used with Guava's future utilities.
  */
 public class ResultSetFuture extends SimpleFuture<ResultSet>
 {
@@ -133,11 +133,11 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
     /**
      * Waits for the query to return and return its result.
      *
-     * This method is usually more convenient than {@link #get} as it:
+     * This method is usually more convenient than {@link #get} because it:
      * <ul>
-     *   <li>It waits for the result uninterruptibly, and so doesn't throw
+     *   <li>Waits for the result uninterruptibly, and so doesn't throw
      *   {@link InterruptedException}.</li>
-     *   <li>It returns meaningful exceptions, instead of having to deal
+     *   <li>Returns meaningful exceptions, instead of having to deal
      *   with ExecutionException.</li>
      * </ul>
      * As such, it is the preferred way to get the future result.
@@ -145,7 +145,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
      * @throws NoHostAvailableException if no host in the cluster can be
      * contacted successfully to execute this query.
      * @throws QueryExecutionException if the query triggered an execution
-     * exception, i.e. an exception thrown by Cassandra when it cannot execute
+     * exception, that is an exception thrown by Cassandra when it cannot execute
      * the query with the requested consistency level successfully.
      * @throws QueryValidationException if the query if invalid (syntax error,
      * unauthorized or any other validation problem).
@@ -173,14 +173,14 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
     }
 
     /**
-     * Waits for the given time for the query to return and return its
+     * Waits for the provided time for the query to return and return its
      * result if available.
      *
-     * This method is usually more convenient than {@link #get} as it:
+     * This method is usually more convenient than {@link #get} because it:
      * <ul>
-     *   <li>It waits for the result uninterruptibly, and so doesn't throw
+     *   <li>Waits for the result uninterruptibly, and so doesn't throw
      *   {@link InterruptedException}.</li>
-     *   <li>It returns meaningful exceptions, instead of having to deal
+     *   <li>Returns meaningful exceptions, instead of having to deal
      *   with ExecutionException.</li>
      * </ul>
      * As such, it is the preferred way to get the future result.
@@ -188,7 +188,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
      * @throws NoHostAvailableException if no host in the cluster can be
      * contacted successfully to execute this query.
      * @throws QueryExecutionException if the query triggered an execution
-     * exception, i.e. an exception thrown by Cassandra when it cannot execute
+     * exception, that is an exception thrown by Cassandra when it cannot execute
      * the query with the requested consistency level successfully.
      * @throws QueryValidationException if the query if invalid (syntax error,
      * unauthorized or any other validation problem).

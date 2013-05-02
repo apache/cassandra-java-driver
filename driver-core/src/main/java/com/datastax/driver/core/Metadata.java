@@ -163,7 +163,7 @@ public class Metadata {
     }
 
     /**
-     * The set of hosts that are replica for a given partition key.
+     * Returns the set of hosts that are replica for a given partition key.
      * <p>
      * Note that this method is a best effort method. Consumers should not rely
      * too heavily on the result of this method not being stale (or even empty).
@@ -185,7 +185,7 @@ public class Metadata {
     }
 
     /**
-     * The Cassandra name for the cluster connect to.
+     * Returns the Cassandra name for the cluster connect to.
      *
      * @return the Cassandra name for the cluster connect to.
      */
@@ -203,7 +203,7 @@ public class Metadata {
     }
 
     /**
-     * Return the metadata of a keyspace given its name.
+     * Returns the metadata of a keyspace given its name.
      *
      * @param keyspace the name of the keyspace for which metadata should be
      * returned.
@@ -224,7 +224,7 @@ public class Metadata {
     }
 
     /**
-     * Return a {@code String} containing CQL queries representing the schema
+     * Returns a {@code String} containing CQL queries representing the schema
      * of this cluster.
      *
      * In other words, this method returns the queries that would allow to

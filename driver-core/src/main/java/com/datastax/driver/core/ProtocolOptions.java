@@ -80,7 +80,7 @@ public class ProtocolOptions {
     }
 
     /**
-     * The port used to connect to the Cassandra hosts.
+     * Returns the port used to connect to the Cassandra hosts.
      *
      * @return the port used to connect to the Cassandra hosts.
      */
@@ -111,8 +111,8 @@ public class ProtocolOptions {
      *
      * @throws IllegalStateException if the compression requested is not
      * available. Most compression algorithms require that the relevant be
-     * present int the classpath. If not, the compression will not be
-     * available.
+     * present in the classpath. If not, the compression will be
+     * unavailable.
      */
     public ProtocolOptions setCompression(Compression compression) {
         if (compression != Compression.NONE && compression.compressor == null)

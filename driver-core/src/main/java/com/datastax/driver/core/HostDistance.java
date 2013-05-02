@@ -20,7 +20,7 @@ package com.datastax.driver.core;
  * {@link com.datastax.driver.core.policies.LoadBalancingPolicy} (through its {@code
  * distance} method).
  *
- * The distance assigned to an host influence how many connections the driver
+ * The distance assigned to an host influences how many connections the driver
  * maintains towards this host. If for a given host the assigned {@code HostDistance}
  * is {@code LOCAL} or {@code REMOTE}, some connections will be maintained by
  * the driver to this host. More active connections will be kept to
@@ -28,7 +28,7 @@ package com.datastax.driver.core;
  * {@code LoadBalancingPolicy} should assign a {@code REMOTE} distance only to
  * hosts that are the less often queried).
  * <p>
- * However, if an host is assigned the distance {@code IGNORED}, no connection
+ * However, if a host is assigned the distance {@code IGNORED}, no connection
  * to that host will maintained active. In other words, {@code IGNORED} should
  * be assigned to hosts that should not be used by this driver (because they
  * are in a remote datacenter for instance).

@@ -32,11 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A session holds connections to a Cassandra cluster, allowing to query it.
+ * A session holds connections to a Cassandra cluster, allowing it to be queried.
  *
- * Each session will maintain multiple connections to the cluster nodes, and
+ * Each session maintains multiple connections to the cluster nodes,
  * provides policies to choose which node to use for each query (round-robin on
- * all nodes of the cluster by default), handles retries for failed query (when
+ * all nodes of the cluster by default), and handles retries for failed query (when
  * it makes sense), etc...
  * <p>
  * Session instances are thread-safe and usually a single instance is enough
@@ -55,9 +55,9 @@ public class Session {
     }
 
     /**
-     * Execute the provided query.
+     * Executes the provided query.
      *
-     * This method is a shortcut for {@code execute(new SimpleStatement(query))}.
+     * This is a convenience method for {@code execute(new SimpleStatement(query))}.
      *
      * @param query the CQL query to execute.
      * @return the result of the query. That result will never be null but can
@@ -76,7 +76,7 @@ public class Session {
     }
 
     /**
-     * Execute the provided query.
+     * Executes the provided query.
      *
      * This method blocks until at least some result has been received from the
      * database. However, for SELECT queries, it does not guarantee that the
@@ -107,9 +107,9 @@ public class Session {
     }
 
     /**
-     * Execute the provided query asynchronously.
+     * Executes the provided query asynchronously.
      *
-     * This method is a shortcut for {@code executeAsync(new SimpleStatement(query))}.
+     * This is a convenience method for {@code executeAsync(new SimpleStatement(query))}.
      *
      * @param query the CQL query to execute.
      * @return a future on the result of the query.
@@ -119,16 +119,16 @@ public class Session {
     }
 
     /**
-     * Execute the provided query asynchronously.
+     * Executes the provided query asynchronously.
      *
      * This method does not block. It returns as soon as the query has been
      * passed to the underlying network stack. In particular, returning from
-     * this method does not guarantee that the query is valid or have even been
+     * this method does not guarantee that the query is valid or has even been
      * submitted to a live node. Any exception pertaining to the failure of the
      * query will be thrown when accessing the {@link ResultSetFuture}.
      *
      * Note that for queries that doesn't return a result (INSERT, UPDATE and
-     * DELETE), you will need to access the ResultSetFuture (i.e. call one of
+     * DELETE), you will need to access the ResultSetFuture (that is call one of
      * its get method to make sure the query was successful.
      *
      * @param query the CQL query to execute (that can be either a {@code
@@ -153,7 +153,7 @@ public class Session {
     }
 
     /**
-     * Prepare the provided query.
+     * Prepares the provided query.
      *
      * @param query the CQL query to prepare
      * @return the prepared statement corresponding to {@code query}.
@@ -168,10 +168,10 @@ public class Session {
     }
 
     /**
-     * Shutdown this session instance.
+     * Shuts down this session instance.
      * <p>
      * This closes all connections used by this sessions. Note that if you want
-     * to shutdown the full {@code Cluster} instance this session is part of,
+     * to shut down the full {@code Cluster} instance this session is part of,
      * you should use {@link Cluster#shutdown} instead (which will call this
      * method for all session but also release some additional resources).
      * <p>
@@ -208,7 +208,7 @@ public class Session {
     }
 
     /**
-     * The {@code Cluster} object this session is part of.
+     * Returns the {@code Cluster} object this session is part of.
      *
      * @return the {@code Cluster} object this session is part of.
      */
