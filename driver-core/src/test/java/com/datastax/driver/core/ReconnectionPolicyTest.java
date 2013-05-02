@@ -78,7 +78,8 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
         // Run integration test
         long restartTime = 2 + 4 + 8 + 2;   // 16: 3 full cycles + 2 seconds
         long retryTime = 30;                // 4th cycle start time
-        reconnectionPolicyTest(builder, restartTime, retryTime);
+        long breakTime = 62;                // time until next reconnection attempt
+        reconnectionPolicyTest(builder, restartTime, retryTime, breakTime);
     }
 
     /*
@@ -114,10 +115,11 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
         // Run integration test
         long restartTime = 16;      // matches the above test
         long retryTime = 20;        // 2nd cycle start time
-        reconnectionPolicyTest(builder, restartTime, retryTime);
+        long breakTime = 10;        // time until next reconnection attempt
+        reconnectionPolicyTest(builder, restartTime, retryTime, breakTime);
     }
 
-    public void reconnectionPolicyTest(Cluster.Builder builder, long restartTime, long retryTime) throws Throwable {
+    public void reconnectionPolicyTest(Cluster.Builder builder, long restartTime, long retryTime, long breakTime) throws Throwable {
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
         createSchema(c.session, 1);
 
@@ -156,28 +158,54 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
                     resetCoordinators();
 
                     // Ensure the time when the query completes successfully is what was expected
-                    assertTrue(retryTime - 2 < thisTime - startTime && thisTime - startTime < retryTime + 2);
+                    assertTrue(retryTime - 2 < thisTime - startTime && thisTime - startTime < retryTime + 2, String.format("Waited %s seconds instead an expected %s seconds wait", thisTime - startTime, retryTime));
                 } catch (NoHostAvailableException e) {
                     Thread.sleep(1000);
                     continue;
                 }
 
-                // The the same query a few more times, just to be sure
+                Thread.sleep(breakTime);
+
+                // The the same query once more, just to be sure
                 query(c, 12);
                 assertQueried(CCMBridge.IP_PREFIX + "1", 12);
                 resetCoordinators();
 
-                query(c, 12);
-                assertQueried(CCMBridge.IP_PREFIX + "1", 12);
-                resetCoordinators();
+                // Ensure the reconnection times reset
+                c.cassandraCluster.forceStop(1);
 
-                query(c, 12);
-                assertQueried(CCMBridge.IP_PREFIX + "1", 12);
+                // Start timing and ensure that the node is down
+                startTime = 0;
+                try {
+                    startTime = System.nanoTime() / 1000000000;
+                    query(c, 12);
+                    fail("Test race condition where node has not shut off quickly enough.");
+                } catch (NoHostAvailableException e) {}
 
-                // BUG: Errors appear underneath this when c.discard is called (exponentialReconnectionPolicyTest)
-                // [Reconnection-1] ERROR com.datastax.driver.core.ControlConnection  - [Control connection] Cannot connect to any host, scheduling retry in 32000 milliseconds
-                // Print statement is useful for seeing the error in the console
-                System.out.println("Should not error out underneath this line, especially not with another 32 second wait");
+                restarted = false;
+                while (true) {
+                    thisTime = System.nanoTime() / 1000000000;
+
+                    // Restart node at restartTime
+                    if (!restarted && thisTime - startTime > restartTime) {
+                        c.cassandraCluster.start(1);
+                        restarted = true;
+                    }
+
+                    // Continue testing queries each second
+                    try {
+                        query(c, 12);
+                        assertQueried(CCMBridge.IP_PREFIX + "1", 12);
+                        resetCoordinators();
+
+                        // Ensure the time when the query completes successfully is what was expected
+                        assertTrue(retryTime - 2 < thisTime - startTime && thisTime - startTime < retryTime + 2, String.format("Waited %s seconds instead an expected %s seconds wait", thisTime - startTime, retryTime));
+                    } catch (NoHostAvailableException e) {
+                        Thread.sleep(1000);
+                        continue;
+                    }
+                    break;
+                }
                 break;
             }
 
