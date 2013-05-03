@@ -422,10 +422,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             long start = System.currentTimeMillis();
             ChannelGroupFuture future = allChannels.close();
 
-            channelFactory.shutdown();
-
-            bossExecutor.shutdown();
-            workerExecutor.shutdown();
+            channelFactory.releaseExternalResources();
 
             return future.await(timeout, unit)
                 && bossExecutor.awaitTermination(timeout - Cluster.timeSince(start, unit), unit)
