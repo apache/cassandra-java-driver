@@ -64,14 +64,17 @@ class ControlConnection implements Host.StateListener {
     private final Cluster.Manager cluster;
     private final LoadBalancingPolicy balancingPolicy;
 
-    private final ReconnectionPolicy reconnectionPolicy = new ExponentialReconnectionPolicy(2 * 1000, 5 * 60 * 1000);
+    private final ReconnectionPolicy reconnectionPolicy;
     private final AtomicReference<ScheduledFuture> reconnectionAttempt = new AtomicReference<ScheduledFuture>();
 
     private volatile boolean isShutdown;
 
     public ControlConnection(Cluster.Manager manager, Metadata metadata) {
         this.cluster = manager;
-        this.balancingPolicy = new RoundRobinPolicy();
+
+        // We use the configured reconnection policy and balancing policy
+        this.reconnectionPolicy = manager.configuration.getPolicies().getReconnectionPolicy();
+        this.balancingPolicy = manager.configuration.getPolicies().getLoadBalancingPolicy();
         this.balancingPolicy.init(manager.getCluster(), metadata.allHosts());
     }
 
