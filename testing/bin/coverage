@@ -141,7 +141,7 @@ def main():
     if args.samplecode:
         cobertura_build_command += ' -Pdoc'                             # Runs the docs "tests" and prints sample code
     else:
-        cobertura_build_command += ' -Pintegration'                     # Runs the integration tests, not just tests
+        cobertura_build_command += ' -Plong'                            # Runs the integration tests, not just tests
 
     # Use a specific Cassandra version, if asked
     if args.cassandra_version:

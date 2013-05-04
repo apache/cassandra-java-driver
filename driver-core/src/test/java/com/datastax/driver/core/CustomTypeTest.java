@@ -74,7 +74,7 @@ public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
         return res;
     }
 
-    @Test(groups = "long")
+    @Test(groups = "short")
     public void DynamicCompositeTypeTest() {
 
         session.execute("INSERT INTO test(k, c, v) VALUES (0, 's@foo:i@32', 1)");

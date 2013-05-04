@@ -227,7 +227,7 @@ public class CCMBridge {
             }
         }
 
-        @AfterClass(groups = {"integration"})
+        @AfterClass(groups = {"short", "long"})
         public static void discardCluster() {
             if (cluster != null)
                 cluster.shutdown();
@@ -243,7 +243,7 @@ public class CCMBridge {
             }
         }
 
-        @BeforeClass(groups = {"integration"})
+        @BeforeClass(groups = {"short", "long"})
         public void beforeClass() {
         	createCluster();
         	maybeCreateSchema();

@@ -514,7 +514,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the table definitions that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "doc" })
+    @Test(groups = "doc")
     public void printTableDefinitions() {
         String objective = "Table Definitions";
         System.out.println(String.format("Printing %s...", objective));
@@ -531,7 +531,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the sample data that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "doc" })
+    @Test(groups = "doc")
     public void printSampleData() {
         String objective = "Sample Data";
         System.out.println(String.format("Printing %s...", objective));
@@ -548,7 +548,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the sample collections that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "doc" })
+    @Test(groups = "doc")
     public void printSampleCollections() {
         String objective = "Sample Collections";
         System.out.println(String.format("Printing %s...", objective));
@@ -578,7 +578,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the simple insert statements that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "doc" })
+    @Test(groups = "doc")
     public void printPrimitiveInsertStatements() {
         String objective = "Primitive Insert Statements";
         System.out.println(String.format("Printing %s...", objective));
@@ -594,7 +594,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the simple select statements that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "doc" })
+    @Test(groups = "doc")
     public void printPrimitiveSelectStatements() {
         String objective = "Primitive Select Statements";
         System.out.println(String.format("Printing %s...", objective));
@@ -610,7 +610,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the simple insert statements that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "doc" })
+    @Test(groups = "doc")
     public void printCollectionInsertStatements() {
         String objective = "Collection Insert Statements";
         System.out.println(String.format("Printing %s...", objective));
@@ -626,7 +626,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Prints the simple insert statements that will be used in testing
      * (for exporting purposes)
      */
-    @Test(groups = { "doc" })
+    @Test(groups = "doc")
     public void printCollectionSelectStatements() {
         String objective = "Collection Select Statements";
         System.out.println(String.format("Printing %s...", objective));
