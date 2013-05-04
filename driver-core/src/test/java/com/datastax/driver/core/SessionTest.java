@@ -38,7 +38,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
                              String.format("CREATE TABLE %s (k text PRIMARY KEY, c counter)", COUNTER_TABLE));
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void executeTest() throws Exception {
         // Simple calls to all versions of the execute/executeAsync methods
         String key = "execute_test";
@@ -54,7 +54,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         checkExecuteResultSet(session.executeAsync(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void executePreparedTest() throws Exception {
         // Simple calls to all versions of the execute/executeAsync methods for prepared statements
         // Note: the goal is only to exercice the Session methods, PreparedStatementTest have better prepared statement tests.
@@ -87,7 +87,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
     // That test is currently disabled because we actually want to assume drop
     // doesn't "delog" from a keyspace as this is what Cassandra does. We
     // may change that depending on the resulotion of CASSANDRA-5358
-    //@Test(groups = "integration")
+    //@Test(groups = "long")
     //public void setAndDropKeyspaceTest() throws Exception {
     //    // Check that if someone set a keyspace and then drop it, we recognize
     //    // that fact and don't assume he is still set to this keyspace
@@ -104,7 +104,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
     //    }
     //}
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void executePreparedCounterTest() throws Exception {
         PreparedStatement p = session.prepare("UPDATE " + COUNTER_TABLE + " SET c = c + ? WHERE k = ?");
 
@@ -117,7 +117,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(rows.get(0).getLong("c"), 2L);
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void compressionTest() throws Exception {
 
         // Same as executeTest, but with compression enabled

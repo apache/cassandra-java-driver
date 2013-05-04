@@ -29,7 +29,7 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
     /*
      * Test the ExponentialReconnectionPolicy.
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void exponentialReconnectionPolicyTest() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withReconnectionPolicy(new ExponentialReconnectionPolicy(2 * 1000, 5 * 60 * 1000));
 
@@ -85,7 +85,7 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
     /*
      * Test the ConstantReconnectionPolicy.
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void constantReconnectionPolicyTest() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withReconnectionPolicy(new ConstantReconnectionPolicy(10 * 1000));
 
