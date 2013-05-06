@@ -20,34 +20,15 @@ package com.datastax.driver.core.policies;
  */
 public class Policies {
 
-    /**
-     * The default load balancing policy.
-     * <p>
-     * The default load balancing policy is {@link RoundRobinPolicy}.
-     */
-    public static final LoadBalancingPolicy DEFAULT_LOAD_BALANCING_POLICY = new RoundRobinPolicy();
-
-    /**
-     * The default reconnection policy.
-     * <p>
-     * The default reconnection policy is an {@link ExponentialReconnectionPolicy}
-     * where the base delay is 1 second and the max delay is 10 minutes;
-     */
-    public static final ReconnectionPolicy DEFAULT_RECONNECTION_POLICY = new ExponentialReconnectionPolicy(1000, 10 * 60 * 1000);
-
-    /**
-     * The default retry policy.
-     * <p>
-     * The default retry policy is {@link DefaultRetryPolicy}.
-     */
-    public static final RetryPolicy DEFAULT_RETRY_POLICY = DefaultRetryPolicy.INSTANCE;
+    private static final ReconnectionPolicy DEFAULT_RECONNECTION_POLICY = new ExponentialReconnectionPolicy(1000, 10 * 60 * 1000);
+    private static final RetryPolicy DEFAULT_RETRY_POLICY = DefaultRetryPolicy.INSTANCE;
 
     private final LoadBalancingPolicy loadBalancingPolicy;
     private final ReconnectionPolicy reconnectionPolicy;
     private final RetryPolicy retryPolicy;
 
     public Policies() {
-        this(DEFAULT_LOAD_BALANCING_POLICY, DEFAULT_RECONNECTION_POLICY, DEFAULT_RETRY_POLICY);
+        this(defaultLoadBalancingPolicy(), defaultReconnectionPolicy(), defaultRetryPolicy());
     }
 
     /**
@@ -65,6 +46,37 @@ public class Policies {
         this.reconnectionPolicy = reconnectionPolicy;
         this.retryPolicy = retryPolicy;
     }
+
+    /**
+     * The default load balancing policy.
+     * <p>
+     * The default load balancing policy is {@link RoundRobinPolicy}.
+     */
+    public static LoadBalancingPolicy defaultLoadBalancingPolicy() {
+        // Note: balancing policies are stateful, so we can't store that in a static or that would screw thing
+        // up if multiple Cluster instance are started in the same JVM.
+        return new RoundRobinPolicy();
+    }
+
+    /**
+     * The default reconnection policy.
+     * <p>
+     * The default reconnection policy is an {@link ExponentialReconnectionPolicy}
+     * where the base delay is 1 second and the max delay is 10 minutes;
+     */
+    public static ReconnectionPolicy defaultReconnectionPolicy() {
+        return DEFAULT_RECONNECTION_POLICY;
+    }
+
+    /**
+     * The default retry policy.
+     * <p>
+     * The default retry policy is {@link DefaultRetryPolicy}.
+     */
+    public static RetryPolicy defaultRetryPolicy() {
+        return DEFAULT_RETRY_POLICY;
+    }
+
 
     /**
      * The load balancing policy in use.

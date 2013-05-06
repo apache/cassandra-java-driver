@@ -10,6 +10,8 @@ CHANGELOG
   - [api] The isMetricsEnabled() method in Configuration has been replaced by
     getMetricsOptions(). An option to disabled JMX reporting (on by default)
     has been added.
+  - [bug] Don't make default load balancing policy a static singleton since it
+    is stateful (JAVA-91).
 
 * 1.0.0-RC1:
   - [new] Null values are now supported in BoundStatement (but you will need at

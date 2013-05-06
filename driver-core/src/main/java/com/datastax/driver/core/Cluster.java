@@ -472,9 +472,9 @@ public class Cluster {
          */
         public Configuration getConfiguration() {
             Policies policies = new Policies(
-                loadBalancingPolicy == null ? Policies.DEFAULT_LOAD_BALANCING_POLICY : loadBalancingPolicy,
-                reconnectionPolicy == null ? Policies.DEFAULT_RECONNECTION_POLICY : reconnectionPolicy,
-                retryPolicy == null ? Policies.DEFAULT_RETRY_POLICY : retryPolicy
+                loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
+                reconnectionPolicy == null ? Policies.defaultReconnectionPolicy() : reconnectionPolicy,
+                retryPolicy == null ? Policies.defaultRetryPolicy() : retryPolicy
             );
             return new Configuration(policies,
                                      new ProtocolOptions(port).setCompression(compression),
@@ -548,6 +548,8 @@ public class Cluster {
         final Map<MD5Digest, PreparedStatement> preparedQueries = new ConcurrentHashMap<MD5Digest, PreparedStatement>();
 
         private Manager(List<InetAddress> contactPoints, Configuration configuration) {
+            logger.debug("Starting new cluster with contact points " + contactPoints);
+
             this.configuration = configuration;
             this.metadata = new Metadata(this);
             this.contactPoints = contactPoints;
