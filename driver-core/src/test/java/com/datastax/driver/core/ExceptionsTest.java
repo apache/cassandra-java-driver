@@ -34,7 +34,7 @@ public class ExceptionsTest{
      * Create a keyspace twice and a table twice.
      * Catch and test all the exception methods.
      */
-    @Test(groups = "integration")
+    @Test(groups = "short")
     public void alreadyExistsException() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(1, builder);
@@ -96,7 +96,7 @@ public class ExceptionsTest{
      * Tests DriverInternalError.
      * Tests basic message, rethrow, and copy abilities.
      */
-    @Test(groups = "integration")
+    @Test(groups = "unit")
     public void driverInternalError() throws Exception {
         String errorMessage = "Test Message";
 
@@ -118,7 +118,7 @@ public class ExceptionsTest{
      * Tests InvalidConfigurationInQueryException.
      * Tests basic message abilities.
      */
-    @Test(groups = "integration")
+    @Test(groups = "unit")
     public void invalidConfigurationInQueryException() throws Exception {
         String errorMessage = "Test Message";
 
@@ -133,7 +133,7 @@ public class ExceptionsTest{
      * Tests InvalidQueryException.
      * Tests basic message and copy abilities.
      */
-    @Test(groups = "integration")
+    @Test(groups = "unit")
     public void invalidQueryException() throws Exception {
         String errorMessage = "Test Message";
 
@@ -151,7 +151,7 @@ public class ExceptionsTest{
      * Tests InvalidTypeException.
      * Tests basic message and copy abilities.
      */
-    @Test(groups = "integration")
+    @Test(groups = "unit")
     public void invalidTypeException() throws Exception {
         String errorMessage = "Test Message";
 
@@ -170,14 +170,14 @@ public class ExceptionsTest{
      * by attempting to build a cluster using the IP address "255.255.255.255"
      * and test all available exception methods.
      */
-    @Test(groups = "integration")
+    @Test(groups = "short")
     public void noHostAvailableException() throws Exception {
         String ipAddress = "255.255.255.255";
         HashMap<InetAddress, String> errorsHashMap = new HashMap<InetAddress, String>();
         errorsHashMap.put(InetAddress.getByName(ipAddress), "[/255.255.255.255] Cannot connect");
 
         try {
-            Cluster cluster = Cluster.builder().addContactPoints("255.255.255.255").build();
+            Cluster.builder().addContactPoints("255.255.255.255").build();
         } catch (NoHostAvailableException e) {
             assertEquals(e.getMessage(), String.format("All host(s) tried for query failed (tried: [/%s])", ipAddress));
             assertEquals(e.getErrors(), errorsHashMap);
@@ -194,7 +194,7 @@ public class ExceptionsTest{
      * Then forcibly kill single node and attempt a read of the key at CL.ALL.
      * Catch and test all available exception methods.
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void readTimeoutException() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(3, builder);
@@ -238,7 +238,7 @@ public class ExceptionsTest{
      * Tests SyntaxError.
      * Tests basic message and copy abilities.
      */
-    @Test(groups = "integration")
+    @Test(groups = "unit")
     public void syntaxError() throws Exception {
         String errorMessage = "Test Message";
 
@@ -256,7 +256,7 @@ public class ExceptionsTest{
      * Tests TraceRetrievalException.
      * Tests basic message and copy abilities.
      */
-    @Test(groups = "integration")
+    @Test(groups = "unit")
     public void traceRetrievalException() throws Exception {
         String errorMessage = "Test Message";
 
@@ -274,7 +274,7 @@ public class ExceptionsTest{
      * Tests TruncateException.
      * Tests basic message and copy abilities.
      */
-    @Test(groups = "integration")
+    @Test(groups = "unit")
     public void truncateException() throws Exception {
         String errorMessage = "Test Message";
 
@@ -292,7 +292,7 @@ public class ExceptionsTest{
      * Tests UnauthorizedException.
      * Tests basic message and copy abilities.
      */
-    @Test(groups = "integration")
+    @Test(groups = "unit")
     public void unauthorizedException() throws Exception {
         String errorMessage = "Test Message";
 
@@ -313,7 +313,7 @@ public class ExceptionsTest{
      * and attempt to read and write the same key at CL.ALL.
      * Catch and test all available exception methods.
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void unavailableException() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(3, builder);
@@ -369,7 +369,7 @@ public class ExceptionsTest{
      * Then forcibly kill single node and attempt to write the same key at CL.ALL.
      * Catch and test all available exception methods.
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void writeTimeoutException() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster cluster = CCMBridge.buildCluster(3, builder);
