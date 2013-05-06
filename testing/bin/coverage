@@ -45,6 +45,7 @@ def parse():
     parser.add_argument('--cassandra-version', help='run tests on a specific Cassandra version')
     parser.add_argument('--upload', action='store_true', help='upload cobertura site to configured server')
     parser.add_argument('--clean', action='store_true', help='runs the maven project from a clean environment')
+    parser.add_argument('--automated', action='store_true', help='ensures that runs do not get hung up by user input requests')
     parser.add_argument('--testdocs', action='store_true', help='generates the test\'s Javadoc')
     parser.add_argument('--samplecode', action='store_true', help='prints generated sample CQL')
     args = parser.parse_args()
@@ -158,7 +159,7 @@ def main():
         execute('%s' % cobertura_build_command)
 
         try:
-            if raw_input('Save Cobertura Report? [y/N] ').lower() == 'y':
+            if args.automated or raw_input('Save Cobertura Report? [y/N] ').lower() == 'y':
 
                 # Save out cobertura site files
                 save_cobertura_site()
