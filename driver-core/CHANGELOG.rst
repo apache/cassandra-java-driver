@@ -7,6 +7,9 @@ CHANGELOG
     and password for use with Cassandra's PasswordAuthenticator. Custom
     authenticator will be re-introduced in a future version but are not
     supported at the moment.
+  - [api] The isMetricsEnabled() method in Configuration has been replaced by
+    getMetricsOptions(). An option to disabled JMX reporting (on by default)
+    has been added.
 
 * 1.0.0-RC1:
   - [new] Null values are now supported in BoundStatement (but you will need at

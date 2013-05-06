@@ -33,9 +33,9 @@ public class Configuration {
     private final ProtocolOptions protocolOptions;
     private final PoolingOptions poolingOptions;
     private final SocketOptions socketOptions;
+    private final MetricsOptions metricsOptions;
 
     private final AuthInfoProvider authProvider;
-    private final boolean metricsEnabled;
 
     /*
      * Creates a configuration object.
@@ -46,7 +46,7 @@ public class Configuration {
              new PoolingOptions(),
              new SocketOptions(),
              AuthInfoProvider.NONE,
-             true);
+             new MetricsOptions());
     }
 
     /**
@@ -57,14 +57,14 @@ public class Configuration {
      * @param poolingOptions the pooling options to use
      * @param socketOptions the socket options to use
      * @param authProvider the authentication provider to use
-     * @param metricsEnabled whether to enable metrics or not
+     * @param metricsOptions the metrics options, or null to disable metrics.
      */
     public Configuration(Policies policies,
                          ProtocolOptions protocolOptions,
                          PoolingOptions poolingOptions,
                          SocketOptions socketOptions,
-                         boolean metricsEnabled) {
-        this(policies, protocolOptions, poolingOptions, socketOptions, AuthInfoProvider.NONE, metricsEnabled);
+                         MetricsOptions metricsOptions) {
+        this(policies, protocolOptions, poolingOptions, socketOptions, AuthInfoProvider.NONE, metricsOptions);
     }
 
     // TODO: ultimately we should expose this, but we don't want to expose the AuthInfoProvider yet as it
@@ -74,13 +74,13 @@ public class Configuration {
                          PoolingOptions poolingOptions,
                          SocketOptions socketOptions,
                          AuthInfoProvider authProvider,
-                         boolean metricsEnabled) {
+                         MetricsOptions metricsOptions) {
         this.policies = policies;
         this.protocolOptions = protocolOptions;
         this.poolingOptions = poolingOptions;
         this.socketOptions = socketOptions;
         this.authProvider = authProvider;
-        this.metricsEnabled = metricsEnabled;
+        this.metricsOptions = metricsOptions;
     }
 
     void register(Cluster.Manager manager) {
@@ -125,6 +125,18 @@ public class Configuration {
     }
 
     /**
+     * Returns the metrics configuration, if metrics are enabled.
+     * <p>
+     * Metrics collection is enabled by default but can be disabled at cluster
+     * construction time through {@link Cluster.Builder#withoutMetrics}.
+     *
+     * @return the metrics options or {@code null} if metrics are not enabled.
+     */
+    public MetricsOptions getMetricsOptions() {
+        return metricsOptions;
+    }
+
+    /**
      * Returns the authentication provider used to connect to the Cassandra cluster.
      *
      * @return the authentication provider in use.
@@ -132,17 +144,5 @@ public class Configuration {
     // Not exposed yet on purpose
     AuthInfoProvider getAuthInfoProvider() {
         return authProvider;
-    }
-
-    /**
-     * Returns whether metrics collection is enabled for the cluster instance.
-     * <p>
-     * Metrics collection is enabled by default but can be disabled at cluster
-     * construction time through {@link Cluster.Builder#withoutMetrics}.
-     *
-     * @return whether metrics collection is enabled for the cluster instance.
-     */
-    public boolean isMetricsEnabled() {
-        return metricsEnabled;
     }
 }

@@ -156,12 +156,11 @@ public class Cluster {
      * The cluster metrics.
      *
      * @return the cluster metrics, or {@code null} if metrics collection has
-     * been disabled (see {@link Configuration#isMetricsEnabled}).
+     * been disabled (that is if {@link Configuration#getMetricsOptions}
+     * returns {@code null}).
      */
     public Metrics getMetrics() {
-        return manager.configuration.isMetricsEnabled()
-             ? manager.metrics
-             : null;
+        return manager.metrics;
     }
 
     /**
@@ -255,6 +254,7 @@ public class Cluster {
 
         private ProtocolOptions.Compression compression = ProtocolOptions.Compression.NONE;
         private boolean metricsEnabled = true;
+        private boolean jmxEnabled = true;
         private final PoolingOptions poolingOptions = new PoolingOptions();
         private final SocketOptions socketOptions = new SocketOptions();
 
@@ -426,6 +426,20 @@ public class Cluster {
         }
 
         /**
+         * Disables JMX reporting of the metrics.
+         * <p>
+         * JMX reporting is enabled by default (see {@link Metrics}) but can be
+         * disabled using this option. If metrics are disabled, this is a
+         * no-op.
+         *
+         * @return this builder
+         */
+        public Builder withoutJMXReporting() {
+            this.jmxEnabled = false;
+            return this;
+        }
+
+        /**
          * Return the pooling options used by this builder.
          *
          * @return the pooling options that will be used by this builder. You
@@ -467,7 +481,7 @@ public class Cluster {
                                      poolingOptions,
                                      socketOptions,
                                      authProvider,
-                                     metricsEnabled);
+                                     metricsEnabled ? new MetricsOptions(jmxEnabled) : null);
         }
 
         /**
@@ -544,7 +558,7 @@ public class Cluster {
 
             this.controlConnection = new ControlConnection(this, metadata);
 
-            this.metrics = new Metrics(this);
+            this.metrics = configuration.getMetricsOptions() == null ? null : new Metrics(this);
             this.configuration.register(this);
 
             try {

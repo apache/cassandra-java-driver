@@ -40,7 +40,7 @@ public class Metrics {
 
     private final Cluster.Manager manager;
     private final MetricsRegistry registry = new MetricsRegistry();
-    private final JmxReporter jmxReporter = new JmxReporter(registry);
+    private final JmxReporter jmxReporter;
     private final Errors errors = new Errors();
 
     private final Timer requests = registry.newTimer(Metrics.class, "requests");
@@ -73,7 +73,12 @@ public class Metrics {
 
     Metrics(Cluster.Manager manager) {
         this.manager = manager;
-        this.jmxReporter.start();
+        if (manager.configuration.getMetricsOptions().isJMXReportingEnabled()) {
+            this.jmxReporter = new JmxReporter(registry);
+            this.jmxReporter.start();
+        } else {
+            this.jmxReporter = null;
+        }
     }
 
     /**
@@ -81,10 +86,10 @@ public class Metrics {
      * <p>
      * The metrics registry allows you to easily use the reporters that ships
      * with <a href="http://metrics.codahale.com/manual/core/#reporters">Metrics</a>
-     * or a custom written one. For instance, you can easily export metrics to
-     * csv files using:
+     * or a custom written one. For instance, if {@code metrics} is {@code this} object,
+     * you can easily export the metrics to csv files using:
      * <pre>
-     *     com.yammer.metrics.reporting.CsvReporter.enable(new File("measurements/"), 1, TimeUnit.SECONDS);
+     *     com.yammer.metrics.reporting.CsvReporter.enable(metrics.getRegistry(), new File("measurements/"), 1, TimeUnit.SECONDS);
      * </pre>
      *
      * @return the registry containing all metrics.
@@ -149,7 +154,8 @@ public class Metrics {
     }
 
     void shutdown() {
-        jmxReporter.shutdown();
+        if (jmxReporter != null)
+            jmxReporter.shutdown();
     }
 
     /**
