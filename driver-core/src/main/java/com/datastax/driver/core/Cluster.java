@@ -555,16 +555,25 @@ public class Cluster {
             this.contactPoints = contactPoints;
             this.connectionFactory = new Connection.Factory(this, configuration.getAuthInfoProvider());
 
-            for (InetAddress address : contactPoints)
-                addHost(address, false);
-
-            this.controlConnection = new ControlConnection(this, metadata);
+            this.controlConnection = new ControlConnection(this);
 
             this.metrics = configuration.getMetricsOptions() == null ? null : new Metrics(this);
             this.configuration.register(this);
 
+        }
+
+        // This is separated from the constructor because this reference the
+        // Cluster object, whose manager won't be properly initialized until
+        // the constructor returns.
+        private void init() {
+
+            for (InetAddress address : contactPoints)
+                addHost(address, false);
+
+            configuration.getPolicies().getLoadBalancingPolicy().init(Cluster.this, metadata.allHosts());
+
             try {
-                this.controlConnection.connect();
+                controlConnection.connect();
             } catch (NoHostAvailableException e) {
                 try {
                     shutdown(0, TimeUnit.MILLISECONDS);
@@ -573,13 +582,6 @@ public class Cluster {
                 }
                 throw e;
             }
-        }
-
-        // This is separated from the constructor because this reference the
-        // Cluster object, whose manager won't be properly initialized until
-        // the constructor returns.
-        private void init() {
-            this.configuration.getPolicies().getLoadBalancingPolicy().init(Cluster.this, metadata.getAllHosts());
         }
 
         Cluster getCluster() {

@@ -30,7 +30,6 @@ import static com.datastax.driver.core.TestUtils.*;
 public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
     private static final boolean DEBUG = false;
 
-    private Map<InetAddress, Integer> coordinators = new HashMap<InetAddress, Integer>();
     private PreparedStatement prepared;
 
     @Test(groups = "integration")

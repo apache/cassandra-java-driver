@@ -21,6 +21,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.*;
 
+import com.google.common.base.Objects;
+
 import org.apache.cassandra.transport.Event;
 import org.apache.cassandra.transport.messages.RegisterMessage;
 import org.apache.cassandra.transport.messages.QueryMessage;
@@ -69,13 +71,12 @@ class ControlConnection implements Host.StateListener {
 
     private volatile boolean isShutdown;
 
-    public ControlConnection(Cluster.Manager manager, Metadata metadata) {
+    public ControlConnection(Cluster.Manager manager) {
         this.cluster = manager;
 
         // We use the configured reconnection policy and balancing policy
         this.reconnectionPolicy = manager.configuration.getPolicies().getReconnectionPolicy();
         this.balancingPolicy = manager.configuration.getPolicies().getLoadBalancingPolicy();
-        this.balancingPolicy.init(manager.getCluster(), metadata.allHosts());
     }
 
     // Only for the initial connection. Does not schedule retries if it fails
@@ -288,6 +289,19 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
+    private void updateLocationInfo(Host host, String datacenter, String rack)
+    {
+        if (Objects.equal(host.getDatacenter(), datacenter) && Objects.equal(host.getRack(), rack))
+            return;
+
+        // If the dc/rack information changes, we need to update the load balancing policy.
+        // For what, we remove and re-add the node against the policy. Not the most elegant, and assumes
+        // that the policy will update correctly, but in practice this should work.
+        balancingPolicy.onDown(host);
+        host.setLocationInfo(datacenter, rack);
+        balancingPolicy.onAdd(host);
+    }
+
     private void refreshNodeListAndTokenMap(Connection connection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         // Make sure we're up to date on nodes and tokens
 
@@ -314,7 +328,7 @@ class ControlConnection implements Host.StateListener {
             if (host == null) {
                 logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
-                host.setLocationInfo(localRow.getString("data_center"), localRow.getString("rack"));
+                updateLocationInfo(host, localRow.getString("data_center"), localRow.getString("rack"));
 
                 Set<String> tokens = localRow.getSet("tokens", String.class);
                 if (partitioner != null && !tokens.isEmpty())
@@ -349,7 +363,7 @@ class ControlConnection implements Host.StateListener {
                 // We don't know that node, add it.
                 host = cluster.addHost(foundHosts.get(i), true);
             }
-            host.setLocationInfo(dcs.get(i), racks.get(i));
+            updateLocationInfo(host, dcs.get(i), racks.get(i));
 
             if (partitioner != null && !allTokens.get(i).isEmpty())
                 tokenMap.put(host, allTokens.get(i));
