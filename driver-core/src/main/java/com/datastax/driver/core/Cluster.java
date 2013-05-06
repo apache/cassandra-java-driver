@@ -385,16 +385,19 @@ public class Cluster {
         }
 
         /**
-         * Uses the provided {@code AuthInfoProvider} to connect to Cassandra hosts.
+         * Uses the provided credentials when connecting to Cassandra hosts.
          * <p>
-         * This is optional if the Cassandra cluster has been configured to not
-         * require authentication (the default).
+         * This should be used if the Cassandra cluster has been configured to
+         * use the {@code PasswordAuthenticator}. If the the default {@code
+         * AllowAllAuthenticator} is used instead, using this method has no
+         * effect.
          *
-         * @param authInfoProvider the authentication info provider to use
+         * @param username the username to use to login to Cassandra hosts.
+         * @param password the password corresponding to {@code username}.
          * @return this Builder
          */
-        public Builder withAuthInfoProvider(AuthInfoProvider authInfoProvider) {
-            this.authProvider = authInfoProvider;
+        public Builder withCredentials(String username, String password) {
+            this.authProvider = new AuthInfoProvider.Simple(username, password);
             return this;
         }
 

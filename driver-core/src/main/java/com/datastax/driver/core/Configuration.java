@@ -63,6 +63,16 @@ public class Configuration {
                          ProtocolOptions protocolOptions,
                          PoolingOptions poolingOptions,
                          SocketOptions socketOptions,
+                         boolean metricsEnabled) {
+        this(policies, protocolOptions, poolingOptions, socketOptions, AuthInfoProvider.NONE, metricsEnabled);
+    }
+
+    // TODO: ultimately we should expose this, but we don't want to expose the AuthInfoProvider yet as it
+    // will change soon
+    Configuration(Policies policies,
+                         ProtocolOptions protocolOptions,
+                         PoolingOptions poolingOptions,
+                         SocketOptions socketOptions,
                          AuthInfoProvider authProvider,
                          boolean metricsEnabled) {
         this.policies = policies;
@@ -119,7 +129,8 @@ public class Configuration {
      *
      * @return the authentication provider in use.
      */
-    public AuthInfoProvider getAuthInfoProvider() {
+    // Not exposed yet on purpose
+    AuthInfoProvider getAuthInfoProvider() {
         return authProvider;
     }
 

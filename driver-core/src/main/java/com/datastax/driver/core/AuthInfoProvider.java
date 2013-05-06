@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -26,14 +27,15 @@ import java.util.Map;
  * Which exact key-value pairs are required depends on the authenticator
  * set for the Cassandra nodes.
  */
-public interface AuthInfoProvider {
+// NOTE: we don't expose that yet, this will change to something better
+abstract class AuthInfoProvider {
 
     /**
      * A provider that provides no authentication information.
      * <p>
      * This is only useful for when no authentication is to be used.
      */
-    public static final AuthInfoProvider NONE = new AuthInfoProvider() {
+    static final AuthInfoProvider NONE = new AuthInfoProvider() {
         public Map<String, String> getAuthInfo(InetAddress host) {
             return Collections.<String, String>emptyMap();
         }
@@ -50,5 +52,22 @@ public interface AuthInfoProvider {
      * is requested.
      * @return The authentication informations to use.
      */
-    public Map<String, String> getAuthInfo(InetAddress host);
+    public abstract Map<String, String> getAuthInfo(InetAddress host);
+
+    static class Simple extends AuthInfoProvider {
+
+        private static final String USERNAME_KEY = "username";
+        private static final String PASSWORD_KEY = "password";
+
+        private final Map<String, String> credentials = new HashMap<String, String>(2);
+
+        Simple(String username, String password) {
+            credentials.put(USERNAME_KEY, username);
+            credentials.put(PASSWORD_KEY, password);
+        }
+
+        public Map<String, String> getAuthInfo(InetAddress host) {
+            return credentials;
+        }
+    }
 }

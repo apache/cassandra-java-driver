@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+* 1.0.0:
+  - [api] The AuthInfoProvider has be (temporarily) removed. Instead, the
+    Cluster builder has a new withCredentials() method to provide a username
+    and password for use with Cassandra's PasswordAuthenticator. Custom
+    authenticator will be re-introduced in a future version but are not
+    supported at the moment.
+
 * 1.0.0-RC1:
   - [new] Null values are now supported in BoundStatement (but you will need at
     least Cassandra 1.2.3 for it to work). The API of BoundStatement has been
