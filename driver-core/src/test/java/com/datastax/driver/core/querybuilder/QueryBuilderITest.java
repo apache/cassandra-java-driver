@@ -36,7 +36,7 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
                              String.format("CREATE TABLE %s (k int PRIMARY KEY, a int, b int)", TABLE_INT));
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "short")
     public void remainingDeleteTests() throws Exception {
 
         Statement query;

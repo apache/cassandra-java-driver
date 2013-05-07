@@ -32,7 +32,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
     private PreparedStatement prepared;
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void roundRobinTest() throws Throwable {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy());
@@ -74,7 +74,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
         }
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void roundRobinWith2DCsTest() throws Throwable {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy());
@@ -113,7 +113,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
         }
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void DCAwareRoundRobinTest() throws Throwable {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc2"));
@@ -138,7 +138,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
         }
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void dcAwareRoundRobinTestWithOneRemoteHost() throws Throwable {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc2", 1));
@@ -225,12 +225,12 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
         }
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void tokenAwareTest() throws Throwable {
         tokenAwareTest(false);
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void tokenAwarePreparedTest() throws Throwable {
         tokenAwareTest(true);
     }
@@ -295,7 +295,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
         }
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void tokenAwareWithRF2Test() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);

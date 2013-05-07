@@ -64,7 +64,7 @@ public class TestListener extends TestListenerAdapter {
         if (totalTests == 0)
             totalTests = tr.getTestContext().getAllTestMethods().length;
 
-        System.out.println("Starting " + tr.getName() + " [" + ++test_index + "/" + totalTests + "]...");
+        System.out.println("Starting " + tr.getTestClass().getName() + "." + tr.getName() + " [" + ++test_index + "/" + totalTests + "]...");
     }
 
     static String formatIntoHHMMSS(long secondsTotal) {
