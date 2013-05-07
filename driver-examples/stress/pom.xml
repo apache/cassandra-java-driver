@@ -23,7 +23,7 @@
   <name>DataStax Java Driver for Apache Cassandra Examples - Stress</name>
   <description>A stress test example for DataStax Java Driver for Apache Cassandra.</description>
   <url>https://github.com/datastax/java-driver</url>
-    
+
   <dependencies>
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
@@ -70,19 +70,18 @@
       <comments>Apache License Version 2.0</comments>
     </license>
   </licenses>
-    
+
   <scm>
     <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
     <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
     <url>https://github.com/datastax/java-driver</url>
   </scm>
-  
+
   <developers>
     <developer>
       <name>Various</name>
       <organization>DataStax</organization>
     </developer>
   </developers>
-  
 </project>
 

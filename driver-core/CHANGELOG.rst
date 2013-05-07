@@ -2,7 +2,8 @@ CHANGELOG
 =========
 
 * 1.0.1:
-  - [new] The error message when no host are available has been improved.
+  - [improvement] Better error message when no host are available.
+  - [improvement] Improves performance of the stress example application been.
 
 * 1.0.0:
   - [api] The AuthInfoProvider has be (temporarily) removed. Instead, the

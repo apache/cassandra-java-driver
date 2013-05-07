@@ -24,21 +24,15 @@ import joptsimple.OptionSet;
 
 public abstract class QueryGenerator implements Iterator<QueryGenerator.Request> {
 
-    static final Request DONE_MARKER = new Request() {
-        public ResultSet execute(Session session) { return null; }
-        public ResultSetFuture executeAsync(Session session) { return null; };
-    };
-
     protected final int iterations;
 
     protected QueryGenerator(int iterations) {
         this.iterations = iterations;
     }
 
-    public abstract void createSchema(Session session);
-
     public interface Builder {
-        public QueryGenerator create(int iterations, OptionSet options);
+        public void createSchema(OptionSet options, Session session);
+        public QueryGenerator create(int id, int iterations, OptionSet options, Session session);
     }
 
     public interface Request {

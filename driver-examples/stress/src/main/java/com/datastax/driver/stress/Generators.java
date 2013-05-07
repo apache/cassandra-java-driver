@@ -41,7 +41,7 @@ public class Generators {
         session.execute("USE stress");
 
         StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE Standard1 (key int PRIMARY KEY");
+        sb.append("CREATE TABLE Standard1 (key bigint PRIMARY KEY");
         for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i)
             sb.append(", C").append(i).append(" blob");
         sb.append(")");
@@ -51,33 +51,42 @@ public class Generators {
         } catch (AlreadyExistsException e) { /* It's ok, ignore */ }
     }
 
-    private static ByteBuffer makeValue(OptionSet options) {
-        byte[] value = new byte[(Integer)options.valueOf("value-size")];
+    private static ByteBuffer makeValue(final int valueSize) {
+        byte[] value = new byte[valueSize];
         random.get().nextBytes(value);
         return ByteBuffer.wrap(value);
     }
 
     public static final QueryGenerator.Builder CASSANDRA_INSERTER = new QueryGenerator.Builder() {
-        public QueryGenerator create(final int iterations, final OptionSet options) {
+
+        public void createSchema(OptionSet options, Session session) {
+            createCassandraStressTables(session, options);
+        }
+
+        public QueryGenerator create(final int id,
+                                     final int iterations,
+                                     final OptionSet options,
+                                     final Session session) {
+
+            final int valueSize = (Integer)options.valueOf("value-size");
+            final int columnsPerRow = (Integer)options.valueOf("columns-per-row");
+            final long prefix = (long) id << 32;
+
             return new QueryGenerator(iterations) {
                 private int i;
 
-                public void createSchema(Session session) {
-                    createCassandraStressTables(session, options);
-                }
-
                 public boolean hasNext() {
-                    return i < iterations;
+                    return iterations == -1 || i < iterations;
                 }
 
                 public QueryGenerator.Request next() {
                     StringBuilder sb = new StringBuilder();
                     sb.append("UPDATE Standard1 SET ");
-                    for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i) {
+                    for (int i = 0; i < columnsPerRow; ++i) {
                         if (i > 0) sb.append(", ");
-                        sb.append("C").append(i).append("='").append(ByteBufferUtil.bytesToHex(makeValue(options))).append("'");
+                        sb.append("C").append(i).append("='").append(ByteBufferUtil.bytesToHex(makeValue(valueSize))).append("'");
                     }
-                    sb.append(" WHERE key = ").append(i);
+                    sb.append(" WHERE key = ").append(prefix | i);
                     ++i;
                     return new QueryGenerator.Request.SimpleQuery(new SimpleStatement(sb.toString()));
                 }
@@ -90,33 +99,43 @@ public class Generators {
     };
 
     public static final QueryGenerator.Builder CASSANDRA_PREPARED_INSERTER = new QueryGenerator.Builder() {
-        public QueryGenerator create(final int iterations, final OptionSet options) {
+
+        public void createSchema(OptionSet options, Session session) {
+            createCassandraStressTables(session, options);
+
+        }
+
+        public QueryGenerator create(final int id,
+                                     final int iterations,
+                                     final OptionSet options,
+                                     final Session session) {
+
+            final int columnsPerRow = (Integer)options.valueOf("columns-per-row");
+            final int valueSize = (Integer)options.valueOf("value-size");
+            final long prefix = (long) id << 32;
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("UPDATE Standard1 SET ");
+            for (int i = 0; i < columnsPerRow; ++i) {
+                if (i > 0) sb.append(", ");
+                sb.append("C").append(i).append("=?");
+            }
+            sb.append(" WHERE key = ?");
+
+            final PreparedStatement stmt = session.prepare(sb.toString());
+
             return new QueryGenerator(iterations) {
                 private int i;
-                private PreparedStatement stmt;
-
-                public void createSchema(Session session) {
-                    createCassandraStressTables(session, options);
-
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("UPDATE Standard1 SET ");
-                    for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i) {
-                        if (i > 0) sb.append(", ");
-                        sb.append("C").append(i).append("=?");
-                    }
-                    sb.append(" WHERE key = ?");
-                    stmt = session.prepare(sb.toString());
-                }
 
                 public boolean hasNext() {
-                    return i < iterations;
+                    return iterations == -1 || i < iterations;
                 }
 
                 public QueryGenerator.Request next() {
                     BoundStatement b = stmt.bind();
-                    b.setInt("key", i);
-                    for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i)
-                        b.setBytes("c" + i, makeValue(options));
+                    b.setLong("key", prefix | i);
+                    for (int i = 0; i < columnsPerRow; ++i)
+                        b.setBytes("c" + i, makeValue(valueSize));
                     ++i;
                     return new QueryGenerator.Request.PreparedQuery(b);
                 }
