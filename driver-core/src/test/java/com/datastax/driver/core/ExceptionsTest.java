@@ -335,7 +335,7 @@ public class ExceptionsTest{
 
             bridge.stop(2);
             // Ensure that gossip has reported the node as down.
-            Thread.sleep(1000);
+            Thread.sleep(2000);
 
             try{
                 session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
