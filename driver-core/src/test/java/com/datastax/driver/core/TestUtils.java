@@ -303,6 +303,17 @@ public abstract class TestUtils {
         waitFor(node, cluster, 20, true, false);
     }
 
+    public static void waitForDownWithWait(String node, Cluster cluster, int waitTime) {
+        waitFor(node, cluster, 20, true, false);
+
+        // FIXME: Once stop() works, remove this line
+        try {
+            Thread.sleep(waitTime * 1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void waitForDown(String node, Cluster cluster, int maxTry) {
         waitFor(node, cluster, maxTry, true, false);
     }
