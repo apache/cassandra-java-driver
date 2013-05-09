@@ -306,13 +306,13 @@ class Connection extends org.apache.cassandra.transport.Connection
         // Make sure all new writes are rejected
         isClosed = true;
 
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
         if (!isDefunct) {
             // Busy waiting, we just wait for request to be fully written, shouldn't take long
             while (writer.get() > 0 && Cluster.timeSince(start, unit) < timeout)
                 Uninterruptibles.sleepUninterruptibly(1, unit);
         }
-        return channel.close().await(timeout - unit.convert(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS), unit);
+        return channel.close().await(timeout - Cluster.timeSince(start, unit), unit);
         // Note: we must not call releaseExternalResources on the bootstrap, because this shutdown the executors, which are shared
     }
 
@@ -419,7 +419,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             // Make sure we skip creating connection from now on.
             isShutdown = true;
 
-            long start = System.currentTimeMillis();
+            long start = System.nanoTime();
             ChannelGroupFuture future = allChannels.close();
 
             channelFactory.releaseExternalResources();

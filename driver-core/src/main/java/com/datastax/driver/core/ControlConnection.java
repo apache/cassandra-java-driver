@@ -381,7 +381,7 @@ class ControlConnection implements Host.StateListener {
 
     static boolean waitForSchemaAgreement(Connection connection, Metadata metadata) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
 
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
         long elapsed = 0;
         while (elapsed < MAX_SCHEMA_AGREEMENT_WAIT_MS) {
             ResultSetFuture peersFuture = new ResultSetFuture(null, new QueryMessage(SELECT_SCHEMA_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
@@ -415,7 +415,7 @@ class ControlConnection implements Host.StateListener {
             // let's not flood the node too much
             Thread.sleep(200);
 
-            elapsed = System.currentTimeMillis() - start;
+            elapsed = Cluster.timeSince(start, TimeUnit.MILLISECONDS);
         }
 
         return false;
