@@ -201,7 +201,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             assertTrue(writeTimeoutOnce, "Hit testing race condition. [Never encountered a ReadTimeoutException.] (Shouldn't be an issue.):\n");
             assertTrue(unavailableOnce, "Hit testing race condition. [Never encountered an UnavailableException.] (Shouldn't be an issue.):\n");
 
-            // TODO: Missing test to see if nodes were written too
+            // TODO: Missing test to see if nodes were written to
 
 
             // Test batch writes
@@ -244,7 +244,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             assertTrue(writeTimeoutOnce, "Hit testing race condition. [Never encountered a ReadTimeoutException.] (Shouldn't be an issue.):\n");
             assertTrue(unavailableOnce, "Hit testing race condition. [Never encountered an UnavailableException.] (Shouldn't be an issue.):\n");
 
-            // TODO: Missing test to see if nodes were written too
+            // TODO: Missing test to see if nodes were written to
 
         } catch (Throwable e) {
             c.errorOut();
@@ -391,7 +391,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
                 init(c, 12);
             }
 
-            // TODO: Missing test to see if nodes were written too
+            // TODO: Missing test to see if nodes were written to
 
 
             // Test failed writes
@@ -400,7 +400,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
                 init(c, 12);
             }
 
-            // TODO: Missing test to see if nodes were written too
+            // TODO: Missing test to see if nodes were written to
 
         } catch (Throwable e) {
             c.errorOut();
@@ -495,7 +495,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
                 init(c, 12);
             }
 
-            // TODO: Missing test to see if nodes were written too
+            // TODO: Missing test to see if nodes were written to
 
 
             // Test failed writes
@@ -506,7 +506,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             if (t2.isAlive())
                 t2.interrupt();
 
-            // TODO: Missing test to see if nodes were written too
+            // TODO: Missing test to see if nodes were written to
 
         } catch (Throwable e) {
             c.errorOut();
