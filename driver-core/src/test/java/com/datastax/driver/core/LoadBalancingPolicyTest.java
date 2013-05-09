@@ -272,6 +272,9 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             c.cassandraCluster.start(2);
             waitFor(CCMBridge.IP_PREFIX + "2", c.cluster);
 
+            // FIXME: remove sleep once waitFor() is fixed
+            Thread.sleep(2000);
+
             query(c, 12);
 
             assertQueried(CCMBridge.IP_PREFIX + "1", 0);
