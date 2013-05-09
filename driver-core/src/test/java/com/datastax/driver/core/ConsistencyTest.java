@@ -28,7 +28,7 @@ import static com.datastax.driver.core.TestUtils.*;
 
 public class ConsistencyTest extends AbstractPoliciesTest {
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void testRFOneTokenAware() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
@@ -126,7 +126,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
         }
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void testRFTwoTokenAware() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
@@ -224,7 +224,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
         }
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void testRFThreeTokenAware() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
@@ -321,7 +321,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             c.discard();
         }
     }
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void testRFOneDowngradingCL() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy())).withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
@@ -419,7 +419,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
         }
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void testRFTwoDowngradingCL() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy())).withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
@@ -519,13 +519,13 @@ public class ConsistencyTest extends AbstractPoliciesTest {
         }
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void testRFThreeRoundRobinDowngradingCL() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy()).withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
         testRFThreeDowngradingCL(builder);
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void testRFThreeTokenAwareDowngradingCL() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy())).withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
         testRFThreeDowngradingCL(builder);
@@ -636,7 +636,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
         }
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void testRFThreeDowngradingCLTwoDCs() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy())).withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, 3, builder);
@@ -730,7 +730,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
         }
     }
 
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void testRFThreeDowngradingCLTwoDCsDCAware() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy("dc2"))).withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, 3, builder);

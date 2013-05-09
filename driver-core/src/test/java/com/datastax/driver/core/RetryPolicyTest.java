@@ -63,7 +63,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
     /*
      * Test the DefaultRetryPolicy.
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void defaultRetryPolicy() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         defaultPolicyTest(builder);
@@ -72,7 +72,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
     /*
      * Test the DefaultRetryPolicy with Logging enabled.
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void defaultLoggingPolicy() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE));
         defaultPolicyTest(builder);
@@ -82,7 +82,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      * Test the FallthroughRetryPolicy.
      * Uses the same code that DefaultRetryPolicy uses.
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void fallthroughRetryPolicy() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withRetryPolicy(FallthroughRetryPolicy.INSTANCE);
         defaultPolicyTest(builder);
@@ -92,7 +92,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      * Test the FallthroughRetryPolicy with Logging enabled.
      * Uses the same code that DefaultRetryPolicy uses.
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void fallthroughLoggingPolicy() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(FallthroughRetryPolicy.INSTANCE));
         defaultPolicyTest(builder);
@@ -258,7 +258,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
     /**
      * Tests DowngradingConsistencyRetryPolicy
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void downgradingConsistencyRetryPolicy() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
         downgradingConsistencyRetryPolicy(builder);
@@ -267,7 +267,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
     /**
      * Tests DowngradingConsistencyRetryPolicy with LoggingRetryPolicy
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void downgradingConsistencyLoggingPolicy() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE));
         downgradingConsistencyRetryPolicy(builder);
@@ -345,7 +345,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
     /*
      * Test the AlwaysIgnoreRetryPolicy with Logging enabled.
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void alwaysIgnoreRetryPolicyTest() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(AlwaysIgnoreRetryPolicy.INSTANCE));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
@@ -446,7 +446,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
     /*
      * Test the AlwaysIgnoreRetryPolicy with Logging enabled.
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void alwaysRetryRetryPolicyTest() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(AlwaysRetryRetryPolicy.INSTANCE));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
