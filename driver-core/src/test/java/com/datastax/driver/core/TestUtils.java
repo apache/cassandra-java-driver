@@ -264,13 +264,13 @@ public abstract class TestUtils {
                 case INT:
                     return Integer.MAX_VALUE;
                 case TEXT:
-                    return "A different text string";
+                    return "résumé";
                 case TIMESTAMP:
                     return new Date(872835240000L);
                 case UUID:
                     return UUID.fromString("067e6162-3b6f-4ae2-a171-2470b63dff00");
                 case VARCHAR:
-                    return "A different varchar string";
+                    return "A different varchar résumé";
                 case VARINT:
                     return new BigInteger(Integer.toString(Integer.MAX_VALUE) + "000");
                 case TIMEUUID:
