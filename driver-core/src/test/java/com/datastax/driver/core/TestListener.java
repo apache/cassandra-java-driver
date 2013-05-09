@@ -32,8 +32,8 @@ public class TestListener extends TestListenerAdapter {
 
         tr.getThrowable().printStackTrace();
         System.out.println("FAILED: " + tr.getName());
-        System.out.println("Test: " + formatIntoHHMMSS(testTime / 1000) + " seconds");
-        System.out.println("Elapsed: " + formatIntoHHMMSS(elapsedTime) + " seconds");
+        System.out.println("Test: " + formatIntoHHMMSS(testTime / 1000));
+        System.out.println("Elapsed: " + formatIntoHHMMSS(elapsedTime));
         System.out.println();
     }
 
@@ -43,8 +43,8 @@ public class TestListener extends TestListenerAdapter {
         long testTime = tr.getEndMillis() - tr.getStartMillis();
 
         System.out.println("SKIPPED: " + tr.getName());
-        System.out.println("Test: " + formatIntoHHMMSS(testTime / 1000) + " seconds");
-        System.out.println("Elapsed: " + formatIntoHHMMSS(elapsedTime) + " seconds");
+        System.out.println("Test: " + formatIntoHHMMSS(testTime / 1000));
+        System.out.println("Elapsed: " + formatIntoHHMMSS(elapsedTime));
         System.out.println();
     }
 
@@ -54,8 +54,8 @@ public class TestListener extends TestListenerAdapter {
         long testTime = tr.getEndMillis() - tr.getStartMillis();
 
         System.out.println("SUCCESS: " + tr.getName());
-        System.out.println("Test: " + formatIntoHHMMSS(testTime / 1000) + " seconds");
-        System.out.println("Elapsed: " + formatIntoHHMMSS(elapsedTime) + " seconds");
+        System.out.println("Test: " + formatIntoHHMMSS(testTime / 1000));
+        System.out.println("Elapsed: " + formatIntoHHMMSS(elapsedTime));
         System.out.println("\n");
     }
 
