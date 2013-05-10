@@ -67,7 +67,7 @@ class ControlConnection implements Host.StateListener {
     private final LoadBalancingPolicy balancingPolicy;
 
     private final ReconnectionPolicy reconnectionPolicy;
-    private final AtomicReference<ScheduledFuture> reconnectionAttempt = new AtomicReference<ScheduledFuture>();
+    private final AtomicReference<ScheduledFuture<?>> reconnectionAttempt = new AtomicReference<ScheduledFuture<?>>();
 
     private volatile boolean isShutdown;
 

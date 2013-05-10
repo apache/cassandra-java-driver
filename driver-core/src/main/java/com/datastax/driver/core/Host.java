@@ -37,7 +37,7 @@ public class Host {
     private volatile String rack;
 
     // Tracks reconnection attempts to that host so we avoid adding multiple tasks
-    final AtomicReference<ScheduledFuture> reconnectionAttempt = new AtomicReference<ScheduledFuture>();
+    final AtomicReference<ScheduledFuture<?>> reconnectionAttempt = new AtomicReference<ScheduledFuture<?>>();
 
     final ExecutionInfo defaultExecutionInfo;
 
