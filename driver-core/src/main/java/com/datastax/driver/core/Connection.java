@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
@@ -129,9 +130,7 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         // TODO: we will need to get fancy about handling protocol version at
         // some point, but keep it simple for now.
-        Map<String, String> options = new HashMap<String, String>() {{
-            put(StartupMessage.CQL_VERSION, CQL_VERSION);
-        }};
+        Map<String, String> options = ImmutableMap.of(StartupMessage.CQL_VERSION, CQL_VERSION);
         ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
         if (compression != ProtocolOptions.Compression.NONE)
         {
