@@ -53,8 +53,8 @@ public class Delete extends BuiltStatement {
         StringBuilder builder = new StringBuilder();
 
         builder.append("DELETE ");
-		if (columnNames != null)
-        	Utils.joinAndAppendNames(builder, ",", columnNames);
+        if (columnNames != null)
+            Utils.joinAndAppendNames(builder, ",", columnNames);
 
         builder.append(" FROM ");
         if (keyspace != null)
