@@ -633,7 +633,7 @@ public class Cluster {
             logger.trace("Host {} is UP", host);
 
             // If there is a reconnection attempt scheduled for that node, cancel it
-            ScheduledFuture scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
+            ScheduledFuture<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
             if (scheduledAttempt != null)
                 scheduledAttempt.cancel(false);
 
