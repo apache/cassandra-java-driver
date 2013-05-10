@@ -84,8 +84,9 @@ public class DataType {
                 case SET:
                 case MAP:
                     return true;
+                default:
+                    return false;
             }
-            return false;
         }
 
         /**
