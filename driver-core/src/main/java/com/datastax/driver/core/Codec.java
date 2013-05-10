@@ -54,7 +54,7 @@ class Codec {
         return (AbstractType<T>)getCodecInternal(type);
     }
 
-    private static AbstractType getCodecInternal(DataType type) {
+    private static AbstractType<?> getCodecInternal(DataType type) {
         switch (type.getName()) {
             case ASCII:     return AsciiType.instance;
             case BIGINT:    return LongType.instance;
@@ -82,21 +82,21 @@ class Codec {
     }
 
     public static DataType rawTypeToDataType(AbstractType<?> rawType) {
-        if (rawType instanceof ReversedType)
-            rawType = ((ReversedType) rawType).baseType;
+        if (rawType instanceof ReversedType<?>)
+            rawType = ((ReversedType<?>) rawType).baseType;
 
         DataType type = rawNativeMap.get(rawType);
         if (type != null)
             return type;
 
-        if (rawType instanceof CollectionType) {
-            switch (((CollectionType)rawType).kind) {
+        if (rawType instanceof CollectionType<?>) {
+            switch (((CollectionType<?>)rawType).kind) {
                 case LIST:
-                    return DataType.list(rawTypeToDataType(((ListType)rawType).elements));
+                    return DataType.list(rawTypeToDataType(((ListType<?>)rawType).elements));
                 case SET:
-                    return DataType.set(rawTypeToDataType(((SetType)rawType).elements));
+                    return DataType.set(rawTypeToDataType(((SetType<?>)rawType).elements));
                 case MAP:
-                    MapType mt = (MapType)rawType;
+                    MapType<?, ?> mt = (MapType<?, ?>)rawType;
                     return DataType.map(rawTypeToDataType(mt.keys), rawTypeToDataType(mt.values));
             }
         }
