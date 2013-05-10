@@ -35,7 +35,8 @@ public class Configuration {
     private final SocketOptions socketOptions;
     private final MetricsOptions metricsOptions;
 
-    private final AuthInfoProvider authProvider;
+    private final AuthProvider authProvider;
+
 
     /*
      * Creates a configuration object.
@@ -45,7 +46,7 @@ public class Configuration {
              new ProtocolOptions(),
              new PoolingOptions(),
              new SocketOptions(),
-             AuthInfoProvider.NONE,
+             AuthProvider.NONE,
              new MetricsOptions());
     }
 
@@ -63,17 +64,7 @@ public class Configuration {
                          ProtocolOptions protocolOptions,
                          PoolingOptions poolingOptions,
                          SocketOptions socketOptions,
-                         MetricsOptions metricsOptions) {
-        this(policies, protocolOptions, poolingOptions, socketOptions, AuthInfoProvider.NONE, metricsOptions);
-    }
-
-    // TODO: ultimately we should expose this, but we don't want to expose the AuthInfoProvider yet as it
-    // will change soon
-    Configuration(Policies policies,
-                         ProtocolOptions protocolOptions,
-                         PoolingOptions poolingOptions,
-                         SocketOptions socketOptions,
-                         AuthInfoProvider authProvider,
+                         AuthProvider authProvider,
                          MetricsOptions metricsOptions) {
         this.policies = policies;
         this.protocolOptions = protocolOptions;
@@ -141,8 +132,7 @@ public class Configuration {
      *
      * @return the authentication provider in use.
      */
-    // Not exposed yet on purpose
-    AuthInfoProvider getAuthInfoProvider() {
+    public AuthProvider getAuthProvider() {
         return authProvider;
     }
 }

@@ -246,7 +246,7 @@ public class Cluster {
 
         private final List<InetAddress> addresses = new ArrayList<InetAddress>();
         private int port = ProtocolOptions.DEFAULT_PORT;
-        private AuthInfoProvider authProvider = AuthInfoProvider.NONE;
+        private AuthProvider authProvider = AuthProvider.NONE;
 
         private LoadBalancingPolicy loadBalancingPolicy;
         private ReconnectionPolicy reconnectionPolicy;
@@ -398,7 +398,25 @@ public class Cluster {
          * @return this Builder
          */
         public Builder withCredentials(String username, String password) {
-            this.authProvider = new AuthInfoProvider.Simple(username, password);
+            this.authProvider = new PlainTextAuthProvider(username, password);
+            return this;
+        }
+
+        /**
+         * Use the specified AuthProvider when connecting to Cassandra
+         * hosts.
+         * <p>
+         * Use this method when a custom authentication scheme is in place.
+         * You shouldn't call both this method and {@code withCredentials}
+         * on the same {@code Builder} instance as one will supercede the
+         * other
+         *
+         * @param authProvider the {@link AuthProvider} to use to login to
+         *                     Cassandra hosts.
+         * @return this Builder
+         */
+        public Builder withAuthProvider(AuthProvider authProvider) {
+            this.authProvider = authProvider;
             return this;
         }
 
@@ -555,7 +573,7 @@ public class Cluster {
             this.configuration = configuration;
             this.metadata = new Metadata(this);
             this.contactPoints = contactPoints;
-            this.connectionFactory = new Connection.Factory(this, configuration.getAuthInfoProvider());
+            this.connectionFactory = new Connection.Factory(this, configuration.getAuthProvider());
 
             this.controlConnection = new ControlConnection(this);
 

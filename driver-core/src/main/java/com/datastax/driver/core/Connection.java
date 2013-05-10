@@ -18,15 +18,13 @@ package com.datastax.driver.core;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.ImmutableMap;
+import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.google.common.util.concurrent.Uninterruptibles;
 
-import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
 import org.apache.cassandra.service.ClientState;
@@ -150,17 +148,13 @@ class Connection extends org.apache.cassandra.transport.Connection
                 case ERROR:
                     throw defunct(new TransportException(address, String.format("Error initializing connection: %s", ((ErrorMessage)response).error.getMessage())));
                 case AUTHENTICATE:
-                    CredentialsMessage creds = new CredentialsMessage();
-                    creds.credentials.putAll(factory.authProvider.getAuthInfo(address));
-                    Message.Response authResponse = write(creds).get();
-                    switch (authResponse.type) {
-                        case READY:
-                            break;
-                        case ERROR:
-                            throw new AuthenticationException(address, (((ErrorMessage)authResponse).error).getMessage());
-                        default:
-                            throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a CREDENTIALS message", authResponse.type)));
-                    }
+                    Authenticator authenticator = factory.authProvider.newAuthenticator(address);
+                    byte[] initialResponse = authenticator.initialResponse();
+                    if (null == initialResponse)
+                        initialResponse = new byte[0];
+
+                    Message.Response authResponse = write(new AuthResponse(initialResponse)).get();
+                    waitForSaslCompletion(authResponse, authenticator);
                     break;
                 default:
                     throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type)));
@@ -169,6 +163,36 @@ class Connection extends org.apache.cassandra.transport.Connection
             throw new DriverInternalError("Newly created connection should not be busy");
         } catch (ExecutionException e) {
             throw defunct(new ConnectionException(address, "Unexpected error during transport initialization", e.getCause()));
+        }
+    }
+
+    private void waitForSaslCompletion(Message.Response authResponse, Authenticator authenticator)
+    throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException
+    {
+        switch (authResponse.type) {
+            case AUTH_SUCCESS:
+            case READY:
+                logger.debug("Server has sent us a Ready message, authentication should be complete.");
+                break;
+            case AUTH_CHALLENGE:
+                byte[] responseToServer = authenticator.evaluateChallenge(((AuthChallenge) authResponse).getToken());
+                if (responseToServer == null) {
+                    // If we generate a null response, then authentication has completed,return without
+                    // sending a further response back to the server.
+                    logger.trace("Response to server is null: authentication should now be complete.");
+                    return;
+                } else {
+                    // Otherwise, send the challenge response back to the server
+                    logger.trace("Sending token response back to server");
+                    waitForSaslCompletion(write(new AuthResponse(responseToServer)).get(), authenticator);
+                }
+                break;
+            case ERROR:
+                throw new AuthenticationException(address, (((ErrorMessage) authResponse).error).getMessage());
+            default:
+                throw new TransportException(address,
+                        String.format("Unexpected %s response message from server to authentication message",
+                                authResponse.type));
         }
     }
 
@@ -346,14 +370,14 @@ class Connection extends org.apache.cassandra.transport.Connection
         public final DefaultResponseHandler defaultHandler;
         public final Configuration configuration;
 
-        public final AuthInfoProvider authProvider;
+        public final AuthProvider authProvider;
         private volatile boolean isShutdown;
 
-        public Factory(Cluster.Manager manager, AuthInfoProvider authProvider) {
+        public Factory(Cluster.Manager manager, AuthProvider authProvider) {
             this(manager, manager.configuration, authProvider);
         }
 
-        private Factory(DefaultResponseHandler defaultHandler, Configuration configuration, AuthInfoProvider authProvider) {
+        private Factory(DefaultResponseHandler defaultHandler, Configuration configuration, AuthProvider authProvider) {
             this.defaultHandler = defaultHandler;
             this.configuration = configuration;
             this.authProvider = authProvider;
@@ -500,8 +524,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         }
 
         @Override
-        public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e)
-        {
+        public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) {
             // If we've closed the channel server side then we don't really want to defunct the connection, but
             // if there is remaining thread waiting on us, we still want to wake them up
             if (isClosed)
