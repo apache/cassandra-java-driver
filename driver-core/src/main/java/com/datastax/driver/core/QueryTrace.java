@@ -26,9 +26,6 @@ import org.apache.cassandra.transport.messages.QueryMessage;
 
 import com.datastax.driver.core.exceptions.TraceRetrievalException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * The Cassandra trace for a query.
  * <p>
@@ -44,8 +41,6 @@ import org.slf4j.LoggerFactory;
  * incomplete.
  */
 public class QueryTrace {
-    private static final Logger logger = LoggerFactory.getLogger(QueryTrace.class);
-
     private static final String SELECT_SESSIONS_FORMAT = "SELECT * FROM system_traces.sessions WHERE session_id = %s";
     private static final String SELECT_EVENTS_FORMAT = "SELECT * FROM system_traces.events WHERE session_id = %s";
 
