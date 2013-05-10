@@ -54,11 +54,7 @@ abstract class ConvictionPolicy {
     }
 
     public static class Simple extends ConvictionPolicy {
-
-        private final Host host;
-
         private Simple(Host host) {
-            this.host = host;
         }
 
         @Override
