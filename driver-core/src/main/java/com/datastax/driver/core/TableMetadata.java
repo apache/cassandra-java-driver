@@ -74,7 +74,7 @@ public class TableMetadata {
 
             // First, figure out which kind of table we are
             boolean isCompact = false;
-            AbstractType ct = TypeParser.parse(row.getString(COMPARATOR));
+            AbstractType<?> ct = TypeParser.parse(row.getString(COMPARATOR));
             boolean isComposite = ct instanceof CompositeType;
             List<AbstractType<?>> columnTypes = isComposite
                                               ? ((CompositeType)ct).types
@@ -83,7 +83,7 @@ public class TableMetadata {
             int clusteringSize;
             boolean hasValue;
             int last = columnTypes.size() - 1;
-            AbstractType lastType = columnTypes.get(last);
+            AbstractType<?> lastType = columnTypes.get(last);
             if (isComposite) {
                 if (lastType instanceof ColumnToCollectionType || (columnAliases.size() == last && lastType instanceof UTF8Type)) {
                     hasValue = false;
@@ -107,7 +107,7 @@ public class TableMetadata {
             TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringKey, columns, new Options(row, isCompact));
 
             // Partition key
-            AbstractType kt = TypeParser.parse(row.getString(KEY_VALIDATOR));
+            AbstractType<?> kt = TypeParser.parse(row.getString(KEY_VALIDATOR));
             List<AbstractType<?>> keyTypes = kt instanceof CompositeType
                                            ? ((CompositeType)kt).types
                                            : Collections.<AbstractType<?>>singletonList(kt);
@@ -135,7 +135,7 @@ public class TableMetadata {
 
             // Value alias (if present)
             if (hasValue) {
-                AbstractType vt = TypeParser.parse(row.getString(VALIDATOR));
+                AbstractType<?> vt = TypeParser.parse(row.getString(VALIDATOR));
                 String valueAlias = row.isNull(KEY_ALIASES) ? DEFAULT_VALUE_ALIAS : row.getString(VALUE_ALIAS);
                 ColumnMetadata vm = new ColumnMetadata(tm, valueAlias, Codec.rawTypeToDataType(vt), null);
                 columns.put(valueAlias, vm);
