@@ -245,8 +245,8 @@ public class CCMBridge {
 
         @BeforeClass(groups = {"short", "long"})
         public void beforeClass() {
-        	createCluster();
-        	maybeCreateSchema();
+            createCluster();
+            maybeCreateSchema();
         }
         
         public void maybeCreateSchema() {
