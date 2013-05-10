@@ -588,7 +588,7 @@ public class Row {
             return Collections.<T>emptyList();
 
         // TODO: we could avoid the getCodec call if we kept a reference to the original message.
-        return (List<T>)Codec.getCodec(type).compose(value);
+        return Codec.<List<T>>getCodec(type).compose(value);
     }
 
     /**
@@ -638,7 +638,7 @@ public class Row {
         if (value == null)
             return Collections.<T>emptySet();
 
-        return (Set<T>)Codec.getCodec(type).compose(value);
+        return Codec.<Set<T>>getCodec(type).compose(value);
     }
 
     /**
@@ -691,7 +691,7 @@ public class Row {
         if (value == null)
             return Collections.<K, V>emptyMap();
 
-        return (Map<K, V>)Codec.getCodec(type).compose(value);
+        return Codec.<Map<K, V>>getCodec(type).compose(value);
     }
 
     /**
