@@ -146,6 +146,14 @@ public class CCMBridge {
         execute("ccm node%d decommission", n);
     }
 
+    public void updateConfig(String name, String value) {
+        execute("ccm updateconf %s:%s", name, value);
+    }
+
+    public void populate(int n) {
+        execute("ccm populate -n %d -i %s", n, IP_PREFIX);
+    }
+
     private void execute(String command, Object... args) {
         try {
             String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;

@@ -18,8 +18,6 @@ package com.datastax.driver.core;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -109,10 +107,10 @@ class Connection extends org.apache.cassandra.transport.Connection {
         this.name = name;
 
         ClientBootstrap bootstrap = factory.newBootstrap();
-        if (factory.configuration.getProtocolOptions().sslOptions == null)
+        if (factory.configuration.getProtocolOptions().getSSLOptions() == null)
             bootstrap.setPipelineFactory(new PipelineFactory(this));
         else
-            bootstrap.setPipelineFactory(new SecurePipelineFactory(this, factory.configuration.getProtocolOptions().sslOptions));
+            bootstrap.setPipelineFactory(new SecurePipelineFactory(this, factory.configuration.getProtocolOptions().getSSLOptions()));
 
         ChannelFuture future = bootstrap.connect(new InetSocketAddress(address, factory.getPort()));
 
@@ -164,17 +162,13 @@ class Connection extends org.apache.cassandra.transport.Connection {
                 case ERROR:
                     throw defunct(new TransportException(address, String.format("Error initializing connection: %s", ((ErrorMessage)response).error.getMessage())));
                 case AUTHENTICATE:
-                    CredentialsMessage creds = new CredentialsMessage();
-                    creds.credentials.putAll(factory.authProvider.getAuthInfo(address));
-                    Message.Response authResponse = write(creds).get();
-                    switch (authResponse.type) {
-                        case READY:
-                            break;
-                        case ERROR:
-                            throw new AuthenticationException(address, (((ErrorMessage)authResponse).error).getMessage());
-                        default:
-                            throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a CREDENTIALS message", authResponse.type)));
-                    }
+                    Authenticator authenticator = factory.authProvider.newAuthenticator(address);
+                    byte[] initialResponse = authenticator.initialResponse();
+                    if (null == initialResponse)
+                        initialResponse = new byte[0];
+
+                    Message.Response authResponse = write(new AuthResponse(initialResponse)).get();
+                    waitForAuthCompletion(authResponse, authenticator);
                     break;
                 default:
                     throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type)));
@@ -183,6 +177,33 @@ class Connection extends org.apache.cassandra.transport.Connection {
             throw new DriverInternalError("Newly created connection should not be busy");
         } catch (ExecutionException e) {
             throw defunct(new ConnectionException(address, String.format("Unexpected error during transport initialization (%s)", e.getCause()), e.getCause()));
+        }
+    }
+
+    private void waitForAuthCompletion(Message.Response authResponse, Authenticator authenticator)
+    throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException
+    {
+        switch (authResponse.type) {
+            case READY:
+                logger.trace("Authentication complete");
+                break;
+            case AUTH_CHALLENGE:
+                byte[] responseToServer = authenticator.evaluateChallenge(((AuthChallenge) authResponse).getToken());
+                if (responseToServer == null) {
+                    // If we generate a null response, then authentication has completed, return without
+                    // sending a further response back to the server.
+                    logger.trace("Authentication complete (No response to server)");
+                    return;
+                } else {
+                    // Otherwise, send the challenge response back to the server
+                    logger.trace("Sending Auth response to challenge");
+                    waitForAuthCompletion(write(new AuthResponse(responseToServer)).get(), authenticator);
+                }
+                break;
+            case ERROR:
+                throw new AuthenticationException(address, (((ErrorMessage) authResponse).error).getMessage());
+            default:
+                throw new TransportException(address, String.format("Unexpected %s response message from server to authentication message", authResponse.type));
         }
     }
 
@@ -366,14 +387,14 @@ class Connection extends org.apache.cassandra.transport.Connection {
         public final DefaultResponseHandler defaultHandler;
         public final Configuration configuration;
 
-        public final AuthInfoProvider authProvider;
+        public final AuthProvider authProvider;
         private volatile boolean isShutdown;
 
-        public Factory(Cluster.Manager manager, AuthInfoProvider authProvider) {
+        public Factory(Cluster.Manager manager, AuthProvider authProvider) {
             this(manager, manager.configuration, authProvider);
         }
 
-        private Factory(DefaultResponseHandler defaultHandler, Configuration configuration, AuthInfoProvider authProvider) {
+        private Factory(DefaultResponseHandler defaultHandler, Configuration configuration, AuthProvider authProvider) {
             this.defaultHandler = defaultHandler;
             this.configuration = configuration;
             this.authProvider = authProvider;

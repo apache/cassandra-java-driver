@@ -40,8 +40,6 @@ public class Configuration {
     private final MetricsOptions metricsOptions;
     private final QueryOptions queryOptions;
 
-    private final AuthInfoProvider authProvider;
-
     /*
      * Creates a configuration object.
      */
@@ -50,7 +48,6 @@ public class Configuration {
              new ProtocolOptions(),
              new PoolingOptions(),
              new SocketOptions(),
-             AuthInfoProvider.NONE,
              new MetricsOptions(),
              new QueryOptions());
     }
@@ -63,29 +60,18 @@ public class Configuration {
      * @param poolingOptions the pooling options to use
      * @param socketOptions the socket options to use
      * @param metricsOptions the metrics options, or null to disable metrics.
+     * @param queryOptions defaults related to queries.
      */
     public Configuration(Policies policies,
                          ProtocolOptions protocolOptions,
                          PoolingOptions poolingOptions,
                          SocketOptions socketOptions,
-                         MetricsOptions metricsOptions) {
-        this(policies, protocolOptions, poolingOptions, socketOptions, AuthInfoProvider.NONE, metricsOptions, new QueryOptions());
-    }
-
-    // TODO: ultimately we should expose this, but we don't want to expose the AuthInfoProvider yet as it
-    // will change soon
-    Configuration(Policies policies,
-                  ProtocolOptions protocolOptions,
-                  PoolingOptions poolingOptions,
-                  SocketOptions socketOptions,
-                  AuthInfoProvider authProvider,
-                  MetricsOptions metricsOptions,
-                  QueryOptions queryOptions) {
+                         MetricsOptions metricsOptions,
+                         QueryOptions queryOptions) {
         this.policies = policies;
         this.protocolOptions = protocolOptions;
         this.poolingOptions = poolingOptions;
         this.socketOptions = socketOptions;
-        this.authProvider = authProvider;
         this.metricsOptions = metricsOptions;
         this.queryOptions = queryOptions;
     }
@@ -144,21 +130,11 @@ public class Configuration {
     }
 
     /**
-     * Returns the query configuration.
+     * Returns the queries configuration.
      *
-     * @return the query options.
+     * @return the queries options.
      */
     public QueryOptions getQueryOptions() {
         return queryOptions;
-    }
-
-    /**
-     * Returns the authentication provider used to connect to the Cassandra cluster.
-     *
-     * @return the authentication provider in use.
-     */
-    // Not exposed yet on purpose
-    AuthInfoProvider getAuthInfoProvider() {
-        return authProvider;
     }
 }

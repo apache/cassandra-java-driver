@@ -75,7 +75,8 @@ public class ProtocolOptions {
 
     private final int port;
 
-    final SSLOptions sslOptions; // null if no SSL
+    private final SSLOptions sslOptions; // null if no SSL
+    private final AuthProvider authProvider;
 
     private volatile Compression compression = Compression.NONE;
 
@@ -84,19 +85,19 @@ public class ProtocolOptions {
      * (and without SSL).
      */
     public ProtocolOptions() {
-        this(DEFAULT_PORT, null);
+        this(DEFAULT_PORT);
     }
 
     /**
      * Creates a new {@code ProtocolOptions} instance using the provided port
-     * (and without SSL).
+     * (without SSL nor authentication).
      * <p>
-     * This is a shortcut for {@code new ProtocolOptions(port, null)}.
+     * This is a shortcut for {@code new ProtocolOptions(port, null, AuthProvider.NONE)}.
      *
      * @param port the port to use for the binary protocol.
      */
     public ProtocolOptions(int port) {
-        this(port, null);
+        this(port, null, AuthProvider.NONE);
     }
 
     /**
@@ -106,10 +107,13 @@ public class ProtocolOptions {
      * @param port the port to use for the binary protocol.
      * @param sslOptions the SSL options to use. Use {@code null} if SSL is not
      * to be used.
+     * @param authProvider the {@code AuthProvider} to use for authentication against
+     * the Cassandra nodes.
      */
-    public ProtocolOptions(int port, SSLOptions sslOptions) {
+    public ProtocolOptions(int port, SSLOptions sslOptions, AuthProvider authProvider) {
         this.port = port;
         this.sslOptions = sslOptions;
+        this.authProvider = authProvider;
     }
 
     void register(Cluster.Manager manager) {
@@ -157,4 +161,26 @@ public class ProtocolOptions {
         this.compression = compression;
         return this;
     }
+
+    /**
+     * The {@code SSLOptions} used by this cluster.
+     *
+     * @return the {@code SSLOptions} used by this cluster (set at the cluster creation time)
+     * or {@code null} if SSL is not in use.
+     */
+    public SSLOptions getSSLOptions() {
+        return sslOptions;
+    }
+
+    /**
+     * The {@code AuthProvider} used by this cluster.
+     *
+     * @return the {@code AuthProvided} used by this cluster (set at the cluster creation
+     * time). If no authentication mechanism is in use (the default), {@code AuthProvided.NONE}
+     * will be returned.
+     */
+    public AuthProvider getAuthProvider() {
+        return authProvider;
+    }
+
 }
