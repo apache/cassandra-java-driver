@@ -58,7 +58,10 @@ class Connection extends org.apache.cassandra.transport.Connection
     private static final String CQL_VERSION = "3.0.0";
 
     private static final org.apache.cassandra.transport.Connection.Tracker EMPTY_TRACKER = new org.apache.cassandra.transport.Connection.Tracker() {
+        @Override
         public void addConnection(Channel ch, org.apache.cassandra.transport.Connection connection) {}
+
+        @Override
         public void closeAll() {}
     };
 
@@ -260,6 +263,7 @@ class Connection extends org.apache.cassandra.transport.Connection
 
     private ChannelFutureListener writeHandler(final Message.Request request, final ResponseHandler handler) {
         return new ChannelFutureListener() {
+            @Override
             public void operationComplete(ChannelFuture writeFuture) {
 
                 writer.decrementAndGet();
@@ -515,19 +519,23 @@ class Connection extends org.apache.cassandra.transport.Connection
             this.request = request;
         }
 
+        @Override
         public Message.Request request() {
             return request;
         }
 
+        @Override
         public void onSet(Connection connection, Message.Response response, ExecutionInfo info) {
             onSet(connection, response);
         }
 
+        @Override
         public void onSet(Connection connection, Message.Response response) {
             this.address = connection.address;
             super.set(response);
         }
 
+        @Override
         public void onException(Connection connection, Exception exception) {
             super.setException(exception);
         }
@@ -570,7 +578,10 @@ class Connection extends org.apache.cassandra.transport.Connection
         private static final org.apache.cassandra.transport.Connection.Tracker tracker;
         static {
             tracker = new org.apache.cassandra.transport.Connection.Tracker() {
+                @Override
                 public void addConnection(Channel ch, org.apache.cassandra.transport.Connection connection) {}
+
+                @Override
                 public void closeAll() {}
             };
         }
@@ -581,12 +592,14 @@ class Connection extends org.apache.cassandra.transport.Connection
         public PipelineFactory(final Connection connection) {
             this.connection = connection;
             this.cfactory = new org.apache.cassandra.transport.Connection.Factory() {
+                @Override
                 public Connection newConnection(org.apache.cassandra.transport.Connection.Tracker tracker) {
                     return connection;
                 }
             };
         }
 
+        @Override
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = Channels.pipeline();
 

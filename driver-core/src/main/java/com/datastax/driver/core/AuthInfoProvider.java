@@ -36,6 +36,7 @@ abstract class AuthInfoProvider {
      * This is only useful for when no authentication is to be used.
      */
     static final AuthInfoProvider NONE = new AuthInfoProvider() {
+        @Override
         public Map<String, String> getAuthInfo(InetAddress host) {
             return Collections.<String, String>emptyMap();
         }
@@ -66,6 +67,7 @@ abstract class AuthInfoProvider {
             credentials.put(PASSWORD_KEY, password);
         }
 
+        @Override
         public Map<String, String> getAuthInfo(InetAddress host) {
             return credentials;
         }

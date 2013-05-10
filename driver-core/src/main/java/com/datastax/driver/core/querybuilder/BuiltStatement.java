@@ -40,6 +40,7 @@ abstract class BuiltStatement extends Statement {
         this.routingKey = new ByteBuffer[tableMetadata.getPartitionKey().size()];
     }
 
+    @Override
     public String getQueryString() {
         if (dirty || cache == null) {
             cache = buildQueryString().trim();
@@ -76,6 +77,7 @@ abstract class BuiltStatement extends Statement {
         }
     }
 
+    @Override
     public ByteBuffer getRoutingKey() {
         if (routingKey == null)
             return null;
@@ -127,6 +129,7 @@ abstract class BuiltStatement extends Statement {
             return statement.getQueryString();
         }
 
+        @Override
         protected String buildQueryString() {
             throw new UnsupportedOperationException();
         }

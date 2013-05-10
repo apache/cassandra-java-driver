@@ -74,6 +74,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
         }
     }
 
+    @Override
     public void run() {
         // We shouldn't arrive here if the future is cancelled but better safe than sorry
         if (localFuture.isCancelled())

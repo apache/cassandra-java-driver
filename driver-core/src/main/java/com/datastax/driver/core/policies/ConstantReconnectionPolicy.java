@@ -50,12 +50,14 @@ public class ConstantReconnectionPolicy implements ReconnectionPolicy {
      *
      * @return the newly created schedule.
      */
+    @Override
     public ReconnectionSchedule newSchedule() {
         return new ConstantSchedule();
     }
 
     private class ConstantSchedule implements ReconnectionSchedule {
 
+        @Override
         public long nextDelayMs() {
             return delayMs;
         }

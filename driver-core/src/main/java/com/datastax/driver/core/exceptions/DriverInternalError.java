@@ -35,6 +35,7 @@ public class DriverInternalError extends DriverException {
         super(message, cause);
     }
 
+    @Override
     public DriverException copy() {
         return new DriverInternalError(getMessage(), this);
     }

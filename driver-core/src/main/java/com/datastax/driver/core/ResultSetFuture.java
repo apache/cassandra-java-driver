@@ -53,10 +53,12 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
             this.request = request;
         }
 
+        @Override
         public Message.Request request() {
             return request;
         }
 
+        @Override
         public void onSet(Connection connection, Message.Response response, ExecutionInfo info) {
             try {
                 switch (response.type) {
@@ -121,10 +123,12 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
         }
 
         // This is only called for internal calls, so don't bother with ExecutionInfo
+        @Override
         public void onSet(Connection connection, Message.Response response) {
             onSet(connection, response, null);
         }
 
+        @Override
         public void onException(Connection connection, Exception exception) {
             setException(exception);
         }

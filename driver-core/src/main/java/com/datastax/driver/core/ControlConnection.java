@@ -102,6 +102,7 @@ class ControlConnection implements Host.StateListener {
         } catch (NoHostAvailableException e) {
             logger.error("[Control connection] Cannot connect to any host, scheduling retry");
             new AbstractReconnectionHandler(cluster.reconnectionExecutor, reconnectionPolicy.newSchedule(), reconnectionAttempt) {
+                @Override
                 protected Connection tryReconnect() throws ConnectionException {
                     try {
                         return reconnectInternal();
@@ -110,15 +111,18 @@ class ControlConnection implements Host.StateListener {
                     }
                 }
 
+                @Override
                 protected void onReconnection(Connection connection) {
                     setNewConnection(connection);
                 }
 
+                @Override
                 protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
                     logger.error("[Control connection] Cannot connect to any host, scheduling retry in {} milliseconds", nextDelayMs);
                     return true;
                 }
 
+                @Override
                 protected boolean onUnknownException(Exception e, long nextDelayMs) {
                     logger.error(String.format("[Control connection] Unknown error during reconnection, scheduling retry in %d milliseconds", nextDelayMs), e);
                     return true;
@@ -426,10 +430,12 @@ class ControlConnection implements Host.StateListener {
         return c != null && !c.isClosed();
     }
 
+    @Override
     public void onUp(Host host) {
         balancingPolicy.onUp(host);
     }
 
+    @Override
     public void onDown(Host host) {
         balancingPolicy.onDown(host);
 
@@ -441,6 +447,7 @@ class ControlConnection implements Host.StateListener {
             // We might very be on an I/O thread when we reach this so we should not do that on this thread.
             // Besides, there is no reason to block the onDown method while we try to reconnect.
             cluster.executor.submit(new Runnable() {
+                @Override
                 public void run() {
                     reconnect();
                 }
@@ -448,11 +455,13 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
+    @Override
     public void onAdd(Host host) {
         balancingPolicy.onAdd(host);
         refreshNodeListAndTokenMap();
     }
 
+    @Override
     public void onRemove(Host host) {
         balancingPolicy.onRemove(host);
         refreshNodeListAndTokenMap();

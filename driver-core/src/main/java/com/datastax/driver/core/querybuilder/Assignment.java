@@ -36,6 +36,7 @@ public abstract class Assignment extends Utils.Appendeable {
             this.value = value;
         }
 
+        @Override
         void appendTo(StringBuilder sb) {
             appendName(name, sb);
             sb.append("=");
@@ -59,6 +60,7 @@ public abstract class Assignment extends Utils.Appendeable {
             }
         }
 
+        @Override
         void appendTo(StringBuilder sb) {
             appendName(name, sb).append("=");
             appendName(name, sb).append(isIncr ? "+" : "-").append(value);
@@ -75,6 +77,7 @@ public abstract class Assignment extends Utils.Appendeable {
             this.value = value;
         }
 
+        @Override
         void appendTo(StringBuilder sb) {
             appendName(name, sb).append("=");
             appendList(value, sb);
@@ -94,6 +97,7 @@ public abstract class Assignment extends Utils.Appendeable {
             this.value = value;
         }
 
+        @Override
         void appendTo(StringBuilder sb) {
             appendName(name, sb).append("[").append(idx).append("]=");
             appendValue(value, sb);
@@ -111,6 +115,7 @@ public abstract class Assignment extends Utils.Appendeable {
             this.isAdd = isAdd;
         }
 
+        @Override
         void appendTo(StringBuilder sb) {
             appendName(name, sb).append("=");
             appendName(name, sb).append(isAdd ? "+" : "-");
@@ -129,6 +134,7 @@ public abstract class Assignment extends Utils.Appendeable {
             this.value = value;
         }
 
+        @Override
         void appendTo(StringBuilder sb) {
             appendName(name, sb).append("[");
             appendValue(key, sb);

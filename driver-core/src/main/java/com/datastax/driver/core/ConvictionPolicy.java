@@ -61,6 +61,7 @@ abstract class ConvictionPolicy {
             this.host = host;
         }
 
+        @Override
         public boolean addFailure(ConnectionException exception) {
             return true;
         }
@@ -69,10 +70,12 @@ abstract class ConvictionPolicy {
             return true;
         }
 
+        @Override
         public void reset() {}
 
         public static class Factory implements ConvictionPolicy.Factory {
 
+            @Override
             public ConvictionPolicy create(Host host) {
                 return new Simple(host);
             }

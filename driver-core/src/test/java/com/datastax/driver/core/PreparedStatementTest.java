@@ -42,6 +42,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         return t.getName() == DataType.Name.COUNTER;
     }
 
+    @Override
     protected Collection<String> getTableDefinitions() {
 
         List<String> defs = new ArrayList<String>(4);

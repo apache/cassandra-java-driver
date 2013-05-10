@@ -57,6 +57,7 @@ public class NoHostAvailableException extends DriverException {
         return new HashMap<InetAddress, String>(errors);
     }
 
+    @Override
     public DriverException copy() {
         return new NoHostAvailableException(getMessage(), this, errors);
     }

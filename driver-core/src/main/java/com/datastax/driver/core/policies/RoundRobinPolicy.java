@@ -46,6 +46,7 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
      */
     public RoundRobinPolicy() {}
 
+    @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
         this.liveHosts.addAll(hosts);
         this.index.set(new Random().nextInt(Math.max(hosts.size(), 1)));
@@ -61,6 +62,7 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
      * @param host the host of which to return the distance of.
      * @return the HostDistance to {@code host}.
      */
+    @Override
     public HostDistance distance(Host host) {
         return HostDistance.LOCAL;
     }
@@ -76,6 +78,7 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
      * @return a new query plan, i.e. an iterator indicating which host to
      * try first for querying, which one to use as failover, etc...
      */
+    @Override
     public Iterator<Host> newQueryPlan(Query query) {
 
         // We clone liveHosts because we want a version of the list that
@@ -94,6 +97,7 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
             private int idx = startIdx;
             private int remaining = hosts.size();
 
+            @Override
             protected Host computeNext() {
                 if (remaining <= 0)
                     return endOfData();
@@ -104,18 +108,22 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
         };
     }
 
+    @Override
     public void onUp(Host host) {
         liveHosts.addIfAbsent(host);
     }
 
+    @Override
     public void onDown(Host host) {
         liveHosts.remove(host);
     }
 
+    @Override
     public void onAdd(Host host) {
         onUp(host);
     }
 
+    @Override
     public void onRemove(Host host) {
         onDown(host);
     }

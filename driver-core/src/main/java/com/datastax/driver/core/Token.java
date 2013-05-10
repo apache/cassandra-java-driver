@@ -47,10 +47,12 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
         private final long value;
 
         public static final Factory<M3PToken> FACTORY = new Factory<M3PToken>() {
+            @Override
             public M3PToken fromString(String tokenStr) {
                 return new M3PToken(Long.parseLong(tokenStr));
             }
 
+            @Override
             public M3PToken hash(ByteBuffer partitionKey) {
                 long v = MurmurHash.hash3_x64_128(partitionKey, partitionKey.position(), partitionKey.remaining(), 0)[0];
                 return new M3PToken(v == Long.MIN_VALUE ? Long.MAX_VALUE : v);
@@ -88,10 +90,12 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
         private final ByteBuffer value;
 
         public static final Factory<OPPToken> FACTORY = new Factory<OPPToken>() {
+            @Override
             public OPPToken fromString(String tokenStr) {
                 return new OPPToken(ByteBufferUtil.bytes(tokenStr));
             }
 
+            @Override
             public OPPToken hash(ByteBuffer partitionKey) {
                 return new OPPToken(partitionKey);
             }
@@ -127,10 +131,12 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
         private final BigInteger value;
 
         public static final Factory<RPToken> FACTORY = new Factory<RPToken>() {
+            @Override
             public RPToken fromString(String tokenStr) {
                 return new RPToken(new BigInteger(tokenStr));
             }
 
+            @Override
             public RPToken hash(ByteBuffer partitionKey) {
                 return new RPToken(FBUtilities.hashToBigInteger(partitionKey));
             }

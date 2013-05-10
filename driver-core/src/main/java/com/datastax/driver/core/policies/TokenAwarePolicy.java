@@ -62,6 +62,7 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
         this.childPolicy = childPolicy;
     }
 
+    @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
         clusterMetadata = cluster.getMetadata();
         childPolicy.init(cluster, hosts);
@@ -73,6 +74,7 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
      * @param host the host of which to return the distance of.
      * @return the HostDistance to {@code host} as returned by the wrapped policy.
      */
+    @Override
     public HostDistance distance(Host host) {
         return childPolicy.distance(host);
     }
@@ -88,6 +90,7 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
      * @param query the query for which to build the plan.
      * @return the new query plan.
      */
+    @Override
     public Iterator<Host> newQueryPlan(final Query query) {
 
         ByteBuffer partitionKey = query.getRoutingKey();
@@ -103,6 +106,7 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
             private final Iterator<Host> iter = replicas.iterator();
             private Iterator<Host> childIterator;
 
+            @Override
             protected Host computeNext() {
                 while (iter.hasNext()) {
                     Host host = iter.next();
@@ -124,18 +128,22 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
         };
     }
 
+    @Override
     public void onUp(Host host) {
         childPolicy.onUp(host);
     }
 
+    @Override
     public void onDown(Host host) {
         childPolicy.onDown(host);
     }
 
+    @Override
     public void onAdd(Host host) {
         childPolicy.onAdd(host);
     }
 
+    @Override
     public void onRemove(Host host) {
         childPolicy.onRemove(host);
     }

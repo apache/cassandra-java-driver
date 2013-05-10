@@ -31,6 +31,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private static String withOptions;
 
+    @Override
     protected Collection<String> getTableDefinitions() {
 
         String sparse = "CREATE TABLE sparse (\n"

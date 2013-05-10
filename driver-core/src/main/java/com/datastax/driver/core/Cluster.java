@@ -258,6 +258,7 @@ public class Cluster {
         private final PoolingOptions poolingOptions = new PoolingOptions();
         private final SocketOptions socketOptions = new SocketOptions();
 
+        @Override
         public List<InetAddress> getContactPoints() {
             return addresses;
         }
@@ -470,6 +471,7 @@ public class Cluster {
          *
          * @return the configuration to use for the new cluster.
          */
+        @Override
         public Configuration getConfiguration() {
             Policies policies = new Policies(
                 loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
@@ -626,6 +628,7 @@ public class Cluster {
                 && executor.awaitTermination(timeout - timeSince(start, unit), unit);
         }
 
+        @Override
         public void onUp(Host host) {
             logger.trace("Host {} is UP", host);
 
@@ -646,6 +649,7 @@ public class Cluster {
                 s.manager.onUp(host);
         }
 
+        @Override
         public void onDown(final Host host) {
             logger.trace("Host {} is DOWN", host);
             controlConnection.onDown(host);
@@ -679,6 +683,7 @@ public class Cluster {
             }.start();
         }
 
+        @Override
         public void onAdd(Host host) {
             logger.trace("Adding new host {}", host);
 
@@ -694,6 +699,7 @@ public class Cluster {
                 s.manager.onAdd(host);
         }
 
+        @Override
         public void onRemove(Host host) {
             logger.trace("Removing host {}", host);
             controlConnection.onRemove(host);
@@ -804,6 +810,7 @@ public class Cluster {
         public void submitSchemaRefresh(final String keyspace, final String table) {
             logger.trace("Submitting schema refresh");
             executor.submit(new Runnable() {
+                @Override
                 public void run() {
                     try {
                         controlConnection.refreshSchema(keyspace, table);
@@ -820,6 +827,7 @@ public class Cluster {
                 logger.debug("Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : "." + table);
 
             executor.submit(new Runnable() {
+                @Override
                 public void run() {
                     try {
                         // Before refreshing the schema, wait for schema agreement so that querying a table just after having created it don't fail.
@@ -837,6 +845,7 @@ public class Cluster {
         }
 
         // Called when some message has been received but has been initiated from the server (streamId < 0).
+        @Override
         public void handle(Message.Response response) {
 
             if (!(response instanceof EventMessage)) {
@@ -854,6 +863,7 @@ public class Cluster {
             // but that before the client-side server is up) so adds a 1 second delay in that case.
             // TODO: this delay is honestly quite random. We should do something on the C* side to fix that.
             scheduledTasksExecutor.schedule(new Runnable() {
+                @Override
                 public void run() {
                     switch (event.type) {
                         case TOPOLOGY_CHANGE:

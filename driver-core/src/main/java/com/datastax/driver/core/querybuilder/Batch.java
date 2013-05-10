@@ -40,6 +40,7 @@ public class Batch extends BuiltStatement {
             add(statements[i]);
     }
 
+    @Override
     protected String buildQueryString() {
         StringBuilder builder = new StringBuilder();
         builder.append(isCounterOp() ? "BEGIN COUNTER BATCH" : "BEGIN BATCH");

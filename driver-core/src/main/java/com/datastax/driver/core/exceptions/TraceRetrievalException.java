@@ -30,6 +30,7 @@ public class TraceRetrievalException extends DriverException {
         super(message, cause);
     }
 
+    @Override
     public DriverException copy() {
         return new TraceRetrievalException(getMessage(), this);
     }

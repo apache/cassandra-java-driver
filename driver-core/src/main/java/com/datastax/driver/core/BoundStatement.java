@@ -208,6 +208,7 @@ public class BoundStatement extends Query {
      *
      * @return the routing key for this statement or {@code null}.
      */
+    @Override
     public ByteBuffer getRoutingKey() {
         if (statement.routingKey != null)
             return statement.routingKey;

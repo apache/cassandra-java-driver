@@ -55,6 +55,7 @@ class HostConnectionPool {
         this.manager = manager;
 
         this.newConnectionTask = new Runnable() {
+            @Override
             public void run() {
                 addConnectionIfUnderMaximum();
                 scheduledForCreation.decrementAndGet();
@@ -300,6 +301,7 @@ class HostConnectionPool {
         connections.remove(connection);
 
         manager.executor().submit(new Runnable() {
+            @Override
             public void run() {
                 connection.close();
                 addConnectionIfUnderMaximum();
@@ -309,6 +311,7 @@ class HostConnectionPool {
 
     private void close(final Connection connection) {
         manager.executor().submit(new Runnable() {
+            @Override
             public void run() {
                 connection.close();
             }

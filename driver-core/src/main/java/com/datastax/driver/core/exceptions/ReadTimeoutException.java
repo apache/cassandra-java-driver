@@ -62,6 +62,7 @@ public class ReadTimeoutException extends QueryTimeoutException {
         return dataPresent;
     }
 
+    @Override
     public DriverException copy() {
         return new ReadTimeoutException(getMessage(),
                                         this,
