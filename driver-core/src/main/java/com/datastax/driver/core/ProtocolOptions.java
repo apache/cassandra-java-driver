@@ -57,8 +57,6 @@ public class ProtocolOptions {
     private final int port;
     private volatile Compression compression = Compression.NONE;
 
-    private volatile Cluster.Manager manager;
-
     /**
      * Creates a new {@code ProtocolOptions} instance using the {@code DEFAULT_PORT}.
      */
@@ -76,7 +74,6 @@ public class ProtocolOptions {
     }
 
     void register(Cluster.Manager manager) {
-        this.manager = manager;
     }
 
     /**
