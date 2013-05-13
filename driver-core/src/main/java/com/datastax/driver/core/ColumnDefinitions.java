@@ -108,6 +108,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
      *
      * @return an iterator over the {@link Definition} contained in this metadata.
      */
+    @Override
     public Iterator<Definition> iterator() {
         return Arrays.asList(byIdx).iterator();
     }
@@ -198,6 +199,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         return getTable(getIdx(name));
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Columns[");

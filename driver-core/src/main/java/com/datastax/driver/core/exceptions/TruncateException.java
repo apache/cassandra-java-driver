@@ -28,6 +28,7 @@ public class TruncateException extends QueryExecutionException {
         super(msg, cause);
     }
 
+    @Override
     public DriverException copy() {
         return new TruncateException(getMessage(), this);
     }

@@ -70,6 +70,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Generates the table definitions that will be used in testing
      */
+    @Override
     protected Collection<String> getTableDefinitions() {
         ArrayList<String> tableDefinitions = new ArrayList<String>();
 

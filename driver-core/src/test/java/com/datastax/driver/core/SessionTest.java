@@ -31,6 +31,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final String TABLE3 = "test3";
     private static final String COUNTER_TABLE = "counters";
 
+    @Override
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
                              String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE2),

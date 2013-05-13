@@ -30,6 +30,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
     private static final String TABLE_TEXT = "test_text";
     private static final String TABLE_INT = "test_int";
 
+    @Override
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList(String.format("CREATE TABLE %s (k text PRIMARY KEY, a int, b int)", TABLE_TEXT),
                              String.format("CREATE TABLE %s (k int PRIMARY KEY, a int, b int)", TABLE_INT));

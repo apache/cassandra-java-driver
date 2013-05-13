@@ -28,6 +28,7 @@ public class SyntaxError extends QueryValidationException {
         super(msg, cause);
     }
 
+    @Override
     public DriverException copy() {
         return new SyntaxError(getMessage(), this);
     }

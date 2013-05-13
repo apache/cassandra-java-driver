@@ -78,6 +78,7 @@ public class AlreadyExistsException extends QueryValidationException {
         return table.isEmpty() ? null : table;
     }
 
+    @Override
     public DriverException copy() {
         return new AlreadyExistsException(getMessage(), this, keyspace, table);
     }

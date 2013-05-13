@@ -29,7 +29,10 @@ public abstract class Query {
 
     // An exception to the Statement or BoundStatement rule above. This is
     // used when preparing a statement and for other internal queries. Do not expose publicly.
-    static final Query DEFAULT = new Query() { public ByteBuffer getRoutingKey() { return null; } };
+    static final Query DEFAULT = new Query() {
+        @Override
+        public ByteBuffer getRoutingKey() { return null; }
+    };
 
     private volatile ConsistencyLevel consistency;
     private volatile boolean traceQuery;

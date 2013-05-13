@@ -130,17 +130,21 @@ public class ResultSet implements Iterable<Row> {
      * @return an iterator that will consume and return the remaining rows of
      * this ResultSet.
      */
+    @Override
     public Iterator<Row> iterator() {
         return new Iterator<Row>() {
 
+            @Override
             public boolean hasNext() {
                 return !rows.isEmpty();
             }
 
+            @Override
             public Row next() {
                 return Row.fromData(metadata, rows.poll());
             }
 
+            @Override
             public void remove() {
                 throw new UnsupportedOperationException();
             }
