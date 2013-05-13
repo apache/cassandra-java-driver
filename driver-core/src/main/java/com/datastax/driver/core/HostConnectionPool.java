@@ -127,10 +127,6 @@ class HostConnectionPool {
         return leastBusy;
     }
 
-    private static long elapsed(long start, TimeUnit unit) {
-        return unit.convert(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS);
-    }
-
     private void awaitAvailableConnection(long timeout, TimeUnit unit) throws InterruptedException {
         waitLock.lock();
         try {
@@ -159,7 +155,7 @@ class HostConnectionPool {
     }
 
     private Connection waitForConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
         long remaining = timeout;
         do {
             try {
@@ -193,7 +189,7 @@ class HostConnectionPool {
                     return leastBusy;
             }
 
-            remaining = timeout - elapsed(start, unit);
+            remaining = timeout - Cluster.timeSince(start, unit);
         } while (remaining > 0);
 
         throw new TimeoutException();
@@ -343,7 +339,7 @@ class HostConnectionPool {
     }
 
     private boolean discardAvailableConnections(long timeout, TimeUnit unit) throws InterruptedException {
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
         boolean success = true;
         for (Connection connection : connections) {
             success &= connection.close(timeout - Cluster.timeSince(start, unit), unit);
