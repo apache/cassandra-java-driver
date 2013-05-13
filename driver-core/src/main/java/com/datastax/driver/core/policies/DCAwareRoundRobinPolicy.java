@@ -87,6 +87,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
         this.usedHostsPerRemoteDc = usedHostsPerRemoteDc;
     }
 
+    @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
         this.index.set(new Random().nextInt(Math.max(hosts.size(), 1)));
 
@@ -118,6 +119,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * @param host the host of which to return the distance of.
      * @return the HostDistance to {@code host}.
      */
+    @Override
     public HostDistance distance(Host host) {
         String dc = dc(host);
         if (dc.equals(localDc))
@@ -147,6 +149,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * @return a new query plan, i.e. an iterator indicating which host to
      * try first for querying, which one to use as failover, etc...
      */
+    @Override
     public Iterator<Host> newQueryPlan(Query query) {
 
         CopyOnWriteArrayList<Host> localLiveHosts = perDcLiveHosts.get(localDc);
@@ -167,6 +170,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
             private List<Host> currentDcHosts;
             private int currentDcRemaining;
 
+            @Override
             protected Host computeNext() {
                 if (remainingLocal > 0) {
                     remainingLocal--;
@@ -201,6 +205,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
         };
     }
 
+    @Override
     public void onUp(Host host) {
         String dc = dc(host);
         CopyOnWriteArrayList<Host> dcHosts = perDcLiveHosts.get(dc);
@@ -214,16 +219,19 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
         dcHosts.addIfAbsent(host);
     }
 
+    @Override
     public void onDown(Host host) {
         CopyOnWriteArrayList<Host> dcHosts = perDcLiveHosts.get(dc(host));
         if (dcHosts != null)
             dcHosts.remove(host);
     }
 
+    @Override
     public void onAdd(Host host) {
         onUp(host);
     }
 
+    @Override
     public void onRemove(Host host) {
         onDown(host);
     }

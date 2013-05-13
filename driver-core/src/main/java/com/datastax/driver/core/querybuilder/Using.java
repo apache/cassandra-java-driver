@@ -25,6 +25,7 @@ public class Using extends Utils.Appendeable {
         this.value = value;
     }
 
+    @Override
     void appendTo(StringBuilder sb) {
         sb.append(optionName).append(" ").append(value);
     }

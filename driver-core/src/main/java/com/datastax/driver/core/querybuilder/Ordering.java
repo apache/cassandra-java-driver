@@ -25,6 +25,7 @@ public class Ordering extends Utils.Appendeable {
         this.isDesc = isDesc;
     }
 
+    @Override
     void appendTo(StringBuilder sb) {
         Utils.appendName(name, sb);
         sb.append(isDesc ? " DESC" : " ASC");

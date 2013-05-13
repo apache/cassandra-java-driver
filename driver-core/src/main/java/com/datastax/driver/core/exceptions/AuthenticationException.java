@@ -44,6 +44,7 @@ public class AuthenticationException extends DriverException {
         return host;
     }
 
+    @Override
     public DriverException copy() {
         return new AuthenticationException(getMessage(), this, host);
     }

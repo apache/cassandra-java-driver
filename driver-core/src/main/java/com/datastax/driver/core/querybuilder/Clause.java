@@ -42,11 +42,13 @@ public abstract class Clause extends Utils.Appendeable {
             this.value = value;
         }
 
+        @Override
         void appendTo(StringBuilder sb) {
             Utils.appendName(name, sb).append(op);
             Utils.appendValue(value, sb);
         }
 
+        @Override
         Object firstValue() {
             return value;
         }
@@ -64,11 +66,13 @@ public abstract class Clause extends Utils.Appendeable {
                 throw new IllegalArgumentException("Missing values for IN clause");
         }
 
+        @Override
         void appendTo(StringBuilder sb) {
             Utils.appendName(name, sb).append(" IN (");
             Utils.joinAndAppendValues(sb, ",", values).append(")");
         }
 
+        @Override
         Object firstValue() {
             return values.get(0);
         }

@@ -49,6 +49,7 @@ public class Delete extends BuiltStatement {
         this.usings = new Options(this);
     }
 
+    @Override
     protected String buildQueryString() {
         StringBuilder builder = new StringBuilder();
 

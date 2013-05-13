@@ -349,12 +349,14 @@ public class Session {
             }
         }
 
+        @Override
         public void onUp(Host host) {
             addOrRenewPool(host);
             loadBalancer.onUp(host);
             updateCreatedPools();
         }
 
+        @Override
         public void onDown(Host host) {
             loadBalancer.onDown(host);
             // Note that with well behaved balancing policy (that ignore dead nodes), the removePool call is not necessary
@@ -363,12 +365,14 @@ public class Session {
             updateCreatedPools();
         }
 
+        @Override
         public void onAdd(Host host) {
             addOrRenewPool(host);
             loadBalancer.onAdd(host);
             updateCreatedPools();
         }
 
+        @Override
         public void onRemove(Host host) {
             loadBalancer.onRemove(host);
             removePool(host);

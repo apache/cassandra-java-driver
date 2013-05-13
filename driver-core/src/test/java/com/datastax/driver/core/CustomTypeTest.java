@@ -28,6 +28,7 @@ import org.apache.cassandra.utils.ByteBufferUtil;
  */
 public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
 
+    @Override
     protected Collection<String> getTableDefinitions() {
         return Collections.singleton(
               "CREATE TABLE test ("

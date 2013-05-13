@@ -29,6 +29,7 @@ public class UnauthorizedException extends QueryValidationException {
         super(msg, cause);
     }
 
+    @Override
     public DriverException copy() {
         return new UnauthorizedException(getMessage(), this);
     }

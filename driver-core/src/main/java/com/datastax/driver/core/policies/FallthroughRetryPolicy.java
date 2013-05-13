@@ -43,6 +43,7 @@ public class FallthroughRetryPolicy implements RetryPolicy {
      * @param nbRetry the number of retry already performed for this operation.
      * @return {@code RetryDecision.rethrow()}.
      */
+    @Override
     public RetryDecision onReadTimeout(Query query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
         return RetryDecision.rethrow();
     }
@@ -60,6 +61,7 @@ public class FallthroughRetryPolicy implements RetryPolicy {
      * @param nbRetry the number of retry already performed for this operation.
      * @return {@code RetryDecision.rethrow()}.
      */
+    @Override
     public RetryDecision onWriteTimeout(Query query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
         return RetryDecision.rethrow();
     }
@@ -78,6 +80,7 @@ public class FallthroughRetryPolicy implements RetryPolicy {
      * @param nbRetry the number of retry already performed for this operation.
      * @return {@code RetryDecision.rethrow()}.
      */
+    @Override
     public RetryDecision onUnavailable(Query query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
         return RetryDecision.rethrow();
     }

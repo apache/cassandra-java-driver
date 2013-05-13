@@ -69,6 +69,7 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
      *
      * @return the newly created schedule.
      */
+    @Override
     public ReconnectionSchedule newSchedule() {
         return new ExponentialSchedule();
     }
@@ -77,6 +78,7 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
         private int attempts;
 
+        @Override
         public long nextDelayMs() {
             // We "overflow" at 64 attempts but I doubt this matter
             if (attempts >= 64)
