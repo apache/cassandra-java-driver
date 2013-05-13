@@ -22,6 +22,8 @@ package com.datastax.driver.core.exceptions;
  */
 public class TraceRetrievalException extends DriverException {
 
+    private static final long serialVersionUID = 0;
+
     public TraceRetrievalException(String message) {
         super(message);
     }

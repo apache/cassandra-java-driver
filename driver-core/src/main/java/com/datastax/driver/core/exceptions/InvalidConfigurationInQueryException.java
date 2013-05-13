@@ -24,6 +24,8 @@ package com.datastax.driver.core.exceptions;
  */
 public class InvalidConfigurationInQueryException extends InvalidQueryException {
 
+    private static final long serialVersionUID = 0;
+
     public InvalidConfigurationInQueryException(String msg) {
         super(msg);
     }

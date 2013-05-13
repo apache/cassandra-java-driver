@@ -85,6 +85,7 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
         // cannot change concurrently of the query plan iterator (this
         // would be racy). We use clone() as it don't involve a copy of the
         // underlying array (and thus we rely on liveHosts being a CopyOnWriteArrayList).
+        @SuppressWarnings("unchecked")
         final List<Host> hosts = (List<Host>)liveHosts.clone();
         final int startIdx = index.getAndIncrement();
 

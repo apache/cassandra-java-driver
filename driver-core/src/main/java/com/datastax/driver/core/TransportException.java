@@ -23,6 +23,8 @@ import java.net.InetAddress;
  */
 class TransportException extends ConnectionException
 {
+    private static final long serialVersionUID = 0;
+
     public TransportException(InetAddress address, String msg, Throwable cause)
     {
         super(address, msg, cause);

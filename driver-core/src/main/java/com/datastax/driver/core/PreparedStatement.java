@@ -55,16 +55,15 @@ public class PreparedStatement {
     static PreparedStatement fromMessage(ResultMessage.Prepared msg, Metadata clusterMetadata, String query, String queryKeyspace) {
         switch (msg.kind) {
             case PREPARED:
-                ResultMessage.Prepared pmsg = (ResultMessage.Prepared)msg;
-                ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[pmsg.metadata.names.size()];
+                ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[msg.metadata.names.size()];
                 if (defs.length == 0)
-                    return new PreparedStatement(new ColumnDefinitions(defs), pmsg.statementId, null, query, queryKeyspace);
+                    return new PreparedStatement(new ColumnDefinitions(defs), msg.statementId, null, query, queryKeyspace);
 
                 List<ColumnMetadata> partitionKeyColumns = null;
                 int[] pkIndexes = null;
-                KeyspaceMetadata km = clusterMetadata.getKeyspace(pmsg.metadata.names.get(0).ksName);
+                KeyspaceMetadata km = clusterMetadata.getKeyspace(msg.metadata.names.get(0).ksName);
                 if (km != null) {
-                    TableMetadata tm = km.getTable(pmsg.metadata.names.get(0).cfName);
+                    TableMetadata tm = km.getTable(msg.metadata.names.get(0).cfName);
                     if (tm != null) {
                         partitionKeyColumns = tm.getPartitionKey();
                         pkIndexes = new int[partitionKeyColumns.size()];
@@ -75,11 +74,11 @@ public class PreparedStatement {
 
                 // Note: we rely on the fact CQL queries cannot span multiple tables. If that change, we'll have to get smarter.
                 for (int i = 0; i < defs.length; i++) {
-                    defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(pmsg.metadata.names.get(i));
+                    defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(msg.metadata.names.get(i));
                     maybeGetIndex(defs[i].getName(), i, partitionKeyColumns, pkIndexes);
                 }
 
-                return new PreparedStatement(new ColumnDefinitions(defs), pmsg.statementId, allSet(pkIndexes) ? pkIndexes : null, query, queryKeyspace);
+                return new PreparedStatement(new ColumnDefinitions(defs), msg.statementId, allSet(pkIndexes) ? pkIndexes : null, query, queryKeyspace);
             default:
                 throw new DriverInternalError(String.format("%s response received when prepared statement received was expected", msg.kind));
         }

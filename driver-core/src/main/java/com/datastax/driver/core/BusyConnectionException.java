@@ -17,6 +17,8 @@ package com.datastax.driver.core;
 
 class BusyConnectionException extends Exception
 {
+    private static final long serialVersionUID = 0;
+
     public BusyConnectionException() {
         super();
     }

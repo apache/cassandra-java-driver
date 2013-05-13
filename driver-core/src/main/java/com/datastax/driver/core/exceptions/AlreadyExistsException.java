@@ -20,6 +20,8 @@ package com.datastax.driver.core.exceptions;
  */
 public class AlreadyExistsException extends QueryValidationException {
 
+    private static final long serialVersionUID = 0;
+
     private final String keyspace;
     private final String table;
 

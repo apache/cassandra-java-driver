@@ -17,8 +17,10 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 
-class ConnectionException extends Exception
-{
+class ConnectionException extends Exception {
+
+    private static final long serialVersionUID = 0;
+
     public final InetAddress address;
 
     public ConnectionException(InetAddress address, String msg, Throwable cause)

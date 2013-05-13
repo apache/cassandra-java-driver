@@ -23,6 +23,8 @@ import com.datastax.driver.core.ConsistencyLevel;
  */
 public class UnavailableException extends QueryExecutionException {
 
+    private static final long serialVersionUID = 0;
+
     private final ConsistencyLevel consistency;
     private final int required;
     private final int alive;

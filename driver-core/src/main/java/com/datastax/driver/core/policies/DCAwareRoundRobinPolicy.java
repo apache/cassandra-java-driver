@@ -106,6 +106,11 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
         return dc == null ? localDc : dc;
     }
 
+    @SuppressWarnings("unchecked")
+    private static CopyOnWriteArrayList<Host> cloneList(CopyOnWriteArrayList<Host> list) {
+        return (CopyOnWriteArrayList<Host>)list.clone();
+    }
+
     /**
      * Return the HostDistance for the provided host.
      * <p>
@@ -130,7 +135,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
             return HostDistance.IGNORED;
 
         // We need to clone, otherwise our subList call is not thread safe
-        dcHosts = (CopyOnWriteArrayList<Host>)dcHosts.clone();
+        dcHosts = cloneList(dcHosts);
         return dcHosts.subList(0, Math.min(dcHosts.size(), usedHostsPerRemoteDc)).contains(host)
              ? HostDistance.REMOTE
              : HostDistance.IGNORED;
@@ -153,7 +158,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
     public Iterator<Host> newQueryPlan(Query query) {
 
         CopyOnWriteArrayList<Host> localLiveHosts = perDcLiveHosts.get(localDc);
-        final List<Host> hosts = localLiveHosts == null ? Collections.<Host>emptyList() : (List<Host>)localLiveHosts.clone();
+        final List<Host> hosts = localLiveHosts == null ? Collections.<Host>emptyList() : cloneList(localLiveHosts);
         final int startIdx = index.getAndIncrement();
 
         // Overflow protection; not theoretically thread safe but should be good enough
@@ -195,7 +200,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
                 CopyOnWriteArrayList<Host> nextDcHosts = perDcLiveHosts.get(nextRemoteDc);
                 if (nextDcHosts != null) {
                     // Clone for thread safety
-                    List<Host> dcHosts = (List<Host>)nextDcHosts.clone();
+                    List<Host> dcHosts = cloneList(nextDcHosts);
                     currentDcHosts = dcHosts.subList(0, Math.min(dcHosts.size(), usedHostsPerRemoteDc));
                     currentDcRemaining = currentDcHosts.size();
                 }

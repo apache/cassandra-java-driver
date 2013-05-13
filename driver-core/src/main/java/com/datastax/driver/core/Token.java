@@ -22,8 +22,9 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.MurmurHash;
 
-// We really only use the generic for type safety and it's not an interface because we don't want to expose
-// Note: we may want to expose this later if people use custom partitioner and want to be able to extend that. This is way premature however.
+// We really only use the generic for type safety and it's not an interface because we don't want to expose it
+// Note: we may want to expose this later if people use custom partitioner and want to be able to extend that.
+// This is way premature however.
 abstract class Token<T extends Token<T>> implements Comparable<T> {
 
     public static Token.Factory<?> getFactory(String partitionerName) {

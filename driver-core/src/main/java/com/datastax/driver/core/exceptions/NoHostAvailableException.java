@@ -34,6 +34,8 @@ import java.util.Map;
  */
 public class NoHostAvailableException extends DriverException {
 
+    private static final long serialVersionUID = 0;
+
     private final Map<InetAddress, String> errors;
 
     public NoHostAvailableException(Map<InetAddress, String> errors) {

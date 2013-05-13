@@ -22,6 +22,8 @@ import com.datastax.driver.core.ConsistencyLevel;
  */
 public class ReadTimeoutException extends QueryTimeoutException {
 
+    private static final long serialVersionUID = 0;
+
     private final boolean dataPresent;
 
     public ReadTimeoutException(ConsistencyLevel consistency, int received, int required, boolean dataPresent) {

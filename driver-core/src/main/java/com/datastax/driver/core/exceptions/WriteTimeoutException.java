@@ -23,6 +23,8 @@ import com.datastax.driver.core.WriteType;
  */
 public class WriteTimeoutException extends QueryTimeoutException {
 
+    private static final long serialVersionUID = 0;
+
     private final WriteType writeType;
 
     public WriteTimeoutException(ConsistencyLevel consistency, WriteType writeType, int received, int required) {

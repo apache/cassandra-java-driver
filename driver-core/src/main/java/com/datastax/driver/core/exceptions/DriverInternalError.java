@@ -23,6 +23,8 @@ package com.datastax.driver.core.exceptions;
  */
 public class DriverInternalError extends DriverException {
 
+    private static final long serialVersionUID = 0;
+
     public DriverInternalError(String message) {
         super(message);
     }

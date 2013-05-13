@@ -573,6 +573,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code i} is not a list or if its
      * elements are not of class {@code elementsClass}.
      */
+    @SuppressWarnings("unchecked")
     public <T> List<T> getList(int i, Class<T> elementsClass) {
         DataType type = metadata.getType(i);
         if (type.getName() != DataType.Name.LIST)
@@ -623,6 +624,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code i} is not a set or if its
      * elements are not of class {@code elementsClass}.
      */
+    @SuppressWarnings("unchecked")
     public <T> Set<T> getSet(int i, Class<T> elementsClass) {
         DataType type = metadata.getType(i);
         if (type.getName() != DataType.Name.SET)
@@ -674,6 +676,7 @@ public class Row {
      * keys are not of class {@code keysClass} or if its values are not of
      * class {@code valuesClass}.
      */
+    @SuppressWarnings("unchecked")
     public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass) {
         DataType type = metadata.getType(i);
         if (type.getName() != DataType.Name.MAP)

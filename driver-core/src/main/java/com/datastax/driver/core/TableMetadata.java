@@ -243,6 +243,7 @@ public class TableMetadata {
     // :_(
     private static ObjectMapper jsonMapper = new ObjectMapper(new JsonFactory());
 
+    @SuppressWarnings("unchecked")
     static List<String> fromJsonList(String json) {
         try {
             return jsonMapper.readValue(json, List.class);
@@ -251,6 +252,7 @@ public class TableMetadata {
         }
     }
 
+    @SuppressWarnings("unchecked")
     static Map<String, String> fromJsonMap(String json) {
         try {
             return jsonMapper.readValue(json, Map.class);

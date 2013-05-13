@@ -27,14 +27,19 @@ import org.apache.cassandra.transport.messages.ResultMessage;
 
 import com.datastax.driver.core.exceptions.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A future on a {@link ResultSet}.
  *
  * Note that this class implements <a href="http://code.google.com/p/guava-libraries/">Guava</a>'s {@code
  * ListenableFuture} and can so be used with Guava's future utilities.
  */
-public class ResultSetFuture extends SimpleFuture<ResultSet>
-{
+public class ResultSetFuture extends SimpleFuture<ResultSet> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ResultSetFuture.class);
+
     private final Session.Manager session;
     final ResponseCallback callback;
 
@@ -99,6 +104,9 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
                                         } else {
                                             session.cluster.manager.refreshSchema(connection, ResultSetFuture.this, rs, scc.keyspace, scc.columnFamily);
                                         }
+                                        break;
+                                    default:
+                                        logger.info("Ignoring unknown schema change result");
                                         break;
                                 }
                                 break;

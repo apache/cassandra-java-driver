@@ -131,6 +131,7 @@ public class Metadata {
         }
     }
 
+    @SuppressWarnings("unchecked")
     synchronized void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
         this.tokenMap = TokenMap.build(partitioner, allTokens);
     }
@@ -175,6 +176,7 @@ public class Metadata {
      * this information. It is also not guarantee that the returned set won't
      * be empty (which is then some form of staleness).
      */
+    @SuppressWarnings("unchecked")
     public Set<Host> getReplicas(ByteBuffer partitionKey) {
         TokenMap current = tokenMap;
         if (current == null) {
@@ -248,10 +250,10 @@ public class Metadata {
     static class TokenMap<T extends Token<T>> {
 
         private final Token.Factory<T> factory;
-        private final Map<Token<T>, Set<Host>> tokenToHosts;
-        private final List<Token<T>> ring;
+        private final Map<T, Set<Host>> tokenToHosts;
+        private final List<T> ring;
 
-        private TokenMap(Token.Factory<T> factory, Map<Token<T>, Set<Host>> tokenToHosts, List<Token<T>> ring) {
+        private TokenMap(Token.Factory<T> factory, Map<T, Set<Host>> tokenToHosts, List<T> ring) {
             this.factory = factory;
             this.tokenToHosts = tokenToHosts;
             this.ring = ring;
@@ -259,18 +261,19 @@ public class Metadata {
 
         public static <T extends Token<T>> TokenMap<T> build(String partitioner, Map<Host, Collection<String>> allTokens) {
 
+            @SuppressWarnings("unchecked")
             Token.Factory<T> factory = (Token.Factory<T>)Token.getFactory(partitioner);
             if (factory == null)
                 return null;
 
-            Map<Token<T>, Set<Host>> tokenToHosts = new HashMap<Token<T>, Set<Host>>();
-            Set<Token<T>> allSorted = new TreeSet<Token<T>>();
+            Map<T, Set<Host>> tokenToHosts = new HashMap<T, Set<Host>>();
+            Set<T> allSorted = new TreeSet<T>();
 
             for (Map.Entry<Host, Collection<String>> entry : allTokens.entrySet()) {
                 Host host = entry.getKey();
                 for (String tokenStr : entry.getValue()) {
                     try {
-                        Token<T> t = factory.fromString(tokenStr);
+                        T t = factory.fromString(tokenStr);
                         allSorted.add(t);
                         Set<Host> hosts = tokenToHosts.get(t);
                         if (hosts == null) {
@@ -284,10 +287,10 @@ public class Metadata {
                 }
             }
             // Make all the inet set immutable so we can share them publicly safely
-            for (Map.Entry<Token<T>, Set<Host>> entry: tokenToHosts.entrySet()) {
+            for (Map.Entry<T, Set<Host>> entry: tokenToHosts.entrySet()) {
                 entry.setValue(Collections.unmodifiableSet(entry.getValue()));
             }
-            return new TokenMap(factory, tokenToHosts, new ArrayList<Token<T>>(allSorted));
+            return new TokenMap<T>(factory, tokenToHosts, new ArrayList<T>(allSorted));
         }
 
         private Set<Host> getReplicas(T token) {

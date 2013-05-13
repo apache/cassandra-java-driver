@@ -20,6 +20,8 @@ package com.datastax.driver.core.exceptions;
  */
 public class TruncateException extends QueryExecutionException {
 
+    private static final long serialVersionUID = 0;
+
     public TruncateException(String msg) {
         super(msg);
     }

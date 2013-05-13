@@ -49,6 +49,7 @@ class Codec {
 
     private Codec() {}
 
+    @SuppressWarnings("unchecked")
     public static <T> AbstractType<T> getCodec(DataType type) {
         return (AbstractType<T>)getCodecInternal(type);
     }
