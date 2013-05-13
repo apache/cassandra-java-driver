@@ -113,8 +113,8 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
         assertTrue(schedule.nextDelayMs() == 10000);
 
         // Run integration test
-        long restartTime = 15;      // matches the above test
-        long retryTime = 20;        // 2nd cycle start time
+        long restartTime = 32;      // matches the above test
+        long retryTime = 40;        // 2nd cycle start time
         long breakTime = 10;        // time until next reconnection attempt
         reconnectionPolicyTest(builder, restartTime, retryTime, breakTime);
     }
