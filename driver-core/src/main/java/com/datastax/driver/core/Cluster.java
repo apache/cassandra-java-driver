@@ -507,7 +507,7 @@ public class Cluster {
     }
 
     static long timeSince(long start, TimeUnit unit) {
-        return unit.convert(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS);
+        return unit.convert(System.nanoTime() - start, TimeUnit.NANOSECONDS);
     }
 
     /**
@@ -601,7 +601,7 @@ public class Cluster {
 
             logger.debug("Shutting down");
 
-            long start = System.currentTimeMillis();
+            long start = System.nanoTime();
             boolean success = true;
 
             success &= controlConnection.shutdown(timeout, unit);

@@ -291,7 +291,7 @@ public class Session {
             if (!isShutdown.compareAndSet(false, true))
                 return true;
 
-            long start = System.currentTimeMillis();
+            long start = System.nanoTime();
             boolean success = true;
             for (HostConnectionPool pool : pools.values())
                 success &= pool.shutdown(timeout - Cluster.timeSince(start, unit), unit);
