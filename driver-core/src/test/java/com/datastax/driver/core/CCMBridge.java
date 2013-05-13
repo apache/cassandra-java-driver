@@ -248,7 +248,7 @@ public class CCMBridge {
             createCluster();
             maybeCreateSchema();
         }
-        
+
         public void maybeCreateSchema() {
 
             try {

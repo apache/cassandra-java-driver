@@ -506,8 +506,8 @@ public class Cluster {
         return new ThreadFactoryBuilder().setNameFormat(nameFormat).build();
     }
 
-    static long timeSince(long start, TimeUnit unit) {
-        return unit.convert(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+    static long timeSince(long startNanos, TimeUnit destUnit) {
+        return destUnit.convert(System.nanoTime() - startNanos, TimeUnit.NANOSECONDS);
     }
 
     /**
