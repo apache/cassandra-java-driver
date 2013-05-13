@@ -40,6 +40,7 @@ public class SimpleStatement extends Statement {
      *
      * @return the query string;
      */
+    @Override
     public String getQueryString() {
         return query;
     }
@@ -56,6 +57,7 @@ public class SimpleStatement extends Statement {
      *
      * @see Query#getRoutingKey
      */
+    @Override
     public ByteBuffer getRoutingKey() {
         return routingKey;
     }

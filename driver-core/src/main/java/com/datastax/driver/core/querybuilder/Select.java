@@ -53,6 +53,7 @@ public class Select extends BuiltStatement {
         this.where = new Where(this);
     }
 
+    @Override
     protected String buildQueryString() {
         StringBuilder builder = new StringBuilder();
 

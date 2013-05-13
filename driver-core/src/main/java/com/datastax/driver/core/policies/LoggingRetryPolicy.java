@@ -46,6 +46,7 @@ public class LoggingRetryPolicy implements RetryPolicy {
         return decision.getRetryConsistencyLevel() == null ? cl : decision.getRetryConsistencyLevel();
     }
 
+    @Override
     public RetryDecision onReadTimeout(Query query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
         RetryDecision decision = policy.onReadTimeout(query, cl, requiredResponses, receivedResponses, dataRetrieved, nbRetry);
         switch (decision.getType()) {
@@ -61,6 +62,7 @@ public class LoggingRetryPolicy implements RetryPolicy {
         return decision;
     }
 
+    @Override
     public RetryDecision onWriteTimeout(Query query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
         RetryDecision decision = policy.onWriteTimeout(query, cl, writeType, requiredAcks, receivedAcks, nbRetry);
         switch (decision.getType()) {
@@ -76,6 +78,7 @@ public class LoggingRetryPolicy implements RetryPolicy {
         return decision;
     }
 
+    @Override
     public RetryDecision onUnavailable(Query query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
         RetryDecision decision = policy.onUnavailable(query, cl, requiredReplica, aliveReplica, nbRetry);
         switch (decision.getType()) {

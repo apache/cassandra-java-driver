@@ -156,6 +156,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
         // We should not retry on the current thread as this will be an IO thread.
         manager.executor().execute(new Runnable() {
+            @Override
             public void run() {
                 if (retryCurrent) {
                     if (query(h))
@@ -166,6 +167,7 @@ class RequestHandler implements Connection.ResponseCallback {
         });
     }
 
+    @Override
     public Message.Request request() {
 
         Message.Request request = callback.request();
@@ -206,6 +208,7 @@ class RequestHandler implements Connection.ResponseCallback {
         callback.onException(connection, exception);
     }
 
+    @Override
     public void onSet(Connection connection, Message.Response response) {
 
         if (currentPool == null) {
@@ -347,10 +350,12 @@ class RequestHandler implements Connection.ResponseCallback {
     private Connection.ResponseCallback prepareAndRetry(final String toPrepare) {
         return new Connection.ResponseCallback() {
 
+            @Override
             public Message.Request request() {
                 return new PrepareMessage(toPrepare);
             }
 
+            @Override
             public void onSet(Connection connection, Message.Response response) {
                 // TODO should we check the response ?
                 switch (response.type) {
@@ -376,12 +381,14 @@ class RequestHandler implements Connection.ResponseCallback {
                 }
             }
 
+            @Override
             public void onException(Connection connection, Exception exception) {
                 RequestHandler.this.onException(connection, exception);
             }
         };
     }
 
+    @Override
     public void onException(Connection connection, Exception exception) {
 
         if (connection != null) {

@@ -102,6 +102,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * @param nbRetry the number of retry already performed for this operation.
      * @return a RetryDecision as defined above.
      */
+    @Override
     public RetryDecision onReadTimeout(Query query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
         if (nbRetry != 0)
             return RetryDecision.rethrow();
@@ -137,6 +138,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * @param nbRetry the number of retry already performed for this operation.
      * @return a RetryDecision as defined above.
      */
+    @Override
     public RetryDecision onWriteTimeout(Query query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
         if (nbRetry != 0)
             return RetryDecision.rethrow();
@@ -177,6 +179,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * @param nbRetry the number of retry already performed for this operation.
      * @return a RetryDecision as defined above.
      */
+    @Override
     public RetryDecision onUnavailable(Query query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
         if (nbRetry != 0)
             return RetryDecision.rethrow();

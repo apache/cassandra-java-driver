@@ -72,6 +72,7 @@ public class UnavailableException extends QueryExecutionException {
         return alive;
     }
 
+    @Override
     public DriverException copy() {
         return new UnavailableException(getMessage(), this, consistency, required, alive);
     }

@@ -47,6 +47,7 @@ public class WriteTimeoutException extends QueryTimeoutException {
         return writeType;
     }
 
+    @Override
     public DriverException copy() {
         return new WriteTimeoutException(getMessage(),
                                          this,
