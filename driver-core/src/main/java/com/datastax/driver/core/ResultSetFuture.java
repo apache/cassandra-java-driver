@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.ErrorMessage;
@@ -151,24 +151,11 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
      * unauthorized or any other validation problem).
      */
     public ResultSet getUninterruptibly() {
-        boolean interrupted = false;
         try {
-            while (true) {
-                try {
-                    return super.get();
-                } catch (InterruptedException e) {
-                    // We said 'uninterruptibly'
-                    interrupted = true;
-                }
-            }
+            return Uninterruptibles.getUninterruptibly(this);
         } catch (ExecutionException e) {
             extractCauseFromExecutionException(e);
             throw new AssertionError();
-        } finally {
-            // Restore interrupted state
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
         }
     }
 
@@ -197,30 +184,11 @@ public class ResultSetFuture extends SimpleFuture<ResultSet>
      * QueryExecutionException}).
      */
     public ResultSet getUninterruptibly(long timeout, TimeUnit unit) throws TimeoutException {
-        long start = System.nanoTime();
-        long timeoutNanos = unit.toNanos(timeout);
-        boolean interrupted = false;
         try {
-            while (true) {
-                try {
-                    return super.get(timeoutNanos, TimeUnit.NANOSECONDS);
-                } catch (InterruptedException e) {
-                    // We said 'uninterruptibly'
-                    long now = System.nanoTime();
-                    long elapsedNanos = now - start;
-                    timeoutNanos = timeoutNanos - elapsedNanos;
-                    start = now;
-                    interrupted = true;
-                }
-            }
+            return Uninterruptibles.getUninterruptibly(this, timeout, unit);
         } catch (ExecutionException e) {
             extractCauseFromExecutionException(e);
             throw new AssertionError();
-        } finally {
-            // Restore interrupted state
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
         }
     }
 
