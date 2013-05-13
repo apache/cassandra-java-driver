@@ -19,6 +19,8 @@ import java.util.*;
 
 import com.datastax.driver.core.DataType;
 
+import com.google.common.collect.ImmutableMap;
+
 import org.apache.cassandra.db.marshal.*;
 
 /**
@@ -26,23 +28,24 @@ import org.apache.cassandra.db.marshal.*;
  */
 class Codec {
 
-    private static Map<AbstractType<?>, DataType> rawNativeMap = new HashMap<AbstractType<?>, DataType>() {{
-        put(AsciiType.instance,         DataType.ascii());
-        put(LongType.instance,          DataType.bigint());
-        put(BytesType.instance,         DataType.blob());
-        put(BooleanType.instance,       DataType.cboolean());
-        put(CounterColumnType.instance, DataType.counter());
-        put(DecimalType.instance,       DataType.decimal());
-        put(DoubleType.instance,        DataType.cdouble());
-        put(FloatType.instance,         DataType.cfloat());
-        put(InetAddressType.instance,   DataType.inet());
-        put(Int32Type.instance,         DataType.cint());
-        put(UTF8Type.instance,          DataType.text());
-        put(DateType.instance,          DataType.timestamp());
-        put(UUIDType.instance,          DataType.uuid());
-        put(IntegerType.instance,       DataType.varint());
-        put(TimeUUIDType.instance,      DataType.timeuuid());
-    }};
+    private static ImmutableMap<AbstractType<?>, DataType> rawNativeMap =
+        new ImmutableMap.Builder<AbstractType<?>, DataType>()
+            .put(AsciiType.instance,         DataType.ascii())
+            .put(LongType.instance,          DataType.bigint())
+            .put(BytesType.instance,         DataType.blob())
+            .put(BooleanType.instance,       DataType.cboolean())
+            .put(CounterColumnType.instance, DataType.counter())
+            .put(DecimalType.instance,       DataType.decimal())
+            .put(DoubleType.instance,        DataType.cdouble())
+            .put(FloatType.instance,         DataType.cfloat())
+            .put(InetAddressType.instance,   DataType.inet())
+            .put(Int32Type.instance,         DataType.cint())
+            .put(UTF8Type.instance,          DataType.text())
+            .put(DateType.instance,          DataType.timestamp())
+            .put(UUIDType.instance,          DataType.uuid())
+            .put(IntegerType.instance,       DataType.varint())
+            .put(TimeUUIDType.instance,      DataType.timeuuid())
+            .build();
 
     private Codec() {}
 
