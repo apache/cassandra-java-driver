@@ -347,7 +347,7 @@ public class Cluster {
          * Configures the load balancing policy to use for the new cluster.
          * <p>
          * If no load balancing policy is set through this method,
-         * {@link Policies#DEFAULT_LOAD_BALANCING_POLICY} will be used instead.
+         * {@link Policies#defaultLoadBalancingPolicy} will be used instead.
          *
          * @param policy the load balancing policy to use
          * @return this Builder
