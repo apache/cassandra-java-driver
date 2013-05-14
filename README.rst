@@ -4,8 +4,10 @@ DataStax Java Driver for Apache Cassandra
 A Java client driver for Apache Cassandra. This driver works exclusively with
 the Cassandra Query Language version 3 (CQL3) and Cassandra's binary protocol.
 
-JIRA: https://datastax-oss.atlassian.net/browse/JAVA
-IRC: #datastax-drivers (freenode)
+- JIRA: https://datastax-oss.atlassian.net/browse/JAVA
+- IRC: #datastax-drivers on [irc.freenode.net](http://freenode.net)
+- DOCS: http://www.datastax.com/doc-source/developer/java-driver
+- API: http://www.datastax.com/drivers/java/apidocs
 
 
 The driver architecture is based on layers. At the bottom lies the driver core.
