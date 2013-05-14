@@ -36,7 +36,7 @@ public class Metadata {
     private final ConcurrentMap<InetAddress, Host> hosts = new ConcurrentHashMap<InetAddress, Host>();
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
 
-    private volatile TokenMap<? extends Token> tokenMap;
+    private volatile TokenMap<? extends Token<?>> tokenMap;
 
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
