@@ -133,14 +133,15 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         // TODO: we will need to get fancy about handling protocol version at
         // some point, but keep it simple for now.
-        Map<String, String> options = ImmutableMap.of(StartupMessage.CQL_VERSION, CQL_VERSION);
+        ImmutableMap.Builder<String, String> options = new ImmutableMap.Builder<String, String>();
+        options.put(StartupMessage.CQL_VERSION, CQL_VERSION);
         ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
         if (compression != ProtocolOptions.Compression.NONE)
         {
             options.put(StartupMessage.COMPRESSION, compression.toString());
             setCompressor(compression.compressor());
         }
-        StartupMessage startup = new StartupMessage(options);
+        StartupMessage startup = new StartupMessage(options.build());
         try {
             Message.Response response = write(startup).get();
             switch (response.type) {
