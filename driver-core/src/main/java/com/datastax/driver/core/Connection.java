@@ -470,7 +470,8 @@ class Connection extends org.apache.cassandra.transport.Connection
                 if (handler == null) {
                     // Note: this is a bug, either us or cassandra. So log it, but I'm not sure it's worth breaking
                     // the connection for that.
-                    logger.error("[{}] No handler set for stream {} (this is a bug, either of this driver or of Cassandra, you should report it)", name, streamId);
+                    logger.error("[{}] No handler set for stream {} (this is a bug, either of this driver or of Cassandra, you should report it). Received message is {}", 
+                                 name, streamId, response);
                     return;
                 }
                 handler.callback.onSet(Connection.this, response);
