@@ -49,6 +49,9 @@ public abstract class AbstractPoliciesTest {
 
     public static void createSchema(Session session, int replicationFactor) {
         session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, replicationFactor));
+        try {
+            Thread.sleep(1000);
+        } catch (Exception e) {}
         session.execute("USE " + SIMPLE_KEYSPACE);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
     }
@@ -59,6 +62,9 @@ public abstract class AbstractPoliciesTest {
 
     public static void createMultiDCSchema(Session session, int dc1RF, int dc2RF) {
         session.execute(String.format(CREATE_KEYSPACE_GENERIC_FORMAT, SIMPLE_KEYSPACE, "NetworkTopologyStrategy", String.format("'dc1' : 1, 'dc2' : 1", dc1RF, dc2RF)));
+        try {
+            Thread.sleep(1000);
+        } catch (Exception e) {}
         session.execute("USE " + SIMPLE_KEYSPACE);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
     }
