@@ -15,10 +15,13 @@
  */
 package com.datastax.driver.core;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.apache.cassandra.transport.Message;
@@ -165,6 +168,31 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
     public ResultSet getUninterruptibly() {
         try {
             return Uninterruptibles.getUninterruptibly(this);
+        } catch (ExecutionException e) {
+            extractCauseFromExecutionException(e);
+            throw new AssertionError();
+        }
+    }
+
+    /**
+     * Waits for the queries to return and returns their results.
+     *
+     * This method is like {@link #getUninterruptibly} but it is on a
+     * list of ResultSetFuture instances and doesn't return until all
+     * of the futures have completed.
+     *
+     * @throws NoHostAvailableException if no host in the cluster can be
+     * contacted successfully to execute the queries.
+     * @throws QueryExecutionException if any query triggered an execution
+     * exception, that is an exception thrown by Cassandra when it cannot execute
+     * a query with the requested consistency level successfully.
+     * @throws QueryValidationException if any query is invalid (syntax error,
+     * unauthorized or any other validation problem).
+     */
+    static public List<ResultSet> getUninterruptibly(Iterable<ResultSetFuture> futures) {
+        ListenableFuture<List<ResultSet>> future = Futures.allAsList(futures);
+        try {
+            return Uninterruptibles.getUninterruptibly(future);
         } catch (ExecutionException e) {
             extractCauseFromExecutionException(e);
             throw new AssertionError();
