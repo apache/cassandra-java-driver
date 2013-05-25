@@ -159,7 +159,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
      * @throws QueryExecutionException if the query triggered an execution
      * exception, that is an exception thrown by Cassandra when it cannot execute
      * the query with the requested consistency level successfully.
-     * @throws QueryValidationException if the query if invalid (syntax error,
+     * @throws QueryValidationException if the query is invalid (syntax error,
      * unauthorized or any other validation problem).
      */
     public ResultSet getUninterruptibly() {
