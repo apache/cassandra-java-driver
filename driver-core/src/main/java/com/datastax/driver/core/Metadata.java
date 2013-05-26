@@ -36,6 +36,7 @@ public class Metadata {
     private final ConcurrentMap<InetAddress, Host> hosts = new ConcurrentHashMap<InetAddress, Host>();
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
 
+    @SuppressWarnings("unchecked")
     private volatile TokenMap<? extends Token> tokenMap;
 
     Metadata(Cluster.Manager cluster) {
