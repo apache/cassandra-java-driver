@@ -1,6 +1,9 @@
 CHANGELOG
 =========
 
+* 1.0.1:
+  - [new] The error message when no host are available has been improved.
+
 * 1.0.0:
   - [api] The AuthInfoProvider has be (temporarily) removed. Instead, the
     Cluster builder has a new withCredentials() method to provide a username
@@ -39,7 +42,6 @@ CHANGELOG
   - [bug] Fix failover bug in DCAwareRoundRobinPolicy (JAVA-62)
   - [bug] Fix use of bind markers for routing keys in the query builder
     (JAVA-66)
-
 
 * 1.0.0-beta1:
   - initial release
