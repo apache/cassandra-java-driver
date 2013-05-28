@@ -19,6 +19,7 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -51,6 +52,7 @@ public abstract class AbstractPoliciesTest {
         session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, replicationFactor));
         session.execute("USE " + SIMPLE_KEYSPACE);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
+        waitForSchemaAgreement(session);
     }
 
     public static void createMultiDCSchema(Session session) {
@@ -61,6 +63,23 @@ public abstract class AbstractPoliciesTest {
         session.execute(String.format(CREATE_KEYSPACE_GENERIC_FORMAT, SIMPLE_KEYSPACE, "NetworkTopologyStrategy", String.format("'dc1' : 1, 'dc2' : 1", dc1RF, dc2RF)));
         session.execute("USE " + SIMPLE_KEYSPACE);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
+        waitForSchemaAgreement(session);
+    }
+
+    public static void waitForSchemaAgreement(Session session) {
+        ResultSet rs;
+        UUID schema_version;
+        while (true){
+            rs = session.execute("select schema_version from system.peers;");
+            schema_version = rs.one().getUUID("schema_version");
+            while (!rs.isExhausted()) {
+                if (!schema_version.equals(rs.one().getUUID("schema_version"))) {
+                    schema_version = null;
+                }
+            }
+            if (schema_version != null)
+                break;
+        }
     }
 
 
