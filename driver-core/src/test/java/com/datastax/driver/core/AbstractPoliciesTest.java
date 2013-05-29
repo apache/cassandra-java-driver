@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.in;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -68,20 +69,30 @@ public abstract class AbstractPoliciesTest {
 
     public static void waitForSchemaAgreement(Session session) {
         ResultSet rs;
-        UUID schema_version;
+        UUID schemaVersion;
+        int schemaTry = 0;
+        int maxSchemaTries = 10;
         while (true){
             try {
                 rs = session.execute("select schema_version from system.peers;");
-                schema_version = rs.one().getUUID("schema_version");
+                schemaVersion = rs.one().getUUID("schema_version");
                 while (!rs.isExhausted()) {
-                    if (!schema_version.equals(rs.one().getUUID("schema_version"))) {
-                        schema_version = null;
+                    if (!schemaVersion.equals(rs.one().getUUID("schema_version"))) {
+                        schemaVersion = null;
                         break;
                     }
                 }
-                if (schema_version != null)
+                if (schemaVersion != null)
                     break;
-            } catch (NullPointerException e) {}
+            } catch (NullPointerException e) {
+                if (++schemaTry > maxSchemaTries)
+                    throw e;
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+            }
         }
     }
 
