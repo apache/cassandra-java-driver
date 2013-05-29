@@ -70,16 +70,18 @@ public abstract class AbstractPoliciesTest {
         ResultSet rs;
         UUID schema_version;
         while (true){
-            rs = session.execute("select schema_version from system.peers;");
-            schema_version = rs.one().getUUID("schema_version");
-            while (!rs.isExhausted()) {
-                if (!schema_version.equals(rs.one().getUUID("schema_version"))) {
-                    schema_version = null;
-                    break;
+            try {
+                rs = session.execute("select schema_version from system.peers;");
+                schema_version = rs.one().getUUID("schema_version");
+                while (!rs.isExhausted()) {
+                    if (!schema_version.equals(rs.one().getUUID("schema_version"))) {
+                        schema_version = null;
+                        break;
+                    }
                 }
-            }
-            if (schema_version != null)
-                break;
+                if (schema_version != null)
+                    break;
+            } catch (NullPointerException e) {}
         }
     }
 
