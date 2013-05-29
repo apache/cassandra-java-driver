@@ -75,6 +75,7 @@ public abstract class AbstractPoliciesTest {
             while (!rs.isExhausted()) {
                 if (!schema_version.equals(rs.one().getUUID("schema_version"))) {
                     schema_version = null;
+                    break;
                 }
             }
             if (schema_version != null)
