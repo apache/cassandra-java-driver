@@ -100,11 +100,11 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
 
     public void defaultPolicyTest(Cluster.Builder builder) throws Throwable {
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
-        createSchema(c.session);
-
-        // FIXME: Race condition where the nodes are not fully up yet and assertQueried reports slightly different numbers with fallthrough*Policy
-        Thread.sleep(5000);
         try {
+            createSchema(c.session);
+            // FIXME: Race condition where the nodes are not fully up yet and assertQueried reports slightly different numbers with fallthrough*Policy
+            Thread.sleep(5000);
+
             init(c, 12);
             query(c, 12);
 
@@ -278,11 +278,11 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      */
     public void downgradingConsistencyRetryPolicy(Cluster.Builder builder) throws Throwable {
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
-        createSchema(c.session, 3);
-
-        // FIXME: Race condition where the nodes are not fully up yet and assertQueried reports slightly different numbers
-        Thread.sleep(5000);
         try {
+            createSchema(c.session, 3);
+            // FIXME: Race condition where the nodes are not fully up yet and assertQueried reports slightly different numbers
+            Thread.sleep(5000);
+
             init(c, 12, ConsistencyLevel.ALL);
             query(c, 12, ConsistencyLevel.ALL);
 
@@ -349,9 +349,9 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
     public void alwaysIgnoreRetryPolicyTest() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(AlwaysIgnoreRetryPolicy.INSTANCE));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
-        createSchema(c.session);
 
         try {
+            createSchema(c.session);
             init(c, 12);
             query(c, 12);
 
@@ -450,9 +450,9 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
     public void alwaysRetryRetryPolicyTest() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(AlwaysRetryRetryPolicy.INSTANCE));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
-        createSchema(c.session);
 
         try {
+            createSchema(c.session);
             init(c, 12);
             query(c, 12);
 
