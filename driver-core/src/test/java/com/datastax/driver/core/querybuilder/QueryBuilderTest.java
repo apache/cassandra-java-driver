@@ -132,6 +132,12 @@ public class QueryBuilderTest {
                    .using(timestamp(42)).and(ttl(24));
         assertEquals(insert.toString(), query);
 
+        query = "INSERT INTO foo(a,b) VALUES (2,null);";
+        insert = insertInto("foo")
+                   .value("a", 2)
+                   .value("b", null);
+        assertEquals(insert.toString(), query);
+
         query = "INSERT INTO foo(a,b) VALUES ({2,3,4},3.4) USING TTL 24 AND TIMESTAMP 42;";
         insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet(){{ add(2); add(3); add(4); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
@@ -175,6 +181,10 @@ public class QueryBuilderTest {
 
         query = "UPDATE foo.bar USING TIMESTAMP 42 SET a=12,b=[3,2,1],c=c+3 WHERE k=2;";
         update = update("foo", "bar").using(timestamp(42)).with(set("a", 12)).and(set("b", Arrays.asList(3, 2, 1))).and(incr("c", 3)).where(eq("k", 2));
+        assertEquals(update.toString(), query);
+
+        query = "UPDATE foo SET b=null WHERE k=2;";
+        update = update("foo").where().and(eq("k", 2)).with(set("b", null));
         assertEquals(update.toString(), query);
 
         query = "UPDATE foo SET a[2]='foo',b=[3,2,1]+b,c=c-{'a'} WHERE k=2 AND l='foo' AND m<4 AND n>=1;";

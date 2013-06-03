@@ -109,6 +109,9 @@ abstract class Utils {
         } else if (value == QueryBuilder.BIND_MARKER) {
             sb.append("?");
             return true;
+        } else if (value == null) {
+            sb.append("null");
+            return true;
         } else {
             return false;
         }
