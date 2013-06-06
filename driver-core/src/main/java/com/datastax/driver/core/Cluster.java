@@ -861,8 +861,10 @@ public class Cluster {
                 @Override
                 public void run() {
                     try {
-                        // Before refreshing the schema, wait for schema agreement so that querying a table just after having created it don't fail.
-                        ControlConnection.waitForSchemaAgreement(connection, metadata);
+                        // Before refreshing the schema, wait for schema agreement so
+                        // that querying a table just after having created it don't fail.
+                        if (!ControlConnection.waitForSchemaAgreement(connection, metadata))
+                            logger.warn("No schema agreement from live replicas after {} ms. The schema may not be up to date on some nodes.", ControlConnection.MAX_SCHEMA_AGREEMENT_WAIT_MS);
                         ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this);
                     } catch (Exception e) {
                         logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
