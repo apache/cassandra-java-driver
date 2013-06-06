@@ -55,22 +55,42 @@ public class ProtocolOptions {
     public static final int DEFAULT_PORT = 9042;
 
     private final int port;
+
+    final SSLOptions sslOptions; // null if no SSL
+
     private volatile Compression compression = Compression.NONE;
 
     /**
-     * Creates a new {@code ProtocolOptions} instance using the {@code DEFAULT_PORT}.
+     * Creates a new {@code ProtocolOptions} instance using the {@code DEFAULT_PORT}
+     * (and without SSL).
      */
     public ProtocolOptions() {
-        this(DEFAULT_PORT);
+        this(DEFAULT_PORT, null);
     }
 
     /**
-     * Creates a new {@code ProtocolOptions} instance using the provided port.
+     * Creates a new {@code ProtocolOptions} instance using the provided port
+     * (and without SSL).
+     * <p>
+     * This is a shortcut for {@code new ProtocolOptions(port, null)}.
      *
      * @param port the port to use for the binary protocol.
      */
     public ProtocolOptions(int port) {
+        this(port, null);
+    }
+
+    /**
+     * Creates a new {@code ProtocolOptions} instance using the provided port
+     * and SSL context.
+     *
+     * @param port the port to use for the binary protocol.
+     * @param sslOptions the SSL options to use. Use {@code null} if SSL is not
+     * to be used.
+     */
+    public ProtocolOptions(int port, SSLOptions sslOptions) {
         this.port = port;
+        this.sslOptions = sslOptions;
     }
 
     void register(Cluster.Manager manager) {

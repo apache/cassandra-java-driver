@@ -253,6 +253,7 @@ public class Cluster {
         private RetryPolicy retryPolicy;
 
         private ProtocolOptions.Compression compression = ProtocolOptions.Compression.NONE;
+        private SSLOptions sslOptions = null;
         private boolean metricsEnabled = true;
         private boolean jmxEnabled = true;
         private final PoolingOptions poolingOptions = new PoolingOptions();
@@ -427,6 +428,36 @@ public class Cluster {
         }
 
         /**
+         * Enables the use of SSL for the created {@code Cluster}.
+         * <p>
+         * Calling this method will use default SSL options (see {@link SSLOptions#SSLOptions()}).
+         * This is thus a shortcut for {@code withSSL(new SSLOptions())}.
+         *
+         * Note that if SSL is enabled, the driver will not connect to any
+         * Cassandra nodes that doesn't have SSL enabled and it is strongly
+         * advised to enable SSL on every Cassandra node if you plan on using
+         * SSL in the driver.
+         *
+         * @return this builder
+         */
+        public Builder withSSL() {
+            this.sslOptions = new SSLOptions();
+            return this;
+        }
+
+        /**
+         * Enable the use of SSL for the created {@code Cluster} using the provided options.
+         *
+         * @param sslOptions the SSL options to use.
+         *
+         * @return this builder
+         */
+        public Builder withSSL(SSLOptions sslOptions) {
+            this.sslOptions = sslOptions;
+            return this;
+        }
+
+        /**
          * Disables JMX reporting of the metrics.
          * <p>
          * JMX reporting is enabled by default (see {@link Metrics}) but can be
@@ -479,7 +510,7 @@ public class Cluster {
                 retryPolicy == null ? Policies.defaultRetryPolicy() : retryPolicy
             );
             return new Configuration(policies,
-                                     new ProtocolOptions(port).setCompression(compression),
+                                     new ProtocolOptions(port, sslOptions).setCompression(compression),
                                      poolingOptions,
                                      socketOptions,
                                      authProvider,
