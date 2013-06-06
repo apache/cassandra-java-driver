@@ -49,7 +49,7 @@
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
       <!-- Leave at 0.7.0 for Cassandra compatibility -->
-      <version>[0.7.0]</version>
+      <version>0.7.0</version>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -62,7 +62,7 @@
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-core-asl</artifactId>
       <!-- Leave at 1.9.2 for Cassandra compatibility -->
-      <version>[1.9.2]</version>
+      <version>1.9.2</version>
     </dependency>
 
     <dependency>

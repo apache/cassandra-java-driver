@@ -293,8 +293,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    private void updateLocationInfo(Host host, String datacenter, String rack)
-    {
+    private void updateLocationInfo(Host host, String datacenter, String rack) {
         if (Objects.equal(host.getDatacenter(), datacenter) && Objects.equal(host.getRack(), rack))
             return;
 
