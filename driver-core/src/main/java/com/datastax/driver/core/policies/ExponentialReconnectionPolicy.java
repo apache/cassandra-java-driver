@@ -24,6 +24,7 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
     private final long baseDelayMs;
     private final long maxDelayMs;
+    private final long maxAttempts;
 
     /**
      * Creates a reconnection policy waiting exponentially longer for each new attempt.
@@ -35,11 +36,18 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
     public ExponentialReconnectionPolicy(long baseDelayMs, long maxDelayMs) {
         if (baseDelayMs < 0 || maxDelayMs < 0)
             throw new IllegalArgumentException("Invalid negative delay");
+        if (baseDelayMs == 0)
+            throw new IllegalArgumentException("baseDelayMs must be strictly positive");
         if (maxDelayMs < baseDelayMs)
             throw new IllegalArgumentException(String.format("maxDelayMs (got %d) cannot be smaller than baseDelayMs (got %d)", maxDelayMs, baseDelayMs));
 
         this.baseDelayMs = baseDelayMs;
         this.maxDelayMs = maxDelayMs;
+
+        // Maximum number of attempts after which we overflow (which is kind of theoretical anyway, you'll
+        // die of old age before reaching that but hey ...)
+        int ceil = (baseDelayMs & (baseDelayMs - 1)) == 0 ? 0 : 1;
+        this.maxAttempts = 64 - Long.numberOfLeadingZeros(Long.MAX_VALUE / baseDelayMs) - ceil;
     }
 
     /**
@@ -80,8 +88,8 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
         @Override
         public long nextDelayMs() {
-            // We "overflow" at 64 attempts but I doubt this matter
-            if (attempts >= 64)
+
+            if (attempts > maxAttempts)
                 return maxDelayMs;
 
             return Math.min(baseDelayMs * (1L << attempts++), maxDelayMs);
