@@ -156,13 +156,41 @@ public final class QueryBuilder {
     }
 
     /**
-     * Built a new BATCH query on the provided statement.
+     * Built a new BATCH query on the provided statements.
+     * <p>
+     * This method will build a logged batch (this is the default in CQL3). To
+     * create unlogged batches, use {@link #unloggedBatch}. Also note that
+     * for convenience, if the provided statements are counter statements, this
+     * method will create a COUNTER batch even though COUNTER batches are never
+     * logged (so for counters, using this method is effectively equivalent to
+     * using {@link #unloggedBatch}).
      *
      * @param statements the statements to batch.
      * @return a new {@code Statement} that batch {@code statements}.
      */
     public static Batch batch(Statement... statements) {
-        return new Batch(statements);
+        return new Batch(statements, true);
+    }
+
+    /**
+     * Built a new UNLOGGED BATCH query on the provided statements.
+     * <p>
+     * Compared to logged batches (the default), unlogged batch don't
+     * use the distributed batch log server side and as such are not
+     * guaranteed to be atomic. In other words, if an unlogged batch
+     * timeout, some of the batched statements may have been persisted
+     * while some have not. Unlogged batch will however be slightly
+     * faster than logged batch.
+     * <p>
+     * If the statements added to the batch are counter statements, the
+     * resulting batch will be a COUNTER one.
+     *
+     * @param statements the statements to batch.
+     * @return a new {@code Statement} that batch {@code statements} without
+     * using the batch log.
+     */
+    public static Batch unloggedBatch(Statement... statements) {
+        return new Batch(statements, false);
     }
 
     /**

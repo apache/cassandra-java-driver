@@ -2,8 +2,9 @@ CHANGELOG
 =========
 
 * 1.0.1:
-  - [new] null values support in the Query builder.
-  - [new] SSL support (requires C* >= 1.2.1)
+  - [new] null values support in the query builder.
+  - [new] SSL support (requires C* >= 1.2.1).
+  - [new] Allow generating unlogged batch in the query builder.
   - [improvement] Better error message when no host are available.
   - [improvement] Improves performance of the stress example application been.
 
