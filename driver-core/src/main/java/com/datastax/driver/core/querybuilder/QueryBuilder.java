@@ -55,7 +55,7 @@ public final class QueryBuilder {
      * least a FROM clause to complete the query).
      */
     public static Select.Builder select(String... columns) {
-        return new Select.Builder(Arrays.asList(columns));
+        return new Select.Builder(Arrays.asList((Object[])columns));
     }
 
     /**
@@ -141,7 +141,7 @@ public final class QueryBuilder {
      * clause needs to be provided to complete the query).
      */
     public static Delete.Builder delete(String... columns) {
-        return new Delete.Builder(Arrays.asList(columns));
+        return new Delete.Builder(Arrays.asList((Object[])columns));
     }
 
     /**
@@ -232,7 +232,7 @@ public final class QueryBuilder {
     public static String token(String... columnNames) {
         StringBuilder sb = new StringBuilder();
         sb.append("token(");
-        Utils.joinAndAppendNames(sb, ",", Arrays.asList(columnNames));
+        Utils.joinAndAppendNames(sb, ",", Arrays.asList((Object[])columnNames));
         sb.append(")");
         return sb.toString();
     }
@@ -633,6 +633,30 @@ public final class QueryBuilder {
      * @return the value but protected from being interpreted/escaped by the query builder.
      */
     public static Object raw(String str) {
-        return new Utils.RawString(str);
+        return new Utils.RawString("'" + str + "'");
+    }
+
+    /**
+     * Creates a function call.
+     *
+     * @param name the name of the function to call.
+     * @param parameters the paramters for the function.
+     * @return the function call.
+     */
+    public static Object fcall(String name, Object... parameters) {
+        return new Utils.FCall(name, parameters);
+    }
+
+    /**
+     * Declares that the name in argument should be treated as a column name.
+     * <p>
+     * This mainly meant for use with {@link Select.Builder#fcall} when a
+     * function should apply to a column name, not a string value.
+     *
+     * @param name the name of the column.
+     * @return the name as a column name.
+     */
+    public static Object column(String name) {
+        return new Utils.CName(name);
     }
 }

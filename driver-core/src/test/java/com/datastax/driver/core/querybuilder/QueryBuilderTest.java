@@ -62,16 +62,20 @@ public class QueryBuilderTest {
         // Ensure getQueryString() == to.String()
         assertEquals(select().countAll().from("foo").getQueryString(), query);
 
+        query = "SELECT intToBlob(b) FROM foo;";
+        select = select().fcall("intToBlob", column("b")).from("foo");
+        assertEquals(select.toString(), query);
+
         query = "SELECT * FROM foo WHERE k>42 LIMIT 42;";
         select = select().all().from("foo").where(gt("k", 42)).limit(42);
         assertEquals(select.toString(), query);
 
         query = "SELECT * FROM foo WHERE token(k)>token(42);";
-        select = select().all().from("foo").where(gt(token("k"), token("42")));
+        select = select().all().from("foo").where(gt(token("k"), fcall("token", 42)));
         assertEquals(select.toString(), query);
 
         query = "SELECT * FROM foo2 WHERE token(a,b)>token(42,101);";
-        select = select().all().from("foo2").where(gt(token("a", "b"), token("42", "101")));
+        select = select().all().from("foo2").where(gt(token("a", "b"), fcall("token", 42, 101)));
         assertEquals(select.toString(), query);
 
         try {
@@ -412,7 +416,7 @@ public class QueryBuilderTest {
         assertEquals(select.toString(), query);
 
         query = "SELECT * FROM t WHERE c=now();";
-        select = select().from("t").where(eq("c", "now()"));
+        select = select().from("t").where(eq("c", fcall("now")));
         assertEquals(select.toString(), query);
 
         query = "SELECT * FROM t WHERE c='now()';";

@@ -27,11 +27,11 @@ public class Delete extends BuiltStatement {
 
     private final String keyspace;
     private final String table;
-    private final List<String> columnNames;
+    private final List<Object> columnNames;
     private final Where where;
     private final Options usings;
 
-    Delete(String keyspace, String table, List<String> columnNames) {
+    Delete(String keyspace, String table, List<Object> columnNames) {
         super();
         this.keyspace = keyspace;
         this.table = table;
@@ -40,7 +40,7 @@ public class Delete extends BuiltStatement {
         this.usings = new Options(this);
     }
 
-    Delete(TableMetadata table, List<String> columnNames) {
+    Delete(TableMetadata table, List<Object> columnNames) {
         super(table);
         this.keyspace = table.getKeyspace().getName();
         this.table = table.getName();
@@ -180,11 +180,11 @@ public class Delete extends BuiltStatement {
      */
     public static class Builder {
 
-        protected List<String> columnNames;
+        protected List<Object> columnNames;
 
         protected Builder() {}
 
-        Builder(List<String> columnNames) {
+        Builder(List<Object> columnNames) {
             this.columnNames = columnNames;
         }
 
@@ -247,7 +247,7 @@ public class Delete extends BuiltStatement {
          */
         public Selection column(String name) {
             if (columnNames == null)
-                columnNames = new ArrayList<String>();
+                columnNames = new ArrayList<Object>();
 
             columnNames.add(name);
             return this;

@@ -2,6 +2,9 @@ CHANGELOG
 =========
 
 * 1.0.1:
+  - [api] Function call handling in the query builder has been modified in a
+    backward incompatible way. Function calls are not parsed from string values
+    anymore as this wasn't safe. Instead the new 'fcall' method should be used.
   - [new] null values support in the query builder.
   - [new] SSL support (requires C* >= 1.2.1).
   - [new] Allow generating unlogged batch in the query builder.
