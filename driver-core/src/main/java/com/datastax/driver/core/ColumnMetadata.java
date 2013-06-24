@@ -154,8 +154,8 @@ public class ColumnMetadata {
             if (type == null)
                 return null;
 
-            IndexMetadata index = new IndexMetadata(column, type, row.getString(INDEX_NAME));
-            return index;
+            return new IndexMetadata(column, type, row.getString(INDEX_NAME));
+        
         }
     }
 
