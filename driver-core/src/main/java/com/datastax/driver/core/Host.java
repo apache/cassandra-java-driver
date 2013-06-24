@@ -190,6 +190,10 @@ public class Host {
         }
 
         boolean signalConnectionFailure(ConnectionException exception) {
+            // Already down, avoid duplicate signaling
+            if (!isUp)
+                return true;
+
             boolean isDown = policy.addFailure(exception);
             if (isDown)
                 setDown();

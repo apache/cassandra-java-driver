@@ -179,7 +179,6 @@ public class ExceptionsTest {
         try {
             Cluster.builder().addContactPoints("255.255.255.255").build();
         } catch (NoHostAvailableException e) {
-            assertEquals(e.getMessage(), String.format("All host(s) tried for query failed (tried: [/%s])", ipAddress));
             assertEquals(e.getErrors(), errorsHashMap);
 
             NoHostAvailableException copy = (NoHostAvailableException) e.copy();

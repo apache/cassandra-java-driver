@@ -253,6 +253,7 @@ public class Cluster {
         private RetryPolicy retryPolicy;
 
         private ProtocolOptions.Compression compression = ProtocolOptions.Compression.NONE;
+        private SSLOptions sslOptions = null;
         private boolean metricsEnabled = true;
         private boolean jmxEnabled = true;
         private final PoolingOptions poolingOptions = new PoolingOptions();
@@ -445,6 +446,36 @@ public class Cluster {
         }
 
         /**
+         * Enables the use of SSL for the created {@code Cluster}.
+         * <p>
+         * Calling this method will use default SSL options (see {@link SSLOptions#SSLOptions()}).
+         * This is thus a shortcut for {@code withSSL(new SSLOptions())}.
+         *
+         * Note that if SSL is enabled, the driver will not connect to any
+         * Cassandra nodes that doesn't have SSL enabled and it is strongly
+         * advised to enable SSL on every Cassandra node if you plan on using
+         * SSL in the driver.
+         *
+         * @return this builder
+         */
+        public Builder withSSL() {
+            this.sslOptions = new SSLOptions();
+            return this;
+        }
+
+        /**
+         * Enable the use of SSL for the created {@code Cluster} using the provided options.
+         *
+         * @param sslOptions the SSL options to use.
+         *
+         * @return this builder
+         */
+        public Builder withSSL(SSLOptions sslOptions) {
+            this.sslOptions = sslOptions;
+            return this;
+        }
+
+        /**
          * Disables JMX reporting of the metrics.
          * <p>
          * JMX reporting is enabled by default (see {@link Metrics}) but can be
@@ -497,7 +528,7 @@ public class Cluster {
                 retryPolicy == null ? Policies.defaultRetryPolicy() : retryPolicy
             );
             return new Configuration(policies,
-                                     new ProtocolOptions(port).setCompression(compression),
+                                     new ProtocolOptions(port, sslOptions).setCompression(compression),
                                      poolingOptions,
                                      socketOptions,
                                      authProvider,
@@ -848,8 +879,10 @@ public class Cluster {
                 @Override
                 public void run() {
                     try {
-                        // Before refreshing the schema, wait for schema agreement so that querying a table just after having created it don't fail.
-                        ControlConnection.waitForSchemaAgreement(connection, metadata);
+                        // Before refreshing the schema, wait for schema agreement so
+                        // that querying a table just after having created it don't fail.
+                        if (!ControlConnection.waitForSchemaAgreement(connection, metadata))
+                            logger.warn("No schema agreement from live replicas after {} ms. The schema may not be up to date on some nodes.", ControlConnection.MAX_SCHEMA_AGREEMENT_WAIT_MS);
                         ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this);
                     } catch (Exception e) {
                         logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());

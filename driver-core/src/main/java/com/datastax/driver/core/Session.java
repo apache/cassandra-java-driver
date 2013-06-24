@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import com.datastax.driver.core.exceptions.*;
@@ -270,8 +271,23 @@ public class Session {
             this.loadBalancer = cluster.manager.configuration.getPolicies().getLoadBalancingPolicy();
             this.poolsState = new HostConnectionPool.PoolState();
 
+            // Create pool to initial nodes (and wait for them to be created)
             for (Host host : hosts)
-                addOrRenewPool(host);
+            {
+                try
+                {
+                    addOrRenewPool(host).get();
+                }
+                catch (ExecutionException e)
+                {
+                    // This is not supposed to happen
+                    throw new DriverInternalError(e);
+                }
+                catch (InterruptedException e)
+                {
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
 
         public Connection.Factory connectionFactory() {
@@ -298,22 +314,28 @@ public class Session {
             return success;
         }
 
-        private void addOrRenewPool(Host host) {
-            try {
-                HostDistance distance = loadBalancer.distance(host);
-                if (distance != HostDistance.IGNORED) {
+        private Future<?> addOrRenewPool(final Host host) {
+            final HostDistance distance = loadBalancer.distance(host);
+            if (distance == HostDistance.IGNORED)
+                return Futures.immediateFuture(null);
+
+            // Creating a pool is somewhat long since it has to create the connection, so do it asynchronously.
+            return executor().submit(new Runnable() {
+                public void run() {
                     logger.debug("Adding {} to list of queried hosts", host);
-                    HostConnectionPool previous = pools.put(host, new HostConnectionPool(host, distance, this));
-                    if (previous != null)
-                        previous.shutdown(); // The previous was probably already shutdown but that's ok
+                    try {
+                        HostConnectionPool previous = pools.put(host, new HostConnectionPool(host, distance, Session.Manager.this));
+                        if (previous != null)
+                            previous.shutdown(); // The previous was probably already shutdown but that's ok
+                    } catch (AuthenticationException e) {
+                        logger.error("Error creating pool to {} ({})", host, e.getMessage());
+                        host.getMonitor().signalConnectionFailure(new ConnectionException(e.getHost(), e.getMessage()));
+                    } catch (ConnectionException e) {
+                        logger.debug("Error creating pool to {} ({})", host, e.getMessage());
+                        host.getMonitor().signalConnectionFailure(e);
+                    }
                 }
-            } catch (AuthenticationException e) {
-                logger.error("Error creating pool to {} ({})", host, e.getMessage());
-                host.getMonitor().signalConnectionFailure(new ConnectionException(e.getHost(), e.getMessage()));
-            } catch (ConnectionException e) {
-                logger.debug("Error creating pool to {} ({})", host, e.getMessage());
-                host.getMonitor().signalConnectionFailure(e);
-            }
+            });
         }
 
         private void removePool(Host host) {

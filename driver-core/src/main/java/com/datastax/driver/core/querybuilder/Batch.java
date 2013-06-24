@@ -27,13 +27,15 @@ import com.datastax.driver.core.Statement;
 public class Batch extends BuiltStatement {
 
     private final List<Statement> statements;
+    private final boolean logged;
     private final Options usings;
     private ByteBuffer routingKey;
 
-    Batch(Statement[] statements) {
+    Batch(Statement[] statements, boolean logged) {
         this.statements = statements.length == 0
                         ? new ArrayList<Statement>()
                         : new ArrayList<Statement>(statements.length);
+        this.logged = logged;
         this.usings = new Options(this);
 
         for (int i = 0; i < statements.length; i++)
@@ -43,7 +45,10 @@ public class Batch extends BuiltStatement {
     @Override
     protected String buildQueryString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(isCounterOp() ? "BEGIN COUNTER BATCH" : "BEGIN BATCH");
+
+        builder.append(isCounterOp()
+                       ? "BEGIN COUNTER BATCH"
+                       : (logged ? "BEGIN BATCH" : "BEGIN UNLOGGED BATCH"));
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");

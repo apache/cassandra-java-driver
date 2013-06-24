@@ -39,7 +39,7 @@ class ControlConnection implements Host.StateListener {
     private static final Logger logger = LoggerFactory.getLogger(ControlConnection.class);
 
     // TODO: we might want to make that configurable
-    private static final long MAX_SCHEMA_AGREEMENT_WAIT_MS = 10000;
+    static final long MAX_SCHEMA_AGREEMENT_WAIT_MS = 10000;
 
     private static final InetAddress bindAllAddress;
     static
@@ -231,7 +231,7 @@ class ControlConnection implements Host.StateListener {
     }
 
     public void refreshSchema(String keyspace, String table) throws InterruptedException {
-        logger.debug("[Control connection] Refreshing schema for {}.{}", keyspace, table);
+        logger.debug("[Control connection] Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : "." + table);
         try {
             refreshSchema(connectionRef.get(), keyspace, table, cluster);
         } catch (ConnectionException e) {
@@ -293,8 +293,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    private void updateLocationInfo(Host host, String datacenter, String rack)
-    {
+    private void updateLocationInfo(Host host, String datacenter, String rack) {
         if (Objects.equal(host.getDatacenter(), datacenter) && Objects.equal(host.getRack(), rack))
             return;
 
@@ -388,6 +387,7 @@ class ControlConnection implements Host.StateListener {
         long start = System.nanoTime();
         long elapsed = 0;
         while (elapsed < MAX_SCHEMA_AGREEMENT_WAIT_MS) {
+
             ResultSetFuture peersFuture = new ResultSetFuture(null, new QueryMessage(SELECT_SCHEMA_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
             ResultSetFuture localFuture = new ResultSetFuture(null, new QueryMessage(SELECT_SCHEMA_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
             connection.write(peersFuture.callback);
@@ -412,6 +412,8 @@ class ControlConnection implements Host.StateListener {
                 if (peer != null && peer.getMonitor().isUp())
                     versions.add(row.getUUID("schema_version"));
             }
+
+            logger.debug("Checking for schema agreement: versions are {}", versions);
 
             if (versions.size() <= 1)
                 return true;

@@ -27,17 +27,17 @@ import com.datastax.driver.core.TableMetadata;
  */
 public class Select extends BuiltStatement {
 
-    private static final List<String> COUNT_ALL = Collections.singletonList("count(*)");
+    private static final List<Object> COUNT_ALL = Collections.<Object>singletonList(new Utils.FCall("count", new Utils.RawString("*")));
 
     private final String keyspace;
     private final String table;
-    private final List<String> columnNames;
+    private final List<Object> columnNames;
     private final Where where;
     private List<Ordering> orderings;
     private int limit = -1;
     private boolean allowFiltering;
 
-    Select(String keyspace, String table, List<String> columnNames) {
+    Select(String keyspace, String table, List<Object> columnNames) {
         super();
         this.keyspace = keyspace;
         this.table = table;
@@ -45,7 +45,7 @@ public class Select extends BuiltStatement {
         this.where = new Where(this);
     }
 
-    Select(TableMetadata table, List<String> columnNames) {
+    Select(TableMetadata table, List<Object> columnNames) {
         super(table);
         this.keyspace = table.getKeyspace().getName();
         this.table = table.getName();
@@ -220,11 +220,11 @@ public class Select extends BuiltStatement {
      */
     public static class Builder {
 
-        protected List<String> columnNames;
+        protected List<Object> columnNames;
 
         protected Builder() {}
 
-        Builder(List<String> columnNames) {
+        Builder(List<Object> columnNames) {
             this.columnNames = columnNames;
         }
 
@@ -294,6 +294,14 @@ public class Select extends BuiltStatement {
             return (Builder)this;
         }
 
+        private Selection addName(Object name) {
+            if (columnNames == null)
+                columnNames = new ArrayList<Object>();
+
+            columnNames.add(name);
+            return this;
+        }
+
         /**
          * Selects the provided column.
          *
@@ -301,39 +309,46 @@ public class Select extends BuiltStatement {
          * @return this in-build SELECT statement
          */
         public Selection column(String name) {
-            if (columnNames == null)
-                columnNames = new ArrayList<String>();
-
-            columnNames.add(name);
-            return this;
+            return addName(name);
         }
 
         /**
          * Selects the write time of provided column.
+         * <p>
+         * This is a shortcut for {@code fcall("writetime", QueryBuilder.column(name))}.
          *
          * @param name the name of the column to select the write time of.
          * @return this in-build SELECT statement
          */
         public Selection writeTime(String name) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("writetime(");
-            Utils.appendName(name, sb);
-            sb.append(")");
-            return column(sb.toString());
+            return addName(new Utils.FCall("writetime", new Utils.CName(name)));
         }
 
         /**
          * Selects the ttl of provided column.
+         * <p>
+         * This is a shortcut for {@code fcall("ttl", QueryBuilder.column(name))}.
          *
          * @param name the name of the column to select the ttl of.
          * @return this in-build SELECT statement
          */
         public Selection ttl(String name) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("ttl(");
-            Utils.appendName(name, sb);
-            sb.append(")");
-            return column(sb.toString());
+            return addName(new Utils.FCall("ttl", new Utils.CName(name)));
+        }
+
+        /**
+         * Creates a function call.
+         * <p>
+         * Please note that the parameters are interpreted as values, and so
+         * {@code fcall("textToBlob", "foo")} will generate the string
+         * {@code "textToBlob('foo')"}. If you want to generate
+         * {@code "textToBlob(foo)"}, i.e. if the argument must be interpreted
+         * as a column name (in a select clause), you will need to use the
+         * {@link QueryBuilder#column} method, and so 
+         * {@code fcall("textToBlob", QueryBuilder.column(foo)}.
+         */
+        public Selection fcall(String name, Object... parameters) {
+            return addName(new Utils.FCall(name, parameters));
         }
     }
 }

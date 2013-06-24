@@ -376,7 +376,7 @@ public class TableMetadata {
     }
 
     private StringBuilder and(StringBuilder sb, boolean formatted) {
-        return newLine(sb, formatted).append(spaces(3, formatted)).append("AND ");
+        return newLine(sb, formatted).append(spaces(2, formatted)).append(" AND ");
     }
 
     private String spaces(int n, boolean formatted) {

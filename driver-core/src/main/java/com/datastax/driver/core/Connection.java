@@ -20,6 +20,8 @@ import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 
 import com.google.common.collect.ImmutableMap;
 import com.datastax.driver.core.exceptions.AuthenticationException;
@@ -37,6 +39,8 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.ChannelGroupFuture;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.handler.ssl.SslHandler;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +101,10 @@ class Connection extends org.apache.cassandra.transport.Connection
         this.name = name;
 
         ClientBootstrap bootstrap = factory.newBootstrap();
-        bootstrap.setPipelineFactory(new PipelineFactory(this));
+        if (factory.configuration.getProtocolOptions().sslOptions == null)
+            bootstrap.setPipelineFactory(new PipelineFactory(this));
+        else
+            bootstrap.setPipelineFactory(new SecurePipelineFactory(this, factory.configuration.getProtocolOptions().sslOptions));
 
         ChannelFuture future = bootstrap.connect(new InetSocketAddress(address, factory.getPort()));
 
@@ -640,6 +647,25 @@ class Connection extends org.apache.cassandra.transport.Connection
 
             pipeline.addLast("dispatcher", connection.dispatcher);
 
+            return pipeline;
+        }
+    }
+
+    private static class SecurePipelineFactory extends PipelineFactory {
+
+        private final SSLOptions options;
+
+        public SecurePipelineFactory(final Connection connection, SSLOptions options) {
+            super(connection);
+            this.options = options;
+        }
+
+        public ChannelPipeline getPipeline() throws Exception {
+            SSLEngine engine = options.context.createSSLEngine();
+            engine.setUseClientMode(true);
+            engine.setEnabledCipherSuites(options.cipherSuites);
+            ChannelPipeline pipeline = super.getPipeline();
+            pipeline.addFirst("ssl", new SslHandler(engine));
             return pipeline;
         }
     }

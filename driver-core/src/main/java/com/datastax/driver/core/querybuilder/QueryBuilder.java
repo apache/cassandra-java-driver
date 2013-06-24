@@ -55,7 +55,7 @@ public final class QueryBuilder {
      * least a FROM clause to complete the query).
      */
     public static Select.Builder select(String... columns) {
-        return new Select.Builder(Arrays.asList(columns));
+        return new Select.Builder(Arrays.asList((Object[])columns));
     }
 
     /**
@@ -141,7 +141,7 @@ public final class QueryBuilder {
      * clause needs to be provided to complete the query).
      */
     public static Delete.Builder delete(String... columns) {
-        return new Delete.Builder(Arrays.asList(columns));
+        return new Delete.Builder(Arrays.asList((Object[])columns));
     }
 
     /**
@@ -156,13 +156,41 @@ public final class QueryBuilder {
     }
 
     /**
-     * Built a new BATCH query on the provided statement.
+     * Built a new BATCH query on the provided statements.
+     * <p>
+     * This method will build a logged batch (this is the default in CQL3). To
+     * create unlogged batches, use {@link #unloggedBatch}. Also note that
+     * for convenience, if the provided statements are counter statements, this
+     * method will create a COUNTER batch even though COUNTER batches are never
+     * logged (so for counters, using this method is effectively equivalent to
+     * using {@link #unloggedBatch}).
      *
      * @param statements the statements to batch.
      * @return a new {@code Statement} that batch {@code statements}.
      */
     public static Batch batch(Statement... statements) {
-        return new Batch(statements);
+        return new Batch(statements, true);
+    }
+
+    /**
+     * Built a new UNLOGGED BATCH query on the provided statements.
+     * <p>
+     * Compared to logged batches (the default), unlogged batch don't
+     * use the distributed batch log server side and as such are not
+     * guaranteed to be atomic. In other words, if an unlogged batch
+     * timeout, some of the batched statements may have been persisted
+     * while some have not. Unlogged batch will however be slightly
+     * faster than logged batch.
+     * <p>
+     * If the statements added to the batch are counter statements, the
+     * resulting batch will be a COUNTER one.
+     *
+     * @param statements the statements to batch.
+     * @return a new {@code Statement} that batch {@code statements} without
+     * using the batch log.
+     */
+    public static Batch unloggedBatch(Statement... statements) {
+        return new Batch(statements, false);
     }
 
     /**
@@ -204,7 +232,7 @@ public final class QueryBuilder {
     public static String token(String... columnNames) {
         StringBuilder sb = new StringBuilder();
         sb.append("token(");
-        Utils.joinAndAppendNames(sb, ",", Arrays.asList(columnNames));
+        Utils.joinAndAppendNames(sb, ",", Arrays.asList((Object[])columnNames));
         sb.append(")");
         return sb.toString();
     }
@@ -605,6 +633,30 @@ public final class QueryBuilder {
      * @return the value but protected from being interpreted/escaped by the query builder.
      */
     public static Object raw(String str) {
-        return new Utils.RawString(str);
+        return new Utils.RawString("'" + str + "'");
+    }
+
+    /**
+     * Creates a function call.
+     *
+     * @param name the name of the function to call.
+     * @param parameters the paramters for the function.
+     * @return the function call.
+     */
+    public static Object fcall(String name, Object... parameters) {
+        return new Utils.FCall(name, parameters);
+    }
+
+    /**
+     * Declares that the name in argument should be treated as a column name.
+     * <p>
+     * This mainly meant for use with {@link Select.Builder#fcall} when a
+     * function should apply to a column name, not a string value.
+     *
+     * @param name the name of the column.
+     * @return the name as a column name.
+     */
+    public static Object column(String name) {
+        return new Utils.CName(name);
     }
 }

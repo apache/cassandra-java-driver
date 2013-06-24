@@ -132,7 +132,7 @@ class RequestHandler implements Connection.ResponseCallback {
             return false;
         } catch (TimeoutException e) {
             // We timeout, log it but move to the next node.
-            logError(host.getAddress(), "Timeout while trying to acquire available connection");
+            logError(host.getAddress(), "Timeout while trying to acquire available connection (you may want to increase the driver number of per-host connections)");
             return false;
         } catch (RuntimeException e) {
             if (connection != null)

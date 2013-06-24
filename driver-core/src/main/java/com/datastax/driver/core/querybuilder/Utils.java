@@ -26,7 +26,6 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 abstract class Utils {
 
     private static final Pattern cnamePattern = Pattern.compile("\\w+(?:\\[.+\\])?");
-    private static final Pattern fctsPattern = Pattern.compile("\\s*[a-zA-Z]\\w*\\(.+");
 
     static StringBuilder joinAndAppend(StringBuilder sb, String separator, List<? extends Appendeable> values) {
         for (int i = 0; i < values.size(); i++) {
@@ -37,7 +36,7 @@ abstract class Utils {
         return sb;
     }
 
-    static StringBuilder joinAndAppendNames(StringBuilder sb, String separator, List<String> values) {
+    static StringBuilder joinAndAppendNames(StringBuilder sb, String separator, List<Object> values) {
         for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);
@@ -72,21 +71,17 @@ abstract class Utils {
         if (appendValueIfCollection(value, sb, rawValue))
             return sb;
 
-        if (rawValue || isFunctionCall(value) || value instanceof RawString)
+        if (rawValue || value instanceof RawString)
             return sb.append(value.toString());
         else
             return appendValueString(value.toString(), sb);
-    }
-
-    static boolean isFunctionCall(Object value) {
-        return value instanceof String && fctsPattern.matcher((String)value).matches();
     }
 
     private static void appendFlatValue(Object value, StringBuilder sb, boolean rawValue) {
         if (appendValueIfLiteral(value, sb))
             return;
 
-        if (rawValue || isFunctionCall(value) || value instanceof RawString)
+        if (rawValue || value instanceof RawString)
             sb.append(value.toString());
         else
             appendValueString(value.toString(), sb);
@@ -108,6 +103,22 @@ abstract class Utils {
             return true;
         } else if (value == QueryBuilder.BIND_MARKER) {
             sb.append("?");
+            return true;
+        } else if (value instanceof FCall) {
+            FCall fcall = (FCall)value;
+            sb.append(fcall.name).append("(");
+            for (int i = 0; i < fcall.parameters.length; i++) {
+                if (i > 0)
+                    sb.append(",");
+                appendValue(fcall.parameters[i], sb);
+            }
+            sb.append(")");
+            return true;
+        } else if (value instanceof CName) {
+            appendName(((CName)value).name, sb);
+            return true;
+        } else if (value == null) {
+            sb.append("null");
             return true;
         } else {
             return false;
@@ -189,16 +200,44 @@ abstract class Utils {
         return sb.append("'").append(replace(value, '\'', "''")).append("'");
     }
 
+    static boolean isRawValue(Object value) {
+        return value != null
+            && !(value instanceof FCall)
+            && !(value instanceof CName)
+            && value != QueryBuilder.BIND_MARKER;
+    }
+
     static String toRawString(Object value) {
         return appendValue(value, new StringBuilder(), true).toString();
     }
 
     static StringBuilder appendName(String name, StringBuilder sb) {
         name = name.trim();
-        if (cnamePattern.matcher(name).matches() || name.startsWith("\"") || fctsPattern.matcher(name).matches())
+        // FIXME: checking for token( specifically is uber ugly, we'll need some better solution.
+        if (cnamePattern.matcher(name).matches() || name.startsWith("\"") || name.startsWith("token("))
             sb.append(name);
         else
             sb.append("\"").append(name).append("\"");
+        return sb;
+    }
+
+    static StringBuilder appendName(Object name, StringBuilder sb) {
+        if (name instanceof String) {
+            appendName((String)name, sb);
+        } else if (name instanceof CName) {
+            appendName(((CName)name).name, sb);
+        } else if (name instanceof FCall) {
+            FCall fcall = (FCall)name;
+            sb.append(fcall.name).append("(");
+            for (int i = 0; i < fcall.parameters.length; i++) {
+                if (i > 0)
+                    sb.append(",");
+                appendValue(fcall.parameters[i], sb);
+            }
+            sb.append(")");
+        } else {
+            appendName((String)name, sb);
+        }
         return sb;
     }
 
@@ -247,7 +286,43 @@ abstract class Utils {
 
         @Override
         public String toString() {
-            return "'" + str + "'";
+            return str;
+        }
+    }
+
+    static class FCall {
+        private final String name;
+        private final Object[] parameters;
+
+        FCall(String name, Object... parameters) {
+            this.name = name;
+            this.parameters = parameters;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(name).append("(");
+            for (int i = 0; i < parameters.length; i++) {
+                if (i > 0)
+                    sb.append(",");
+                sb.append(parameters[i]);
+            }
+            sb.append(")");
+            return sb.toString();
+        }
+    }
+
+    static class CName {
+        private final String name;
+
+        CName(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
         }
     }
 }
