@@ -232,7 +232,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
                     if (name.equals(byIdx[idx].name))
                         return idx;
                 } else {
-                    if (name.toLowerCase().equals(byIdx[idx].name))
+                    if (name.equalsIgnoreCase(byIdx[idx].name))
                         return idx;
                 }
             }
