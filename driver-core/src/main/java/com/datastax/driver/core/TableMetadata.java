@@ -53,7 +53,7 @@ public class TableMetadata {
                           String name,
                           List<ColumnMetadata> partitionKey,
                           List<ColumnMetadata> clusteringKey,
-                          LinkedHashMap<String, ColumnMetadata> columns,
+                          Map<String, ColumnMetadata> columns,
                           Options options) {
         this.keyspace = keyspace;
         this.name = name;
