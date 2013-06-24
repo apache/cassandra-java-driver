@@ -297,7 +297,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         }
 
         static Definition fromTransportSpecification(ColumnSpecification spec) {
-            return new Definition(spec.ksName, spec.cfName, spec.name.toString(), Codec.rawTypeToDataType(spec.type));
+            return new Definition(spec.ksName, spec.cfName, spec.name, Codec.rawTypeToDataType(spec.type));
         }
 
         /**
