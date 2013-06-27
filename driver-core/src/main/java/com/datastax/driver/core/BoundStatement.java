@@ -178,6 +178,13 @@ public class BoundStatement extends Query {
                             throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting map of %s->%s but provided set of %s->%s", i, columnType, expectedKeysClass, expectedValuesClass, providedKeysClass, providedValuesClass));
                     }
                     break;
+                case COUNTER:
+                    if (toSet instanceof Integer)
+                    {
+                        toSet = Long.valueOf(((Integer) toSet).longValue());
+                    }
+                    /* FALL-THRU */
+                    
                 default:
                     Class<?> providedClass = toSet.getClass();
                     Class<?> expectedClass = columnType.getName().javaType;
