@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.stress;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -35,6 +36,17 @@ public class Stress {
 
     private static final Map<String, QueryGenerator.Builder> generators = new HashMap<String, QueryGenerator.Builder>();
 
+    private static final OptionParser parser = new OptionParser() {{
+        accepts("h", "Show this help message");
+        accepts("n", "Number of requests to perform (default: unlimited)").withRequiredArg().ofType(Integer.class);
+        accepts("t", "Level of concurrency to use").withRequiredArg().ofType(Integer.class).defaultsTo(50);
+        accepts("async", "Make asynchronous requests instead of blocking ones");
+        accepts("csv", "Save metrics into csv instead of displaying on stdout");
+        accepts("columns-per-row", "Number of columns per CQL3 row").withRequiredArg().ofType(Integer.class).defaultsTo(5);
+        accepts("value-size", "The size in bytes for column values").withRequiredArg().ofType(Integer.class).defaultsTo(34);
+        accepts("ip", "The hosts ip to connect to").withRequiredArg().ofType(String.class).defaultsTo("127.0.0.1");
+    }};
+
     public static void register(String name, QueryGenerator.Builder generator) {
         if (generators.containsKey(name))
             throw new IllegalStateException("There is already a generator registered with the name " + name);
@@ -42,56 +54,66 @@ public class Stress {
         generators.put(name, generator);
     }
 
-    private static void printHelp(OptionParser parser, Collection<String> generators) throws Exception {
+    private static void printHelp(OptionParser parser, Collection<String> generators) {
 
         System.out.println("Usage: stress <generator> [<option>]*\n");
         System.out.println("Where <generator> can be one of " + generators);
         System.out.println();
-        parser.printHelpOn(System.out);
+
+        try {
+            parser.printHelpOn(System.out);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
 
-    public static void main(String[] args) throws Exception {
+    private static OptionSet parseOptions(String[] args) {
+        try {
+            OptionSet options = parser.parse(args);
+            if (options.has("h")) {
+                printHelp(parser, generators.keySet());
+                System.exit(0);
+            }
+            return options;
+        } catch (Exception e) {
+            System.err.println("Error parsing options: " + e.getMessage());
+            printHelp(parser, generators.keySet());
+            System.exit(1);
+            throw new AssertionError();
+        }
+    }
 
-        OptionParser parser = new OptionParser();
-
-        parser.accepts("?", "Show this help message");
-        parser.accepts("n", "Number of requests to perform (default: unlimited)").withRequiredArg().ofType(Integer.class);
-        parser.accepts("t", "Level of concurrency to use").withRequiredArg().ofType(Integer.class).defaultsTo(50);
-        parser.accepts("async", "Make asynchronous requests instead of blocking ones");
-        parser.accepts("csv", "Save metrics into csv instead of displaying on stdout");
-        parser.accepts("columns-per-row", "Number of columns per CQL3 row").withRequiredArg().ofType(Integer.class).defaultsTo(5);
-        parser.accepts("value-size", "The size in bytes for column values").withRequiredArg().ofType(Integer.class).defaultsTo(34);
-        parser.accepts("ip", "The hosts ip to connect to").withRequiredArg().ofType(String.class).defaultsTo("127.0.0.1");
-
+    private static QueryGenerator.Builder getGenerator(OptionSet options) {
         register("insert", Generators.CASSANDRA_INSERTER);
         register("insert_prepared", Generators.CASSANDRA_PREPARED_INSERTER);
 
-        if (args.length < 1) {
-            System.err.println("Missing argument, you must at least provide the action to do");
+        List<?> args = options.nonOptionArguments();
+        if (args.isEmpty()) {
+            System.err.println("Missing generator, you need to provide a generator.");
             printHelp(parser, generators.keySet());
             System.exit(1);
         }
 
-        String action = args[0];
+        if (args.size() > 1) {
+            System.err.println("Too many generators provided. Got " + args + " but only one generator supported.");
+            printHelp(parser, generators.keySet());
+            System.exit(1);
+        }
+
+        String action = (String)args.get(0);
         if (!generators.containsKey(action)) {
             System.err.println(String.format("Unknown generator '%s'", action));
             printHelp(parser, generators.keySet());
             System.exit(1);
         }
 
-        QueryGenerator.Builder genBuilder = generators.get(action);
+        return generators.get(action);
+    }
 
-        String[] opts = new String[args.length - 1];
-        System.arraycopy(args, 1, opts, 0, opts.length);
+    public static void main(String[] args) throws Exception {
 
-        OptionSet options = null;
-        try {
-            options = parser.parse(opts);
-        } catch (Exception e) {
-            System.err.println("Error parsing options: " + e.getMessage());
-            printHelp(parser, generators.keySet());
-            System.exit(1);
-        }
+        OptionSet options = parseOptions(args);
+        QueryGenerator.Builder genBuilder = getGenerator(options);
 
         int requests = options.has("n") ? (Integer)options.valueOf("n") : -1;
         int concurrency = (Integer)options.valueOf("t");
