@@ -55,7 +55,7 @@ import java.net.InetAddress;
  * connecting. JAAS config:
 
  * <pre>
- * Client {
+ * DseClient {
  *   com.sun.security.auth.module.Krb5LoginModule required
  *     useTicketCache=true
  *     renewTGT=true;
@@ -69,7 +69,7 @@ import java.net.InetAddress;
  * which one to select.
  *
  * <pre>
- * Client {
+ * DseClient {
  *     com.sun.security.auth.module.Krb5LoginModule required
  *       useKeyTab=true
  *       keyTab="/path/to/file.keytab"
