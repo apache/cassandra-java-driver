@@ -1,0 +1,46 @@
+#!/bin/sh
+
+SCRIPT_DIR=$( cd "$( dirname "$0" )" && pwd )
+CURRENT_DIR=$( pwd )
+
+LOG_FILE="$CURRENT_DIR/stress_build.log"
+VERSION_FILE="$SCRIPT_DIR/../.stress.version"
+
+[ -f $LOG_FILE ] && rm $LOG_FILE
+[ -f $VERSION_FILE ] && rm $VERSION_FILE
+
+echo "Building java driver ..."
+echo "-- Driver build --\n" > $LOG_FILE
+
+cd $SCRIPT_DIR/../../..
+mvn clean install -Dmaven.test.skip=true >> $LOG_FILE 2>&1
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ];
+then
+    echo "Error building driver. See $LOG_FILE for details." 1>&2
+    cd $CURRENT_DIR
+    exit $EXIT_CODE
+fi
+
+echo "Building stress application ..."
+echo "\n-- Stress build --\n" >> $LOG_FILE
+
+cd $SCRIPT_DIR/..
+mvn assembly:single >> $LOG_FILE 2>&1
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ];
+then
+    echo "Error building stress application. See $LOG_FILE for details." 1>&2
+    cd $CURRENT_DIR
+    exit $EXIT_CODE
+fi
+
+# We don't want to hardcode the version in the stress launch file, but maven takes an unreasonabe time
+# just to return project version (even if the internet has already been downloaded). So for the common
+# case, just compute that version now and save it to some hidden file, so we speed up the execution script
+
+VERSION=`cd $SCRIPT_DIR/.. && mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version | grep -Ev '(^\[|Download\w+:)'`
+echo "$VERSION" > $VERSION_FILE
+
+cd $CURRENT_DIR
+rm $LOG_FILE
