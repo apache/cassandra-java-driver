@@ -13,10 +13,8 @@ Usage
 
 You will need to build the stress application fist:
     ./bin/build
-
 After which you can run it using for instance:
     ./bin/stress insert_prepared
-
 Of course, you will need to have at least one Cassandra node running (on
 127.0.0.1 by default) for this to work. Please refer to:
     ./bin/stress -h
