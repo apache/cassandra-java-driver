@@ -236,6 +236,41 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
         tokenAwareTest(true);
     }
 
+    /**
+     * Check for JAVA-123 bug. Doesn't really test token awareness, but rather
+     * that we do not destroy the keys.
+     */
+    @Test(groups = "long")
+    public void tokenAwareCompositeKeyTest() throws Throwable {
+
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
+        CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
+
+        Session session = c.session;
+
+        try {
+            String COMPOSITE_TABLE = "composite";
+            session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, 2));
+            session.execute("USE " + SIMPLE_KEYSPACE);
+            session.execute(String.format("CREATE TABLE %s (k1 int, k2 int, i int, PRIMARY KEY ((k1, k2)))", COMPOSITE_TABLE));
+
+            PreparedStatement ps = session.prepare("INSERT INTO " + COMPOSITE_TABLE + "(k1, k2, i) VALUES (?, ?, ?)");
+            session.execute(ps.bind(1, 2, 3));
+
+            ResultSet rs = session.execute("SELECT * FROM " + COMPOSITE_TABLE + " WHERE k1 = 1 AND k2 = 2");
+            assertTrue(!rs.isExhausted());
+            Row r = rs.one();
+            assertTrue(rs.isExhausted());
+
+            assertEquals(r.getInt("i"), 3);
+        } catch (Throwable e) {
+            c.errorOut();
+            throw e;
+        } finally {
+            c.discard();
+        }
+    }
+
     public void tokenAwareTest(boolean usePrepared) throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);

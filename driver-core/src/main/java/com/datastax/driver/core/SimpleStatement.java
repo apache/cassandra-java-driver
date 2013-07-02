@@ -108,8 +108,9 @@ public class SimpleStatement extends Statement {
             totalLength += 2 + bb.remaining() + 1;
 
         ByteBuffer out = ByteBuffer.allocate(totalLength);
-        for (ByteBuffer bb : buffers)
+        for (ByteBuffer buffer : buffers)
         {
+            ByteBuffer bb = buffer.duplicate();
             putShortLength(out, bb.remaining());
             out.put(bb);
             out.put((byte) 0);
