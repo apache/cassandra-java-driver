@@ -6,6 +6,8 @@ CHANGELOG
     backward incompatible way. Function calls are not parsed from string values
     anymore as this wasn't safe. Instead the new 'fcall' method should be used
     (JAVA-100).
+  - [api] Some typos in method names in PoolingOptions have been fixed in a
+    backward incompatible way before the API get widespread.
   - [bug] Don't destroy composite partition key with BoundStatement and
     TokenAwarePolicy (JAVA-123).
   - [new] null values support in the query builder.
