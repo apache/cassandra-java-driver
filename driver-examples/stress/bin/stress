@@ -1,0 +1,39 @@
+#!/bin/sh
+
+SCRIPT_DIR=$( cd "$( dirname "$0" )" && pwd )
+CURRENT_DIR=$( pwd )
+
+# Use $JAVA_HOME if set
+if [ -n "$JAVA_HOME" ]; then
+    JAVA="$JAVA_HOME/bin/java"
+else
+    JAVA=java
+fi
+
+if [ "x$STRESS_JAR" = "x" ]; then
+    # Get the current project version...
+
+    VERSION_FILE="$SCRIPT_DIR/../.stress.version"
+    if [ -f $VERSION_FILE ]; then
+        VERSION=`cat $VERSION_FILE`
+    else
+        VERSION=`cd $SCRIPT_DIR/.. && mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version | grep -Ev '(^\[|Download\w+:)'`
+    fi
+
+    STRESS_JAR="$SCRIPT_DIR/../target/cassandra-driver-examples-stress-$VERSION-jar-with-dependencies.jar"
+
+    if [ ! -f $STRESS_JAR ]; then
+        # Trash the version file in case there was some crap in it
+        [ -f $VERSION_FILE ] && rm $VERSION_FILE;
+        RELATIVE_SCRIPT_DIR=`dirname $0`
+        echo "Stress application does not seem to be build, try $RELATIVE_SCRIPT_DIR/build first" 1>&2
+        exit 1
+    fi
+else
+    if [ ! -f $STRESS_JAR ]; then
+        echo "Cannot find file $STRESS_JAR" 1>&2
+        exit 1
+    fi
+fi
+
+"$JAVA" -jar $STRESS_JAR $@
