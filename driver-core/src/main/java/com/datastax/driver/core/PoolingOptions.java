@@ -27,12 +27,12 @@ package com.datastax.driver.core;
  * For each host, the driver keeps a core pool of connections open at all
  * times determined by calling ({@link #getCoreConnectionsPerHost}).
  * If the use of those connections reaches a configurable threshold
- * ({@link #getMaxSimultaneousRequestsPerConnectionTreshold}),
+ * ({@link #getMaxSimultaneousRequestsPerConnectionThreshold}),
  * more connections are created up to the configurable maximum number of
  * connections ({@link #getMaxConnectionPerHost}). When the pool exceeds
  * the maximum number of connections, connections in excess are
  * reclaimed if the use of opened connections drops below the
- * configured threshold ({@link #getMinSimultaneousRequestsPerConnectionTreshold}).
+ * configured threshold ({@link #getMinSimultaneousRequestsPerConnectionThreshold}).
  * <p>
  * Each of these parameters can be separately set for {@code LOCAL} and
  * {@code REMOTE} hosts ({@link HostDistance}). For {@code IGNORED} hosts,
@@ -86,7 +86,7 @@ public class PoolingOptions {
      * @param distance the {@code HostDistance} for which to return this threshold.
      * @return the configured threshold, or the default one if none have been set.
      */
-    public int getMinSimultaneousRequestsPerConnectionTreshold(HostDistance distance) {
+    public int getMinSimultaneousRequestsPerConnectionThreshold(HostDistance distance) {
         switch (distance) {
             case LOCAL:
                 return minSimultaneousRequestsForLocal;
@@ -107,7 +107,7 @@ public class PoolingOptions {
      *
      * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}.
      */
-    public PoolingOptions setMinSimultaneousRequestsPerConnectionTreshold(HostDistance distance, int minSimultaneousRequests) {
+    public PoolingOptions setMinSimultaneousRequestsPerConnectionThreshold(HostDistance distance, int minSimultaneousRequests) {
         switch (distance) {
             case LOCAL:
                 minSimultaneousRequestsForLocal = minSimultaneousRequests;
@@ -140,7 +140,7 @@ public class PoolingOptions {
      * @param distance the {@code HostDistance} for which to return this threshold.
      * @return the configured threshold, or the default one if none have been set.
      */
-    public int getMaxSimultaneousRequestsPerConnectionTreshold(HostDistance distance) {
+    public int getMaxSimultaneousRequestsPerConnectionThreshold(HostDistance distance) {
         switch (distance) {
             case LOCAL:
                 return maxSimultaneousRequestsForLocal;
@@ -161,7 +161,7 @@ public class PoolingOptions {
      *
      * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}.
      */
-    public PoolingOptions setMaxSimultaneousRequestsPerConnectionTreshold(HostDistance distance, int maxSimultaneousRequests) {
+    public PoolingOptions setMaxSimultaneousRequestsPerConnectionThreshold(HostDistance distance, int maxSimultaneousRequests) {
         switch (distance) {
             case LOCAL:
                 maxSimultaneousRequestsForLocal = maxSimultaneousRequests;
@@ -234,7 +234,7 @@ public class PoolingOptions {
      * @param distance the {@code HostDistance} for which to return this threshold.
      * @return the maximum number of connections per host at distance {@code distance}.
      */
-    public int getMaxConnectionPerHost(HostDistance distance) {
+    public int getMaxConnectionsPerHost(HostDistance distance) {
         switch (distance) {
             case LOCAL:
                 return maxConnectionsForLocal;

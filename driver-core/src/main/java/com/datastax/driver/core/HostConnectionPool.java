@@ -111,7 +111,7 @@ class HostConnectionPool {
             }
         }
 
-        if (minInFlight >= options().getMaxSimultaneousRequestsPerConnectionTreshold(hostDistance) && connections.size() < options().getMaxConnectionPerHost(hostDistance))
+        if (minInFlight >= options().getMaxSimultaneousRequestsPerConnectionThreshold(hostDistance) && connections.size() < options().getMaxConnectionsPerHost(hostDistance))
             maybeSpawnNewConnection();
 
         while (true) {
@@ -223,7 +223,7 @@ class HostConnectionPool {
                 return;
             }
 
-            if (connections.size() > options().getCoreConnectionsPerHost(hostDistance) && inFlight <= options().getMinSimultaneousRequestsPerConnectionTreshold(hostDistance)) {
+            if (connections.size() > options().getCoreConnectionsPerHost(hostDistance) && inFlight <= options().getMinSimultaneousRequestsPerConnectionThreshold(hostDistance)) {
                 trashConnection(connection);
             } else {
                 signalAvailableConnection();
@@ -254,7 +254,7 @@ class HostConnectionPool {
         // First, make sure we don't cross the allowed limit of open connections
         for(;;) {
             int opened = open.get();
-            if (opened >= options().getMaxConnectionPerHost(hostDistance))
+            if (opened >= options().getMaxConnectionsPerHost(hostDistance))
                 return false;
 
             if (open.compareAndSet(opened, opened + 1))
