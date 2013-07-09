@@ -32,6 +32,7 @@ import com.datastax.driver.core.policies.*;
 
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.*;
+import org.apache.cassandra.cql3.statements.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,11 +150,17 @@ public class Session {
 
         if (query instanceof Statement) {
             return manager.executeQuery(new QueryMessage(((Statement)query).getQueryString(), ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
-        } else {
-            assert query instanceof BoundStatement : query;
-
+        } else if (query instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)query;
             return manager.executeQuery(new ExecuteMessage(bs.statement.id, Arrays.asList(bs.values), ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
+        } else {
+            assert query instanceof BatchStatement : query;
+            BatchStatement bs = (BatchStatement)query;
+            BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
+            return manager.executeQuery(new BatchMessage(org.apache.cassandra.cql3.statements.BatchStatement.Type.LOGGED,
+                                                         idAndVals.ids,
+                                                         idAndVals.values,
+                                                         ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
         }
     }
 

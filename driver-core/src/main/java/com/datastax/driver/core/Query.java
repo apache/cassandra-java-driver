@@ -22,8 +22,9 @@ import com.datastax.driver.core.policies.RetryPolicy;
 /**
  * An executable query.
  * <p>
- * This represents either a {@link Statement} or a {@link BoundStatement}
- * along with the query options (consistency level, whether to trace the query, ...).
+ * This represents either a {@link Statement}, a {@link BoundStatement} or a
+ * {@link BatchStatement} along with the query options (consistency level,
+ * whether to trace the query, ...).
  */
 public abstract class Query {
 
@@ -42,7 +43,7 @@ public abstract class Query {
 
     private volatile RetryPolicy retryPolicy;
 
-    // We don't want to expose the constructor, because the code rely on this being only subclassed by Statement and BoundStatement
+    // We don't want to expose the constructor, because the code rely on this being only subclassed Statement, BoundStatement and BatchStatement
     Query() {
         this.consistency = ConsistencyLevel.ONE;
     }

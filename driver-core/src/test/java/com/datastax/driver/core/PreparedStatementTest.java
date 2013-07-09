@@ -370,4 +370,24 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             System.out.println(definition);
         }
     }
+
+    @Test(groups = "unit")
+    public void batchTest() throws Exception {
+
+        PreparedStatement ps1 = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, ?)");
+        PreparedStatement ps2 = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, 'bar')");
+
+        BatchStatement bs = new BatchStatement();
+        bs.add(ps1.bind("one", "foo"));
+        bs.add(ps2.bind("two"));
+        bs.add(new SimpleStatement("INSERT INTO " + SIMPLE_TABLE2 + " (k, v) VALUES ('three', 'foobar')"));
+
+        session.execute(bs);
+
+        ResultSet rs = session.execute("SELECT * FROM " + SIMPLE_TABLE2);
+        for (Row r : rs)
+        {
+            System.out.println(">> " + r.getString("k") + " -> " + r.getString("v"));
+        }
+    }
 }
