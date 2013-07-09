@@ -66,6 +66,13 @@
     </dependency>
 
     <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-mapper-asl</artifactId>
+      <!-- Leave at 1.9.2 for Cassandra compatibility -->
+      <version>[1.9.2]</version>
+    </dependency>
+
+    <dependency>
       <groupId>com.yammer.metrics</groupId>
       <artifactId>metrics-core</artifactId>
       <version>2.2.0</version>
