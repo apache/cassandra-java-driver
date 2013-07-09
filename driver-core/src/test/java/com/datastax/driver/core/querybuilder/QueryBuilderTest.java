@@ -78,6 +78,14 @@ public class QueryBuilderTest {
         select = select().all().from("foo2").where(gt(token("a", "b"), fcall("token", 42, 101)));
         assertEquals(select.toString(), query);
 
+        query = "SELECT * FROM words WHERE w='):,ydL ;O,D';";
+        select = select().all().from("words").where(eq("w", "):,ydL ;O,D"));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM words WHERE w='WA(!:gS)r(UfW';";
+        select = select().all().from("words").where(eq("w", "WA(!:gS)r(UfW"));
+        assertEquals(select.toString(), query);
+
         try {
             select = select("a").from("foo").where(in("a"));
             fail();
