@@ -35,6 +35,9 @@ import java.util.UUID;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
+
 /**
  * Tests DataType class to ensure data sent in is the same as data received
  * All tests are executed via a Simple Statement
@@ -376,11 +379,6 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
         return selectStatements;
     }
 
-
-
-
-
-
     /**
      * Test simple statement inserts for all primitive data types
      */
@@ -482,33 +480,29 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
         collectionSelectTest();
     }
 
-    /**
-     * Test TTLs.
-     */
-    // TODO: @Test(groups = "long")
-    public void ttlTest() throws Throwable {
+    @Test(groups = "unit")
+    public void serializeDeserializeTest() {
 
+        for (DataType dt : DataType.allPrimitiveTypes())
+        {
+            if (exclude(dt))
+                continue;
+
+            Object value = TestUtils.getFixedValue(dt);
+            assertEquals(dt.deserialize(dt.serialize(value)), value);
+        }
+
+        try {
+            DataType.bigint().serialize(4);
+            fail("This should not have worked");
+        } catch (InvalidTypeException e) { /* That's what we want */ }
+
+        try {
+            ByteBuffer badValue = ByteBuffer.allocate(4);
+            DataType.bigint().deserialize(badValue);
+            fail("This should not have worked");
+        } catch (InvalidTypeException e) { /* That's what we want */ }
     }
-
-    /**
-     * Test Counters in an isolated format.
-     */
-    // TODO: @Test(groups = "long")
-    public void countersTest() throws Throwable {
-
-    }
-
-    /**
-     * Test tombstones.
-     */
-    // TODO: @Test(groups = "long")
-    public void tombstonesTest() throws Throwable {
-
-    }
-
-
-
-
 
 
     /**

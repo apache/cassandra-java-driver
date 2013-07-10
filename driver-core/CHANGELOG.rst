@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+* 1.0.2:
+  - [new] New serialize/deserialize methods in DataType to serialize/deserialize
+    values to/from bytes (JAVA-92).
+
 * 1.0.1:
   - [api] Function call handling in the query builder has been modified in a
     backward incompatible way. Function calls are not parsed from string values
