@@ -258,7 +258,6 @@ public class Session {
         final Cluster cluster;
 
         final ConcurrentMap<Host, HostConnectionPool> pools;
-        final LoadBalancingPolicy loadBalancer;
 
         final HostConnectionPool.PoolState poolsState;
 
@@ -268,7 +267,6 @@ public class Session {
             this.cluster = cluster;
 
             this.pools = new ConcurrentHashMap<Host, HostConnectionPool>(hosts.size());
-            this.loadBalancer = cluster.manager.configuration.getPolicies().getLoadBalancingPolicy();
             this.poolsState = new HostConnectionPool.PoolState();
 
             // Create pool to initial nodes (and wait for them to be created)
@@ -298,6 +296,14 @@ public class Session {
             return cluster.manager.configuration;
         }
 
+        LoadBalancingPolicy loadBalancingPolicy() {
+            return cluster.manager.loadBalancingPolicy();
+        }
+
+        ReconnectionPolicy reconnectionPolicy() {
+            return cluster.manager.reconnectionPolicy();
+        }
+
         public ExecutorService executor() {
             return cluster.manager.executor;
         }
@@ -315,7 +321,7 @@ public class Session {
         }
 
         private Future<?> addOrRenewPool(final Host host) {
-            final HostDistance distance = loadBalancer.distance(host);
+            final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
             if (distance == HostDistance.IGNORED)
                 return Futures.immediateFuture(null);
 
@@ -355,7 +361,7 @@ public class Session {
          */
         private void updateCreatedPools() {
             for (Host h : cluster.getMetadata().allHosts()) {
-                HostDistance dist = loadBalancer.distance(h);
+                HostDistance dist = loadBalancingPolicy().distance(h);
                 HostConnectionPool pool = pools.get(h);
 
                 if (pool == null) {
@@ -374,13 +380,11 @@ public class Session {
         @Override
         public void onUp(Host host) {
             addOrRenewPool(host);
-            loadBalancer.onUp(host);
             updateCreatedPools();
         }
 
         @Override
         public void onDown(Host host) {
-            loadBalancer.onDown(host);
             // Note that with well behaved balancing policy (that ignore dead nodes), the removePool call is not necessary
             // since updateCreatedPools should take care of it. But better protect against non well behaving policies.
             removePool(host);
@@ -390,13 +394,11 @@ public class Session {
         @Override
         public void onAdd(Host host) {
             addOrRenewPool(host);
-            loadBalancer.onAdd(host);
             updateCreatedPools();
         }
 
         @Override
         public void onRemove(Host host) {
-            loadBalancer.onRemove(host);
             removePool(host);
             updateCreatedPools();
         }

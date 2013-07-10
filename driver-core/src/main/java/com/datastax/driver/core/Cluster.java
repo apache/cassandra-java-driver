@@ -603,7 +603,7 @@ public class Cluster {
             for (InetAddress address : contactPoints)
                 addHost(address, false);
 
-            configuration.getPolicies().getLoadBalancingPolicy().init(Cluster.this, metadata.allHosts());
+            loadBalancingPolicy().init(Cluster.this, metadata.allHosts());
 
             try {
                 controlConnection.connect();
@@ -619,6 +619,14 @@ public class Cluster {
 
         Cluster getCluster() {
             return Cluster.this;
+        }
+
+        LoadBalancingPolicy loadBalancingPolicy() {
+            return configuration.getPolicies().getLoadBalancingPolicy();
+        }
+
+        ReconnectionPolicy reconnectionPolicy() {
+            return configuration.getPolicies().getReconnectionPolicy();
         }
 
         private Session newSession() {
@@ -675,6 +683,11 @@ public class Cluster {
                 // Don't propagate because we don't want to prevent other listener to run
             }
 
+            // We add to the loadbalancing policy before updating the session. We want to do it in that
+            // order because the Session expects it. This may mean the balancing could return the new
+            // node in a query plan before a pool are really been created, but that's harmless, since
+            // RequestHandler will ignore them until then
+            loadBalancingPolicy().onUp(host);
             controlConnection.onUp(host);
             for (Session s : sessions)
                 s.manager.onUp(host);
@@ -683,13 +696,14 @@ public class Cluster {
         @Override
         public void onDown(final Host host) {
             logger.trace("Host {} is DOWN", host);
+            loadBalancingPolicy().onDown(host);
             controlConnection.onDown(host);
             for (Session s : sessions)
                 s.manager.onDown(host);
 
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug("{} is down, scheduling connection retries", host);
-            new AbstractReconnectionHandler(reconnectionExecutor, configuration.getPolicies().getReconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
+            new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
 
                 protected Connection tryReconnect() throws ConnectionException, InterruptedException {
                     return connectionFactory.open(host);
@@ -725,6 +739,7 @@ public class Cluster {
                 // Don't propagate because we don't want to prevent other listener to run
             }
 
+            loadBalancingPolicy().onAdd(host);
             controlConnection.onAdd(host);
             for (Session s : sessions)
                 s.manager.onAdd(host);
@@ -733,6 +748,7 @@ public class Cluster {
         @Override
         public void onRemove(Host host) {
             logger.trace("Removing host {}", host);
+            loadBalancingPolicy().onRemove(host);
             controlConnection.onRemove(host);
             for (Session s : sessions)
                 s.manager.onRemove(host);
