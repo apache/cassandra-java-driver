@@ -22,12 +22,14 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.MurmurHash;
 
-// We really only use the generic for type safety and it's not an interface because we don't want to expose it
-// Note: we may want to expose this later if people use custom partitioner and want to be able to extend that.
-// This is way premature however.
-abstract class Token<T extends Token<T>> implements Comparable<T> {
+/*
+ * It's not an interface because we don't want to expose it
+ * Note: we may want to expose this later if people use custom partitioner and want to be able to extend that.
+ * This is way premature however.
+ */
+abstract class Token implements Comparable<Token> {
 
-    public static Token.Factory<?> getFactory(String partitionerName) {
+    public static Token.Factory getFactory(String partitionerName) {
         if (partitionerName.endsWith("Murmur3Partitioner"))
             return M3PToken.FACTORY;
         else if (partitionerName.endsWith("RandomPartitioner"))
@@ -38,16 +40,16 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
             return null;
     }
 
-    public interface Factory<T extends Token<T>> {
-        public T fromString(String tokenStr);
-        public T hash(ByteBuffer partitionKey);
+    public interface Factory {
+        public Token fromString(String tokenStr);
+        public Token hash(ByteBuffer partitionKey);
     }
 
     // Murmur3Partitioner tokens
-    static class M3PToken extends Token<M3PToken> {
+    static class M3PToken extends Token {
         private final long value;
 
-        public static final Factory<M3PToken> FACTORY = new Factory<M3PToken>() {
+        public static final Factory FACTORY = new Factory() {
             @Override
             public M3PToken fromString(String tokenStr) {
                 return new M3PToken(Long.parseLong(tokenStr));
@@ -65,8 +67,9 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
         }
 
         @Override
-        public int compareTo(M3PToken other) {
-            long otherValue = other.value;
+        public int compareTo(Token other) {
+            assert other instanceof M3PToken;
+            long otherValue = ((M3PToken)other).value;
             return value < otherValue ? -1 : (value == otherValue) ? 0 : 1;
         }
 
@@ -87,10 +90,10 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
     }
 
     // OPPartitioner tokens
-    static class OPPToken extends Token<OPPToken> {
+    static class OPPToken extends Token {
         private final ByteBuffer value;
 
-        public static final Factory<OPPToken> FACTORY = new Factory<OPPToken>() {
+        public static final Factory FACTORY = new Factory() {
             @Override
             public OPPToken fromString(String tokenStr) {
                 return new OPPToken(ByteBufferUtil.bytes(tokenStr));
@@ -107,8 +110,9 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
         }
 
         @Override
-        public int compareTo(OPPToken other) {
-            return value.compareTo(other.value);
+        public int compareTo(Token other) {
+            assert other instanceof OPPToken;
+            return value.compareTo(((OPPToken)other).value);
         }
 
         @Override
@@ -128,10 +132,10 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
     }
 
     // RandomPartitioner tokens
-    static class RPToken extends Token<RPToken> {
+    static class RPToken extends Token {
         private final BigInteger value;
 
-        public static final Factory<RPToken> FACTORY = new Factory<RPToken>() {
+        public static final Factory FACTORY = new Factory() {
             @Override
             public RPToken fromString(String tokenStr) {
                 return new RPToken(new BigInteger(tokenStr));
@@ -148,8 +152,9 @@ abstract class Token<T extends Token<T>> implements Comparable<T> {
         }
 
         @Override
-        public int compareTo(RPToken other) {
-            return value.compareTo(other.value);
+        public int compareTo(Token other) {
+            assert other instanceof RPToken;
+            return value.compareTo(((RPToken)other).value);
         }
 
         @Override

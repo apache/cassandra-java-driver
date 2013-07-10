@@ -25,6 +25,7 @@ public class SimpleStatement extends Statement {
 
     private final String query;
     private volatile ByteBuffer routingKey;
+    private volatile String keyspace;
 
     /**
      * Creates a new {@code SimpleStatement} with the provided query string.
@@ -52,7 +53,7 @@ public class SimpleStatement extends Statement {
      * {@link #setRoutingKey}, this method will return {@code null} to
      * avoid having to parse the query string to retrieve the partition key.
      *
-     * @return the routing key set through {@link #setRoutingKey} is such a key
+     * @return the routing key set through {@link #setRoutingKey} if such a key
      * was set, {@code null} otherwise.
      *
      * @see Query#getRoutingKey
@@ -80,6 +81,44 @@ public class SimpleStatement extends Statement {
      */
     public SimpleStatement setRoutingKey(ByteBuffer routingKey) {
         this.routingKey = routingKey;
+        return this;
+    }
+
+    /**
+     * Returns the keyspace this query operates on.
+     * <p>
+     * Unless the keyspace has been explicitly set through {@link #setKeyspace},
+     * this method will return {@code null} to avoid having to parse the query
+     * string.
+     *
+     * @return the keyspace set through {@link #setKeyspace} if such keyspace was
+     * set, {@code null} otherwise.
+     *
+     * @see Query#getKeyspace
+     */
+    @Override
+    public String getKeyspace() {
+        return keyspace;
+    }
+
+    /**
+     * Sets the keyspace this query operates on.
+     * <p>
+     * This method allows you to manually provide a keyspace for this query. It
+     * is thus optional since the value returned by this method is only an hint
+     * for token aware load balancing policy but is never mandatory.
+     * <p>
+     * Do note that if the query does not use a fully qualified keyspace, then
+     * you do not need to set the keyspace through that method as the
+     * currently logged in keyspace will be used.
+     *
+     * @param keyspace the name of the keyspace this query operates on.
+     * @return this {@code SimpleStatement} object.
+     *
+     * @see Query#getKeyspace
+     */
+    public SimpleStatement setKeyspace(String keyspace) {
+        this.keyspace = keyspace;
         return this;
     }
 

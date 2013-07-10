@@ -26,15 +26,13 @@ import com.datastax.driver.core.querybuilder.Assignment.CounterAssignment;
  */
 public class Update extends BuiltStatement {
 
-    private final String keyspace;
     private final String table;
     private final Assignments assignments;
     private final Where where;
     private final Options usings;
 
     Update(String keyspace, String table) {
-        super();
-        this.keyspace = keyspace;
+        super(keyspace);
         this.table = table;
         this.assignments = new Assignments(this);
         this.where = new Where(this);
@@ -43,7 +41,6 @@ public class Update extends BuiltStatement {
 
     Update(TableMetadata table) {
         super(table);
-        this.keyspace = table.getKeyspace().getName();
         this.table = table.getName();
         this.assignments = new Assignments(this);
         this.where = new Where(this);

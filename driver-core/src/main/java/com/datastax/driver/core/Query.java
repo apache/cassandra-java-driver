@@ -32,6 +32,9 @@ public abstract class Query {
     static final Query DEFAULT = new Query() {
         @Override
         public ByteBuffer getRoutingKey() { return null; }
+
+        @Override
+        public String getKeyspace() { return null; }
     };
 
     private volatile ConsistencyLevel consistency;
@@ -114,6 +117,26 @@ public abstract class Query {
      * @return the routing key for this query or {@code null}.
      */
     public abstract ByteBuffer getRoutingKey();
+
+    /**
+     * Returns the keyspace this query operates on.
+     * <p>
+     * Note that not all query specify on which keyspace they operate on, and
+     * so this method can always reutrn {@code null}. Firstly, some queries do
+     * not operate inside a keyspace: keyspace creation, {@code USE} queries,
+     * user creation, etc. Secondly, even query that operate within a keyspace
+     * do not have to specify said keyspace directly, in which case the
+     * currently logged in keyspace (the one set through a {@code USE} query
+     * (or through the use of {@link Session#connect(String)})). Lastly, as
+     * for the routing key, this keyspace information is only a hint for
+     * token-aware routing (since replica placement depend on the replication
+     * strategy in use which is a per-keyspace property) and having this method
+     * return {@code null} (or even a bogus keyspace name) will never cause the
+     * query to fail.
+     *
+     * @return the keyspace this query operate on if relevant or {@code null}.
+     */
+    public abstract String getKeyspace();
 
     /**
      * Sets the retry policy to use for this query.

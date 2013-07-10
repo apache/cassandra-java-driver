@@ -76,10 +76,14 @@ public interface LoadBalancingPolicy extends Host.StateListener {
      * used. If all hosts of the returned {@code Iterator} are down, the query
      * will fail.
      *
+     * @param loggedKeyspace the currently logged keyspace (the one set through either
+     * {@link Session#connect(String)} or by manually doing a {@code USE} query) for
+     * the session on which this plan need to be built. This can be {@code null} if
+     * the corresponding session has no keyspace logged in.
      * @param query the query for which to build a plan.
      * @return an iterator of Host. The query is tried against the hosts
      * returned by this iterator in order, until the query has been sent
      * successfully to one of the host.
      */
-    public Iterator<Host> newQueryPlan(Query query);
+    public Iterator<Host> newQueryPlan(String loggedKeyspace, Query query);
 }

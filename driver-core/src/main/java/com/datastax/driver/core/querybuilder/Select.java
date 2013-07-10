@@ -29,7 +29,6 @@ public class Select extends BuiltStatement {
 
     private static final List<Object> COUNT_ALL = Collections.<Object>singletonList(new Utils.FCall("count", new Utils.RawString("*")));
 
-    private final String keyspace;
     private final String table;
     private final List<Object> columnNames;
     private final Where where;
@@ -38,8 +37,7 @@ public class Select extends BuiltStatement {
     private boolean allowFiltering;
 
     Select(String keyspace, String table, List<Object> columnNames) {
-        super();
-        this.keyspace = keyspace;
+        super(keyspace);
         this.table = table;
         this.columnNames = columnNames;
         this.where = new Where(this);
@@ -47,7 +45,6 @@ public class Select extends BuiltStatement {
 
     Select(TableMetadata table, List<Object> columnNames) {
         super(table);
-        this.keyspace = table.getKeyspace().getName();
         this.table = table.getName();
         this.columnNames = columnNames;
         this.where = new Where(this);

@@ -157,7 +157,7 @@ class ControlConnection implements Host.StateListener {
 
     private Connection reconnectInternal() {
 
-        Iterator<Host> iter = cluster.loadBalancingPolicy().newQueryPlan(Query.DEFAULT);
+        Iterator<Host> iter = cluster.loadBalancingPolicy().newQueryPlan(null, Query.DEFAULT);
         Map<InetAddress, String> errors = null;
 
         Host host = null;
@@ -214,7 +214,7 @@ class ControlConnection implements Host.StateListener {
             connection.write(new RegisterMessage(evs));
 
             logger.debug(String.format("[Control connection] Refreshing node list and token map"));
-            refreshNodeListAndTokenMap(connection);
+            refreshNodeListAndTokenMap(connection, cluster);
 
             logger.debug("[Control connection] Refreshing schema");
             refreshSchema(connection, null, null, cluster);
@@ -263,6 +263,10 @@ class ControlConnection implements Host.StateListener {
         connection.write(colsFuture.callback);
 
         cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get());
+        // If the table is null, we either rebuild all from scratch or have an updated keyspace. In both case, rebuild the token map
+        // since some replication on some keyspace may have changed
+        if (table == null)
+            refreshNodeListAndTokenMap(connection, cluster);
     }
 
     public void refreshNodeListAndTokenMap() {
@@ -273,7 +277,7 @@ class ControlConnection implements Host.StateListener {
 
         logger.debug(String.format("[Control connection] Refreshing node list and token map"));
         try {
-            refreshNodeListAndTokenMap(c);
+            refreshNodeListAndTokenMap(c, cluster);
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refeshing node list and token map ({})", e.getMessage());
             signalError();
@@ -291,19 +295,19 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    private void updateLocationInfo(Host host, String datacenter, String rack) {
+    private static void updateLocationInfo(Host host, String datacenter, String rack, Cluster.Manager cluster) {
         if (Objects.equal(host.getDatacenter(), datacenter) && Objects.equal(host.getRack(), rack))
             return;
 
         // If the dc/rack information changes, we need to update the load balancing policy.
-        // For what, we remove and re-add the node against the policy. Not the most elegant, and assumes
+        // For that, we remove and re-add the node against the policy. Not the most elegant, and assumes
         // that the policy will update correctly, but in practice this should work.
         cluster.loadBalancingPolicy().onDown(host);
         host.setLocationInfo(datacenter, rack);
         cluster.loadBalancingPolicy().onAdd(host);
     }
 
-    private void refreshNodeListAndTokenMap(Connection connection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    private static void refreshNodeListAndTokenMap(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         // Make sure we're up to date on nodes and tokens
 
         ResultSetFuture peersFuture = new ResultSetFuture(null, new QueryMessage(SELECT_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
@@ -329,7 +333,7 @@ class ControlConnection implements Host.StateListener {
             if (host == null) {
                 logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
-                updateLocationInfo(host, localRow.getString("data_center"), localRow.getString("rack"));
+                updateLocationInfo(host, localRow.getString("data_center"), localRow.getString("rack"), cluster);
 
                 Set<String> tokens = localRow.getSet("tokens", String.class);
                 if (partitioner != null && !tokens.isEmpty())
@@ -364,7 +368,7 @@ class ControlConnection implements Host.StateListener {
                 // We don't know that node, add it.
                 host = cluster.addHost(foundHosts.get(i), true);
             }
-            updateLocationInfo(host, dcs.get(i), racks.get(i));
+            updateLocationInfo(host, dcs.get(i), racks.get(i), cluster);
 
             if (partitioner != null && !allTokens.get(i).isEmpty())
                 tokenMap.put(host, allTokens.get(i));
@@ -376,8 +380,7 @@ class ControlConnection implements Host.StateListener {
             if (!host.getAddress().equals(connection.address) && !foundHostsSet.contains(host.getAddress()))
                 cluster.removeHost(host);
 
-        if (partitioner != null)
-            cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
+        cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
     }
 
     static boolean waitForSchemaAgreement(Connection connection, Metadata metadata) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {

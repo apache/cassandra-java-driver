@@ -32,6 +32,7 @@ public class Batch extends BuiltStatement {
     private ByteBuffer routingKey;
 
     Batch(Statement[] statements, boolean logged) {
+        super((String)null);
         this.statements = statements.length == 0
                         ? new ArrayList<Statement>()
                         : new ArrayList<Statement>(statements.length);
@@ -111,6 +112,16 @@ public class Batch extends BuiltStatement {
     @Override
     public ByteBuffer getRoutingKey() {
         return routingKey;
+    }
+
+    /**
+     * Returns the keyspace of the first statement in this batch.
+     *
+     * @return the keyspace of the first statement in this batch.
+     */
+    @Override
+    public String getKeyspace() {
+        return statements.isEmpty() ? null : statements.get(0).getKeyspace();
     }
 
     /**

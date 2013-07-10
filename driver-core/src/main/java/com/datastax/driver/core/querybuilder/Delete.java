@@ -25,15 +25,13 @@ import com.datastax.driver.core.TableMetadata;
  */
 public class Delete extends BuiltStatement {
 
-    private final String keyspace;
     private final String table;
     private final List<Object> columnNames;
     private final Where where;
     private final Options usings;
 
     Delete(String keyspace, String table, List<Object> columnNames) {
-        super();
-        this.keyspace = keyspace;
+        super(keyspace);
         this.table = table;
         this.columnNames = columnNames;
         this.where = new Where(this);
@@ -42,7 +40,6 @@ public class Delete extends BuiltStatement {
 
     Delete(TableMetadata table, List<Object> columnNames) {
         super(table);
-        this.keyspace = table.getKeyspace().getName();
         this.table = table.getName();
         this.columnNames = columnNames;
         this.where = new Where(this);

@@ -321,6 +321,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             c.discard();
         }
     }
+
     @Test(groups = "long")
     public void testRFOneDowngradingCL() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy())).withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
@@ -743,15 +744,14 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             assertQueried(CCMBridge.IP_PREFIX + "1", 0);
             assertQueried(CCMBridge.IP_PREFIX + "2", 0);
             assertQueried(CCMBridge.IP_PREFIX + "3", 0);
-            // BUG: JAVA-88
-            //assertQueried(CCMBridge.IP_PREFIX + "4", 12);
-            //assertQueried(CCMBridge.IP_PREFIX + "5", 0);
-            //assertQueried(CCMBridge.IP_PREFIX + "6", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "4", 4);
+            assertQueried(CCMBridge.IP_PREFIX + "5", 4);
+            assertQueried(CCMBridge.IP_PREFIX + "6", 4);
 
             resetCoordinators();
             c.cassandraCluster.forceStop(2);
             // FIXME: This sleep is needed to allow the waitFor() to work
-            Thread.sleep(20000);
+            //Thread.sleep(20000);
             waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
 
             List<ConsistencyLevel> acceptedList = Arrays.asList(

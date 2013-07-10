@@ -26,22 +26,19 @@ import com.datastax.driver.core.TableMetadata;
  */
 public class Insert extends BuiltStatement {
 
-    private final String keyspace;
     private final String table;
     private final List<Object> names = new ArrayList<Object>();
     private final List<Object> values = new ArrayList<Object>();
     private final Options usings;
 
     Insert(String keyspace, String table) {
-        super();
-        this.keyspace = keyspace;
+        super(keyspace);
         this.table = table;
         this.usings = new Options(this);
     }
 
     Insert(TableMetadata table) {
         super(table);
-        this.keyspace = table.getKeyspace().getName();
         this.table = table.getName();
         this.usings = new Options(this);
     }

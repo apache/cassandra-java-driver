@@ -77,7 +77,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
         callback.register(this);
 
-        this.queryPlan = manager.loadBalancingPolicy().newQueryPlan(query);
+        this.queryPlan = manager.loadBalancingPolicy().newQueryPlan(manager.poolsState.keyspace, query);
         this.query = query;
 
         this.timerContext = metricsEnabled()

@@ -31,22 +31,29 @@ public class KeyspaceMetadata {
 
     private final String name;
     private final boolean durableWrites;
-    private final Map<String, String> replication = new HashMap<String, String>();
+
+    private final ReplicationStrategy strategy;
+    private final Map<String, String> replication;
+
     private final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
 
-    private KeyspaceMetadata(String name, boolean durableWrites) {
+    private KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
         this.name = name;
         this.durableWrites = durableWrites;
+        this.replication = replication;
+        this.strategy = ReplicationStrategy.create(replication);
     }
 
     static KeyspaceMetadata build(Row row) {
 
         String name = row.getString(KS_NAME);
         boolean durableWrites = row.getBool(DURABLE_WRITES);
-        KeyspaceMetadata ksm = new KeyspaceMetadata(name, durableWrites);
-        ksm.replication.put("class", row.getString(STRATEGY_CLASS));
-        ksm.replication.putAll(TableMetadata.fromJsonMap(row.getString(STRATEGY_OPTIONS)));
-        return ksm;
+
+        Map<String, String> replicationOptions = new HashMap<String, String>();
+        replicationOptions.put("class", row.getString(STRATEGY_CLASS));
+        replicationOptions.putAll(TableMetadata.fromJsonMap(row.getString(STRATEGY_OPTIONS)));
+
+        return new KeyspaceMetadata(name, durableWrites, replicationOptions);
     }
 
     /**
@@ -148,5 +155,9 @@ public class KeyspaceMetadata {
 
     void add(TableMetadata tm) {
         tables.put(tm.getName(), tm);
+    }
+
+    ReplicationStrategy replicationStrategy() {
+        return strategy;
     }
 }

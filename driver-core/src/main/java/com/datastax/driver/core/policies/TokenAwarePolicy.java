@@ -91,15 +91,19 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
      * @return the new query plan.
      */
     @Override
-    public Iterator<Host> newQueryPlan(final Query query) {
+    public Iterator<Host> newQueryPlan(final String loggedKeyspace, final Query query) {
 
         ByteBuffer partitionKey = query.getRoutingKey();
-        if (partitionKey == null)
-            return childPolicy.newQueryPlan(query);
+        String keyspace = query.getKeyspace();
+        if (keyspace == null)
+            keyspace = loggedKeyspace;
 
-        final Set<Host> replicas = clusterMetadata.getReplicas(partitionKey);
+        if (partitionKey == null || keyspace == null)
+            return childPolicy.newQueryPlan(keyspace, query);
+
+        final Set<Host> replicas = clusterMetadata.getReplicas(keyspace, partitionKey);
         if (replicas.isEmpty())
-            return childPolicy.newQueryPlan(query);
+            return childPolicy.newQueryPlan(loggedKeyspace, query);
 
         return new AbstractIterator<Host>() {
 
@@ -115,7 +119,7 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
                 }
 
                 if (childIterator == null)
-                    childIterator = childPolicy.newQueryPlan(query);
+                    childIterator = childPolicy.newQueryPlan(loggedKeyspace, query);
 
                 while (childIterator.hasNext()) {
                     Host host = childIterator.next();

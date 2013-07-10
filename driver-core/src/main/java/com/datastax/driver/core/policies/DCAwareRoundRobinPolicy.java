@@ -150,12 +150,14 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * The order of the local node in the returned query plan will follow a
      * Round-robin algorithm.
      *
+     * @param loggedKeyspace the keyspace currently logged in on for this
+     * query.
      * @param query the query for which to build the plan.
      * @return a new query plan, i.e. an iterator indicating which host to
      * try first for querying, which one to use as failover, etc...
      */
     @Override
-    public Iterator<Host> newQueryPlan(Query query) {
+    public Iterator<Host> newQueryPlan(String loggedKeyspace, Query query) {
 
         CopyOnWriteArrayList<Host> localLiveHosts = perDcLiveHosts.get(localDc);
         final List<Host> hosts = localLiveHosts == null ? Collections.<Host>emptyList() : cloneList(localLiveHosts);

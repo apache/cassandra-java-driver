@@ -209,7 +209,7 @@ public class BoundStatement extends Query {
      * Otherwise, {@code null} is returned.
      * <p>
      * Note that if the routing key has been set through {@link PreparedStatement#setRoutingKey},
-     * that value takes precedence even if the partition key is part of the bound variables.
+     * that latter value takes precedence even if the partition key is part of the bound variables.
      *
      * @return the routing key for this statement or {@code null}.
      */
@@ -233,6 +233,24 @@ public class BoundStatement extends Query {
             }
         }
         return null;
+    }
+
+    /**
+     * Returns the keyspace this query operates on.
+     * <p>
+     * This method will always return a non-{@code null} value (unless the statement
+     * has no variables, but you should avoid prepared statement in the first in that
+     * case). The keyspace returned will be the one corresponding to the first
+     * variable prepared in this statement (which in almost all case will be <i>the</i>
+     * keyspace for the operation, though it's possible in CQL to build a batch
+     * statement that acts on multiple keyspace).
+     *
+     * @return the keyspace for this statement (see above), or {@code null} if the
+     * statement has no variables.
+     */
+    @Override
+    public String getKeyspace() {
+        return statement.metadata.size() == 0 ? null : statement.metadata.getKeyspace(0);
     }
 
     /**
