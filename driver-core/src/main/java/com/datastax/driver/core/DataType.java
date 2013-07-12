@@ -467,7 +467,12 @@ public class DataType {
         if (!expectedClass.isAssignableFrom(providedClass))
             throw new InvalidTypeException(String.format("Invalid value for CQL type %s, expecting %s but %s provided", toString(), expectedClass, providedClass));
 
-        return Codec.getCodec(this).decompose(value);
+        try {
+            return Codec.getCodec(this).decompose(value);
+        } catch (ClassCastException e) {
+            // With collections, the element type has not been checked, so it can throw
+            throw new InvalidTypeException("Invalid type for collection element: " + e.getMessage());
+        }
     }
 
     /**

@@ -480,7 +480,13 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
         collectionSelectTest();
     }
 
-    @Test(groups = "unit")
+    // The two following tests a really unit tests, but since the whole uses
+    // CCMBridge.PerClassSingleNodeCluster, they'll still spawn a cluster even
+    // you execute only them, so we keep them in the "long" group. We could
+    // move them in another class but not sure where honestly (one could argue
+    // that it would make more sense to move all the *other* tests to some
+    // DataTypeIntegrationTest class).
+    @Test(groups = "long")
     public void serializeDeserializeTest() {
 
         for (DataType dt : DataType.allPrimitiveTypes())
@@ -504,6 +510,19 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
         } catch (InvalidTypeException e) { /* That's what we want */ }
     }
 
+    @Test(groups = "long")
+    public void serializeDeserializeCollectionsTest() {
+
+        List<String> l = Arrays.asList("foo", "bar");
+
+        DataType dt = DataType.list(DataType.text());
+        assertEquals(dt.deserialize(dt.serialize(l)), l);
+
+        try {
+            DataType.list(DataType.bigint()).serialize(l);
+            fail("This should not have worked");
+        } catch (InvalidTypeException e) { /* That's what we want */ }
+    }
 
     /**
      * Prints the table definitions that will be used in testing
