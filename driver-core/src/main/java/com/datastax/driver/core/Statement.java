@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
+
 /**
  * A non-prepared CQL statement.
  * <p>
@@ -30,6 +32,16 @@ public abstract class Statement extends Query {
      * @return a valid CQL query string.
      */
     public abstract String getQueryString();
+
+    /**
+     * The values to use for this statement.
+     *
+     * @return the values to use for this statement or {@code null} if there is
+     * no such values.
+     *
+     * @see SimpleStatement#SimpleStatement(String, Object...)
+     */
+    public abstract ByteBuffer[] getValues();
 
     @Override
     public String toString() {

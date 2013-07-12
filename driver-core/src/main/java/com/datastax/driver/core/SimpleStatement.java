@@ -17,6 +17,8 @@ package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
 /**
  * A simple {@code Statement} implementation built directly from a query
  * string.
@@ -24,16 +26,87 @@ import java.nio.ByteBuffer;
 public class SimpleStatement extends Statement {
 
     private final String query;
+    private final ByteBuffer[] values;
+
     private volatile ByteBuffer routingKey;
     private volatile String keyspace;
 
     /**
-     * Creates a new {@code SimpleStatement} with the provided query string.
+     * Creates a new {@code SimpleStatement} with the provided query string (and no values).
      *
      * @param query the query string.
      */
     public SimpleStatement(String query) {
         this.query = query;
+        this.values = null;
+    }
+
+    /**
+     * Creates a new {@code SimpleStatement} with the provided query string and values.
+     * <p>
+     * This version of SimpleStatement is useful when you do not want to execute a
+     * query only once (and thus do not want to resort to prepared statement), but
+     * do not want to convert all column values to string (typically, if you have blob
+     * values, encoding them to a hexidecimal string is not very efficient). In
+     * that case, you can provide a query string with bind marker to this constructor
+     * along with the values for those bind variables. When executed, the server will
+     * prepare the provided, bind the provided values to that prepare statement and
+     * execute the resulting statement. Thus,
+     * <pre>
+     *   session.execute(new SimpleStatement(query, value1, value2, value3));
+     * </pre>
+     * is functionally equivalent to
+     * <pre>
+     *   PreparedStatement ps = session.prepare(query);
+     *   session.execute(ps.bind(value1, value2, value3));
+     * </pre>
+     * except that the former version:
+     * <ul>
+     *   <li>Requires only one round-trip to a Cassandra node.</li>
+     *   <li>Does not left any prepared statement stored in memory (neither client or
+     *   server side) once it has been executed.</li>
+     * </ul>
+     * <p>
+     * Note that the type of the {@code values} provided to this method will
+     * not be validated by the driver as is done by {@link BoundStatement#bind} since
+     * {@code query} is not parsed (and hence the driver cannot know what those value
+     * should be). If too much or too little values are provided or if a value is not
+     * a valid one for the variable it is bound to, an
+     * {@link com.datastax.driver.core.exceptions.InvalidQueryException} will be thrown
+     * by Cassandra at execution time. An {@code IllegalArgumentException} may be
+     * thrown by this constructor however if one of the value does not correspond to
+     * any CQL3 type (for instance, if it is a custom class).
+     *
+     * @param query the query string.
+     * @param values values required for the execution of {@code query}.
+     *
+     * @throws IllegalArgumentException if one of {@code values} is not of a type
+     * corresponding to a CQL3 type, i.e. is not a Class that could be returned
+     * by {@link DataType#asJavaClass}.
+     */
+    public SimpleStatement(String query, Object... values) {
+        this.query = query;
+        this.values = convert(values);
+    }
+
+    private static ByteBuffer[] convert(Object[] values) {
+        ByteBuffer[] serializedValues = new ByteBuffer[values.length];
+        for (int i = 0; i < values.length; i++)
+        {
+            DataType dt = Codec.getDataTypeFor(values[i]);
+            if (dt == null)
+                throw new IllegalArgumentException(String.format("Value %d of type %s does not correspond to any CQL3 type", i, values[i].getClass()));
+
+            try {
+                serializedValues[i] = dt.serialize(values[i]);
+            } catch (InvalidTypeException e) {
+                // In theory we couldn't get that if getDataTypeFor does his job correctly,
+                // but there is no point in sending an exception that the user won't expect if we're
+                // wrong on that.
+                throw new IllegalArgumentException(e.getMessage());
+            }
+        }
+        return serializedValues;
     }
 
     /**
@@ -44,6 +117,11 @@ public class SimpleStatement extends Statement {
     @Override
     public String getQueryString() {
         return query;
+    }
+
+    @Override
+    public ByteBuffer[] getValues() {
+        return values;
     }
 
     /**

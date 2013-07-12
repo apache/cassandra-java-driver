@@ -82,6 +82,29 @@ public class Session {
     }
 
     /**
+     * Executes the provided query using the provided value.
+     *
+     * This is a convenience method for {@code execute(new SimpleStatement(query, values))}.
+     *
+     * @param query the CQL query to execute.
+     * @param values values required for the execution of {@code query}. See
+     * {@link SimpleStatement#SimpleStatement(String, Object...)} for more detail.
+     * @return the result of the query. That result will never be null but can
+     * be empty (and will be for any non SELECT query).
+     *
+     * @throws NoHostAvailableException if no host in the cluster can be
+     * contacted successfully to execute this query.
+     * @throws QueryExecutionException if the query triggered an execution
+     * exception, i.e. an exception thrown by Cassandra when it cannot execute
+     * the query with the requested consistency level successfully.
+     * @throws QueryValidationException if the query if invalid (syntax error,
+     * unauthorized or any other validation problem).
+     */
+    public ResultSet execute(String query, Object... values) {
+        return execute(new SimpleStatement(query, values));
+    }
+
+    /**
      * Executes the provided query.
      *
      * This method blocks until at least some result has been received from the
@@ -125,6 +148,20 @@ public class Session {
     }
 
     /**
+     * Executes the provided query asynchronously using the provided values.
+     *
+     * This is a convenience method for {@code executeAsync(new SimpleStatement(query, values))}.
+     *
+     * @param query the CQL query to execute.
+     * @param values values required for the execution of {@code query}. See
+     * {@link SimpleStatement#SimpleStatement(String, Object...)} for more detail.
+     * @return a future on the result of the query.
+     */
+    public ResultSetFuture executeAsync(String query, Object... values) {
+        return executeAsync(new SimpleStatement(query, values));
+    }
+
+    /**
      * Executes the provided query asynchronously.
      *
      * This method does not block. It returns as soon as the query has been
@@ -149,7 +186,11 @@ public class Session {
     public ResultSetFuture executeAsync(Query query) {
 
         if (query instanceof Statement) {
-            return manager.executeQuery(new QueryMessage(((Statement)query).getQueryString(), ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
+            Statement statement = (Statement)query;
+            ByteBuffer[] rawValues = statement.getValues();
+            List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
+            String qString = statement.getQueryString();
+            return manager.executeQuery(new QueryMessage(qString, values, ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
         } else if (query instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)query;
             return manager.executeQuery(new ExecuteMessage(bs.statement.id, Arrays.asList(bs.values), ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);

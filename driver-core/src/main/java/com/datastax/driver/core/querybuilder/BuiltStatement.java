@@ -115,6 +115,12 @@ abstract class BuiltStatement extends Statement {
         return keyspace;
     }
 
+    @Override
+    public ByteBuffer[] getValues() {
+        // I suppose we should have a mode where we keep values in binary?!
+        return null;
+    }
+
     // This is a duplicate of the one in SimpleStatement, but I don't want to expose this publicly so...
     static ByteBuffer compose(ByteBuffer... buffers) {
         int totalLength = 0;

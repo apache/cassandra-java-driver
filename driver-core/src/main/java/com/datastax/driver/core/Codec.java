@@ -15,6 +15,10 @@
  */
 package com.datastax.driver.core;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.datastax.driver.core.DataType;
@@ -25,6 +29,8 @@ import org.apache.cassandra.db.marshal.*;
 
 /**
  * Static method to code/decode serialized data given their types.
+ *
+ * This is *not* meant to be exposed publicly.
  */
 class Codec {
 
@@ -101,5 +107,83 @@ class Codec {
             }
         }
         return DataType.custom(rawType.getClass().toString());
+    }
+
+    /* This is ugly, but not sure how we can do much better/faster
+     * Returns if it's doesn't correspond to a known type.
+     *
+     * Also, note that this only a dataType that is fit for the value,
+     * but for instance, for a UUID, this will return never DataType.uuid() but
+     * never DataType.timeuuid(). Also, provided an empty list, this will return
+     * DataType.list(DataType.blob()), which is semi-random. This is ok if all
+     * we want is serialize the value, but that's probably all we should do with
+     * the return of this method.
+     */
+    public static DataType getDataTypeFor(Object value) {
+        // Starts with ByteBuffer, so that if already serialized value are provided, we don't have the
+        // cost of tested a bunch of other types first
+        if (value instanceof ByteBuffer)
+            return DataType.blob();
+
+        if (value instanceof Number) {
+            if (value instanceof Integer)
+                return DataType.cint();
+            if (value instanceof Long)
+                return DataType.bigint();
+            if (value instanceof Float)
+                return DataType.cfloat();
+            if (value instanceof Double)
+                return DataType.cdouble();
+            if (value instanceof BigDecimal)
+                return DataType.decimal();
+            if (value instanceof BigInteger)
+                return DataType.decimal();
+            return null;
+        }
+
+        if (value instanceof String)
+            return DataType.text();
+
+        if (value instanceof Boolean)
+            return DataType.cboolean();
+
+        if (value instanceof InetAddress)
+            return DataType.inet();
+
+        if (value instanceof Date)
+            return DataType.timestamp();
+
+        if (value instanceof UUID)
+            return DataType.uuid();
+
+        if (value instanceof List) {
+            List<?> l = (List<?>)value;
+            if (l.isEmpty())
+                return DataType.list(DataType.blob());
+            DataType eltType = getDataTypeFor(l.get(0));
+            return eltType == null ? null : DataType.list(eltType);
+        }
+
+        if (value instanceof Set) {
+            Set<?> s = (Set<?>)value;
+            if (s.isEmpty())
+                return DataType.set(DataType.blob());
+            DataType eltType = getDataTypeFor(s.iterator().next());
+            return eltType == null ? null : DataType.set(eltType);
+        }
+
+        if (value instanceof Map) {
+            Map<?, ?> m = (Map<?, ?>)value;
+            if (m.isEmpty())
+                return DataType.map(DataType.blob(), DataType.blob());
+            Map.Entry<?, ?> e = m.entrySet().iterator().next();
+            DataType keyType = getDataTypeFor(e.getKey());
+            DataType valueType = getDataTypeFor(e.getValue());
+            return keyType == null || valueType == null
+                 ? null
+                 : DataType.map(keyType, valueType);
+        }
+
+        return null;
     }
 }
