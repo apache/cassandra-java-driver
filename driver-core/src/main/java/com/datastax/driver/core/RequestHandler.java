@@ -29,6 +29,7 @@ import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.exceptions.*;
 
 import org.apache.cassandra.transport.Message;
+import org.apache.cassandra.transport.messages.BatchMessage;
 import org.apache.cassandra.transport.messages.ErrorMessage;
 import org.apache.cassandra.transport.messages.ExecuteMessage;
 import org.apache.cassandra.transport.messages.PrepareMessage;
@@ -38,6 +39,7 @@ import org.apache.cassandra.exceptions.UnavailableException;
 import org.apache.cassandra.exceptions.PreparedQueryNotFoundException;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
 import org.apache.cassandra.exceptions.WriteTimeoutException;
+import org.apache.cassandra.service.pager.PagingState;
 
 import com.yammer.metrics.core.TimerContext;
 
@@ -182,20 +184,26 @@ class RequestHandler implements Connection.ResponseCallback {
     public Message.Request request() {
 
         Message.Request request = callback.request();
-        if (retryConsistencyLevel != null) {
-            org.apache.cassandra.db.ConsistencyLevel cl = ConsistencyLevel.toCassandraCL(retryConsistencyLevel);
-            if (request instanceof QueryMessage) {
-                QueryMessage qm = (QueryMessage)request;
-                if (qm.consistency != cl)
-                    request = new QueryMessage(qm.query, cl);
-            }
-            else if (request instanceof ExecuteMessage) {
-                ExecuteMessage em = (ExecuteMessage)request;
-                if (em.consistency != cl)
-                    request = new ExecuteMessage(em.statementId, em.values, cl);
-            }
-        }
+        if (retryConsistencyLevel != null && retryConsistencyLevel != consistencyOf(request))
+            request = Session.makeRequestMessage(query, retryConsistencyLevel, pagingStateOf(request));
         return request;
+    }
+
+    private ConsistencyLevel consistencyOf(Message.Request request) {
+        switch (request.type) {
+            case QUERY:   return ConsistencyLevel.from(((QueryMessage)request).consistency);
+            case EXECUTE: return ConsistencyLevel.from(((ExecuteMessage)request).consistency);
+            case BATCH:   return ConsistencyLevel.from(((BatchMessage)request).consistency);
+            default:      return null;
+        }
+    }
+
+    private PagingState pagingStateOf(Message.Request request) {
+        switch (request.type) {
+            case QUERY:   return ((QueryMessage)request).pagingState;
+            case EXECUTE: return ((ExecuteMessage)request).pagingState;
+            default:      return null;
+        }
     }
 
     private void setFinalResult(Connection connection, Message.Response response) {
@@ -210,7 +218,7 @@ class RequestHandler implements Connection.ResponseCallback {
         }
         if (retryConsistencyLevel != null)
             info = info.withAchievedConsistency(retryConsistencyLevel);
-        callback.onSet(connection, response, info);
+        callback.onSet(connection, response, info, query);
     }
 
     private void setFinalException(Connection connection, Exception exception) {
@@ -434,7 +442,7 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     interface Callback extends Connection.ResponseCallback {
-        public void onSet(Connection connection, Message.Response response, ExecutionInfo info);
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Query query);
         public void register(RequestHandler handler);
     }
 }

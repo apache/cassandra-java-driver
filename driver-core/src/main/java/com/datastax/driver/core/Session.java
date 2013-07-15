@@ -30,9 +30,10 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
 
+import org.apache.cassandra.cql3.statements.*;
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.*;
-import org.apache.cassandra.cql3.statements.*;
+import org.apache.cassandra.service.pager.PagingState;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -184,24 +185,30 @@ public class Session {
      * but {@code !query.isReady()}.
      */
     public ResultSetFuture executeAsync(Query query) {
+        return manager.executeQuery(makeRequestMessage(query, null), query);
+    }
 
+    static Message.Request makeRequestMessage(Query query, PagingState state) {
+        return makeRequestMessage(query, query.getConsistencyLevel(), state);
+    }
+
+    static Message.Request makeRequestMessage(Query query, ConsistencyLevel cl, PagingState state) {
+        org.apache.cassandra.db.ConsistencyLevel cassCL = ConsistencyLevel.toCassandraCL(cl);
         if (query instanceof Statement) {
             Statement statement = (Statement)query;
             ByteBuffer[] rawValues = statement.getValues();
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
             String qString = statement.getQueryString();
-            return manager.executeQuery(new QueryMessage(qString, values, ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
+            return new QueryMessage(qString, cassCL, values, query.getFetchSize(), false, state);
         } else if (query instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)query;
-            return manager.executeQuery(new ExecuteMessage(bs.statement.id, Arrays.asList(bs.values), ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
+            return new ExecuteMessage(bs.statement.id, Arrays.asList(bs.values), cassCL, query.getFetchSize(), false, state);
         } else {
             assert query instanceof BatchStatement : query;
+            assert state == null;
             BatchStatement bs = (BatchStatement)query;
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
-            return manager.executeQuery(new BatchMessage(org.apache.cassandra.cql3.statements.BatchStatement.Type.LOGGED,
-                                                         idAndVals.ids,
-                                                         idAndVals.values,
-                                                         ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
+            return new BatchMessage(org.apache.cassandra.cql3.statements.BatchStatement.Type.LOGGED, idAndVals.ids, idAndVals.values, cassCL);
         }
     }
 
@@ -333,8 +340,7 @@ public class Session {
             }
             throw new AssertionError();
         } catch (ExecutionException e) {
-            ResultSetFuture.extractCauseFromExecutionException(e);
-            throw new AssertionError();
+            throw ResultSetFuture.extractCauseFromExecutionException(e);
         }
     }
 
@@ -508,7 +514,7 @@ public class Session {
             } catch (TimeoutException e) {
                 throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
             } catch (ExecutionException e) {
-                ResultSetFuture.extractCauseFromExecutionException(e);
+                throw ResultSetFuture.extractCauseFromExecutionException(e);
             }
         }
 

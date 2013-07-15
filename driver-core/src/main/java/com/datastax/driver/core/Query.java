@@ -38,14 +38,19 @@ public abstract class Query {
         public String getKeyspace() { return null; }
     };
 
+    // TODO: we'd need to make that default configurable, which involve not making static naymore.
+    private static final int DEFAULT_FETCH_SIZE = 5000;
+
     private volatile ConsistencyLevel consistency;
     private volatile boolean traceQuery;
+    private volatile int fetchSize;
 
     private volatile RetryPolicy retryPolicy;
 
     // We don't want to expose the constructor, because the code rely on this being only subclassed Statement, BoundStatement and BatchStatement
     Query() {
         this.consistency = ConsistencyLevel.ONE;
+        this.fetchSize = DEFAULT_FETCH_SIZE;
     }
 
     /**
@@ -164,5 +169,41 @@ public abstract class Query {
      */
     public RetryPolicy getRetryPolicy() {
         return retryPolicy;
+    }
+
+    /**
+     * Sets the query fetch size.
+     * <p>
+     * The fetch size controls how much resulting rows will be retrieved
+     * simultaneously (the goal being to avoid loading too much results
+     * in memory for queries yielding large results). Please note that
+     * while value as low as 1 can be used, it is *highly* discouraged to
+     * use such a low value in practice as it will yield very poor
+     * performance. If in doubt, leaving the default is probably a good
+     * idea.
+     * <p>
+     * Also note that only {@code SELECT} queries only ever make use of that
+     * setting.
+     *
+     * @param fetchSize the fetch size to use. If {@code fetchSize &gte; 0},
+     * the default fetch size will be used. To disable paging of the
+     * result set, use {@code fetchSize = Integer.MAX_VALUE}.
+     * @return this {@code Query} object.
+     */
+    public Query setFetchSize(int fetchSize) {
+        this.fetchSize = fetchSize;
+        return this;
+    }
+
+
+    /**
+     * The fetch size for this query.
+     *
+     * @return the fetch size for this query. If that value is less or equal
+     * to 0 (the default unless {@link #setFetchSize} is used), the default
+     * fetch size will be used.
+     */
+    public int getFetchSize() {
+        return fetchSize;
     }
 }

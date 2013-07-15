@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.cassandra.db.marshal.AbstractType;
-import org.apache.cassandra.db.marshal.MarshalException;
+import org.apache.cassandra.serializers.MarshalException;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

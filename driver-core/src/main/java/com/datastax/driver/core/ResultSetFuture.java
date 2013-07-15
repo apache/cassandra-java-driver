@@ -70,7 +70,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
         }
 
         @Override
-        public void onSet(Connection connection, Message.Response response, ExecutionInfo info) {
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Query query) {
             try {
                 switch (response.type) {
                     case RESULT:
@@ -79,11 +79,11 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
                             case SET_KEYSPACE:
                                 // propagate the keyspace change to other connections
                                 session.poolsState.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
-                                set(ResultSet.fromMessage(rm, session, info));
+                                set(ResultSet.fromMessage(rm, session, info, query));
                                 break;
                             case SCHEMA_CHANGE:
                                 ResultMessage.SchemaChange scc = (ResultMessage.SchemaChange)rm;
-                                ResultSet rs = ResultSet.fromMessage(rm, session, info);
+                                ResultSet rs = ResultSet.fromMessage(rm, session, info, query);
                                 switch (scc.change) {
                                     case CREATED:
                                         if (scc.columnFamily.isEmpty()) {
@@ -117,7 +117,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
                                 }
                                 break;
                             default:
-                                set(ResultSet.fromMessage(rm, session, info));
+                                set(ResultSet.fromMessage(rm, session, info, query));
                                 break;
                         }
                         break;
@@ -140,7 +140,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
         public void onSet(Connection connection, Message.Response response) {
             // This is only called for internal calls (i.e, when the callback is not wrapped in ResponseHandler),
             // so don't bother with ExecutionInfo.
-            onSet(connection, response, null);
+            onSet(connection, response, null, null);
         }
 
         @Override
@@ -180,8 +180,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
         try {
             return Uninterruptibles.getUninterruptibly(this);
         } catch (ExecutionException e) {
-            extractCauseFromExecutionException(e);
-            throw new AssertionError();
+            throw extractCauseFromExecutionException(e);
         }
     }
 
@@ -213,8 +212,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
         try {
             return Uninterruptibles.getUninterruptibly(this, timeout, unit);
         } catch (ExecutionException e) {
-            extractCauseFromExecutionException(e);
-            throw new AssertionError();
+            throw extractCauseFromExecutionException(e);
         }
     }
 
@@ -259,7 +257,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
         return true;
     }
 
-    static void extractCauseFromExecutionException(ExecutionException e) {
+    static RuntimeException extractCauseFromExecutionException(ExecutionException e) {
         // We could just rethrow e.getCause(). However, the cause of the ExecutionException has likely been
         // created on the I/O thread receiving the response. Which means that the stacktrace associated
         // with said cause will make no mention of the current thread. This is painful for say, finding
