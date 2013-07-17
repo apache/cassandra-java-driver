@@ -45,6 +45,8 @@ import com.datastax.driver.core.policies.RetryPolicy;
 public class PreparedStatement {
 
     final ColumnDefinitions metadata;
+    final ColumnDefinitions resultSetMetadata;
+
     final MD5Digest id;
     final String query;
     final String queryKeyspace;
@@ -56,8 +58,9 @@ public class PreparedStatement {
     volatile boolean traceQuery;
     volatile RetryPolicy retryPolicy;
 
-    private PreparedStatement(ColumnDefinitions metadata, MD5Digest id, int[] routingKeyIndexes, String query, String queryKeyspace) {
+    private PreparedStatement(ColumnDefinitions metadata, ColumnDefinitions resultSetMetadata, MD5Digest id, int[] routingKeyIndexes, String query, String queryKeyspace) {
         this.metadata = metadata;
+        this.resultSetMetadata = resultSetMetadata;
         this.id = id;
         this.routingKeyIndexes = routingKeyIndexes;
         this.query = query;
@@ -67,9 +70,18 @@ public class PreparedStatement {
     static PreparedStatement fromMessage(ResultMessage.Prepared msg, Metadata clusterMetadata, String query, String queryKeyspace) {
         switch (msg.kind) {
             case PREPARED:
-                ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[msg.metadata.names.size()];
+                ColumnDefinitions resultMetadata = null;
+                if (!msg.resultMetadata.flags.contains(org.apache.cassandra.cql3.ResultSet.Flag.NO_METADATA)) {
+                    ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[msg.resultMetadata.columnCount];
+                    for (int i = 0; i < defs.length; i++) {
+                        defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(msg.resultMetadata.names.get(i));
+                    }
+                    resultMetadata = new ColumnDefinitions(defs);
+                }
+
+                ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[msg.metadata.columnCount];
                 if (defs.length == 0)
-                    return new PreparedStatement(new ColumnDefinitions(defs), msg.statementId, null, query, queryKeyspace);
+                    return new PreparedStatement(new ColumnDefinitions(defs), resultMetadata, msg.statementId, null, query, queryKeyspace);
 
                 List<ColumnMetadata> partitionKeyColumns = null;
                 int[] pkIndexes = null;
@@ -90,7 +102,7 @@ public class PreparedStatement {
                     maybeGetIndex(defs[i].getName(), i, partitionKeyColumns, pkIndexes);
                 }
 
-                return new PreparedStatement(new ColumnDefinitions(defs), msg.statementId, allSet(pkIndexes) ? pkIndexes : null, query, queryKeyspace);
+                return new PreparedStatement(new ColumnDefinitions(defs), resultMetadata, msg.statementId, allSet(pkIndexes) ? pkIndexes : null, query, queryKeyspace);
             default:
                 throw new DriverInternalError(String.format("%s response received when prepared statement received was expected", msg.kind));
         }

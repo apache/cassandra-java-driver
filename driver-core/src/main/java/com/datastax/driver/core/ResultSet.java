@@ -96,14 +96,21 @@ public class ResultSet implements Iterable<Row> {
                 ResultMessage.Rows r = (ResultMessage.Rows)msg;
                 org.apache.cassandra.cql3.ResultSet.Metadata metadata = r.result.metadata;
 
-                // TODO: handle metadata-less messages
-                ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[metadata.names.size()];
-                for (int i = 0; i < defs.length; i++)
-                    defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(metadata.names.get(i));
+                ColumnDefinitions columnDefs;
+                if (metadata.flags.contains(org.apache.cassandra.cql3.ResultSet.Flag.NO_METADATA)) {
+                    assert query instanceof BoundStatement;
+                    columnDefs = ((BoundStatement)query).statement.resultSetMetadata;
+                    assert columnDefs != null;
+                } else {
+                    ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[metadata.names.size()];
+                    for (int i = 0; i < defs.length; i++)
+                        defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(metadata.names.get(i));
+                    columnDefs = new ColumnDefinitions(defs);
+                }
 
                 PagingState initialState = metadata.flags.contains(org.apache.cassandra.cql3.ResultSet.Flag.HAS_MORE_PAGES) ? metadata.pagingState : null;
 
-                return new ResultSet(new ColumnDefinitions(defs), new ArrayDeque<List<ByteBuffer>>(r.result.rows), info, initialState, session, query);
+                return new ResultSet(columnDefs, new ArrayDeque<List<ByteBuffer>>(r.result.rows), info, initialState, session, query);
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
                 return empty(info);

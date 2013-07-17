@@ -202,7 +202,8 @@ public class Session {
             return new QueryMessage(qString, cassCL, values, query.getFetchSize(), false, state);
         } else if (query instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)query;
-            return new ExecuteMessage(bs.statement.id, Arrays.asList(bs.values), cassCL, query.getFetchSize(), false, state);
+            boolean skipMetadata = bs.statement.resultSetMetadata != null;
+            return new ExecuteMessage(bs.statement.id, Arrays.asList(bs.values), cassCL, query.getFetchSize(), skipMetadata, state);
         } else {
             assert query instanceof BatchStatement : query;
             assert state == null;
