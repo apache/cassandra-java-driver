@@ -175,7 +175,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         } catch (BusyConnectionException e) {
             throw new DriverInternalError("Newly created connection should not be busy");
         } catch (ExecutionException e) {
-            throw defunct(new ConnectionException(address, "Unexpected error during transport initialization", e.getCause()));
+            throw defunct(new ConnectionException(address, String.format("Unexpected error during transport initialization (%s)", e.getCause()), e.getCause()));
         }
     }
 
@@ -475,10 +475,19 @@ class Connection extends org.apache.cassandra.transport.Connection
                 ResponseHandler handler = pending.remove(streamId);
                 streamIdHandler.release(streamId);
                 if (handler == null) {
-                    // Note: this is a bug, either us or cassandra. So log it, but I'm not sure it's worth breaking
-                    // the connection for that.
-                    logger.error("[{}] No handler set for stream {} (this is a bug, either of this driver or of Cassandra, you should report it). Received message is {}", 
-                                 name, streamId, response);
+                    if (!isDefunct()) {
+                        /*
+                         * In general, a defunct connection is one that is broken, in which case we won't receive a message anymore.
+                         * However, we could be defunct because of a internal error (anecdotally, this will happens if you have
+                         * an old version of the google-collections (the guava precursor) in the classpath, which happened to at least
+                         * 2 users already). In that case, the initial defunct already has registered what the problem was and we can ignore this.
+                         *
+                         * But if the connection is not defunct, this is a bug, either of us or cassandra. So log it, but I'm not sure it's worth
+                         * breaking the connection for that.
+                         */
+                        logger.error("[{}] No handler set for stream {} (this is a bug, either of this driver or of Cassandra, you should report it). Received message is {}", 
+                                     name, streamId, response);
+                    }
                     return;
                 }
                 handler.callback.onSet(Connection.this, response);
@@ -494,7 +503,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             if (writer.get() > 0)
                 return;
 
-            defunct(new TransportException(address, "Unexpected exception triggered", e.getCause()));
+            defunct(new TransportException(address, String.format("Unexpected exception triggered (%s)", e.getCause()), e.getCause()));
         }
 
         public void errorOutAllHandler(ConnectionException ce) {
