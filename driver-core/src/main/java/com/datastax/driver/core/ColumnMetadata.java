@@ -45,7 +45,12 @@ public class ColumnMetadata {
     static ColumnMetadata build(TableMetadata tm, Row row) {
         try {
             String name = row.getString(COLUMN_NAME);
-            AbstractType<?> t = TypeParser.parse(row.getString(VALIDATOR));
+
+            String validator = row.getString(VALIDATOR);
+            // Ugly special case for TimestampType as we don't have it yet. We should get rid of that later.
+            if (validator.equals("org.apache.cassandra.db.marshal.TimestampType"))
+                validator = "org.apache.cassandra.db.marshal.DateType";
+            AbstractType<?> t = TypeParser.parse(validator);
             ColumnMetadata cm = new ColumnMetadata(tm, name, Codec.rawTypeToDataType(t), row);
             tm.add(cm);
             return cm;
