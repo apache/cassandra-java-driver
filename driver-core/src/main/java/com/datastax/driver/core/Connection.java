@@ -209,6 +209,7 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         try {
             logger.trace("[{}] Setting keyspace {}", name, keyspace);
+            // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
             Message.Response response = Uninterruptibles.getUninterruptibly(write(new QueryMessage("USE \"" + keyspace + "\"", ConsistencyLevel.DEFAULT_CASSANDRA_CL)));
             switch (response.type) {
                 case RESULT:
