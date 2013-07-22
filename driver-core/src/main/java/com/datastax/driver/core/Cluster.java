@@ -671,6 +671,9 @@ public class Cluster {
         public void onUp(Host host) {
             logger.trace("Host {} is UP", host);
 
+            if (isShutdown.get())
+                return;
+
             // If there is a reconnection attempt scheduled for that node, cancel it
             ScheduledFuture<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
             if (scheduledAttempt != null)
@@ -683,10 +686,13 @@ public class Cluster {
                 // Don't propagate because we don't want to prevent other listener to run
             }
 
-            // We add to the loadbalancing policy before updating the session. We want to do it in that
-            // order because the Session expects it. This may mean the balancing could return the new
-            // node in a query plan before a pool are really been created, but that's harmless, since
-            // RequestHandler will ignore them until then
+            // Session#onUp() expects the load balancing policy to have been updated first, so that
+            // Host distances are up to date. This mean the policy could return the node before the
+            // new pool have been created. This is harmless if there is no prior pool since RequestHandler
+            // will ignore the node, but we do wan to make sure there is no prior pool so we don't
+            // query from a pool we will shutdown right away.
+            for (Session s : sessions)
+                s.manager.removePool(host);
             loadBalancingPolicy().onUp(host);
             controlConnection.onUp(host);
             for (Session s : sessions)
@@ -696,6 +702,10 @@ public class Cluster {
         @Override
         public void onDown(final Host host) {
             logger.trace("Host {} is DOWN", host);
+
+            if (isShutdown.get())
+                return;
+
             loadBalancingPolicy().onDown(host);
             controlConnection.onDown(host);
             for (Session s : sessions)
@@ -732,6 +742,9 @@ public class Cluster {
         public void onAdd(Host host) {
             logger.trace("Adding new host {}", host);
 
+            if (isShutdown.get())
+                return;
+
             try {
                 prepareAllQueries(host);
             } catch (InterruptedException e) {
@@ -747,6 +760,9 @@ public class Cluster {
 
         @Override
         public void onRemove(Host host) {
+            if (isShutdown.get())
+                return;
+
             logger.trace("Removing host {}", host);
             loadBalancingPolicy().onRemove(host);
             controlConnection.onRemove(host);

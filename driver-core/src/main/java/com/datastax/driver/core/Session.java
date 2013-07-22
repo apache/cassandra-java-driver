@@ -344,10 +344,17 @@ public class Session {
             });
         }
 
-        private void removePool(Host host) {
-            HostConnectionPool pool = pools.remove(host);
-            if (pool != null)
-                pool.shutdown();
+        Future<?> removePool(Host host) {
+            final HostConnectionPool pool = pools.remove(host);
+            if (pool == null)
+                return Futures.immediateFuture(null);
+
+            // Shutdown can take some time and we don't care about holding the thread on that.
+            return executor().submit(new Runnable() {
+                public void run() {
+                    pool.shutdown();
+                }
+            });
         }
 
         /*

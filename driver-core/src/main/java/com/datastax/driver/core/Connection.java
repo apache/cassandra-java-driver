@@ -193,6 +193,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         exception = e;
         isDefunct = true;
         dispatcher.errorOutAllHandler(e);
+        close();
         return e;
     }
 
@@ -252,17 +253,28 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         Message.Request request = callback.request();
 
-        if (isDefunct)
-            throw new ConnectionException(address, "Write attempt on defunct connection");
-
-        if (isClosed)
-            throw new ConnectionException(address, "Connection has been closed");
-
         request.attach(this);
 
         ResponseHandler handler = new ResponseHandler(dispatcher, callback);
         dispatcher.add(handler);
         request.setStreamId(handler.streamId);
+
+        /*
+         * We check for close/defunct *after* having set the handler because closing/defuncting
+         * will set their flag and then error out handler if need. So, by doing the check after
+         * having set the handler, we guarantee that even if we race with defunct/close, we may
+         * never leave a handler that won't get an answer or be errored out.
+         */
+        if (isDefunct) {
+            dispatcher.removeHandler(handler.streamId);
+            throw new ConnectionException(address, "Write attempt on defunct connection");
+        }
+
+        if (isClosed) {
+            dispatcher.removeHandler(handler.streamId);
+            throw new ConnectionException(address, "Connection has been closed");
+        }
+
 
         logger.trace("[{}] writing request {}", name, request);
         writer.incrementAndGet();
@@ -324,8 +336,15 @@ class Connection extends org.apache.cassandra.transport.Connection
             while (writer.get() > 0 && Cluster.timeSince(start, unit) < timeout)
                 Uninterruptibles.sleepUninterruptibly(1, unit);
         }
-        return channel.close().await(timeout - Cluster.timeSince(start, unit), unit);
         // Note: we must not call releaseExternalResources on the bootstrap, because this shutdown the executors, which are shared
+        boolean closed = channel == null // This method can be throw in the ctor at which point channel is not yet set. This is ok.
+                       ? true
+                       : channel.close().await(timeout - Cluster.timeSince(start, unit), unit);
+
+        // We've closed the channel. If anyone was waiting on that connection, we should defunct it otherwise it'll wait forever.
+        // Note that this is a no-op if there is no handler set anymore.
+        dispatcher.errorOutAllHandler(new TransportException(address, "Connection has been closed"));
+        return closed;
     }
 
     public boolean isClosed() {

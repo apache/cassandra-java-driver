@@ -232,7 +232,9 @@ class ControlConnection implements Host.StateListener {
             logger.debug("[Control connection] Connection error while refeshing schema ({})", e.getMessage());
             signalError();
         } catch (ExecutionException e) {
-            logger.error("[Control connection] Unexpected error while refeshing schema", e);
+            // If we're being shutdown during schema refresh, this can happen. That's fine so don't scare the user.
+            if (!isShutdown)
+                logger.error("[Control connection] Unexpected error while refeshing schema", e);
             signalError();
         } catch (BusyConnectionException e) {
             logger.debug("[Control connection] Connection is busy, reconnecting");
@@ -276,7 +278,9 @@ class ControlConnection implements Host.StateListener {
             logger.debug("[Control connection] Connection error while refeshing node list and token map ({})", e.getMessage());
             signalError();
         } catch (ExecutionException e) {
-            logger.error("[Control connection] Unexpected error while refeshing node list and token map", e);
+            // If we're being shutdown during refresh, this can happen. That's fine so don't scare the user.
+            if (!isShutdown)
+                logger.error("[Control connection] Unexpected error while refeshing node list and token map", e);
             signalError();
         } catch (BusyConnectionException e) {
             logger.debug("[Control connection] Connection is busy, reconnecting");
