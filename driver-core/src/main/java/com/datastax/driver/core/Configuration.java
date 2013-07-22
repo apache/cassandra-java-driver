@@ -56,7 +56,6 @@ public class Configuration {
      * @param protocolOptions the protocol options to use
      * @param poolingOptions the pooling options to use
      * @param socketOptions the socket options to use
-     * @param authProvider the authentication provider to use
      * @param metricsOptions the metrics options, or null to disable metrics.
      */
     public Configuration(Policies policies,

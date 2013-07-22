@@ -29,7 +29,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * {@code ColumnsDefinitions.Definition}. The definitions or metadata for a column
  * can be accessed either by:
  * <ul>
- *   <li>index</li>
+ *   <li>index (indexed from 0)</li>
  *   <li>name</li>
  * </ul>
  * <p>

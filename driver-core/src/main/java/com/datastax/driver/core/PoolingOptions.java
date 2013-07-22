@@ -29,7 +29,7 @@ package com.datastax.driver.core;
  * If the use of those connections reaches a configurable threshold
  * ({@link #getMaxSimultaneousRequestsPerConnectionThreshold}),
  * more connections are created up to the configurable maximum number of
- * connections ({@link #getMaxConnectionPerHost}). When the pool exceeds
+ * connections ({@link #getMaxConnectionsPerHost}). When the pool exceeds
  * the maximum number of connections, connections in excess are
  * reclaimed if the use of opened connections drops below the
  * configured threshold ({@link #getMinSimultaneousRequestsPerConnectionThreshold}).
@@ -128,7 +128,7 @@ public class PoolingOptions {
      * If all the connections opened to an host at distance {@code
      * distance} connection are handling more than this number of
      * simultaneous requests and there is less than
-     * {@link #getMaxConnectionPerHost} connections open to this host, a
+     * {@link #getMaxConnectionsPerHost} connections open to this host, a
      * new connection is open.
      * <p>
      * Note that a given connection cannot handle more than 128
