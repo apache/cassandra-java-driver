@@ -94,11 +94,23 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     /**
      * Returns whether this metadata contains a given column.
      *
+     * @param name the name of column.
      * @return {@code true} if this metadata contains the column named {@code  name},
      * {@code false} otherwise.
      */
     public boolean contains(String name) {
         return findIdx(name) >= 0;
+    }
+
+    /**
+     * The index in this metadata of the povided column name, if present.
+     *
+     * @param name the name of the column.
+     * @return the index of {@code name} in this metadata if this metadata
+     * {@code contains(name)}, -1 otherwise.
+     */
+    public int getIndexOf(String name) {
+        return findIdx(name);
     }
 
     /**
@@ -125,6 +137,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     /**
      * Returns the name of the {@code i}th column in this metadata.
      *
+     * @param i the index in this metadata.
      * @return the name of the {@code i}th column in this metadata.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= size()}
@@ -136,6 +149,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     /**
      * Returns the type of the {@code i}th column in this metadata.
      *
+     * @param i the index in this metadata.
      * @return the type of the {@code i}th column in this metadata.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= size()}
@@ -147,6 +161,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     /**
      * Returns the type of column {@code name} in this metadata.
      *
+     * @param name the name of the column.
      * @return the type of column {@code name} in this metadata.
      *
      * @throws IllegalArgumentException if {@code name} is not one of the columns in this metadata.
@@ -158,6 +173,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     /**
      * Returns the keyspace of the {@code i}th column in this metadata.
      *
+     * @param i the index in this metadata.
      * @return the keyspace of the {@code i}th column in this metadata.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= size()}
@@ -169,6 +185,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     /**
      * Returns the keyspace of column {@code name} in this metadata.
      *
+     * @param name the name of the column.
      * @return the keyspace of column {@code name} in this metadata.
      *
      * @throws IllegalArgumentException if {@code name} is not one of the columns in this metadata.
@@ -180,6 +197,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     /**
      * Returns the table of the {@code i}th column in this metadata.
      *
+     * @param i the index in this metadata.
      * @return the table of the {@code i}th column in this metadata.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= size()}
@@ -191,6 +209,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     /**
      * Returns the table of column {@code name} in this metadata.
      *
+     * @param name the name of the column.
      * @return the table of column {@code name} in this metadata.
      *
      * @throws IllegalArgumentException if {@code name} is not one of the columns in this metadata.
