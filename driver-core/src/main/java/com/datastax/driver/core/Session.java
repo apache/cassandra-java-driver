@@ -411,8 +411,13 @@ public class Session {
         }
 
         public void setKeyspace(String keyspace) {
+            long timeout = configuration().getSocketOptions().getConnectTimeoutMillis();
             try {
-                Uninterruptibles.getUninterruptibly(executeQuery(new QueryMessage("use " + keyspace, ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT));
+                Future<?> future = executeQuery(new QueryMessage("use " + keyspace, ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT);
+                // Note: using the connection timeout is perfectly correct, we should probably change that someday
+                Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
+            } catch (TimeoutException e) {
+                throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
             } catch (ExecutionException e) {
                 ResultSetFuture.extractCauseFromExecutionException(e);
             }

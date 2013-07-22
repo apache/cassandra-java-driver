@@ -211,7 +211,9 @@ class Connection extends org.apache.cassandra.transport.Connection
         try {
             logger.trace("[{}] Setting keyspace {}", name, keyspace);
             // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
-            Message.Response response = Uninterruptibles.getUninterruptibly(write(new QueryMessage("USE \"" + keyspace + "\"", ConsistencyLevel.DEFAULT_CASSANDRA_CL)));
+            long timeout = factory.getConnectTimeoutMillis();
+            Future future = write(new QueryMessage("USE \"" + keyspace + "\"", ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+            Message.Response response = Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
             switch (response.type) {
                 case RESULT:
                     this.keyspace = keyspace;
@@ -227,8 +229,10 @@ class Connection extends org.apache.cassandra.transport.Connection
             }
         } catch (ConnectionException e) {
             throw defunct(e);
+        } catch (TimeoutException e) {
+            logger.warn(String.format("Timeout while setting keyspace on connection to %s. This should not happen but is not critical (it will retried)", address));
         } catch (BusyConnectionException e) {
-            logger.error("Tried to set the keyspace on busy connection. This should not happen but is not critical");
+            logger.warn(String.format("Tried to set the keyspace on busy connection to %s. This should not happen but is not critical (it will retried)", address));
         } catch (ExecutionException e) {
             throw defunct(new ConnectionException(address, "Error while setting keyspace", e));
         }
@@ -416,6 +420,10 @@ class Connection extends org.apache.cassandra.transport.Connection
                     g = old;
             }
             return g;
+        }
+
+        public long getConnectTimeoutMillis() {
+            return configuration.getSocketOptions().getConnectTimeoutMillis();
         }
 
         private ClientBootstrap newBootstrap() {
