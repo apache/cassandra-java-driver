@@ -66,7 +66,7 @@ class RequestHandler implements Connection.ResponseCallback {
     private volatile int queryRetries;
     private volatile ConsistencyLevel retryConsistencyLevel;
 
-    private volatile Map<InetAddress, String> errors;
+    private volatile Map<InetAddress, Throwable> errors;
 
     private volatile boolean isCanceled;
     private volatile Connection.ResponseHandler connectionHandler;
@@ -102,7 +102,7 @@ class RequestHandler implements Connection.ResponseCallback {
             if (query(host))
                 return;
         }
-        setFinalException(null, new NoHostAvailableException(errors == null ? Collections.<InetAddress, String>emptyMap() : errors));
+        setFinalException(null, new NoHostAvailableException(errors == null ? Collections.<InetAddress, Throwable>emptyMap() : errors));
     }
 
     private boolean query(Host host) {
@@ -129,32 +129,32 @@ class RequestHandler implements Connection.ResponseCallback {
                 metrics().getErrorMetrics().getConnectionErrors().inc();
             if (connection != null)
                 currentPool.returnConnection(connection);
-            logError(host.getAddress(), e.getMessage());
+            logError(host.getAddress(), e);
             return false;
         } catch (BusyConnectionException e) {
             // The pool shoudln't have give us a busy connection unless we've maxed up the pool, so move on to the next host.
             if (connection != null)
                 currentPool.returnConnection(connection);
-            logError(host.getAddress(), e.getMessage());
+            logError(host.getAddress(), e);
             return false;
         } catch (TimeoutException e) {
             // We timeout, log it but move to the next node.
-            logError(host.getAddress(), "Timeout while trying to acquire available connection (you may want to increase the driver number of per-host connections)");
+            logError(host.getAddress(), new DriverException("Timeout while trying to acquire available connection (you may want to increase the driver number of per-host connections)"));
             return false;
         } catch (RuntimeException e) {
             if (connection != null)
                 currentPool.returnConnection(connection);
             logger.error("Unexpected error while querying " + host.getAddress(), e);
-            logError(host.getAddress(), e.getMessage());
+            logError(host.getAddress(), e);
             return false;
         }
     }
 
-    private void logError(InetAddress address, String msg) {
-        logger.debug("Error querying {}, trying next host (error is: {})", address, msg);
+    private void logError(InetAddress address, Throwable exception) {
+        logger.debug("Error querying {}, trying next host (error is: {})", address, exception.toString());
         if (errors == null)
-            errors = new HashMap<InetAddress, String>();
-        errors.put(address, msg);
+            errors = new HashMap<InetAddress, Throwable>();
+        errors.put(address, exception);
     }
 
     private void retry(final boolean retryCurrent, ConsistencyLevel newConsistencyLevel) {
@@ -283,7 +283,7 @@ class RequestHandler implements Connection.ResponseCallback {
                         case OVERLOADED:
                             // Try another node
                             logger.warn("Host {} is overloaded, trying next host.", connection.address);
-                            logError(connection.address, "Host overloaded");
+                            logError(connection.address, new DriverException("Host overloaded"));
                             if (metricsEnabled())
                                 metrics().getErrorMetrics().getOthers().inc();
                             retry(false, null);
@@ -291,7 +291,7 @@ class RequestHandler implements Connection.ResponseCallback {
                         case IS_BOOTSTRAPPING:
                             // Try another node
                             logger.error("Query sent to {} but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
-                            logError(connection.address, "Host is boostrapping");
+                            logError(connection.address, new DriverException("Host is boostrapping"));
                             if (metricsEnabled())
                                 metrics().getErrorMetrics().getOthers().inc();
                             retry(false, null);
@@ -387,12 +387,12 @@ class RequestHandler implements Connection.ResponseCallback {
                             logger.trace("Scheduling retry now that query is prepared");
                             retry(true, null);
                         } else {
-                            logError(connection.address, "Got unexpected response to prepare message: " + response);
+                            logError(connection.address, new DriverException("Got unexpected response to prepare message: " + response));
                             retry(false, null);
                         }
                         break;
                     case ERROR:
-                        logError(connection.address, "Error preparing query, got " + response);
+                        logError(connection.address, new DriverException("Error preparing query, got " + response));
                         if (metricsEnabled())
                             metrics().getErrorMetrics().getOthers().inc();
                         retry(false, null);
@@ -426,7 +426,7 @@ class RequestHandler implements Connection.ResponseCallback {
             if (metricsEnabled())
                 metrics().getErrorMetrics().getConnectionErrors().inc();
             ConnectionException ce = (ConnectionException)exception;
-            logError(ce.address, ce.getMessage());
+            logError(ce.address, ce);
             retry(false, null);
             return;
         }

@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.policies.*;
+import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
@@ -158,7 +159,7 @@ class ControlConnection implements Host.StateListener {
     private Connection reconnectInternal() {
 
         Iterator<Host> iter = cluster.loadBalancingPolicy().newQueryPlan(null, Query.DEFAULT);
-        Map<InetAddress, String> errors = null;
+        Map<InetAddress, Throwable> errors = null;
 
         Host host = null;
         try {
@@ -167,10 +168,10 @@ class ControlConnection implements Host.StateListener {
                 try {
                     return tryConnect(host);
                 } catch (ConnectionException e) {
-                    errors = logError(host, e.getMessage(), errors, iter);
+                    errors = logError(host, e, errors, iter);
                     cluster.signalConnectionFailure(host, e);
                 } catch (ExecutionException e) {
-                    errors = logError(host, e.getMessage(), errors, iter);
+                    errors = logError(host, e.getCause(), errors, iter);
                 }
             }
         } catch (InterruptedException e) {
@@ -179,23 +180,24 @@ class ControlConnection implements Host.StateListener {
 
             // Indicates that all remaining hosts are skipped due to the interruption
             if (host != null)
-                errors = logError(host, "Connection thread interrupted", errors, iter);
+                errors = logError(host, new DriverException("Connection thread interrupted"), errors, iter);
             while (iter.hasNext())
-                errors = logError(iter.next(), "Connection thread interrupted", errors, iter);
+                errors = logError(iter.next(), new DriverException("Connection thread interrupted"), errors, iter);
         }
-        throw new NoHostAvailableException(errors == null ? Collections.<InetAddress, String>emptyMap() : errors);
+        throw new NoHostAvailableException(errors == null ? Collections.<InetAddress, Throwable>emptyMap() : errors);
     }
 
-    private static Map<InetAddress, String> logError(Host host, String msg, Map<InetAddress, String> errors, Iterator<Host> iter) {
+    private static Map<InetAddress, Throwable> logError(Host host, Throwable exception, Map<InetAddress, Throwable> errors, Iterator<Host> iter) {
         if (errors == null)
-            errors = new HashMap<InetAddress, String>();
-        errors.put(host.getAddress(), msg);
+            errors = new HashMap<InetAddress, Throwable>();
+
+        errors.put(host.getAddress(), exception);
 
         if (logger.isDebugEnabled()) {
             if (iter.hasNext()) {
-                logger.debug("[Control connection] error on {} connection ({}), trying next host", host, msg);
+                logger.debug("[Control connection] error on {} connection ({}), trying next host", host, exception.getMessage());
             } else {
-                logger.debug("[Control connection] error on {} connection ({}), no more host to try", host, msg);
+                logger.debug("[Control connection] error on {} connection ({}), no more host to try", host, exception.getMessage());
             }
         }
         return errors;
