@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableList;
 public class Host {
 
     private final InetAddress address;
-    private final HealthMonitor monitor;
 
     private volatile String datacenter;
     private volatile String rack;
@@ -53,7 +52,6 @@ public class Host {
         this.address = address;
         this.isUp = true;
         this.policy = policy.create(this);
-        this.monitor = new HealthMonitor();
         this.defaultExecutionInfo = new ExecutionInfo(ImmutableList.of(this));
     }
 
@@ -108,28 +106,6 @@ public class Host {
         return isUp;
     }
 
-    /**
-     * Returns the health monitor for this host.
-     *
-     * The health monitor keeps tracks of the known host state (up or down). A
-     * class implementing {@link Host.StateListener} can also register against
-     * the health monitor to be notified when this node is detected to be up or down
-     *
-     * @return the host {@link HealthMonitor}.
-     *
-     * @deprecated you are encouraged not to use the HealthMonitor anymore. To test
-     * if a node is considered UP or not, you should use {@link #isUp} instead. To
-     * register a {@link Host.StateListener}, you should do so at the Cluster level
-     * through {@link Cluster#register} (registering against the HealtMonitor does
-     * not work as intented: listeners will only be informed of onUp and onDown
-     * events (not onAdd and onRemove) and you need to manually register against
-     * every host. {@link Cluster#register} solves this).
-     */
-    @Deprecated
-    public HealthMonitor getMonitor() {
-        return monitor;
-    }
-
     @Override
     public final int hashCode() {
         return address.hashCode();
@@ -152,79 +128,13 @@ public class Host {
         isUp = false;
     }
 
-    /**
-     * Resets the policy, setting the host as up and informing the
-     * registered listener that the node is up.
-     */
     void setUp() {
         policy.reset();
         isUp = true;
-        for (Host.StateListener listener : monitor.listeners)
-            listener.onUp(this);
     }
 
     boolean signalConnectionFailure(ConnectionException exception) {
-        boolean isDown = policy.addFailure(exception);
-        if (isDown) {
-            // For vague compatibility sake
-            for (Host.StateListener listener : monitor.listeners)
-                listener.onDown(this);
-        }
-        return isDown;
-    }
-
-    /**
-     * Tracks the health of a node and notify listeners when a host is considered up or down.
-     *
-     * @deprecated See {@link Host#getMonitor}.
-     */
-    @Deprecated
-    public class HealthMonitor {
-
-        private Set<Host.StateListener> listeners = new CopyOnWriteArraySet<Host.StateListener>();
-
-        HealthMonitor() {}
-
-        /**
-         * Registers the provided listener to be notified on up/down events.
-         *
-         * Registering the same listener multiple times is a no-op.
-         *
-         * @param listener the new {@link Host.StateListener} to register.
-         *
-         * @deprecated See {@link Host#getMonitor}. Replaced by {@link Cluster#register}.
-         */
-        @Deprecated
-        public void register(StateListener listener) {
-            listeners.add(listener);
-        }
-
-        /**
-         * Unregisters a given provided listener.
-         *
-         * This method is a no-op if {@code listener} hadn't previously be
-         * registered against this monitor.
-         *
-         * @param listener the {@link Host.StateListener} to unregister.
-         *
-         * @deprecated See {@link Host#getMonitor}. Replaced by {@link Cluster#unregister}.
-         */
-        @Deprecated
-        public void unregister(StateListener listener) {
-            listeners.remove(listener);
-        }
-
-        /**
-         * Returns whether the host is considered up by this monitor.
-         *
-         * @return whether the node is considered up.
-         *
-         * @deprecated See {@link Host#getMonitor}. Replaced by {@link Host#isUp}.
-         */
-        @Deprecated
-        public boolean isUp() {
-            return Host.this.isUp;
-        }
+        return policy.addFailure(exception);
     }
 
     /**

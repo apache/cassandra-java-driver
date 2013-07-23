@@ -64,8 +64,8 @@ public class Cluster {
 
     final Manager manager;
 
-    private Cluster(List<InetAddress> contactPoints, Configuration configuration) {
-        this.manager = new Manager(contactPoints, configuration);
+    private Cluster(List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
+        this.manager = new Manager(contactPoints, configuration, listeners);
         this.manager.init();
     }
 
@@ -93,7 +93,7 @@ public class Cluster {
         if (contactPoints.isEmpty())
             throw new IllegalArgumentException("Cannot build a cluster without contact points");
 
-        return new Cluster(contactPoints, initializer.getConfiguration());
+        return new Cluster(contactPoints, initializer.getConfiguration(), initializer.getInitialListeners());
     }
 
     /**
@@ -270,6 +270,18 @@ public class Cluster {
          * @return the configuration to use for the new cluster.
          */
         public Configuration getConfiguration();
+
+        /**
+         * Optional listeners to register against the newly created cluster.
+         * <p>
+         * Note that contrarly to listeners registered post Cluster creation,
+         * the listeners returned by this method will see {@link Host.StateListener#onAdd}
+         * events for the initial contact points.
+         *
+         * @return a possibly empty collection of {@code Host.StateListener} to register
+         * against the newly created cluster.
+         */
+        public Collection<Host.StateListener> getInitialListeners();
     }
 
     /**
@@ -293,6 +305,9 @@ public class Cluster {
         private PoolingOptions poolingOptions;
         private SocketOptions socketOptions;
         private QueryOptions queryOptions;
+
+        private Collection<Host.StateListener> listeners;
+
 
         @Override
         public List<InetAddress> getContactPoints() {
@@ -493,6 +508,19 @@ public class Cluster {
         }
 
         /**
+         * Register the provided listeners in the newly created cluster.
+         * <p>
+         * Note: repeated calls to this method will override the previous ones.
+         *
+         * @param listeners the listeners to register.
+         * @return this builder
+         */
+        public Builder withInitialListeners(Collection<Host.StateListener> listeners) {
+            this.listeners = listeners;
+            return this;
+        }
+
+        /**
          * Disables JMX reporting of the metrics.
          * <p>
          * JMX reporting is enabled by default (see {@link Metrics}) but can be
@@ -574,6 +602,11 @@ public class Cluster {
                                      queryOptions == null ? new QueryOptions() : queryOptions);
         }
 
+        @Override
+        public Collection<Host.StateListener> getInitialListeners() {
+            return listeners == null ? Collections.<Host.StateListener>emptySet() : listeners;
+        }
+
         /**
          * Builds the cluster with the configured set of initial contact points
          * and policies.
@@ -637,9 +670,9 @@ public class Cluster {
         // this would yield a slightly less clear behavior.
         final Map<MD5Digest, PreparedStatement> preparedQueries = new ConcurrentHashMap<MD5Digest, PreparedStatement>();
 
-        private final Set<Host.StateListener> listeners = new CopyOnWriteArraySet<Host.StateListener>();
+        private final Set<Host.StateListener> listeners;
 
-        private Manager(List<InetAddress> contactPoints, Configuration configuration) {
+        private Manager(List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
             logger.debug("Starting new cluster with contact points " + contactPoints);
 
             this.configuration = configuration;
@@ -651,7 +684,7 @@ public class Cluster {
 
             this.metrics = configuration.getMetricsOptions() == null ? null : new Metrics(this);
             this.configuration.register(this);
-
+            this.listeners = new CopyOnWriteArraySet<Host.StateListener>(listeners);
         }
 
         // This is separated from the constructor because this reference the
@@ -659,8 +692,17 @@ public class Cluster {
         // the constructor returns.
         private void init() {
 
-            for (InetAddress address : contactPoints)
-                addHost(address, false);
+            for (InetAddress address : contactPoints) {
+                // We don't want to signal -- call onAdd() -- because nothing is ready
+                // yet (loadbalancing policy, control connection, ...). All we want is
+                // create the Host object so we can initialize the loadBalancing policy.
+                // But this also mean we should signal the external listners manually.
+                Host host = addHost(address, false);
+                if (host != null) {
+                    for (Host.StateListener listener : listeners)
+                        listener.onAdd(host);
+                }
+            }
 
             loadBalancingPolicy().init(Cluster.this, metadata.allHosts());
 
