@@ -131,9 +131,10 @@ class Connection extends org.apache.cassandra.transport.Connection
     }
 
     private static String extractMessage(Throwable t) {
-        if (t == null || t.getMessage().isEmpty())
-            return "";
-        return " (" + t.getMessage() + ")";
+        String msg = t == null || t.getMessage() == null || t.getMessage().isEmpty()
+                   ? t.toString()
+                   : t.getMessage();
+        return " (" + msg + ")";
     }
 
     private void initializeTransport() throws ConnectionException, InterruptedException {
