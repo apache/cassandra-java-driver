@@ -229,8 +229,7 @@ public class PreparedStatement {
      * @return the query that was prepared to yield this
      * {@code PreparedStatement}.
      */
-    public String getQueryString()
-    {
+    public String getQueryString() {
         return query;
     }
 
@@ -244,9 +243,7 @@ public class PreparedStatement {
      * is possible since keyspaces can be explicitly qualified in queries and
      * so may not require a current keyspace to be set).
      */
-    public String getQueryKeyspace()
-    {
+    public String getQueryKeyspace() {
         return queryKeyspace;
     }
-
 }
