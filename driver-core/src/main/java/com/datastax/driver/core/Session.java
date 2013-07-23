@@ -185,32 +185,7 @@ public class Session {
      * but {@code !query.isReady()}.
      */
     public ResultSetFuture executeAsync(Query query) {
-        return manager.executeQuery(makeRequestMessage(query, null), query);
-    }
-
-    static Message.Request makeRequestMessage(Query query, PagingState state) {
-        return makeRequestMessage(query, query.getConsistencyLevel(), state);
-    }
-
-    static Message.Request makeRequestMessage(Query query, ConsistencyLevel cl, PagingState state) {
-        org.apache.cassandra.db.ConsistencyLevel cassCL = ConsistencyLevel.toCassandraCL(cl);
-        if (query instanceof Statement) {
-            Statement statement = (Statement)query;
-            ByteBuffer[] rawValues = statement.getValues();
-            List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
-            String qString = statement.getQueryString();
-            return new QueryMessage(qString, cassCL, values, query.getFetchSize(), false, state);
-        } else if (query instanceof BoundStatement) {
-            BoundStatement bs = (BoundStatement)query;
-            boolean skipMetadata = bs.statement.resultSetMetadata != null;
-            return new ExecuteMessage(bs.statement.id, Arrays.asList(bs.values), cassCL, query.getFetchSize(), skipMetadata, state);
-        } else {
-            assert query instanceof BatchStatement : query;
-            assert state == null;
-            BatchStatement bs = (BatchStatement)query;
-            BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
-            return new BatchMessage(org.apache.cassandra.cql3.statements.BatchStatement.Type.LOGGED, idAndVals.ids, idAndVals.values, cassCL);
-        }
+        return manager.executeQuery(manager.makeRequestMessage(query, null), query);
     }
 
     /**
@@ -518,6 +493,40 @@ public class Session {
                 throw ResultSetFuture.extractCauseFromExecutionException(e);
             }
         }
+
+        public Message.Request makeRequestMessage(Query query, PagingState state) {
+            ConsistencyLevel consistency = query.getConsistencyLevel();
+            if (consistency == null)
+                consistency = configuration().getQueryOptions().getConsistencyLevel();
+
+            return makeRequestMessage(query, consistency, state);
+        }
+
+        public Message.Request makeRequestMessage(Query query, ConsistencyLevel cl, PagingState state) {
+            org.apache.cassandra.db.ConsistencyLevel cassCL = ConsistencyLevel.toCassandraCL(cl);
+            int fetchSize = query.getFetchSize();
+            if (fetchSize <= 0)
+                fetchSize = configuration().getQueryOptions().getFetchSize();
+
+            if (query instanceof Statement) {
+                Statement statement = (Statement)query;
+                ByteBuffer[] rawValues = statement.getValues();
+                List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
+                String qString = statement.getQueryString();
+                return new QueryMessage(qString, cassCL, values, fetchSize, false, state);
+            } else if (query instanceof BoundStatement) {
+                BoundStatement bs = (BoundStatement)query;
+                boolean skipMetadata = bs.statement.resultSetMetadata != null;
+                return new ExecuteMessage(bs.statement.id, Arrays.asList(bs.values), cassCL, fetchSize, skipMetadata, state);
+            } else {
+                assert query instanceof BatchStatement : query;
+                assert state == null;
+                BatchStatement bs = (BatchStatement)query;
+                BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
+                return new BatchMessage(org.apache.cassandra.cql3.statements.BatchStatement.Type.LOGGED, idAndVals.ids, idAndVals.values, cassCL);
+            }
+        }
+
 
         /**
          * Execute the provided request.

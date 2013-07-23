@@ -315,7 +315,7 @@ public class ResultSet implements Iterable<Row> {
 
         assert !(query instanceof BatchStatement);
 
-        final Message.Request request = Session.makeRequestMessage(query, nextStart);
+        final Message.Request request = session.makeRequestMessage(query, nextStart);
         session.execute(new RequestHandler.Callback() {
 
             @Override

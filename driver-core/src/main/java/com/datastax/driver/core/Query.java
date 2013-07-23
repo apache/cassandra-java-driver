@@ -38,9 +38,6 @@ public abstract class Query {
         public String getKeyspace() { return null; }
     };
 
-    // TODO: we'd need to make that default configurable, which involve not making static naymore.
-    private static final int DEFAULT_FETCH_SIZE = 5000;
-
     private volatile ConsistencyLevel consistency;
     private volatile boolean traceQuery;
     private volatile int fetchSize;
@@ -48,15 +45,10 @@ public abstract class Query {
     private volatile RetryPolicy retryPolicy;
 
     // We don't want to expose the constructor, because the code rely on this being only subclassed Statement, BoundStatement and BatchStatement
-    Query() {
-        this.consistency = ConsistencyLevel.ONE;
-        this.fetchSize = DEFAULT_FETCH_SIZE;
-    }
+    Query() {}
 
     /**
      * Sets the consistency level for the query.
-     * <p>
-     * The default consistency level, if this method is not called, is ConsistencyLevel.ONE.
      *
      * @param consistency the consistency level to set.
      * @return this {@code Query} object.
@@ -67,10 +59,11 @@ public abstract class Query {
     }
 
     /**
-     * Returns the consistency level.
+     * The consistency level for this query.
      *
-     * @return the consistency level, which is {@code ConsistencyLevel.ONE} if no
-     * consistency level has been specified.
+     * @return the consistency level for this query, or {@code null} if no
+     * consistency level has been specified (through {@code setConsistencyLevel}).
+     * In the latter case, the default consistency level will be used.
      */
     public ConsistencyLevel getConsistencyLevel() {
         return consistency;

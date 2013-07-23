@@ -289,8 +289,10 @@ public class Cluster {
         private SSLOptions sslOptions = null;
         private boolean metricsEnabled = true;
         private boolean jmxEnabled = true;
-        private PoolingOptions poolingOptions = new PoolingOptions();
-        private SocketOptions socketOptions = new SocketOptions();
+
+        private PoolingOptions poolingOptions;
+        private SocketOptions socketOptions;
+        private QueryOptions queryOptions;
 
         @Override
         public List<InetAddress> getContactPoints() {
@@ -505,23 +507,7 @@ public class Cluster {
         }
 
         /**
-         * Return the pooling options used by this builder.
-         *
-         * @return the pooling options that will be used by this builder. You
-         * can use the returned object to define the initial pooling options
-         * for the built cluster.
-         *
-         * @deprecated you are now encouraged to use the {@link #withPoolingOptions}
-         * method. This method is deprecated and will be removed in the next major
-         * version of the driver.
-         */
-        @Deprecated
-        public PoolingOptions poolingOptions() {
-            return poolingOptions;
-        }
-
-        /**
-         * Set the PoolingOptions to use for the newly created Cluster.
+         * Sets the PoolingOptions to use for the newly created Cluster.
          * <p>
          * If no pooling options are set through this method, default pooling
          * options will be used.
@@ -535,23 +521,7 @@ public class Cluster {
         }
 
         /**
-         * Returns the socket options used by this builder.
-         *
-         * @return the socket options that will be used by this builder. You
-         * can use the returned object to define the initial socket options
-         * for the built cluster.
-         *
-         * @deprecated you are now encouraged to use the {@link #withPoolingOptions}
-         * method. This method is deprecated and will be removed in the next major
-         * version of the driver.
-         */
-        @Deprecated
-        public SocketOptions socketOptions() {
-            return socketOptions;
-        }
-
-        /**
-         * Set the SocketOptions to use for the newly created Cluster.
+         * Sets the SocketOptions to use for the newly created Cluster.
          * <p>
          * If no socket options are set through this method, default socket
          * options will be used.
@@ -563,6 +533,21 @@ public class Cluster {
             this.socketOptions = options;
             return this;
         }
+
+        /**
+         * Sets the QueryOptions to use for the newly created Cluster.
+         * <p>
+         * If no query options are set through this method, default query
+         * options will be used.
+         *
+         * @param options the query options to use.
+         * @return this builder.
+         */
+        public Builder withQueryOptions(QueryOptions options) {
+            this.queryOptions = options;
+            return this;
+        }
+
 
         /**
          * The configuration that will be used for the new cluster.
@@ -582,10 +567,11 @@ public class Cluster {
             );
             return new Configuration(policies,
                                      new ProtocolOptions(port, sslOptions).setCompression(compression),
-                                     poolingOptions,
-                                     socketOptions,
+                                     poolingOptions == null ? new PoolingOptions() : poolingOptions,
+                                     socketOptions == null ? new SocketOptions() : socketOptions,
                                      authProvider,
-                                     metricsEnabled ? new MetricsOptions(jmxEnabled) : null);
+                                     metricsEnabled ? new MetricsOptions(jmxEnabled) : null,
+                                     queryOptions == null ? new QueryOptions() : queryOptions);
         }
 
         /**
