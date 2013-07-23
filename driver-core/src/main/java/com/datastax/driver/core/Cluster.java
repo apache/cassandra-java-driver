@@ -20,6 +20,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -62,10 +63,14 @@ public class Cluster {
 
     private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
 
+    // Some per-JVM number that allows to generate unique cluster names when
+    // multiple Cluster instance are created in the same JVM.
+    private static final AtomicInteger CLUSTER_ID = new AtomicInteger(0);
+
     final Manager manager;
 
-    private Cluster(List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
-        this.manager = new Manager(contactPoints, configuration, listeners);
+    private Cluster(String name, List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
+        this.manager = new Manager(name, contactPoints, configuration, listeners);
         this.manager.init();
     }
 
@@ -93,7 +98,7 @@ public class Cluster {
         if (contactPoints.isEmpty())
             throw new IllegalArgumentException("Cannot build a cluster without contact points");
 
-        return new Cluster(contactPoints, initializer.getConfiguration(), initializer.getInitialListeners());
+        return new Cluster(initializer.getClusterName(), contactPoints, initializer.getConfiguration(), initializer.getInitialListeners());
     }
 
     /**
@@ -131,6 +136,24 @@ public class Cluster {
         Session session = connect();
         session.manager.setKeyspace(keyspace);
         return session;
+    }
+
+    /**
+     * The name of this cluster object.
+     * <p>
+     * Note that this is not the Cassandra cluster name, but rather a name
+     * assigned to this Cluster object. Currently, that name is only used
+     * for one purpose: to distinguish exposed JMX metrics when multiple
+     * Cluster instances live in the same JVM (which should be rare in the first
+     * place). That name can be set at Cluster building time (through
+     * {@link Builder#withClusterName} for instance) but will default to a
+     * name like {@code cluster1} where each Cluster instance in the same JVM
+     * will ahve a different number.
+     *
+     * @return the name for this cluster instance.
+     */
+    public String getClusterName() {
+        return manager.clusterName;
     }
 
     /**
@@ -247,6 +270,18 @@ public class Cluster {
     public interface Initializer {
 
         /**
+         * An optional name for the created cluster.
+         * <p>
+         * Such name is optional (a default name will be created otherwise) and is currently
+         * only use for JMX reporting of metrics. See {@link Cluster#getClusterName} for more
+         * information.
+         *
+         * @return the name for the created cluster or {@code null} to use an automatically
+         * generated name.
+         */
+        public String getClusterName();
+
+        /**
          * Returns the initial Cassandra hosts to connect to.
          *
          * @return the initial Cassandra contact points. See {@link Builder#addContactPoint}
@@ -289,6 +324,7 @@ public class Cluster {
      */
     public static class Builder implements Initializer {
 
+        private String clusterName;
         private final List<InetAddress> addresses = new ArrayList<InetAddress>();
         private int port = ProtocolOptions.DEFAULT_PORT;
         private AuthInfoProvider authProvider = AuthInfoProvider.NONE;
@@ -310,8 +346,33 @@ public class Cluster {
 
 
         @Override
+        public String getClusterName() {
+            return clusterName;
+        }
+
+        @Override
         public List<InetAddress> getContactPoints() {
             return addresses;
+        }
+
+        /**
+         * An optional name for the create cluster.
+         * <p>
+         * Note: this is not related to the Cassandra cluster name (though you
+         * are free to provide the same name). See {@link Cluster#getClusterName} for
+         * details.
+         * <p>
+         * If you use this method and create more than one Cluster instance in the
+         * same JVM (which should be avoided unless you need to connect to multiple
+         * Cassandra clusters), you should make sure each Cluster instance get a
+         * unique name or you may have a problem with JMX reporting.
+         *
+         * @param name the cluster name to use for the created Cluster instance.
+         * @return this Builder.
+         */
+        public Builder withClusterName(String name) {
+            this.clusterName = name;
+            return this;
         }
 
         /**
@@ -321,7 +382,7 @@ public class Cluster {
          * instead.
          *
          * @param port the port to set.
-         * @return this Builder
+         * @return this Builder.
          */
         public Builder withPort(int port) {
             this.port = port;
@@ -339,7 +400,7 @@ public class Cluster {
          * the driver cannot initialize itself correctly.
          *
          * @param address the address of the node to connect to
-         * @return this Builder
+         * @return this Builder.
          *
          * @throws IllegalArgumentException if no IP address for {@code address}
          * could be found
@@ -361,8 +422,8 @@ public class Cluster {
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
          *
-         * @param addresses addresses of the nodes to add as contact point
-         * @return this Builder
+         * @param addresses addresses of the nodes to add as contact point.
+         * @return this Builder.
          *
          * @throws IllegalArgumentException if no IP address for at least one
          * of {@code addresses} could be found
@@ -383,8 +444,8 @@ public class Cluster {
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
          *
-         * @param addresses addresses of the nodes to add as contact point
-         * @return this Builder
+         * @param addresses addresses of the nodes to add as contact point.
+         * @return this Builder.
          *
          * @see Builder#addContactPoint
          */
@@ -400,8 +461,8 @@ public class Cluster {
          * If no load balancing policy is set through this method,
          * {@link Policies#defaultLoadBalancingPolicy} will be used instead.
          *
-         * @param policy the load balancing policy to use
-         * @return this Builder
+         * @param policy the load balancing policy to use.
+         * @return this Builder.
          */
         public Builder withLoadBalancingPolicy(LoadBalancingPolicy policy) {
             this.loadBalancingPolicy = policy;
@@ -414,8 +475,8 @@ public class Cluster {
          * If no reconnection policy is set through this method,
          * {@link Policies#DEFAULT_RECONNECTION_POLICY} will be used instead.
          *
-         * @param policy the reconnection policy to use
-         * @return this Builder
+         * @param policy the reconnection policy to use.
+         * @return this Builder.
          */
         public Builder withReconnectionPolicy(ReconnectionPolicy policy) {
             this.reconnectionPolicy = policy;
@@ -428,8 +489,8 @@ public class Cluster {
          * If no retry policy is set through this method,
          * {@link Policies#DEFAULT_RETRY_POLICY} will be used instead.
          *
-         * @param policy the retry policy to use
-         * @return this Builder
+         * @param policy the retry policy to use.
+         * @return this Builder.
          */
         public Builder withRetryPolicy(RetryPolicy policy) {
             this.retryPolicy = policy;
@@ -446,7 +507,7 @@ public class Cluster {
          *
          * @param username the username to use to login to Cassandra hosts.
          * @param password the password corresponding to {@code username}.
-         * @return this Builder
+         * @return this Builder.
          */
         public Builder withCredentials(String username, String password) {
             this.authProvider = new AuthInfoProvider.Simple(username, password);
@@ -456,8 +517,8 @@ public class Cluster {
         /**
          * Sets the compression to use for the transport.
          *
-         * @param compression the compression to set
-         * @return this Builder
+         * @param compression the compression to set.
+         * @return this Builder.
          *
          * @see ProtocolOptions.Compression
          */
@@ -470,7 +531,7 @@ public class Cluster {
          * Disables metrics collection for the created cluster (metrics are
          * enabled by default otherwise).
          *
-         * @return this builder
+         * @return this builder.
          */
         public Builder withoutMetrics() {
             this.metricsEnabled = false;
@@ -488,7 +549,7 @@ public class Cluster {
          * advised to enable SSL on every Cassandra node if you plan on using
          * SSL in the driver.
          *
-         * @return this builder
+         * @return this builder.
          */
         public Builder withSSL() {
             this.sslOptions = new SSLOptions();
@@ -500,7 +561,7 @@ public class Cluster {
          *
          * @param sslOptions the SSL options to use.
          *
-         * @return this builder
+         * @return this builder.
          */
         public Builder withSSL(SSLOptions sslOptions) {
             this.sslOptions = sslOptions;
@@ -513,7 +574,7 @@ public class Cluster {
          * Note: repeated calls to this method will override the previous ones.
          *
          * @param listeners the listeners to register.
-         * @return this builder
+         * @return this builder.
          */
         public Builder withInitialListeners(Collection<Host.StateListener> listeners) {
             this.listeners = listeners;
@@ -527,7 +588,7 @@ public class Cluster {
          * disabled using this option. If metrics are disabled, this is a
          * no-op.
          *
-         * @return this builder
+         * @return this builder.
          */
         public Builder withoutJMXReporting() {
             this.jmxEnabled = false;
@@ -618,7 +679,7 @@ public class Cluster {
          * @throws NoHostAvailableException if none of the contact points
          * provided can be reached.
          * @throws AuthenticationException if an authentication error occurs.
-         * while contacting the initial contact points
+         * while contacting the initial contact points.
          */
         public Cluster build() {
             return Cluster.buildFrom(this);
@@ -633,6 +694,11 @@ public class Cluster {
         return destUnit.convert(System.nanoTime() - startNanos, TimeUnit.NANOSECONDS);
     }
 
+    private static String generateClusterName() {
+        return "cluster" + CLUSTER_ID.incrementAndGet();
+    }
+
+
     /**
      * The sessions and hosts managed by this a Cluster instance.
      * <p>
@@ -641,6 +707,8 @@ public class Cluster {
      * user to be able to call the {@link #onUp} and {@link #onDown} methods.
      */
     class Manager implements Host.StateListener, Connection.DefaultResponseHandler {
+
+        final String clusterName;
 
         // Initial contacts point
         final List<InetAddress> contactPoints;
@@ -672,9 +740,10 @@ public class Cluster {
 
         private final Set<Host.StateListener> listeners;
 
-        private Manager(List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
+        private Manager(String clusterName, List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
             logger.debug("Starting new cluster with contact points " + contactPoints);
 
+            this.clusterName = clusterName == null ? generateClusterName() : clusterName;
             this.configuration = configuration;
             this.metadata = new Metadata(this);
             this.contactPoints = contactPoints;
