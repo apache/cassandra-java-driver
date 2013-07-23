@@ -48,7 +48,7 @@ public class ResultSet implements Iterable<Row> {
     private final ColumnDefinitions metadata;
     private final Queue<List<ByteBuffer>> rows;
 
-    private final ExecutionInfo info;
+    private final List<ExecutionInfo> infos;
 
     /*
      * The fetching state of this result set. The fetchState will always be in one of
@@ -77,10 +77,17 @@ public class ResultSet implements Iterable<Row> {
         this.metadata = metadata;
         this.rows = rows;
         this.session = session;
-        this.info = info;
-        this.fetchState = initialPagingState == null ? null : new FetchingState(initialPagingState, null);
-        this.query = query;
 
+        if (initialPagingState == null) {
+            this.fetchState = null;
+            this.infos = Collections.<ExecutionInfo>singletonList(info);
+        } else {
+            this.fetchState = new FetchingState(initialPagingState, null);
+            this.infos = new ArrayList<ExecutionInfo>();
+            this.infos.add(info);
+        }
+
+        this.query = query;
         assert fetchState == null || (session != null && query != null);
     }
 
@@ -336,9 +343,9 @@ public class ResultSet implements Iterable<Row> {
                             // If we're paging, the query was a SELECT, so we don't have to handle SET_KEYSPACE and SCHEMA_CHANGE really
                             ResultSet tmp = ResultSet.fromMessage(rm, ResultSet.this.session, info, query);
 
-                            // TODO: we shouldn't ignore the execution infos!
                             ResultSet.this.rows.addAll(tmp.rows);
                             ResultSet.this.fetchState = tmp.fetchState;
+                            ResultSet.this.infos.addAll(tmp.infos);
                             future.set(null);
                             break;
                         case ERROR:
@@ -379,15 +386,35 @@ public class ResultSet implements Iterable<Row> {
     }
 
     /**
-     * Returns information on the execution of this query.
+     * Returns information on the execution of the last query made for this ResultSet.
+     * <p>
+     * Note that in most cases, a ResultSet is fetched with only one query, but large
+     * result sets can be paged and thus be retrieved by multiple queries. If that is
+     * the case, that method return that {@code ExecutionInfo} for the last query
+     * performed. To retrieve the informations for all queries, use {@link #getAllExecutionInfo}.
      * <p>
      * The returned object includes basic information such as the queried hosts,
      * but also the Cassandra query trace if tracing was enabled for the query.
      *
-     * @return the execution info for this query.
+     * @return the execution info for the last query made for this ResultSet.
      */
     public ExecutionInfo getExecutionInfo() {
-        return info;
+        return infos.get(infos.size() - 1);
+    }
+
+    /**
+     * Return the execution informations for all queries made to retrieve this
+     * ResultSet.
+     * <p>
+     * Unless the ResultSet is large enough to get paged underneath, the returned
+     * list will be singleton. If paging has been used however, the returned list
+     * contains the {@code ExecutionInfo} for all the queries done to obtain this
+     * ResultSet (at the time of the call) in the order those queries were made.
+     *
+     * @return a list of the execution info for all the queries made for this ResultSet.
+     */
+    public List<ExecutionInfo> getAllExecutionInfo() {
+        return new ArrayList<ExecutionInfo>(infos);
     }
 
     @Override

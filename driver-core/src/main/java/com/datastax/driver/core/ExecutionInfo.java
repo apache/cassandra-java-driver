@@ -18,7 +18,7 @@ package com.datastax.driver.core;
 import java.util.List;
 
 /**
- * Basic information on the execution of a query.
+ * Basic informations on the execution of a query.
  * <p>
  * This provides the following information on the execution of a (successful)
  * query:
