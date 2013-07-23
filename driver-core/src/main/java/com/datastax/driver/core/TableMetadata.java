@@ -409,9 +409,11 @@ public class TableMetadata {
         private static final String COMPACTION_OPTIONS       = "compaction_strategy_options";
         private static final String MIN_COMPACTION_THRESHOLD = "min_compaction_threshold";
         private static final String MAX_COMPACTION_THRESHOLD = "max_compaction_threshold";
+        private static final String POPULATE_CACHE_ON_FLUSH  = "populate_io_cache_on_flush";
         private static final String COMPRESSION_PARAMS       = "compression_parameters";
 
         private static final double DEFAULT_BF_FP_CHANCE = 0.01;
+        private static final boolean DEFAULT_POPULATE_CACHE_ON_FLUSH = false;
 
         private final boolean isCompactStorage;
 
@@ -422,6 +424,7 @@ public class TableMetadata {
         private final int gcGrace;
         private final double bfFpChance;
         private final String caching;
+        private final boolean populateCacheOnFlush;
         private final Map<String, String> compaction = new HashMap<String, String>();
         private final Map<String, String> compression = new HashMap<String, String>();
 
@@ -434,6 +437,7 @@ public class TableMetadata {
             this.gcGrace = row.getInt(GC_GRACE);
             this.bfFpChance = row.isNull(BF_FP_CHANCE) ? DEFAULT_BF_FP_CHANCE : row.getDouble(BF_FP_CHANCE);
             this.caching = row.getString(CACHING);
+            this.populateCacheOnFlush = row.isNull(POPULATE_CACHE_ON_FLUSH) ? DEFAULT_POPULATE_CACHE_ON_FLUSH : row.getBool(POPULATE_CACHE_ON_FLUSH);
 
             this.compaction.put("class", row.getString(COMPACTION_CLASS));
             this.compaction.putAll(fromJsonMap(row.getString(COMPACTION_OPTIONS)));
@@ -513,6 +517,15 @@ public class TableMetadata {
          */
         public String getCaching() {
             return caching;
+        }
+
+        /**
+         * Whether the populate I/O cache on flush is set on this table.
+         *
+         * @return whether the populate I/O cache on flush is set on this table.
+         */
+        public boolean getPopulateIOCacheOnFlush() {
+            return populateCacheOnFlush;
         }
 
         /**
