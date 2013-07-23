@@ -140,15 +140,7 @@ public class Metadata {
     Host add(InetAddress address) {
         Host newHost = new Host(address, cluster.convictionPolicyFactory);
         Host previous = hosts.putIfAbsent(address, newHost);
-        if (previous == null)
-        {
-            newHost.getMonitor().register(cluster);
-            return newHost;
-        }
-        else
-        {
-            return null;
-        }
+        return previous == null ? newHost : null;
     }
 
     boolean remove(Host host) {

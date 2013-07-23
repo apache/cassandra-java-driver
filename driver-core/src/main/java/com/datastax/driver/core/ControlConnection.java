@@ -134,7 +134,7 @@ class ControlConnection implements Host.StateListener {
             // Host might be null in the case the host has been removed, but it means this has
             // been reported already so it's fine.
             if (host != null) {
-                host.getMonitor().signalConnectionFailure(connection.lastException());
+                cluster.signalConnectionFailure(host, connection.lastException());
                 return;
             }
         }
@@ -168,7 +168,7 @@ class ControlConnection implements Host.StateListener {
                     return tryConnect(host);
                 } catch (ConnectionException e) {
                     errors = logError(host, e.getMessage(), errors, iter);
-                    host.getMonitor().signalConnectionFailure(e);
+                    cluster.signalConnectionFailure(host, e);
                 } catch (ExecutionException e) {
                     errors = logError(host, e.getMessage(), errors, iter);
                 }
@@ -407,7 +407,7 @@ class ControlConnection implements Host.StateListener {
                     rpc = row.getInet("peer");
 
                 Host peer = metadata.getHost(rpc);
-                if (peer != null && peer.getMonitor().isUp())
+                if (peer != null && peer.isUp())
                     versions.add(row.getUUID("schema_version"));
             }
 

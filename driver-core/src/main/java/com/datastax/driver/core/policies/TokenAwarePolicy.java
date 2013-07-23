@@ -110,7 +110,7 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
             protected Host computeNext() {
                 while (iter.hasNext()) {
                     Host host = iter.next();
-                    if (host.getMonitor().isUp() && childPolicy.distance(host) == HostDistance.LOCAL)
+                    if (host.isUp() && childPolicy.distance(host) == HostDistance.LOCAL)
                         return host;
                 }
 

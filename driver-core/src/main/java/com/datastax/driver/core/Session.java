@@ -21,6 +21,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import com.datastax.driver.core.exceptions.*;
@@ -304,7 +307,7 @@ public class Session {
             return cluster.manager.reconnectionPolicy();
         }
 
-        public ExecutorService executor() {
+        public ListeningExecutorService executor() {
             return cluster.manager.executor;
         }
 
@@ -320,7 +323,7 @@ public class Session {
             return success;
         }
 
-        private Future<?> addOrRenewPool(final Host host) {
+        private ListenableFuture<?> addOrRenewPool(final Host host) {
             final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
             if (distance == HostDistance.IGNORED)
                 return Futures.immediateFuture(null);
@@ -335,16 +338,16 @@ public class Session {
                             previous.shutdown(); // The previous was probably already shutdown but that's ok
                     } catch (AuthenticationException e) {
                         logger.error("Error creating pool to {} ({})", host, e.getMessage());
-                        host.getMonitor().signalConnectionFailure(new ConnectionException(e.getHost(), e.getMessage()));
+                        cluster.manager.signalConnectionFailure(host, new ConnectionException(e.getHost(), e.getMessage()));
                     } catch (ConnectionException e) {
                         logger.debug("Error creating pool to {} ({})", host, e.getMessage());
-                        host.getMonitor().signalConnectionFailure(e);
+                        cluster.manager.signalConnectionFailure(host, e);
                     }
                 }
             });
         }
 
-        Future<?> removePool(Host host) {
+        ListenableFuture<?> removePool(Host host) {
             final HostConnectionPool pool = pools.remove(host);
             if (pool == null)
                 return Futures.immediateFuture(null);
@@ -372,7 +375,7 @@ public class Session {
                 HostConnectionPool pool = pools.get(h);
 
                 if (pool == null) {
-                    if (dist != HostDistance.IGNORED && h.getMonitor().isUp())
+                    if (dist != HostDistance.IGNORED && h.isUp())
                         addOrRenewPool(h);
                 } else if (dist != pool.hostDistance) {
                     if (dist == HostDistance.IGNORED) {
@@ -386,28 +389,32 @@ public class Session {
 
         @Override
         public void onUp(Host host) {
-            addOrRenewPool(host);
-            updateCreatedPools();
+            addOrRenewPool(host).addListener(new Runnable() {
+                public void run() {
+                    updateCreatedPools();
+                }
+            }, MoreExecutors.sameThreadExecutor());
         }
 
         @Override
         public void onDown(Host host) {
             // Note that with well behaved balancing policy (that ignore dead nodes), the removePool call is not necessary
             // since updateCreatedPools should take care of it. But better protect against non well behaving policies.
-            removePool(host);
-            updateCreatedPools();
+            removePool(host).addListener(new Runnable() {
+                public void run() {
+                    updateCreatedPools();
+                }
+            }, MoreExecutors.sameThreadExecutor());
         }
 
         @Override
         public void onAdd(Host host) {
-            addOrRenewPool(host);
-            updateCreatedPools();
+            onUp(host);
         }
 
         @Override
         public void onRemove(Host host) {
-            removePool(host);
-            updateCreatedPools();
+            onDown(host);
         }
 
         public void setKeyspace(String keyspace) {
