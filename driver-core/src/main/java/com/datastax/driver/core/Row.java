@@ -28,9 +28,9 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 /**
  * A CQL Row returned in a {@link ResultSet}.
  * <p>
- * The values of a CQL Row can be retrieve by either index or name. When
- * setting them by name, names follow the case insensitivity rules explained in
- * {@link ColumnDefinitions}.
+ * The values of a CQL Row can be retrieve by either index (index starts at 0)
+ * or name. When setting them by name, names follow the case insensitivity
+ * rules explained in {@link ColumnDefinitions}.
  */
 public class Row {
 
@@ -61,7 +61,7 @@ public class Row {
     /**
      * Returns whether the {@code i}th value of this row is NULL.
      *
-     * @param i the index of the column to check.
+     * @param i the index ({@code 0 <= i < size()}) of the column to check.
      * @return whether the {@code i}th value of this row is NULL.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
@@ -87,7 +87,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as a boolean.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the boolean value of the {@code i}th column in this row. If the
      * value is NULL, {@code false} is returned.
      *
@@ -122,7 +122,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as an integer.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the value of the {@code i}th column in this row as an integer. If the
      * value is NULL, {@code 0} is returned.
      *
@@ -157,7 +157,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as a long.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a long. If the
      * value is NULL, {@code 0L} is returned.
      *
@@ -192,7 +192,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as a date.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a data. If the
      * value is NULL, {@code null} is returned.
      *
@@ -227,7 +227,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as a float.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a float. If the
      * value is NULL, {@code 0.0f} is returned.
      *
@@ -262,7 +262,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as a double.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a double. If the
      * value is NULL, {@code 0.0} is returned.
      *
@@ -302,7 +302,7 @@ public class Row {
      * InvalidTypeException. However, if the type is not BLOB, it is up to the
      * caller to handle the returned value correctly.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a ByteBuffer. If the
      * value is NULL, {@code null} is returned.
      *
@@ -343,7 +343,7 @@ public class Row {
      * Note that this method validate that the colum is of type BLOB. If you want to retrieve
      * the bytes for any type of columns, use {@link #getBytesUnsafe(int)} instead.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a byte array. If the
      * value is NULL, {@code null} is returned.
      *
@@ -376,7 +376,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as a string.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a string. If the
      * value is NULL, {@code null} is returned.
      *
@@ -417,7 +417,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as a variable length integer.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a variable
      * length integer. If the value is NULL, {@code null} is returned.
      *
@@ -452,7 +452,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as a variable length decimal.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a variable
      * length decimal. If the value is NULL, {@code null} is returned.
      *
@@ -487,7 +487,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as a UUID.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the value of the {@code i}th column in this row as a UUID.
      * If the value is NULL, {@code null} is returned.
      *
@@ -526,7 +526,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as an InetAddress.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the value of the {@code i}th column in this row as an InetAddress.
      * If the value is NULL, {@code null} is returned.
      *
@@ -562,7 +562,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as a list.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @param elementsClass the class for the elements of the list to retrieve.
      * @return the value of the {@code i}th column in this row as a list of
      * {@code elementsClass} objects. If the value is NULL, an empty list is
@@ -613,7 +613,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as a set.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @param elementsClass the class for the elements of the set to retrieve.
      * @return the value of the {@code i}th column in this row as a set of
      * {@code elementsClass} objects. If the value is NULL, an empty set is
@@ -663,7 +663,7 @@ public class Row {
     /**
      * Returns the {@code i}th value of this row as a map.
      *
-     * @param i the index of the column to retrieve.
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @param keysClass the class for the keys of the map to retrieve.
      * @param valuesClass the class for the values of the map to retrieve.
      * @return the value of the {@code i}th column in this row as a map of

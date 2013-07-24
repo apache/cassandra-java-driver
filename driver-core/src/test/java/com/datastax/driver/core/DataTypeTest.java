@@ -35,6 +35,9 @@ import java.util.UUID;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
+
 /**
  * Tests DataType class to ensure data sent in is the same as data received
  * All tests are executed via a Simple Statement
@@ -376,11 +379,6 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
         return selectStatements;
     }
 
-
-
-
-
-
     /**
      * Test simple statement inserts for all primitive data types
      */
@@ -482,34 +480,49 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
         collectionSelectTest();
     }
 
-    /**
-     * Test TTLs.
-     */
-    // TODO: @Test(groups = "long")
-    public void ttlTest() throws Throwable {
+    // The two following tests a really unit tests, but since the whole uses
+    // CCMBridge.PerClassSingleNodeCluster, they'll still spawn a cluster even
+    // you execute only them, so we keep them in the "long" group. We could
+    // move them in another class but not sure where honestly (one could argue
+    // that it would make more sense to move all the *other* tests to some
+    // DataTypeIntegrationTest class).
+    @Test(groups = "long")
+    public void serializeDeserializeTest() {
 
+        for (DataType dt : DataType.allPrimitiveTypes())
+        {
+            if (exclude(dt))
+                continue;
+
+            Object value = TestUtils.getFixedValue(dt);
+            assertEquals(dt.deserialize(dt.serialize(value)), value);
+        }
+
+        try {
+            DataType.bigint().serialize(4);
+            fail("This should not have worked");
+        } catch (InvalidTypeException e) { /* That's what we want */ }
+
+        try {
+            ByteBuffer badValue = ByteBuffer.allocate(4);
+            DataType.bigint().deserialize(badValue);
+            fail("This should not have worked");
+        } catch (InvalidTypeException e) { /* That's what we want */ }
     }
 
-    /**
-     * Test Counters in an isolated format.
-     */
-    // TODO: @Test(groups = "long")
-    public void countersTest() throws Throwable {
+    @Test(groups = "long")
+    public void serializeDeserializeCollectionsTest() {
 
+        List<String> l = Arrays.asList("foo", "bar");
+
+        DataType dt = DataType.list(DataType.text());
+        assertEquals(dt.deserialize(dt.serialize(l)), l);
+
+        try {
+            DataType.list(DataType.bigint()).serialize(l);
+            fail("This should not have worked");
+        } catch (InvalidTypeException e) { /* That's what we want */ }
     }
-
-    /**
-     * Test tombstones.
-     */
-    // TODO: @Test(groups = "long")
-    public void tombstonesTest() throws Throwable {
-
-    }
-
-
-
-
-
 
     /**
      * Prints the table definitions that will be used in testing

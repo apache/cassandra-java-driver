@@ -1,6 +1,19 @@
 CHANGELOG
 =========
 
+* 1.0.2:
+  - [api] Host#getMonitor and all Host.HealthMonitor methods have been
+    deprecated. The new Host#isUp method is now prefered to the method
+    in the monitor and you should now register Host.StateListener against
+    the Cluster object directly (registering against a host HealthMonitor
+    was much more limited anyway).
+  - [new] New serialize/deserialize methods in DataType to serialize/deserialize
+    values to/from bytes (JAVA-92).
+  - [new] New getIndexOf() method in ColumnDefinitions to find the index of
+    a given column name (JAVA-128).
+  - [bug] Fix a bug when thread could get blocked while setting the current
+    keyspace (JAVA-131).
+
 * 1.0.1:
   - [api] Function call handling in the query builder has been modified in a
     backward incompatible way. Function calls are not parsed from string values

@@ -64,19 +64,13 @@ class ControlConnection implements Host.StateListener {
     private final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
 
     private final Cluster.Manager cluster;
-    private final LoadBalancingPolicy balancingPolicy;
 
-    private final ReconnectionPolicy reconnectionPolicy;
     private final AtomicReference<ScheduledFuture<?>> reconnectionAttempt = new AtomicReference<ScheduledFuture<?>>();
 
     private volatile boolean isShutdown;
 
     public ControlConnection(Cluster.Manager manager) {
         this.cluster = manager;
-
-        // We use the configured reconnection policy and balancing policy
-        this.reconnectionPolicy = manager.configuration.getPolicies().getReconnectionPolicy();
-        this.balancingPolicy = manager.configuration.getPolicies().getLoadBalancingPolicy();
     }
 
     // Only for the initial connection. Does not schedule retries if it fails
@@ -101,7 +95,7 @@ class ControlConnection implements Host.StateListener {
             setNewConnection(reconnectInternal());
         } catch (NoHostAvailableException e) {
             logger.error("[Control connection] Cannot connect to any host, scheduling retry");
-            new AbstractReconnectionHandler(cluster.reconnectionExecutor, reconnectionPolicy.newSchedule(), reconnectionAttempt) {
+            new AbstractReconnectionHandler(cluster.reconnectionExecutor, cluster.reconnectionPolicy().newSchedule(), reconnectionAttempt) {
                 @Override
                 protected Connection tryReconnect() throws ConnectionException {
                     try {
@@ -140,7 +134,7 @@ class ControlConnection implements Host.StateListener {
             // Host might be null in the case the host has been removed, but it means this has
             // been reported already so it's fine.
             if (host != null) {
-                host.getMonitor().signalConnectionFailure(connection.lastException());
+                cluster.signalConnectionFailure(host, connection.lastException());
                 return;
             }
         }
@@ -163,7 +157,7 @@ class ControlConnection implements Host.StateListener {
 
     private Connection reconnectInternal() {
 
-        Iterator<Host> iter = balancingPolicy.newQueryPlan(Query.DEFAULT);
+        Iterator<Host> iter = cluster.loadBalancingPolicy().newQueryPlan(Query.DEFAULT);
         Map<InetAddress, String> errors = null;
 
         Host host = null;
@@ -174,7 +168,7 @@ class ControlConnection implements Host.StateListener {
                     return tryConnect(host);
                 } catch (ConnectionException e) {
                     errors = logError(host, e.getMessage(), errors, iter);
-                    host.getMonitor().signalConnectionFailure(e);
+                    cluster.signalConnectionFailure(host, e);
                 } catch (ExecutionException e) {
                     errors = logError(host, e.getMessage(), errors, iter);
                 }
@@ -238,7 +232,9 @@ class ControlConnection implements Host.StateListener {
             logger.debug("[Control connection] Connection error while refeshing schema ({})", e.getMessage());
             signalError();
         } catch (ExecutionException e) {
-            logger.error("[Control connection] Unexpected error while refeshing schema", e);
+            // If we're being shutdown during schema refresh, this can happen. That's fine so don't scare the user.
+            if (!isShutdown)
+                logger.error("[Control connection] Unexpected error while refeshing schema", e);
             signalError();
         } catch (BusyConnectionException e) {
             logger.debug("[Control connection] Connection is busy, reconnecting");
@@ -282,7 +278,9 @@ class ControlConnection implements Host.StateListener {
             logger.debug("[Control connection] Connection error while refeshing node list and token map ({})", e.getMessage());
             signalError();
         } catch (ExecutionException e) {
-            logger.error("[Control connection] Unexpected error while refeshing node list and token map", e);
+            // If we're being shutdown during refresh, this can happen. That's fine so don't scare the user.
+            if (!isShutdown)
+                logger.error("[Control connection] Unexpected error while refeshing node list and token map", e);
             signalError();
         } catch (BusyConnectionException e) {
             logger.debug("[Control connection] Connection is busy, reconnecting");
@@ -300,9 +298,9 @@ class ControlConnection implements Host.StateListener {
         // If the dc/rack information changes, we need to update the load balancing policy.
         // For what, we remove and re-add the node against the policy. Not the most elegant, and assumes
         // that the policy will update correctly, but in practice this should work.
-        balancingPolicy.onDown(host);
+        cluster.loadBalancingPolicy().onDown(host);
         host.setLocationInfo(datacenter, rack);
-        balancingPolicy.onAdd(host);
+        cluster.loadBalancingPolicy().onAdd(host);
     }
 
     private void refreshNodeListAndTokenMap(Connection connection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
@@ -409,7 +407,7 @@ class ControlConnection implements Host.StateListener {
                     rpc = row.getInet("peer");
 
                 Host peer = metadata.getHost(rpc);
-                if (peer != null && peer.getMonitor().isUp())
+                if (peer != null && peer.isUp())
                     versions.add(row.getUUID("schema_version"));
             }
 
@@ -434,13 +432,10 @@ class ControlConnection implements Host.StateListener {
 
     @Override
     public void onUp(Host host) {
-        balancingPolicy.onUp(host);
     }
 
     @Override
     public void onDown(Host host) {
-        balancingPolicy.onDown(host);
-
         // If that's the host we're connected to, and we haven't yet schedule a reconnection, preemptively start one
         Connection current = connectionRef.get();
         if (logger.isTraceEnabled())
@@ -459,13 +454,11 @@ class ControlConnection implements Host.StateListener {
 
     @Override
     public void onAdd(Host host) {
-        balancingPolicy.onAdd(host);
         refreshNodeListAndTokenMap();
     }
 
     @Override
     public void onRemove(Host host) {
-        balancingPolicy.onRemove(host);
         refreshNodeListAndTokenMap();
     }
 }

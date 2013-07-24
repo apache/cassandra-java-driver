@@ -650,7 +650,7 @@ public final class QueryBuilder {
     /**
      * Declares that the name in argument should be treated as a column name.
      * <p>
-     * This mainly meant for use with {@link Select.Builder#fcall} when a
+     * This mainly meant for use with {@link Select.Selection#fcall} when a
      * function should apply to a column name, not a string value.
      *
      * @param name the name of the column.

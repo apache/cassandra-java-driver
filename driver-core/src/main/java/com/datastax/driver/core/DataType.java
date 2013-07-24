@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.MarshalException;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -446,6 +447,70 @@ public class DataType {
      */
     public static Set<DataType> allPrimitiveTypes() {
         return primitiveTypeSet;
+    }
+
+    /**
+     * Serialize a value of this type to bytes.
+     * <p>
+     * The actual format of the resulting bytes will correspond to the
+     * Cassandra encoding for this type.
+     *
+     * @param value the value to serialize.
+     * @return the value serialized, or {@code null} if {@code value} is null.
+     *
+     * @throws InvalidTypeException if {@code value} is not a valid object
+     * for this {@code DataType}.
+     */
+    public ByteBuffer serialize(Object value) {
+        Class<?> providedClass = value.getClass();
+        Class<?> expectedClass = asJavaClass();
+        if (!expectedClass.isAssignableFrom(providedClass))
+            throw new InvalidTypeException(String.format("Invalid value for CQL type %s, expecting %s but %s provided", toString(), expectedClass, providedClass));
+
+        try {
+            return Codec.getCodec(this).decompose(value);
+        } catch (ClassCastException e) {
+            // With collections, the element type has not been checked, so it can throw
+            throw new InvalidTypeException("Invalid type for collection element: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Deserialize a value of this type from the provided bytes.
+     * <p>
+     * The format of {@code bytes} must correspond to the Cassandra
+     * encoding for this type.
+     *
+     * @param bytes bytes holding the value to deserialize.
+     * @return the deserialized value (of class {@code this.asJavaClass()}).
+     * Will return {@code null} if either {@code bytes} is {@code null} or if
+     * {@code bytes.remaining() == 0} and this type has no value corresponding
+     * to an empty byte buffer (the latter somewhat strange behavior is due to
+     * the fact that for historical/technical reason, Cassandra types always
+     * accept empty byte buffer as valid value of those type, and so we avoid
+     * throwing an exception in that case. It is however highly discouraged to
+     * store empty byte buffers for types for which it doesn't make sense, so
+     * this implementation can generally be ignored).
+     *
+     * @throws InvalidTypeException if {@code bytes} is not a valid
+     * encoding of an object of this {@code DataType}.
+     */
+    public Object deserialize(ByteBuffer bytes) {
+        AbstractType<?> codec = Codec.getCodec(this);
+        try {
+            codec.validate(bytes);
+        } catch (MarshalException e) {
+            throw new InvalidTypeException(String.format("Invalid serialized value for type %s (%s)", toString(), e.getMessage()));
+        }
+
+        try {
+            return codec.compose(bytes);
+        } catch (IndexOutOfBoundsException e) {
+            // As it happens, types like Int32Type will accept empty byte buffers
+            // in their validate method, but their compose method will throw. We
+            // should probably fix that Cassandra side, but in the meantime ...
+            return null;
+        }
     }
 
     @Override

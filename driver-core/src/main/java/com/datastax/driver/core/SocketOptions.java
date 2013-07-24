@@ -49,7 +49,7 @@ public class SocketOptions {
      * Sets the connection timeout in milliseconds.
      *  
      * @param connectTimeoutMillis the timeout to set
-     * @return
+     * @return this {@code SocketOptions}.
      */
     public SocketOptions setConnectTimeoutMillis(int connectTimeoutMillis) {
         this.connectTimeoutMillis = connectTimeoutMillis;

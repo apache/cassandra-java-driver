@@ -211,7 +211,7 @@ class HostConnectionPool {
         int inFlight = connection.inFlight.decrementAndGet();
 
         if (connection.isDefunct()) {
-            if (host.getMonitor().signalConnectionFailure(connection.lastException()))
+            if (manager.cluster.manager.signalConnectionFailure(host, connection.lastException()))
                 shutdown();
             else
                 replace(connection);
@@ -279,7 +279,7 @@ class HostConnectionPool {
         } catch (ConnectionException e) {
             open.decrementAndGet();
             logger.debug("Connection error to {} while creating additional connection", host);
-            if (host.getMonitor().signalConnectionFailure(e))
+            if (manager.cluster.manager.signalConnectionFailure(host, e))
                 shutdown();
             return false;
         } catch (AuthenticationException e) {

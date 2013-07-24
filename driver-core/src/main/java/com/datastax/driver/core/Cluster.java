@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.cassandra.utils.MD5Digest;
@@ -161,6 +163,37 @@ public class Cluster {
      */
     public Metrics getMetrics() {
         return manager.metrics;
+    }
+
+    /**
+     * Registers the provided listener to be notified on hosts
+     * up/down/added/removed events.
+     * <p>
+     * Registering the same listener multiple times is a no-op.
+     * <p>
+     * Note that while {@link LoadBalancingPolicy} implements
+     * {@code Host.StateListener}, the configured load balancy does not
+     * need to (and should not) be registered through this  method to
+     * received host related events.
+     *
+     * @param listener the new {@link Host.StateListener} to register.
+     * @return this {@code Cluster} object;
+     */
+    public Cluster register(Host.StateListener listener) {
+        manager.listeners.add(listener);
+        return this;
+    }
+
+    /**
+     * Unregisters the provided listener from being notified on hosts events.
+     * <p>
+     * This method is a no-op if {@code listener} hadn't previously be
+     * registered against this monitor.
+     *
+     * @param listener the {@link Host.StateListener} to unregister.
+     */
+    public void unregister(Host.StateListener listener) {
+        manager.listeners.remove(listener);
     }
 
     /**
@@ -588,7 +621,7 @@ public class Cluster {
         // applied in the order received.
         final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, threadFactory("Scheduled Tasks-%d"));
 
-        final ExecutorService executor = Executors.newCachedThreadPool(threadFactory("Cassandra Java Driver worker-%d"));
+        final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool(threadFactory("Cassandra Java Driver worker-%d")));
 
         final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
@@ -597,6 +630,8 @@ public class Cluster {
         // Note: we could move this down to the session level, but since prepared statement are global to a node,
         // this would yield a slightly less clear behavior.
         final Map<MD5Digest, PreparedStatement> preparedQueries = new ConcurrentHashMap<MD5Digest, PreparedStatement>();
+
+        private final Set<Host.StateListener> listeners = new CopyOnWriteArraySet<Host.StateListener>();
 
         private Manager(List<InetAddress> contactPoints, Configuration configuration) {
             logger.debug("Starting new cluster with contact points " + contactPoints);
@@ -621,7 +656,7 @@ public class Cluster {
             for (InetAddress address : contactPoints)
                 addHost(address, false);
 
-            configuration.getPolicies().getLoadBalancingPolicy().init(Cluster.this, metadata.allHosts());
+            loadBalancingPolicy().init(Cluster.this, metadata.allHosts());
 
             try {
                 controlConnection.connect();
@@ -637,6 +672,14 @@ public class Cluster {
 
         Cluster getCluster() {
             return Cluster.this;
+        }
+
+        LoadBalancingPolicy loadBalancingPolicy() {
+            return configuration.getPolicies().getLoadBalancingPolicy();
+        }
+
+        ReconnectionPolicy reconnectionPolicy() {
+            return configuration.getPolicies().getReconnectionPolicy();
         }
 
         private Session newSession() {
@@ -681,10 +724,20 @@ public class Cluster {
         public void onUp(Host host) {
             logger.trace("Host {} is UP", host);
 
+            if (isShutdown.get())
+                return;
+
+            if (host.isUp())
+                return;
+
+            host.setUp();
+
             // If there is a reconnection attempt scheduled for that node, cancel it
             ScheduledFuture<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
-            if (scheduledAttempt != null)
+            if (scheduledAttempt != null) {
+                logger.debug("Cancelling reconnection attempt since node is UP");
                 scheduledAttempt.cancel(false);
+            }
 
             try {
                 prepareAllQueries(host);
@@ -693,21 +746,45 @@ public class Cluster {
                 // Don't propagate because we don't want to prevent other listener to run
             }
 
+            // Session#onUp() expects the load balancing policy to have been updated first, so that
+            // Host distances are up to date. This mean the policy could return the node before the
+            // new pool have been created. This is harmless if there is no prior pool since RequestHandler
+            // will ignore the node, but we do wan to make sure there is no prior pool so we don't
+            // query from a pool we will shutdown right away.
+            for (Session s : sessions)
+                s.manager.removePool(host);
+            loadBalancingPolicy().onUp(host);
             controlConnection.onUp(host);
             for (Session s : sessions)
                 s.manager.onUp(host);
+
+            for (Host.StateListener listener : listeners)
+                listener.onUp(host);
         }
 
         @Override
         public void onDown(final Host host) {
             logger.trace("Host {} is DOWN", host);
+
+            if (isShutdown.get())
+                return;
+
+            if (!host.isUp())
+                return;
+
+            host.setDown();
+
+            loadBalancingPolicy().onDown(host);
             controlConnection.onDown(host);
             for (Session s : sessions)
                 s.manager.onDown(host);
 
+            for (Host.StateListener listener : listeners)
+                listener.onDown(host);
+
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug("{} is down, scheduling connection retries", host);
-            new AbstractReconnectionHandler(reconnectionExecutor, configuration.getPolicies().getReconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
+            new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
 
                 protected Connection tryReconnect() throws ConnectionException, InterruptedException {
                     return connectionFactory.open(host);
@@ -715,7 +792,7 @@ public class Cluster {
 
                 protected void onReconnection(Connection connection) {
                     logger.debug("Successful reconnection to {}, setting host UP", host);
-                    host.getMonitor().setUp();
+                    onUp(host);
                 }
 
                 protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
@@ -736,6 +813,9 @@ public class Cluster {
         public void onAdd(Host host) {
             logger.trace("Adding new host {}", host);
 
+            if (isShutdown.get())
+                return;
+
             try {
                 prepareAllQueries(host);
             } catch (InterruptedException e) {
@@ -743,17 +823,41 @@ public class Cluster {
                 // Don't propagate because we don't want to prevent other listener to run
             }
 
+            loadBalancingPolicy().onAdd(host);
             controlConnection.onAdd(host);
             for (Session s : sessions)
                 s.manager.onAdd(host);
+
+            for (Host.StateListener listener : listeners)
+                listener.onAdd(host);
         }
 
         @Override
         public void onRemove(Host host) {
+            if (isShutdown.get())
+                return;
+
+            host.setDown();
+
             logger.trace("Removing host {}", host);
+            loadBalancingPolicy().onRemove(host);
             controlConnection.onRemove(host);
             for (Session s : sessions)
                 s.manager.onRemove(host);
+
+            for (Host.StateListener listener : listeners)
+                listener.onRemove(host);
+        }
+
+        public boolean signalConnectionFailure(Host host, ConnectionException exception) {
+            // If already down, don't signal again
+            if (!host.isUp())
+                return true;
+
+            boolean isDown = host.signalConnectionFailure(exception);
+            if (isDown)
+                onDown(host);
+            return isDown;
         }
 
         public Host addHost(InetAddress address, boolean signal) {
@@ -940,7 +1044,7 @@ public class Cluster {
                                         // first time we heard about that node apparently, add it
                                         addHost(stc.node.getAddress(), true);
                                     } else {
-                                        hostUp.getMonitor().setUp();
+                                        onUp(hostUp);
                                     }
                                     break;
                                 case DOWN:
@@ -950,7 +1054,7 @@ public class Cluster {
                                     // right away, so we favor the detection to make the Host.isUp method more reliable.
                                     Host hostDown = metadata.getHost(stc.node.getAddress());
                                     if (hostDown != null) {
-                                        hostDown.getMonitor().setDown();
+                                        onDown(hostDown);
                                     }
                                     break;
                             }

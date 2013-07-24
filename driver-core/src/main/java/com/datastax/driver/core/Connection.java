@@ -129,9 +129,10 @@ class Connection extends org.apache.cassandra.transport.Connection
     }
 
     private static String extractMessage(Throwable t) {
-        if (t == null || t.getMessage().isEmpty())
-            return "";
-        return " (" + t.getMessage() + ")";
+        String msg = t == null || t.getMessage() == null || t.getMessage().isEmpty()
+                   ? t.toString()
+                   : t.getMessage();
+        return " (" + msg + ")";
     }
 
     private void initializeTransport() throws ConnectionException, InterruptedException {
@@ -169,7 +170,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         } catch (BusyConnectionException e) {
             throw new DriverInternalError("Newly created connection should not be busy");
         } catch (ExecutionException e) {
-            throw defunct(new ConnectionException(address, "Unexpected error during transport initialization", e.getCause()));
+            throw defunct(new ConnectionException(address, String.format("Unexpected error during transport initialization (%s)", e.getCause()), e.getCause()));
         }
     }
 
@@ -217,6 +218,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         exception = e;
         isDefunct = true;
         dispatcher.errorOutAllHandler(e);
+        close();
         return e;
     }
 
@@ -233,7 +235,10 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         try {
             logger.trace("[{}] Setting keyspace {}", name, keyspace);
-            Message.Response response = Uninterruptibles.getUninterruptibly(write(new QueryMessage("USE \"" + keyspace + "\"", ConsistencyLevel.DEFAULT_CASSANDRA_CL)));
+            // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
+            long timeout = factory.getConnectTimeoutMillis();
+            Future future = write(new QueryMessage("USE \"" + keyspace + "\"", ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+            Message.Response response = Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
             switch (response.type) {
                 case RESULT:
                     this.keyspace = keyspace;
@@ -249,8 +254,10 @@ class Connection extends org.apache.cassandra.transport.Connection
             }
         } catch (ConnectionException e) {
             throw defunct(e);
+        } catch (TimeoutException e) {
+            logger.warn(String.format("Timeout while setting keyspace on connection to %s. This should not happen but is not critical (it will retried)", address));
         } catch (BusyConnectionException e) {
-            logger.error("Tried to set the keyspace on busy connection. This should not happen but is not critical");
+            logger.warn(String.format("Tried to set the keyspace on busy connection to %s. This should not happen but is not critical (it will retried)", address));
         } catch (ExecutionException e) {
             throw defunct(new ConnectionException(address, "Error while setting keyspace", e));
         }
@@ -275,17 +282,28 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         Message.Request request = callback.request();
 
-        if (isDefunct)
-            throw new ConnectionException(address, "Write attempt on defunct connection");
-
-        if (isClosed)
-            throw new ConnectionException(address, "Connection has been closed");
-
         request.attach(this);
 
         ResponseHandler handler = new ResponseHandler(dispatcher, callback);
         dispatcher.add(handler);
         request.setStreamId(handler.streamId);
+
+        /*
+         * We check for close/defunct *after* having set the handler because closing/defuncting
+         * will set their flag and then error out handler if need. So, by doing the check after
+         * having set the handler, we guarantee that even if we race with defunct/close, we may
+         * never leave a handler that won't get an answer or be errored out.
+         */
+        if (isDefunct) {
+            dispatcher.removeHandler(handler.streamId);
+            throw new ConnectionException(address, "Write attempt on defunct connection");
+        }
+
+        if (isClosed) {
+            dispatcher.removeHandler(handler.streamId);
+            throw new ConnectionException(address, "Connection has been closed");
+        }
+
 
         logger.trace("[{}] writing request {}", name, request);
         writer.incrementAndGet();
@@ -347,8 +365,15 @@ class Connection extends org.apache.cassandra.transport.Connection
             while (writer.get() > 0 && Cluster.timeSince(start, unit) < timeout)
                 Uninterruptibles.sleepUninterruptibly(1, unit);
         }
-        return channel.close().await(timeout - Cluster.timeSince(start, unit), unit);
         // Note: we must not call releaseExternalResources on the bootstrap, because this shutdown the executors, which are shared
+        boolean closed = channel == null // This method can be throw in the ctor at which point channel is not yet set. This is ok.
+                       ? true
+                       : channel.close().await(timeout - Cluster.timeSince(start, unit), unit);
+
+        // We've closed the channel. If anyone was waiting on that connection, we should defunct it otherwise it'll wait forever.
+        // Note that this is a no-op if there is no handler set anymore.
+        dispatcher.errorOutAllHandler(new TransportException(address, "Connection has been closed"));
+        return closed;
     }
 
     public boolean isClosed() {
@@ -420,6 +445,10 @@ class Connection extends org.apache.cassandra.transport.Connection
                     g = old;
             }
             return g;
+        }
+
+        public long getConnectTimeoutMillis() {
+            return configuration.getSocketOptions().getConnectTimeoutMillis();
         }
 
         private ClientBootstrap newBootstrap() {
@@ -499,10 +528,19 @@ class Connection extends org.apache.cassandra.transport.Connection
                 ResponseHandler handler = pending.remove(streamId);
                 streamIdHandler.release(streamId);
                 if (handler == null) {
-                    // Note: this is a bug, either us or cassandra. So log it, but I'm not sure it's worth breaking
-                    // the connection for that.
-                    logger.error("[{}] No handler set for stream {} (this is a bug, either of this driver or of Cassandra, you should report it). Received message is {}", 
-                                 name, streamId, response);
+                    if (!isDefunct()) {
+                        /*
+                         * In general, a defunct connection is one that is broken, in which case we won't receive a message anymore.
+                         * However, we could be defunct because of a internal error (anecdotally, this will happens if you have
+                         * an old version of the google-collections (the guava precursor) in the classpath, which happened to at least
+                         * 2 users already). In that case, the initial defunct already has registered what the problem was and we can ignore this.
+                         *
+                         * But if the connection is not defunct, this is a bug, either of us or cassandra. So log it, but I'm not sure it's worth
+                         * breaking the connection for that.
+                         */
+                        logger.error("[{}] No handler set for stream {} (this is a bug, either of this driver or of Cassandra, you should report it). Received message is {}", 
+                                     name, streamId, response);
+                    }
                     return;
                 }
                 handler.callback.onSet(Connection.this, response);
@@ -518,7 +556,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             if (writer.get() > 0)
                 return;
 
-            defunct(new TransportException(address, "Unexpected exception triggered", e.getCause()));
+            defunct(new TransportException(address, String.format("Unexpected exception triggered (%s)", e.getCause()), e.getCause()));
         }
 
         public void errorOutAllHandler(ConnectionException ce) {

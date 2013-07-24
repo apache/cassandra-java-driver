@@ -92,7 +92,7 @@ abstract class Utils {
             sb.append(value);
             return true;
         } else if (value instanceof InetAddress) {
-            sb.append(((InetAddress)value).getHostAddress());
+            sb.append("'").append(((InetAddress)value).getHostAddress()).append("'");
             return true;
         } else if (value instanceof Date) {
             sb.append(((Date)value).getTime());

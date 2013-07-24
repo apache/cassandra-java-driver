@@ -141,47 +141,11 @@ public abstract class TestUtils {
             case TIMEUUID:
                 return row.getUUID(name);
             case LIST:
-                return row.getList(name, classOf(type.getTypeArguments().get(0)));
+                return row.getList(name, type.getTypeArguments().get(0).asJavaClass());
             case SET:
-                return row.getSet(name, classOf(type.getTypeArguments().get(0)));
+                return row.getSet(name, type.getTypeArguments().get(0).asJavaClass());
             case MAP:
-                return row.getMap(name, classOf(type.getTypeArguments().get(0)), classOf(type.getTypeArguments().get(1)));
-        }
-        throw new RuntimeException("Missing handling of " + type);
-    }
-
-    private static Class classOf(DataType type) {
-        assert !type.isCollection();
-
-        switch (type.getName()) {
-            case ASCII:
-            case TEXT:
-            case VARCHAR:
-                return String.class;
-            case BIGINT:
-            case COUNTER:
-                return Long.class;
-            case BLOB:
-                return ByteBuffer.class;
-            case BOOLEAN:
-                return Boolean.class;
-            case DECIMAL:
-                return BigDecimal.class;
-            case DOUBLE:
-                return Double.class;
-            case FLOAT:
-                return Float.class;
-            case INET:
-                return InetAddress.class;
-            case INT:
-                return Integer.class;
-            case TIMESTAMP:
-                return Date.class;
-            case UUID:
-            case TIMEUUID:
-                return UUID.class;
-            case VARINT:
-                return BigInteger.class;
+                return row.getMap(name, type.getTypeArguments().get(0).asJavaClass(), type.getTypeArguments().get(1).asJavaClass());
         }
         throw new RuntimeException("Missing handling of " + type);
     }
@@ -380,6 +344,6 @@ public abstract class TestUtils {
     }
 
     private static boolean testHost(Host host, boolean testForDown) {
-        return testForDown ? !host.getMonitor().isUp() : host.getMonitor().isUp();
+        return testForDown ? !host.isUp() : host.isUp();
     }
 }
