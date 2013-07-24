@@ -43,7 +43,7 @@ public class QueryBuilderTest {
         select = select().all().from("foo").where().and(eq("k", 4)).and(gt("c", "a")).and(lte("c", "z"));
         assertEquals(select.toString(), query);
 
-        query = "SELECT a,b,\"C\" FROM foo WHERE a IN (127.0.0.1,127.0.0.3) AND \"C\"='foo' ORDER BY a ASC,b DESC LIMIT 42;";
+        query = "SELECT a,b,\"C\" FROM foo WHERE a IN ('127.0.0.1','127.0.0.3') AND \"C\"='foo' ORDER BY a ASC,b DESC LIMIT 42;";
         select = select("a", "b", quote("C")).from("foo")
                    .where(in("a", InetAddress.getByName("127.0.0.1"), InetAddress.getByName("127.0.0.3")))
                       .and(eq(quote("C"), "foo"))
@@ -135,7 +135,7 @@ public class QueryBuilderTest {
         String query;
         Query insert;
 
-        query = "INSERT INTO foo(a,b,\"C\",d) VALUES (123,127.0.0.1,'foo''bar',{'x':3,'y':2}) USING TIMESTAMP 42 AND TTL 24;";
+        query = "INSERT INTO foo(a,b,\"C\",d) VALUES (123,'127.0.0.1','foo''bar',{'x':3,'y':2}) USING TIMESTAMP 42 AND TTL 24;";
         insert = insertInto("foo")
                    .value("a", 123)
                    .value("b", InetAddress.getByName("127.0.0.1"))
