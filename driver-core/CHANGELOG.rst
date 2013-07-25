@@ -13,6 +13,8 @@ CHANGELOG
     a given column name (JAVA-128).
   - [bug] Fix a bug when thread could get blocked while setting the current
     keyspace (JAVA-131).
+  - [bug] Quote inet addresses in the query builder since CQL3 requires it
+    (JAVA-136)
 
 * 1.0.1:
   - [api] Function call handling in the query builder has been modified in a
