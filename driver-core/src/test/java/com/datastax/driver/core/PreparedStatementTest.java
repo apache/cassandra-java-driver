@@ -371,7 +371,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @Test(groups = "unit")
+    @Test(groups = "short")
     public void batchTest() throws Exception {
 
         PreparedStatement ps1 = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, ?)");

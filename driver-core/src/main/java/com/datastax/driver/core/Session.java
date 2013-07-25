@@ -19,7 +19,7 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -237,43 +237,29 @@ public class Session {
     }
 
     /**
-     * Shuts down this session instance.
-     * <p>
-     * This closes all connections used by this sessions. Note that if you want
-     * to shut down the full {@code Cluster} instance this session is part of,
-     * you should use {@link Cluster#shutdown} instead (which will call this
-     * method for all session but also release some additional resources).
-     * <p>
-     * This method has no effect if the session was already shutdown.
-     */
-    public void shutdown() {
-        shutdown(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * Shutdown this session instance, only waiting a definite amount of time.
-     * <p>
-     * This closes all connections used by this sessions. Note that if you want
-     * to shutdown the full {@code Cluster} instance this session is part of,
-     * you should use {@link Cluster#shutdown} instead (which will call this
-     * method for all session but also release some additional resources).
-     * <p>
-     * Note that this method is not thread safe in the sense that if another
-     * shutdown is perform in parallel, it might return {@code true} even if
-     * the instance is not yet fully shutdown.
+     * Initiates a shutdown of this session instance.
      *
-     * @param timeout how long to wait for the session to shutdown.
-     * @param unit the unit for the timeout.
-     * @return {@code true} if the session has been properly shutdown within
-     * the {@code timeout}, {@code false} otherwise.
+     * This method is asynchronous and return a future on the completion
+     * of the shutdown process. As soon a the session is shutdown, no
+     * new request will be accepted, but already submitted queries are
+     * allowed to complete. Shutdown closes all connections of this
+     * session  and reclaims all ressources used by it.
+     * <p>
+     * If for some reason you wish to expedite this process, the
+     * {@link ShutdownFuture#force} can be called on the result future.
+     * <p>
+     * This method has no particular effect if the session was already shut
+     * down (in which case the returned future will return immediately).
+     * <p>
+     * Note that if you want to shut down the full {@code Cluster} instance
+     * this session is part of, you should use {@link Cluster#shutdown} instead
+     * (which will call this method for all sessions but also release some
+     * additional resources).
+     *
+     * @return a future on the completion of the shtudown process.
      */
-    public boolean shutdown(long timeout, TimeUnit unit) {
-        try {
-            return manager.shutdown(timeout, unit);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        }
+    public ShutdownFuture shutdown() {
+        return manager.shutdown();
     }
 
     /**
@@ -328,7 +314,7 @@ public class Session {
 
         final HostConnectionPool.PoolState poolsState;
 
-        final AtomicBoolean isShutdown = new AtomicBoolean(false);
+        final AtomicReference<ShutdownFuture> shutdownFuture = new AtomicReference<ShutdownFuture>();
 
         public Manager(Cluster cluster, Collection<Host> hosts) {
             this.cluster = cluster;
@@ -375,16 +361,25 @@ public class Session {
             return cluster.manager.executor;
         }
 
-        private boolean shutdown(long timeout, TimeUnit unit) throws InterruptedException {
+        boolean isShutdown() {
+            return shutdownFuture.get() != null;
+        }
 
-            if (!isShutdown.compareAndSet(false, true))
-                return true;
+        private ShutdownFuture shutdown() {
 
-            long start = System.nanoTime();
-            boolean success = true;
+            ShutdownFuture future = shutdownFuture.get();
+            if (future != null)
+                return future;
+
+            List<ShutdownFuture> futures = new ArrayList<ShutdownFuture>(pools.size());
             for (HostConnectionPool pool : pools.values())
-                success &= pool.shutdown(timeout - Cluster.timeSince(start, unit), unit);
-            return success;
+                futures.add(pool.shutdown());
+
+            future = new ShutdownFuture.Forwarding(futures);
+
+            return shutdownFuture.compareAndSet(null, future)
+                 ? future
+                 : shutdownFuture.get(); // We raced, it's ok, return the future that was actually set
         }
 
         private ListenableFuture<?> addOrRenewPool(final Host host) {
@@ -526,7 +521,6 @@ public class Session {
                 return new BatchMessage(org.apache.cassandra.cql3.statements.BatchStatement.Type.LOGGED, idAndVals.ids, idAndVals.values, cassCL);
             }
         }
-
 
         /**
          * Execute the provided request.

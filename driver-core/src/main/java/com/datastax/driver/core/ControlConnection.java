@@ -82,10 +82,12 @@ class ControlConnection implements Host.StateListener {
         setNewConnection(reconnectInternal());
     }
 
-    public boolean shutdown(long timeout, TimeUnit unit) throws InterruptedException {
+    public ShutdownFuture shutdown() {
+        // We don't have to be fancy here. We just set a flag so that we stop trying to reconnect (and thus change the
+        // connection used) and shutdown the current one.
         isShutdown = true;
         Connection connection = connectionRef.get();
-        return connection != null ? connection.close(timeout, unit) : true;
+        return connection == null ? ShutdownFuture.immediateFuture() : connection.close();
     }
 
     private void reconnect() {
@@ -147,13 +149,8 @@ class ControlConnection implements Host.StateListener {
     private void setNewConnection(Connection newConnection) {
         logger.debug("[Control connection] Successfully connected to {}", newConnection.address);
         Connection old = connectionRef.getAndSet(newConnection);
-        if (old != null && !old.isClosed()) {
-            try {
-                old.close(0, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
+        if (old != null && !old.isClosed())
+            old.close();
     }
 
     private Connection reconnectInternal() {

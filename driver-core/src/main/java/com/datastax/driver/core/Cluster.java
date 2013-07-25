@@ -19,8 +19,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -220,41 +220,25 @@ public class Cluster {
     }
 
     /**
-     * Shuts down this cluster instance.
+     * Initiates a shutdown of this cluster instance.
      *
-     * This closes all connections from all the sessions of this {@code
-     * Cluster} instance and reclaims all resources used by it.
+     * This method is asynchronous and return a future on the completion
+     * of the shutdown process. As soon a the cluster is shutdown, no
+     * new request will be accepted, but already submitted queries are
+     * allowed to complete. Shutdown closes all connections from all
+     * sessions and reclaims all ressources used by this Cluster
+     * instance.
      * <p>
-     * This method waits indefinitely for the driver to shut down.
+     * If for some reason you wish to expedite this process, the
+     * {@link ShutdownFuture#force} can be called on the result future.
      * <p>
-     * This method has no effect if the cluster was already shut down.
+     * This method has no particular effect if the cluster was already shut
+     * down (in which case the returned future will return immediately).
+     *
+     * @return a future on the completion of the shtudown process.
      */
-    public void shutdown() {
-        shutdown(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * Shutdown this cluster instance, only waiting a definite amount of time.
-     *
-     * This closes all connections from all the sessions of this {@code
-     * Cluster} instance and reclaim all resources used by it.
-     * <p>
-     * Note that this method is not thread safe in the sense that if another
-     * shutdown is perform in parallel, it might return {@code true} even if
-     * the instance is not yet fully shutdown.
-     *
-     * @param timeout how long to wait for the cluster instance to shutdown.
-     * @param unit the unit for the timeout.
-     * @return {@code true} if the instance has been properly shutdown within
-     * the {@code timeout}, {@code false} otherwise.
-     */
-    public boolean shutdown(long timeout, TimeUnit unit) {
-        try {
-            return manager.shutdown(timeout, unit);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        }
+    public ShutdownFuture shutdown() {
+        return manager.shutdown();
     }
 
     /**
@@ -730,7 +714,7 @@ public class Cluster {
 
         final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool(threadFactory("Cassandra Java Driver worker-%d")));
 
-        final AtomicBoolean isShutdown = new AtomicBoolean(false);
+        final AtomicReference<ClusterShutdownFuture> shutdownFuture = new AtomicReference<ClusterShutdownFuture>();
 
         // All the queries that have been prepared (we keep them so we can re-prepared them when a node fail or a
         // new one join the cluster).
@@ -778,11 +762,7 @@ public class Cluster {
             try {
                 controlConnection.connect();
             } catch (NoHostAvailableException e) {
-                try {
-                    shutdown(0, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                }
+                shutdown();
                 throw e;
             }
         }
@@ -805,43 +785,47 @@ public class Cluster {
             return session;
         }
 
-        private boolean shutdown(long timeout, TimeUnit unit) throws InterruptedException {
+        boolean isShutdown() {
+            return shutdownFuture.get() != null;
+        }
 
-            if (!isShutdown.compareAndSet(false, true))
-                return true;
+        private ShutdownFuture shutdown() {
+
+            ClusterShutdownFuture future = shutdownFuture.get();
+            if (future != null)
+                return future;
 
             logger.debug("Shutting down");
 
-            long start = System.nanoTime();
-            boolean success = true;
-
-            success &= controlConnection.shutdown(timeout, unit);
-
-            for (Session session : sessions)
-                success &= session.shutdown(timeout - timeSince(start, unit), unit);
-
+            // We start by shutting down the executors. This does mean we won't handle notifications anymore, nor
+            // reconnect to nodes, etc..., but since we're shutting down, that's all right.
             reconnectionExecutor.shutdown();
             scheduledTasksExecutor.shutdown();
             executor.shutdown();
 
-            success &= connectionFactory.shutdown(timeout - timeSince(start, unit), unit);
-
+            // We also closes the metrics
             if (metrics != null)
                 metrics.shutdown();
 
-            // Note that it's on purpose that we shutdown everything *even* if the timeout
-            // is reached early
-            return success
-                && reconnectionExecutor.awaitTermination(timeout - timeSince(start, unit), unit)
-                && scheduledTasksExecutor.awaitTermination(timeout - timeSince(start, unit), unit)
-                && executor.awaitTermination(timeout - timeSince(start, unit), unit);
+            // Then we shutdown all connections
+            List<ShutdownFuture> futures = new ArrayList<ShutdownFuture>(sessions.size() + 1);
+            futures.add(controlConnection.shutdown());
+            for (Session session : sessions)
+                futures.add(session.shutdown());
+
+            future = new ClusterShutdownFuture(futures);
+
+            // The rest will happen asynchonrously, when all connections are successfully closed
+            return shutdownFuture.compareAndSet(null, future)
+                 ? future
+                 : shutdownFuture.get(); // We raced, it's ok, return the future that was actually set
         }
 
         @Override
         public void onUp(Host host) {
             logger.trace("Host {} is UP", host);
 
-            if (isShutdown.get())
+            if (isShutdown())
                 return;
 
             if (host.isUp())
@@ -883,7 +867,7 @@ public class Cluster {
         public void onDown(final Host host) {
             logger.trace("Host {} is DOWN", host);
 
-            if (isShutdown.get())
+            if (isShutdown())
                 return;
 
             if (!host.isUp())
@@ -930,7 +914,7 @@ public class Cluster {
         public void onAdd(Host host) {
             logger.trace("Adding new host {}", host);
 
-            if (isShutdown.get())
+            if (isShutdown())
                 return;
 
             try {
@@ -951,7 +935,7 @@ public class Cluster {
 
         @Override
         public void onRemove(Host host) {
-            if (isShutdown.get())
+            if (isShutdown())
                 return;
 
             host.setDown();
@@ -1066,7 +1050,7 @@ public class Cluster {
                         }
                     }
                 } finally {
-                    connection.close(0, TimeUnit.MILLISECONDS);
+                    connection.close();
                 }
             } catch (ConnectionException e) {
                 // Ignore, not a big deal
@@ -1218,5 +1202,54 @@ public class Cluster {
             return 0;
         }
 
+        private class ClusterShutdownFuture extends ShutdownFuture.Forwarding {
+
+            ClusterShutdownFuture(List<ShutdownFuture> futures) {
+                super(futures);
+            }
+
+            @Override
+            public ShutdownFuture force() {
+                reconnectionExecutor.shutdownNow();
+                scheduledTasksExecutor.shutdownNow();
+                executor.shutdownNow();
+
+                return super.force();
+            }
+
+            @Override
+            protected void onFuturesDone() {
+                // When we reach this, all sessions should be shutdown. We've also started a shutdown
+                // of the thread pools, so that remains is to wait for the completion of the shutdown
+                // of those threads pools
+
+                // TODO: What about the connection factory? It should be shutdown too.
+
+                // We don't want to wait on the current thread, because that could be a netty worker
+                // thread and since we're stopping those, we don't to hold them, and so we create a
+                // specific thread. But if at that stage all executor are already terminated, we
+                // can skip starting that thread.
+                if (reconnectionExecutor.isTerminated() && scheduledTasksExecutor.isTerminated() && executor.isTerminated()) {
+                    set(null);
+                    return;
+                }
+
+                (new Thread("Shutdown-checker") {
+                    public void run() {
+                        // Just wait indefinitively on the the completion of the thread pools. Provided the user
+                        // call force(), we'll never really block forever.
+                        try {
+                            reconnectionExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                            scheduledTasksExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                            set(null);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            setException(e);
+                        }
+                    }
+                }).start();
+            }
+        }
     }
 }

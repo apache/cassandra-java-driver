@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
@@ -85,11 +86,12 @@ class Connection extends org.apache.cassandra.transport.Connection
     public final AtomicInteger inFlight = new AtomicInteger(0);
 
     private final AtomicInteger writer = new AtomicInteger(0);
-    private volatile boolean isClosed;
     private volatile String keyspace;
 
     private volatile boolean isDefunct;
     private volatile ConnectionException exception;
+
+    private final AtomicReference<ConnectionShutdownFuture> shutdownFuture = new AtomicReference<ConnectionShutdownFuture>();
 
     /**
      * Create a new connection to a Cassandra node.
@@ -279,7 +281,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             throw new ConnectionException(address, "Write attempt on defunct connection");
         }
 
-        if (isClosed) {
+        if (isClosed()) {
             dispatcher.removeHandler(handler.streamId);
             throw new ConnectionException(address, "Connection has been closed");
         }
@@ -318,51 +320,32 @@ class Connection extends org.apache.cassandra.transport.Connection
         };
     }
 
-    public void close() {
-        try {
-            close(0, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+    public boolean isClosed() {
+        return shutdownFuture.get() != null;
     }
 
-    public boolean close(long timeout, TimeUnit unit) throws InterruptedException {
-        if (isClosed)
-            return true;
+    public ShutdownFuture close() {
 
-        // Note: there is no guarantee only one thread will reach that point, but executing this
-        // method multiple time is harmless. If the latter change, we'll have to CAS isClosed to
-        // make sure this gets executed only once.
+        ConnectionShutdownFuture future = new ConnectionShutdownFuture();
+        if (!shutdownFuture.compareAndSet(null, future))
+        {
+            // Shutdown had already been called, return the existing future
+            return shutdownFuture.get();
+        }
 
         logger.trace("[{}] closing connection", name);
 
-        // Make sure all new writes are rejected
-        isClosed = true;
-
-        long start = System.nanoTime();
-        if (!isDefunct) {
-            // Busy waiting, we just wait for request to be fully written, shouldn't take long
-            while (writer.get() > 0 && Cluster.timeSince(start, unit) < timeout)
-                Uninterruptibles.sleepUninterruptibly(1, unit);
-        }
-        // Note: we must not call releaseExternalResources on the bootstrap, because this shutdown the executors, which are shared
-        boolean closed = channel == null // This method can be throw in the ctor at which point channel is not yet set. This is ok.
-                       ? true
-                       : channel.close().await(timeout - Cluster.timeSince(start, unit), unit);
-
-        // We've closed the channel. If anyone was waiting on that connection, we should defunct it otherwise it'll wait forever.
-        // Note that this is a no-op if there is no handler set anymore.
-        dispatcher.errorOutAllHandler(new TransportException(address, "Connection has been closed"));
-        return closed;
-    }
-
-    public boolean isClosed() {
-        return isClosed;
+        // New writes will be refused now that the future is setup.
+        // We must now wait on the last ongoing queries to return, which will in turn trigger
+        // the closing of the channel. However, if there no ongoing query, signal now.
+        if (dispatcher.pending.isEmpty())
+            future.force();
+        return future;
     }
 
     @Override
     public String toString() {
-        return String.format("Connection[%s, inFlight=%d, closed=%b]", name, inFlight.get(), isClosed);
+        return String.format("Connection[%s, inFlight=%d, closed=%b]", name, inFlight.get(), isClosed());
     }
 
     // Cruft needed because we reuse server side classes, but we don't care about it
@@ -532,6 +515,11 @@ class Connection extends org.apache.cassandra.transport.Connection
                 }
                 handler.cancelTimeout();
                 handler.callback.onSet(Connection.this, response);
+
+                // If we happen to be shutdown and we're the last outstand request, we need to signal the shutdown future
+                // (note: this is racy as the signaling can be called more than once, but that's not a problem)
+                if (isClosed() && pending.isEmpty())
+                    shutdownFuture.get().force();
             }
         }
 
@@ -560,10 +548,40 @@ class Connection extends org.apache.cassandra.transport.Connection
         public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) {
             // If we've closed the channel server side then we don't really want to defunct the connection, but
             // if there is remaining thread waiting on us, we still want to wake them up
-            if (isClosed)
+            if (isClosed())
                 errorOutAllHandler(new TransportException(address, "Channel has been closed"));
             else
                 defunct(new TransportException(address, "Channel has been closed"));
+        }
+    }
+
+    private class ConnectionShutdownFuture extends ShutdownFuture {
+
+        @Override
+        public ConnectionShutdownFuture force() {
+            // Note: we must not call releaseExternalResources on the bootstrap, because this shutdown the executors, which are shared
+
+            // This method can be thrown during Connection ctor, at which point channel is not yet set. This is ok.
+            if (channel == null) {
+                set(null);
+                return this;
+            }
+
+            // We're going to close this channel. If anyone is waiting on that connection, we should defunct it otherwise it'll wait
+            // forever. In general this won't happen since we get there only when all ongoing query are done, but this can happen
+            // if the shutdown is forced. This is a no-op if there is no handler set anymore.
+            dispatcher.errorOutAllHandler(new TransportException(address, "Connection has been closed"));
+
+            ChannelFuture future = channel.close();
+            future.addListener(new ChannelFutureListener() {
+                public void operationComplete(ChannelFuture future) {
+                    if (future.getCause() != null)
+                        ConnectionShutdownFuture.this.setException(future.getCause());
+                    else
+                        ConnectionShutdownFuture.this.set(null);
+                }
+            });
+            return this;
         }
     }
 
