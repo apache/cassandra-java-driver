@@ -102,7 +102,7 @@ class Connection extends org.apache.cassandra.transport.Connection
      * refused by the server.
      */
     private Connection(String name, InetAddress address, Factory factory) throws ConnectionException, InterruptedException {
-        super(EMPTY_TRACKER);
+        super(null, 2, EMPTY_TRACKER);
 
         this.address = address;
         this.factory = factory;
@@ -706,7 +706,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             this.connection = connection;
             this.cfactory = new org.apache.cassandra.transport.Connection.Factory() {
                 @Override
-                public Connection newConnection(org.apache.cassandra.transport.Connection.Tracker tracker) {
+                public Connection newConnection(Channel channel, int version) {
                     return connection;
                 }
             };
@@ -718,7 +718,7 @@ class Connection extends org.apache.cassandra.transport.Connection
 
             //pipeline.addLast("debug", new LoggingHandler(InternalLogLevel.INFO));
 
-            pipeline.addLast("frameDecoder", new Frame.Decoder(tracker, cfactory));
+            pipeline.addLast("frameDecoder", new Frame.Decoder(cfactory));
             pipeline.addLast("frameEncoder", frameEncoder);
 
             pipeline.addLast("frameDecompressor", frameDecompressor);

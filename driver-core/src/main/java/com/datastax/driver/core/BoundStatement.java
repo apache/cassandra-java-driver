@@ -358,7 +358,7 @@ public class BoundStatement extends Query {
      */
     public BoundStatement setDate(int i, Date v) {
         metadata().checkType(i, DataType.Name.TIMESTAMP);
-        return setValue(i, v == null ? null : DateType.instance.decompose(v));
+        return setValue(i, v == null ? null : TimestampType.instance.decompose(v));
     }
 
     /**

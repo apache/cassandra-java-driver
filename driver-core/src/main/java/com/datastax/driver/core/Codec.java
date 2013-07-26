@@ -47,7 +47,7 @@ class Codec {
             .put(InetAddressType.instance,   DataType.inet())
             .put(Int32Type.instance,         DataType.cint())
             .put(UTF8Type.instance,          DataType.text())
-            .put(DateType.instance,          DataType.timestamp())
+            .put(TimestampType.instance,     DataType.timestamp())
             .put(UUIDType.instance,          DataType.uuid())
             .put(IntegerType.instance,       DataType.varint())
             .put(TimeUUIDType.instance,      DataType.timeuuid())
@@ -73,7 +73,7 @@ class Codec {
             case INET:      return InetAddressType.instance;
             case INT:       return Int32Type.instance;
             case TEXT:      return UTF8Type.instance;
-            case TIMESTAMP: return DateType.instance;
+            case TIMESTAMP: return TimestampType.instance;
             case UUID:      return UUIDType.instance;
             case VARCHAR:   return UTF8Type.instance;
             case VARINT:    return IntegerType.instance;

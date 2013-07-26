@@ -206,7 +206,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return DateType.instance.compose(value);
+        return TimestampType.instance.compose(value);
     }
 
     /**
