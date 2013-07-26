@@ -18,7 +18,7 @@ package com.datastax.driver.core;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.apache.cassandra.transport.messages.ResultMessage;
+import com.datastax.cassandra.transport.messages.ResultMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

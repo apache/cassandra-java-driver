@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import org.apache.cassandra.transport.FrameCompressor;
+import com.datastax.cassandra.transport.FrameCompressor;
 
 /**
  * Options of the Cassandra native binary protocol.

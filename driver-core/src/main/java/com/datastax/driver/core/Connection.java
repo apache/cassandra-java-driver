@@ -20,9 +20,10 @@ import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
+import com.datastax.cassandra.transport.messages.AuthChallenge;
+import com.datastax.cassandra.transport.messages.AuthResponse;
 import com.google.common.collect.ImmutableMap;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -30,8 +31,8 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
 import org.apache.cassandra.service.ClientState;
-import org.apache.cassandra.transport.*;
-import org.apache.cassandra.transport.messages.*;
+import com.datastax.cassandra.transport.*;
+import com.datastax.cassandra.transport.messages.*;
 
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
@@ -51,7 +52,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A connection to a Cassandra Node.
  */
-class Connection extends org.apache.cassandra.transport.Connection
+class Connection extends com.datastax.cassandra.transport.Connection
 {
     public static final int MAX_STREAM_PER_CONNECTION = 128;
 
@@ -60,9 +61,9 @@ class Connection extends org.apache.cassandra.transport.Connection
     // TODO: that doesn't belong here
     private static final String CQL_VERSION = "3.0.0";
 
-    private static final org.apache.cassandra.transport.Connection.Tracker EMPTY_TRACKER = new org.apache.cassandra.transport.Connection.Tracker() {
+    private static final Connection.Tracker EMPTY_TRACKER = new Connection.Tracker() {
         @Override
-        public void addConnection(Channel ch, org.apache.cassandra.transport.Connection connection) {}
+        public void addConnection(Channel ch, com.datastax.cassandra.transport.Connection connection) {}
 
         @Override
         public void closeAll() {}
@@ -149,7 +150,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         }
         StartupMessage startup = new StartupMessage(options.build());
         try {
-            Message.Response response = write(startup).get();
+            com.datastax.cassandra.transport.Message.Response response = write(startup).get();
             switch (response.type) {
                 case READY:
                     break;
@@ -161,7 +162,7 @@ class Connection extends org.apache.cassandra.transport.Connection
                     if (null == initialResponse)
                         initialResponse = new byte[0];
 
-                    Message.Response authResponse = write(new AuthResponse(initialResponse)).get();
+                    com.datastax.cassandra.transport.Message.Response authResponse = write(new AuthResponse(initialResponse)).get();
                     waitForSaslCompletion(authResponse, authenticator);
                     break;
                 default:
@@ -174,7 +175,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         }
     }
 
-    private void waitForSaslCompletion(Message.Response authResponse, Authenticator authenticator)
+    private void waitForSaslCompletion(com.datastax.cassandra.transport.Message.Response authResponse, Authenticator authenticator)
     throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException
     {
         switch (authResponse.type) {
@@ -238,7 +239,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
             long timeout = factory.getConnectTimeoutMillis();
             Future future = write(new QueryMessage("USE \"" + keyspace + "\"", ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-            Message.Response response = Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
+            com.datastax.cassandra.transport.Message.Response response = Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
             switch (response.type) {
                 case RESULT:
                     this.keyspace = keyspace;
@@ -272,7 +273,7 @@ class Connection extends org.apache.cassandra.transport.Connection
      * @throws ConnectionException if the connection is closed
      * @throws TransportException if an I/O error while sending the request
      */
-    public Future write(Message.Request request) throws ConnectionException, BusyConnectionException {
+    public Future write(com.datastax.cassandra.transport.Message.Request request) throws ConnectionException, BusyConnectionException {
         Future future = new Future(request);
         write(future);
         return future;
@@ -280,7 +281,7 @@ class Connection extends org.apache.cassandra.transport.Connection
 
     public void write(ResponseCallback callback) throws ConnectionException, BusyConnectionException {
 
-        Message.Request request = callback.request();
+        com.datastax.cassandra.transport.Message.Request request = callback.request();
 
         request.attach(this);
 
@@ -310,7 +311,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         channel.write(request).addListener(writeHandler(request, handler));
     }
 
-    private ChannelFutureListener writeHandler(final Message.Request request, final ResponseHandler handler) {
+    private ChannelFutureListener writeHandler(final com.datastax.cassandra.transport.Message.Request request, final ResponseHandler handler) {
         return new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture writeFuture) {
@@ -386,8 +387,8 @@ class Connection extends org.apache.cassandra.transport.Connection
     }
 
     // Cruft needed because we reuse server side classes, but we don't care about it
-    public void validateNewMessage(Message.Type type) {};
-    public void applyStateTransition(Message.Type requestType, Message.Type responseType) {};
+    public void validateNewMessage(com.datastax.cassandra.transport.Message.Type type) {};
+    public void applyStateTransition(com.datastax.cassandra.transport.Message.Type requestType, com.datastax.cassandra.transport.Message.Type responseType) {};
     public ClientState clientState() { return null; };
 
     public static class Factory {
@@ -511,11 +512,11 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
-            if (!(e.getMessage() instanceof Message.Response)) {
+            if (!(e.getMessage() instanceof com.datastax.cassandra.transport.Message.Response)) {
                 logger.error("[{}] Received unexpected message: {}", name, e.getMessage());
                 defunct(new TransportException(address, "Unexpected message received: " + e.getMessage()));
             } else {
-                Message.Response response = (Message.Response)e.getMessage();
+                com.datastax.cassandra.transport.Message.Response response = (com.datastax.cassandra.transport.Message.Response)e.getMessage();
                 int streamId = response.getStreamId();
 
                 logger.trace("[{}] received: {}", name, e.getMessage());
@@ -579,27 +580,27 @@ class Connection extends org.apache.cassandra.transport.Connection
         }
     }
 
-    static class Future extends SimpleFuture<Message.Response> implements RequestHandler.Callback {
+    static class Future extends SimpleFuture<com.datastax.cassandra.transport.Message.Response> implements RequestHandler.Callback {
 
-        private final Message.Request request;
+        private final com.datastax.cassandra.transport.Message.Request request;
         private volatile InetAddress address;
 
-        public Future(Message.Request request) {
+        public Future(com.datastax.cassandra.transport.Message.Request request) {
             this.request = request;
         }
 
         @Override
-        public Message.Request request() {
+        public com.datastax.cassandra.transport.Message.Request request() {
             return request;
         }
 
         @Override
-        public void onSet(Connection connection, Message.Response response, ExecutionInfo info) {
+        public void onSet(Connection connection, com.datastax.cassandra.transport.Message.Response response, ExecutionInfo info) {
             onSet(connection, response);
         }
 
         @Override
-        public void onSet(Connection connection, Message.Response response) {
+        public void onSet(Connection connection, com.datastax.cassandra.transport.Message.Response response) {
             this.address = connection.address;
             super.set(response);
         }
@@ -615,8 +616,8 @@ class Connection extends org.apache.cassandra.transport.Connection
     }
 
     interface ResponseCallback {
-        public Message.Request request();
-        public void onSet(Connection connection, Message.Response response);
+        public com.datastax.cassandra.transport.Message.Request request();
+        public void onSet(Connection connection, com.datastax.cassandra.transport.Message.Response response);
         public void onException(Connection connection, Exception exception);
     }
 
@@ -632,7 +633,7 @@ class Connection extends org.apache.cassandra.transport.Connection
     }
 
     public interface DefaultResponseHandler {
-        public void handle(Message.Response response);
+        public void handle(com.datastax.cassandra.transport.Message.Response response);
     }
 
     private static class PipelineFactory implements ChannelPipelineFactory {
@@ -644,11 +645,11 @@ class Connection extends org.apache.cassandra.transport.Connection
         private static final Frame.Encoder frameEncoder = new Frame.Encoder();
 
         // One more fallout of using server side classes; not a big deal
-        private static final org.apache.cassandra.transport.Connection.Tracker tracker;
+        private static final Connection.Tracker tracker;
         static {
-            tracker = new org.apache.cassandra.transport.Connection.Tracker() {
+            tracker = new Connection.Tracker() {
                 @Override
-                public void addConnection(Channel ch, org.apache.cassandra.transport.Connection connection) {}
+                public void addConnection(Channel ch, com.datastax.cassandra.transport.Connection connection) {}
 
                 @Override
                 public void closeAll() {}
@@ -656,13 +657,13 @@ class Connection extends org.apache.cassandra.transport.Connection
         }
 
         private final Connection connection;
-        private final org.apache.cassandra.transport.Connection.Factory cfactory;
+        private final com.datastax.cassandra.transport.Connection.Factory cfactory;
 
         public PipelineFactory(final Connection connection) {
             this.connection = connection;
-            this.cfactory = new org.apache.cassandra.transport.Connection.Factory() {
+            this.cfactory = new com.datastax.cassandra.transport.Connection.Factory() {
                 @Override
-                public Connection newConnection(org.apache.cassandra.transport.Connection.Tracker tracker) {
+                public Connection newConnection(Connection.Tracker tracker) {
                     return connection;
                 }
             };

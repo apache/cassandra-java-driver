@@ -15,35 +15,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.transport.messages;
+package com.datastax.cassandra.transport.messages;
 
+import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.transport.CBUtil;
-import org.apache.cassandra.transport.Message;
+import com.datastax.cassandra.transport.Message;
+
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 
 import java.nio.ByteBuffer;
 
 /**
- * SASL challenge sent from client to server
+ * A SASL token message sent from client to server. Some SASL
+ * mechanisms & clients may send an initial token before
+ * receiving a challenge from the server.
  */
-public class AuthChallenge extends Message.Response
+public class AuthResponse extends Message.Request
 {
-    public static final Message.Codec<AuthChallenge> codec = new Message.Codec<AuthChallenge>()
+    public static final Message.Codec<AuthResponse> codec = new Message.Codec<AuthResponse>()
     {
         @Override
-        public AuthChallenge decode(ChannelBuffer body)
+        public AuthResponse decode(ChannelBuffer body)
         {
             ByteBuffer b = CBUtil.readValue(body);
             byte[] token = new byte[b.remaining()];
             b.get(token);
-            return new AuthChallenge(token);
+            return new AuthResponse(token);
         }
 
         @Override
-        public ChannelBuffer encode(AuthChallenge challenge)
+        public ChannelBuffer encode(AuthResponse response)
         {
-            byte[] bytes = challenge.getToken();
+            byte[] bytes = response.token;
             if (bytes == null || bytes.length == 0)
                 return CBUtil.intToCB(0);
 
@@ -54,9 +58,9 @@ public class AuthChallenge extends Message.Response
 
     private byte[] token;
 
-    public AuthChallenge(byte[] token)
+    public AuthResponse(byte[] token)
     {
-        super(Message.Type.AUTH_CHALLENGE);
+        super(Message.Type.AUTH_RESPONSE);
         this.token = token;
     }
 
@@ -66,8 +70,4 @@ public class AuthChallenge extends Message.Response
         return codec.encode(this);
     }
 
-    public byte[] getToken()
-    {
-        return token;
-    }
 }
