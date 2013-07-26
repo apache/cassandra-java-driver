@@ -15,39 +15,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.transport.messages;
+package com.datastax.cassandra.transport.messages;
 
-import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.transport.CBUtil;
-import org.apache.cassandra.transport.Message;
-
+import org.apache.cassandra.transport.Message.Codec;
+import com.datastax.cassandra.transport.Message;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 
 import java.nio.ByteBuffer;
 
 /**
- * A SASL token message sent from client to server. Some SASL
- * mechanisms & clients may send an initial token before
- * receiving a challenge from the server.
+ * Indicates to the client that authentication has succeeded.
+ *
+ * Optionally ships some final informations from the server (as mandated by
+ * SASL).
  */
-public class AuthResponse extends Message.Request
+public class AuthSuccess extends Message.Response
 {
-    public static final Message.Codec<AuthResponse> codec = new Message.Codec<AuthResponse>()
+    public static final Codec<AuthSuccess> codec = new Codec<AuthSuccess>()
     {
         @Override
-        public AuthResponse decode(ChannelBuffer body)
+        public AuthSuccess decode(ChannelBuffer body)
         {
             ByteBuffer b = CBUtil.readValue(body);
             byte[] token = new byte[b.remaining()];
             b.get(token);
-            return new AuthResponse(token);
+            return new AuthSuccess(token);
         }
 
         @Override
-        public ChannelBuffer encode(AuthResponse response)
+        public ChannelBuffer encode(AuthSuccess success)
         {
-            byte[] bytes = response.token;
+            byte[] bytes = success.getToken();
             if (bytes == null || bytes.length == 0)
                 return CBUtil.intToCB(0);
 
@@ -58,9 +58,9 @@ public class AuthResponse extends Message.Request
 
     private byte[] token;
 
-    public AuthResponse(byte[] token)
+    public AuthSuccess(byte[] token)
     {
-        super(Message.Type.AUTH_RESPONSE);
+        super(Message.Type.AUTH_SUCCESS);
         this.token = token;
     }
 
@@ -70,10 +70,9 @@ public class AuthResponse extends Message.Request
         return codec.encode(this);
     }
 
-    @Override
-    public Response execute(QueryState queryState)
+    public byte[] getToken()
     {
-        throw new UnsupportedOperationException("This class is provided in client code " +
-                "for forward compatibility only so this should never be called on the client");
+        return token;
     }
 }
+

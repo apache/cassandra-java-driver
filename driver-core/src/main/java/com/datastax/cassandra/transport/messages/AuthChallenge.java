@@ -15,38 +15,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.transport.messages;
+package com.datastax.cassandra.transport.messages;
 
 import org.apache.cassandra.transport.CBUtil;
-import org.apache.cassandra.transport.Message;
+import com.datastax.cassandra.transport.Message;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 
 import java.nio.ByteBuffer;
 
 /**
- * Indicates to the client that authentication has succeeded.
- *
- * Optionally ships some final informations from the server (as mandated by
- * SASL).
+ * SASL challenge sent from client to server
  */
-public class AuthSuccess extends Message.Response
+public class AuthChallenge extends Message.Response
 {
-    public static final Message.Codec<AuthSuccess> codec = new Message.Codec<AuthSuccess>()
+    public static final Message.Codec<AuthChallenge> codec = new Message.Codec<AuthChallenge>()
     {
         @Override
-        public AuthSuccess decode(ChannelBuffer body)
+        public AuthChallenge decode(ChannelBuffer body)
         {
             ByteBuffer b = CBUtil.readValue(body);
             byte[] token = new byte[b.remaining()];
             b.get(token);
-            return new AuthSuccess(token);
+            return new AuthChallenge(token);
         }
 
         @Override
-        public ChannelBuffer encode(AuthSuccess success)
+        public ChannelBuffer encode(AuthChallenge challenge)
         {
-            byte[] bytes = success.getToken();
+            byte[] bytes = challenge.getToken();
             if (bytes == null || bytes.length == 0)
                 return CBUtil.intToCB(0);
 
@@ -57,9 +54,9 @@ public class AuthSuccess extends Message.Response
 
     private byte[] token;
 
-    public AuthSuccess(byte[] token)
+    public AuthChallenge(byte[] token)
     {
-        super(Message.Type.AUTH_SUCCESS);
+        super(Message.Type.AUTH_CHALLENGE);
         this.token = token;
     }
 
@@ -74,4 +71,3 @@ public class AuthSuccess extends Message.Response
         return token;
     }
 }
-

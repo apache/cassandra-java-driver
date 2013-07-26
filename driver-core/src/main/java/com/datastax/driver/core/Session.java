@@ -29,8 +29,8 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
 
-import org.apache.cassandra.transport.Message;
-import org.apache.cassandra.transport.messages.*;
+import com.datastax.cassandra.transport.Message;
+import com.datastax.cassandra.transport.messages.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
