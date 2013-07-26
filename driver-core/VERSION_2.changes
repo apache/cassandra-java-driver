@@ -1,0 +1,71 @@
+API Changes
+-----------
+
+- Statement must now implement 2 new methods: Statement#getKeyspace() and
+  Statement#getValues(). If you defined a class that directly extend Statement,
+  you will have to implement those methods, even though both can return null
+  if they are not useful in your case.
+
+- The Metadata#getReplicas() method now takes 2 arguments. You must now provide
+  the keyspace on top of the partition key (the previous behavior was buggy,
+  it's impossible to return the full list of replica for a partition key
+  without knowing the keyspace since replication depends on the keyspace).
+
+- The method LoadBalancingPolicy#newQueryPlan() method now takes the currently
+  logged keyspace as 2nd argument (in addition to the query object). This
+  information is actually necessary to do proper token aware balancing.
+
+- NoHostAvaiableException#getErrors() now return the full exception for each
+  node. In other words, it return a Map<InetAddress, Throwable> instead of
+  a Map<InetAddress, String>.
+
+- Query#getConsistencyLevel() will now return null by default, which means "use
+  the default consistency level". That default consistency level can now be
+  configured (through the new QueryOptions object in the cluster Configuration).
+
+- The deprecated since 1.0.2, Host.HealtMonitor class has been removed. You will
+  now need to use Host#isUp and Cluster#register if you were using that class.
+
+- The Cluster.Initializer interface should now implement 2 new methods:
+  getInitialListeners() (which can return an empty collection) and getClusterName
+  (which can return null).
+
+- The Metrics class now uses Codahale metrics library version 3. That new major
+  version of the library has many API changes compare to the previous used
+  version 2. This may have impact on users of that class. Besides, the
+  default JmxReporter now includes a name specific to the cluster instance in the
+  ObjectName (to avoid conflict if multiple Cluster instance are created in the
+  same JVM), so tools that were polling JMX information may have to be updated
+  accordingly.
+
+- The Cluster and Session shutdown API have changed. There is now only one
+  shutdown() method that is asynchronous and return a Future on the completeion
+  of shutdown.
+
+
+New Features
+------------
+
+- A new BatchStatement class has been added. It allows to execute other
+  statements as in a BATCH. The main use case is to batch multiple prepared
+  statements when the number of said statement is not known in advance (i.e.
+  you cannot or it is inconvenient to prepare a CQL BATCH statement in the
+  first place).
+
+- SimpleStatement can now take a list of values in addtion to the query. This
+  allows to do the equivalent of a prepare+execute but in only one round-trip
+  to the server and without keeping the prepared statement after the execution.
+  This is useful if a given should be executed only once (i.e. you don't want to
+  prepare it) but you also don't want to serialize all values into strings.
+  Shortcut Session#execute() and Session#executeAsync() methods are also
+  provided for that case.
+
+- SELECT queries are now "paged" under the hood. The size of each "page" can be
+  controlled through Query#setFetchSize(). In general, paging should be
+  transparent, more results will be automatically fetched (if relevant) once a
+  given page of results has been retrieved from the resultSet. However ResultSet
+  provides 2 methods to query the state of that paging:
+  ResultSet#getAvailableWithoutFetching() and ResultSet#isFullyFetched(). You can
+  also force the prefetching of pages somewhat through the use of
+  ResultSet#fetchMoreResults.
+
