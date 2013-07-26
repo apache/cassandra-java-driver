@@ -173,14 +173,11 @@ public class ExceptionsTest {
      */
     @Test(groups = "short")
     public void noHostAvailableException() throws Exception {
-        String ipAddress = "255.255.255.255";
-        HashMap<InetAddress, String> errorsHashMap = new HashMap<InetAddress, String>();
-        errorsHashMap.put(InetAddress.getByName(ipAddress), "[/255.255.255.255] Cannot connect");
-
         try {
             Cluster.builder().addContactPoints("255.255.255.255").build();
         } catch (NoHostAvailableException e) {
-            assertEquals(e.getErrors(), errorsHashMap);
+            assertEquals(e.getErrors().size(), 1);
+            assertTrue(e.getErrors().values().iterator().next().toString().contains("[/255.255.255.255] Cannot connect"));
 
             NoHostAvailableException copy = (NoHostAvailableException) e.copy();
             assertEquals(copy.getMessage(), e.getMessage());
