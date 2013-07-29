@@ -21,7 +21,7 @@
   
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-parent</artifactId>
-  <version>1.0.2-dse2</version>
+  <version>1.0.3-dse-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>DataStax Java Driver for Apache Cassandra</name>
   <description>A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's binary protocol.</description>
