@@ -22,7 +22,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.util.concurrent.Uninterruptibles;
-import org.apache.cassandra.transport.messages.QueryMessage;
+import com.datastax.cassandra.transport.messages.QueryMessage;
 
 import com.datastax.driver.core.exceptions.TraceRetrievalException;
 

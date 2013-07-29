@@ -15,11 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.transport;
+package com.datastax.cassandra.transport;
 
 import java.util.EnumSet;
 import java.util.UUID;
 
+import com.datastax.cassandra.transport.messages.AuthChallenge;
+import com.datastax.cassandra.transport.messages.AuthResponse;
+import com.datastax.cassandra.transport.messages.AuthSuccess;
+import org.apache.cassandra.transport.*;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
@@ -28,7 +32,7 @@ import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.cassandra.transport.messages.*;
+import com.datastax.cassandra.transport.messages.*;
 import org.apache.cassandra.service.QueryState;
 
 /**
@@ -38,7 +42,8 @@ public abstract class Message
 {
     protected static final Logger logger = LoggerFactory.getLogger(Message.class);
 
-    public interface Codec<M extends Message> extends CBCodec<M> {}
+    public interface Codec<M extends Message> extends CBCodec<M>
+    {}
 
     public enum Direction
     {
@@ -161,7 +166,16 @@ public abstract class Message
                 throw new IllegalArgumentException();
         }
 
-        public abstract Response execute(QueryState queryState);
+        public Response execute(QueryState queryState)
+        {
+            // Several new message types have been backported from protocol v2
+            // in order to support SASL authentication. To avoid conflicting versions
+            // of the message classes on the classpath, we re-create the entire set
+            // of messages in the com.datastax package. The execute method on Request
+            // messages should only ever be called on the server side, so we throw
+            // and exception if its called on the client.
+            throw new UnsupportedOperationException("This message should not be executed by the client");
+        }
 
         public void setTracingRequested()
         {
@@ -269,59 +283,59 @@ public abstract class Message
         }
     }
 
-    public static class Dispatcher extends SimpleChannelUpstreamHandler
-    {
-        @Override
-        public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
-        {
-            assert e.getMessage() instanceof Message : "Expecting message, got " + e.getMessage();
-
-            if (e.getMessage() instanceof Response)
-                throw new ProtocolException("Invalid response message received, expecting requests");
-
-            Request request = (Request)e.getMessage();
-
-            try
-            {
-                assert request.connection() instanceof ServerConnection;
-                ServerConnection connection = (ServerConnection)request.connection();
-                connection.validateNewMessage(request.type);
-
-                logger.debug("Received: {}", request);
-
-                Response response = request.execute(connection.getQueryState(request.getStreamId()));
-                response.setStreamId(request.getStreamId());
-                response.attach(connection);
-                connection.applyStateTransition(request.type, response.type);
-
-                logger.debug("Responding: {}", response);
-
-                ctx.getChannel().write(response);
-            }
-            catch (Exception ex)
-            {
-                // Don't let the exception propagate to exceptionCaught() if we can help it so that we can assign the right streamID.
-                ctx.getChannel().write(ErrorMessage.fromException(ex).setStreamId(request.getStreamId()));
-            }
-        }
-
-        @Override
-        public void exceptionCaught(final ChannelHandlerContext ctx, ExceptionEvent e)
-        throws Exception
-        {
-            if (ctx.getChannel().isOpen())
-            {
-                ChannelFuture future = ctx.getChannel().write(ErrorMessage.fromException(e.getCause()));
-                // On protocol exception, close the channel as soon as the message have been sent
-                if (e.getCause() instanceof ProtocolException)
-                {
-                    future.addListener(new ChannelFutureListener() {
-                        public void operationComplete(ChannelFuture future) {
-                            ctx.getChannel().close();
-                        }
-                    });
-                }
-            }
-        }
-    }
+//    public static class Dispatcher extends SimpleChannelUpstreamHandler
+//    {
+//        @Override
+//        public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
+//        {
+//            assert e.getMessage() instanceof Message : "Expecting message, got " + e.getMessage();
+//
+//            if (e.getMessage() instanceof Response)
+//                throw new ProtocolException("Invalid response message received, expecting requests");
+//
+//            Request request = (Request)e.getMessage();
+//
+//            try
+//            {
+//                assert request.connection() instanceof ServerConnection;
+//                ServerConnection connection = (ServerConnection)request.connection();
+//                connection.validateNewMessage(request.type);
+//
+//                logger.debug("Received: {}", request);
+//
+//                Response response = request.execute(connection.getQueryState(request.getStreamId()));
+//                response.setStreamId(request.getStreamId());
+//                response.attach(connection);
+//                connection.applyStateTransition(request.type, response.type);
+//
+//                logger.debug("Responding: {}", response);
+//
+//                ctx.getChannel().write(response);
+//            }
+//            catch (Exception ex)
+//            {
+//                // Don't let the exception propagate to exceptionCaught() if we can help it so that we can assign the right streamID.
+//                ctx.getChannel().write(ErrorMessage.fromException(ex).setStreamId(request.getStreamId()));
+//            }
+//        }
+//
+//        @Override
+//        public void exceptionCaught(final ChannelHandlerContext ctx, ExceptionEvent e)
+//        throws Exception
+//        {
+//            if (ctx.getChannel().isOpen())
+//            {
+//                ChannelFuture future = ctx.getChannel().write(ErrorMessage.fromException(e.getCause()));
+//                // On protocol exception, close the channel as soon as the message have been sent
+//                if (e.getCause() instanceof ProtocolException)
+//                {
+//                    future.addListener(new ChannelFutureListener() {
+//                        public void operationComplete(ChannelFuture future) {
+//                            ctx.getChannel().close();
+//                        }
+//                    });
+//                }
+//            }
+//        }
+//    }
 }

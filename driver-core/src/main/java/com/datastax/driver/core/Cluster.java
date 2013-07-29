@@ -29,9 +29,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.cassandra.utils.MD5Digest;
 import org.apache.cassandra.transport.Event;
-import org.apache.cassandra.transport.Message;
-import org.apache.cassandra.transport.messages.EventMessage;
-import org.apache.cassandra.transport.messages.PrepareMessage;
+import com.datastax.cassandra.transport.Message;
+import com.datastax.cassandra.transport.messages.EventMessage;
+import com.datastax.cassandra.transport.messages.PrepareMessage;
 
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;

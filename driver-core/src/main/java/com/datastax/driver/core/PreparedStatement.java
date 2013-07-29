@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.apache.cassandra.utils.MD5Digest;
-import org.apache.cassandra.transport.messages.ResultMessage;
+import com.datastax.cassandra.transport.messages.ResultMessage;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
