@@ -54,7 +54,7 @@ public class Select extends BuiltStatement {
     }
 
     @Override
-    protected String buildQueryString() {
+    protected StringBuilder buildQueryString() {
         StringBuilder builder = new StringBuilder();
 
         builder.append("SELECT ");
@@ -86,7 +86,7 @@ public class Select extends BuiltStatement {
             builder.append(" ALLOW FILTERING");
         }
 
-        return builder.toString();
+        return builder;
     }
 
     /**
