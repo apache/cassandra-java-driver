@@ -51,7 +51,7 @@ public class Update extends BuiltStatement {
     }
 
     @Override
-    protected String buildQueryString() {
+    protected StringBuilder buildQueryString() {
         StringBuilder builder = new StringBuilder();
 
         builder.append("UPDATE ");
@@ -74,7 +74,7 @@ public class Update extends BuiltStatement {
             Utils.joinAndAppend(builder, " AND ", where.clauses);
         }
 
-        return builder.toString();
+        return builder;
     }
 
     /**
