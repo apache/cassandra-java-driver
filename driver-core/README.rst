@@ -50,6 +50,8 @@ tests use it. Also note that the first time you run the tests, ccm will
 download/compile the source of C* under the hood, which may require some time
 (that depends on your Internet connection or machine).
 
+If you are having issues connecting to the cluster (seeing ``NoHostAvailableConnection`` exceptions) please check the 
+`connection requirements <https://github.com/datastax/java-driver/wiki/Connection-requirements>`_.
 
 Installing
 ----------
@@ -62,6 +64,15 @@ it in your application using the following Maven dependency::
       <artifactId>cassandra-driver-core</artifactId>
       <version>1.0.2</version>
     </dependency>
+
+**DSE users** should use the following Maven dependency (*note the version is set to 1.0.2-dse*)::
+
+    <dependency>
+      <groupId>com.datastax.cassandra</groupId>
+      <artifactId>cassandra-driver-core</artifactId>
+      <version>1.0.2-dse</version>
+    </dependency>
+
 
 Getting Started
 ---------------
