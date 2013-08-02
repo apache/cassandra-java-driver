@@ -38,7 +38,7 @@ it in your application using the following Maven dependency::
       <version>1.0.2</version>
     </dependency>
     
-**DSE users** should use the following Maven dependency:
+**DSE users** should use the following Maven dependency (*note the version is set to 1.0.2-dse*)::
 
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
