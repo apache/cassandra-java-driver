@@ -37,6 +37,14 @@ it in your application using the following Maven dependency::
       <artifactId>cassandra-driver-core</artifactId>
       <version>1.0.2</version>
     </dependency>
+    
+**DSE users** should use the following Maven dependency:
+
+    <dependency>
+      <groupId>com.datastax.cassandra</groupId>
+      <artifactId>cassandra-driver-core</artifactId>
+      <version>1.0.2-dse</version>
+    </dependency>
 
 
 License
