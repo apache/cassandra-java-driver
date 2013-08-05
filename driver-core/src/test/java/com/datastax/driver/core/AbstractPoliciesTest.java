@@ -19,7 +19,9 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.in;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -51,6 +53,7 @@ public abstract class AbstractPoliciesTest {
         session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, replicationFactor));
         session.execute("USE " + SIMPLE_KEYSPACE);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
+        waitForSchemaAgreement(session);
     }
 
     public static void createMultiDCSchema(Session session) {
@@ -61,6 +64,36 @@ public abstract class AbstractPoliciesTest {
         session.execute(String.format(CREATE_KEYSPACE_GENERIC_FORMAT, SIMPLE_KEYSPACE, "NetworkTopologyStrategy", String.format("'dc1' : 1, 'dc2' : 1", dc1RF, dc2RF)));
         session.execute("USE " + SIMPLE_KEYSPACE);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
+        waitForSchemaAgreement(session);
+    }
+
+    public static void waitForSchemaAgreement(Session session) {
+        ResultSet rs;
+        UUID schemaVersion;
+        int schemaTry = 0;
+        int maxSchemaTries = 10;
+        while (true){
+            try {
+                rs = session.execute("select schema_version from system.peers;");
+                schemaVersion = rs.one().getUUID("schema_version");
+                while (!rs.isExhausted()) {
+                    if (!schemaVersion.equals(rs.one().getUUID("schema_version"))) {
+                        schemaVersion = null;
+                        break;
+                    }
+                }
+                if (schemaVersion != null)
+                    break;
+            } catch (NullPointerException e) {
+                if (++schemaTry > maxSchemaTries)
+                    throw e;
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
     }
 
 
