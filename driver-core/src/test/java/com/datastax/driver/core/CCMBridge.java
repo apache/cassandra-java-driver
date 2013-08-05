@@ -313,8 +313,22 @@ public class CCMBridge {
                 int maxTry = 30;
                 for (int i = 0; i < maxTry; ++i) {
                     List<Row> rs = tmpSession.execute("SELECT * from system.peers").all();
+
+                    UUID schemaVersion = null;
                     if (rs.size() == totalNodes - 1) {
-                        break;
+                        boolean schemaDisagreement = false;
+                        for (Row row : rs) {
+                            if (schemaVersion == null) {
+                                schemaVersion = row.getUUID("schema_version");
+                                continue;
+                            }
+                            if (!schemaVersion.equals(row.getUUID("schema_version"))) {
+                                schemaDisagreement = true;
+                                break;
+                            }
+                        }
+                        if (!schemaDisagreement)
+                            break;
                     }
                     try { Thread.sleep(1000); } catch (Exception e) {}
 
