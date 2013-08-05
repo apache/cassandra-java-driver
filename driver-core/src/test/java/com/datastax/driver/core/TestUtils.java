@@ -256,7 +256,7 @@ public abstract class TestUtils {
     // This is used because there is some delay between when a node has been
     // added through ccm and when it's actually available for querying
     public static void waitFor(String node, Cluster cluster) {
-        waitFor(node, cluster, 20, false, false);
+        waitFor(node, cluster, 30, false, false);
     }
 
     public static void waitFor(String node, Cluster cluster, int maxTry) {
@@ -264,11 +264,11 @@ public abstract class TestUtils {
     }
 
     public static void waitForDown(String node, Cluster cluster) {
-        waitFor(node, cluster, 20, true, false);
+        waitFor(node, cluster, 30, true, false);
     }
 
     public static void waitForDownWithWait(String node, Cluster cluster, int waitTime) {
-        waitFor(node, cluster, 20, true, false);
+        waitFor(node, cluster, 30, true, false);
 
         // FIXME: Once stop() works, remove this line
         try {
@@ -283,7 +283,7 @@ public abstract class TestUtils {
     }
 
     public static void waitForDecommission(String node, Cluster cluster) {
-        waitFor(node, cluster, 20, true, true);
+        waitFor(node, cluster, 30, true, true);
     }
 
     public static void waitForDecommission(String node, Cluster cluster, int maxTry) {

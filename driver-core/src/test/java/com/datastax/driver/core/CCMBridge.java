@@ -292,21 +292,36 @@ public class CCMBridge {
             if (nbNodes == 0)
                 throw new IllegalArgumentException();
 
-            return new CCMCluster(CCMBridge.create("test", nbNodes), builder);
+            return new CCMCluster(CCMBridge.create("test", nbNodes), builder, nbNodes);
         }
 
         public static CCMCluster create(int nbNodesDC1, int nbNodesDC2, Cluster.Builder builder) {
             if (nbNodesDC1 == 0)
                 throw new IllegalArgumentException();
 
-            return new CCMCluster(CCMBridge.create("test", nbNodesDC1, nbNodesDC2), builder);
+            return new CCMCluster(CCMBridge.create("test", nbNodesDC1, nbNodesDC2), builder, nbNodesDC1 + nbNodesDC2);
         }
 
-        private CCMCluster(CCMBridge cassandraCluster, Cluster.Builder builder) {
+        private CCMCluster(CCMBridge cassandraCluster, Cluster.Builder builder, int totalNodes) {
             this.cassandraCluster = cassandraCluster;
             try {
                 this.cluster = builder.addContactPoints(IP_PREFIX + "1").build();
                 this.session = cluster.connect();
+
+                Session tmpSession = cluster.connect();
+
+                int maxTry = 30;
+                for (int i = 0; i < maxTry; ++i) {
+                    List<Row> rs = tmpSession.execute("SELECT * from system.peers").all();
+                    if (rs.size() == totalNodes - 1) {
+                        break;
+                    }
+                    try { Thread.sleep(1000); } catch (Exception e) {}
+
+                    if (i == maxTry - 1) {
+                        throw new RuntimeException("Not all nodes came online.");
+                    }
+                }
 
             } catch (NoHostAvailableException e) {
                 for (Map.Entry<InetAddress, String> entry : e.getErrors().entrySet())
