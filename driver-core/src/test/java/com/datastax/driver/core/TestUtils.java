@@ -346,4 +346,60 @@ public abstract class TestUtils {
     private static boolean testHost(Host host, boolean testForDown) {
         return testForDown ? !host.isUp() : host.isUp();
     }
+
+    // Check for all nodes to come online for up to 30 seconds
+    public static void waitForAllNodesToComeOnline(Session session, int totalNodes) {
+        int maxTry = 30;
+        for (int i = 0; i < maxTry; ++i) {
+            List<Row> rs = session.execute("SELECT * from system.peers").all();
+
+            // Don't count yourself in the peers list
+            if (rs.size() == totalNodes - 1) {
+                return;
+            }
+
+            // Throttle schema polling
+            try { Thread.sleep(1000); } catch (Exception e) {}
+        }
+
+        // Throw exception if not all nodes came online
+        throw new RuntimeException(String.format("Not all nodes came online within %s seconds.", maxTry));
+    }
+
+    // Check for a schema agreement with all nodes for up to 30 seconds
+    public static void waitForSchemaAgreement(Session session) {
+        int maxTry = 30;
+        UUID schemaVersion;
+        for (int i = 0; i < maxTry; ++i) {
+            schemaVersion = null;
+            List<Row> rs = session.execute("SELECT * from system.peers").all();
+
+            // Track disagreements
+            boolean schemaDisagreement = false;
+
+            for (Row row : rs) {
+                // Save the first schemaVersion
+                if (schemaVersion == null) {
+                    schemaVersion = row.getUUID("schema_version");
+                    continue;
+                }
+
+                // Compare all succeeding schemaVersions to the first schemaVersion
+                if (!schemaVersion.equals(row.getUUID("schema_version"))) {
+                    schemaDisagreement = true;
+                    break;
+                }
+            }
+
+            // Exit without an exception when a schema agreement has been reached
+            if (!schemaDisagreement)
+                return;
+
+            // Throttle schema polling
+            try { Thread.sleep(1000); } catch (Exception e) {}
+        }
+
+        // Throw exception if schema agreement is never reached
+        throw new RuntimeException(String.format("Schema agreement not reached within %s seconds.", maxTry));
+    }
 }
