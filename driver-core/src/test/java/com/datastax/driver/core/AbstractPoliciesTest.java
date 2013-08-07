@@ -53,6 +53,7 @@ public abstract class AbstractPoliciesTest {
         session.execute("USE " + SIMPLE_KEYSPACE);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
         waitForSchemaAgreement(session);
+        waitForSchemaAgreement(session);
     }
 
     public static void createMultiDCSchema(Session session) {
@@ -63,6 +64,7 @@ public abstract class AbstractPoliciesTest {
         session.execute(String.format(CREATE_KEYSPACE_GENERIC_FORMAT, SIMPLE_KEYSPACE, "NetworkTopologyStrategy", String.format("'dc1' : 1, 'dc2' : 1", dc1RF, dc2RF)));
         session.execute("USE " + SIMPLE_KEYSPACE);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
+        waitForSchemaAgreement(session);
         waitForSchemaAgreement(session);
     }
 
