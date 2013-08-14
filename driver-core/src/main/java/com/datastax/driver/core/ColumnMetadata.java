@@ -159,7 +159,7 @@ public class ColumnMetadata {
             if (type == null)
                 return null;
 
-            return new IndexMetadata(column, type, row.getString(INDEX_NAME));
+            return new IndexMetadata(column, row.getString(INDEX_NAME), type);
         
         }
     }
