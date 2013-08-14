@@ -43,14 +43,25 @@ abstract class BuiltStatement extends Statement {
     @Override
     public String getQueryString() {
         if (dirty || cache == null) {
-            cache = buildQueryString().trim();
-            if (!cache.endsWith(";"))
-                cache += ";";
+            StringBuilder sb = buildQueryString();
+
+            // Use the same test that String#trim() uses to determine
+            // if a character is a whitespace character.
+            int l = sb.length();
+            while (l > 0 && sb.charAt(l - 1) <= ' ')
+                l -= 1;
+            if (l != sb.length())
+                sb.setLength(l);
+
+            if (l == 0 || sb.charAt(l - 1) != ';')
+                sb.append(';');
+
+            cache = sb.toString();
         }
         return cache;
     }
 
-    protected abstract String buildQueryString();
+    protected abstract StringBuilder buildQueryString();
 
     protected void setDirty() {
         dirty = true;
@@ -131,7 +142,7 @@ abstract class BuiltStatement extends Statement {
         }
 
         @Override
-        protected String buildQueryString() {
+        protected StringBuilder buildQueryString() {
             throw new UnsupportedOperationException();
         }
 

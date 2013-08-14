@@ -43,7 +43,7 @@ public class Batch extends BuiltStatement {
     }
 
     @Override
-    protected String buildQueryString() {
+    protected StringBuilder buildQueryString() {
         StringBuilder builder = new StringBuilder();
 
         builder.append(isCounterOp()
@@ -63,7 +63,7 @@ public class Batch extends BuiltStatement {
                 builder.append(";");
         }
         builder.append("APPLY BATCH;");
-        return builder.toString();
+        return builder;
     }
 
     /**
