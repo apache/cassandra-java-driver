@@ -200,6 +200,28 @@ public class Select extends BuiltStatement {
         }
 
         /**
+         * Adds an ORDER BY ASC clause to the SELECT statement this WHERE clause if
+         * part of.
+         *
+         * @param name - the column name dictating the order 
+         * @return the select statement this Where clause if part of.
+         */
+        public Select asc(String name) {
+            return statement.orderBy(new Ordering(name, false));
+        }
+        
+        /**
+         * Adds an ORDER BY DESC clause to the SELECT statement this WHERE clause if
+         * part of.
+         *
+         * @param name - the column name dictating the order 
+         * @return the select statement this Where clause if part of.
+         */
+        public Select desc(String name) {
+            return statement.orderBy(new Ordering(name, true));
+        }
+
+        /**
          * Adds a LIMIT clause to the SELECT statement this Where clause if
          * part of.
          *
