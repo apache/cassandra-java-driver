@@ -46,6 +46,7 @@ abstract class BuiltStatement extends Statement {
             cache = buildQueryString().trim();
             if (!cache.endsWith(";"))
                 cache += ";";
+            dirty = false;
         }
         return cache;
     }
