@@ -29,7 +29,8 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * A prepared statement with values bound to the bind variables.
  * <p>
  * Once values has been provided for the variables of the {@link PreparedStatement}
- * it has been created from, such BoundStatement can executed (through {@link Session#execute}).
+ * it has been created from, such BoundStatement can be executed (through 
+ * {@link Session#execute(Query)}).
  * <p>
  * The values of a BoundStatement can be set by either index or name. When
  * setting them by name, names follow the case insensitivity rules explained in
