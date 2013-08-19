@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+* 1.0.3:
+  - [bug] Always take per-query CL, tracing, etc. into account for QueryBuilder
+    statements (JAVA-143).
+
+
 * 1.0.2:
   - [api] Host#getMonitor and all Host.HealthMonitor methods have been
     deprecated. The new Host#isUp method is now prefered to the method

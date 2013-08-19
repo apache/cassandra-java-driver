@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Query;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
@@ -569,5 +570,18 @@ public class QueryBuilderTest {
         query = "DELETE  FROM foo WHERE token(\"k)>0 OR token(k\")>token(42);";
         delete = delete().from("foo").where(gt(token("k)>0 OR token(k"), fcall("token", 42)));
         assertEquals(delete.toString(), query);
+    }
+
+    @Test(groups = "unit")
+    public void statementForwardingTest() throws Exception {
+
+        Update upd = update("foo");
+        upd.setConsistencyLevel(ConsistencyLevel.QUORUM);
+        upd.enableTracing();
+
+        Query query = upd.using(timestamp(42)).with(set("a", 12)).and(incr("c", 3)).where(eq("k", 2));
+
+        assertEquals(query.getConsistencyLevel(), ConsistencyLevel.QUORUM);
+        assertTrue(query.isTracing());
     }
 }

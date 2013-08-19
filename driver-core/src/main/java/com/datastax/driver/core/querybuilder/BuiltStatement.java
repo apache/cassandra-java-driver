@@ -19,8 +19,11 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import com.datastax.driver.core.ColumnMetadata;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Query;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.policies.RetryPolicy;
 
 abstract class BuiltStatement extends Statement {
 
@@ -151,5 +154,43 @@ abstract class BuiltStatement extends Statement {
             return statement.isCounterOp();
         }
 
+        @Override
+        public Query setConsistencyLevel(ConsistencyLevel consistency) {
+            statement.setConsistencyLevel(consistency);
+            return this;
+        }
+
+        @Override
+        public ConsistencyLevel getConsistencyLevel() {
+            return statement.getConsistencyLevel();
+        }
+
+        @Override
+        public Query enableTracing() {
+            statement.enableTracing();
+            return this;
+        }
+
+        @Override
+        public Query disableTracing() {
+            statement.disableTracing();
+            return this;
+        }
+
+        @Override
+        public boolean isTracing() {
+            return statement.isTracing();
+        }
+
+        @Override
+        public Query setRetryPolicy(RetryPolicy policy) {
+            statement.setRetryPolicy(policy);
+            return this;
+        }
+
+        @Override
+        public RetryPolicy getRetryPolicy() {
+            return statement.getRetryPolicy();
+        }
     }
 }
