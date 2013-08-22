@@ -71,20 +71,33 @@ abstract class Utils {
         if (appendValueIfCollection(value, sb, rawValue))
             return sb;
 
-        if (rawValue || value instanceof RawString)
-            return sb.append(value.toString());
-        else
-            return appendValueString(value.toString(), sb);
+        appendStringIfValid(value, sb, rawValue);
+        return sb;
     }
 
     private static void appendFlatValue(Object value, StringBuilder sb, boolean rawValue) {
         if (appendValueIfLiteral(value, sb))
             return;
 
-        if (rawValue || value instanceof RawString)
+        appendStringIfValid(value, sb, rawValue);
+    }
+
+    private static void appendStringIfValid(Object value, StringBuilder sb, boolean rawValue) {
+        if (value instanceof RawString) {
             sb.append(value.toString());
-        else
-            appendValueString(value.toString(), sb);
+        } else {
+            if (!(value instanceof String)) {
+                String msg = String.format("Invalid value %s of type unknown to the query builder", value);
+                if (value instanceof byte[])
+                    msg += " (for blob values, make sure to use a ByteBuffer)";
+                throw new IllegalArgumentException(msg);
+            }
+
+            if (rawValue)
+                sb.append((String)value);
+            else
+                appendValueString((String)value, sb);
+        }
     }
 
     private static boolean appendValueIfLiteral(Object value, StringBuilder sb) {

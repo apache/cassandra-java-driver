@@ -584,4 +584,16 @@ public class QueryBuilderTest {
         assertEquals(query.getConsistencyLevel(), ConsistencyLevel.QUORUM);
         assertTrue(query.isTracing());
     }
+
+    @Test(groups = "unit")
+    public void rejectUnknownValueTest() throws Exception {
+
+        try {
+            update("foo").with(set("a", new byte[13])).where(eq("k", 2)).toString();
+            fail("Byte arrays should not be valid, ByteBuffer should be used instead");
+        } catch (IllegalArgumentException e) {
+            System.out.println(">> " + e);
+            // Ok, that's what we expect
+        }
+    }
 }
