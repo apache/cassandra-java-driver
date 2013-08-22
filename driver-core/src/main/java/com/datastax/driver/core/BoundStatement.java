@@ -59,6 +59,10 @@ public class BoundStatement extends Query {
 
         if (statement.getConsistencyLevel() != null)
             this.setConsistencyLevel(statement.getConsistencyLevel());
+        if (statement.isTracing())
+            this.enableTracing();
+        if (statement.getRetryPolicy() != null)
+            this.setRetryPolicy(statement.getRetryPolicy());
     }
 
     /**

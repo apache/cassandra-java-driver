@@ -4,6 +4,7 @@ CHANGELOG
 * 1.0.3:
   - [api] The query builder now correctly throw an exception when give a value
     of type it doesn't know about.
+  - [new] New Session#prepare method that takes a Statement.
   - [bug] Always take per-query CL, tracing, etc. into account for QueryBuilder
     statements (JAVA-143).
 

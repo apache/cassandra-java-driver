@@ -22,6 +22,7 @@ import org.apache.cassandra.utils.MD5Digest;
 import org.apache.cassandra.transport.messages.ResultMessage;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.policies.RetryPolicy;
 
 /**
  * Represents a prepared statement, a query with bound variables that has been
@@ -31,6 +32,15 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
  * for the bound variables. A prepared statement and the values for its
  * bound variables constitute a BoundStatement and can be executed (by
  * {@link Session#execute}).
+ * <p>
+ * A {@code PreparedStatement} object allows you to define specific defaults
+ * for the different properties of a {@link Query} (Consistency level, tracing, ...),
+ * in which case those properties will be inherited as default by every
+ * BoundedStatement created from the {PreparedStatement}. The default for those
+ * {@code PreparedStatement} properties is the same that in {@link Query} if the
+ * PreparedStatement is created by {@link Session#prepare(String)} but will inherit
+ * of the properties of the {@link Statement} used for the preparation if
+ * {@link Session#prepare(Statement)} is used.
  */
 public class PreparedStatement {
 
@@ -43,6 +53,8 @@ public class PreparedStatement {
     final int[] routingKeyIndexes;
 
     volatile ConsistencyLevel consistency;
+    volatile boolean traceQuery;
+    volatile RetryPolicy retryPolicy;
 
     private PreparedStatement(ColumnDefinitions metadata, MD5Digest id, int[] routingKeyIndexes, String query, String queryKeyspace) {
         this.metadata = metadata;
@@ -245,5 +257,67 @@ public class PreparedStatement {
      */
     public String getQueryKeyspace() {
         return queryKeyspace;
+    }
+
+    /**
+     * Convenience method to enables tracing for all bound statements created
+     * from this prepared statement.
+     *
+     * @return this {@code Query} object.
+     */
+    public PreparedStatement enableTracing() {
+        this.traceQuery = true;
+        return this;
+    }
+
+    /**
+     * Convenience method to disable tracing for all bound statements created
+     * from this prepared statement.
+     *
+     * @return this {@code PreparedStatement} object.
+     */
+    public PreparedStatement disableTracing() {
+        this.traceQuery = false;
+        return this;
+    }
+
+    /**
+     * Returns whether tracing is enabled for this prepared statement, i.e. if
+     * BoundStatement created from it will use tracing by default.
+     *
+     * @return {@code true} if this prepared statement has tracing enabled,
+     * {@code false} otherwise.
+     */
+    public boolean isTracing() {
+        return traceQuery;
+    }
+
+    /**
+     * Convenience method to set a default retry policy for the {@code BoundStatement}
+     * created from this prepared statement.
+     * <p>
+     * Note that this method is competely optional. By default, the retry policy
+     * used is the one returned {@link com.datastax.driver.core.policies.Policies#getRetryPolicy}
+     * in the cluster configuration. This method is only useful if you want
+     * to override this default policy for the {@code BoundStatement} created from
+     * this {@code PreparedStatement}.
+     * to punctually override the default policy for this request.
+     *
+     * @param policy the retry policy to use for this prepared statement.
+     * @return this {@code PreparedStatement} object.
+     */
+    public PreparedStatement setRetryPolicy(RetryPolicy policy) {
+        this.retryPolicy = policy;
+        return this;
+    }
+
+    /**
+     * Returns the retry policy sets for this prepared statement, if any.
+     *
+     * @return the retry policy sets specifically for this prepared statement or
+     * {@code null} if none have been set.
+     */
+    public RetryPolicy getRetryPolicy() {
+        return retryPolicy;
     }
 }
