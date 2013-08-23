@@ -177,8 +177,7 @@ public class Select extends BuiltStatement {
          * @param clause the clause to add.
          * @return this WHERE clause.
          */
-        public Where and(Clause clause)
-        {
+        public Where and(Clause clause) {
             clauses.add(clause);
             statement.maybeAddRoutingKey(clause.name(), clause.firstValue());
             setDirty();
