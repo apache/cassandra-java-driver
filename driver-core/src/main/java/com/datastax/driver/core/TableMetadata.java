@@ -63,6 +63,11 @@ public class TableMetadata {
         this.options = options;
     }
 
+    static String fixTimestampType(String type) {
+        // Ugly special case for TimestampType as we don't have it yet. We should get rid of that later.
+        return type.replaceAll("org.apache.cassandra.db.marshal.TimestampType", "org.apache.cassandra.db.marshal.DateType");
+    }
+
     static TableMetadata build(KeyspaceMetadata ksm, Row row, boolean hasColumnMetadata) {
         try {
             String name = row.getString(CF_NAME);
@@ -74,7 +79,8 @@ public class TableMetadata {
 
             // First, figure out which kind of table we are
             boolean isCompact = false;
-            AbstractType<?> ct = TypeParser.parse(row.getString(COMPARATOR));
+
+            AbstractType<?> ct = TypeParser.parse(fixTimestampType(row.getString(COMPARATOR)));
             boolean isComposite = ct instanceof CompositeType;
             List<AbstractType<?>> columnTypes = isComposite
                                               ? ((CompositeType)ct).types
@@ -107,7 +113,7 @@ public class TableMetadata {
             TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringKey, columns, new Options(row, isCompact));
 
             // Partition key
-            AbstractType<?> kt = TypeParser.parse(row.getString(KEY_VALIDATOR));
+            AbstractType<?> kt = TypeParser.parse(fixTimestampType(row.getString(KEY_VALIDATOR)));
             List<AbstractType<?>> keyTypes = kt instanceof CompositeType
                                            ? ((CompositeType)kt).types
                                            : Collections.<AbstractType<?>>singletonList(kt);
@@ -135,7 +141,7 @@ public class TableMetadata {
 
             // Value alias (if present)
             if (hasValue) {
-                AbstractType<?> vt = TypeParser.parse(row.getString(VALIDATOR));
+                AbstractType<?> vt = TypeParser.parse(fixTimestampType(row.getString(VALIDATOR)));
                 String valueAlias = row.isNull(KEY_ALIASES) ? DEFAULT_VALUE_ALIAS : row.getString(VALUE_ALIAS);
                 ColumnMetadata vm = new ColumnMetadata(tm, valueAlias, Codec.rawTypeToDataType(vt), null);
                 columns.put(valueAlias, vm);

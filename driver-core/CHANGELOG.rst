@@ -9,6 +9,7 @@ CHANGELOG
   - [new] New Session#prepare method that takes a Statement.
   - [bug] Always take per-query CL, tracing, etc. into account for QueryBuilder
     statements (JAVA-143).
+  - [bug] Temporary fixup for TimestampType when talking to C* 2.0 nodes.
 
 
 * 1.0.2:
