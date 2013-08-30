@@ -7,6 +7,9 @@ CHANGELOG
 - [api] The Cluster.Builder#poolingOptions and Cluster.Builder#socketOptions
   are now deprecated. They are replaced by the new withPoolingOptions and
   withSocketOptions methods (JAVA-163).
+- [new] A new LatencyAwarePolicy wrapping policy has been added, allowing to
+  add latency awareness to a wrapped load balancing policy (JAVA-129).
+
 
 1.0.3:
 ------
