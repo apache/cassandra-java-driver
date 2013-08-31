@@ -569,7 +569,7 @@ public class Cluster {
     }
 
     private static ThreadFactory threadFactory(String nameFormat) {
-        return new ThreadFactoryBuilder().setNameFormat(nameFormat).build();
+        return new ThreadFactoryBuilder().setNameFormat(nameFormat).setDaemon(true).build();
     }
 
     static long timeSince(long startNanos, TimeUnit destUnit) {
