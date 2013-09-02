@@ -447,19 +447,18 @@ class Connection extends org.apache.cassandra.transport.Connection
             return b;
         }
 
-        public boolean shutdown(long timeout, TimeUnit unit) throws InterruptedException {
+        public void shutdown() {
             // Make sure we skip creating connection from now on.
             isShutdown = true;
 
-            long start = System.nanoTime();
-            ChannelGroupFuture future = allChannels.close();
+            // All channels should be closed already, we call this just to be sure. And we know
+            // we're not on an I/O thread or anything, so just call await.
+            allChannels.close().awaitUninterruptibly();
 
+            // This will call shutdownNow on the boss and worker executor. Since this is called
+            // only once all connection have been individually closed, it's fine.
             channelFactory.releaseExternalResources();
             timer.stop();
-
-            return future.await(timeout, unit)
-                && bossExecutor.awaitTermination(timeout - Cluster.timeSince(start, unit), unit)
-                && workerExecutor.awaitTermination(timeout - Cluster.timeSince(start, unit), unit);
         }
     }
 

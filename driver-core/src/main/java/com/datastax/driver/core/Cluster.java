@@ -714,7 +714,7 @@ public class Cluster {
 
         final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool(threadFactory("Cassandra Java Driver worker-%d")));
 
-        final AtomicReference<ClusterShutdownFuture> shutdownFuture = new AtomicReference<ClusterShutdownFuture>();
+        final AtomicReference<ShutdownFuture> shutdownFuture = new AtomicReference<ShutdownFuture>();
 
         // All the queries that have been prepared (we keep them so we can re-prepared them when a node fail or a
         // new one join the cluster).
@@ -791,7 +791,7 @@ public class Cluster {
 
         private ShutdownFuture shutdown() {
 
-            ClusterShutdownFuture future = shutdownFuture.get();
+            ShutdownFuture future = shutdownFuture.get();
             if (future != null)
                 return future;
 
@@ -1219,23 +1219,19 @@ public class Cluster {
 
             @Override
             protected void onFuturesDone() {
-                // When we reach this, all sessions should be shutdown. We've also started a shutdown
-                // of the thread pools, so that remains is to wait for the completion of the shutdown
-                // of those threads pools
-
-                // TODO: What about the connection factory? It should be shutdown too.
-
-                // We don't want to wait on the current thread, because that could be a netty worker
-                // thread and since we're stopping those, we don't to hold them, and so we create a
-                // specific thread. But if at that stage all executor are already terminated, we
-                // can skip starting that thread.
-                if (reconnectionExecutor.isTerminated() && scheduledTasksExecutor.isTerminated() && executor.isTerminated()) {
-                    set(null);
-                    return;
-                }
-
+                /*
+                 * When we reach this, all sessions should be shutdown. We've also started a shutdown
+                 * of the thread pools used by this object. Remains 2 things before marking the shutdown
+                 * as done:
+                 *   1) we need to wait for the completion of the shutdown of the Cluster threads pools.
+                 *   2) we need to shutdown the Connection.Factory, i.e. the executors used by Netty.
+                 * But at least for 2), we must not do it on the current thread because that could be
+                 * a netty worker, which we're going to shutdown. So creates some thread for that.
+                 */
                 (new Thread("Shutdown-checker") {
                     public void run() {
+                        connectionFactory.shutdown();
+
                         // Just wait indefinitively on the the completion of the thread pools. Provided the user
                         // call force(), we'll never really block forever.
                         try {
