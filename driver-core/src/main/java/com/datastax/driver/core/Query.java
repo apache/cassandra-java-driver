@@ -39,6 +39,7 @@ public abstract class Query {
     };
 
     private volatile ConsistencyLevel consistency;
+    private volatile ConsistencyLevel serialConsistency;
     private volatile boolean traceQuery;
     private volatile int fetchSize;
 
@@ -66,6 +67,53 @@ public abstract class Query {
      * In the latter case, the default consistency level will be used.
      */
     public ConsistencyLevel getConsistencyLevel() {
+        return consistency;
+    }
+
+    /**
+     * Sets the serial consistency level for the query.
+     *
+     * The serial consistency level is only used by conditional updates (so INSERT, UPDATE
+     * and DELETE with an IF condition). For those, the serial consistency level defines
+     * the consistency level of the serial phase (or "paxos" phase) while the
+     * normal consistency level defines the consistency for the "learn" phase, i.e. what
+     * type of reads will be guaranteed to see the update right away. For instance, if
+     * a conditional write has a regular consistency of QUORUM (and is successful), then a
+     * QUORUM read is guaranteed to see that write. But if teh regular consistency of that
+     * write is ANY, then only a read with a consistency of SERIAL is guaranteed to see it
+     * (even a read with consistency ALL is not guaranteed to be enough).
+     * <p>
+     * The serial consistency can only be one of {@code ConsistencyLevel.SERIAL} or
+     * {@code ConsistencyLevel.LOCAL_SERIAL}. While {@code ConsistencyLevel.SERIAL} guarantees full
+     * linearizability (with other SERIAL updates), {@code ConsistencyLevel.LOCAL_SERIAL} only
+     * guarantees it in the local datacenter.
+     * <p>
+     * The serial consistency level is ignored for any query that is not a conditional
+     * update (serial reads should use the regular consistency level for instance).
+     *
+     * @param serialConsistency the serial consistency level to set.
+     * @return this {@code Query} object.
+     *
+     * @throws IllegalArgumentException if {@code serialConsistency} is not one of
+     * {@code ConsistencyLevel.SERIAL} or {@code ConsistencyLevel.LOCAL_SERIAL}.
+     */
+    public Query setSerialConsistencyLevel(ConsistencyLevel serialConsistency) {
+        if (serialConsistency != ConsistencyLevel.SERIAL && serialConsistency != ConsistencyLevel.LOCAL_SERIAL)
+            throw new IllegalArgumentException();
+        this.serialConsistency = serialConsistency;
+        return this;
+    }
+
+    /**
+     * The serial consistency level for this query.
+     * <p>
+     * See {@link #setSerialConsistencyLevel} for more detail on the serial consistency level.
+     *
+     * @return the consistency level for this query, or {@code null} if no serial
+     * consistency level has been specified (through {@code setSerialConsistencyLevel}).
+     * In the latter case, the default serial consistency level will be used.
+     */
+    public ConsistencyLevel getSerialConsistencyLevel() {
         return consistency;
     }
 

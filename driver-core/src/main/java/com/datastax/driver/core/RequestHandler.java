@@ -185,7 +185,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
         Message.Request request = callback.request();
         if (retryConsistencyLevel != null && retryConsistencyLevel != consistencyOf(request))
-            request = manager.makeRequestMessage(query, retryConsistencyLevel, pagingStateOf(request));
+            request = manager.makeRequestMessage(query, retryConsistencyLevel, serialConsistencyOf(request), pagingStateOf(request));
         return request;
     }
 
@@ -194,6 +194,14 @@ class RequestHandler implements Connection.ResponseCallback {
             case QUERY:   return ConsistencyLevel.from(((QueryMessage)request).options.getConsistency());
             case EXECUTE: return ConsistencyLevel.from(((ExecuteMessage)request).options.getConsistency());
             case BATCH:   return ConsistencyLevel.from(((BatchMessage)request).consistency);
+            default:      return null;
+        }
+    }
+
+    private ConsistencyLevel serialConsistencyOf(Message.Request request) {
+        switch (request.type) {
+            case QUERY:   return ConsistencyLevel.from(((QueryMessage)request).options.getSerialConsistency());
+            case EXECUTE: return ConsistencyLevel.from(((ExecuteMessage)request).options.getSerialConsistency());
             default:      return null;
         }
     }

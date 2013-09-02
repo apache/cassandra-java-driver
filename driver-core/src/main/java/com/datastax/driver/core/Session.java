@@ -494,12 +494,16 @@ public class Session {
             if (consistency == null)
                 consistency = configuration().getQueryOptions().getConsistencyLevel();
 
-            return makeRequestMessage(query, consistency, state);
+            ConsistencyLevel serialConsistency = query.getSerialConsistencyLevel();
+            if (serialConsistency == null)
+                serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
+
+            return makeRequestMessage(query, consistency, serialConsistency, state);
         }
 
-        public Message.Request makeRequestMessage(Query query, ConsistencyLevel cl, PagingState state) {
+        public Message.Request makeRequestMessage(Query query, ConsistencyLevel cl, ConsistencyLevel scl, PagingState state) {
             org.apache.cassandra.db.ConsistencyLevel cassCL = ConsistencyLevel.toCassandraCL(cl);
-            org.apache.cassandra.db.ConsistencyLevel serialCL = ConsistencyLevel.toCassandraCL(ConsistencyLevel.SERIAL);
+            org.apache.cassandra.db.ConsistencyLevel serialCL = ConsistencyLevel.toCassandraCL(scl);
             int fetchSize = query.getFetchSize();
             if (fetchSize <= 0)
                 fetchSize = configuration().getQueryOptions().getFetchSize();

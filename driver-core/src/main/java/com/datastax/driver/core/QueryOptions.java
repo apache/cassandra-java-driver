@@ -21,21 +21,27 @@ package com.datastax.driver.core;
 public class QueryOptions {
 
     /**
-     * The default consistency level for queries.
+     * The default consistency level for queries: {@code ConsistencyLevel.ONE}.
      */
     public static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.ONE;
 
     /**
-     * The default fetch size for SELECT queries.
+     * The default serial consistency level for conditional updates: {@code ConsistencyLevel.SERIAL}.
+     */
+    public static final ConsistencyLevel DEFAULT_SERIAL_CONSISTENCY_LEVEL = ConsistencyLevel.SERIAL;
+
+    /**
+     * The default fetch size for SELECT queries: 5000.
      */
     public static final int DEFAULT_FETCH_SIZE = 5000;
 
     private volatile ConsistencyLevel consistency = DEFAULT_CONSISTENCY_LEVEL;
+    private volatile ConsistencyLevel serialConsistency = DEFAULT_SERIAL_CONSISTENCY_LEVEL;
     private volatile int fetchSize = DEFAULT_FETCH_SIZE;
 
     /**
-     * Creates a new {@code QueryOptions} instance using the {@code DEFAULT_CONSISTENCY_LEVEL}
-     * and {@code DEFAULT_FETCH_SIZE}.
+     * Creates a new {@code QueryOptions} instance using the {@code DEFAULT_CONSISTENCY_LEVEL},
+     * {@code DEFAULT_SERIAL_CONSISTENCY_LEVEL} and {@code DEFAULT_FETCH_SIZE}.
      */
     public QueryOptions() {}
 
@@ -61,6 +67,30 @@ public class QueryOptions {
      */
     public ConsistencyLevel getConsistencyLevel() {
         return consistency;
+    }
+
+    /**
+     * Sets the default serial consistency level to use for queries.
+     * <p>
+     * The serial consistency level set through this method will be use for queries
+     * that don't explicitely have a serial consistency level, i.e. when {@link Query#getSerialConsistencyLevel}
+     * returns {@code null}.
+     *
+     * @param serialConsistencyLevel the new serial consistency level to set as default.
+     * @return this {@code QueryOptions} instance.
+     */
+    public QueryOptions setSerialConsistencyLevel(ConsistencyLevel serialConsistencyLevel) {
+        this.serialConsistency = serialConsistencyLevel;
+        return this;
+    }
+
+    /**
+     * The default serial consistency level used by queries.
+     *
+     * @return the default serial consistency level used by queries.
+     */
+    public ConsistencyLevel getSerialConsistencyLevel() {
+        return serialConsistency;
     }
 
     /**

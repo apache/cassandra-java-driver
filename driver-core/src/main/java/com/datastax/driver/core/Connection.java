@@ -58,8 +58,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A connection to a Cassandra Node.
  */
-class Connection extends org.apache.cassandra.transport.Connection
-{
+class Connection extends org.apache.cassandra.transport.Connection {
     public static final int MAX_STREAM_PER_CONNECTION = 128;
 
     private static final Logger logger = LoggerFactory.getLogger(Connection.class);
