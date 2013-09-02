@@ -191,8 +191,8 @@ class RequestHandler implements Connection.ResponseCallback {
 
     private ConsistencyLevel consistencyOf(Message.Request request) {
         switch (request.type) {
-            case QUERY:   return ConsistencyLevel.from(((QueryMessage)request).consistency);
-            case EXECUTE: return ConsistencyLevel.from(((ExecuteMessage)request).consistency);
+            case QUERY:   return ConsistencyLevel.from(((QueryMessage)request).options.getConsistency());
+            case EXECUTE: return ConsistencyLevel.from(((ExecuteMessage)request).options.getConsistency());
             case BATCH:   return ConsistencyLevel.from(((BatchMessage)request).consistency);
             default:      return null;
         }
@@ -200,8 +200,8 @@ class RequestHandler implements Connection.ResponseCallback {
 
     private PagingState pagingStateOf(Message.Request request) {
         switch (request.type) {
-            case QUERY:   return ((QueryMessage)request).pagingState;
-            case EXECUTE: return ((ExecuteMessage)request).pagingState;
+            case QUERY:   return ((QueryMessage)request).options.getPagingState();
+            case EXECUTE: return ((ExecuteMessage)request).options.getPagingState();
             default:      return null;
         }
     }
@@ -411,7 +411,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
             @Override
             public void onTimeout(Connection connection) {
-                logError(connection.address, "Timeout waiting for response to prepare message");
+                logError(connection.address, new DriverException("Timeout waiting for response to prepare message"));
                 retry(false, null);
             }
         };
@@ -437,7 +437,7 @@ class RequestHandler implements Connection.ResponseCallback {
     @Override
     public void onTimeout(Connection connection) {
         returnConnection(connection);
-        logError(connection.address, "Timeout during read");
+        logError(connection.address, new DriverException("Timeout during read"));
         retry(false, null);
     }
 

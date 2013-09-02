@@ -499,6 +499,7 @@ public class Session {
 
         public Message.Request makeRequestMessage(Query query, ConsistencyLevel cl, PagingState state) {
             org.apache.cassandra.db.ConsistencyLevel cassCL = ConsistencyLevel.toCassandraCL(cl);
+            org.apache.cassandra.db.ConsistencyLevel serialCL = ConsistencyLevel.toCassandraCL(ConsistencyLevel.SERIAL);
             int fetchSize = query.getFetchSize();
             if (fetchSize <= 0)
                 fetchSize = configuration().getQueryOptions().getFetchSize();
@@ -508,11 +509,13 @@ public class Session {
                 ByteBuffer[] rawValues = statement.getValues();
                 List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
                 String qString = statement.getQueryString();
-                return new QueryMessage(qString, cassCL, values, fetchSize, false, state);
+                org.apache.cassandra.cql3.QueryOptions options = new org.apache.cassandra.cql3.QueryOptions(cassCL, values, false, fetchSize, state, serialCL);
+                return new QueryMessage(qString, options);
             } else if (query instanceof BoundStatement) {
                 BoundStatement bs = (BoundStatement)query;
                 boolean skipMetadata = bs.statement.resultSetMetadata != null;
-                return new ExecuteMessage(bs.statement.id, Arrays.asList(bs.values), cassCL, fetchSize, skipMetadata, state);
+                org.apache.cassandra.cql3.QueryOptions options = new org.apache.cassandra.cql3.QueryOptions(cassCL, Arrays.asList(bs.values), skipMetadata, fetchSize, state, serialCL);
+                return new ExecuteMessage(bs.statement.id, options);
             } else {
                 assert query instanceof BatchStatement : query;
                 assert state == null;
