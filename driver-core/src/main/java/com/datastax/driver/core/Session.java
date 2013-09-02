@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -193,6 +194,9 @@ public class Session {
     public PreparedStatement prepare(Statement statement) {
         PreparedStatement prepared = prepare(statement.getQueryString());
 
+        ByteBuffer routingKey = statement.getRoutingKey();
+        if (routingKey != null)
+            prepared.setRoutingKey(routingKey);
         prepared.setConsistencyLevel(statement.getConsistencyLevel());
         if (statement.isTracing())
             prepared.enableTracing();
