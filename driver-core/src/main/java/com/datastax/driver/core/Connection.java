@@ -472,6 +472,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             ChannelGroupFuture future = allChannels.close();
 
             channelFactory.releaseExternalResources();
+            timer.stop();
 
             return future.await(timeout, unit)
                 && bossExecutor.awaitTermination(timeout - Cluster.timeSince(start, unit), unit)
