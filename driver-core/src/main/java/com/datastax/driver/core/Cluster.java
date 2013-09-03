@@ -19,6 +19,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -71,7 +72,39 @@ public class Cluster {
 
     private Cluster(String name, List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
         this.manager = new Manager(name, contactPoints, configuration, listeners);
+    }
+
+    /**
+     * Initialize this Cluster instance.
+     *
+     * This method creates an initial connection to one of the contact points
+     * used to construct the {@code Cluster} instance. That connection is then
+     * used to populate the cluster {@link Metadata}.
+     * <p>
+     * Calling this method is optional in the sense that any call to one of the
+     * {@code connect} methods of this object will automatically trigger a call
+     * to this method beforehand. It is thus only useful to call this method if
+     * for some reason you want to populate the metadata (or test that at least
+     * one contact point can be reached) without creating a first {@code
+     * Session}.
+     * <p>
+     * Please note that this method only create one connection for metadata
+     * gathering reasons. In particular, it doesn't create any connection pool.
+     * Those are created when a new {@code Session} is created through
+     * {@code connect}.
+     * <p>
+     * This method has no effect if the cluster is already initialized.
+     *
+     * @return this {@code Cluster} object.
+     *
+     * @throws NoHostAvailableException if no host amongst the contact points
+     * can be reached.
+     * @throws AuthenticationException if an authentication error occurs
+     * while contacting the initial contact points.
+     */
+    public Cluster init() {
         this.manager.init();
+        return this;
     }
 
     /**
@@ -86,12 +119,8 @@ public class Cluster {
      * @param initializer the Cluster.Initializer to use
      * @return the newly created Cluster instance
      *
-     * @throws NoHostAvailableException if no host amongst the contact points
-     * can be reached.
      * @throws IllegalArgumentException if the list of contact points provided
      * by {@code initializer} is empty or if not all those contact points have the same port.
-     * @throws AuthenticationException if an authentication error occurs
-     * while contacting the initial contact points.
      */
     public static Cluster buildFrom(Initializer initializer) {
         List<InetAddress> contactPoints = initializer.getContactPoints();
@@ -676,11 +705,6 @@ public class Cluster {
          * This is a convenience method for {@code Cluster.buildFrom(this)}.
          *
          * @return the newly built Cluster instance.
-         *
-         * @throws NoHostAvailableException if none of the contact points
-         * provided can be reached.
-         * @throws AuthenticationException if an authentication error occurs.
-         * while contacting the initial contact points.
          */
         public Cluster build() {
             return Cluster.buildFrom(this);
@@ -710,6 +734,7 @@ public class Cluster {
     class Manager implements Host.StateListener, Connection.DefaultResponseHandler {
 
         final String clusterName;
+        private final AtomicBoolean isInit = new AtomicBoolean(false);
 
         // Initial contacts point
         final List<InetAddress> contactPoints;
@@ -757,10 +782,10 @@ public class Cluster {
             this.listeners = new CopyOnWriteArraySet<Host.StateListener>(listeners);
         }
 
-        // This is separated from the constructor because this reference the
-        // Cluster object, whose manager won't be properly initialized until
-        // the constructor returns.
         private void init() {
+
+            if (!isInit.compareAndSet(false, true))
+                return;
 
             for (InetAddress address : contactPoints) {
                 // We don't want to signal -- call onAdd() -- because nothing is ready
@@ -797,6 +822,8 @@ public class Cluster {
         }
 
         private Session newSession() {
+            init();
+
             Session session = new Session(Cluster.this, metadata.allHosts());
             sessions.add(session);
             return session;

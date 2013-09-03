@@ -46,6 +46,14 @@ API Changes
   (from the public API at least) as they were never meant to be exposed publicly: a
   resultSetFuture is always set by the driver himself and should not be set manually.
 
+- Creating the Cluster instance (through Cluster#buildFrom or the Cluster.Builder#build method)
+  does not create any connection right away anymore and thus cannot throw a
+  NoHostAvailableException (nor an AuthenticationException) anymore. Instead, the initial
+  contact points are checked the first time a call to Cluster#connect is done.
+  If you want to for some reason, a new Cluster#init method allows to emulate the
+  v1 behavior: Cluster.builder().build() in v1 is equivalent to
+  Cluster.builder().build().init() in v2.
+
 
 New Features
 ------------
