@@ -1076,7 +1076,7 @@ public class Cluster {
         }
 
         // refresh the schema using the provided connection, and notice the future with the provided resultset once done
-        public void refreshSchema(final Connection connection, final SimpleFuture<ResultSet> future, final ResultSet rs, final String keyspace, final String table) {
+        public void refreshSchema(final Connection connection, final ResultSetFuture future, final ResultSet rs, final String keyspace, final String table) {
             if (logger.isDebugEnabled())
                 logger.debug("Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : "." + table);
 
@@ -1094,7 +1094,7 @@ public class Cluster {
                         submitSchemaRefresh(keyspace, table);
                     } finally {
                         // Always sets the result
-                        future.set(rs);
+                        future.setResult(rs);
                     }
                 }
             });

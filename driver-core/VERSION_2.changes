@@ -42,6 +42,10 @@ API Changes
   shutdown() method that is asynchronous and return a Future on the completeion
   of shutdown.
 
+- The ResultSetFuture#set and ResultSetFuture#setException methods have been removed
+  (from the public API at least) as they were never meant to be exposed publicly: a
+  resultSetFuture is always set by the driver himself and should not be set manually.
+
 
 New Features
 ------------

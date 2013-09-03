@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.apache.cassandra.transport.Message;
@@ -36,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * Note that this class implements <a href="http://code.google.com/p/guava-libraries/">Guava</a>'s {@code
  * ListenableFuture} and can so be used with Guava's future utilities.
  */
-public class ResultSetFuture extends SimpleFuture<ResultSet> {
+public class ResultSetFuture extends AbstractFuture<ResultSet> {
 
     private static final Logger logger = LoggerFactory.getLogger(ResultSetFuture.class);
 
@@ -154,6 +155,13 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
             // So just set an exception for the final result, which should be handled correctly by said internal call.
             setException(new ConnectionException(connection.address, "Operation Timeouted"));
         }
+    }
+
+    // We sometimes need (in the driver) to set the future from outside this class,
+    // but AbstractFuture#set is protected so this method. We don't want it public
+    // however, no particular reason to give users rope to hang themselves.
+    void setResult(ResultSet rs) {
+        set(rs);
     }
 
     /**

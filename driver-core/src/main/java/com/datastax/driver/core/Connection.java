@@ -27,6 +27,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
@@ -583,7 +584,7 @@ class Connection extends org.apache.cassandra.transport.Connection {
         }
     }
 
-    static class Future extends SimpleFuture<Message.Response> implements RequestHandler.Callback {
+    static class Future extends AbstractFuture<Message.Response> implements RequestHandler.Callback {
 
         private final Message.Request request;
         private volatile InetAddress address;
