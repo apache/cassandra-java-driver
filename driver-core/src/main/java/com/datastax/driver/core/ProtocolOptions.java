@@ -46,7 +46,9 @@ public class ProtocolOptions {
         /** No compression */
         NONE("", null),
         /** Snappy compression */
-        SNAPPY("snappy", snappyCompressor);
+        SNAPPY("snappy", snappyCompressor),
+        /** LZ4 compression */
+        LZ4("lz4", FrameCompressor.LZ4Compressor.instance);
 
         final String protocolName;
         final FrameCompressor compressor;
@@ -125,7 +127,7 @@ public class ProtocolOptions {
     /**
      * Returns the compression used by the protocol.
      * <p>
-     * The default compression is {@code Compression.SNAPPY}.
+     * By default, compression is not used.
      *
      * @return the compression used.
      */

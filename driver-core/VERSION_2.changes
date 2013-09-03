@@ -69,3 +69,4 @@ New Features
   also force the prefetching of pages somewhat through the use of
   ResultSet#fetchMoreResults.
 
+- LZ4 compression is supported
