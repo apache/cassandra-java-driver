@@ -54,6 +54,10 @@ API Changes
   v1 behavior: Cluster.builder().build() in v1 is equivalent to
   Cluster.builder().build().init() in v2.
 
+- The class Query has been renamed Statement (as it was confusing to some that "BoundStatement"
+  was not a "Statement"). To allow this, the old "Statement" class has been renamed to
+  "RegularStatement". You might have to adapt your code accordingly.
+
 
 New Features
 ------------

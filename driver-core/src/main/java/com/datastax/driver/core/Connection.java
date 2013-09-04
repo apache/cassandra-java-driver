@@ -184,7 +184,7 @@ class Connection extends org.apache.cassandra.transport.Connection {
     throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException
     {
         switch (authResponse.type) {
-            case READY:
+            case AUTH_SUCCESS:
                 logger.trace("Authentication complete");
                 break;
             case AUTH_CHALLENGE:

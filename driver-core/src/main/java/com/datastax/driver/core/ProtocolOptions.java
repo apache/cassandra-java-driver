@@ -28,15 +28,22 @@ public class ProtocolOptions {
     private static final Logger logger = LoggerFactory.getLogger(ProtocolOptions.class);
 
     private static final FrameCompressor snappyCompressor;
+    private static final FrameCompressor lz4Compressor;
     static
     {
-        FrameCompressor compressor = null;
+        FrameCompressor sc = null, lc = null;
         try {
-            compressor = FrameCompressor.SnappyCompressor.instance;
+            sc = FrameCompressor.SnappyCompressor.instance;
         } catch (Throwable e) {
-            logger.warn("Error loading Snappy library. Snappy compression will not be available for the protocol.", e);
+            logger.warn("Error loading Snappy library. Snappy compression will not be available for the protocol ({})", e.toString());
         }
-        snappyCompressor = compressor;
+        try {
+            lc = FrameCompressor.LZ4Compressor.instance;
+        } catch (Throwable e) {
+            logger.warn("Error loading LZ4 library. LZ4 compression will not be available for the protocol ({})", e.toString());
+        }
+        snappyCompressor = sc;
+        lz4Compressor = lc;
     }
 
     /**
@@ -48,7 +55,7 @@ public class ProtocolOptions {
         /** Snappy compression */
         SNAPPY("snappy", snappyCompressor),
         /** LZ4 compression */
-        LZ4("lz4", FrameCompressor.LZ4Compressor.instance);
+        LZ4("lz4", lz4Compressor);
 
         final String protocolName;
         final FrameCompressor compressor;
