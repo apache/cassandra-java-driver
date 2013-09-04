@@ -20,12 +20,12 @@ import java.util.List;
 
 import com.datastax.driver.core.ColumnMetadata;
 import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.Query;
+import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.policies.RetryPolicy;
 
-abstract class BuiltStatement extends Statement {
+abstract class BuiltStatement extends RegularStatement {
 
     private final List<ColumnMetadata> partitionKey;
     private final ByteBuffer[] routingKey;
@@ -187,7 +187,7 @@ abstract class BuiltStatement extends Statement {
         }
 
         @Override
-        public Query setConsistencyLevel(ConsistencyLevel consistency) {
+        public Statement setConsistencyLevel(ConsistencyLevel consistency) {
             statement.setConsistencyLevel(consistency);
             return this;
         }
@@ -198,13 +198,13 @@ abstract class BuiltStatement extends Statement {
         }
 
         @Override
-        public Query enableTracing() {
+        public Statement enableTracing() {
             statement.enableTracing();
             return this;
         }
 
         @Override
-        public Query disableTracing() {
+        public Statement disableTracing() {
             statement.disableTracing();
             return this;
         }
@@ -215,7 +215,7 @@ abstract class BuiltStatement extends Statement {
         }
 
         @Override
-        public Query setRetryPolicy(RetryPolicy policy) {
+        public Statement setRetryPolicy(RetryPolicy policy) {
             statement.setRetryPolicy(policy);
             return this;
         }

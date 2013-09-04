@@ -59,7 +59,7 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     public void selectInjectionTests() throws Exception {
 
         String query;
-        Query select;
+        Statement select;
         PreparedStatement ps;
         BoundStatement bs;
 
@@ -123,7 +123,7 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     public void insertInjectionTest() throws Exception {
 
         String query;
-        Query insert;
+        Statement insert;
 
         query = "INSERT INTO foo(a) VALUES ('123); --comment');";
         insert = insertInto("foo")
@@ -144,7 +144,7 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     public void updateInjectionTest() throws Exception {
 
         String query;
-        Query update;
+        Statement update;
 
         query = "UPDATE foo.bar USING TIMESTAMP 42 SET a=12 WHERE k='2 OR 1=1';";
         update = update("foo", "bar").using(timestamp(42)).with(set("a", 12)).where(eq("k", "2 OR 1=1"));
@@ -163,7 +163,7 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     public void deleteInjectionTests() throws Exception {
 
         String query;
-        Query delete;
+        Statement delete;
 
         query = "DELETE  FROM \"foo WHERE k=4\";";
         delete = delete().from("foo WHERE k=4");

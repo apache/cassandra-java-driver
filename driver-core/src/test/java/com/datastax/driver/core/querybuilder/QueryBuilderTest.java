@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.Query;
+import com.datastax.driver.core.Statement;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class QueryBuilderTest {
@@ -34,7 +34,7 @@ public class QueryBuilderTest {
     public void selectTest() throws Exception {
 
         String query;
-        Query select;
+        Statement select;
 
         query = "SELECT * FROM foo WHERE k=4 AND c>'a' AND c<='z';";
         select = select().all().from("foo").where(eq("k", 4)).and(gt("c", "a")).and(lte("c", "z"));
@@ -134,7 +134,7 @@ public class QueryBuilderTest {
     public void insertTest() throws Exception {
 
         String query;
-        Query insert;
+        Statement insert;
 
         query = "INSERT INTO foo(a,b,\"C\",d) VALUES (123,'127.0.0.1','foo''bar',{'x':3,'y':2}) USING TIMESTAMP 42 AND TTL 24;";
         insert = insertInto("foo")
@@ -190,7 +190,7 @@ public class QueryBuilderTest {
     public void updateTest() throws Exception {
 
         String query;
-        Query update;
+        Statement update;
 
         query = "UPDATE foo.bar USING TIMESTAMP 42 SET a=12,b=[3,2,1],c=c+3 WHERE k=2;";
         update = update("foo", "bar").using(timestamp(42)).with(set("a", 12)).and(set("b", Arrays.asList(3, 2, 1))).and(incr("c", 3)).where(eq("k", 2));
@@ -250,7 +250,7 @@ public class QueryBuilderTest {
     public void deleteTest() throws Exception {
 
         String query;
-        Query delete;
+        Statement delete;
 
         query = "DELETE a,b,c FROM foo USING TIMESTAMP 0 WHERE k=1;";
         delete = delete("a", "b", "c").from("foo").using(timestamp(0)).where(eq("k", 1));
@@ -293,7 +293,7 @@ public class QueryBuilderTest {
     @Test(groups = "unit")
     public void batchTest() throws Exception {
         String query;
-        Query batch;
+        Statement batch;
 
         query = "BEGIN BATCH USING TIMESTAMP 42 ";
         query += "INSERT INTO foo(a,b) VALUES ({2,3,4},3.4);";
@@ -318,7 +318,7 @@ public class QueryBuilderTest {
     @Test(groups = "unit")
     public void batchCounterTest() throws Exception {
         String query;
-        Query batch;
+        Statement batch;
 
         // Test value increments
         query = "BEGIN COUNTER BATCH USING TIMESTAMP 42 ";
@@ -389,7 +389,7 @@ public class QueryBuilderTest {
     @Test(groups = "unit", expectedExceptions={IllegalArgumentException.class})
     public void batchMixedCounterTest() throws Exception {
         String query;
-        Query batch;
+        Statement batch;
 
         batch = batch()
             .add(update("foo").with(incr("a", 1)))
@@ -401,7 +401,7 @@ public class QueryBuilderTest {
     @Test(groups = "unit")
     public void markerTest() throws Exception {
         String query;
-        Query insert;
+        Statement insert;
 
         query = "INSERT INTO test(k,c) VALUES (0,?);";
         insert = insertInto("test")
@@ -414,7 +414,7 @@ public class QueryBuilderTest {
     public void rawEscapingTest() throws Exception {
 
         String query;
-        Query select;
+        Statement select;
 
         query = "SELECT * FROM t WHERE c='C''est la vie!';";
         select = select().from("t").where(eq("c", "C'est la vie!"));
@@ -438,7 +438,7 @@ public class QueryBuilderTest {
     public void selectInjectionTests() throws Exception {
 
         String query;
-        Query select;
+        Statement select;
 
         query = "SELECT * FROM \"foo WHERE k=4\";";
         select = select().all().from("foo WHERE k=4");
@@ -494,7 +494,7 @@ public class QueryBuilderTest {
     public void insertInjectionTest() throws Exception {
 
         String query;
-        Query insert;
+        Statement insert;
 
         query = "INSERT INTO foo(a) VALUES ('123); --comment');";
         insert = insertInto("foo").value("a", "123); --comment");
@@ -513,7 +513,7 @@ public class QueryBuilderTest {
     public void updateInjectionTest() throws Exception {
 
         String query;
-        Query update;
+        Statement update;
 
         query = "UPDATE foo.bar USING TIMESTAMP 42 SET a=12 WHERE k='2 OR 1=1';";
         update = update("foo", "bar").using(timestamp(42)).with(set("a", 12)).where(eq("k", "2 OR 1=1"));
@@ -532,7 +532,7 @@ public class QueryBuilderTest {
     public void deleteInjectionTests() throws Exception {
 
         String query;
-        Query delete;
+        Statement delete;
 
         query = "DELETE  FROM \"foo WHERE k=4\";";
         delete = delete().from("foo WHERE k=4");
@@ -579,7 +579,7 @@ public class QueryBuilderTest {
         upd.setConsistencyLevel(ConsistencyLevel.QUORUM);
         upd.enableTracing();
 
-        Query query = upd.using(timestamp(42)).with(set("a", 12)).and(incr("c", 3)).where(eq("k", 2));
+        Statement query = upd.using(timestamp(42)).with(set("a", 12)).and(incr("c", 3)).where(eq("k", 2));
 
         assertEquals(query.getConsistencyLevel(), ConsistencyLevel.QUORUM);
         assertTrue(query.isTracing());

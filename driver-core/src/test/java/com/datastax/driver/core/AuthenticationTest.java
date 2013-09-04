@@ -68,7 +68,7 @@ public class AuthenticationTest {
                                                 .connect();
         } catch (NoHostAvailableException e) {
 
-            for (Map.Entry<InetAddress, String> entry : e.getErrors().entrySet())
+            for (Map.Entry<InetAddress, Throwable> entry : e.getErrors().entrySet())
                 logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
             throw new RuntimeException(e);
         }
@@ -83,7 +83,7 @@ public class AuthenticationTest {
                    .connect();
         } catch (NoHostAvailableException e) {
 
-            for (Map.Entry<InetAddress, String> entry : e.getErrors().entrySet())
+            for (Map.Entry<InetAddress, Throwable> entry : e.getErrors().entrySet())
                 logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
             throw new RuntimeException(e);
         }
@@ -97,7 +97,7 @@ public class AuthenticationTest {
                               .connect();
         } catch (NoHostAvailableException e) {
 
-            for (Map.Entry<InetAddress, String> entry : e.getErrors().entrySet())
+            for (Map.Entry<InetAddress, Throwable> entry : e.getErrors().entrySet())
                 logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
             throw new RuntimeException(e);
         }

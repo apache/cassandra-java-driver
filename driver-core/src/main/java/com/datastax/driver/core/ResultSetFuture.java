@@ -71,7 +71,7 @@ public class ResultSetFuture extends AbstractFuture<ResultSet> {
         }
 
         @Override
-        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Query query) {
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Statement statement) {
             try {
                 switch (response.type) {
                     case RESULT:
@@ -80,11 +80,11 @@ public class ResultSetFuture extends AbstractFuture<ResultSet> {
                             case SET_KEYSPACE:
                                 // propagate the keyspace change to other connections
                                 session.poolsState.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
-                                set(ResultSet.fromMessage(rm, session, info, query));
+                                set(ResultSet.fromMessage(rm, session, info, statement));
                                 break;
                             case SCHEMA_CHANGE:
                                 ResultMessage.SchemaChange scc = (ResultMessage.SchemaChange)rm;
-                                ResultSet rs = ResultSet.fromMessage(rm, session, info, query);
+                                ResultSet rs = ResultSet.fromMessage(rm, session, info, statement);
                                 switch (scc.change) {
                                     case CREATED:
                                         if (scc.columnFamily.isEmpty()) {
@@ -118,7 +118,7 @@ public class ResultSetFuture extends AbstractFuture<ResultSet> {
                                 }
                                 break;
                             default:
-                                set(ResultSet.fromMessage(rm, session, info, query));
+                                set(ResultSet.fromMessage(rm, session, info, statement));
                                 break;
                         }
                         break;

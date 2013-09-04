@@ -58,7 +58,7 @@ class RequestHandler implements Connection.ResponseCallback {
     private final Callback callback;
 
     private final Iterator<Host> queryPlan;
-    private final Query query;
+    private final Statement statement;
     private volatile Host current;
     private volatile List<Host> triedHosts;
     private volatile HostConnectionPool currentPool;
@@ -73,14 +73,14 @@ class RequestHandler implements Connection.ResponseCallback {
 
     private final Timer.Context timerContext;
 
-    public RequestHandler(Session.Manager manager, Callback callback, Query query) {
+    public RequestHandler(Session.Manager manager, Callback callback, Statement statement) {
         this.manager = manager;
         this.callback = callback;
 
         callback.register(this);
 
-        this.queryPlan = manager.loadBalancingPolicy().newQueryPlan(manager.poolsState.keyspace, query);
-        this.query = query;
+        this.queryPlan = manager.loadBalancingPolicy().newQueryPlan(manager.poolsState.keyspace, statement);
+        this.statement = statement;
 
         this.timerContext = metricsEnabled()
                           ? metrics().getRequestsTimer().time()
@@ -185,7 +185,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
         Message.Request request = callback.request();
         if (retryConsistencyLevel != null && retryConsistencyLevel != consistencyOf(request))
-            request = manager.makeRequestMessage(query, retryConsistencyLevel, serialConsistencyOf(request), pagingStateOf(request));
+            request = manager.makeRequestMessage(statement, retryConsistencyLevel, serialConsistencyOf(request), pagingStateOf(request));
         return request;
     }
 
@@ -226,7 +226,7 @@ class RequestHandler implements Connection.ResponseCallback {
         }
         if (retryConsistencyLevel != null)
             info = info.withAchievedConsistency(retryConsistencyLevel);
-        callback.onSet(connection, response, info, query);
+        callback.onSet(connection, response, info, statement);
     }
 
     private void setFinalException(Connection connection, Exception exception) {
@@ -257,9 +257,9 @@ class RequestHandler implements Connection.ResponseCallback {
                 case ERROR:
                     ErrorMessage err = (ErrorMessage)response;
                     RetryPolicy.RetryDecision retry = null;
-                    RetryPolicy retryPolicy = query.getRetryPolicy() == null
+                    RetryPolicy retryPolicy = statement.getRetryPolicy() == null
                                             ? manager.configuration().getPolicies().getRetryPolicy()
-                                            : query.getRetryPolicy();
+                                            : statement.getRetryPolicy();
                     switch (err.error.code()) {
                         case READ_TIMEOUT:
                             assert err.error instanceof ReadTimeoutException;
@@ -268,7 +268,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
                             ReadTimeoutException rte = (ReadTimeoutException)err.error;
                             ConsistencyLevel rcl = ConsistencyLevel.from(rte.consistency);
-                            retry = retryPolicy.onReadTimeout(query, rcl, rte.blockFor, rte.received, rte.dataPresent, queryRetries);
+                            retry = retryPolicy.onReadTimeout(statement, rcl, rte.blockFor, rte.received, rte.dataPresent, queryRetries);
                             break;
                         case WRITE_TIMEOUT:
                             assert err.error instanceof WriteTimeoutException;
@@ -277,7 +277,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
                             WriteTimeoutException wte = (WriteTimeoutException)err.error;
                             ConsistencyLevel wcl = ConsistencyLevel.from(wte.consistency);
-                            retry = retryPolicy.onWriteTimeout(query, wcl, WriteType.from(wte.writeType), wte.blockFor, wte.received, queryRetries);
+                            retry = retryPolicy.onWriteTimeout(statement, wcl, WriteType.from(wte.writeType), wte.blockFor, wte.received, queryRetries);
                             break;
                         case UNAVAILABLE:
                             assert err.error instanceof UnavailableException;
@@ -286,7 +286,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
                             UnavailableException ue = (UnavailableException)err.error;
                             ConsistencyLevel ucl = ConsistencyLevel.from(ue.consistency);
-                            retry = retryPolicy.onUnavailable(query, ucl, ue.required, ue.alive, queryRetries);
+                            retry = retryPolicy.onUnavailable(statement, ucl, ue.required, ue.alive, queryRetries);
                             break;
                         case OVERLOADED:
                             // Try another node
@@ -353,7 +353,7 @@ class RequestHandler implements Connection.ResponseCallback {
                             case RETRY:
                                 ++queryRetries;
                                 if (logger.isTraceEnabled())
-                                    logger.trace("Doing retry {} for query {} at consistency {}", new Object[]{ queryRetries, query, retry.getRetryConsistencyLevel()});
+                                    logger.trace("Doing retry {} for query {} at consistency {}", new Object[]{ queryRetries, statement, retry.getRetryConsistencyLevel()});
                                 if (metricsEnabled())
                                     metrics().getErrorMetrics().getRetries().inc();
                                 retry(true, retry.getRetryConsistencyLevel());
@@ -450,7 +450,7 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     interface Callback extends Connection.ResponseCallback {
-        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Query query);
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Statement statement);
         public void register(RequestHandler handler);
     }
 }

@@ -84,26 +84,26 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
      * <p>
      * The returned plan will first return replicas (whose {@code HostDistance}
      * for the child policy is {@code LOCAL}) for the query if it can determine
-     * them (i.e. mainly if {@code query.getRoutingKey()} is not {@code null}).
+     * them (i.e. mainly if {@code statement.getRoutingKey()} is not {@code null}).
      * Following what it will return the plan of the child policy.
      *
-     * @param query the query for which to build the plan.
+     * @param statement the query for which to build the plan.
      * @return the new query plan.
      */
     @Override
-    public Iterator<Host> newQueryPlan(final String loggedKeyspace, final Query query) {
+    public Iterator<Host> newQueryPlan(final String loggedKeyspace, final Statement statement) {
 
-        ByteBuffer partitionKey = query.getRoutingKey();
-        String keyspace = query.getKeyspace();
+        ByteBuffer partitionKey = statement.getRoutingKey();
+        String keyspace = statement.getKeyspace();
         if (keyspace == null)
             keyspace = loggedKeyspace;
 
         if (partitionKey == null || keyspace == null)
-            return childPolicy.newQueryPlan(keyspace, query);
+            return childPolicy.newQueryPlan(keyspace, statement);
 
         final Set<Host> replicas = clusterMetadata.getReplicas(keyspace, partitionKey);
         if (replicas.isEmpty())
-            return childPolicy.newQueryPlan(loggedKeyspace, query);
+            return childPolicy.newQueryPlan(loggedKeyspace, statement);
 
         return new AbstractIterator<Host>() {
 
@@ -119,7 +119,7 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
                 }
 
                 if (childIterator == null)
-                    childIterator = childPolicy.newQueryPlan(loggedKeyspace, query);
+                    childIterator = childPolicy.newQueryPlan(loggedKeyspace, statement);
 
                 while (childIterator.hasNext()) {
                     Host host = childIterator.next();

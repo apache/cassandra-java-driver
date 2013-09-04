@@ -115,10 +115,7 @@ public class Session {
      * guarantee that if the request is invalid, an exception will be thrown
      * by this method.
      *
-     * @param query the CQL query to execute (that can be either a {@code
-     * Statement} or a {@code BoundStatement}). If it is a {@code
-     * BoundStatement}, all variables must have been bound (the statement must
-     * be ready).
+     * @param statement the CQL query to execute (that can be any {@code Statement}).
      * @return the result of the query. That result will never be null but can
      * be empty (and will be for any non SELECT query).
      *
@@ -129,11 +126,9 @@ public class Session {
      * the query with the requested consistency level successfully.
      * @throws QueryValidationException if the query if invalid (syntax error,
      * unauthorized or any other validation problem).
-     * @throws IllegalStateException if {@code query} is a {@code BoundStatement}
-     * but {@code !query.isReady()}.
      */
-    public ResultSet execute(Query query) {
-        return executeAsync(query).getUninterruptibly();
+    public ResultSet execute(Statement statement) {
+        return executeAsync(statement).getUninterruptibly();
     }
 
     /**
@@ -175,17 +170,11 @@ public class Session {
      * DELETE), you will need to access the ResultSetFuture (that is call one of
      * its get method to make sure the query was successful.
      *
-     * @param query the CQL query to execute (that can be either a {@code
-     * Statement} or a {@code BoundStatement}). If it is a {@code
-     * BoundStatement}, all variables must have been bound (the statement must
-     * be ready).
+     * @param statement the CQL query to execute (that can be either any {@code Statement}.
      * @return a future on the result of the query.
-     *
-     * @throws IllegalStateException if {@code query} is a {@code BoundStatement}
-     * but {@code !query.isReady()}.
      */
-    public ResultSetFuture executeAsync(Query query) {
-        return manager.executeQuery(manager.makeRequestMessage(query, null), query);
+    public ResultSetFuture executeAsync(Statement statement) {
+        return manager.executeQuery(manager.makeRequestMessage(statement, null), statement);
     }
 
     /**
@@ -199,7 +188,7 @@ public class Session {
      */
     public PreparedStatement prepare(String query) {
         Connection.Future future = new Connection.Future(new PrepareMessage(query));
-        manager.execute(future, Query.DEFAULT);
+        manager.execute(future, Statement.DEFAULT);
         return toPreparedStatement(query, future);
     }
 
@@ -210,7 +199,7 @@ public class Session {
      * but note that the resulting {@code PreparedStamenent} will inherit the query properties
      * set on {@code statement}. Concretely, this means that in the following code:
      * <pre>
-     *   Statement toPrepare = new SimpleStatement("SELECT * FROM test WHERE k=?").setConsistencyLevel(ConsistencyLevel.QUORUM);
+     *   RegularStatement toPrepare = new SimpleStatement("SELECT * FROM test WHERE k=?").setConsistencyLevel(ConsistencyLevel.QUORUM);
      *   PreparedStatement prepared = session.prepare(toPrepare);
      *   session.execute(prepared.bind("someValue"));
      * </pre>
@@ -222,7 +211,7 @@ public class Session {
      * @throws NoHostAvailableException if no host in the cluster can be
      * contacted successfully to prepare this statement.
      */
-    public PreparedStatement prepare(Statement statement) {
+    public PreparedStatement prepare(RegularStatement statement) {
         PreparedStatement prepared = prepare(statement.getQueryString());
 
         ByteBuffer routingKey = statement.getRoutingKey();
@@ -479,7 +468,7 @@ public class Session {
         public void setKeyspace(String keyspace) {
             long timeout = configuration().getSocketOptions().getConnectTimeoutMillis();
             try {
-                Future<?> future = executeQuery(new QueryMessage("use " + keyspace, ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT);
+                Future<?> future = executeQuery(new QueryMessage("use " + keyspace, ConsistencyLevel.DEFAULT_CASSANDRA_CL), Statement.DEFAULT);
                 // Note: using the connection timeout is perfectly correct, we should probably change that someday
                 Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
             } catch (TimeoutException e) {
@@ -489,41 +478,41 @@ public class Session {
             }
         }
 
-        public Message.Request makeRequestMessage(Query query, PagingState state) {
-            ConsistencyLevel consistency = query.getConsistencyLevel();
+        public Message.Request makeRequestMessage(Statement statement, PagingState state) {
+            ConsistencyLevel consistency = statement.getConsistencyLevel();
             if (consistency == null)
                 consistency = configuration().getQueryOptions().getConsistencyLevel();
 
-            ConsistencyLevel serialConsistency = query.getSerialConsistencyLevel();
+            ConsistencyLevel serialConsistency = statement.getSerialConsistencyLevel();
             if (serialConsistency == null)
                 serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
 
-            return makeRequestMessage(query, consistency, serialConsistency, state);
+            return makeRequestMessage(statement, consistency, serialConsistency, state);
         }
 
-        public Message.Request makeRequestMessage(Query query, ConsistencyLevel cl, ConsistencyLevel scl, PagingState state) {
+        public Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, PagingState state) {
             org.apache.cassandra.db.ConsistencyLevel cassCL = ConsistencyLevel.toCassandraCL(cl);
             org.apache.cassandra.db.ConsistencyLevel serialCL = ConsistencyLevel.toCassandraCL(scl);
-            int fetchSize = query.getFetchSize();
+            int fetchSize = statement.getFetchSize();
             if (fetchSize <= 0)
                 fetchSize = configuration().getQueryOptions().getFetchSize();
 
-            if (query instanceof Statement) {
-                Statement statement = (Statement)query;
-                ByteBuffer[] rawValues = statement.getValues();
+            if (statement instanceof RegularStatement) {
+                RegularStatement rs = (RegularStatement)statement;
+                ByteBuffer[] rawValues = rs.getValues();
                 List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
-                String qString = statement.getQueryString();
+                String qString = rs.getQueryString();
                 org.apache.cassandra.cql3.QueryOptions options = new org.apache.cassandra.cql3.QueryOptions(cassCL, values, false, fetchSize, state, serialCL);
                 return new QueryMessage(qString, options);
-            } else if (query instanceof BoundStatement) {
-                BoundStatement bs = (BoundStatement)query;
+            } else if (statement instanceof BoundStatement) {
+                BoundStatement bs = (BoundStatement)statement;
                 boolean skipMetadata = bs.statement.resultSetMetadata != null;
                 org.apache.cassandra.cql3.QueryOptions options = new org.apache.cassandra.cql3.QueryOptions(cassCL, Arrays.asList(bs.values), skipMetadata, fetchSize, state, serialCL);
                 return new ExecuteMessage(bs.statement.id, options);
             } else {
-                assert query instanceof BatchStatement : query;
+                assert statement instanceof BatchStatement : statement;
                 assert state == null;
-                BatchStatement bs = (BatchStatement)query;
+                BatchStatement bs = (BatchStatement)statement;
                 BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
                 return new BatchMessage(org.apache.cassandra.cql3.statements.BatchStatement.Type.LOGGED, idAndVals.ids, idAndVals.values, cassCL);
             }
@@ -535,8 +524,8 @@ public class Session {
          * This method will find a suitable node to connect to using the
          * {@link LoadBalancingPolicy} and handle host failover.
          */
-        public void execute(RequestHandler.Callback callback, Query query) {
-            new RequestHandler(this, callback, query).sendRequest();
+        public void execute(RequestHandler.Callback callback, Statement statement) {
+            new RequestHandler(this, callback, statement).sendRequest();
         }
 
         public void prepare(String query, InetAddress toExclude) throws InterruptedException {
@@ -567,12 +556,12 @@ public class Session {
             }
         }
 
-        public ResultSetFuture executeQuery(Message.Request msg, Query query) {
-            if (query.isTracing())
+        public ResultSetFuture executeQuery(Message.Request msg, Statement statement) {
+            if (statement.isTracing())
                 msg.setTracingRequested();
 
             ResultSetFuture future = new ResultSetFuture(this, msg);
-            execute(future.callback, query);
+            execute(future.callback, statement);
             return future;
         }
     }

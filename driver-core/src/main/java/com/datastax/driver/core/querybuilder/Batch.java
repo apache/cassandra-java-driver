@@ -19,23 +19,23 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.RegularStatement;
 
 /**
  * A built BATCH statement.
  */
 public class Batch extends BuiltStatement {
 
-    private final List<Statement> statements;
+    private final List<RegularStatement> statements;
     private final boolean logged;
     private final Options usings;
     private ByteBuffer routingKey;
 
-    Batch(Statement[] statements, boolean logged) {
+    Batch(RegularStatement[] statements, boolean logged) {
         super((String)null);
         this.statements = statements.length == 0
-                        ? new ArrayList<Statement>()
-                        : new ArrayList<Statement>(statements.length);
+                        ? new ArrayList<RegularStatement>()
+                        : new ArrayList<RegularStatement>(statements.length);
         this.logged = logged;
         this.usings = new Options(this);
 
@@ -76,7 +76,7 @@ public class Batch extends BuiltStatement {
      * @throws IllegalArgumentException if counter and non-counter operations
      * are mixed.
      */
-    public Batch add(Statement statement) {
+    public Batch add(RegularStatement statement) {
         boolean isCounterOp = statement instanceof BuiltStatement && ((BuiltStatement) statement).isCounterOp();
 
         if (this.isCounterOp == null)
@@ -153,7 +153,7 @@ public class Batch extends BuiltStatement {
          * @param statement the statement to add.
          * @return the BATCH statement these options are part of.
          */
-        public Batch add(Statement statement) {
+        public Batch add(RegularStatement statement) {
             return this.statement.add(statement);
         }
     }

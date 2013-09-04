@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -166,9 +166,9 @@ public final class QueryBuilder {
      * using {@link #unloggedBatch}).
      *
      * @param statements the statements to batch.
-     * @return a new {@code Statement} that batch {@code statements}.
+     * @return a new {@code RegularStatement} that batch {@code statements}.
      */
-    public static Batch batch(Statement... statements) {
+    public static Batch batch(RegularStatement... statements) {
         return new Batch(statements, true);
     }
 
@@ -186,10 +186,10 @@ public final class QueryBuilder {
      * resulting batch will be a COUNTER one.
      *
      * @param statements the statements to batch.
-     * @return a new {@code Statement} that batch {@code statements} without
+     * @return a new {@code RegularStatement} that batch {@code statements} without
      * using the batch log.
      */
-    public static Batch unloggedBatch(Statement... statements) {
+    public static Batch unloggedBatch(RegularStatement... statements) {
         return new Batch(statements, false);
     }
 

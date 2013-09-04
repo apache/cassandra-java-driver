@@ -22,51 +22,65 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A statement that group a number of {@link Statement} and
- * {@link BoundStatement} so they get executed as a batch.
+ * A statement that group a number of {@link Statement} so they get executed as
+ * a batch.
  */
-public class BatchStatement extends Query {
+public class BatchStatement extends Statement {
 
-    private final List<Query> queries = new ArrayList<Query>();
+    private final List<Statement> statements = new ArrayList<Statement>();
 
     public BatchStatement() {}
 
     IdAndValues getIdAndValues() {
-        IdAndValues idAndVals = new IdAndValues(queries.size());
-        for (Query query : queries) {
-            if (query instanceof Statement) {
-                Statement st = (Statement)query;
+        IdAndValues idAndVals = new IdAndValues(statements.size());
+        for (Statement statement : statements) {
+            if (statement instanceof RegularStatement) {
+                RegularStatement st = (RegularStatement)statement;
                 ByteBuffer[] vals = st.getValues();
                 idAndVals.ids.add(st.getQueryString());
                 idAndVals.values.add(vals == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(vals));
-            } else if (query instanceof BoundStatement) {
-                BoundStatement st = (BoundStatement)query;
+            } else {
+                // We handle BatchStatement in add() so ...
+                assert statement instanceof BoundStatement;
+                BoundStatement st = (BoundStatement)statement;
                 idAndVals.ids.add(st.statement.id);
                 idAndVals.values.add(Arrays.asList(st.values));
-            } else {
-                assert query instanceof BatchStatement;
-                BatchStatement st = (BatchStatement)query;
-                IdAndValues other = st.getIdAndValues();
-                idAndVals.ids.addAll(other.ids);
-                idAndVals.values.addAll(other.values);
             }
         }
         return idAndVals;
     }
 
     /**
-     * Adds a new query to this batch.
+     * Adds a new statement to this batch.
+     * <p>
+     * Note that {@code statement} can be any {@code Statement}. It is allowed to mix
+     * {@code RegularStatement} and {@code BoundStatement} in the same
+     * {@code BatchStatement} in particular. Adding another {@code BatchStatement}
+     * is also allowed for convenient and is equivalent to adding all the {@code Statement}
+     * contained in that other {@code BatchStatement}.
      *
-     * @param query the new query to add.
+     * @param statement the new statement to add.
+     * @return this batch statement.
      */
-    public void add(Query query) {
-        queries.add(query);
+    public BatchStatement add(Statement statement) {
+
+        // We handle BatchStatement here (rather than in getIdAndValues) as it make it slightly
+        // easier to avoid endless loop if the use mistakenly pass a batch that depends on this
+        // object (or this directly).
+        if (statement instanceof BatchStatement) {
+            for (Statement subStatements : ((BatchStatement)statement).statements) {
+                add(subStatements);
+            }
+        } else {
+            statements.add(statement);
+        }
+        return this;
     }
 
     @Override
     public ByteBuffer getRoutingKey() {
-        for (Query query : queries) {
-            ByteBuffer rk = query.getRoutingKey();
+        for (Statement statement : statements) {
+            ByteBuffer rk = statement.getRoutingKey();
             if (rk != null)
                 return rk;
         }
@@ -75,8 +89,8 @@ public class BatchStatement extends Query {
 
     @Override
     public String getKeyspace() {
-        for (Query query : queries) {
-            String keyspace = query.getKeyspace();
+        for (Statement statement : statements) {
+            String keyspace = statement.getKeyspace();
             if (keyspace != null)
                 return keyspace;
         }
@@ -88,9 +102,9 @@ public class BatchStatement extends Query {
         public final List<Object> ids;
         public final List<List<ByteBuffer>> values;
 
-        IdAndValues(int nbQueries) {
-            ids = new ArrayList<Object>(nbQueries);
-            values = new ArrayList<List<ByteBuffer>>(nbQueries);
+        IdAndValues(int nbstatements) {
+            ids = new ArrayList<Object>(nbstatements);
+            values = new ArrayList<List<ByteBuffer>>(nbstatements);
         }
     }
 }

@@ -155,7 +155,7 @@ class ControlConnection implements Host.StateListener {
 
     private Connection reconnectInternal() {
 
-        Iterator<Host> iter = cluster.loadBalancingPolicy().newQueryPlan(null, Query.DEFAULT);
+        Iterator<Host> iter = cluster.loadBalancingPolicy().newQueryPlan(null, Statement.DEFAULT);
         Map<InetAddress, Throwable> errors = null;
 
         Host host = null;

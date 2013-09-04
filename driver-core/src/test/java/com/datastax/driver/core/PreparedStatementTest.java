@@ -349,7 +349,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void prepareStatementInheritPropertiesTest() {
 
-        Statement toPrepare = new SimpleStatement("SELECT * FROM test WHERE k=?");
+        RegularStatement toPrepare = new SimpleStatement("SELECT * FROM test WHERE k=?");
         toPrepare.setConsistencyLevel(ConsistencyLevel.QUORUM);
         toPrepare.enableTracing();
 

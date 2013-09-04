@@ -39,8 +39,8 @@ import com.datastax.driver.core.policies.RetryPolicy;
  * BoundedStatement created from the {PreparedStatement}. The default for those
  * {@code PreparedStatement} properties is the same that in {@link Query} if the
  * PreparedStatement is created by {@link Session#prepare(String)} but will inherit
- * of the properties of the {@link Statement} used for the preparation if
- * {@link Session#prepare(Statement)} is used.
+ * of the properties of the {@link RegularStatement} used for the preparation if
+ * {@link Session#prepare(RegularStatement)} is used.
  */
 public class PreparedStatement {
 

@@ -91,7 +91,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * retrieve, the operation is retried with the initial consistency
      * level. Otherwise, an exception is thrown.
      *
-     * @param query the original query that timeouted.
+     * @param statement the original query that timeouted.
      * @param cl the original consistency level of the read that timeouted.
      * @param requiredResponses the number of responses that were required to
      * achieve the requested consistency level.
@@ -103,7 +103,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * @return a RetryDecision as defined above.
      */
     @Override
-    public RetryDecision onReadTimeout(Query query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
+    public RetryDecision onReadTimeout(Statement statement, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
         if (nbRetry != 0)
             return RetryDecision.rethrow();
 
@@ -128,7 +128,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * if we know the write has been persisted on at least one replica, we
      * ignore the exception. Otherwise, an exception is thrown.
      *
-     * @param query the original query that timeouted.
+     * @param statement the original query that timeouted.
      * @param cl the original consistency level of the write that timeouted.
      * @param writeType the type of the write that timeouted.
      * @param requiredAcks the number of acknowledgments that were required to
@@ -139,7 +139,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * @return a RetryDecision as defined above.
      */
     @Override
-    public RetryDecision onWriteTimeout(Query query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
+    public RetryDecision onWriteTimeout(Statement statement, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
         if (nbRetry != 0)
             return RetryDecision.rethrow();
 
@@ -169,7 +169,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * is know to be alive, the operation is retried at a lower consistency
      * level.
      *
-     * @param query the original query for which the consistency level cannot
+     * @param statement the original query for which the consistency level cannot
      * be achieved.
      * @param cl the original consistency level for the operation.
      * @param requiredReplica the number of replica that should have been
@@ -180,7 +180,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * @return a RetryDecision as defined above.
      */
     @Override
-    public RetryDecision onUnavailable(Query query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
+    public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
         if (nbRetry != 0)
             return RetryDecision.rethrow();
 

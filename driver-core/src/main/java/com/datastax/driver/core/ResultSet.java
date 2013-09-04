@@ -66,14 +66,14 @@ public class ResultSet implements Iterable<Row> {
     private volatile FetchingState fetchState;
     // The two following info can be null, but only if fetchState == null
     private final Session.Manager session;
-    private final Query query;
+    private final Statement statement;
 
     private ResultSet(ColumnDefinitions metadata,
                       Queue<List<ByteBuffer>> rows,
                       ExecutionInfo info,
                       PagingState initialPagingState,
                       Session.Manager session,
-                      Query query) {
+                      Statement statement) {
         this.metadata = metadata;
         this.rows = rows;
         this.session = session;
@@ -87,11 +87,11 @@ public class ResultSet implements Iterable<Row> {
             this.infos.add(info);
         }
 
-        this.query = query;
-        assert fetchState == null || (session != null && query != null);
+        this.statement = statement;
+        assert fetchState == null || (session != null && statement != null);
     }
 
-    static ResultSet fromMessage(ResultMessage msg, Session.Manager session, ExecutionInfo info, Query query) {
+    static ResultSet fromMessage(ResultMessage msg, Session.Manager session, ExecutionInfo info, Statement statement) {
 
         UUID tracingId = msg.getTracingId();
         info = tracingId == null || info == null ? info : info.withTrace(new QueryTrace(tracingId, session));
@@ -105,8 +105,8 @@ public class ResultSet implements Iterable<Row> {
 
                 ColumnDefinitions columnDefs;
                 if (metadata.flags.contains(org.apache.cassandra.cql3.ResultSet.Flag.NO_METADATA)) {
-                    assert query instanceof BoundStatement;
-                    columnDefs = ((BoundStatement)query).statement.resultSetMetadata;
+                    assert statement instanceof BoundStatement;
+                    columnDefs = ((BoundStatement)statement).statement.resultSetMetadata;
                     assert columnDefs != null;
                 } else {
                     ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[metadata.names.size()];
@@ -117,7 +117,7 @@ public class ResultSet implements Iterable<Row> {
 
                 PagingState initialState = metadata.flags.contains(org.apache.cassandra.cql3.ResultSet.Flag.HAS_MORE_PAGES) ? metadata.pagingState : null;
 
-                return new ResultSet(columnDefs, new ArrayDeque<List<ByteBuffer>>(r.result.rows), info, initialState, session, query);
+                return new ResultSet(columnDefs, new ArrayDeque<List<ByteBuffer>>(r.result.rows), info, initialState, session, statement);
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
                 return empty(info);
@@ -320,9 +320,9 @@ public class ResultSet implements Iterable<Row> {
 
     private ListenableFuture<Void> queryNextPage(PagingState nextStart, final SettableFuture<Void> future) {
 
-        assert !(query instanceof BatchStatement);
+        assert !(statement instanceof BatchStatement);
 
-        final Message.Request request = session.makeRequestMessage(query, nextStart);
+        final Message.Request request = session.makeRequestMessage(statement, nextStart);
         session.execute(new RequestHandler.Callback() {
 
             @Override
@@ -335,13 +335,13 @@ public class ResultSet implements Iterable<Row> {
             }
 
             @Override
-            public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Query query) {
+            public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Statement statement) {
                 try {
                     switch (response.type) {
                         case RESULT:
                             ResultMessage rm = (ResultMessage)response;
                             // If we're paging, the query was a SELECT, so we don't have to handle SET_KEYSPACE and SCHEMA_CHANGE really
-                            ResultSet tmp = ResultSet.fromMessage(rm, ResultSet.this.session, info, query);
+                            ResultSet tmp = ResultSet.fromMessage(rm, ResultSet.this.session, info, statement);
 
                             ResultSet.this.rows.addAll(tmp.rows);
                             ResultSet.this.fetchState = tmp.fetchState;
@@ -380,7 +380,7 @@ public class ResultSet implements Iterable<Row> {
                 throw new UnsupportedOperationException();
             }
 
-        }, query);
+        }, statement);
 
         return future;
     }

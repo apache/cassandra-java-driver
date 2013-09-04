@@ -17,34 +17,233 @@ package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
 
+import com.datastax.driver.core.policies.RetryPolicy;
+
 /**
- * A non-prepared CQL statement.
+ * An executable query.
  * <p>
- * This class represents a query string along with query options. It
- * can be extended but {@link SimpleStatement} is provided to build a {@code
- * Statement} directly from its query string.
+ * This represents either a {@link RegularStatement}, a {@link BoundStatement} or a
+ * {@link BatchStatement} along with the querying options (consistency level,
+ * whether to trace the query, ...).
  */
-public abstract class Statement extends Query {
+public abstract class Statement {
+
+    // An exception to the RegularStatement, BoundStatement or BatchStatement rule above. This is
+    // used when preparing a statement and for other internal queries. Do not expose publicly.
+    static final Statement DEFAULT = new Statement() {
+        @Override
+        public ByteBuffer getRoutingKey() { return null; }
+
+        @Override
+        public String getKeyspace() { return null; }
+    };
+
+    private volatile ConsistencyLevel consistency;
+    private volatile ConsistencyLevel serialConsistency;
+    private volatile boolean traceQuery;
+    private volatile int fetchSize;
+
+    private volatile RetryPolicy retryPolicy;
+
+    // We don't want to expose the constructor, because the code rely on this being only subclassed RegularStatement, BoundStatement and BatchStatement
+    Statement() {}
 
     /**
-     * Returns the query string for this statement.
+     * Sets the consistency level for the query.
      *
-     * @return a valid CQL query string.
+     * @param consistency the consistency level to set.
+     * @return this {@code Statement} object.
      */
-    public abstract String getQueryString();
+    public Statement setConsistencyLevel(ConsistencyLevel consistency) {
+        this.consistency = consistency;
+        return this;
+    }
 
     /**
-     * The values to use for this statement.
+     * The consistency level for this query.
      *
-     * @return the values to use for this statement or {@code null} if there is
-     * no such values.
-     *
-     * @see SimpleStatement#SimpleStatement(String, Object...)
+     * @return the consistency level for this query, or {@code null} if no
+     * consistency level has been specified (through {@code setConsistencyLevel}).
+     * In the latter case, the default consistency level will be used.
      */
-    public abstract ByteBuffer[] getValues();
+    public ConsistencyLevel getConsistencyLevel() {
+        return consistency;
+    }
 
-    @Override
-    public String toString() {
-        return getQueryString();
+    /**
+     * Sets the serial consistency level for the query.
+     *
+     * The serial consistency level is only used by conditional updates (so INSERT, UPDATE
+     * and DELETE with an IF condition). For those, the serial consistency level defines
+     * the consistency level of the serial phase (or "paxos" phase) while the
+     * normal consistency level defines the consistency for the "learn" phase, i.e. what
+     * type of reads will be guaranteed to see the update right away. For instance, if
+     * a conditional write has a regular consistency of QUORUM (and is successful), then a
+     * QUORUM read is guaranteed to see that write. But if teh regular consistency of that
+     * write is ANY, then only a read with a consistency of SERIAL is guaranteed to see it
+     * (even a read with consistency ALL is not guaranteed to be enough).
+     * <p>
+     * The serial consistency can only be one of {@code ConsistencyLevel.SERIAL} or
+     * {@code ConsistencyLevel.LOCAL_SERIAL}. While {@code ConsistencyLevel.SERIAL} guarantees full
+     * linearizability (with other SERIAL updates), {@code ConsistencyLevel.LOCAL_SERIAL} only
+     * guarantees it in the local datacenter.
+     * <p>
+     * The serial consistency level is ignored for any query that is not a conditional
+     * update (serial reads should use the regular consistency level for instance).
+     *
+     * @param serialConsistency the serial consistency level to set.
+     * @return this {@code Statement} object.
+     *
+     * @throws IllegalArgumentException if {@code serialConsistency} is not one of
+     * {@code ConsistencyLevel.SERIAL} or {@code ConsistencyLevel.LOCAL_SERIAL}.
+     */
+    public Statement setSerialConsistencyLevel(ConsistencyLevel serialConsistency) {
+        if (serialConsistency != ConsistencyLevel.SERIAL && serialConsistency != ConsistencyLevel.LOCAL_SERIAL)
+            throw new IllegalArgumentException();
+        this.serialConsistency = serialConsistency;
+        return this;
+    }
+
+    /**
+     * The serial consistency level for this query.
+     * <p>
+     * See {@link #setSerialConsistencyLevel} for more detail on the serial consistency level.
+     *
+     * @return the consistency level for this query, or {@code null} if no serial
+     * consistency level has been specified (through {@code setSerialConsistencyLevel}).
+     * In the latter case, the default serial consistency level will be used.
+     */
+    public ConsistencyLevel getSerialConsistencyLevel() {
+        return consistency;
+    }
+
+    /**
+     * Enables tracing for this query.
+     *
+     * By default (that is unless you call this method), tracing is not enabled.
+     *
+     * @return this {@code Statement} object.
+     */
+    public Statement enableTracing() {
+        this.traceQuery = true;
+        return this;
+    }
+
+    /**
+     * Disables tracing for this query.
+     *
+     * @return this {@code Statement} object.
+     */
+    public Statement disableTracing() {
+        this.traceQuery = false;
+        return this;
+    }
+
+    /**
+     * Returns whether tracing is enabled for this query or not.
+     *
+     * @return {@code true} if this query has tracing enabled, {@code false}
+     * otherwise.
+     */
+    public boolean isTracing() {
+        return traceQuery;
+    }
+
+    /**
+     * Returns the routing key (in binary raw form) to use for token aware 
+     * routing of this query.
+     * <p>
+     * The routing key is optional in that implementers are free to
+     * return {@code null}. The routing key is an hint used for token-aware routing (see
+     * {@link com.datastax.driver.core.policies.TokenAwarePolicy}), and
+     * if provided should correspond to the binary value for the query
+     * partition key. However, not providing a routing key never causes a query
+     * to fail and if the load balancing policy used is not token aware, then
+     * the routing key can be safely ignored.
+     *
+     * @return the routing key for this query or {@code null}.
+     */
+    public abstract ByteBuffer getRoutingKey();
+
+    /**
+     * Returns the keyspace this query operates on.
+     * <p>
+     * Note that not all query specify on which keyspace they operate on, and
+     * so this method can always reutrn {@code null}. Firstly, some queries do
+     * not operate inside a keyspace: keyspace creation, {@code USE} queries,
+     * user creation, etc. Secondly, even query that operate within a keyspace
+     * do not have to specify said keyspace directly, in which case the
+     * currently logged in keyspace (the one set through a {@code USE} query
+     * (or through the use of {@link Session#connect(String)})). Lastly, as
+     * for the routing key, this keyspace information is only a hint for
+     * token-aware routing (since replica placement depend on the replication
+     * strategy in use which is a per-keyspace property) and having this method
+     * return {@code null} (or even a bogus keyspace name) will never cause the
+     * query to fail.
+     *
+     * @return the keyspace this query operate on if relevant or {@code null}.
+     */
+    public abstract String getKeyspace();
+
+    /**
+     * Sets the retry policy to use for this query.
+     * <p>
+     * The default retry policy, if this method is not called, is the one returned by
+     * {@link com.datastax.driver.core.policies.Policies#getRetryPolicy} in the
+     * cluster configuration. This method is thus only useful in case you want
+     * to punctually override the default policy for this request.
+     *
+     * @param policy the retry policy to use for this query.
+     * @return this {@code Statement} object.
+     */
+    public Statement setRetryPolicy(RetryPolicy policy) {
+        this.retryPolicy = policy;
+        return this;
+    }
+
+    /**
+     * Returns the retry policy sets for this query, if any.
+     *
+     * @return the retry policy sets specifically for this query or {@code null} if no query specific
+     * retry policy has been set through {@link #setRetryPolicy} (in which case
+     * the Cluster retry policy will apply if necessary).
+     */
+    public RetryPolicy getRetryPolicy() {
+        return retryPolicy;
+    }
+
+    /**
+     * Sets the query fetch size.
+     * <p>
+     * The fetch size controls how much resulting rows will be retrieved
+     * simultaneously (the goal being to avoid loading too much results
+     * in memory for queries yielding large results). Please note that
+     * while value as low as 1 can be used, it is *highly* discouraged to
+     * use such a low value in practice as it will yield very poor
+     * performance. If in doubt, leaving the default is probably a good
+     * idea.
+     * <p>
+     * Also note that only {@code SELECT} queries only ever make use of that
+     * setting.
+     *
+     * @param fetchSize the fetch size to use. If {@code fetchSize &gte; 0},
+     * the default fetch size will be used. To disable paging of the
+     * result set, use {@code fetchSize = Integer.MAX_VALUE}.
+     * @return this {@code Statement} object.
+     */
+    public Statement setFetchSize(int fetchSize) {
+        this.fetchSize = fetchSize;
+        return this;
+    }
+
+    /**
+     * The fetch size for this query.
+     *
+     * @return the fetch size for this query. If that value is less or equal
+     * to 0 (the default unless {@link #setFetchSize} is used), the default
+     * fetch size will be used.
+     */
+    public int getFetchSize() {
+        return fetchSize;
     }
 }

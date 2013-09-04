@@ -625,7 +625,7 @@ class Connection extends org.apache.cassandra.transport.Connection {
         }
 
         @Override
-        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Query query) {
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Statement statement) {
             onSet(connection, response);
         }
 

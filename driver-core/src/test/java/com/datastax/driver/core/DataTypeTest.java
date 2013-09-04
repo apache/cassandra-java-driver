@@ -40,7 +40,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * Tests DataType class to ensure data sent in is the same as data received
- * All tests are executed via a Simple Statement
+ * All tests are executed via a Simple Statements
  * Counters are the only datatype not tested within the entirety of the suite.
  *     There is, however, an isolated test case that needs to be implemented.
  * All statements and sample data is easily exportable via the print_*() methods.

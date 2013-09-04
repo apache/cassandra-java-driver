@@ -20,10 +20,10 @@ import java.nio.ByteBuffer;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
- * A simple {@code Statement} implementation built directly from a query
+ * A simple {@code RegularStatement} implementation built directly from a query
  * string.
  */
-public class SimpleStatement extends Statement {
+public class SimpleStatement extends RegularStatement {
 
     private final String query;
     private final ByteBuffer[] values;

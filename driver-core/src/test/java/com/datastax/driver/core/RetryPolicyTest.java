@@ -31,13 +31,13 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      * Test RetryPolicy to ensure the basic unit get tests for the RetryDecisions.
      */
     public static class TestRetryPolicy implements RetryPolicy {
-        public RetryDecision onReadTimeout(Query query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
+        public RetryDecision onReadTimeout(Statement query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
             return RetryDecision.rethrow();
         }
-        public RetryDecision onWriteTimeout(Query query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
+        public RetryDecision onWriteTimeout(Statement query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
             return RetryDecision.rethrow();
         }
-        public RetryDecision onUnavailable(Query query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
+        public RetryDecision onUnavailable(Statement query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
             return RetryDecision.rethrow();
         }
         public static void testRetryDecision() {
