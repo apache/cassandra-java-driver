@@ -58,6 +58,21 @@ API Changes
   was not a "Statement"). To allow this, the old "Statement" class has been renamed to
   "RegularStatement". You might have to adapt your code accordingly.
 
+- The QueryBuilder#raw method does not automatically add quotes anymore, but rather ouptut
+  its result without an change (as the raw name implies). This means for instance that
+  eq("x", raw(foo)) will output "x = foo", not "x = 'foo'" (you don't need the raw method
+  to output the latter string).
+
+- The QueryBuilder#in method now has the following special case: using
+  QueryBuilder.in(QueryBuilder.bindMarker()) will generate the string "IN ?", not "IN (?)"
+  as was the case in v1. While the first syntax is not currently valid, it will be once
+  https://issues.apache.org/jira/browse/CASSANDRA-4210 is solved. When that's the case,
+  that "IN ?" syntax will be a lot more util than "IN (?)" for which using an equality
+  is simpler anyway. This change is done now so as to avoid breaking the compatibility in
+  a minor release. Note that if you really want to create "IN (?)" in the query builder
+  for some obscure reason, you can use QueryBuilder.in(QueryBuilder.raw("?")).
+
+
 
 New Features
 ------------

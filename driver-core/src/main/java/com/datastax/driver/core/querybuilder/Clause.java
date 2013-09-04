@@ -68,6 +68,22 @@ public abstract class Clause extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb) {
+
+            // We special case the case of just one bind marker because there is little
+            // reasons to do:
+            //    ... IN (?) ...
+            // since in that case it's more elegant to use an equal. On the other side,
+            // it is a lot more useful to do:
+            //    ... IN ? ...
+            // which binds the variable to the full list the IN is on. Now, at the time
+            // of this writting, that last syntax is not supported, but it will be
+            // once CASSANDRA-4210 is fixed. So to avoid breaking compatibility later on,
+            // we support the most common behavior now.
+            if (values.size() == 1 && values.get(0) == QueryBuilder.BIND_MARKER) {
+                Utils.appendName(name, sb).append("IN ?");
+                return;
+            }
+
             Utils.appendName(name, sb).append(" IN (");
             Utils.joinAndAppendValues(sb, ",", values).append(")");
         }
