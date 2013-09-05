@@ -1,6 +1,17 @@
 CHANGELOG
 =========
 
+* 1.0.3:
+  - [api] The query builder now correctly throw an exception when given a value
+    of a type it doesn't know about.
+  - [new] SocketOptions#setReadTimeout allows to set a timeout on how long we
+    wait for the answer of one node. See the javadoc for more details.
+  - [new] New Session#prepare method that takes a Statement.
+  - [bug] Always take per-query CL, tracing, etc. into account for QueryBuilder
+    statements (JAVA-143).
+  - [bug] Temporary fixup for TimestampType when talking to C* 2.0 nodes.
+
+
 * 1.0.2:
   - [api] Host#getMonitor and all Host.HealthMonitor methods have been
     deprecated. The new Host#isUp method is now prefered to the method
@@ -13,6 +24,8 @@ CHANGELOG
     a given column name (JAVA-128).
   - [bug] Fix a bug when thread could get blocked while setting the current
     keyspace (JAVA-131).
+  - [bug] Quote inet addresses in the query builder since CQL3 requires it
+    (JAVA-136)
 
 * 1.0.1:
   - [api] Function call handling in the query builder has been modified in a
