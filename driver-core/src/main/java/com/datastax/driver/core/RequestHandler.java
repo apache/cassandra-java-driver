@@ -62,11 +62,16 @@ class RequestHandler implements Connection.ResponseCallback {
 
     private volatile Map<InetAddress, String> errors;
 
+    private volatile boolean isCanceled;
+    private volatile Connection.ResponseHandler connectionHandler;
+
     private final TimerContext timerContext;
 
     public RequestHandler(Session.Manager manager, Callback callback, Query query) {
         this.manager = manager;
         this.callback = callback;
+
+        callback.register(this);
 
         this.queryPlan = manager.loadBalancingPolicy().newQueryPlan(query);
         this.query = query;
@@ -86,7 +91,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
     public void sendRequest() {
 
-        while (queryPlan.hasNext()) {
+        while (queryPlan.hasNext() && !isCanceled) {
             Host host = queryPlan.next();
             if (query(host))
                 return;
@@ -110,7 +115,7 @@ class RequestHandler implements Connection.ResponseCallback {
                 triedHosts.add(current);
             }
             current = host;
-            connection.write(this);
+            connectionHandler = connection.write(this);
             return true;
         } catch (ConnectionException e) {
             // If we have any problem with the connection, move to the next node.
@@ -163,6 +168,12 @@ class RequestHandler implements Connection.ResponseCallback {
         });
     }
 
+    public void cancel() {
+        isCanceled = true;
+        if (connectionHandler != null)
+            connectionHandler.cancelHandler();
+    }
+
     @Override
     public Message.Request request() {
 
@@ -204,15 +215,19 @@ class RequestHandler implements Connection.ResponseCallback {
         callback.onException(connection, exception);
     }
 
-    @Override
-    public void onSet(Connection connection, Message.Response response) {
-
+    private void returnConnection(Connection connection) {
         if (currentPool == null) {
             // This should not happen but is probably not reason to fail completely
             logger.error("No current pool set; this should not happen");
         } else {
             currentPool.returnConnection(connection);
         }
+    }
+
+    @Override
+    public void onSet(Connection connection, Message.Response response) {
+
+        returnConnection(connection);
 
         try {
             switch (response.type) {
@@ -381,20 +396,19 @@ class RequestHandler implements Connection.ResponseCallback {
             public void onException(Connection connection, Exception exception) {
                 RequestHandler.this.onException(connection, exception);
             }
+
+            @Override
+            public void onTimeout(Connection connection) {
+                logError(connection.address, "Timeout waiting for response to prepare message");
+                retry(false, null);
+            }
         };
     }
 
     @Override
     public void onException(Connection connection, Exception exception) {
 
-        if (connection != null) {
-            if (currentPool == null) {
-                // This should not happen but is probably not reason to fail completely
-                logger.error("No current pool set; this should not happen");
-            } else {
-                currentPool.returnConnection(connection);
-            }
-        }
+        returnConnection(connection);
 
         if (exception instanceof ConnectionException) {
             if (metricsEnabled())
@@ -408,7 +422,15 @@ class RequestHandler implements Connection.ResponseCallback {
         setFinalException(connection, exception);
     }
 
+    @Override
+    public void onTimeout(Connection connection) {
+        returnConnection(connection);
+        logError(connection.address, "Timeout during read");
+        retry(false, null);
+    }
+
     interface Callback extends Connection.ResponseCallback {
         public void onSet(Connection connection, Message.Response response, ExecutionInfo info);
+        public void register(RequestHandler handler);
     }
 }

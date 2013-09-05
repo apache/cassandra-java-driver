@@ -54,7 +54,7 @@ public class Select extends BuiltStatement {
     }
 
     @Override
-    protected String buildQueryString() {
+    protected StringBuilder buildQueryString() {
         StringBuilder builder = new StringBuilder();
 
         builder.append("SELECT ");
@@ -86,7 +86,7 @@ public class Select extends BuiltStatement {
             builder.append(" ALLOW FILTERING");
         }
 
-        return builder.toString();
+        return builder;
     }
 
     /**
@@ -177,8 +177,7 @@ public class Select extends BuiltStatement {
          * @param clause the clause to add.
          * @return this WHERE clause.
          */
-        public Where and(Clause clause)
-        {
+        public Where and(Clause clause) {
             clauses.add(clause);
             statement.maybeAddRoutingKey(clause.name(), clause.firstValue());
             setDirty();

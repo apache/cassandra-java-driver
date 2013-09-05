@@ -346,6 +346,20 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(r2.getString("v"), null);
     }
 
+    @Test(groups = "short")
+    public void prepareStatementInheritPropertiesTest() {
+
+        Statement toPrepare = new SimpleStatement("SELECT * FROM test WHERE k=?");
+        toPrepare.setConsistencyLevel(ConsistencyLevel.QUORUM);
+        toPrepare.enableTracing();
+
+        PreparedStatement prepared = session.prepare(toPrepare);
+        BoundStatement bs = prepared.bind("someValue");
+
+        assertEquals(ConsistencyLevel.QUORUM, bs.getConsistencyLevel());
+        assertTrue(bs.isTracing());
+    }
+
     /**
      * Prints the table definitions that will be used in testing
      * (for exporting purposes)

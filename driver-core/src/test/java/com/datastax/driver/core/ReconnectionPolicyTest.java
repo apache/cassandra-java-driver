@@ -121,9 +121,9 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
 
     public void reconnectionPolicyTest(Cluster.Builder builder, long restartTime, long retryTime, long breakTime) throws Throwable {
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
-        createSchema(c.session, 1);
 
         try {
+            createSchema(c.session, 1);
             init(c, 12);
             query(c, 12);
 
