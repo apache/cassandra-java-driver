@@ -47,7 +47,7 @@ public class Insert extends BuiltStatement {
     }
 
     @Override
-    protected String buildQueryString() {
+    protected StringBuilder buildQueryString() {
         StringBuilder builder = new StringBuilder();
 
         builder.append("INSERT INTO ");
@@ -65,7 +65,7 @@ public class Insert extends BuiltStatement {
             Utils.joinAndAppend(builder, " AND ", usings.usings);
         }
 
-        return builder.toString();
+        return builder;
     }
 
     /**

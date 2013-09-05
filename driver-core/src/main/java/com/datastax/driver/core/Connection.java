@@ -27,6 +27,7 @@ import com.datastax.cassandra.transport.messages.AuthResponse;
 import com.google.common.collect.ImmutableMap;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
@@ -41,6 +42,9 @@ import org.jboss.netty.channel.group.ChannelGroupFuture;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
+import org.jboss.netty.util.HashedWheelTimer;
+import org.jboss.netty.util.Timeout;
+import org.jboss.netty.util.TimerTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -236,8 +240,8 @@ class Connection extends com.datastax.cassandra.transport.Connection
 
         try {
             logger.trace("[{}] Setting keyspace {}", name, keyspace);
-            // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
             long timeout = factory.getConnectTimeoutMillis();
+            // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
             Future future = write(new QueryMessage("USE \"" + keyspace + "\"", ConsistencyLevel.DEFAULT_CASSANDRA_CL));
             com.datastax.cassandra.transport.Message.Response response = Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
             switch (response.type) {
@@ -279,13 +283,13 @@ class Connection extends com.datastax.cassandra.transport.Connection
         return future;
     }
 
-    public void write(ResponseCallback callback) throws ConnectionException, BusyConnectionException {
+    public ResponseHandler write(ResponseCallback callback) throws ConnectionException, BusyConnectionException {
 
         com.datastax.cassandra.transport.Message.Request request = callback.request();
 
         request.attach(this);
 
-        ResponseHandler handler = new ResponseHandler(dispatcher, callback);
+        ResponseHandler handler = new ResponseHandler(this, callback);
         dispatcher.add(handler);
         request.setStreamId(handler.streamId);
 
@@ -305,10 +309,10 @@ class Connection extends com.datastax.cassandra.transport.Connection
             throw new ConnectionException(address, "Connection has been closed");
         }
 
-
         logger.trace("[{}] writing request {}", name, request);
         writer.incrementAndGet();
         channel.write(request).addListener(writeHandler(request, handler));
+        return handler;
     }
 
     private ChannelFutureListener writeHandler(final com.datastax.cassandra.transport.Message.Request request, final ResponseHandler handler) {
@@ -395,6 +399,7 @@ class Connection extends com.datastax.cassandra.transport.Connection
 
         private final ExecutorService bossExecutor = Executors.newCachedThreadPool();
         private final ExecutorService workerExecutor = Executors.newCachedThreadPool();
+        public final HashedWheelTimer timer = new HashedWheelTimer(new ThreadFactoryBuilder().setNameFormat("Timeouter-%d").build());
 
         private final ChannelFactory channelFactory = new NioClientSocketChannelFactory(bossExecutor, workerExecutor);
         private final ChannelGroup allChannels = new DefaultChannelGroup();
@@ -452,6 +457,10 @@ class Connection extends com.datastax.cassandra.transport.Connection
             return configuration.getSocketOptions().getConnectTimeoutMillis();
         }
 
+        public long getReadTimeoutMillis() {
+            return configuration.getSocketOptions().getReadTimeoutMillis();
+        }
+
         private ClientBootstrap newBootstrap() {
             ClientBootstrap b = new ClientBootstrap(channelFactory);
 
@@ -488,6 +497,7 @@ class Connection extends com.datastax.cassandra.transport.Connection
             ChannelGroupFuture future = allChannels.close();
 
             channelFactory.releaseExternalResources();
+            timer.stop();
 
             return future.await(timeout, unit)
                 && bossExecutor.awaitTermination(timeout - Cluster.timeSince(start, unit), unit)
@@ -506,7 +516,10 @@ class Connection extends com.datastax.cassandra.transport.Connection
         }
 
         public void removeHandler(int streamId) {
-            pending.remove(streamId);
+            ResponseHandler handler = pending.remove(streamId);
+            if (handler != null)
+                handler.cancelTimeout();
+
             streamIdHandler.release(streamId);
         }
 
@@ -529,21 +542,20 @@ class Connection extends com.datastax.cassandra.transport.Connection
                 ResponseHandler handler = pending.remove(streamId);
                 streamIdHandler.release(streamId);
                 if (handler == null) {
-                    if (!isDefunct()) {
-                        /*
-                         * In general, a defunct connection is one that is broken, in which case we won't receive a message anymore.
-                         * However, we could be defunct because of a internal error (anecdotally, this will happens if you have
-                         * an old version of the google-collections (the guava precursor) in the classpath, which happened to at least
-                         * 2 users already). In that case, the initial defunct already has registered what the problem was and we can ignore this.
-                         *
-                         * But if the connection is not defunct, this is a bug, either of us or cassandra. So log it, but I'm not sure it's worth
-                         * breaking the connection for that.
-                         */
-                        logger.error("[{}] No handler set for stream {} (this is a bug, either of this driver or of Cassandra, you should report it). Received message is {}", 
-                                     name, streamId, response);
-                    }
+                    /**
+                     * During normal operation, we should not receive responses for which we don't have a handler. There is
+                     * two cases however where this can happen:
+                     *   1) The connection has been defuncted due to some internal error and we've raced between removing the
+                     *      handler and actually closing the connection; since the original error has been logged, we're fine
+                     *      ignoring this completely.
+                     *   2) This request has timeouted. In that case, we've already switched to another host (or errored out
+                     *      to the user). So log it for debugging purpose, but it's fine ignoring otherwise.
+                     */
+                    if (!isDefunct())
+                        logger.debug("[{}] Response received on stream {} but no handler set anymore (the request must have timeouted). Received message is {}", name, streamId, response);
                     return;
                 }
+                handler.cancelTimeout();
                 handler.callback.onSet(Connection.this, response);
             }
         }
@@ -590,6 +602,11 @@ class Connection extends com.datastax.cassandra.transport.Connection
         }
 
         @Override
+        public void register(RequestHandler handler) {
+            // noop, we don't care about the handler here so far
+        }
+
+        @Override
         public com.datastax.cassandra.transport.Message.Request request() {
             return request;
         }
@@ -607,7 +624,14 @@ class Connection extends com.datastax.cassandra.transport.Connection
 
         @Override
         public void onException(Connection connection, Exception exception) {
+            this.address = connection.address;
             super.setException(exception);
+        }
+
+        @Override
+        public void onTimeout(Connection connection) {
+            this.address = connection.address;
+            super.setException(new ConnectionException(connection.address, "Operation Timeouted"));
         }
 
         public InetAddress getAddress() {
@@ -619,16 +643,42 @@ class Connection extends com.datastax.cassandra.transport.Connection
         public com.datastax.cassandra.transport.Message.Request request();
         public void onSet(Connection connection, com.datastax.cassandra.transport.Message.Response response);
         public void onException(Connection connection, Exception exception);
+        public void onTimeout(Connection connection);
     }
 
-    private static class ResponseHandler {
+    static class ResponseHandler {
 
+        public final Connection connection;
         public final int streamId;
         public final ResponseCallback callback;
+        private final Timeout timeout;
 
-        public ResponseHandler(Dispatcher dispatcher, ResponseCallback callback) throws BusyConnectionException {
-            this.streamId = dispatcher.streamIdHandler.next();
+        public ResponseHandler(Connection connection, ResponseCallback callback) throws BusyConnectionException {
+            this.connection = connection;
+            this.streamId = connection.dispatcher.streamIdHandler.next();
             this.callback = callback;
+
+            long timeoutMs = connection.factory.getReadTimeoutMillis();
+            this.timeout = timeoutMs <= 0 ? null : connection.factory.timer.newTimeout(onTimeoutTask(), timeoutMs, TimeUnit.MILLISECONDS);
+        }
+
+        void cancelTimeout() {
+            if (timeout != null)
+                timeout.cancel();
+        }
+
+        public void cancelHandler() {
+            connection.dispatcher.removeHandler(streamId);
+        }
+
+        private TimerTask onTimeoutTask() {
+            return new TimerTask() {
+                @Override
+                public void run(Timeout timeout) {
+                    callback.onTimeout(connection);
+                    cancelHandler();
+                }
+            };
         }
     }
 

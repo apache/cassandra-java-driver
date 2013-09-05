@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -157,18 +158,51 @@ public class Session {
     }
 
     /**
-     * Prepares the provided query.
+     * Prepares the provided query string.
      *
-     * @param query the CQL query to prepare
+     * @param query the CQL query string to prepare
      * @return the prepared statement corresponding to {@code query}.
      *
      * @throws NoHostAvailableException if no host in the cluster can be
-     * contacted successfully to execute this query.
+     * contacted successfully to prepare this query.
      */
     public PreparedStatement prepare(String query) {
         Connection.Future future = new Connection.Future(new PrepareMessage(query));
         manager.execute(future, Query.DEFAULT);
         return toPreparedStatement(query, future);
+    }
+
+    /**
+     * Prepares the provided query.
+     * <p>
+     * This method is essentially a shortcut for {@code prepare(statement.getQueryString())},
+     * but note that the resulting {@code PreparedStamenent} will inherit the query properties
+     * set on {@code statement}. Concretely, this means that in the following code:
+     * <pre>
+     *   Statement toPrepare = new SimpleStatement("SELECT * FROM test WHERE k=?").setConsistencyLevel(ConsistencyLevel.QUORUM);
+     *   PreparedStatement prepared = session.prepare(toPrepare);
+     *   session.execute(prepared.bind("someValue"));
+     * </pre>
+     * the final execution will be performed with Quorum consistency.
+     *
+     * @param statement the statement to prepare
+     * @return the prepared statement corresponding to {@code statement}.
+     *
+     * @throws NoHostAvailableException if no host in the cluster can be
+     * contacted successfully to prepare this statement.
+     */
+    public PreparedStatement prepare(Statement statement) {
+        PreparedStatement prepared = prepare(statement.getQueryString());
+
+        ByteBuffer routingKey = statement.getRoutingKey();
+        if (routingKey != null)
+            prepared.setRoutingKey(routingKey);
+        prepared.setConsistencyLevel(statement.getConsistencyLevel());
+        if (statement.isTracing())
+            prepared.enableTracing();
+        prepared.setRetryPolicy(statement.getRetryPolicy());
+
+        return prepared;
     }
 
     /**

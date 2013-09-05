@@ -47,10 +47,7 @@ public class ColumnMetadata {
             String name = row.getString(COLUMN_NAME);
 
             String validator = row.getString(VALIDATOR);
-            // Ugly special case for TimestampType as we don't have it yet. We should get rid of that later.
-            if (validator.equals("org.apache.cassandra.db.marshal.TimestampType"))
-                validator = "org.apache.cassandra.db.marshal.DateType";
-            AbstractType<?> t = TypeParser.parse(validator);
+            AbstractType<?> t = TypeParser.parse(TableMetadata.fixTimestampType(validator));
             ColumnMetadata cm = new ColumnMetadata(tm, name, Codec.rawTypeToDataType(t), row);
             tm.add(cm);
             return cm;
@@ -159,7 +156,7 @@ public class ColumnMetadata {
             if (type == null)
                 return null;
 
-            return new IndexMetadata(column, type, row.getString(INDEX_NAME));
+            return new IndexMetadata(column, row.getString(INDEX_NAME), type);
         
         }
     }
