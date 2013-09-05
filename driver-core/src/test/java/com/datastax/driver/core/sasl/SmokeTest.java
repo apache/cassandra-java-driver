@@ -71,9 +71,6 @@ public class SmokeTest
     // (to handle username/password auth)
     public static AuthProvider getStandardAuthProvider()
     {
-        Map<String, String> credentials = new HashMap<String, String>();
-        credentials.put("username", "cassandra");
-        credentials.put("password", "cassandra");
         return new PlainTextAuthProvider("cassandra", "cassandra");
     }
 }
