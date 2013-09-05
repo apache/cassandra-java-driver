@@ -22,7 +22,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.util.concurrent.Uninterruptibles;
-import org.apache.cassandra.transport.messages.QueryMessage;
 
 import com.datastax.driver.core.exceptions.TraceRetrievalException;
 
@@ -197,8 +196,8 @@ public class QueryTrace {
             while (duration == Integer.MIN_VALUE && tries <= MAX_TRIES) {
                 ++tries;
 
-                ResultSetFuture sessionsFuture = session.executeQuery(new QueryMessage(String.format(SELECT_SESSIONS_FORMAT, traceId), ConsistencyLevel.DEFAULT_CASSANDRA_CL), Statement.DEFAULT);
-                ResultSetFuture eventsFuture = session.executeQuery(new QueryMessage(String.format(SELECT_EVENTS_FORMAT, traceId), ConsistencyLevel.DEFAULT_CASSANDRA_CL), Statement.DEFAULT);
+                ResultSetFuture sessionsFuture = session.executeQuery(new Requests.Query(String.format(SELECT_SESSIONS_FORMAT, traceId)), Statement.DEFAULT);
+                ResultSetFuture eventsFuture = session.executeQuery(new Requests.Query(String.format(SELECT_EVENTS_FORMAT, traceId)), Statement.DEFAULT);
 
                 Row sessRow = sessionsFuture.get().one();
                 if (sessRow != null && !sessRow.isNull("duration")) {

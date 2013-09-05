@@ -29,12 +29,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import org.apache.cassandra.utils.MD5Digest;
-import org.apache.cassandra.transport.Event;
-import org.apache.cassandra.transport.Message;
-import org.apache.cassandra.transport.messages.EventMessage;
-import org.apache.cassandra.transport.messages.PrepareMessage;
-
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
 
@@ -1080,7 +1074,7 @@ public class Cluster {
 
                         List<Connection.Future> futures = new ArrayList<Connection.Future>(preparedQueries.size());
                         for (String query : perKeyspace.get(keyspace)) {
-                            futures.add(connection.write(new PrepareMessage(query)));
+                            futures.add(connection.write(new Requests.Prepare(query)));
                         }
                         for (Connection.Future future : futures) {
                             try {
@@ -1148,12 +1142,12 @@ public class Cluster {
         @Override
         public void handle(Message.Response response) {
 
-            if (!(response instanceof EventMessage)) {
+            if (!(response instanceof Responses.Event)) {
                 logger.error("Received an unexpected message from the server: {}", response);
                 return;
             }
 
-            final Event event = ((EventMessage)response).event;
+            final ProtocolEvent event = ((Responses.Event)response).event;
 
             logger.debug("Received event {}, scheduling delivery", response);
 
@@ -1167,7 +1161,7 @@ public class Cluster {
                 public void run() {
                     switch (event.type) {
                         case TOPOLOGY_CHANGE:
-                            Event.TopologyChange tpc = (Event.TopologyChange)event;
+                            ProtocolEvent.TopologyChange tpc = (ProtocolEvent.TopologyChange)event;
                             switch (tpc.change) {
                                 case NEW_NODE:
                                     addHost(tpc.node.getAddress(), true);
@@ -1181,7 +1175,7 @@ public class Cluster {
                             }
                             break;
                         case STATUS_CHANGE:
-                            Event.StatusChange stc = (Event.StatusChange)event;
+                            ProtocolEvent.StatusChange stc = (ProtocolEvent.StatusChange)event;
                             switch (stc.status) {
                                 case UP:
                                     Host hostUp = metadata.getHost(stc.node.getAddress());
@@ -1205,7 +1199,7 @@ public class Cluster {
                             }
                             break;
                         case SCHEMA_CHANGE:
-                            Event.SchemaChange scc = (Event.SchemaChange)event;
+                            ProtocolEvent.SchemaChange scc = (ProtocolEvent.SchemaChange)event;
                             switch (scc.change) {
                                 case CREATED:
                                     if (scc.table.isEmpty())
@@ -1232,14 +1226,14 @@ public class Cluster {
             }, delayForEvent(event), TimeUnit.SECONDS);
         }
 
-        private int delayForEvent(Event event) {
+        private int delayForEvent(ProtocolEvent event) {
             switch (event.type) {
                 case TOPOLOGY_CHANGE:
                     // Could probably be 0 for REMOVED_NODE but it's inconsequential
                     return 1;
                 case STATUS_CHANGE:
-                    Event.StatusChange stc = (Event.StatusChange)event;
-                    if (stc.status == Event.StatusChange.Status.UP)
+                    ProtocolEvent.StatusChange stc = (ProtocolEvent.StatusChange)event;
+                    if (stc.status == ProtocolEvent.StatusChange.Status.UP)
                         return 1;
                     break;
             }

@@ -15,19 +15,19 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import org.apache.cassandra.auth.PasswordAuthenticator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 /**
  * Tests for authenticated cluster access
@@ -45,7 +45,7 @@ public class AuthenticationTest {
     public void setupClusterWithAuthentication() throws InterruptedException {
         cassandraCluster = CCMBridge.create("test");
         cassandraCluster.populate(1);
-        cassandraCluster.updateConfig("authenticator", PasswordAuthenticator.class.getName());
+        cassandraCluster.updateConfig("authenticator", "PasswordAuthenticator");
         cassandraCluster.start(1);
 
         // Pre-1.2.4, we cannot override the pause before creating the default user,
@@ -69,7 +69,7 @@ public class AuthenticationTest {
         } catch (NoHostAvailableException e) {
 
             for (Map.Entry<InetAddress, Throwable> entry : e.getErrors().entrySet())
-                logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
+                logger.error("Error connecting to " + entry.getKey(),  entry.getValue());
             throw new RuntimeException(e);
         }
     }

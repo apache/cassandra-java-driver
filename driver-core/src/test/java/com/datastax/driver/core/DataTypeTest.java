@@ -197,7 +197,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
                         if (exclude(typeArgument))
                             continue;
 
-                        List list = new ArrayList();
+                        List<Object> list = new ArrayList<Object>();
                         for (int i = 0; i < 5; i++) {
                             list.add(SAMPLE_DATA.get(typeArgument));
                         }
@@ -212,7 +212,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
                         if (exclude(typeArgument))
                             continue;
 
-                        Set set = new HashSet();
+                        Set<Object> set = new HashSet<Object>();
                         for (int i = 0; i < 5; i++) {
                             set.add(SAMPLE_DATA.get(typeArgument));
                         }
@@ -322,6 +322,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Generates the insert statements that will be used in testing
      */
+    @SuppressWarnings("unchecked")
     private static Collection<String> getCollectionInsertStatements() {
         ArrayList<String> insertStatements = new ArrayList<String>();
 
@@ -436,6 +437,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test simple statement selects for all collection data types
      */
+    @SuppressWarnings("unchecked")
     public void collectionSelectTest() throws Throwable {
         HashMap<DataType, Object> sampleValueMap;
         String execute_string;
@@ -455,7 +457,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
                 HashMap<DataType, Object> sampleMap = (HashMap<DataType, Object>) sampleValueMap.get(typeArgument1);
                 Object mapKey = SAMPLE_DATA.get(sampleMap.keySet().iterator().next());
                 Object mapValue = sampleMap.values().iterator().next();
-                HashMap expectedMap = new HashMap();
+                HashMap<Object, Object> expectedMap = new HashMap<Object, Object>();
                 expectedMap.put(mapKey, mapValue);
 
                 assertEquals(TestUtils.getValue(row, "k", typeArgument2), SAMPLE_DATA.get(typeArgument2));
@@ -563,6 +565,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * (for exporting purposes)
      */
     @Test(groups = "doc")
+    @SuppressWarnings("unchecked")
     public void printSampleCollections() {
         String objective = "Sample Collections";
         System.out.println(String.format("Printing %s...", objective));

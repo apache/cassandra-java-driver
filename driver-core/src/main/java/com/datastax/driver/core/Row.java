@@ -21,8 +21,6 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.apache.cassandra.db.marshal.*;
-
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
@@ -101,7 +99,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return false;
 
-        return BooleanType.instance.compose(value);
+        return TypeCodec.BooleanCodec.instance.deserializeNoBoxing(value);
     }
 
     /**
@@ -136,7 +134,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return 0;
 
-        return Int32Type.instance.compose(value);
+        return TypeCodec.IntCodec.instance.deserializeNoBoxing(value);
     }
 
     /**
@@ -171,7 +169,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return 0L;
 
-        return LongType.instance.compose(value);
+        return TypeCodec.LongCodec.instance.deserializeNoBoxing(value);
     }
 
     /**
@@ -206,7 +204,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return TimestampType.instance.compose(value);
+        return TypeCodec.DateCodec.instance.deserialize(value);
     }
 
     /**
@@ -241,7 +239,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return 0.0f;
 
-        return FloatType.instance.compose(value);
+        return TypeCodec.FloatCodec.instance.deserializeNoBoxing(value);
     }
 
     /**
@@ -276,7 +274,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return 0.0;
 
-        return DoubleType.instance.compose(value);
+        return TypeCodec.DoubleCodec.instance.deserializeNoBoxing(value);
     }
 
     /**
@@ -394,8 +392,8 @@ public class Row {
             return null;
 
         return type == DataType.Name.ASCII
-             ? AsciiType.instance.compose(value)
-             : UTF8Type.instance.compose(value);
+             ? TypeCodec.StringCodec.asciiInstance.deserialize(value)
+             : TypeCodec.StringCodec.utf8Instance.deserialize(value);
     }
 
     /**
@@ -431,7 +429,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return IntegerType.instance.compose(value);
+        return TypeCodec.BigIntegerCodec.instance.deserialize(value);
     }
 
     /**
@@ -466,7 +464,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return DecimalType.instance.compose(value);
+        return TypeCodec.DecimalCodec.instance.deserialize(value);
     }
 
     /**
@@ -503,8 +501,8 @@ public class Row {
             return null;
 
         return type == DataType.Name.UUID
-             ? UUIDType.instance.compose(value)
-             : TimeUUIDType.instance.compose(value);
+             ? TypeCodec.UUIDCodec.instance.deserialize(value)
+             : TypeCodec.TimeUUIDCodec.instance.deserialize(value);
     }
 
     /**
@@ -540,7 +538,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return InetAddressType.instance.compose(value);
+        return TypeCodec.InetCodec.instance.deserialize(value);
     }
 
     /**
@@ -587,8 +585,7 @@ public class Row {
         if (value == null)
             return Collections.<T>emptyList();
 
-        // TODO: we could avoid the getCodec call if we kept a reference to the original message.
-        return Codec.<List<T>>getCodec(type).compose(value);
+        return (List<T>)type.codec().deserialize(value);
     }
 
     /**
@@ -638,7 +635,7 @@ public class Row {
         if (value == null)
             return Collections.<T>emptySet();
 
-        return Codec.<Set<T>>getCodec(type).compose(value);
+        return (Set<T>)type.codec().deserialize(value);
     }
 
     /**
@@ -691,7 +688,7 @@ public class Row {
         if (value == null)
             return Collections.<K, V>emptyMap();
 
-        return Codec.<Map<K, V>>getCodec(type).compose(value);
+        return (Map<K, V>)type.codec().deserialize(value);
     }
 
     /**
@@ -726,7 +723,7 @@ public class Row {
             if (bb == null)
                 sb.append("NULL");
             else
-                sb.append(Codec.getCodec(metadata.getType(i)).getString(bb));
+                sb.append(metadata.getType(i).codec().deserialize(bb).toString());
         }
         sb.append("]");
         return sb.toString();

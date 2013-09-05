@@ -41,6 +41,7 @@ public abstract class TestUtils {
     public static final String INSERT_FORMAT = "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)";
     public static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
 
+    @SuppressWarnings("unchecked")
     public static BoundStatement setBoundValue(BoundStatement bs, String name, DataType type, Object value) {
         switch (type.getName()) {
             case ASCII:
@@ -151,6 +152,7 @@ public abstract class TestUtils {
     }
 
     // Always return the "same" value for each type
+    @SuppressWarnings("serial")
     public static Object getFixedValue(final DataType type) {
         try {
             switch (type.getName()) {
@@ -187,11 +189,11 @@ public abstract class TestUtils {
                 case TIMEUUID:
                     return UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66");
                 case LIST:
-                    return new ArrayList(){{ add(getFixedValue(type.getTypeArguments().get(0))); }};
+                    return new ArrayList<Object>(){{ add(getFixedValue(type.getTypeArguments().get(0))); }};
                 case SET:
-                    return new HashSet(){{ add(getFixedValue(type.getTypeArguments().get(0))); }};
+                    return new HashSet<Object>(){{ add(getFixedValue(type.getTypeArguments().get(0))); }};
                 case MAP:
-                    return new HashMap(){{ put(getFixedValue(type.getTypeArguments().get(0)), getFixedValue(type.getTypeArguments().get(1))); }};
+                    return new HashMap<Object, Object>(){{ put(getFixedValue(type.getTypeArguments().get(0)), getFixedValue(type.getTypeArguments().get(1))); }};
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -200,6 +202,7 @@ public abstract class TestUtils {
     }
 
     // Always return the "same" value for each type
+    @SuppressWarnings("serial")
     public static Object getFixedValue2(final DataType type) {
         try {
             switch (type.getName()) {
@@ -240,11 +243,11 @@ public abstract class TestUtils {
                 case TIMEUUID:
                     return UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66");
                 case LIST:
-                    return new ArrayList(){{ add(getFixedValue2(type.getTypeArguments().get(0))); }};
+                    return new ArrayList<Object>(){{ add(getFixedValue2(type.getTypeArguments().get(0))); }};
                 case SET:
-                    return new HashSet(){{ add(getFixedValue2(type.getTypeArguments().get(0))); }};
+                    return new HashSet<Object>(){{ add(getFixedValue2(type.getTypeArguments().get(0))); }};
                 case MAP:
-                    return new HashMap(){{ put(getFixedValue2(type.getTypeArguments().get(0)), getFixedValue2(type.getTypeArguments().get(1))); }};
+                    return new HashMap<Object, Object>(){{ put(getFixedValue2(type.getTypeArguments().get(0)), getFixedValue2(type.getTypeArguments().get(1))); }};
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

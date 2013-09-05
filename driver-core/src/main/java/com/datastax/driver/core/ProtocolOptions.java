@@ -18,33 +18,12 @@ package com.datastax.driver.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.cassandra.transport.FrameCompressor;
-
 /**
  * Options of the Cassandra native binary protocol.
  */
 public class ProtocolOptions {
 
     private static final Logger logger = LoggerFactory.getLogger(ProtocolOptions.class);
-
-    private static final FrameCompressor snappyCompressor;
-    private static final FrameCompressor lz4Compressor;
-    static
-    {
-        FrameCompressor sc = null, lc = null;
-        try {
-            sc = FrameCompressor.SnappyCompressor.instance;
-        } catch (Throwable e) {
-            logger.warn("Error loading Snappy library. Snappy compression will not be available for the protocol ({})", e.toString());
-        }
-        try {
-            lc = FrameCompressor.LZ4Compressor.instance;
-        } catch (Throwable e) {
-            logger.warn("Error loading LZ4 library. LZ4 compression will not be available for the protocol ({})", e.toString());
-        }
-        snappyCompressor = sc;
-        lz4Compressor = lc;
-    }
 
     /**
      * Compression supported by the Cassandra binary protocol.
@@ -53,9 +32,9 @@ public class ProtocolOptions {
         /** No compression */
         NONE("", null),
         /** Snappy compression */
-        SNAPPY("snappy", snappyCompressor),
+        SNAPPY("snappy", FrameCompressor.SnappyCompressor.instance),
         /** LZ4 compression */
-        LZ4("lz4", lz4Compressor);
+        LZ4("lz4", FrameCompressor.LZ4Compressor.instance);
 
         final String protocolName;
         final FrameCompressor compressor;

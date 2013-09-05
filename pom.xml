@@ -35,16 +35,9 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <cassandra.version>2.0.0</cassandra.version>
-    <cassandra-dependency.version>2.0.0</cassandra-dependency.version>
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>org.apache.cassandra</groupId>
-      <artifactId>cassandra-all</artifactId>
-      <version>${cassandra-dependency.version}</version>
-    </dependency>
-
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>

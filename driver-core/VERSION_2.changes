@@ -72,6 +72,8 @@ API Changes
   a minor release. Note that if you really want to create "IN (?)" in the query builder
   for some obscure reason, you can use QueryBuilder.in(QueryBuilder.raw("?")).
 
+- The UnavailableException#getConsistency method has been renamed to getConsistencyLevel
+  for consistency with QueryTimeoutException.
 
 
 New Features

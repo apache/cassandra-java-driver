@@ -18,9 +18,6 @@ package com.datastax.driver.core;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.apache.cassandra.utils.MD5Digest;
-import org.apache.cassandra.transport.messages.ResultMessage;
-
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.policies.RetryPolicy;
 
@@ -67,45 +64,32 @@ public class PreparedStatement {
         this.queryKeyspace = queryKeyspace;
     }
 
-    static PreparedStatement fromMessage(ResultMessage.Prepared msg, Metadata clusterMetadata, String query, String queryKeyspace) {
-        switch (msg.kind) {
-            case PREPARED:
-                ColumnDefinitions resultMetadata = null;
-                if (!msg.resultMetadata.flags.contains(org.apache.cassandra.cql3.ResultSet.Flag.NO_METADATA)) {
-                    ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[msg.resultMetadata.columnCount];
-                    for (int i = 0; i < defs.length; i++) {
-                        defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(msg.resultMetadata.names.get(i));
-                    }
-                    resultMetadata = new ColumnDefinitions(defs);
-                }
+    static PreparedStatement fromMessage(Responses.Result.Prepared msg, Metadata clusterMetadata, String query, String queryKeyspace) {
+        assert msg.metadata.columns != null;
 
-                ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[msg.metadata.columnCount];
-                if (defs.length == 0)
-                    return new PreparedStatement(new ColumnDefinitions(defs), resultMetadata, msg.statementId, null, query, queryKeyspace);
+        ColumnDefinitions defs = msg.metadata.columns;
 
-                List<ColumnMetadata> partitionKeyColumns = null;
-                int[] pkIndexes = null;
-                KeyspaceMetadata km = clusterMetadata.getKeyspace(msg.metadata.names.get(0).ksName);
-                if (km != null) {
-                    TableMetadata tm = km.getTable(msg.metadata.names.get(0).cfName);
-                    if (tm != null) {
-                        partitionKeyColumns = tm.getPartitionKey();
-                        pkIndexes = new int[partitionKeyColumns.size()];
-                        for (int i = 0; i < pkIndexes.length; ++i)
-                            pkIndexes[i] = -1;
-                    }
-                }
+        if (defs.size() == 0)
+            return new PreparedStatement(defs, msg.resultMetadata.columns, msg.statementId, null, query, queryKeyspace);
 
-                // Note: we rely on the fact CQL queries cannot span multiple tables. If that change, we'll have to get smarter.
-                for (int i = 0; i < defs.length; i++) {
-                    defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(msg.metadata.names.get(i));
-                    maybeGetIndex(defs[i].getName(), i, partitionKeyColumns, pkIndexes);
-                }
-
-                return new PreparedStatement(new ColumnDefinitions(defs), resultMetadata, msg.statementId, allSet(pkIndexes) ? pkIndexes : null, query, queryKeyspace);
-            default:
-                throw new DriverInternalError(String.format("%s response received when prepared statement received was expected", msg.kind));
+        List<ColumnMetadata> partitionKeyColumns = null;
+        int[] pkIndexes = null;
+        KeyspaceMetadata km = clusterMetadata.getKeyspace(defs.getKeyspace(0));
+        if (km != null) {
+            TableMetadata tm = km.getTable(defs.getTable(0));
+            if (tm != null) {
+                partitionKeyColumns = tm.getPartitionKey();
+                pkIndexes = new int[partitionKeyColumns.size()];
+                for (int i = 0; i < pkIndexes.length; ++i)
+                    pkIndexes[i] = -1;
+            }
         }
+
+        // Note: we rely on the fact CQL queries cannot span multiple tables. If that change, we'll have to get smarter.
+        for (int i = 0; i < defs.size(); i++)
+            maybeGetIndex(defs.getName(i), i, partitionKeyColumns, pkIndexes);
+
+        return new PreparedStatement(defs, msg.resultMetadata.columns, msg.statementId, allSet(pkIndexes) ? pkIndexes : null, query, queryKeyspace);
     }
 
     private static void maybeGetIndex(String name, int j, List<ColumnMetadata> pkColumns, int[] pkIndexes) {

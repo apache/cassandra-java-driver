@@ -17,9 +17,6 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
-import org.apache.cassandra.exceptions.RequestValidationException;
-import org.apache.cassandra.db.marshal.*;
-
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -63,96 +60,76 @@ public class TableMetadata {
         this.options = options;
     }
 
-    static String fixTimestampType(String type) {
-        // Ugly special case for TimestampType as we don't have it yet. We should get rid of that later.
-        return type.replaceAll("org.apache.cassandra.db.marshal.TimestampType", "org.apache.cassandra.db.marshal.DateType");
-    }
-
     static TableMetadata build(KeyspaceMetadata ksm, Row row, boolean hasColumnMetadata) {
-        try {
-            String name = row.getString(CF_NAME);
+        String name = row.getString(CF_NAME);
 
-            List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>();
-            List<ColumnMetadata> clusteringKey = new ArrayList<ColumnMetadata>();
-            // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
-            LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
+        List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>();
+        List<ColumnMetadata> clusteringKey = new ArrayList<ColumnMetadata>();
+        // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
+        LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
 
-            // First, figure out which kind of table we are
-            boolean isCompact = false;
+        // First, figure out which kind of table we are
+        boolean isCompact = false;
 
-            AbstractType<?> ct = TypeParser.parse(fixTimestampType(row.getString(COMPARATOR)));
-            boolean isComposite = ct instanceof CompositeType;
-            List<AbstractType<?>> columnTypes = isComposite
-                                              ? ((CompositeType)ct).types
-                                              : Collections.<AbstractType<?>>singletonList(ct);
-            List<String> columnAliases = fromJsonList(row.getString(COLUMN_ALIASES));
-            int clusteringSize;
-            boolean hasValue;
-            int last = columnTypes.size() - 1;
-            AbstractType<?> lastType = columnTypes.get(last);
-            if (isComposite) {
-                if (lastType instanceof ColumnToCollectionType || (columnAliases.size() == last && lastType instanceof UTF8Type)) {
-                    hasValue = false;
-                    clusteringSize = lastType instanceof ColumnToCollectionType ? last - 1 : last;
-                } else {
-                    isCompact = true;
-                    hasValue = true;
-                    clusteringSize = columnTypes.size();
-                }
+        CassandraTypeParser.ParseResult ct = CassandraTypeParser.parseWithComposite(row.getString(COMPARATOR));
+        List<String> columnAliases = fromJsonList(row.getString(COLUMN_ALIASES));
+        int clusteringSize;
+        boolean hasValue;
+        int last = ct.types.size() - 1;
+        DataType lastType = ct.types.get(last);
+        if (ct.isComposite) {
+            if (!ct.collections.isEmpty() || (columnAliases.size() == last && lastType.equals(DataType.text()))) {
+                hasValue = false;
+                clusteringSize = last;
             } else {
                 isCompact = true;
-                if (!columnAliases.isEmpty() || !hasColumnMetadata) {
-                    hasValue = true;
-                    clusteringSize = columnTypes.size();
-                } else {
-                    hasValue = false;
-                    clusteringSize = 0;
-                }
+                hasValue = true;
+                clusteringSize = ct.types.size();
             }
-
-            TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringKey, columns, new Options(row, isCompact));
-
-            // Partition key
-            AbstractType<?> kt = TypeParser.parse(fixTimestampType(row.getString(KEY_VALIDATOR)));
-            List<AbstractType<?>> keyTypes = kt instanceof CompositeType
-                                           ? ((CompositeType)kt).types
-                                           : Collections.<AbstractType<?>>singletonList(kt);
-
-            // check if key_aliases is null, and set to [] due to CASSANDRA-5101
-            List<String> keyAliases = row.getString(KEY_ALIASES) == null ? Collections.<String>emptyList() : fromJsonList(row.getString(KEY_ALIASES));
-            for (int i = 0; i < keyTypes.size(); i++) {
-                String cn = keyAliases.size() > i
-                          ? keyAliases.get(i)
-                          : (i == 0 ? DEFAULT_KEY_ALIAS : DEFAULT_KEY_ALIAS + (i + 1));
-                DataType dt = Codec.rawTypeToDataType(keyTypes.get(i));
-                ColumnMetadata colMeta = new ColumnMetadata(tm, cn, dt, null);
-                columns.put(cn, colMeta);
-                partitionKey.add(colMeta);
+        } else {
+            isCompact = true;
+            if (!columnAliases.isEmpty() || !hasColumnMetadata) {
+                hasValue = true;
+                clusteringSize = ct.types.size();
+            } else {
+                hasValue = false;
+                clusteringSize = 0;
             }
-
-            // Clustering key
-            for (int i = 0; i < clusteringSize; i++) {
-                String cn = columnAliases.size() > i ? columnAliases.get(i) : DEFAULT_COLUMN_ALIAS + (i + 1);
-                DataType dt = Codec.rawTypeToDataType(columnTypes.get(i));
-                ColumnMetadata colMeta = new ColumnMetadata(tm, cn, dt, null);
-                columns.put(cn, colMeta);
-                clusteringKey.add(colMeta);
-            }
-
-            // Value alias (if present)
-            if (hasValue) {
-                AbstractType<?> vt = TypeParser.parse(fixTimestampType(row.getString(VALIDATOR)));
-                String valueAlias = row.isNull(KEY_ALIASES) ? DEFAULT_VALUE_ALIAS : row.getString(VALUE_ALIAS);
-                ColumnMetadata vm = new ColumnMetadata(tm, valueAlias, Codec.rawTypeToDataType(vt), null);
-                columns.put(valueAlias, vm);
-            }
-
-            ksm.add(tm);
-            return tm;
-        } catch (RequestValidationException e) {
-            // The server will have validated the type
-            throw new RuntimeException(e);
         }
+
+        TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringKey, columns, new Options(row, isCompact));
+
+        // Partition key
+        CassandraTypeParser.ParseResult kt = CassandraTypeParser.parseWithComposite(row.getString(KEY_VALIDATOR));
+        // check if key_aliases is null, and set to [] due to CASSANDRA-5101
+        List<String> keyAliases = row.getString(KEY_ALIASES) == null ? Collections.<String>emptyList() : fromJsonList(row.getString(KEY_ALIASES));
+        for (int i = 0; i < kt.types.size(); i++) {
+            String cn = keyAliases.size() > i
+                      ? keyAliases.get(i)
+                      : (i == 0 ? DEFAULT_KEY_ALIAS : DEFAULT_KEY_ALIAS + (i + 1));
+            ColumnMetadata colMeta = new ColumnMetadata(tm, cn, kt.types.get(i), null);
+            columns.put(cn, colMeta);
+            partitionKey.add(colMeta);
+        }
+
+        // Clustering key
+        for (int i = 0; i < clusteringSize; i++) {
+            String cn = columnAliases.size() > i ? columnAliases.get(i) : DEFAULT_COLUMN_ALIAS + (i + 1);
+            ColumnMetadata colMeta = new ColumnMetadata(tm, cn, ct.types.get(i), null);
+            columns.put(cn, colMeta);
+            clusteringKey.add(colMeta);
+        }
+
+        // Value alias (if present)
+        if (hasValue) {
+            DataType vt = CassandraTypeParser.parseOne(row.getString(VALIDATOR));
+            String valueAlias = row.isNull(KEY_ALIASES) ? DEFAULT_VALUE_ALIAS : row.getString(VALUE_ALIAS);
+            ColumnMetadata vm = new ColumnMetadata(tm, valueAlias, vt, null);
+            columns.put(valueAlias, vm);
+        }
+
+        ksm.add(tm);
+        return tm;
     }
 
     /**

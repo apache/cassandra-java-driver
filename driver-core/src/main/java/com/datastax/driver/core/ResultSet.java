@@ -24,11 +24,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 
-import org.apache.cassandra.service.pager.PagingState;
-import org.apache.cassandra.transport.Message;
-import org.apache.cassandra.transport.messages.ErrorMessage;
-import org.apache.cassandra.transport.messages.ResultMessage;
-
 import com.datastax.driver.core.exceptions.*;
 
 import org.slf4j.Logger;
@@ -71,7 +66,7 @@ public class ResultSet implements Iterable<Row> {
     private ResultSet(ColumnDefinitions metadata,
                       Queue<List<ByteBuffer>> rows,
                       ExecutionInfo info,
-                      PagingState initialPagingState,
+                      ByteBuffer initialPagingState,
                       Session.Manager session,
                       Statement statement) {
         this.metadata = metadata;
@@ -91,7 +86,7 @@ public class ResultSet implements Iterable<Row> {
         assert fetchState == null || (session != null && statement != null);
     }
 
-    static ResultSet fromMessage(ResultMessage msg, Session.Manager session, ExecutionInfo info, Statement statement) {
+    static ResultSet fromMessage(Responses.Result msg, Session.Manager session, ExecutionInfo info, Statement statement) {
 
         UUID tracingId = msg.getTracingId();
         info = tracingId == null || info == null ? info : info.withTrace(new QueryTrace(tracingId, session));
@@ -100,24 +95,18 @@ public class ResultSet implements Iterable<Row> {
             case VOID:
                 return empty(info);
             case ROWS:
-                ResultMessage.Rows r = (ResultMessage.Rows)msg;
-                org.apache.cassandra.cql3.ResultSet.Metadata metadata = r.result.metadata;
+                Responses.Result.Rows r = (Responses.Result.Rows)msg;
 
                 ColumnDefinitions columnDefs;
-                if (metadata.flags.contains(org.apache.cassandra.cql3.ResultSet.Flag.NO_METADATA)) {
+                if (r.metadata.columns == null) {
                     assert statement instanceof BoundStatement;
                     columnDefs = ((BoundStatement)statement).statement.resultSetMetadata;
                     assert columnDefs != null;
                 } else {
-                    ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[metadata.names.size()];
-                    for (int i = 0; i < defs.length; i++)
-                        defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(metadata.names.get(i));
-                    columnDefs = new ColumnDefinitions(defs);
+                    columnDefs = r.metadata.columns;
                 }
 
-                PagingState initialState = metadata.flags.contains(org.apache.cassandra.cql3.ResultSet.Flag.HAS_MORE_PAGES) ? metadata.pagingState : null;
-
-                return new ResultSet(columnDefs, new ArrayDeque<List<ByteBuffer>>(r.result.rows), info, initialState, session, statement);
+                return new ResultSet(columnDefs, r.data, info, r.metadata.pagingState, session, statement);
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
                 return empty(info);
@@ -312,13 +301,13 @@ public class ResultSet implements Iterable<Row> {
             return fetchState.inProgress;
 
         assert fetchState.nextStart != null;
-        PagingState state = fetchState.nextStart;
+        ByteBuffer state = fetchState.nextStart;
         SettableFuture<Void> future = SettableFuture.create();
         fetchState = new FetchingState(null, future);
         return queryNextPage(state, future);
     }
 
-    private ListenableFuture<Void> queryNextPage(PagingState nextStart, final SettableFuture<Void> future) {
+    private ListenableFuture<Void> queryNextPage(ByteBuffer nextStart, final SettableFuture<Void> future) {
 
         assert !(statement instanceof BatchStatement);
 
@@ -339,7 +328,7 @@ public class ResultSet implements Iterable<Row> {
                 try {
                     switch (response.type) {
                         case RESULT:
-                            ResultMessage rm = (ResultMessage)response;
+                            Responses.Result rm = (Responses.Result)response;
                             // If we're paging, the query was a SELECT, so we don't have to handle SET_KEYSPACE and SCHEMA_CHANGE really
                             ResultSet tmp = ResultSet.fromMessage(rm, ResultSet.this.session, info, statement);
 
@@ -349,7 +338,7 @@ public class ResultSet implements Iterable<Row> {
                             future.set(null);
                             break;
                         case ERROR:
-                            future.setException(ResultSetFuture.convertException(((ErrorMessage)response).error));
+                            future.setException(((Responses.Error)response).asException(connection.address));
                             break;
                         default:
                             // This mean we have probably have a bad node, so defunct the connection
@@ -426,10 +415,10 @@ public class ResultSet implements Iterable<Row> {
     }
 
     private static class FetchingState {
-        public final PagingState nextStart;
+        public final ByteBuffer nextStart;
         public final ListenableFuture<Void> inProgress;
 
-        FetchingState(PagingState nextStart, ListenableFuture<Void> inProgress) {
+        FetchingState(ByteBuffer nextStart, ListenableFuture<Void> inProgress) {
             assert (nextStart == null) != (inProgress == null);
             this.nextStart = nextStart;
             this.inProgress = inProgress;

@@ -100,8 +100,12 @@ public class QueryOptions {
      * that don't explicitely have a fetch size, i.e. when {@link Query#getFetchSize}
      * is less or equal to 0.
      *
-     * @param fetchSize the new fetch size to set as default.
+     * @param fetchSize the new fetch size to set as default. It must be
+     * strictly positive but you can use {@code Integer.MAX_VALUE} to disable
+     * paging.
      * @return this {@code QueryOptions} instance.
+     *
+     * @throws IllegalArgumentException if {@code fetchSize &lte; 0}.
      */
     public QueryOptions setFetchSize(int fetchSize) {
         this.fetchSize = fetchSize;

@@ -24,17 +24,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
-
-import org.apache.cassandra.service.ClientState;
-import org.apache.cassandra.transport.*;
-import org.apache.cassandra.transport.messages.*;
 
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
@@ -57,27 +52,17 @@ import org.slf4j.LoggerFactory;
 /**
  * A connection to a Cassandra Node.
  */
-class Connection extends org.apache.cassandra.transport.Connection {
+class Connection {
     public static final int MAX_STREAM_PER_CONNECTION = 128;
 
     private static final Logger logger = LoggerFactory.getLogger(Connection.class);
-
-    // TODO: that doesn't belong here
-    private static final String CQL_VERSION = "3.0.0";
-
-    private static final org.apache.cassandra.transport.Connection.Tracker EMPTY_TRACKER = new org.apache.cassandra.transport.Connection.Tracker() {
-        @Override
-        public void addConnection(Channel ch, org.apache.cassandra.transport.Connection connection) {}
-
-        @Override
-        public void closeAll() {}
-    };
 
     public final InetAddress address;
     private final String name;
 
     private final Channel channel;
     private final Factory factory;
+
     private final Dispatcher dispatcher = new Dispatcher();
 
     // Used by connnection pooling to count how many requests are "in flight" on that connection.
@@ -100,17 +85,13 @@ class Connection extends org.apache.cassandra.transport.Connection {
      * refused by the server.
      */
     private Connection(String name, InetAddress address, Factory factory) throws ConnectionException, InterruptedException {
-        super(null, 2, EMPTY_TRACKER);
-
         this.address = address;
         this.factory = factory;
         this.name = name;
 
         ClientBootstrap bootstrap = factory.newBootstrap();
-        if (factory.configuration.getProtocolOptions().getSSLOptions() == null)
-            bootstrap.setPipelineFactory(new PipelineFactory(this));
-        else
-            bootstrap.setPipelineFactory(new SecurePipelineFactory(this, factory.configuration.getProtocolOptions().getSSLOptions()));
+        ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
+        bootstrap.setPipelineFactory(new PipelineFactory(this, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
 
         ChannelFuture future = bootstrap.connect(new InetSocketAddress(address, factory.getPort()));
 
@@ -142,32 +123,22 @@ class Connection extends org.apache.cassandra.transport.Connection {
     }
 
     private void initializeTransport() throws ConnectionException, InterruptedException {
-
-        // TODO: we will need to get fancy about handling protocol version at
-        // some point, but keep it simple for now.
-        ImmutableMap.Builder<String, String> options = new ImmutableMap.Builder<String, String>();
-        options.put(StartupMessage.CQL_VERSION, CQL_VERSION);
-        ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
-        if (compression != ProtocolOptions.Compression.NONE)
-        {
-            options.put(StartupMessage.COMPRESSION, compression.toString());
-            setCompressor(compression.compressor());
-        }
-        StartupMessage startup = new StartupMessage(options.build());
         try {
-            Message.Response response = write(startup).get();
+
+            ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
+            Message.Response response = write(new Requests.Startup(compression)).get();
             switch (response.type) {
                 case READY:
                     break;
                 case ERROR:
-                    throw defunct(new TransportException(address, String.format("Error initializing connection: %s", ((ErrorMessage)response).error.getMessage())));
+                    throw defunct(new TransportException(address, String.format("Error initializing connection: %s", ((Responses.Error)response).message)));
                 case AUTHENTICATE:
                     Authenticator authenticator = factory.authProvider.newAuthenticator(address);
                     byte[] initialResponse = authenticator.initialResponse();
                     if (null == initialResponse)
                         initialResponse = new byte[0];
 
-                    Message.Response authResponse = write(new AuthResponse(initialResponse)).get();
+                    Message.Response authResponse = write(new Requests.AuthResponse(initialResponse)).get();
                     waitForAuthCompletion(authResponse, authenticator);
                     break;
                 default:
@@ -181,14 +152,13 @@ class Connection extends org.apache.cassandra.transport.Connection {
     }
 
     private void waitForAuthCompletion(Message.Response authResponse, Authenticator authenticator)
-    throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException
-    {
+    throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         switch (authResponse.type) {
             case AUTH_SUCCESS:
                 logger.trace("Authentication complete");
                 break;
             case AUTH_CHALLENGE:
-                byte[] responseToServer = authenticator.evaluateChallenge(((AuthChallenge) authResponse).getToken());
+                byte[] responseToServer = authenticator.evaluateChallenge(((Responses.AuthChallenge)authResponse).token);
                 if (responseToServer == null) {
                     // If we generate a null response, then authentication has completed, return without
                     // sending a further response back to the server.
@@ -197,11 +167,11 @@ class Connection extends org.apache.cassandra.transport.Connection {
                 } else {
                     // Otherwise, send the challenge response back to the server
                     logger.trace("Sending Auth response to challenge");
-                    waitForAuthCompletion(write(new AuthResponse(responseToServer)).get(), authenticator);
+                    waitForAuthCompletion(write(new Requests.AuthResponse(responseToServer)).get(), authenticator);
                 }
                 break;
             case ERROR:
-                throw new AuthenticationException(address, (((ErrorMessage) authResponse).error).getMessage());
+                throw new AuthenticationException(address, ((Responses.Error)authResponse).message);
             default:
                 throw new TransportException(address, String.format("Unexpected %s response message from server to authentication message", authResponse.type));
         }
@@ -240,7 +210,7 @@ class Connection extends org.apache.cassandra.transport.Connection {
             logger.trace("[{}] Setting keyspace {}", name, keyspace);
             long timeout = factory.getConnectTimeoutMillis();
             // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
-            Future future = write(new QueryMessage("USE \"" + keyspace + "\"", ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+            Future future = write(new Requests.Query("USE \"" + keyspace + "\""));
             Message.Response response = Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
             switch (response.type) {
                 case RESULT:
@@ -284,8 +254,6 @@ class Connection extends org.apache.cassandra.transport.Connection {
     public ResponseHandler write(ResponseCallback callback) throws ConnectionException, BusyConnectionException {
 
         Message.Request request = callback.request();
-
-        request.attach(this);
 
         ResponseHandler handler = new ResponseHandler(this, callback);
         dispatcher.add(handler);
@@ -368,11 +336,6 @@ class Connection extends org.apache.cassandra.transport.Connection {
     public String toString() {
         return String.format("Connection[%s, inFlight=%d, closed=%b]", name, inFlight.get(), isClosed());
     }
-
-    // Cruft needed because we reuse server side classes, but we don't care about it
-    public void validateNewMessage(Message.Type type) {};
-    public void applyStateTransition(Message.Type requestType, Message.Type responseType) {};
-    public ClientState clientState() { return null; };
 
     public static class Factory {
 
@@ -703,71 +666,44 @@ class Connection extends org.apache.cassandra.transport.Connection {
         // Stateless handlers
         private static final Message.ProtocolDecoder messageDecoder = new Message.ProtocolDecoder();
         private static final Message.ProtocolEncoder messageEncoder = new Message.ProtocolEncoder();
-        private static final Frame.Decompressor frameDecompressor = new Frame.Decompressor();
-        private static final Frame.Compressor frameCompressor = new Frame.Compressor();
         private static final Frame.Encoder frameEncoder = new Frame.Encoder();
 
-        // One more fallout of using server side classes; not a big deal
-        private static final org.apache.cassandra.transport.Connection.Tracker tracker;
-        static {
-            tracker = new org.apache.cassandra.transport.Connection.Tracker() {
-                @Override
-                public void addConnection(Channel ch, org.apache.cassandra.transport.Connection connection) {}
-
-                @Override
-                public void closeAll() {}
-            };
-        }
-
         private final Connection connection;
-        private final org.apache.cassandra.transport.Connection.Factory cfactory;
+        private final FrameCompressor compressor;
+        private final SSLOptions sslOptions;
 
-        public PipelineFactory(final Connection connection) {
+        public PipelineFactory(Connection connection, FrameCompressor compressor, SSLOptions sslOptions) {
             this.connection = connection;
-            this.cfactory = new org.apache.cassandra.transport.Connection.Factory() {
-                @Override
-                public Connection newConnection(Channel channel, int version) {
-                    return connection;
-                }
-            };
+            this.compressor = compressor;
+            this.sslOptions = sslOptions;
         }
 
         @Override
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = Channels.pipeline();
 
+            if (sslOptions != null) {
+                SSLEngine engine = sslOptions.context.createSSLEngine();
+                engine.setUseClientMode(true);
+                engine.setEnabledCipherSuites(sslOptions.cipherSuites);
+                pipeline.addLast("ssl", new SslHandler(engine));
+            }
+
             //pipeline.addLast("debug", new LoggingHandler(InternalLogLevel.INFO));
 
-            pipeline.addLast("frameDecoder", new Frame.Decoder(cfactory));
+            pipeline.addLast("frameDecoder", new Frame.Decoder());
             pipeline.addLast("frameEncoder", frameEncoder);
 
-            pipeline.addLast("frameDecompressor", frameDecompressor);
-            pipeline.addLast("frameCompressor", frameCompressor);
+            if (compressor != null) {
+                pipeline.addLast("frameDecompressor", new Frame.Decompressor(compressor));
+                pipeline.addLast("frameCompressor", new Frame.Compressor(compressor));
+            }
 
             pipeline.addLast("messageDecoder", messageDecoder);
             pipeline.addLast("messageEncoder", messageEncoder);
 
             pipeline.addLast("dispatcher", connection.dispatcher);
 
-            return pipeline;
-        }
-    }
-
-    private static class SecurePipelineFactory extends PipelineFactory {
-
-        private final SSLOptions options;
-
-        public SecurePipelineFactory(final Connection connection, SSLOptions options) {
-            super(connection);
-            this.options = options;
-        }
-
-        public ChannelPipeline getPipeline() throws Exception {
-            SSLEngine engine = options.context.createSSLEngine();
-            engine.setUseClientMode(true);
-            engine.setEnabledCipherSuites(options.cipherSuites);
-            ChannelPipeline pipeline = super.getPipeline();
-            pipeline.addFirst("ssl", new SslHandler(engine));
             return pipeline;
         }
     }

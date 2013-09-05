@@ -21,8 +21,6 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.apache.cassandra.db.marshal.*;
-
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
@@ -190,7 +188,7 @@ public class BoundStatement extends Statement {
                         throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting %s but %s provided", i, columnType, expectedClass, providedClass));
                     break;
             }
-            setValue(i, Codec.getCodec(columnType).decompose(toSet));
+            setValue(i, columnType.codec().serialize(toSet));
         }
         return this;
     }
@@ -265,7 +263,7 @@ public class BoundStatement extends Statement {
      */
     public BoundStatement setBool(int i, boolean v) {
         metadata().checkType(i, DataType.Name.BOOLEAN);
-        return setValue(i, BooleanType.instance.decompose(v));
+        return setValue(i, TypeCodec.BooleanCodec.instance.serializeNoBoxing(v));
     }
 
     /**
@@ -296,7 +294,7 @@ public class BoundStatement extends Statement {
      */
     public BoundStatement setInt(int i, int v) {
         metadata().checkType(i, DataType.Name.INT);
-        return setValue(i, Int32Type.instance.decompose(v));
+        return setValue(i, TypeCodec.IntCodec.instance.serializeNoBoxing(v));
     }
 
     /**
@@ -327,7 +325,7 @@ public class BoundStatement extends Statement {
      */
     public BoundStatement setLong(int i, long v) {
         metadata().checkType(i, DataType.Name.BIGINT, DataType.Name.COUNTER);
-        return setValue(i, LongType.instance.decompose(v));
+        return setValue(i, TypeCodec.LongCodec.instance.serializeNoBoxing(v));
     }
 
     /**
@@ -358,7 +356,7 @@ public class BoundStatement extends Statement {
      */
     public BoundStatement setDate(int i, Date v) {
         metadata().checkType(i, DataType.Name.TIMESTAMP);
-        return setValue(i, v == null ? null : TimestampType.instance.decompose(v));
+        return setValue(i, v == null ? null : TypeCodec.DateCodec.instance.serialize(v));
     }
 
     /**
@@ -389,7 +387,7 @@ public class BoundStatement extends Statement {
      */
     public BoundStatement setFloat(int i, float v) {
         metadata().checkType(i, DataType.Name.FLOAT);
-        return setValue(i, FloatType.instance.decompose(v));
+        return setValue(i, TypeCodec.FloatCodec.instance.serializeNoBoxing(v));
     }
 
     /**
@@ -420,7 +418,7 @@ public class BoundStatement extends Statement {
      */
     public BoundStatement setDouble(int i, double v) {
         metadata().checkType(i, DataType.Name.DOUBLE);
-        return setValue(i, DoubleType.instance.decompose(v));
+        return setValue(i, TypeCodec.DoubleCodec.instance.serializeNoBoxing(v));
     }
 
     /**
@@ -456,10 +454,10 @@ public class BoundStatement extends Statement {
                                                      DataType.Name.ASCII);
         switch (type) {
             case ASCII:
-                return setValue(i, v == null ? null : AsciiType.instance.decompose(v));
+                return setValue(i, v == null ? null : TypeCodec.StringCodec.asciiInstance.serialize(v));
             case TEXT:
             case VARCHAR:
-                return setValue(i, v == null ? null : UTF8Type.instance.decompose(v));
+                return setValue(i, v == null ? null : TypeCodec.StringCodec.utf8Instance.serialize(v));
             default:
                 throw new AssertionError();
         }
@@ -571,7 +569,7 @@ public class BoundStatement extends Statement {
      */
     public BoundStatement setVarint(int i, BigInteger v) {
         metadata().checkType(i, DataType.Name.VARINT);
-        return setValue(i, v == null ? null : IntegerType.instance.decompose(v));
+        return setValue(i, v == null ? null : TypeCodec.BigIntegerCodec.instance.serialize(v));
     }
 
     /**
@@ -602,7 +600,7 @@ public class BoundStatement extends Statement {
      */
     public BoundStatement setDecimal(int i, BigDecimal v) {
         metadata().checkType(i, DataType.Name.DECIMAL);
-        return setValue(i, v == null ? null : DecimalType.instance.decompose(v));
+        return setValue(i, v == null ? null : TypeCodec.DecimalCodec.instance.serialize(v));
     }
 
     /**
@@ -644,8 +642,8 @@ public class BoundStatement extends Statement {
             throw new InvalidTypeException(String.format("%s is not a Type 1 (time-based) UUID", v));
 
         return type == DataType.Name.UUID
-             ? setValue(i, UUIDType.instance.decompose(v))
-             : setValue(i, TimeUUIDType.instance.decompose(v));
+             ? setValue(i, TypeCodec.UUIDCodec.instance.serialize(v))
+             : setValue(i, TypeCodec.TimeUUIDCodec.instance.serialize(v));
     }
 
     /**
@@ -678,7 +676,7 @@ public class BoundStatement extends Statement {
      */
     public BoundStatement setInet(int i, InetAddress v) {
         metadata().checkType(i, DataType.Name.INET);
-        return setValue(i, v == null ? null : InetAddressType.instance.decompose(v));
+        return setValue(i, v == null ? null : TypeCodec.InetCodec.instance.serialize(v));
     }
 
     /**
@@ -727,7 +725,7 @@ public class BoundStatement extends Statement {
                 throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting list of %s but provided list of %s", metadata().getName(i), type, expectedClass, providedClass));
         }
 
-        return setValue(i, Codec.<List<T>>getCodec(type).decompose(v));
+        return setValue(i, type.codec().serialize(v));
     }
 
     /**
@@ -780,7 +778,7 @@ public class BoundStatement extends Statement {
                 throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting map of %s->%s but provided map of %s->%s", metadata().getName(i), type, expectedKeysClass, expectedValuesClass, providedKeysClass, providedValuesClass));
         }
 
-        return setValue(i, Codec.<Map<K, V>>getCodec(type).decompose(v));
+        return setValue(i, type.codec().serialize(v));
     }
 
     /**
@@ -830,7 +828,7 @@ public class BoundStatement extends Statement {
                 throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting set of %s but provided set of %s", metadata().getName(i), type, expectedClass, providedClass));
         }
 
-        return setValue(i, Codec.<Set<T>>getCodec(type).decompose(v));
+        return setValue(i, type.codec().serialize(v));
     }
 
     /**

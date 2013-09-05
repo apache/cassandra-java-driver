@@ -17,10 +17,6 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
-import org.apache.cassandra.exceptions.RequestValidationException;
-import org.apache.cassandra.db.marshal.AbstractType;
-import org.apache.cassandra.db.marshal.TypeParser;
-
 /**
  * Describes a Column.
  */
@@ -43,18 +39,11 @@ public class ColumnMetadata {
     }
 
     static ColumnMetadata build(TableMetadata tm, Row row) {
-        try {
-            String name = row.getString(COLUMN_NAME);
+        String name = row.getString(COLUMN_NAME);
 
-            String validator = row.getString(VALIDATOR);
-            AbstractType<?> t = TypeParser.parse(TableMetadata.fixTimestampType(validator));
-            ColumnMetadata cm = new ColumnMetadata(tm, name, Codec.rawTypeToDataType(t), row);
-            tm.add(cm);
-            return cm;
-        } catch (RequestValidationException e) {
-            // The server will have validated the type
-            throw new RuntimeException(e);
-        }
+        ColumnMetadata cm = new ColumnMetadata(tm, name, CassandraTypeParser.parseOne(row.getString(VALIDATOR)), row);
+        tm.add(cm);
+        return cm;
     }
 
     /**

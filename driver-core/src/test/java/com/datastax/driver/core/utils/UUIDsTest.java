@@ -23,9 +23,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import static org.testng.Assert.*;
-
-import org.apache.cassandra.db.marshal.TimeUUIDType;
 import org.testng.annotations.Test;
+
+import com.datastax.driver.core.DataType;
 
 public class UUIDsTest {
 
@@ -110,11 +110,39 @@ public class UUIDsTest {
     }
 
     private static void assertWithin(UUID uuid, UUID lowerBound, UUID upperBound) {
-        ByteBuffer uuidBytes = TimeUUIDType.instance.decompose(uuid);
-        ByteBuffer lb = TimeUUIDType.instance.decompose(lowerBound);
-        ByteBuffer ub = TimeUUIDType.instance.decompose(upperBound);
-        assertTrue(TimeUUIDType.instance.compare(lb, uuidBytes) <= 0);
-        assertTrue(TimeUUIDType.instance.compare(ub, uuidBytes) >= 0);
+        ByteBuffer uuidBytes = DataType.uuid().serialize(uuid);
+        ByteBuffer lb = DataType.uuid().serialize(lowerBound);
+        ByteBuffer ub = DataType.uuid().serialize(upperBound);
+        assertTrue(compareTimestampBytes(lb, uuidBytes) <= 0);
+        assertTrue(compareTimestampBytes(ub, uuidBytes) >= 0);
+    }
+
+    private static int compareTimestampBytes(ByteBuffer o1, ByteBuffer o2) {
+        int o1Pos = o1.position();
+        int o2Pos = o2.position();
+
+        int d = (o1.get(o1Pos + 6) & 0xF) - (o2.get(o2Pos + 6) & 0xF);
+        if (d != 0) return d;
+
+        d = (o1.get(o1Pos + 7) & 0xFF) - (o2.get(o2Pos + 7) & 0xFF);
+        if (d != 0) return d;
+
+        d = (o1.get(o1Pos + 4) & 0xFF) - (o2.get(o2Pos + 4) & 0xFF);
+        if (d != 0) return d;
+
+        d = (o1.get(o1Pos + 5) & 0xFF) - (o2.get(o2Pos + 5) & 0xFF);
+        if (d != 0) return d;
+
+        d = (o1.get(o1Pos) & 0xFF) - (o2.get(o2Pos) & 0xFF);
+        if (d != 0) return d;
+
+        d = (o1.get(o1Pos + 1) & 0xFF) - (o2.get(o2Pos + 1) & 0xFF);
+        if (d != 0) return d;
+
+        d = (o1.get(o1Pos + 2) & 0xFF) - (o2.get(o2Pos + 2) & 0xFF);
+        if (d != 0) return d;
+
+        return (o1.get(o1Pos + 3) & 0xFF) - (o2.get(o2Pos + 3) & 0xFF);
     }
 
     private static class UUIDGenerator extends Thread {

@@ -40,25 +40,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.cassandra</groupId>
-      <artifactId>cassandra-thrift</artifactId>
-      <version>${cassandra-dependency.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.thrift</groupId>
-      <artifactId>libthrift</artifactId>
-      <!-- Leave at 0.7.0 for Cassandra compatibility -->
-      <version>0.7.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-core-asl</artifactId>
       <!-- Leave at 1.9.2 for Cassandra compatibility -->
@@ -77,6 +58,23 @@
       <artifactId>metrics-core</artifactId>
       <version>3.0.0</version>
     </dependency>
+
+    <!-- Compression libraries for the protocol. -->
+    <!-- Each of them is only a mandatory runtime dependency if you want to use the compression it offers -->
+
+    <dependency>
+        <groupId>org.xerial.snappy</groupId>
+        <artifactId>snappy-java</artifactId>
+        <version>1.0.5</version>
+    </dependency>
+
+    <dependency>
+        <groupId>net.jpountz.lz4</groupId>
+        <artifactId>lz4</artifactId>
+        <version>1.2.0</version>
+    </dependency>
+
+    <!-- End of compression libraries -->
 
     <dependency>
       <groupId>org.testng</groupId>

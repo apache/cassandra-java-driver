@@ -22,10 +22,6 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 
-import org.apache.cassandra.transport.Message;
-import org.apache.cassandra.transport.messages.ErrorMessage;
-import org.apache.cassandra.transport.messages.ResultMessage;
-
 import com.datastax.driver.core.exceptions.*;
 
 import org.slf4j.Logger;
@@ -75,15 +71,15 @@ public class ResultSetFuture extends AbstractFuture<ResultSet> {
             try {
                 switch (response.type) {
                     case RESULT:
-                        ResultMessage rm = (ResultMessage)response;
+                        Responses.Result rm = (Responses.Result)response;
                         switch (rm.kind) {
                             case SET_KEYSPACE:
                                 // propagate the keyspace change to other connections
-                                session.poolsState.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
+                                session.poolsState.setKeyspace(((Responses.Result.SetKeyspace)rm).keyspace);
                                 set(ResultSet.fromMessage(rm, session, info, statement));
                                 break;
                             case SCHEMA_CHANGE:
-                                ResultMessage.SchemaChange scc = (ResultMessage.SchemaChange)rm;
+                                Responses.Result.SchemaChange scc = (Responses.Result.SchemaChange)rm;
                                 ResultSet rs = ResultSet.fromMessage(rm, session, info, statement);
                                 switch (scc.change) {
                                     case CREATED:
@@ -123,7 +119,7 @@ public class ResultSetFuture extends AbstractFuture<ResultSet> {
                         }
                         break;
                     case ERROR:
-                        setException(convertException(((ErrorMessage)response).error));
+                        setException(((Responses.Error)response).asException(connection.address));
                         break;
                     default:
                         // This mean we have probably have a bad node, so defunct the connection
@@ -275,49 +271,5 @@ public class ResultSetFuture extends AbstractFuture<ResultSet> {
             throw ((DriverException)e.getCause()).copy();
         else
             throw new DriverInternalError("Unexpected exception thrown", e.getCause());
-    }
-
-    static void extractCause(Throwable cause) {
-        // Same as above
-        if (cause instanceof DriverException)
-            throw ((DriverException)cause).copy();
-        throw new DriverInternalError("Unexpected exception thrown", cause);
-    }
-
-    static Exception convertException(org.apache.cassandra.exceptions.TransportException te) {
-        switch (te.code()) {
-            case SERVER_ERROR:
-                return new DriverInternalError("An unexpected error occured server side: " + te.getMessage());
-            case PROTOCOL_ERROR:
-                return new DriverInternalError("An unexpected protocol error occured. This is a bug in this library, please report: " + te.getMessage());
-            case UNAVAILABLE:
-                org.apache.cassandra.exceptions.UnavailableException ue = (org.apache.cassandra.exceptions.UnavailableException)te;
-                return new UnavailableException(ConsistencyLevel.from(ue.consistency), ue.required, ue.alive);
-            case OVERLOADED:
-                return new DriverInternalError("Queried host was overloaded; this shouldn't happen, another node should have been tried");
-            case IS_BOOTSTRAPPING:
-                return new DriverInternalError("Queried host was boostrapping; this shouldn't happen, another node should have been tried");
-            case TRUNCATE_ERROR:
-                return new TruncateException(te.getMessage());
-            case WRITE_TIMEOUT:
-                org.apache.cassandra.exceptions.WriteTimeoutException wte = (org.apache.cassandra.exceptions.WriteTimeoutException)te;
-                return new WriteTimeoutException(ConsistencyLevel.from(wte.consistency), WriteType.from(wte.writeType), wte.received, wte.blockFor);
-            case READ_TIMEOUT:
-                org.apache.cassandra.exceptions.ReadTimeoutException rte = (org.apache.cassandra.exceptions.ReadTimeoutException)te;
-                return new ReadTimeoutException(ConsistencyLevel.from(rte.consistency), rte.received, rte.blockFor, rte.dataPresent);
-            case SYNTAX_ERROR:
-                return new SyntaxError(te.getMessage());
-            case UNAUTHORIZED:
-                return new UnauthorizedException(te.getMessage());
-            case INVALID:
-                return new InvalidQueryException(te.getMessage());
-            case CONFIG_ERROR:
-                return new InvalidConfigurationInQueryException(te.getMessage());
-            case ALREADY_EXISTS:
-                org.apache.cassandra.exceptions.AlreadyExistsException aee = (org.apache.cassandra.exceptions.AlreadyExistsException)te;
-                return new AlreadyExistsException(aee.ksName, aee.cfName);
-            default:
-                return new DriverInternalError("Unknown error return code: " + te.code());
-        }
     }
 }

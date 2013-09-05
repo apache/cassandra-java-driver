@@ -30,11 +30,6 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
 
-import org.apache.cassandra.cql3.statements.*;
-import org.apache.cassandra.transport.Message;
-import org.apache.cassandra.transport.messages.*;
-import org.apache.cassandra.service.pager.PagingState;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -187,7 +182,7 @@ public class Session {
      * contacted successfully to prepare this query.
      */
     public PreparedStatement prepare(String query) {
-        Connection.Future future = new Connection.Future(new PrepareMessage(query));
+        Connection.Future future = new Connection.Future(new Requests.Prepare(query));
         manager.execute(future, Statement.DEFAULT);
         return toPreparedStatement(query, future);
     }
@@ -261,15 +256,14 @@ public class Session {
     }
 
     private PreparedStatement toPreparedStatement(String query, Connection.Future future) {
-
         try {
             Message.Response response = Uninterruptibles.getUninterruptibly(future);
             switch (response.type) {
                 case RESULT:
-                    ResultMessage rm = (ResultMessage)response;
+                    Responses.Result rm = (Responses.Result)response;
                     switch (rm.kind) {
                         case PREPARED:
-                            ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
+                            Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
                             PreparedStatement stmt = PreparedStatement.fromMessage(pmsg, manager.cluster.getMetadata(), query, manager.poolsState.keyspace);
                             try {
                                 manager.cluster.manager.prepare(pmsg.statementId, stmt, future.getAddress());
@@ -284,12 +278,10 @@ public class Session {
                             throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
                     }
                 case ERROR:
-                    ResultSetFuture.extractCause(ResultSetFuture.convertException(((ErrorMessage)response).error));
-                    break;
+                    throw ((Responses.Error)response).asException(future.getAddress());
                 default:
                     throw new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type));
             }
-            throw new AssertionError();
         } catch (ExecutionException e) {
             throw ResultSetFuture.extractCauseFromExecutionException(e);
         }
@@ -468,7 +460,7 @@ public class Session {
         public void setKeyspace(String keyspace) {
             long timeout = configuration().getSocketOptions().getConnectTimeoutMillis();
             try {
-                Future<?> future = executeQuery(new QueryMessage("use " + keyspace, ConsistencyLevel.DEFAULT_CASSANDRA_CL), Statement.DEFAULT);
+                Future<?> future = executeQuery(new Requests.Query("use " + keyspace), Statement.DEFAULT);
                 // Note: using the connection timeout is perfectly correct, we should probably change that someday
                 Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
             } catch (TimeoutException e) {
@@ -478,7 +470,8 @@ public class Session {
             }
         }
 
-        public Message.Request makeRequestMessage(Statement statement, PagingState state) {
+        public Message.Request makeRequestMessage(Statement statement, ByteBuffer pagingState) {
+
             ConsistencyLevel consistency = statement.getConsistencyLevel();
             if (consistency == null)
                 consistency = configuration().getQueryOptions().getConsistencyLevel();
@@ -487,34 +480,35 @@ public class Session {
             if (serialConsistency == null)
                 serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
 
-            return makeRequestMessage(statement, consistency, serialConsistency, state);
+            return makeRequestMessage(statement, consistency, serialConsistency, pagingState);
         }
 
-        public Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, PagingState state) {
-            org.apache.cassandra.db.ConsistencyLevel cassCL = ConsistencyLevel.toCassandraCL(cl);
-            org.apache.cassandra.db.ConsistencyLevel serialCL = ConsistencyLevel.toCassandraCL(scl);
+        public Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState) {
             int fetchSize = statement.getFetchSize();
             if (fetchSize <= 0)
                 fetchSize = configuration().getQueryOptions().getFetchSize();
+            else if (fetchSize == Integer.MAX_VALUE)
+                fetchSize = -1;
 
             if (statement instanceof RegularStatement) {
                 RegularStatement rs = (RegularStatement)statement;
                 ByteBuffer[] rawValues = rs.getValues();
                 List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
                 String qString = rs.getQueryString();
-                org.apache.cassandra.cql3.QueryOptions options = new org.apache.cassandra.cql3.QueryOptions(cassCL, values, false, fetchSize, state, serialCL);
-                return new QueryMessage(qString, options);
+                Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false, fetchSize, pagingState, scl);
+                return new Requests.Query(qString, options);
             } else if (statement instanceof BoundStatement) {
                 BoundStatement bs = (BoundStatement)statement;
                 boolean skipMetadata = bs.statement.resultSetMetadata != null;
-                org.apache.cassandra.cql3.QueryOptions options = new org.apache.cassandra.cql3.QueryOptions(cassCL, Arrays.asList(bs.values), skipMetadata, fetchSize, state, serialCL);
-                return new ExecuteMessage(bs.statement.id, options);
+                Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.values), skipMetadata, fetchSize, pagingState, scl);
+                return new Requests.Execute(bs.statement.id, options);
             } else {
                 assert statement instanceof BatchStatement : statement;
-                assert state == null;
+                assert pagingState == null;
                 BatchStatement bs = (BatchStatement)statement;
                 BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
-                return new BatchMessage(org.apache.cassandra.cql3.statements.BatchStatement.Type.LOGGED, idAndVals.ids, idAndVals.values, cassCL);
+                // TODO: needs to allow exposing other type of batches
+                return new Requests.Batch(Requests.Batch.Type.LOGGED, idAndVals.ids, idAndVals.values, cl);
             }
         }
 
@@ -538,7 +532,7 @@ public class Session {
                 Connection c = null;
                 try {
                     c = entry.getValue().borrowConnection(200, TimeUnit.MILLISECONDS);
-                    c.write(new PrepareMessage(query)).get();
+                    c.write(new Requests.Prepare(query)).get();
                 } catch (ConnectionException e) {
                     // Again, not being able to prepare the query right now is no big deal, so just ignore
                 } catch (BusyConnectionException e) {

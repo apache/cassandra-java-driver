@@ -19,7 +19,6 @@ import com.datastax.driver.core.exceptions.*;
 import java.net.InetAddress;
 import java.util.HashMap;
 
-import org.apache.commons.lang.StringUtils;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.TestUtils.waitForDown;
@@ -107,7 +106,7 @@ public class ExceptionsTest {
             try {
                 throw new DriverInternalError(e1);
             } catch (DriverInternalError e2) {
-                assertTrue(StringUtils.contains(e2.getMessage(), errorMessage));
+                assertTrue(e2.getMessage().contains(errorMessage));
 
                 DriverInternalError copy = (DriverInternalError) e2.copy();
                 assertEquals(copy.getMessage(), e2.getMessage());
@@ -333,7 +332,7 @@ public class ExceptionsTest {
             } catch (UnavailableException e) {
                 String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
                 assertEquals(e.getMessage(), expectedError);
-                assertEquals(e.getConsistency(), ConsistencyLevel.ALL);
+                assertEquals(e.getConsistencyLevel(), ConsistencyLevel.ALL);
                 assertEquals(e.getRequiredReplicas(), replicationFactor);
                 assertEquals(e.getAliveReplicas(), replicationFactor - 1);
             }
@@ -343,7 +342,7 @@ public class ExceptionsTest {
             } catch (UnavailableException e) {
                 String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
                 assertEquals(e.getMessage(), expectedError);
-                assertEquals(e.getConsistency(), ConsistencyLevel.ALL);
+                assertEquals(e.getConsistencyLevel(), ConsistencyLevel.ALL);
                 assertEquals(e.getRequiredReplicas(), replicationFactor);
                 assertEquals(e.getAliveReplicas(), replicationFactor - 1);
             }

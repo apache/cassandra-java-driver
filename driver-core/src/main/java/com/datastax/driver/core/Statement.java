@@ -226,9 +226,9 @@ public abstract class Statement {
      * Also note that only {@code SELECT} queries only ever make use of that
      * setting.
      *
-     * @param fetchSize the fetch size to use. If {@code fetchSize &gte; 0},
+     * @param fetchSize the fetch size to use. If {@code fetchSize &lte; 0},
      * the default fetch size will be used. To disable paging of the
-     * result set, use {@code fetchSize = Integer.MAX_VALUE}.
+     * result set, use {@code fetchSize == Integer.MAX_VALUE}.
      * @return this {@code Statement} object.
      */
     public Statement setFetchSize(int fetchSize) {

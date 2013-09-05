@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,19 +28,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.exceptions.*;
-
-import org.apache.cassandra.transport.Message;
-import org.apache.cassandra.transport.messages.BatchMessage;
-import org.apache.cassandra.transport.messages.ErrorMessage;
-import org.apache.cassandra.transport.messages.ExecuteMessage;
-import org.apache.cassandra.transport.messages.PrepareMessage;
-import org.apache.cassandra.transport.messages.QueryMessage;
-import org.apache.cassandra.transport.messages.ResultMessage;
-import org.apache.cassandra.exceptions.UnavailableException;
-import org.apache.cassandra.exceptions.PreparedQueryNotFoundException;
-import org.apache.cassandra.exceptions.ReadTimeoutException;
-import org.apache.cassandra.exceptions.WriteTimeoutException;
-import org.apache.cassandra.service.pager.PagingState;
 
 import com.codahale.metrics.Timer;
 
@@ -191,25 +179,25 @@ class RequestHandler implements Connection.ResponseCallback {
 
     private ConsistencyLevel consistencyOf(Message.Request request) {
         switch (request.type) {
-            case QUERY:   return ConsistencyLevel.from(((QueryMessage)request).options.getConsistency());
-            case EXECUTE: return ConsistencyLevel.from(((ExecuteMessage)request).options.getConsistency());
-            case BATCH:   return ConsistencyLevel.from(((BatchMessage)request).consistency);
+            case QUERY:   return ((Requests.Query)request).options.consistency;
+            case EXECUTE: return ((Requests.Execute)request).options.consistency;
+            case BATCH:   return ((Requests.Batch)request).consistency;
             default:      return null;
         }
     }
 
     private ConsistencyLevel serialConsistencyOf(Message.Request request) {
         switch (request.type) {
-            case QUERY:   return ConsistencyLevel.from(((QueryMessage)request).options.getSerialConsistency());
-            case EXECUTE: return ConsistencyLevel.from(((ExecuteMessage)request).options.getSerialConsistency());
+            case QUERY:   return ((Requests.Query)request).options.serialConsistency;
+            case EXECUTE: return ((Requests.Execute)request).options.serialConsistency;
             default:      return null;
         }
     }
 
-    private PagingState pagingStateOf(Message.Request request) {
+    private ByteBuffer pagingStateOf(Message.Request request) {
         switch (request.type) {
-            case QUERY:   return ((QueryMessage)request).options.getPagingState();
-            case EXECUTE: return ((ExecuteMessage)request).options.getPagingState();
+            case QUERY:   return ((Requests.Query)request).options.pagingState;
+            case EXECUTE: return ((Requests.Execute)request).options.pagingState;
             default:      return null;
         }
     }
@@ -255,38 +243,49 @@ class RequestHandler implements Connection.ResponseCallback {
                     setFinalResult(connection, response);
                     break;
                 case ERROR:
-                    ErrorMessage err = (ErrorMessage)response;
+                    Responses.Error err = (Responses.Error)response;
                     RetryPolicy.RetryDecision retry = null;
                     RetryPolicy retryPolicy = statement.getRetryPolicy() == null
                                             ? manager.configuration().getPolicies().getRetryPolicy()
                                             : statement.getRetryPolicy();
-                    switch (err.error.code()) {
+                    switch (err.code) {
                         case READ_TIMEOUT:
-                            assert err.error instanceof ReadTimeoutException;
+                            assert err.infos instanceof ReadTimeoutException;
                             if (metricsEnabled())
                                 metrics().getErrorMetrics().getReadTimeouts().inc();
 
-                            ReadTimeoutException rte = (ReadTimeoutException)err.error;
-                            ConsistencyLevel rcl = ConsistencyLevel.from(rte.consistency);
-                            retry = retryPolicy.onReadTimeout(statement, rcl, rte.blockFor, rte.received, rte.dataPresent, queryRetries);
+                            ReadTimeoutException rte = (ReadTimeoutException)err.infos;
+                            retry = retryPolicy.onReadTimeout(statement,
+                                                              rte.getConsistencyLevel(),
+                                                              rte.getRequiredAcknowledgements(),
+                                                              rte.getReceivedAcknowledgements(),
+                                                              rte.wasDataRetrieved(),
+                                                              queryRetries);
                             break;
                         case WRITE_TIMEOUT:
-                            assert err.error instanceof WriteTimeoutException;
+                            assert err.infos instanceof WriteTimeoutException;
                             if (metricsEnabled())
                                 metrics().getErrorMetrics().getWriteTimeouts().inc();
 
-                            WriteTimeoutException wte = (WriteTimeoutException)err.error;
-                            ConsistencyLevel wcl = ConsistencyLevel.from(wte.consistency);
-                            retry = retryPolicy.onWriteTimeout(statement, wcl, WriteType.from(wte.writeType), wte.blockFor, wte.received, queryRetries);
+                            WriteTimeoutException wte = (WriteTimeoutException)err.infos;
+                            retry = retryPolicy.onWriteTimeout(statement,
+                                                               wte.getConsistencyLevel(),
+                                                               wte.getWriteType(),
+                                                               wte.getRequiredAcknowledgements(),
+                                                               wte.getReceivedAcknowledgements(),
+                                                               queryRetries);
                             break;
                         case UNAVAILABLE:
-                            assert err.error instanceof UnavailableException;
+                            assert err.infos instanceof UnavailableException;
                             if (metricsEnabled())
                                 metrics().getErrorMetrics().getUnavailables().inc();
 
-                            UnavailableException ue = (UnavailableException)err.error;
-                            ConsistencyLevel ucl = ConsistencyLevel.from(ue.consistency);
-                            retry = retryPolicy.onUnavailable(statement, ucl, ue.required, ue.alive, queryRetries);
+                            UnavailableException ue = (UnavailableException)err.infos;
+                            retry = retryPolicy.onUnavailable(statement,
+                                                              ue.getConsistencyLevel(),
+                                                              ue.getRequiredReplicas(),
+                                                              ue.getAliveReplicas(),
+                                                              queryRetries);
                             break;
                         case OVERLOADED:
                             // Try another node
@@ -305,12 +304,12 @@ class RequestHandler implements Connection.ResponseCallback {
                             retry(false, null);
                             return;
                         case UNPREPARED:
-                            assert err.error instanceof PreparedQueryNotFoundException;
-                            PreparedQueryNotFoundException pqnf = (PreparedQueryNotFoundException)err.error;
-                            PreparedStatement toPrepare = manager.cluster.manager.preparedQueries.get(pqnf.id);
+                            assert err.infos instanceof MD5Digest;
+                            MD5Digest id = (MD5Digest)err.infos;
+                            PreparedStatement toPrepare = manager.cluster.manager.preparedQueries.get(id);
                             if (toPrepare == null) {
                                 // This shouldn't happen
-                                String msg = String.format("Tried to execute unknown prepared query %s", pqnf.id);
+                                String msg = String.format("Tried to execute unknown prepared query %s", id);
                                 logger.error(msg);
                                 setFinalException(connection, new DriverInternalError(msg));
                                 return;
@@ -364,7 +363,7 @@ class RequestHandler implements Connection.ResponseCallback {
                             case IGNORE:
                                 if (metricsEnabled())
                                     metrics().getErrorMetrics().getIgnores().inc();
-                                setFinalResult(connection, new ResultMessage.Void());
+                                setFinalResult(connection, new Responses.Result.Void());
                                 break;
                         }
                     }
@@ -383,7 +382,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
             @Override
             public Message.Request request() {
-                return new PrepareMessage(toPrepare);
+                return new Requests.Prepare(toPrepare);
             }
 
             @Override
@@ -391,7 +390,7 @@ class RequestHandler implements Connection.ResponseCallback {
                 // TODO should we check the response ?
                 switch (response.type) {
                     case RESULT:
-                        if (((ResultMessage)response).kind == ResultMessage.Kind.PREPARED) {
+                        if (((Responses.Result)response).kind == Responses.Result.Kind.PREPARED) {
                             logger.trace("Scheduling retry now that query is prepared");
                             retry(true, null);
                         } else {

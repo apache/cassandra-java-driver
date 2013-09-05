@@ -20,7 +20,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import org.apache.cassandra.utils.ByteBufferUtil;
+import com.datastax.driver.core.utils.Bytes;
 
 // Static utilities private to the query builder
 abstract class Utils {
@@ -111,8 +111,7 @@ abstract class Utils {
             sb.append(((Date)value).getTime());
             return true;
         } else if (value instanceof ByteBuffer) {
-            sb.append("0x");
-            sb.append(ByteBufferUtil.bytesToHex((ByteBuffer)value));
+            sb.append(Bytes.toHexString((ByteBuffer)value));
             return true;
         } else if (value == QueryBuilder.BIND_MARKER) {
             sb.append("?");

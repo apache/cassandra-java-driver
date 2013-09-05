@@ -23,10 +23,6 @@ import java.util.concurrent.*;
 
 import com.google.common.base.Objects;
 
-import org.apache.cassandra.transport.Event;
-import org.apache.cassandra.transport.messages.RegisterMessage;
-import org.apache.cassandra.transport.messages.QueryMessage;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -205,12 +201,12 @@ class ControlConnection implements Host.StateListener {
 
         try {
             logger.trace("[Control connection] Registering for events");
-            List<Event.Type> evs = Arrays.asList(new Event.Type[]{
-                Event.Type.TOPOLOGY_CHANGE,
-                Event.Type.STATUS_CHANGE,
-                Event.Type.SCHEMA_CHANGE,
+            List<ProtocolEvent.Type> evs = Arrays.asList(new ProtocolEvent.Type[]{
+                ProtocolEvent.Type.TOPOLOGY_CHANGE,
+                ProtocolEvent.Type.STATUS_CHANGE,
+                ProtocolEvent.Type.SCHEMA_CHANGE,
             });
-            connection.write(new RegisterMessage(evs));
+            connection.write(new Requests.Register(evs));
 
             logger.debug(String.format("[Control connection] Refreshing node list and token map"));
             refreshNodeListAndTokenMap(connection, cluster);
@@ -251,10 +247,10 @@ class ControlConnection implements Host.StateListener {
         }
 
         ResultSetFuture ksFuture = table == null
-                                 ? new ResultSetFuture(null, new QueryMessage(SELECT_KEYSPACES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL))
+                                 ? new ResultSetFuture(null, new Requests.Query(SELECT_KEYSPACES + whereClause))
                                  : null;
-        ResultSetFuture cfFuture = new ResultSetFuture(null, new QueryMessage(SELECT_COLUMN_FAMILIES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-        ResultSetFuture colsFuture = new ResultSetFuture(null, new QueryMessage(SELECT_COLUMNS + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+        ResultSetFuture cfFuture = new ResultSetFuture(null, new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause));
+        ResultSetFuture colsFuture = new ResultSetFuture(null, new Requests.Query(SELECT_COLUMNS + whereClause));
 
         if (ksFuture != null)
             connection.write(ksFuture.callback);
@@ -309,8 +305,8 @@ class ControlConnection implements Host.StateListener {
     private static void refreshNodeListAndTokenMap(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         // Make sure we're up to date on nodes and tokens
 
-        ResultSetFuture peersFuture = new ResultSetFuture(null, new QueryMessage(SELECT_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-        ResultSetFuture localFuture = new ResultSetFuture(null, new QueryMessage(SELECT_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+        ResultSetFuture peersFuture = new ResultSetFuture(null, new Requests.Query(SELECT_PEERS));
+        ResultSetFuture localFuture = new ResultSetFuture(null, new Requests.Query(SELECT_LOCAL));
         connection.write(peersFuture.callback);
         connection.write(localFuture.callback);
 
@@ -388,8 +384,8 @@ class ControlConnection implements Host.StateListener {
         long elapsed = 0;
         while (elapsed < MAX_SCHEMA_AGREEMENT_WAIT_MS) {
 
-            ResultSetFuture peersFuture = new ResultSetFuture(null, new QueryMessage(SELECT_SCHEMA_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-            ResultSetFuture localFuture = new ResultSetFuture(null, new QueryMessage(SELECT_SCHEMA_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+            ResultSetFuture peersFuture = new ResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_PEERS));
+            ResultSetFuture localFuture = new ResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_LOCAL));
             connection.write(peersFuture.callback);
             connection.write(localFuture.callback);
 

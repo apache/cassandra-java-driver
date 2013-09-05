@@ -17,8 +17,6 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
-import org.apache.cassandra.cql3.ColumnSpecification;
-
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
@@ -313,10 +311,6 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
             this.table = table;
             this.name = name;
             this.type = type;
-        }
-
-        static Definition fromTransportSpecification(ColumnSpecification spec) {
-            return new Definition(spec.ksName, spec.cfName, spec.name.toString(), Codec.rawTypeToDataType(spec.type));
         }
 
         /**
