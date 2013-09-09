@@ -31,10 +31,10 @@ import com.datastax.driver.core.policies.RetryPolicy;
  * {@link Session#execute}).
  * <p>
  * A {@code PreparedStatement} object allows you to define specific defaults
- * for the different properties of a {@link Query} (Consistency level, tracing, ...),
+ * for the different properties of a {@link Statement} (Consistency level, tracing, ...),
  * in which case those properties will be inherited as default by every
  * BoundedStatement created from the {PreparedStatement}. The default for those
- * {@code PreparedStatement} properties is the same that in {@link Query} if the
+ * {@code PreparedStatement} properties is the same that in {@link Statement} if the
  * PreparedStatement is created by {@link Session#prepare(String)} but will inherit
  * of the properties of the {@link RegularStatement} used for the preparation if
  * {@link Session#prepare(RegularStatement)} is used.
@@ -169,7 +169,7 @@ public class PreparedStatement {
      * @param routingKey the raw (binary) value to use as routing key.
      * @return this {@code PreparedStatement} object.
      *
-     * @see Query#getRoutingKey
+     * @see Statement#getRoutingKey
      */
     public PreparedStatement setRoutingKey(ByteBuffer routingKey) {
         this.routingKey = routingKey;
@@ -187,7 +187,7 @@ public class PreparedStatement {
      * the routing key.
      * @return this {@code PreparedStatement} object.
      *
-     * @see Query#getRoutingKey
+     * @see Statement#getRoutingKey
      */
     public PreparedStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
         this.routingKey = SimpleStatement.compose(routingKeyComponents);

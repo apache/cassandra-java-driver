@@ -174,7 +174,7 @@ public abstract class Statement {
      * user creation, etc. Secondly, even query that operate within a keyspace
      * do not have to specify said keyspace directly, in which case the
      * currently logged in keyspace (the one set through a {@code USE} query
-     * (or through the use of {@link Session#connect(String)})). Lastly, as
+     * (or through the use of {@link Cluster#connect(String)})). Lastly, as
      * for the routing key, this keyspace information is only a hint for
      * token-aware routing (since replica placement depend on the replication
      * strategy in use which is a per-keyspace property) and having this method

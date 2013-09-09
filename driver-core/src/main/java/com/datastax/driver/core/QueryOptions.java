@@ -49,7 +49,7 @@ public class QueryOptions {
      * Sets the default consistency level to use for queries.
      * <p>
      * The consistency level set through this method will be use for queries
-     * that don't explicitely have a consistency level, i.e. when {@link Query#getConsistencyLevel}
+     * that don't explicitely have a consistency level, i.e. when {@link Statement#getConsistencyLevel}
      * returns {@code null}.
      *
      * @param consistencyLevel the new consistency level to set as default.
@@ -73,7 +73,7 @@ public class QueryOptions {
      * Sets the default serial consistency level to use for queries.
      * <p>
      * The serial consistency level set through this method will be use for queries
-     * that don't explicitely have a serial consistency level, i.e. when {@link Query#getSerialConsistencyLevel}
+     * that don't explicitely have a serial consistency level, i.e. when {@link Statement#getSerialConsistencyLevel}
      * returns {@code null}.
      *
      * @param serialConsistencyLevel the new serial consistency level to set as default.
@@ -97,7 +97,7 @@ public class QueryOptions {
      * Sets the default fetch size to use for SELECT queries.
      * <p>
      * The fetch size set through this method will be use for queries
-     * that don't explicitely have a fetch size, i.e. when {@link Query#getFetchSize}
+     * that don't explicitely have a fetch size, i.e. when {@link Statement#getFetchSize}
      * is less or equal to 0.
      *
      * @param fetchSize the new fetch size to set as default. It must be

@@ -133,7 +133,7 @@ public class SimpleStatement extends RegularStatement {
      * @return the routing key set through {@link #setRoutingKey} if such a key
      * was set, {@code null} otherwise.
      *
-     * @see Query#getRoutingKey
+     * @see Statement#getRoutingKey
      */
     @Override
     public ByteBuffer getRoutingKey() {
@@ -154,7 +154,7 @@ public class SimpleStatement extends RegularStatement {
      * @param routingKey the raw (binary) value to use as routing key.
      * @return this {@code SimpleStatement} object.
      *
-     * @see Query#getRoutingKey
+     * @see Statement#getRoutingKey
      */
     public SimpleStatement setRoutingKey(ByteBuffer routingKey) {
         this.routingKey = routingKey;
@@ -171,7 +171,7 @@ public class SimpleStatement extends RegularStatement {
      * @return the keyspace set through {@link #setKeyspace} if such keyspace was
      * set, {@code null} otherwise.
      *
-     * @see Query#getKeyspace
+     * @see Statement#getKeyspace
      */
     @Override
     public String getKeyspace() {
@@ -192,7 +192,7 @@ public class SimpleStatement extends RegularStatement {
      * @param keyspace the name of the keyspace this query operates on.
      * @return this {@code SimpleStatement} object.
      *
-     * @see Query#getKeyspace
+     * @see Statement#getKeyspace
      */
     public SimpleStatement setKeyspace(String keyspace) {
         this.keyspace = keyspace;
@@ -210,7 +210,7 @@ public class SimpleStatement extends RegularStatement {
      * the routing key.
      * @return this {@code SimpleStatement} object.
      *
-     * @see Query#getRoutingKey
+     * @see Statement#getRoutingKey
      */
     public SimpleStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
         this.routingKey = compose(routingKeyComponents);

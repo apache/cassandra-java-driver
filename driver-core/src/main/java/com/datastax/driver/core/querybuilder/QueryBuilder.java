@@ -28,7 +28,7 @@ import com.datastax.driver.core.TableMetadata;
  * Static methods to build a CQL3 query.
  * <p>
  * The queries built by this builder will provide a value for the
- * {@link com.datastax.driver.core.Query#getRoutingKey} method only when a
+ * {@link com.datastax.driver.core.Statement#getRoutingKey} method only when a
  * {@link com.datastax.driver.core.TableMetadata} is provided to the builder.
  * It is thus advised to do so if a {@link com.datastax.driver.core.policies.TokenAwarePolicy}
  * is in use.

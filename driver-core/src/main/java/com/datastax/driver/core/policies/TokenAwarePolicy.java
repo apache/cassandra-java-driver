@@ -32,7 +32,7 @@ import com.datastax.driver.core.*;
  * <ul>
  *   <li>the {@code distance} method is inherited from the child policy.</li>
  *   <li>the iterator return by the {@code newQueryPlan} method will first
- *   return the {@code LOCAL} replicas for the query (based on {@link Query#getRoutingKey})
+ *   return the {@code LOCAL} replicas for the query (based on {@link Statement#getRoutingKey})
  *   <i>if possible</i> (i.e. if the query {@code getRoutingKey} method
  *   doesn't return {@code null} and if {@link Metadata#getReplicas}
  *   returns a non empty set of replicas for that partition key). If no

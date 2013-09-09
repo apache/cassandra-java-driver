@@ -23,9 +23,8 @@ import java.net.InetAddress;
  * Provides {@link Authenticator} instances for use when connecting
  * to Cassandra nodes.
  *
- * See {@link PlainTextAuthProvider} and {@link SimpleAuthenticator}
- * for an implementation which uses SASL PLAIN mechanism to
- * authenticate using username/password strings
+ * See {@link PlainTextAuthProvider} for an implementation which uses SASL
+ * PLAIN mechanism to authenticate using username/password strings
  */
 public interface AuthProvider {
 
@@ -48,5 +47,4 @@ public interface AuthProvider {
      * @return The authentication implementation to use.
      */
     public Authenticator newAuthenticator(InetAddress host) throws AuthenticationException;
-
 }
