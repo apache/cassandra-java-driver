@@ -27,9 +27,47 @@ import java.util.List;
  */
 public class BatchStatement extends Statement {
 
+    /**
+     * The type of batch to use.
+     */
+    public enum Type {
+        /**
+         * A logged batch: Cassandra will first the batch to its disctributed batch log to
+         * ensure the atomicity of the batch.
+         */
+        LOGGED,
+
+        /**
+         * A batch that doesn't use Cassandra's distributed batch log. Such batch are not
+         * guaranteed to be atomic.
+         */
+        UNLOGGED,
+
+        /**
+         * A counter batch. Note that such batch is the only type that can contain counter
+         * operation and it can only contain these.
+         */
+        COUNTER
+    };
+
+    final Type batchType;
     private final List<Statement> statements = new ArrayList<Statement>();
 
-    public BatchStatement() {}
+    /**
+     * Creates a new {@code LOGGED} batch statement.
+     */
+    public BatchStatement() {
+        this(Type.LOGGED);
+    }
+
+    /**
+     * Creates a new batch statement of the provided type.
+     *
+     * @param batchType the type of batch.
+     */
+    public BatchStatement(Type batchType) {
+        this.batchType = batchType;
+    }
 
     IdAndValues getIdAndValues() {
         IdAndValues idAndVals = new IdAndValues(statements.size());
@@ -74,6 +112,21 @@ public class BatchStatement extends Statement {
         } else {
             statements.add(statement);
         }
+        return this;
+    }
+
+    /**
+     * Adds multiple statements to this batch.
+     * <p>
+     * This is a shortcut method that calls {@link #add} on all the statements
+     * from {@code statements}.
+     *
+     * @param statements the statements to add.
+     * @return this batch statement.
+     */
+    public BatchStatement addAll(Iterable<? extends Statement> statements) {
+        for (Statement statement : statements)
+            add(statement);
         return this;
     }
 

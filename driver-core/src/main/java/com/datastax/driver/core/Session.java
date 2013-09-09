@@ -507,8 +507,7 @@ public class Session {
                 assert pagingState == null;
                 BatchStatement bs = (BatchStatement)statement;
                 BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
-                // TODO: needs to allow exposing other type of batches
-                return new Requests.Batch(Requests.Batch.Type.LOGGED, idAndVals.ids, idAndVals.values, cl);
+                return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl);
             }
         }
 

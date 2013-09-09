@@ -71,10 +71,9 @@ public class ExceptionsTest {
             try {
                 c.session.execute(cqlCommands[2]);
             } catch (AlreadyExistsException e) {
-                // TODO: Pending CASSANDRA-5362 this won't work. So let's re-enable this once C* 1.2.4
                 // is released
-                //assertEquals(e.getKeyspace(), keyspace.toLowerCase());
-                //assertEquals(e.getTable(), table.toLowerCase());
+                assertEquals(e.getKeyspace(), keyspace.toLowerCase());
+                assertEquals(e.getTable(), table.toLowerCase());
                 assertEquals(e.wasTableCreation(), true);
             }
         } catch (Throwable e) {
@@ -82,14 +81,6 @@ public class ExceptionsTest {
         } finally {
             c.discard();
         }
-    }
-
-    /**
-     * Placeholder test for the AuthenticationException.
-     * Testing pending CCM authenticated sessions integration.
-     */
-    public void authenticationException() throws Exception {
-        // TODO: Modify CCM to accept authenticated sessions
     }
 
     /**

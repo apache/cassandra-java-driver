@@ -246,8 +246,6 @@ class Requests {
 
     public static class Batch extends Message.Request {
 
-        public static enum Type { LOGGED, UNLOGGED, COUNTER }
-
         public static final Message.Coder<Batch> coder = new Message.Coder<Batch>() {
             public void encode(Batch msg, ChannelBuffer dest) {
                 int queries = msg.queryOrIdList.size();
@@ -283,7 +281,7 @@ class Requests {
                 return size;
             }
 
-            private byte fromType(Batch.Type type) {
+            private byte fromType(BatchStatement.Type type) {
                 switch (type) {
                     case LOGGED:   return 0;
                     case UNLOGGED: return 1;
@@ -293,12 +291,12 @@ class Requests {
             }
         };
 
-        public final Batch.Type type;
+        public final BatchStatement.Type type;
         public final List<Object> queryOrIdList;
         public final List<List<ByteBuffer>> values;
         public final ConsistencyLevel consistency;
 
-        public Batch(Batch.Type type, List<Object> queryOrIdList, List<List<ByteBuffer>> values, ConsistencyLevel consistency) {
+        public Batch(BatchStatement.Type type, List<Object> queryOrIdList, List<List<ByteBuffer>> values, ConsistencyLevel consistency) {
             super(Message.Request.Type.BATCH);
             this.type = type;
             this.queryOrIdList = queryOrIdList;
