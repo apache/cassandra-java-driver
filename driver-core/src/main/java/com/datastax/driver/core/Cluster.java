@@ -289,8 +289,8 @@ public class Cluster {
         private SSLOptions sslOptions = null;
         private boolean metricsEnabled = true;
         private boolean jmxEnabled = true;
-        private final PoolingOptions poolingOptions = new PoolingOptions();
-        private final SocketOptions socketOptions = new SocketOptions();
+        private PoolingOptions poolingOptions = new PoolingOptions();
+        private SocketOptions socketOptions = new SocketOptions();
 
         @Override
         public List<InetAddress> getContactPoints() {
@@ -510,9 +510,28 @@ public class Cluster {
          * @return the pooling options that will be used by this builder. You
          * can use the returned object to define the initial pooling options
          * for the built cluster.
+         *
+         * @deprecated you are now encouraged to use the {@link #withPoolingOptions}
+         * method. This method is deprecated and will be removed in the next major
+         * version of the driver.
          */
+        @Deprecated
         public PoolingOptions poolingOptions() {
             return poolingOptions;
+        }
+
+        /**
+         * Set the PoolingOptions to use for the newly created Cluster.
+         * <p>
+         * If no pooling options are set through this method, default pooling
+         * options will be used.
+         *
+         * @param options the pooling options to use.
+         * @return this builder.
+         */
+        public Builder withPoolingOptions(PoolingOptions options) {
+            this.poolingOptions = options;
+            return this;
         }
 
         /**
@@ -521,9 +540,28 @@ public class Cluster {
          * @return the socket options that will be used by this builder. You
          * can use the returned object to define the initial socket options
          * for the built cluster.
+         *
+         * @deprecated you are now encouraged to use the {@link #withPoolingOptions}
+         * method. This method is deprecated and will be removed in the next major
+         * version of the driver.
          */
+        @Deprecated
         public SocketOptions socketOptions() {
             return socketOptions;
+        }
+
+        /**
+         * Set the SocketOptions to use for the newly created Cluster.
+         * <p>
+         * If no socket options are set through this method, default socket
+         * options will be used.
+         *
+         * @param options the socket options to use.
+         * @return this builder.
+         */
+        public Builder withSocketOptions(SocketOptions options) {
+            this.socketOptions = options;
+            return this;
         }
 
         /**

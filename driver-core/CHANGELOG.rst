@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+1.0.4:
+------
+
+- [api] The Cluster.Builder#poolingOptions and Cluster.Builder#socketOptions
+  are now deprecated. They are replaced by the new withPoolingOptions and
+  withSocketOptions methods (JAVA-163).
+
 1.0.3:
 ------
 
