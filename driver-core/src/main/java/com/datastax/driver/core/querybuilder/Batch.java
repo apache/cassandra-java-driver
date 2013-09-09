@@ -77,6 +77,9 @@ public class Batch extends BuiltStatement {
      * are mixed.
      */
     public Batch add(RegularStatement statement) {
+        if (statement.getValues() != null)
+            throw new IllegalArgumentException("Statements with values are not (yet) supported by the query builder. You should use BatchStatement instead.");
+
         boolean isCounterOp = statement instanceof BuiltStatement && ((BuiltStatement) statement).isCounterOp();
 
         if (this.isCounterOp == null)
