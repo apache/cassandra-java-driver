@@ -30,6 +30,7 @@ public class Update extends BuiltStatement {
     private final Assignments assignments;
     private final Where where;
     private final Options usings;
+    private final Conditions conditions;
 
     Update(String keyspace, String table) {
         super(keyspace);
@@ -37,6 +38,7 @@ public class Update extends BuiltStatement {
         this.assignments = new Assignments(this);
         this.where = new Where(this);
         this.usings = new Options(this);
+        this.conditions = new Conditions(this);
     }
 
     Update(TableMetadata table) {
@@ -45,6 +47,7 @@ public class Update extends BuiltStatement {
         this.assignments = new Assignments(this);
         this.where = new Where(this);
         this.usings = new Options(this);
+        this.conditions = new Conditions(this);
     }
 
     @Override
@@ -69,6 +72,11 @@ public class Update extends BuiltStatement {
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
             Utils.joinAndAppend(builder, " AND ", where.clauses);
+        }
+
+        if (!conditions.conditions.isEmpty()) {
+            builder.append(" IF ");
+            Utils.joinAndAppend(builder, " AND ", conditions.conditions);
         }
 
         return builder;
@@ -114,6 +122,27 @@ public class Update extends BuiltStatement {
      */
     public Where where() {
         return where;
+    }
+
+    /**
+     * Adds a conditions clause (IF) to this statement.
+     * <p>
+     * This is a shorter/more readable version for {@code onlyIf().and(condition)}.
+     *
+     * @param condition the condition to add.
+     * @return the conditions of this query to which more conditions can be added.
+     */
+    public Conditions onlyIf(Clause condition) {
+        return conditions.and(condition);
+    }
+
+    /**
+     * Adds a conditions clause (IF) to this statement.
+     *
+     * @return the conditions of this query to which more conditions can be added.
+     */
+    public Conditions onlyIf() {
+        return conditions;
     }
 
     /**
@@ -169,6 +198,16 @@ public class Update extends BuiltStatement {
         public Options using(Using using) {
             return statement.using(using);
         }
+
+        /**
+         * Adds a condition to the UPDATE statement those assignments are part of.
+         *
+         * @param condition the condition to add.
+         * @return the conditions for the UPDATE statement those assignments are part of.
+         */
+        public Conditions onlyIf(Clause condition) {
+            return statement.onlyIf(condition);
+        }
     }
 
     /**
@@ -188,8 +227,7 @@ public class Update extends BuiltStatement {
          * @param clause the clause to add.
          * @return this WHERE clause.
          */
-        public Where and(Clause clause)
-        {
+        public Where and(Clause clause) {
             clauses.add(clause);
             statement.maybeAddRoutingKey(clause.name(), clause.firstValue());
             setDirty();
@@ -214,6 +252,16 @@ public class Update extends BuiltStatement {
          */
         public Options using(Using using) {
             return statement.using(using);
+        }
+
+        /**
+         * Adds a condition to the UPDATE statement this WHERE clause is part of.
+         *
+         * @param condition the condition to add.
+         * @return the conditions for the UPDATE statement this WHERE clause is part of.
+         */
+        public Conditions onlyIf(Clause condition) {
+            return statement.onlyIf(condition);
         }
     }
 
@@ -258,6 +306,79 @@ public class Update extends BuiltStatement {
          */
         public Where where(Clause clause) {
             return statement.where(clause);
+        }
+
+        /**
+         * Adds a condition to the UPDATE statement these options are part of.
+         *
+         * @param condition the condition to add.
+         * @return the conditions for the UPDATE statement these options are part of.
+         */
+        public Conditions onlyIf(Clause condition) {
+            return statement.onlyIf(condition);
+        }
+    }
+
+    /**
+     * Conditions for an UDPATE statement.
+     * <p>
+     * When provided some conditions, an update will not apply unless the
+     * provided conditions applies.
+     * <p>
+     * Please keep in mind that provided conditions has a non negligible
+     * performance impact and should be avoided when possible.
+     */
+    public static class Conditions extends BuiltStatement.ForwardingStatement<Update> {
+
+        private final List<Clause> conditions = new ArrayList<Clause>();
+
+        Conditions(Update statement) {
+            super(statement);
+        }
+
+        /**
+         * Adds the provided condition for the update.
+         * <p>
+         * Note that while the query builder accept any type of {@code Clause}
+         * as conditions, Cassandra currently only allow equality ones.
+         *
+         * @param condition the condition to add.
+         * @return this {@code Conditions} clause.
+         */
+        public Conditions and(Clause condition) {
+            conditions.add(condition);
+            setDirty();
+            return this;
+        }
+
+        /**
+         * Adds an assignment to the UPDATE statement those conditions are part of.
+         *
+         * @param assignment the assignment to add.
+         * @return the assignments of the UPDATE statement those conditions are part of.
+         */
+        public Assignments with(Assignment assignment) {
+            return statement.with(assignment);
+        }
+
+        /**
+         * Adds a where clause to the UPDATE statement these conditions are part of.
+         *
+         * @param clause clause to add.
+         * @return the WHERE clause of the UPDATE statement these conditions are part of.
+         */
+        public Where where(Clause clause) {
+            return statement.where(clause);
+        }
+
+        /**
+         * Adds an option to the UPDATE statement these conditions are part of.
+         *
+         * @param using the using clause to add.
+         * @return the options of the UPDATE statement these conditions are part of.
+         */
+        public Options using(Using using) {
+            return statement.using(using);
         }
     }
 }

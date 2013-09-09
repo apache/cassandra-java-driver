@@ -185,6 +185,11 @@ public class QueryBuilderTest {
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Got 2 names but 3 values");
         }
+
+        // CAS test
+        query = "INSERT INTO foo(k,x) VALUES (0,1) IF NOT EXISTS;";
+        insert = insertInto("foo").value("k", 0).value("x", 1).ifNotExists();
+        assertEquals(insert.toString(), query);
     }
 
     @Test(groups = "unit")
@@ -246,6 +251,11 @@ public class QueryBuilderTest {
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid ttl, must be positive");
         }
+
+        // CAS test
+        query = "UPDATE foo SET x=4 WHERE k=0 IF x=1;";
+        update = update("foo").with(set("x", 4)).where(eq("k", 0)).onlyIf(eq("x", 1));
+        assertEquals(update.toString(), query);
     }
 
     @Test(groups = "unit")

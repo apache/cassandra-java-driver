@@ -30,6 +30,7 @@ public class Insert extends BuiltStatement {
     private final List<Object> names = new ArrayList<Object>();
     private final List<Object> values = new ArrayList<Object>();
     private final Options usings;
+    private boolean ifNotExists;
 
     Insert(String keyspace, String table) {
         super(keyspace);
@@ -57,11 +58,13 @@ public class Insert extends BuiltStatement {
         Utils.joinAndAppendValues(builder, ",", values);
         builder.append(")");
 
+        if (ifNotExists)
+            builder.append(" IF NOT EXISTS");
+
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
             Utils.joinAndAppend(builder, " AND ", usings.usings);
         }
-
         return builder;
     }
 
@@ -111,6 +114,25 @@ public class Insert extends BuiltStatement {
      */
     public Options using(Using using) {
         return usings.and(using);
+    }
+
+    /**
+     * Sets the 'IF NOT EXISTS' option for this INSERT statement.
+     * <p>
+     * An insert with that option will not succeed unless the row does not
+     * exist at the time the insertion is execution. The existence check and
+     * insertions are done transactionally in the sense that if multiple
+     * clients attempt to create a given row with this option, then at most one
+     * may succeed.
+     * <p>
+     * Please keep in mind that using this option has a non negligible
+     * performance impact and should be avoided when possible.
+     *
+     * @return this INSERT statement.
+     */
+    public Insert ifNotExists() {
+        this.ifNotExists = true;
+        return this;
     }
 
     /**
