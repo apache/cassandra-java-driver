@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
 import com.google.common.util.concurrent.AbstractFuture;
@@ -34,7 +33,6 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.ChannelGroupFuture;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
@@ -116,7 +114,9 @@ class Connection {
     }
 
     private static String extractMessage(Throwable t) {
-        String msg = t == null || t.getMessage() == null || t.getMessage().isEmpty()
+    	if (t == null)
+    		return "";
+    	String msg = t.getMessage() == null || t.getMessage().isEmpty()
                    ? t.toString()
                    : t.getMessage();
         return " (" + msg + ")";
