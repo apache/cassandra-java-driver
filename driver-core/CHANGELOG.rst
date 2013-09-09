@@ -1,12 +1,29 @@
 CHANGELOG
 =========
 
-1.0.4:
-------
+2.0.0-beta1:
+-----------
 
-- [api] The Cluster.Builder#poolingOptions and Cluster.Builder#socketOptions
-  are now deprecated. They are replaced by the new withPoolingOptions and
-  withSocketOptions methods (JAVA-163).
+- [api] The 2.0 version is an API-breaking upgrade of the driver. While most
+  of the breaking changes are minor, there are too numerous to be listed here
+  and you are encouraged to look at the Upgrade_guide_to_2.0 file that describe
+  those changes in details.
+- [new] LZ4 compression is supported for the protocol.
+- [new] The driver does not depend on cassandra-all anymore (JAVA-39)
+- [new] New BatchStatement class allows to execute batch other statements.
+- [new] Large ResultSet are now paged (incrementally fetched) by default.
+- [new] SimpleStatement support values for bind-variables, to allow
+  prepare+execute behavior with one roundtrip.
+- [new] Query parameters defaults (Consistency level, page size, ...) can be
+  configured globally.
+- [new] New Cassandra 2.0 SERIAL and LOCAL_SERIAL consistency levels are
+  supported.
+- [new] Cluster#shutdown now waits for ongoing queries to complete by default
+  (JAVA-116).
+- [new] Generic authentication through SASL is now exposed.
+- [bug] TokenAwarePolicy now takes all replica into account, instead of only the
+  first one (JAVA-88).
+
 
 1.0.3:
 ------
