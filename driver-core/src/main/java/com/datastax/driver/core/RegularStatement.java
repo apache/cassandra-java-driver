@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
  * <p>
  * This class represents a query string along with query options (and optionally
  * binary values, see {@code getValues}). It can be extended but {@link SimpleStatement}
- * is provided as a simple implementaion to build a {@code RegularStatement} directly
+ * is provided as a simple implementation to build a {@code RegularStatement} directly
  * from its query string.
  */
 public abstract class RegularStatement extends Statement {

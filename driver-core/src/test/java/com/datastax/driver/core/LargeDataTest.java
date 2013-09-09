@@ -98,7 +98,6 @@ public class LargeDataTest {
         ResultSet rs = c.session.execute(select("i").from("wide_byte_rows").where(eq("k", key)));
 
         // Verify data
-        int i = 0;
         for (Row row : rs) {
             assertEquals(row.getBytes("i"), bb);
         }

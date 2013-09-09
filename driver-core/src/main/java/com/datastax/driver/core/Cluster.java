@@ -1270,7 +1270,7 @@ public class Cluster {
                     public void run() {
                         connectionFactory.shutdown();
 
-                        // Just wait indefinitively on the the completion of the thread pools. Provided the user
+                        // Just wait indefinitely on the the completion of the thread pools. Provided the user
                         // call force(), we'll never really block forever.
                         try {
                             reconnectionExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);

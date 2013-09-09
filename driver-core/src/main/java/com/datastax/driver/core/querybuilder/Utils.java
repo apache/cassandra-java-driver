@@ -137,7 +137,8 @@ abstract class Utils {
         }
     }
 
-    private static boolean appendValueIfCollection(Object value, StringBuilder sb, boolean rawValue) {
+    @SuppressWarnings("rawtypes")
+	private static boolean appendValueIfCollection(Object value, StringBuilder sb, boolean rawValue) {
         if (value instanceof List) {
             appendList((List)value, sb, rawValue);
             return true;

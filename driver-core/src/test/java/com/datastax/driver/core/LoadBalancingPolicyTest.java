@@ -15,9 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.util.*;
-
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
@@ -28,9 +25,6 @@ import com.datastax.driver.core.exceptions.UnavailableException;
 import static com.datastax.driver.core.TestUtils.*;
 
 public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
-    private static final boolean DEBUG = false;
-
-    private PreparedStatement prepared;
 
     @Test(groups = "long")
     public void roundRobinTest() throws Throwable {

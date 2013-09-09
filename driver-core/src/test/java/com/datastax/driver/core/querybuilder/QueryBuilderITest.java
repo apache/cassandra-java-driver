@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.testng.annotations.Test;

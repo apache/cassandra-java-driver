@@ -16,9 +16,6 @@
 package com.datastax.driver.core;
 import com.datastax.driver.core.exceptions.*;
 
-import java.net.InetAddress;
-import java.util.HashMap;
-
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.TestUtils.waitForDown;

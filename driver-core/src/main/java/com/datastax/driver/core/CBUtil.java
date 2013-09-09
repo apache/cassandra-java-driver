@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.util.CharsetUtil;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;

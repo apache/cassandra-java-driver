@@ -227,7 +227,7 @@ public class Session {
      * of the shutdown process. As soon a the session is shutdown, no
      * new request will be accepted, but already submitted queries are
      * allowed to complete. Shutdown closes all connections of this
-     * session  and reclaims all ressources used by it.
+     * session  and reclaims all resources used by it.
      * <p>
      * If for some reason you wish to expedite this process, the
      * {@link ShutdownFuture#force} can be called on the result future.
@@ -240,7 +240,7 @@ public class Session {
      * (which will call this method for all sessions but also release some
      * additional resources).
      *
-     * @return a future on the completion of the shtudown process.
+     * @return a future on the completion of the shutdown process.
      */
     public ShutdownFuture shutdown() {
         return manager.shutdown();

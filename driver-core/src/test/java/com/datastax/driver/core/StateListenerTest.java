@@ -15,8 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
