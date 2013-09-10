@@ -86,6 +86,7 @@ public class Stress {
     private static QueryGenerator.Builder getGenerator(OptionSet options) {
         register("insert", Generators.CASSANDRA_INSERTER);
         register("insert_prepared", Generators.CASSANDRA_PREPARED_INSERTER);
+        register("read", Generators.CASSANDRA_READER);
 
         List<?> args = options.nonOptionArguments();
         if (args.isEmpty()) {
