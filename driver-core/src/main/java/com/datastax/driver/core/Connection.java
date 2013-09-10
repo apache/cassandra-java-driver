@@ -599,12 +599,16 @@ class Connection extends org.apache.cassandra.transport.Connection
 
         @Override
         public void onException(Connection connection, Exception exception) {
-            this.address = connection.address;
+            // If all nodes are down, we will get a null connection here. This is fine, if we have
+            // an exception, consumers shouldn't assume the address is not null.
+            if (connection != null)
+                this.address = connection.address;
             super.setException(exception);
         }
 
         @Override
         public void onTimeout(Connection connection) {
+            assert connection != null; // We always timeout on a specific connection, so this shouldn't be null
             this.address = connection.address;
             super.setException(new ConnectionException(connection.address, "Operation Timeouted"));
         }
