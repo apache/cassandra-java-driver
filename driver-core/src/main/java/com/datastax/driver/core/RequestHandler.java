@@ -220,12 +220,14 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     private void returnConnection(Connection connection) {
-        if (currentPool == null) {
-            // This should not happen but is probably not reason to fail completely
-            logger.error("No current pool set; this should not happen");
-        } else {
+        // In most case currentPool won't be null since we set it before sending the
+        // query. However, it's possible that for the same write we call both onSet
+        // and onException (especially if a node dies, we'll error out the handler and
+        // that may race with a result that just came in before the death). That fine
+        // though, but it means currentPool might be null (in which case the connection
+        // has been returned already to its pool anyway).
+        if (currentPool != null)
             currentPool.returnConnection(connection);
-        }
     }
 
     @Override
