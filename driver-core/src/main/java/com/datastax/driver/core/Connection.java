@@ -114,9 +114,9 @@ class Connection {
     }
 
     private static String extractMessage(Throwable t) {
-    	if (t == null)
-    		return "";
-    	String msg = t.getMessage() == null || t.getMessage().isEmpty()
+        if (t == null)
+            return "";
+        String msg = t.getMessage() == null || t.getMessage().isEmpty()
                    ? t.toString()
                    : t.getMessage();
         return " (" + msg + ")";
