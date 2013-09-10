@@ -37,8 +37,8 @@ public class CCMBridge {
 
     private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d(-\\w+)?";
 
-    private static final File CASSANDRA_DIR;
-    private static final String CASSANDRA_VERSION;
+    static final File CASSANDRA_DIR;
+    static final String CASSANDRA_VERSION;
     static {
         String version = System.getProperty("cassandra.version");
         if (version.matches(CASSANDRA_VERSION_REGEXP)) {
