@@ -36,21 +36,19 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>14.0.1</version>
+      <version>15.0</version>
     </dependency>
 
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-core-asl</artifactId>
-      <!-- Leave at 1.9.2 for Cassandra compatibility -->
-      <version>1.9.2</version>
+      <version>1.9.13</version>
     </dependency>
 
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-mapper-asl</artifactId>
-      <!-- Leave at 1.9.2 for Cassandra compatibility -->
-      <version>[1.9.2]</version>
+      <version>1.9.13</version>
     </dependency>
 
     <dependency>
@@ -79,7 +77,7 @@
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
-      <version>6.8.1</version>
+      <version>6.8.7</version>
       <scope>test</scope>
     </dependency>
 
@@ -99,7 +97,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.14</version>
+            <version>2.16</version>
             <configuration>
               <groups>unit</groups>
               <useFile>false</useFile>
@@ -131,7 +129,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.14</version>
+            <version>2.16</version>
             <configuration>
               <groups>unit,short</groups>
               <useFile>false</useFile>
@@ -155,7 +153,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.14</version>
+            <version>2.16</version>
             <configuration>
               <groups>unit,short,long</groups>
               <useFile>false</useFile>
@@ -179,7 +177,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.14</version>
+            <version>2.16</version>
             <configuration>
               <groups>unit,short,long,duration</groups>
               <useFile>false</useFile>
@@ -203,7 +201,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.14</version>
+            <version>2.16</version>
             <configuration>
               <groups>unit,doc</groups>
               <useFile>false</useFile>
