@@ -18,7 +18,6 @@ package com.datastax.driver.stress;
 import java.util.Iterator;
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.*;
 
 import joptsimple.OptionSet;
 
@@ -43,18 +42,18 @@ public abstract class QueryGenerator implements Iterator<QueryGenerator.Request>
 
         public static class SimpleQuery implements Request {
 
-            private final Query query;
+            private final Statement statement;
 
-            public SimpleQuery(Query query) {
-                this.query = query;
+            public SimpleQuery(Statement statement) {
+                this.statement = statement;
             }
 
             public ResultSet execute(Session session) {
-                return session.execute(query);
+                return session.execute(statement);
             }
 
             public ResultSetFuture executeAsync(Session session) {
-                return session.executeAsync(query);
+                return session.executeAsync(statement);
             }
         }
 

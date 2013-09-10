@@ -20,10 +20,9 @@ import java.util.Random;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.utils.Bytes;
 
 import joptsimple.OptionSet;
-
-import org.apache.cassandra.utils.ByteBufferUtil;
 
 public class Generators {
 
@@ -84,7 +83,7 @@ public class Generators {
                     sb.append("UPDATE Standard1 SET ");
                     for (int i = 0; i < columnsPerRow; ++i) {
                         if (i > 0) sb.append(", ");
-                        sb.append("C").append(i).append("='").append(ByteBufferUtil.bytesToHex(makeValue(valueSize))).append("'");
+                        sb.append("C").append(i).append("='").append(Bytes.toHexString(makeValue(valueSize))).append("'");
                     }
                     sb.append(" WHERE key = ").append(prefix | i);
                     ++i;

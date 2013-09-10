@@ -17,7 +17,6 @@ package com.datastax.driver.stress;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.*;
