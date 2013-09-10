@@ -42,6 +42,7 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.ChannelGroupFuture;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.channel.socket.nio.NioWorkerPool;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timeout;
@@ -372,11 +373,14 @@ class Connection extends org.apache.cassandra.transport.Connection
 
     public static class Factory {
 
-        private final ExecutorService bossExecutor = Executors.newCachedThreadPool();
-        private final ExecutorService workerExecutor = Executors.newCachedThreadPool();
-        public final HashedWheelTimer timer = new HashedWheelTimer(new ThreadFactoryBuilder().setNameFormat("Timeouter-%d").build());
+        private final ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true).build();
+        private final ExecutorService bossExecutor = Executors.newCachedThreadPool(threadFactory);
+        private final ExecutorService workerExecutor = Executors.newCachedThreadPool(threadFactory);
+        public final HashedWheelTimer timer = new HashedWheelTimer(new ThreadFactoryBuilder().setNameFormat("Timeouter-%d").setDaemon(true).build());
 
-        private final ChannelFactory channelFactory = new NioClientSocketChannelFactory(bossExecutor, workerExecutor);
+        private final HashedWheelTimer channelFactoryTimer = new HashedWheelTimer(new ThreadFactoryBuilder().setDaemon(true).build());
+        private final NioWorkerPool channelNioWokerPool = new NioWorkerPool(workerExecutor, Runtime.getRuntime().availableProcessors() * 2);
+        private final ChannelFactory channelFactory = new NioClientSocketChannelFactory(bossExecutor, 1, channelNioWokerPool, channelFactoryTimer);
         private final ChannelGroup allChannels = new DefaultChannelGroup();
 
         private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
