@@ -307,11 +307,6 @@ public class CCMBridge {
             try {
                 this.cluster = builder.addContactPoints(IP_PREFIX + "1").build();
                 this.session = cluster.connect();
-
-                Session tmpSession = cluster.connect();
-                waitForAllNodesToComeOnline(tmpSession, totalNodes);
-                waitForSchemaAgreement(tmpSession);
-
             } catch (NoHostAvailableException e) {
                 for (Map.Entry<InetAddress, String> entry : e.getErrors().entrySet())
                     logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());

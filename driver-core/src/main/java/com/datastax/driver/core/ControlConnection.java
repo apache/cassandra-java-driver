@@ -134,7 +134,7 @@ class ControlConnection implements Host.StateListener {
             // Host might be null in the case the host has been removed, but it means this has
             // been reported already so it's fine.
             if (host != null) {
-                cluster.signalConnectionFailure(host, connection.lastException());
+                cluster.signalConnectionFailure(host, connection.lastException(), false);
                 return;
             }
         }
@@ -168,7 +168,7 @@ class ControlConnection implements Host.StateListener {
                     return tryConnect(host);
                 } catch (ConnectionException e) {
                     errors = logError(host, e.getMessage(), errors, iter);
-                    cluster.signalConnectionFailure(host, e);
+                    cluster.signalConnectionFailure(host, e, false);
                 } catch (ExecutionException e) {
                     errors = logError(host, e.getMessage(), errors, iter);
                 }
