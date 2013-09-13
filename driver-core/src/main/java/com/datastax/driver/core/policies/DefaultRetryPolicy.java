@@ -99,7 +99,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
         if (nbRetry != 0)
             return RetryDecision.rethrow();
 
-        // If the batch log write failed, retry the operation as this might just be we were unlucky at picking candidtes
+        // If the batch log write failed, retry the operation as this might just be we were unlucky at picking candidates
         return writeType == WriteType.BATCH_LOG ? RetryDecision.retry(cl) : RetryDecision.rethrow();
     }
 

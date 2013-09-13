@@ -107,6 +107,13 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
         if (nbRetry != 0)
             return RetryDecision.rethrow();
 
+        // CAS reads are not all that useful in terms of visibility of the writes since CAS write supports the
+        // normal consistency levels on the committing phase. So the main use case for CAS reads is probably for
+        // when you've timeouted on a CAS write and want to make sure what happened. Downgrading in that case
+        // would be always wrong so we just special case to rethrow.
+        if (cl == ConsistencyLevel.SERIAL || cl == ConsistencyLevel.LOCAL_SERIAL)
+            return RetryDecision.rethrow();
+
         if (receivedResponses < requiredResponses) {
             // Tries the biggest CL that is expected to work
             return maxLikelyToWorkCL(receivedResponses);
@@ -148,9 +155,6 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
             case BATCH:
                 // Since we provide atomicity there is no point in retrying
                 return RetryDecision.ignore();
-            case COUNTER:
-                // We should not retry counters, period!
-                return RetryDecision.ignore();
             case UNLOGGED_BATCH:
                 // Since only part of the batch could have been persisted,
                 // retry with whatever consistency should allow to persist all
@@ -158,6 +162,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
             case BATCH_LOG:
                 return RetryDecision.retry(cl);
         }
+        // We want to rethrow on COUNTER and CAS, because in those case "we don't know" and don't want to guess
         return RetryDecision.rethrow();
     }
 

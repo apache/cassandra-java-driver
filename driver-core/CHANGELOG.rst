@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+2.0.0-beta2:
+------------
+
+- [bug] Fix exception when a conditional write timeout C* side.
+
+
 2.0.0-beta1:
 -----------
 
