@@ -72,7 +72,7 @@ public class CCMBridge {
 
     public static CCMBridge create(String name, int nbNodes) {
         CCMBridge bridge = new CCMBridge();
-        bridge.execute("ccm create %s -n %d -s -i %s -b %s", name, nbNodes, IP_PREFIX, CASSANDRA_VERSION);
+        bridge.execute("ccm create %s -n %d -s -i %s -b %s -d", name, nbNodes, IP_PREFIX, CASSANDRA_VERSION);
         return bridge;
     }
 

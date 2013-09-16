@@ -298,7 +298,6 @@ class Connection extends org.apache.cassandra.transport.Connection
                 writer.decrementAndGet();
 
                 if (!writeFuture.isSuccess()) {
-
                     logger.debug("[{}] Error writing request {}", name, request);
                     // Remove this handler from the dispatcher so it don't get notified of the error
                     // twice (we will fail that method already)
@@ -526,8 +525,7 @@ class Connection extends org.apache.cassandra.transport.Connection
                      *   2) This request has timeouted. In that case, we've already switched to another host (or errored out
                      *      to the user). So log it for debugging purpose, but it's fine ignoring otherwise.
                      */
-                    if (!isDefunct())
-                        logger.debug("[{}] Response received on stream {} but no handler set anymore (the request must have timeouted). Received message is {}", name, streamId, response);
+                    logger.debug("[{}] Response received on stream {} but no handler set anymore (either the request has timeouted or it was closed due to another error). Received message is {}", name, streamId, response);
                     return;
                 }
                 handler.cancelTimeout();

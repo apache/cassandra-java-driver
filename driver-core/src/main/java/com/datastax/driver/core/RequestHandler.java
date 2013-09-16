@@ -97,6 +97,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
         while (queryPlan.hasNext() && !isCanceled) {
             Host host = queryPlan.next();
+            logger.trace("Querying node {}", host);
             if (query(host))
                 return;
         }
