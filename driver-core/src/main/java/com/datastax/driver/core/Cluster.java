@@ -23,8 +23,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.base.Predicates;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -785,8 +790,13 @@ public class Cluster {
                 // We don't want to signal -- call onAdd() -- because nothing is ready
                 // yet (loadbalancing policy, control connection, ...). All we want is
                 // create the Host object so we can initialize the loadBalancing policy.
-                // But this also mean we should signal the external listners manually.
+                // But this also mean we should signal the external listeners manually.
+                // Note: we mark the initial contact point as UP, because we have no prior
+                // notion of their state and no real way to know until we connect to them
+                // (since the node status is not exposed by C* in the System tables). This
+                // may not be correct.
                 Host host = addHost(address, false);
+                host.setUp();
                 if (host != null) {
                     for (Host.StateListener listener : listeners)
                         listener.onAdd(host);
@@ -860,7 +870,7 @@ public class Cluster {
         }
 
         @Override
-        public void onUp(Host host) {
+        public void onUp(final Host host) {
             logger.trace("Host {} is UP", host);
 
             if (isShutdown())
@@ -868,8 +878,6 @@ public class Cluster {
 
             if (host.isUp())
                 return;
-
-            host.setUp();
 
             // If there is a reconnection attempt scheduled for that node, cancel it
             ScheduledFuture<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
@@ -888,29 +896,68 @@ public class Cluster {
             // Session#onUp() expects the load balancing policy to have been updated first, so that
             // Host distances are up to date. This mean the policy could return the node before the
             // new pool have been created. This is harmless if there is no prior pool since RequestHandler
-            // will ignore the node, but we do wan to make sure there is no prior pool so we don't
+            // will ignore the node, but we do want to make sure there is no prior pool so we don't
             // query from a pool we will shutdown right away.
             for (Session s : sessions)
                 s.manager.removePool(host);
             loadBalancingPolicy().onUp(host);
             controlConnection.onUp(host);
-            for (Session s : sessions)
-                s.manager.onUp(host);
 
-            for (Host.StateListener listener : listeners)
-                listener.onUp(host);
+            List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
+            for (Session s : sessions)
+                futures.add(s.manager.addOrRenewPool(host, false));
+
+            // Only mark the node up once all session have re-added their pool (if the loadbalancing
+            // policy says it should), so that Host.isUp() don't return true before we're reconnected
+            // to the node.
+            Futures.addCallback(Futures.allAsList(futures), new FutureCallback<List<Boolean>>() {
+                public void onSuccess(List<Boolean> poolCreationResults) {
+                    // If any of the creation failed, they will have signaled a connection failure
+                    // which will trigger a reconnection to the node. So don't bother marking UP.
+                    if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
+                        logger.debug("Connection pool cannot be created, not marking {} UP", host);
+                        return;
+                    }
+
+                    host.setUp();
+
+                    for (Host.StateListener listener : listeners)
+                        listener.onUp(host);
+
+                    // Now, check if there isn't pools to create/remove following the addition.
+                    // We do that now only so that it's not called before we've set the node up.
+                    for (Session s : sessions)
+                        s.manager.updateCreatedPools();
+                }
+
+                public void onFailure(Throwable t) {
+                    // That future is not really supposed to throw unexpected exceptions
+                    if (!(t instanceof InterruptedException))
+                        logger.error("Unexpected error while marking node UP: while this shouldn't happen, this shouldn't be critical", t);
+                }
+            });
         }
 
         @Override
         public void onDown(final Host host) {
+            onDown(host, false);
+        }
+
+        public void onDown(final Host host, final boolean isHostAddition) {
             logger.trace("Host {} is DOWN", host);
 
             if (isShutdown())
                 return;
 
-            if (!host.isUp())
+            // Note: we don't want to skip that method if !host.isUp() because we set isUp
+            // late in onUp, and so we can rely on isUp if there is an error during onUp.
+            // But if there is a reconnection attempt in progress already, then we know
+            // we've already gone through that method since the last successful onUp(), so
+            // we're good skipping it.
+            if (host.reconnectionAttempt.get() != null)
                 return;
 
+            boolean wasUp = host.isUp();
             host.setDown();
 
             loadBalancingPolicy().onDown(host);
@@ -918,8 +965,13 @@ public class Cluster {
             for (Session s : sessions)
                 s.manager.onDown(host);
 
-            for (Host.StateListener listener : listeners)
-                listener.onDown(host);
+            // Contrarily to other actions of that method, there is no reason to notify listeners
+            // unless the host was UP at the beginning of this function since even if a onUp fail
+            // mid-method, listeners won't  have been notified of the UP.
+            if (wasUp) {
+                for (Host.StateListener listener : listeners)
+                    listener.onDown(host);
+            }
 
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug("{} is down, scheduling connection retries", host);
@@ -931,7 +983,10 @@ public class Cluster {
 
                 protected void onReconnection(Connection connection) {
                     logger.debug("Successful reconnection to {}, setting host UP", host);
-                    onUp(host);
+                    if (isHostAddition)
+                        onAdd(host);
+                    else
+                        onUp(host);
                 }
 
                 protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
@@ -949,7 +1004,7 @@ public class Cluster {
         }
 
         @Override
-        public void onAdd(Host host) {
+        public void onAdd(final Host host) {
             logger.trace("Adding new host {}", host);
 
             if (isShutdown())
@@ -964,11 +1019,40 @@ public class Cluster {
 
             loadBalancingPolicy().onAdd(host);
             controlConnection.onAdd(host);
-            for (Session s : sessions)
-                s.manager.onAdd(host);
 
-            for (Host.StateListener listener : listeners)
-                listener.onAdd(host);
+            List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
+            for (Session s : sessions)
+                futures.add(s.manager.addOrRenewPool(host, true));
+
+            // Only mark the node up once all session have added their pool (if the loadbalancing
+            // policy says it should), so that Host.isUp() don't return true before we're reconnected
+            // to the node.
+            Futures.addCallback(Futures.allAsList(futures), new FutureCallback<List<Boolean>>() {
+                public void onSuccess(List<Boolean> poolCreationResults) {
+                    // If any of the creation failed, they will have signaled a connection failure
+                    // which will trigger a reconnection to the node. So don't bother marking UP.
+                    if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
+                        logger.debug("Connection pool cannot be created, not marking {} UP", host);
+                        return;
+                    }
+
+                    host.setUp();
+
+                    for (Host.StateListener listener : listeners)
+                        listener.onAdd(host);
+
+                    // Now, check if there isn't pools to create/remove following the addition.
+                    // We do that now only so that it's not called before we've set the node up.
+                    for (Session s : sessions)
+                        s.manager.updateCreatedPools();
+                }
+
+                public void onFailure(Throwable t) {
+                    // That future is not really supposed to throw unexpected exceptions
+                    if (!(t instanceof InterruptedException))
+                        logger.error("Unexpected error while adding node: while this shouldn't happen, this shouldn't be critical", t);
+                }
+            });
         }
 
         @Override
@@ -988,14 +1072,10 @@ public class Cluster {
                 listener.onRemove(host);
         }
 
-        public boolean signalConnectionFailure(Host host, ConnectionException exception) {
-            // If already down, don't signal again
-            if (!host.isUp())
-                return true;
-
+        public boolean signalConnectionFailure(Host host, ConnectionException exception, boolean isHostAddition) {
             boolean isDown = host.signalConnectionFailure(exception);
             if (isDown)
-                onDown(host);
+                onDown(host, isHostAddition);
             return isDown;
         }
 

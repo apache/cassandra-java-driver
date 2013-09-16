@@ -37,8 +37,8 @@ public class CCMBridge {
 
     private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d(-\\w+)?";
 
-    private static final File CASSANDRA_DIR;
-    private static final String CASSANDRA_VERSION;
+    static final File CASSANDRA_DIR;
+    static final String CASSANDRA_VERSION;
     static {
         String version = System.getProperty("cassandra.version");
         if (version.matches(CASSANDRA_VERSION_REGEXP)) {
@@ -72,7 +72,7 @@ public class CCMBridge {
 
     public static CCMBridge create(String name, int nbNodes) {
         CCMBridge bridge = new CCMBridge();
-        bridge.execute("ccm create %s -n %d -s -i %s -b %s", name, nbNodes, IP_PREFIX, CASSANDRA_VERSION);
+        bridge.execute("ccm create %s -n %d -s -i %s -b %s -d", name, nbNodes, IP_PREFIX, CASSANDRA_VERSION);
         return bridge;
     }
 
@@ -315,11 +315,6 @@ public class CCMBridge {
             try {
                 this.cluster = builder.addContactPoints(IP_PREFIX + "1").build();
                 this.session = cluster.connect();
-
-                Session tmpSession = cluster.connect();
-                waitForAllNodesToComeOnline(tmpSession, totalNodes);
-                waitForSchemaAgreement(tmpSession);
-
             } catch (NoHostAvailableException e) {
                 for (Map.Entry<InetAddress, Throwable> entry : e.getErrors().entrySet())
                     logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
