@@ -390,10 +390,15 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         session.execute(bs);
 
-        ResultSet rs = session.execute("SELECT * FROM " + SIMPLE_TABLE2);
-        for (Row r : rs)
-        {
-            System.out.println(">> " + r.getString("k") + " -> " + r.getString("v"));
-        }
+        List<Row> all = session.execute("SELECT * FROM " + SIMPLE_TABLE2).all();
+
+        assertEquals("three", all.get(0).getString("k"));
+        assertEquals("foobar", all.get(0).getString("v"));
+
+        assertEquals("one", all.get(1).getString("k"));
+        assertEquals("foo", all.get(1).getString("v"));
+
+        assertEquals("two", all.get(2).getString("k"));
+        assertEquals("bar", all.get(2).getString("v"));
     }
 }

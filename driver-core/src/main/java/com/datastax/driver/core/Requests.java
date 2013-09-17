@@ -242,6 +242,11 @@ class Requests {
                     size += CBUtil.sizeOfConsistencyLevel(serialConsistency);
                 return size;
         }
+
+        @Override
+        public String toString() {
+            return String.format("[cl=%s, vals=%s, skip=%b, psize=%d, state=%s, serialCl=%s]", consistency, values, skipMetadata, pageSize, pagingState, serialConsistency);
+        }
     }
 
     public static class Batch extends Message.Request {
