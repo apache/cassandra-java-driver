@@ -108,6 +108,8 @@ public class QueryOptions {
      * @throws IllegalArgumentException if {@code fetchSize &lte; 0}.
      */
     public QueryOptions setFetchSize(int fetchSize) {
+        if (fetchSize <= 0)
+            throw new IllegalArgumentException("Invalid fetchSize, should be > 0, got " + fetchSize);
         this.fetchSize = fetchSize;
         return this;
     }
