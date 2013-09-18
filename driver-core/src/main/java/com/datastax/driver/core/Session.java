@@ -468,7 +468,7 @@ public class Session {
             int fetchSize = statement.getFetchSize();
             if (fetchSize <= 0)
                 fetchSize = configuration().getQueryOptions().getFetchSize();
-            else if (fetchSize == Integer.MAX_VALUE)
+            if (fetchSize == Integer.MAX_VALUE)
                 fetchSize = -1;
 
             if (statement instanceof RegularStatement) {
