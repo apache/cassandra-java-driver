@@ -33,11 +33,16 @@ public class Metadata {
 
     private final Cluster.Manager cluster;
     volatile String clusterName;
+    volatile String partitioner;
+    volatile String cqlVersion;
+    volatile String releaseVersion;
     private final ConcurrentMap<InetAddress, Host> hosts = new ConcurrentHashMap<InetAddress, Host>();
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
 
     @SuppressWarnings("unchecked")
     private volatile TokenMap<? extends Token> tokenMap;
+
+
 
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
@@ -180,14 +185,50 @@ public class Metadata {
     }
 
     /**
-     * Returns the Cassandra name for the cluster connect to.
+     * Returns the Cassandra name for the cluster connected to.
      *
-     * @return the Cassandra name for the cluster connect to.
+     * @return the Cassandra name for the cluster connected to.
      */
     public String getClusterName() {
         return clusterName;
     }
 
+    /**
+     * Returns the partitioner for the cluster connected to.
+     *
+     * @return the partitioner for the cluster connected to.
+     */
+    public String getPartitioner() {
+        return partitioner;
+    }
+
+    /**
+     * Returns the highest CQL version supported by the cluster connected to.
+     * The version considered here is the one of the node used by the control
+     * connection. This means that while you're upgrading your Cassandra cluster,
+     * you should expect the result returned by this method to evolve sometime
+     * between the first and the last node upgrade. 
+     *
+     * @return the highest CQL version supported by the cluster connected to.
+     */
+    public String getCQLVersion() {
+        return cqlVersion;
+    }
+    
+    /**
+     * Returns the Cassandra release version for the cluster connected to. The version
+     * considered here is the one of the node used by the control connection.
+     * This means that while you're upgrading your Cassandra cluster, you should
+     * expect the result returned by this method to evolve sometime between the
+     * first and the last node upgrade. 
+     *
+     * @return the Cassandra release version for the cluster connected to.
+     */
+    public String getReleaseVersion() {
+        return releaseVersion;
+    }
+    
+    
     /**
      * Returns the known hosts of this cluster.
      *

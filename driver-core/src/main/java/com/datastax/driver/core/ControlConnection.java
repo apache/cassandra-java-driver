@@ -56,7 +56,7 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
 
     private static final String SELECT_PEERS = "SELECT peer, data_center, rack, tokens, rpc_address FROM system.peers";
-    private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens, partitioner FROM system.local WHERE key='local'";
+    private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens, partitioner, cql_version, release_version FROM system.local WHERE key='local'";
 
     private static final String SELECT_SCHEMA_PEERS = "SELECT peer, rpc_address, schema_version FROM system.peers";
     private static final String SELECT_SCHEMA_LOCAL = "SELECT schema_version FROM system.local WHERE key='local'";
@@ -314,7 +314,7 @@ class ControlConnection implements Host.StateListener {
         String partitioner = null;
         Map<Host, Collection<String>> tokenMap = new HashMap<Host, Collection<String>>();
 
-        // Update cluster name, DC and rack for the one node we are connected to
+        // Update cluster name, partitioner, versions, DC and rack for the one node we are connected to
         Row localRow = localFuture.get().one();
         if (localRow != null) {
             String clusterName = localRow.getString("cluster_name");
@@ -322,6 +322,16 @@ class ControlConnection implements Host.StateListener {
                 cluster.metadata.clusterName = clusterName;
 
             partitioner = localRow.getString("partitioner");
+            if (partitioner != null)
+            	cluster.metadata.partitioner = partitioner;
+            
+            String cqlVersion = localRow.getString("cql_version");
+            if (cqlVersion != null)
+            	cluster.metadata.cqlVersion = cqlVersion;
+            
+            String releaseVersion = localRow.getString("release_version");
+            if (releaseVersion != null)
+            	cluster.metadata.releaseVersion = releaseVersion;
 
             Host host = cluster.metadata.getHost(connection.address);
             // In theory host can't be null. However there is no point in risking a NPE in case we
