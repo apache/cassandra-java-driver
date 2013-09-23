@@ -79,7 +79,7 @@ public class Row {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      */
     public boolean isNull(String name) {
-        return isNull(metadata.getIdx(name));
+        return isNull(metadata.getFirstIdx(name));
     }
 
     /**
@@ -114,7 +114,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type BOOLEAN.
      */
     public boolean getBool(String name) {
-        return getBool(metadata.getIdx(name));
+        return getBool(metadata.getFirstIdx(name));
     }
 
     /**
@@ -149,7 +149,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type INT.
      */
     public int getInt(String name) {
-        return getInt(metadata.getIdx(name));
+        return getInt(metadata.getFirstIdx(name));
     }
 
     /**
@@ -184,7 +184,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code i} is not of type BIGINT or COUNTER.
      */
     public long getLong(String name) {
-        return getLong(metadata.getIdx(name));
+        return getLong(metadata.getFirstIdx(name));
     }
 
     /**
@@ -219,7 +219,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type TIMESTAMP.
      */
     public Date getDate(String name) {
-        return getDate(metadata.getIdx(name));
+        return getDate(metadata.getFirstIdx(name));
     }
 
     /**
@@ -254,7 +254,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type FLOAT.
      */
     public float getFloat(String name) {
-        return getFloat(metadata.getIdx(name));
+        return getFloat(metadata.getFirstIdx(name));
     }
 
     /**
@@ -289,7 +289,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type DOUBLE.
      */
     public double getDouble(String name) {
-        return getDouble(metadata.getIdx(name));
+        return getDouble(metadata.getFirstIdx(name));
     }
 
     /**
@@ -332,7 +332,7 @@ public class Row {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      */
     public ByteBuffer getBytesUnsafe(String name) {
-        return getBytesUnsafe(metadata.getIdx(name));
+        return getBytesUnsafe(metadata.getFirstIdx(name));
     }
 
     /**
@@ -368,7 +368,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code i} type is not of type BLOB.
      */
     public ByteBuffer getBytes(String name) {
-        return getBytes(metadata.getIdx(name));
+        return getBytes(metadata.getFirstIdx(name));
     }
 
     /**
@@ -409,7 +409,7 @@ public class Row {
      * VARCHAR, TEXT or ASCII.
      */
     public String getString(String name) {
-        return getString(metadata.getIdx(name));
+        return getString(metadata.getFirstIdx(name));
     }
 
     /**
@@ -444,7 +444,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type VARINT.
      */
     public BigInteger getVarint(String name) {
-        return getVarint(metadata.getIdx(name));
+        return getVarint(metadata.getFirstIdx(name));
     }
 
     /**
@@ -479,7 +479,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type DECIMAL.
      */
     public BigDecimal getDecimal(String name) {
-        return getDecimal(metadata.getIdx(name));
+        return getDecimal(metadata.getFirstIdx(name));
     }
 
     /**
@@ -518,7 +518,7 @@ public class Row {
      * UUID or TIMEUUID.
      */
     public UUID getUUID(String name) {
-        return getUUID(metadata.getIdx(name));
+        return getUUID(metadata.getFirstIdx(name));
     }
 
     /**
@@ -554,7 +554,7 @@ public class Row {
      * INET.
      */
     public InetAddress getInet(String name) {
-        return getInet(metadata.getIdx(name));
+        return getInet(metadata.getFirstIdx(name));
     }
 
     /**
@@ -604,7 +604,7 @@ public class Row {
      * elements are not of class {@code elementsClass}.
      */
     public <T> List<T> getList(String name, Class<T> elementsClass) {
-        return getList(metadata.getIdx(name), elementsClass);
+        return getList(metadata.getFirstIdx(name), elementsClass);
     }
 
     /**
@@ -654,7 +654,7 @@ public class Row {
      * elements are not of class {@code elementsClass}.
      */
     public <T> Set<T> getSet(String name, Class<T> elementsClass) {
-        return getSet(metadata.getIdx(name), elementsClass);
+        return getSet(metadata.getFirstIdx(name), elementsClass);
     }
 
     /**
@@ -709,7 +709,7 @@ public class Row {
      * class {@code valuesClass}.
      */
     public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass) {
-        return getMap(metadata.getIdx(name), keysClass, valuesClass);
+        return getMap(metadata.getFirstIdx(name), keysClass, valuesClass);
     }
 
     @Override

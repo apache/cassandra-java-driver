@@ -5,6 +5,8 @@ CHANGELOG
 ------------
 
 - [bug] Fix exception when a conditional write timeout C* side.
+- [api] BoundStatement#setX(String, X) methods now set all values (if there is
+  more than one) having the provided name, not just the first occurence.
 
 
 2.0.0-beta1:

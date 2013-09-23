@@ -99,6 +99,10 @@ though not all applications will be impacted by those changes.
     that if you really want to output "IN (?)" with the query builder, you can
     use QueryBuilder.in(QueryBuilder.raw("?")).
 
+16. When setting by names in BoundStatement (setX(String, X) methods), if more than
+    one variables have the same name, then all values corresponding to that variable
+    name are set instead of just the first occurrence.
+
 
 Non-breaking API Changes
 ------------------------

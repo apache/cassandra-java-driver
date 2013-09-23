@@ -32,11 +32,9 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * <p>
  * The values of a BoundStatement can be set by either index or name. When
  * setting them by name, names follow the case insensitivity rules explained in
- * {@link ColumnDefinitions}. If multiple bind variables
- * correspond to the same column (as would be the case if you prepare
- * {@code SELECT * FROM t WHERE x > ? AND x < ?}), you will have to set
- * values by indexes (or the {@link #bind} method) as the methods to set by
- * name only allows to set the first prepared occurrence of the column.
+ * {@link ColumnDefinitions} but with the difference that if multiple bind
+ * variables have the same name, setting that name will set <b>all</b> the
+ * variables for that name.
  * <p>
  * Any variable that hasn't been specifically set will be considered {@code null}.
  */
@@ -97,7 +95,7 @@ public class BoundStatement extends Statement {
      * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
     public boolean isSet(String name) {
-        return isSet(metadata().getIdx(name));
+        return isSet(metadata().getFirstIdx(name));
     }
 
     /**
@@ -252,7 +250,7 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Set the {@code i}th value to the provided boolean.
+     * Sets the {@code i}th value to the provided boolean.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -267,19 +265,26 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Set the value for the first occurrence of column {@code name} to the provided boolean.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided boolean.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not of type BOOLEAN.
+     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type BOOLEAN.
      */
     public BoundStatement setBool(String name, boolean v) {
-        return setBool(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        ByteBuffer value = TypeCodec.BooleanCodec.instance.serializeNoBoxing(v);
+        for (int i = 0; i < indexes.length; i++) {
+            metadata().checkType(indexes[i], DataType.Name.BOOLEAN);
+            setValue(indexes[i], value);
+        }
+        return this;
     }
 
     /**
@@ -298,30 +303,37 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Set the value for the first occurrence of column {@code name} to the provided integer.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided integer.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code i} is not of type INT.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type INT.
      */
     public BoundStatement setInt(String name, int v) {
-        return setInt(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        ByteBuffer value = TypeCodec.IntCodec.instance.serializeNoBoxing(v);
+        for (int i = 0; i < indexes.length; i++) {
+            metadata().checkType(indexes[i], DataType.Name.INT);
+            setValue(indexes[i], value);
+        }
+        return this;
     }
 
     /**
-     * Set the {@code i}th value to the provided long.
+     * Sets the {@code i}th value to the provided long.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is of type BIGINT or COUNTER.
+     * @throws InvalidTypeException if column {@code i} is not of type BIGINT or COUNTER.
      */
     public BoundStatement setLong(int i, long v) {
         metadata().checkType(i, DataType.Name.BIGINT, DataType.Name.COUNTER);
@@ -329,19 +341,27 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Set the value for the first occurrence of column {@code name} to the provided long.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided long.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code i} is of type BIGINT or COUNTER.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * not of type BIGINT or COUNTER.
      */
     public BoundStatement setLong(String name, long v) {
-        return setLong(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        ByteBuffer value = TypeCodec.LongCodec.instance.serializeNoBoxing(v);
+        for (int i = 0; i < indexes.length; i++) {
+            metadata().checkType(indexes[i], DataType.Name.BIGINT, DataType.Name.COUNTER);
+            setValue(indexes[i], value);
+        }
+        return this;
     }
 
     /**
@@ -360,19 +380,27 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Sets the value for the first occurrence of column {@code name} to the provided date.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided date.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not of type TIMESTAMP.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * not of type TIMESTAMP.
      */
     public BoundStatement setDate(String name, Date v) {
-        return setDate(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        ByteBuffer value = v == null ? null : TypeCodec.DateCodec.instance.serialize(v);
+        for (int i = 0; i < indexes.length; i++) {
+            metadata().checkType(indexes[i], DataType.Name.TIMESTAMP);
+            setValue(indexes[i], value);
+        }
+        return this;
     }
 
     /**
@@ -391,19 +419,27 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Sets the value for the first occurrence of column {@code name} to the provided float.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided float.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code i} is not of type FLOAT.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * not of type FLOAT.
      */
     public BoundStatement setFloat(String name, float v) {
-        return setFloat(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        ByteBuffer value = TypeCodec.FloatCodec.instance.serializeNoBoxing(v);
+        for (int i = 0; i < indexes.length; i++) {
+            metadata().checkType(indexes[i], DataType.Name.FLOAT);
+            setValue(indexes[i], value);
+        }
+        return this;
     }
 
     /**
@@ -422,19 +458,27 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Sets the value for the first occurrence of column {@code name} to the provided double.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided double.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code i} is not of type DOUBLE.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * not of type DOUBLE.
      */
     public BoundStatement setDouble(String name, double v) {
-        return setDouble(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        ByteBuffer value = TypeCodec.DoubleCodec.instance.serializeNoBoxing(v);
+        for (int i = 0; i < indexes.length; i++) {
+            metadata().checkType(indexes[i], DataType.Name.DOUBLE);
+            setValue(indexes[i], value);
+        }
+        return this;
     }
 
     /**
@@ -464,20 +508,24 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Sets the value for the first occurrence of column {@code name} to the provided string.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided string.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is of neither of the
-     * following types: VARCHAR, TEXT or ASCII.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * of neither of the following types: VARCHAR, TEXT or ASCII.
      */
     public BoundStatement setString(String name, String v) {
-        return setString(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        for (int i = 0; i < indexes.length; i++)
+            setString(indexes[i], v);
+        return this;
     }
 
     /**
@@ -500,23 +548,30 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Sets the value for the first occurrence of column {@code name} to the provided byte buffer.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided byte buffer.
      *
      * This method validate that the type of the column set is BLOB. If you
      * want to insert manually serialized data into columns of another type,
      * use {@link #setBytesUnsafe} instead.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not of type BLOB.
+     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is not of type BLOB.
      */
     public BoundStatement setBytes(String name, ByteBuffer v) {
-        return setBytes(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        ByteBuffer value = v == null ? null : v.duplicate();
+        for (int i = 0; i < indexes.length; i++) {
+            metadata().checkType(indexes[i], DataType.Name.BLOB);
+            setValue(indexes[i], value);
+        }
+        return this;
     }
 
     /**
@@ -538,7 +593,8 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Sets the value for the first occurrence of column {@code name} to the provided byte buffer.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided byte buffer.
      *
      * Contrary to {@link #setBytes}, this method does not check the
      * type of the column set. If you insert data that is not compatible with
@@ -546,7 +602,7 @@ public class BoundStatement extends Statement {
      * execute time.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
@@ -554,7 +610,11 @@ public class BoundStatement extends Statement {
      * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
     public BoundStatement setBytesUnsafe(String name, ByteBuffer v) {
-        return setBytesUnsafe(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        ByteBuffer value = v == null ? null : v.duplicate();
+        for (int i = 0; i < indexes.length; i++)
+            setValue(indexes[i], value);
+        return this;
     }
 
     /**
@@ -573,19 +633,27 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Sets the value for the first occurrence of column {@code name} to the provided big integer.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided big integer.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not of type VARINT.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * not of type VARINT.
      */
     public BoundStatement setVarint(String name, BigInteger v) {
-        return setVarint(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        ByteBuffer value = v == null ? null : TypeCodec.BigIntegerCodec.instance.serialize(v);
+        for (int i = 0; i < indexes.length; i++) {
+            metadata().checkType(indexes[i], DataType.Name.VARINT);
+            setValue(indexes[i], value);
+        }
+        return this;
     }
 
     /**
@@ -604,19 +672,27 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Sets the value for the first occurrence of column {@code name} to the provided big decimal.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided big decimal.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not of type DECIMAL.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * not of type DECIMAL.
      */
     public BoundStatement setDecimal(String name, BigDecimal v) {
-        return setDecimal(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        ByteBuffer value = v == null ? null : TypeCodec.DecimalCodec.instance.serialize(v);
+        for (int i = 0; i < indexes.length; i++) {
+            metadata().checkType(indexes[i], DataType.Name.DECIMAL);
+            setValue(indexes[i], value);
+        }
+        return this;
     }
 
     /**
@@ -647,21 +723,30 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Sets the value for the first occurrence of column {@code name} to the provided UUID.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided UUID.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not of type UUID or
-     * TIMEUUID, or if column {@code name} is of type TIMEUUID but {@code v} is
-     * not a type 1 UUID.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * not of type UUID or TIMEUUID, or if column {@code name} is of type
+     * TIMEUUID but {@code v} is not a type 1 UUID.
      */
     public BoundStatement setUUID(String name, UUID v) {
-        return setUUID(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        ByteBuffer value = v == null ? null : TypeCodec.UUIDCodec.instance.serialize(v);
+        for (int i = 0; i < indexes.length; i++) {
+            DataType.Name type = metadata().checkType(indexes[i], DataType.Name.UUID, DataType.Name.TIMEUUID);
+            if (v != null && type == DataType.Name.TIMEUUID && v.version() != 1)
+                throw new InvalidTypeException(String.format("%s is not a Type 1 (time-based) UUID", v));
+            setValue(indexes[i], value);
+        }
+        return this;
     }
 
     /**
@@ -680,19 +765,27 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Sets the value for the first occurrence of column {@code name} to the provided inet address.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided inet address.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not of type INET.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * not of type INET.
      */
     public BoundStatement setInet(String name, InetAddress v) {
-        return setInet(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        ByteBuffer value = v == null ? null : TypeCodec.InetCodec.instance.serialize(v);
+        for (int i = 0; i < indexes.length; i++) {
+            metadata().checkType(indexes[i], DataType.Name.INET);
+            setValue(indexes[i], value);
+        }
+        return this;
     }
 
     /**
@@ -729,21 +822,25 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Sets the value for the first occurrence of column {@code name} to the provided list.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided list.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not a list type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code name}.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * not a list type or if the elements of {@code v} are not of the type of
+     * the elements of column {@code name}.
      */
     public <T> BoundStatement setList(String name, List<T> v) {
-        return setList(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        for (int i = 0; i < indexes.length; i++)
+            setList(indexes[i], v);
+        return this;
     }
 
     /**
@@ -782,21 +879,25 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Sets the value for the first occurrence of column {@code name} to the provided map.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided map.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not a map type or
-     * if the elements (keys or values) of {@code v} are not of the type of the
-     * elements of column {@code name}.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * not a map type or if the elements (keys or values) of {@code v} are not of
+     * the type of the elements of column {@code name}.
      */
     public <K, V> BoundStatement setMap(String name, Map<K, V> v) {
-        return setMap(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        for (int i = 0; i < indexes.length; i++)
+            setMap(indexes[i], v);
+        return this;
     }
 
     /**
@@ -832,21 +933,25 @@ public class BoundStatement extends Statement {
     }
 
     /**
-     * Sets the value for the first occurrence of column {@code name} to the provided set.
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided set.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, only the first one is set.
+     * {@code name} are prepared, all of them are set.
      * @param v the value to set.
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not a set type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code name}.
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * not a map type or if the elements of {@code v} are not of the type of
+     * the elements of column {@code name}.
      */
     public <T> BoundStatement setSet(String name, Set<T> v) {
-        return setSet(metadata().getIdx(name), v);
+        int[] indexes = metadata().getAllIdx(name);
+        for (int i = 0; i < indexes.length; i++)
+            setSet(indexes[i], v);
+        return this;
     }
 
     private ColumnDefinitions metadata() {
