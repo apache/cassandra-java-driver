@@ -47,7 +47,7 @@ public class Metadata {
     synchronized void rebuildSchema(String keyspace, String table, ResultSet ks, ResultSet cfs, ResultSet cols) {
 
         Map<String, List<Row>> cfDefs = new HashMap<String, List<Row>>();
-        Map<String, Map<String, List<Row>>> colsDefs = new HashMap<String, Map<String, List<Row>>>();
+        Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = new HashMap<String, Map<String, Map<String, ColumnMetadata.Raw>>>();
 
         // Gather cf defs
         for (Row row : cfs) {
@@ -64,17 +64,18 @@ public class Metadata {
         for (Row row : cols) {
             String ksName = row.getString(KeyspaceMetadata.KS_NAME);
             String cfName = row.getString(TableMetadata.CF_NAME);
-            Map<String, List<Row>> colsByCf = colsDefs.get(ksName);
+            Map<String, Map<String, ColumnMetadata.Raw>> colsByCf = colsDefs.get(ksName);
             if (colsByCf == null) {
-                colsByCf = new HashMap<String, List<Row>>();
+                colsByCf = new HashMap<String, Map<String, ColumnMetadata.Raw>>();
                 colsDefs.put(ksName, colsByCf);
             }
-            List<Row> l = colsByCf.get(cfName);
+            Map<String, ColumnMetadata.Raw> l = colsByCf.get(cfName);
             if (l == null) {
-                l = new ArrayList<Row>();
+                l = new HashMap<String, ColumnMetadata.Raw>();
                 colsByCf.put(cfName, l);
             }
-            l.add(row);
+            ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row);
+            l.put(c.name, c);
         }
 
         if (table == null) {
@@ -117,18 +118,14 @@ public class Metadata {
         }
     }
 
-    private static void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, List<Row>> colsDefs) {
+    private static void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs) {
         boolean hasColumns = (colsDefs != null) && !colsDefs.isEmpty();
         for (Row cfRow : cfRows) {
             String cfName = cfRow.getString(TableMetadata.CF_NAME);
-            TableMetadata tm = TableMetadata.build(ksm, cfRow, hasColumns);
-
-            if (!hasColumns || colsDefs.get(cfName) == null)
-                continue;
-
-            for (Row colRow : colsDefs.get(cfName)) {
-                ColumnMetadata.build(tm, colRow);
-            }
+            Map<String, ColumnMetadata.Raw> cols = colsDefs.get(cfName);
+            if (cols == null)
+                cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
+            TableMetadata tm = TableMetadata.build(ksm, cfRow, cols);
         }
     }
 

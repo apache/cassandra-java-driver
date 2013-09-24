@@ -31,13 +31,15 @@ public class TableMetadata {
     private static final String COMPARATOR           = "comparator";
     private static final String VALIDATOR            = "default_validator";
 
-    private static final String KEY_ALIASES          = "key_aliases";
-    private static final String COLUMN_ALIASES       = "column_aliases";
-    private static final String VALUE_ALIAS          = "value_alias";
-
     private static final String DEFAULT_KEY_ALIAS    = "key";
     private static final String DEFAULT_COLUMN_ALIAS = "column";
     private static final String DEFAULT_VALUE_ALIAS  = "value";
+
+    private static final Comparator<ColumnMetadata> columnMetadataComparator = new Comparator<ColumnMetadata>() {
+        public int compare(ColumnMetadata c1, ColumnMetadata c2) {
+            return c1.getName().compareTo(c2.getName());
+        }
+    };
 
     private final KeyspaceMetadata keyspace;
     private final String name;
@@ -60,76 +62,64 @@ public class TableMetadata {
         this.options = options;
     }
 
-    static TableMetadata build(KeyspaceMetadata ksm, Row row, boolean hasColumnMetadata) {
+    static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols) {
+
         String name = row.getString(CF_NAME);
 
-        List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>();
-        List<ColumnMetadata> clusteringKey = new ArrayList<ColumnMetadata>();
+        CassandraTypeParser.ParseResult comparator = CassandraTypeParser.parseWithComposite(row.getString(COMPARATOR));
+        CassandraTypeParser.ParseResult keyValidator = CassandraTypeParser.parseWithComposite(row.getString(KEY_VALIDATOR));
+
+        int clusteringSize = findClusteringSize(rawCols.values());
+        boolean isDense = clusteringSize != comparator.types.size() - 1;
+        boolean isCompact = isDense || !comparator.isComposite;
+
+        List<ColumnMetadata> partitionKey = nullInitializedList(keyValidator.types.size());
+        List<ColumnMetadata> clusteringKey = nullInitializedList(clusteringSize);
         // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
 
-        // First, figure out which kind of table we are
-        boolean isCompact = false;
-
-        CassandraTypeParser.ParseResult ct = CassandraTypeParser.parseWithComposite(row.getString(COMPARATOR));
-        List<String> columnAliases = fromJsonList(row.getString(COLUMN_ALIASES));
-        int clusteringSize;
-        boolean hasValue;
-        int last = ct.types.size() - 1;
-        DataType lastType = ct.types.get(last);
-        if (ct.isComposite) {
-            if (!ct.collections.isEmpty() || (columnAliases.size() == last && lastType.equals(DataType.text()))) {
-                hasValue = false;
-                clusteringSize = last;
-            } else {
-                isCompact = true;
-                hasValue = true;
-                clusteringSize = ct.types.size();
-            }
-        } else {
-            isCompact = true;
-            if (!columnAliases.isEmpty() || !hasColumnMetadata) {
-                hasValue = true;
-                clusteringSize = ct.types.size();
-            } else {
-                hasValue = false;
-                clusteringSize = 0;
-            }
-        }
-
         TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringKey, columns, new Options(row, isCompact));
 
-        // Partition key
-        CassandraTypeParser.ParseResult kt = CassandraTypeParser.parseWithComposite(row.getString(KEY_VALIDATOR));
-        // check if key_aliases is null, and set to [] due to CASSANDRA-5101
-        List<String> keyAliases = row.getString(KEY_ALIASES) == null ? Collections.<String>emptyList() : fromJsonList(row.getString(KEY_ALIASES));
-        for (int i = 0; i < kt.types.size(); i++) {
-            String cn = keyAliases.size() > i
-                      ? keyAliases.get(i)
-                      : (i == 0 ? DEFAULT_KEY_ALIAS : DEFAULT_KEY_ALIAS + (i + 1));
-            ColumnMetadata colMeta = new ColumnMetadata(tm, cn, kt.types.get(i), null);
-            columns.put(cn, colMeta);
-            partitionKey.add(colMeta);
+        // We use this temporary set just so non PK columns are added in lexicographical order, which is the one of a
+        // 'SELECT * FROM ...'
+        Set<ColumnMetadata> otherColumns = new TreeSet<ColumnMetadata>(columnMetadataComparator);
+        for (ColumnMetadata.Raw rawCol : rawCols.values()) {
+            ColumnMetadata col = ColumnMetadata.fromRaw(tm, rawCol);
+            otherColumns.add(col);
+            switch (rawCol.kind) {
+                case PARTITION_KEY:
+                    partitionKey.set(rawCol.componentIndex, col);
+                    break;
+                case CLUSTERING_KEY:
+                    clusteringKey.set(rawCol.componentIndex, col);
+                    break;
+            }
         }
 
-        // Clustering key
-        for (int i = 0; i < clusteringSize; i++) {
-            String cn = columnAliases.size() > i ? columnAliases.get(i) : DEFAULT_COLUMN_ALIAS + (i + 1);
-            ColumnMetadata colMeta = new ColumnMetadata(tm, cn, ct.types.get(i), null);
-            columns.put(cn, colMeta);
-            clusteringKey.add(colMeta);
-        }
-
-        // Value alias (if present)
-        if (hasValue) {
-            DataType vt = CassandraTypeParser.parseOne(row.getString(VALIDATOR));
-            String valueAlias = row.isNull(KEY_ALIASES) ? DEFAULT_VALUE_ALIAS : row.getString(VALUE_ALIAS);
-            ColumnMetadata vm = new ColumnMetadata(tm, valueAlias, vt, null);
-            columns.put(valueAlias, vm);
-        }
+        for (ColumnMetadata c : partitionKey)
+            columns.put(c.getName(), c);
+        for (ColumnMetadata c : clusteringKey)
+            columns.put(c.getName(), c);
+        for (ColumnMetadata c : otherColumns)
+            columns.put(c.getName(), c);
 
         ksm.add(tm);
         return tm;
+    }
+
+    private static int findClusteringSize(Collection<ColumnMetadata.Raw> cols) {
+        int maxId = -1;
+        for (ColumnMetadata.Raw col : cols)
+            if (col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_KEY)
+                maxId = Math.max(maxId, col.componentIndex);
+        return maxId + 1;
+    }
+
+    private static <T> List<T> nullInitializedList(int size) {
+        List<T> l = new ArrayList<T>(size);
+        for (int i = 0; i < size; ++i)
+            l.add(null);
+        return l;
     }
 
     /**
@@ -225,15 +215,6 @@ public class TableMetadata {
 
     // :_(
     private static ObjectMapper jsonMapper = new ObjectMapper(new JsonFactory());
-
-    @SuppressWarnings("unchecked")
-    static List<String> fromJsonList(String json) {
-        try {
-            return jsonMapper.readValue(json, List.class);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @SuppressWarnings("unchecked")
     static Map<String, String> fromJsonMap(String json) {
