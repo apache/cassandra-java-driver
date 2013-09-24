@@ -96,6 +96,11 @@ public class BatchStatement extends Statement {
      * {@code BatchStatement} in particular. Adding another {@code BatchStatement}
      * is also allowed for convenient and is equivalent to adding all the {@code Statement}
      * contained in that other {@code BatchStatement}.
+     * <p>
+     * Please note that the options of the added Statement (all those defined directly by the
+     * {@link Statement} class: consistency level, fetch size, tracing, ...) will be ignored
+     * for the purpose of the execution of the Batch. Instead, the options used are the one
+     * of this {@code BatchStatement} object.
      *
      * @param statement the new statement to add.
      * @return this batch statement.
