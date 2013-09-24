@@ -103,6 +103,15 @@ though not all applications will be impacted by those changes.
     one variables have the same name, then all values corresponding to that variable
     name are set instead of just the first occurrence.
 
+17. The querybuilder will now sometime use the new ability to send value as
+    bytes instead of serializing everything to string. In general the querybuilder
+    will do the right thing, but if you were calling the getQueryString() method
+    on a querybuilder Statement manually (for other reasons than to prepare a query)
+    then the returned string may contain bind marker in place of some of the values
+    provided (and in that case, getValues() will contain the values corresponding
+    to those markers). If need be, it is possible to force the old behavior by
+    using the new setForceNoValues() method.
+
 
 Non-breaking API Changes
 ------------------------

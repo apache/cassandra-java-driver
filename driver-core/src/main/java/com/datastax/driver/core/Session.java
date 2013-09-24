@@ -205,9 +205,16 @@ public class Session {
      *
      * @throws NoHostAvailableException if no host in the cluster can be
      * contacted successfully to prepare this statement.
+     * @throws IllegalArgumentException if {@code statement.getValues() != null}
+     * (values for executing a prepared statement should be provided after preparation
+     * though the {@link PreparedStatement#bind} method or through a corresponding
+     * {@link BoundStatement}).
      */
     public PreparedStatement prepare(RegularStatement statement) {
-        PreparedStatement prepared = prepare(statement.getQueryString());
+        if (statement.getValues() != null)
+            throw new IllegalArgumentException("A statement to prepare should not have values");
+
+        PreparedStatement prepared = prepare(statement.toString());
 
         ByteBuffer routingKey = statement.getRoutingKey();
         if (routingKey != null)

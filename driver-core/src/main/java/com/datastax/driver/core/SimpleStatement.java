@@ -92,17 +92,11 @@ public class SimpleStatement extends RegularStatement {
     private static ByteBuffer[] convert(Object[] values) {
         ByteBuffer[] serializedValues = new ByteBuffer[values.length];
         for (int i = 0; i < values.length; i++) {
-            DataType dt = TypeCodec.getDataTypeFor(values[i]);
-            if (dt == null)
-                throw new IllegalArgumentException(String.format("Value %d of type %s does not correspond to any CQL3 type", i, values[i].getClass()));
-
             try {
-                serializedValues[i] = dt.serialize(values[i]);
-            } catch (InvalidTypeException e) {
-                // In theory we couldn't get that if getDataTypeFor does his job correctly,
-                // but there is no point in sending an exception that the user won't expect if we're
-                // wrong on that.
-                throw new IllegalArgumentException(e.getMessage());
+                serializedValues[i] = DataType.serializeValue(values[i]);
+            } catch (IllegalArgumentException e) {
+                // Catch and rethrow to provide a more helpful error message (one that include which value is bad)
+                throw new IllegalArgumentException(String.format("Value %d of type %s does not correspond to any CQL3 type", i, values[i].getClass()));
             }
         }
         return serializedValues;

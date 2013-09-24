@@ -15,11 +15,12 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 public abstract class Clause extends Utils.Appendeable {
 
-    protected final String name;
+    final String name;
 
     private Clause(String name) {
         this.name = name;
@@ -43,14 +44,19 @@ public abstract class Clause extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb) {
+        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             Utils.appendName(name, sb).append(op);
-            Utils.appendValue(value, sb);
+            Utils.appendValue(value, sb, variables);
         }
 
         @Override
         Object firstValue() {
             return value;
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            return Utils.containsBindMarker(value);
         }
     }
 
@@ -67,7 +73,7 @@ public abstract class Clause extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb) {
+        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
 
             // We special case the case of just one bind marker because there is little
             // reasons to do:
@@ -85,12 +91,20 @@ public abstract class Clause extends Utils.Appendeable {
             }
 
             Utils.appendName(name, sb).append(" IN (");
-            Utils.joinAndAppendValues(sb, ",", values).append(")");
+            Utils.joinAndAppendValues(sb, ",", values, variables).append(")");
         }
 
         @Override
         Object firstValue() {
             return values.get(0);
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            for (Object value : values)
+                if (Utils.containsBindMarker(value))
+                    return true;
+            return false;
         }
     }
 }

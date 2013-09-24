@@ -60,9 +60,6 @@ public class QueryBuilderTest {
         select = select().countAll().from("foo");
         assertEquals(select.toString(), query);
 
-        // Ensure getQueryString() == to.String()
-        assertEquals(select().countAll().from("foo").getQueryString(), query);
-
         query = "SELECT intToBlob(b) FROM foo;";
         select = select().fcall("intToBlob", column("b")).from("foo");
         assertEquals(select.toString(), query);

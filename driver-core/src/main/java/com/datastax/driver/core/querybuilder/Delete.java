@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class Delete extends BuiltStatement {
     }
 
     @Override
-    protected StringBuilder buildQueryString() {
+    StringBuilder buildQueryString(List<ByteBuffer> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("DELETE ");
@@ -60,12 +61,12 @@ public class Delete extends BuiltStatement {
         Utils.appendName(table, builder);
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings);
+            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
         }
 
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
-            Utils.joinAndAppend(builder, " AND ", where.clauses);
+            Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
         }
 
         return builder;
@@ -123,7 +124,7 @@ public class Delete extends BuiltStatement {
         {
             clauses.add(clause);
             statement.maybeAddRoutingKey(clause.name(), clause.firstValue());
-            setDirty();
+            checkForBindMarkers(clause);
             return this;
         }
 
@@ -157,7 +158,7 @@ public class Delete extends BuiltStatement {
          */
         public Options and(Using using) {
             usings.add(using);
-            setDirty();
+            checkForBindMarkers(using);
             return this;
         }
 
@@ -177,9 +178,9 @@ public class Delete extends BuiltStatement {
      */
     public static class Builder {
 
-        protected List<Object> columnNames;
+        List<Object> columnNames;
 
-        protected Builder() {}
+        Builder() {}
 
         Builder(List<Object> columnNames) {
             this.columnNames = columnNames;

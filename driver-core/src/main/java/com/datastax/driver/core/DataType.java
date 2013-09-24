@@ -547,6 +547,41 @@ public class DataType {
         return codec().deserialize(bytes);
     }
 
+    /**
+     * Serialize an object based on its java class.
+     * <p>
+     * This is equivalent to {@link #serialize} but with the difference that
+     * the actual {@code DataType} of the resulting value is inferred from the
+     * java class of {@code value}. The correspondance between CQL {@code DataType}
+     * and java class used is the one induced by the method {@link Name#asJavaClass}.
+     * Note that if you know the {@code DataType} of {@code value}, you should use
+     * the {@link #serialize} method instead as it is going to be faster.
+     *
+     * @param value the value to serialize.
+     * @return the value serialized, or {@code null} if {@code value} is null.
+     *
+     * @throws IllegalArgumentException if {@code value} is not of a type
+     * corresponding to a CQL3 type, i.e. is not a Class that could be returned
+     * by {@link DataType#asJavaClass}.
+     */
+    public static ByteBuffer serializeValue(Object value) {
+        if (value == null)
+            return null;
+
+        DataType dt = TypeCodec.getDataTypeFor(value);
+        if (dt == null)
+            throw new IllegalArgumentException(String.format("Value of type %s does not correspond to any CQL3 type", value.getClass()));
+
+        try {
+            return dt.serialize(value);
+        } catch (InvalidTypeException e) {
+            // In theory we couldn't get that if getDataTypeFor does his job correctly,
+            // but there is no point in sending an exception that the user won't expect if we're
+            // wrong on that.
+            throw new IllegalArgumentException(e.getMessage());
+        }
+    }
+
     @Override
     public final int hashCode() {
         return Arrays.hashCode(new Object[]{ name, typeArguments, customClassName });

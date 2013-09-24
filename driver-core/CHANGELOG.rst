@@ -4,9 +4,11 @@ CHANGELOG
 2.0.0-beta2:
 ------------
 
-- [bug] Fix exception when a conditional write timeout C* side.
 - [api] BoundStatement#setX(String, X) methods now set all values (if there is
   more than one) having the provided name, not just the first occurence.
+- [new] The query builder don't serialize large values to strings anymore by
+  default by making use the new ability to send values alongside the query string.
+- [bug] Fix exception when a conditional write timeout C* side.
 
 
 2.0.0-beta1:

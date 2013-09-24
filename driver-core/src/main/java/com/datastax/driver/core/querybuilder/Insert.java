@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,7 +46,7 @@ public class Insert extends BuiltStatement {
     }
 
     @Override
-    protected StringBuilder buildQueryString() {
+    StringBuilder buildQueryString(List<ByteBuffer> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("INSERT INTO ");
@@ -55,7 +56,7 @@ public class Insert extends BuiltStatement {
         builder.append("(");
         Utils.joinAndAppendNames(builder, ",", names);
         builder.append(") VALUES (");
-        Utils.joinAndAppendValues(builder, ",", values);
+        Utils.joinAndAppendValues(builder, ",", values, variables);
         builder.append(")");
 
         if (ifNotExists)
@@ -63,7 +64,7 @@ public class Insert extends BuiltStatement {
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings);
+            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
         }
         return builder;
     }
@@ -78,7 +79,7 @@ public class Insert extends BuiltStatement {
     public Insert value(String name, Object value) {
         names.add(name);
         values.add(value);
-        setDirty();
+        checkForBindMarkers(value);
         maybeAddRoutingKey(name, value);
         return this;
     }
@@ -99,10 +100,11 @@ public class Insert extends BuiltStatement {
             throw new IllegalArgumentException(String.format("Got %d names but %d values", names.length, values.length));
         this.names.addAll(Arrays.asList(names));
         this.values.addAll(Arrays.asList(values));
-        setDirty();
 
-        for (int i = 0; i < names.length; i++)
+        for (int i = 0; i < names.length; i++) {
+            checkForBindMarkers(values[i]);
             maybeAddRoutingKey(names[i], values[i]);
+        }
         return this;
     }
 
@@ -154,7 +156,7 @@ public class Insert extends BuiltStatement {
          */
         public Options and(Using using) {
             usings.add(using);
-            setDirty();
+            checkForBindMarkers(using);
             return this;
         }
 

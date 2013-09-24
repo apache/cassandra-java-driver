@@ -86,7 +86,7 @@ abstract class TypeCodec<T> {
      * Returns if it's doesn't correspond to a known type.
      *
      * Also, note that this only a dataType that is fit for the value,
-     * but for instance, for a UUID, this will return never DataType.uuid() but
+     * but for instance, for a UUID, this will return DataType.uuid() but
      * never DataType.timeuuid(). Also, provided an empty list, this will return
      * DataType.list(DataType.blob()), which is semi-random. This is ok if all
      * we want is serialize the value, but that's probably all we should do with
@@ -94,7 +94,7 @@ abstract class TypeCodec<T> {
      */
     static DataType getDataTypeFor(Object value) {
         // Starts with ByteBuffer, so that if already serialized value are provided, we don't have the
-        // cost of tested a bunch of other types first
+        // cost of testing a bunch of other types first
         if (value instanceof ByteBuffer)
             return DataType.blob();
 

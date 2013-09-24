@@ -15,6 +15,9 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.nio.ByteBuffer;
+import java.util.List;
+
 public class Ordering extends Utils.Appendeable {
 
     private final String name;
@@ -26,8 +29,13 @@ public class Ordering extends Utils.Appendeable {
     }
 
     @Override
-    void appendTo(StringBuilder sb) {
+    void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
         Utils.appendName(name, sb);
         sb.append(isDesc ? " DESC" : " ASC");
+    }
+
+    @Override
+    boolean containsBindMarker() {
+        return false;
     }
 }

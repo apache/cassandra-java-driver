@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,7 +52,7 @@ public class Update extends BuiltStatement {
     }
 
     @Override
-    protected StringBuilder buildQueryString() {
+    StringBuilder buildQueryString(List<ByteBuffer> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("UPDATE ");
@@ -61,22 +62,22 @@ public class Update extends BuiltStatement {
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings);
+            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
         }
 
         if (!assignments.assignments.isEmpty()) {
             builder.append(" SET ");
-            Utils.joinAndAppend(builder, ",", assignments.assignments);
+            Utils.joinAndAppend(builder, ",", assignments.assignments, variables);
         }
 
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
-            Utils.joinAndAppend(builder, " AND ", where.clauses);
+            Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
         }
 
         if (!conditions.conditions.isEmpty()) {
             builder.append(" IF ");
-            Utils.joinAndAppend(builder, " AND ", conditions.conditions);
+            Utils.joinAndAppend(builder, " AND ", conditions.conditions, variables);
         }
 
         return builder;
@@ -175,7 +176,7 @@ public class Update extends BuiltStatement {
         public Assignments and(Assignment assignment) {
             statement.setCounterOp(assignment instanceof CounterAssignment);
             assignments.add(assignment);
-            setDirty();
+            checkForBindMarkers(assignment);
             return this;
         }
 
@@ -230,7 +231,7 @@ public class Update extends BuiltStatement {
         public Where and(Clause clause) {
             clauses.add(clause);
             statement.maybeAddRoutingKey(clause.name(), clause.firstValue());
-            setDirty();
+            checkForBindMarkers(clause);
             return this;
         }
 
@@ -284,7 +285,7 @@ public class Update extends BuiltStatement {
          */
         public Options and(Using using) {
             usings.add(using);
-            setDirty();
+            checkForBindMarkers(using);
             return this;
         }
 
@@ -347,7 +348,7 @@ public class Update extends BuiltStatement {
          */
         public Conditions and(Clause condition) {
             conditions.add(condition);
-            setDirty();
+            checkForBindMarkers(condition);
             return this;
         }
 

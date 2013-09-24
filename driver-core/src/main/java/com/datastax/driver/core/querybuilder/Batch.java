@@ -44,7 +44,7 @@ public class Batch extends BuiltStatement {
     }
 
     @Override
-    protected StringBuilder buildQueryString() {
+    StringBuilder buildQueryString(List<ByteBuffer> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append(isCounterOp()
@@ -53,15 +53,30 @@ public class Batch extends BuiltStatement {
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings);
+            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
         }
         builder.append(" ");
 
         for (int i = 0; i < statements.size(); i++) {
-            String str = statements.get(i).getQueryString();
-            builder.append(str);
-            if (!str.trim().endsWith(";"))
-                builder.append(";");
+            RegularStatement stmt = statements.get(i);
+            if (stmt instanceof BuiltStatement) {
+                BuiltStatement bst = (BuiltStatement)stmt;
+                builder.append(maybeAddSemicolon(bst.buildQueryString(variables)));
+
+            } else {
+                String str = stmt.getQueryString();
+                builder.append(str);
+                if (!str.trim().endsWith(";"))
+                    builder.append(";");
+
+                if (variables != null) {
+                    ByteBuffer[] vars = stmt.getValues();
+                    if (vars != null) {
+                        for (int idx = 0; idx < vars.length; idx++)
+                            variables.add(vars[idx]);
+                    }
+                }
+            }
         }
         builder.append("APPLY BATCH;");
         return builder;
@@ -77,9 +92,6 @@ public class Batch extends BuiltStatement {
      * are mixed.
      */
     public Batch add(RegularStatement statement) {
-        if (statement.getValues() != null)
-            throw new IllegalArgumentException("Statements with values are not (yet) supported by the query builder. You should use BatchStatement instead.");
-
         boolean isCounterOp = statement instanceof BuiltStatement && ((BuiltStatement) statement).isCounterOp();
 
         if (this.isCounterOp == null)
@@ -88,7 +100,14 @@ public class Batch extends BuiltStatement {
             throw new IllegalArgumentException("Cannot mix counter operations and non-counter operations in a batch statement");
 
         this.statements.add(statement);
-        setDirty();
+
+        if (statement instanceof BuiltStatement)
+            this.hasBindMarkers = ((BuiltStatement)statement).hasBindMarkers;
+        else
+            // For non-BuiltStatement, we cannot know if it includes a bind makers. So we assume it does.
+            this.hasBindMarkers = true;
+
+        checkForBindMarkers(null);
 
         if (routingKey == null && statement.getRoutingKey() != null)
             routingKey = statement.getRoutingKey();
@@ -146,7 +165,7 @@ public class Batch extends BuiltStatement {
          */
         public Options and(Using using) {
             usings.add(using);
-            setDirty();
+            checkForBindMarkers(using);
             return this;
         }
 

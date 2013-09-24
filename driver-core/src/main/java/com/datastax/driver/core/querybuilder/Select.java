@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,7 +52,7 @@ public class Select extends BuiltStatement {
     }
 
     @Override
-    protected StringBuilder buildQueryString() {
+    StringBuilder buildQueryString(List<ByteBuffer> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("SELECT ");
@@ -67,12 +68,12 @@ public class Select extends BuiltStatement {
 
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
-            Utils.joinAndAppend(builder, " AND ", where.clauses);
+            Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
         }
 
         if (orderings != null) {
             builder.append(" ORDER BY ");
-            Utils.joinAndAppend(builder, ",", orderings);
+            Utils.joinAndAppend(builder, ",", orderings, variables);
         }
 
         if (limit > 0) {
@@ -121,7 +122,8 @@ public class Select extends BuiltStatement {
             throw new IllegalStateException("An ORDER BY clause has already been provided");
 
         this.orderings = Arrays.asList(orderings);
-        setDirty();
+        for (int i = 0; i < orderings.length; i++)
+            checkForBindMarkers(orderings[i]);
         return this;
     }
 
@@ -143,7 +145,7 @@ public class Select extends BuiltStatement {
             throw new IllegalStateException("A LIMIT value has already been provided");
 
         this.limit = limit;
-        setDirty();
+        checkForBindMarkers(null);
         return this;
     }
 
@@ -177,7 +179,7 @@ public class Select extends BuiltStatement {
         public Where and(Clause clause) {
             clauses.add(clause);
             statement.maybeAddRoutingKey(clause.name(), clause.firstValue());
-            setDirty();
+            checkForBindMarkers(clause);
             return this;
         }
 
@@ -216,9 +218,9 @@ public class Select extends BuiltStatement {
      */
     public static class Builder {
 
-        protected List<Object> columnNames;
+        List<Object> columnNames;
 
-        protected Builder() {}
+        Builder() {}
 
         Builder(List<Object> columnNames) {
             this.columnNames = columnNames;

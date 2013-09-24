@@ -15,6 +15,9 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.nio.ByteBuffer;
+import java.util.List;
+
 public class Using extends Utils.Appendeable {
 
     private final String optionName;
@@ -26,7 +29,12 @@ public class Using extends Utils.Appendeable {
     }
 
     @Override
-    void appendTo(StringBuilder sb) {
+    void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
         sb.append(optionName).append(" ").append(value);
+    }
+
+    @Override
+    boolean containsBindMarker() {
+        return false;
     }
 }

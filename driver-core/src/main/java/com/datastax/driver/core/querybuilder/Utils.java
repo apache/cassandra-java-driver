@@ -15,23 +15,26 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.math.BigInteger;
+import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.regex.Pattern;
 
 import com.datastax.driver.core.utils.Bytes;
+import com.datastax.driver.core.DataType;
 
 // Static utilities private to the query builder
 abstract class Utils {
 
     private static final Pattern cnamePattern = Pattern.compile("\\w+(?:\\[.+\\])?");
 
-    static StringBuilder joinAndAppend(StringBuilder sb, String separator, List<? extends Appendeable> values) {
+    static StringBuilder joinAndAppend(StringBuilder sb, String separator, List<? extends Appendeable> values, List<ByteBuffer> variables) {
         for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);
-            values.get(i).appendTo(sb);
+            values.get(i).appendTo(sb, variables);
         }
         return sb;
     }
@@ -45,17 +48,44 @@ abstract class Utils {
         return sb;
     }
 
-    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<Object> values) {
+    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<Object> values, List<ByteBuffer> variables) {
         for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);
-            appendValue(values.get(i), sb);
+            appendValue(values.get(i), sb, variables);
         }
         return sb;
     }
 
-    static StringBuilder appendValue(Object value, StringBuilder sb) {
-        return appendValue(value, sb, false);
+    // Returns null if it's not really serializable (function call, bind markers, ...)
+    static ByteBuffer serializeValue(Object value) {
+        if (value == QueryBuilder.bindMarker() || value instanceof FCall || value instanceof CName)
+            return null;
+
+        // We also don't serialize fixed size number types. The reason is that if we do it, we will
+        // force a particular size (4 bytes for ints, ...) and for the query builder, we don't want
+        // users to have to bother with that.
+        if (value instanceof Number && !(value instanceof BigInteger || value instanceof BigDecimal))
+            return null;
+
+        try {
+            return DataType.serializeValue(value);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    static StringBuilder appendValue(Object value, StringBuilder sb, List<ByteBuffer> variables) {
+        if (variables == null)
+            return appendValue(value, sb, false);
+
+        ByteBuffer bb = serializeValue(value);
+        if (bb == null)
+            return appendValue(value, sb, false);
+
+        sb.append("?");
+        variables.add(bb);
+        return sb;
     }
 
     static StringBuilder appendFlatValue(Object value, StringBuilder sb) {
@@ -122,7 +152,7 @@ abstract class Utils {
             for (int i = 0; i < fcall.parameters.length; i++) {
                 if (i > 0)
                     sb.append(",");
-                appendValue(fcall.parameters[i], sb);
+                appendValue(fcall.parameters[i], sb, null);
             }
             sb.append(")");
             return true;
@@ -153,9 +183,15 @@ abstract class Utils {
         }
     }
 
-    static StringBuilder appendCollection(Object value, StringBuilder sb) {
-        boolean wasCollection = appendValueIfCollection(value, sb, false);
-        assert wasCollection;
+    static StringBuilder appendCollection(Object value, StringBuilder sb, List<ByteBuffer> variables) {
+        ByteBuffer bb = variables == null ? null : serializeValue(value);
+        if (bb == null) {
+            boolean wasCollection = appendValueIfCollection(value, sb, false);
+            assert wasCollection;
+        } else {
+            sb.append("?");
+            variables.add(bb);
+        }
         return sb;
     }
 
@@ -191,6 +227,20 @@ abstract class Utils {
 
     static StringBuilder appendMap(Map<?, ?> m, StringBuilder sb) {
         return appendMap(m, sb, false);
+    }
+
+    static boolean containsBindMarker(Object value) {
+        if (value == QueryBuilder.bindMarker())
+            return true;
+
+        if (!(value instanceof FCall))
+            return false;
+
+        FCall fcall = (FCall)value;
+        for (Object param : fcall.parameters)
+            if (containsBindMarker(param))
+                return true;
+        return false;
     }
 
     private static StringBuilder appendMap(Map<?, ?> m, StringBuilder sb, boolean rawValue) {
@@ -245,7 +295,7 @@ abstract class Utils {
             for (int i = 0; i < fcall.parameters.length; i++) {
                 if (i > 0)
                     sb.append(",");
-                appendValue(fcall.parameters[i], sb);
+                appendValue(fcall.parameters[i], sb, null);
             }
             sb.append(")");
         } else {
@@ -255,7 +305,8 @@ abstract class Utils {
     }
 
     static abstract class Appendeable {
-        abstract void appendTo(StringBuilder sb);
+        abstract void appendTo(StringBuilder sb, List<ByteBuffer> values);
+        abstract boolean containsBindMarker();
     }
 
     // Simple method to replace a single character. String.replace is a bit too
