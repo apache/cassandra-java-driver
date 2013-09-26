@@ -143,8 +143,8 @@ abstract class Utils {
         } else if (value instanceof ByteBuffer) {
             sb.append(Bytes.toHexString((ByteBuffer)value));
             return true;
-        } else if (value == QueryBuilder.BIND_MARKER) {
-            sb.append("?");
+        } else if (value instanceof BindMarker) {
+            sb.append(value);
             return true;
         } else if (value instanceof FCall) {
             FCall fcall = (FCall)value;
@@ -267,7 +267,7 @@ abstract class Utils {
         return value != null
             && !(value instanceof FCall)
             && !(value instanceof CName)
-            && value != QueryBuilder.BIND_MARKER;
+            && !(value instanceof BindMarker);
     }
 
     static String toRawString(Object value) {
@@ -298,8 +298,12 @@ abstract class Utils {
                 appendValue(fcall.parameters[i], sb, null);
             }
             sb.append(")");
+        } else if (name instanceof Alias) {
+            Alias alias = (Alias)name;
+            appendName(alias.column, sb);
+            sb.append(" AS ").append(alias.alias);
         } else {
-            appendName((String)name, sb);
+            throw new IllegalArgumentException(String.format("Invalid column %s of type unknown of the query builder", name));
         }
         return sb;
     }
@@ -387,6 +391,21 @@ abstract class Utils {
         @Override
         public String toString() {
             return name;
+        }
+    }
+
+    static class Alias {
+        private final Object column;
+        private final String alias;
+
+        Alias(Object column, String alias) {
+            this.column = column;
+            this.alias = alias;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s AS %s", column, alias);
         }
     }
 }

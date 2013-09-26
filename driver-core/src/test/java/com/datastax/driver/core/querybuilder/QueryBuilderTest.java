@@ -56,6 +56,10 @@ public class QueryBuilderTest {
         select = select().writeTime("a").ttl("a").from("foo").allowFiltering();
         assertEquals(select.toString(), query);
 
+        query = "SELECT DISTINCT longName AS a,ttl(longName) AS ttla FROM foo LIMIT :limit;";
+        select = select().distinct().column("longName").as("a").ttl("longName").as("ttla").from("foo").limit(bindMarker("limit"));
+        assertEquals(select.toString(), query);
+
         query = "SELECT count(*) FROM foo;";
         select = select().countAll().from("foo");
         assertEquals(select.toString(), query);
@@ -153,11 +157,11 @@ public class QueryBuilderTest {
         insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
 
-        query = "INSERT INTO foo.bar(a,b) VALUES ({2,3,4},3.4) USING TTL 24 AND TIMESTAMP 42;";
+        query = "INSERT INTO foo.bar(a,b) VALUES ({2,3,4},3.4) USING TTL ? AND TIMESTAMP ?;";
         insert = insertInto("foo", "bar")
                     .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 })
-                    .using(ttl(24))
-                    .and(timestamp(42));
+                    .using(ttl(bindMarker()))
+                    .and(timestamp(bindMarker()));
         assertEquals(insert.toString(), query);
 
         // commutative result of TIMESTAMP

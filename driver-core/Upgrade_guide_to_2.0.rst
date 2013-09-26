@@ -12,48 +12,34 @@ Breaking API Changes
 --------------------
 
 The following describes the changes for 2.0 that are breaking changes of the
-1.0 API. Upgrader from 1.0 should pay particular attention to this list even
-though not all applications will be impacted by those changes.
+1.0 API. For ease of use, we distinguish two category of API changes: the "main"
+ones and the "other" ones. The "main" API changes are the ones that are either
+likely to affect most upgraded apps or are incompatible changes that, even if minor,
+will not be detected at compile time. Upgraders are highly encouraged to check
+this list of "main" changes while upgrading their application to 2.0 (even
+though most applications are likely to be affected by only a handful of
+changes). The "other" list is, well, other changes: those that are likely to
+affect a minor number of applications and will be detected by compile time
+errors anyway. It is ok to skip those initially and only come back to them if
+you have trouble compiling your application after an upgrade.
+
+Main API changes:
 
 1. The Query class has been renamed into Statement (it was confusing to some
    that "BoundStatement" was not a "Statement"). To allow this, the old
    Statement class has been renamed to RegularStatement.
 
-2. The RegularStatement class (ex-Statement class, see above) must now
-   implement two additional methods: RegularStatement#getKeyspace and
-   RegularStatement#getValues. If you had extended this class, you will have to
-   implement those new methods, but both can return null if they are not useful
-   in your case.
-
-3. The Metadata#getReplicas method now takes 2 arguments. On top of the
-   partition key, you must now provide the keyspace too. The previous behavior
-   was buggy: it's impossible to properly return the full list of replica for a
-   partition key without knowing the keyspace since replication may depend on
-   the keyspace).
-
-4. The method LoadBalancingPolicy#newQueryPlan() method now takes the currently
-   logged keyspace as 2nd argument. This information is necessary to do proper
-   token aware balancing (see preceding point).
-
-5. NoHostAvaiableException#getErrors now returns the full exception objects for
+2. NoHostAvaiableException#getErrors now returns the full exception objects for
    each node instead of just a message. In other words, it returns a
    Map<InetAddress, Throwable> instead of a Map<InetAddress, String>.
 
-6. Statement#getConsistencyLevel (previously Query#getConsistencyLevel, see
+3. Statement#getConsistencyLevel (previously Query#getConsistencyLevel, see
    first point) will now return null by default (instead of CL.ONE), with the
    meaning of "use the default consistency level". The default consistency
    level can now be configured through the new QueryOptions object in the
    cluster Configuration.
 
-7. The deprecated since 1.0.2 Host.HealtMonitor class has been removed. You
-   will now need to use Host#isUp and Cluster#register if you were using that
-   class.
-
-8. The Cluster.Initializer interface should now implement 2 new methods:
-   Cluster.Initializer#getInitialListeners (which can return an empty
-   collection) and Cluster.Initializer#getClusterName (which can return null).
-
-9. The Metrics class now uses the Codahale metrics library version 3 (version 2 was
+4. The Metrics class now uses the Codahale metrics library version 3 (version 2 was
    used previously). That new major version of the library has many API changes
    (http://metrics.codahale.com/about/release-notes/ as some details) compared
    to its version 2, which can thus impact consumers of the Metrics class.
@@ -62,55 +48,81 @@ though not all applications will be impacted by those changes.
    in the same JVM). As a result, tools that were polling JMX informations will
    have to be updated accordingly.
 
-10. The Cluster and Session shutdown API has changed. There is now only one
-    shutdown method that is asynchronous but return a Future on the completion
-    of shutdown. Also, shutdown now waits for ongoing queries to complete by
-    default (but you can force the closing of all connections if you want to).
+5. The Cluster and Session shutdown API has changed. There is now only one
+   shutdown method that is asynchronous but return a Future on the completion
+   of shutdown. Also, shutdown now waits for ongoing queries to complete by
+   default (but you can force the closing of all connections if you want to).
 
-11. The ResultSetFuture#set and ResultSetFuture#setException methods have been
-    removed (from the public API at least). They were never meant to be exposed
-    publicly: a resultSetFuture is always set by the driver itself and should
-    not be set manually.
+6. The QueryBuilder#raw method does not automatically add quotes anymore, but
+   rather ouptut its result without an change (as the raw name implies). This
+   means for instance that eq("x", raw(foo)) will output "x = foo", not
+   "x = 'foo'" (you don't need the raw method to output the latter string).
 
-12. Creating a Cluster instance (through Cluster#buildFrom or the
-    Cluster.Builder#build method) does not create any connection right away
-    anymore (and thus cannot throw a NoHostAvailableException or an
-    AuthenticationException). Instead, the initial contact points are checked
-    the first time a call to Cluster#connect is done. If for some reason you
-    want to emulate the previous behavior, you can use the new method
-    Cluster#init: Cluster.builder().build() in 1.0 is equivalent to
-    Cluster.builder().build().init() in 2.0.
+7. The QueryBuilder#in method now has the following special case: using
+   QueryBuilder.in(QueryBuilder.bindMarker()) will generate the string "IN ?",
+   not "IN (?)" as was the case in 1.0. The reasoning being that the former
+   syntax, made valid by https://issues.apache.org/jira/browse/CASSANDRA-4210
+   is a lot more useful than "IN (?)", as the latter can more simply use an
+   equality. Note that if you really want to output "IN (?)" with the query
+   builder, you can use QueryBuilder.in(QueryBuilder.raw("?")).
 
-13. The UnavailableException#getConsistency method has been renamed to
-    UnavailableException#getConsistencyLevel for consistency with the method of
-    QueryTimeoutException.
+8. When setting by names in BoundStatement (setX(String, X) methods), if more than
+   one variables have the same name, then all values corresponding to that variable
+   name are set instead of just the first occurrence.
 
-14. The QueryBuilder#raw method does not automatically add quotes anymore, but
-    rather ouptut its result without an change (as the raw name implies). This
-    means for instance that eq("x", raw(foo)) will output "x = foo", not
-    "x = 'foo'" (you don't need the raw method to output the latter string).
+9. The querybuilder will now sometime use the new ability to send value as
+   bytes instead of serializing everything to string. In general the querybuilder
+   will do the right thing, but if you were calling the getQueryString() method
+   on a querybuilder Statement manually (for other reasons than to prepare a query)
+   then the returned string may contain bind marker in place of some of the values
+   provided (and in that case, getValues() will contain the values corresponding
+   to those markers). If need be, it is possible to force the old behavior by
+   using the new setForceNoValues() method.
 
-15. The QueryBuilder#in method now has the following special case: using
-    QueryBuilder.in(QueryBuilder.bindMarker()) will generate the string "IN ?",
-    not "IN (?)" as was the case in 1.0. While the former syntax is not
-    currently valid, it will be once https://issues.apache.org/jira/browse/CASSANDRA-4210
-    is solved. When that is the case, the "IN ?" syntax will be a lot more
-    useful than "IN (?)",  as the latter can more simply use an equality. Note
-    that if you really want to output "IN (?)" with the query builder, you can
-    use QueryBuilder.in(QueryBuilder.raw("?")).
 
-16. When setting by names in BoundStatement (setX(String, X) methods), if more than
-    one variables have the same name, then all values corresponding to that variable
-    name are set instead of just the first occurrence.
+Other API Changes:
 
-17. The querybuilder will now sometime use the new ability to send value as
-    bytes instead of serializing everything to string. In general the querybuilder
-    will do the right thing, but if you were calling the getQueryString() method
-    on a querybuilder Statement manually (for other reasons than to prepare a query)
-    then the returned string may contain bind marker in place of some of the values
-    provided (and in that case, getValues() will contain the values corresponding
-    to those markers). If need be, it is possible to force the old behavior by
-    using the new setForceNoValues() method.
+1. The RegularStatement class (ex-Statement class, see above) must now
+   implement two additional methods: RegularStatement#getKeyspace and
+   RegularStatement#getValues. If you had extended this class, you will have to
+   implement those new methods, but both can return null if they are not useful
+   in your case.
+
+2. The Metadata#getReplicas method now takes 2 arguments. On top of the
+   partition key, you must now provide the keyspace too. The previous behavior
+   was buggy: it's impossible to properly return the full list of replica for a
+   partition key without knowing the keyspace since replication may depend on
+   the keyspace).
+
+3. The method LoadBalancingPolicy#newQueryPlan() method now takes the currently
+   logged keyspace as 2nd argument. This information is necessary to do proper
+   token aware balancing (see preceding point).
+
+4. The deprecated since 1.0.2 Host.HealtMonitor class has been removed. You
+   will now need to use Host#isUp and Cluster#register if you were using that
+   class.
+
+5. The Cluster.Initializer interface should now implement 2 new methods:
+   Cluster.Initializer#getInitialListeners (which can return an empty
+   collection) and Cluster.Initializer#getClusterName (which can return null).
+
+6. The ResultSetFuture#set and ResultSetFuture#setException methods have been
+   removed (from the public API at least). They were never meant to be exposed
+   publicly: a resultSetFuture is always set by the driver itself and should
+   not be set manually.
+
+7. Creating a Cluster instance (through Cluster#buildFrom or the
+   Cluster.Builder#build method) does not create any connection right away
+   anymore (and thus cannot throw a NoHostAvailableException or an
+   AuthenticationException). Instead, the initial contact points are checked
+   the first time a call to Cluster#connect is done. If for some reason you
+   want to emulate the previous behavior, you can use the new method
+   Cluster#init: Cluster.builder().build() in 1.0 is equivalent to
+   Cluster.builder().build().init() in 2.0.
+
+8. The UnavailableException#getConsistency method has been renamed to
+   UnavailableException#getConsistencyLevel for consistency with the method of
+   QueryTimeoutException.
 
 
 Non-breaking API Changes

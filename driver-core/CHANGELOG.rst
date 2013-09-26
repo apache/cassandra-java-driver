@@ -8,6 +8,7 @@ CHANGELOG
   more than one) having the provided name, not just the first occurence.
 - [new] The query builder don't serialize large values to strings anymore by
   default by making use the new ability to send values alongside the query string.
+- [new] The query builder has been updated for new CQL features (JAVA-140).
 - [bug] Fix exception when a conditional write timeout C* side.
 
 

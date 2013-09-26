@@ -41,8 +41,6 @@ import com.datastax.driver.core.TableMetadata;
  */
 public final class QueryBuilder {
 
-    static final Object BIND_MARKER = new Object() {};
-
     private QueryBuilder() {}
 
     /**
@@ -65,7 +63,8 @@ public final class QueryBuilder {
      * column selection and at least a FROM clause to complete the query).
      */
     public static Select.Selection select() {
-        return new Select.Selection();
+        // Note: the fact we return Select.Selection as return type is on purpose.
+        return new Select.SelectionOrAlias();
     }
 
     /**
@@ -341,7 +340,17 @@ public final class QueryBuilder {
         if (timestamp < 0)
             throw new IllegalArgumentException("Invalid timestamp, must be positive");
 
-        return new Using("TIMESTAMP", timestamp);
+        return new Using.WithValue("TIMESTAMP", timestamp);
+    }
+
+    /**
+     * Option to prepare the timestamp (in microseconds) for a modification query (insert, update or delete).
+     *
+     * @param marker bind marker to use for the timestamp.
+     * @return the corresponding option.
+     */
+    public static Using timestamp(BindMarker marker) {
+        return new Using.WithMarker("TIMESTAMP", marker);
     }
 
     /**
@@ -356,7 +365,17 @@ public final class QueryBuilder {
         if (ttl < 0)
             throw new IllegalArgumentException("Invalid ttl, must be positive");
 
-        return new Using("TTL", ttl);
+        return new Using.WithValue("TTL", ttl);
+    }
+
+    /**
+     * Option to prepare the ttl (in seconds) for a modification query (insert, update or delete).
+     *
+     * @param marker bind marker to use for the ttl.
+     * @return the corresponding option
+     */
+    public static Using ttl(BindMarker marker) {
+        return new Using.WithMarker("TTL", marker);
     }
 
     /**
@@ -594,7 +613,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * An object representing a bind marker (a question mark).
+     * An object representing an anonymous bind marker (a question mark).
      * <p>
      * This can be used wherever a value is expected. For instance, one can do:
      * <pre>
@@ -607,8 +626,29 @@ public final class QueryBuilder {
      *
      * @return an object representing a bind marker.
      */
-    public static Object bindMarker() {
-        return BIND_MARKER;
+    public static BindMarker bindMarker() {
+        return BindMarker.ANONYMOUS;
+    }
+
+    /**
+     * An object representing a named bind marker.
+     * <p>
+     * This can be used wherever a value is expected. For instance, one can do:
+     * <pre>
+     * {@code
+     *     Insert i = QueryBuilder.insertInto("test").value("k", 0)
+     *                                               .value("c", QueryBuilder.bindMarker("c_val"));
+     *     PreparedState p = session.prepare(i.toString());
+     * }
+     * </pre>
+     * <p>
+     * Please note that named bind makers are only supported starting with Cassandra 2.0.1.
+     *
+     * @param name the name for the bind marker.
+     * @return an object representing a bind marker named {@code name}.
+     */
+    public static BindMarker bindMarker(String name) {
+        return new BindMarker(name);
     }
 
     /**
