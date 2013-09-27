@@ -324,7 +324,7 @@ public class ResultSet implements Iterable<Row> {
             }
 
             @Override
-            public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Statement statement) {
+            public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Statement statement, long latency) {
                 try {
                     switch (response.type) {
                         case RESULT:
@@ -354,17 +354,17 @@ public class ResultSet implements Iterable<Row> {
 
             // This is only called for internal calls, so don't bother with ExecutionInfo
             @Override
-            public void onSet(Connection connection, Message.Response response) {
-                onSet(connection, response, null, null);
+            public void onSet(Connection connection, Message.Response response, long latency) {
+                onSet(connection, response, null, null, latency);
             }
 
             @Override
-            public void onException(Connection connection, Exception exception) {
+            public void onException(Connection connection, Exception exception, long latency) {
                 future.setException(exception);
             }
 
             @Override
-            public void onTimeout(Connection connection) {
+            public void onTimeout(Connection connection, long latency) {
                 // This won't be called directly since this will be wrapped by RequestHandler.
                 throw new UnsupportedOperationException();
             }

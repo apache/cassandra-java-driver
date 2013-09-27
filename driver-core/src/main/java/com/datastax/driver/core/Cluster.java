@@ -239,12 +239,53 @@ public class Cluster {
      * Unregisters the provided listener from being notified on hosts events.
      * <p>
      * This method is a no-op if {@code listener} hadn't previously be
-     * registered against this monitor.
+     * registered against this Cluster.
      *
      * @param listener the {@link Host.StateListener} to unregister.
+     * @return this {@code Cluster} object;
      */
-    public void unregister(Host.StateListener listener) {
+    public Cluster unregister(Host.StateListener listener) {
         manager.listeners.remove(listener);
+        return this;
+    }
+
+    /**
+     * Registers the provided tracker to be updated with hosts read
+     * latencies.
+     * <p>
+     * Registering the same listener multiple times is a no-op.
+     * <p>
+     * Be warry that the registered tracker {@code update} method will be call
+     * very frequently (at the end of every query to a Cassandra host) and
+     * should thus not be costly.
+     * <p>
+     * The main use case for a {@code LatencyTracker} is so
+     * {@link LoadBalancingPolicy} can implement latency awareness
+     * Typically, {@link LatencyAwarePolicy} registers  it's own internal
+     * {@code LatencyTracker} (automatically, you don't have to call this
+     * method directly).
+     *
+     * @param tracker the new {@link LatencyTracker} to register.
+     * @return this {@code Cluster} object;
+     */
+    public Cluster register(LatencyTracker tracker) {
+        manager.trackers.add(tracker);
+        return this;
+    }
+
+    /**
+     * Unregisters the provided latency tracking from being updated
+     * with host read latencies.
+     * <p>
+     * This method is a no-op if {@code tracker} hadn't previously be
+     * registered against this Cluster.
+     *
+     * @param tracker the {@link LatencyTracker} to unregister.
+     * @return this {@code Cluster} object;
+     */
+    public Cluster unregister(LatencyTracker tracker) {
+        manager.trackers.remove(tracker);
+        return this;
     }
 
     /**
@@ -763,7 +804,8 @@ public class Cluster {
         // this would yield a slightly less clear behavior.
         final Map<MD5Digest, PreparedStatement> preparedQueries = new ConcurrentHashMap<MD5Digest, PreparedStatement>();
 
-        private final Set<Host.StateListener> listeners;
+        final Set<Host.StateListener> listeners;
+        final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
 
         private Manager(String clusterName, List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
             logger.debug("Starting new cluster with contact points " + contactPoints);
@@ -831,6 +873,12 @@ public class Cluster {
             Session session = new Session(Cluster.this, metadata.allHosts());
             sessions.add(session);
             return session;
+        }
+
+        void reportLatency(Host host, long latencyNanos) {
+            for (LatencyTracker tracker : trackers) {
+                tracker.update(host, latencyNanos);
+            }
         }
 
         boolean isShutdown() {

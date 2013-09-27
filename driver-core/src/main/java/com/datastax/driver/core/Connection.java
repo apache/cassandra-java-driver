@@ -300,7 +300,7 @@ class Connection {
                     } else {
                         ce = new TransportException(address, "Error writing", writeFuture.getCause());
                     }
-                    handler.callback.onException(Connection.this, defunct(ce));
+                    handler.callback.onException(Connection.this, defunct(ce), System.nanoTime() - handler.startTime);
                 } else {
                     logger.trace("[{}] request sent successfully", name);
                 }
@@ -495,7 +495,7 @@ class Connection {
                     return;
                 }
                 handler.cancelTimeout();
-                handler.callback.onSet(Connection.this, response);
+                handler.callback.onSet(Connection.this, response, System.nanoTime() - handler.startTime);
 
                 // If we happen to be shutdown and we're the last outstand request, we need to signal the shutdown future
                 // (note: this is racy as the signaling can be called more than once, but that's not a problem)
@@ -520,7 +520,8 @@ class Connection {
             Iterator<ResponseHandler> iter = pending.values().iterator();
             while (iter.hasNext())
             {
-                iter.next().callback.onException(Connection.this, ce);
+                ResponseHandler handler = iter.next();
+                handler.callback.onException(Connection.this, ce, System.nanoTime() - handler.startTime);
                 iter.remove();
             }
         }
@@ -586,18 +587,18 @@ class Connection {
         }
 
         @Override
-        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Statement statement) {
-            onSet(connection, response);
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Statement statement, long latency) {
+            onSet(connection, response, latency);
         }
 
         @Override
-        public void onSet(Connection connection, Message.Response response) {
+        public void onSet(Connection connection, Message.Response response, long latency) {
             this.address = connection.address;
             super.set(response);
         }
 
         @Override
-        public void onException(Connection connection, Exception exception) {
+        public void onException(Connection connection, Exception exception, long latency) {
             // If all nodes are down, we will get a null connection here. This is fine, if we have
             // an exception, consumers shouldn't assume the address is not null.
             if (connection != null)
@@ -606,7 +607,7 @@ class Connection {
         }
 
         @Override
-        public void onTimeout(Connection connection) {
+        public void onTimeout(Connection connection, long latency) {
             assert connection != null; // We always timeout on a specific connection, so this shouldn't be null
             this.address = connection.address;
             super.setException(new ConnectionException(connection.address, "Operation Timeouted"));
@@ -619,9 +620,9 @@ class Connection {
 
     interface ResponseCallback {
         public Message.Request request();
-        public void onSet(Connection connection, Message.Response response);
-        public void onException(Connection connection, Exception exception);
-        public void onTimeout(Connection connection);
+        public void onSet(Connection connection, Message.Response response, long latency);
+        public void onException(Connection connection, Exception exception, long latency);
+        public void onTimeout(Connection connection, long latency);
     }
 
     static class ResponseHandler {
@@ -629,7 +630,9 @@ class Connection {
         public final Connection connection;
         public final int streamId;
         public final ResponseCallback callback;
+
         private final Timeout timeout;
+        private final long startTime;
 
         public ResponseHandler(Connection connection, ResponseCallback callback) throws BusyConnectionException {
             this.connection = connection;
@@ -638,6 +641,8 @@ class Connection {
 
             long timeoutMs = connection.factory.getReadTimeoutMillis();
             this.timeout = timeoutMs <= 0 ? null : connection.factory.timer.newTimeout(onTimeoutTask(), timeoutMs, TimeUnit.MILLISECONDS);
+
+            this.startTime = System.nanoTime();
         }
 
         void cancelTimeout() {
@@ -653,7 +658,7 @@ class Connection {
             return new TimerTask() {
                 @Override
                 public void run(Timeout timeout) {
-                    callback.onTimeout(connection);
+                    callback.onTimeout(connection, System.nanoTime() - startTime);
                     cancelHandler();
                 }
             };

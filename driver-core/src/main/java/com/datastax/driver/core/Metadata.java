@@ -130,6 +130,8 @@ public class Metadata {
     }
 
     synchronized void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
+        if (allTokens.isEmpty())
+            return;
 
         Token.Factory factory = partitioner == null
                               ? (tokenMap == null ? null : tokenMap.factory)

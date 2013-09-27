@@ -67,7 +67,7 @@ public class ResultSetFuture extends AbstractFuture<ResultSet> {
         }
 
         @Override
-        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Statement statement) {
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Statement statement, long latency) {
             try {
                 switch (response.type) {
                     case RESULT:
@@ -134,19 +134,19 @@ public class ResultSetFuture extends AbstractFuture<ResultSet> {
         }
 
         @Override
-        public void onSet(Connection connection, Message.Response response) {
+        public void onSet(Connection connection, Message.Response response, long latency) {
             // This is only called for internal calls (i.e, when the callback is not wrapped in ResponseHandler),
             // so don't bother with ExecutionInfo.
-            onSet(connection, response, null, null);
+            onSet(connection, response, null, null, latency);
         }
 
         @Override
-        public void onException(Connection connection, Exception exception) {
+        public void onException(Connection connection, Exception exception, long latency) {
             setException(exception);
         }
 
         @Override
-        public void onTimeout(Connection connection) {
+        public void onTimeout(Connection connection, long latency) {
             // This is only called for internal calls (i.e, when the callback is not wrapped in ResponseHandler).
             // So just set an exception for the final result, which should be handled correctly by said internal call.
             setException(new ConnectionException(connection.address, "Operation Timeouted"));
