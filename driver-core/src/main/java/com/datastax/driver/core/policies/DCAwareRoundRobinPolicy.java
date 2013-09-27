@@ -161,10 +161,6 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
         final List<Host> hosts = localLiveHosts == null ? Collections.<Host>emptyList() : cloneList(localLiveHosts);
         final int startIdx = index.getAndIncrement();
 
-        // Overflow protection; not theoretically thread safe but should be good enough
-        if (startIdx > Integer.MAX_VALUE - 10000)
-            index.set(0);
-
         return new AbstractIterator<Host>() {
 
             private int idx = startIdx;
@@ -179,12 +175,18 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
             protected Host computeNext() {
                 if (remainingLocal > 0) {
                     remainingLocal--;
-                    return hosts.get(idx++ % hosts.size());
+                    int c = idx++ % hosts.size();
+                    if (c < 0)
+                        c += hosts.size();
+                    return hosts.get(c);
                 }
 
                 if (currentDcHosts != null && currentDcRemaining > 0) {
                     currentDcRemaining--;
-                    return currentDcHosts.get(idx++ % currentDcHosts.size());
+                    int c = idx++ % currentDcHosts.size();
+                    if (c < 0)
+                        c += currentDcHosts.size();
+                    return currentDcHosts.get(c);
                 }
 
                 if (remoteDcs == null) {

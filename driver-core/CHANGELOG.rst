@@ -11,6 +11,8 @@ CHANGELOG
   add latency awareness to a wrapped load balancing policy (JAVA-129).
 - [bug] Fix spurious "No current pool set; this should not happen" error
   message (JAVA-166)
+- [bug] Fix potential overflow in RoundRobinPolicy and correctly errors if
+  a balancing policy throws (JAVA-184)
 
 
 1.0.3:

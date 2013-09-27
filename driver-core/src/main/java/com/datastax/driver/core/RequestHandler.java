@@ -96,14 +96,18 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     public void sendRequest() {
-
-        while (queryPlan.hasNext() && !isCanceled) {
-            Host host = queryPlan.next();
-            logger.trace("Querying node {}", host);
-            if (query(host))
-                return;
+        try {
+            while (queryPlan.hasNext() && !isCanceled) {
+                Host host = queryPlan.next();
+                logger.trace("Querying node {}", host);
+                if (query(host))
+                    return;
+            }
+            setFinalException(null, new NoHostAvailableException(errors == null ? Collections.<InetAddress, String>emptyMap() : errors));
+        } catch (Exception e) {
+            // Shouldn't happen really, but if ever the loadbalancing policy returned iterator throws, we don't want to block.
+            setFinalException(null, new DriverInternalError("An unexpected error happened while sending requests", e));
         }
-        setFinalException(null, new NoHostAvailableException(errors == null ? Collections.<InetAddress, String>emptyMap() : errors));
     }
 
     private boolean query(Host host) {
