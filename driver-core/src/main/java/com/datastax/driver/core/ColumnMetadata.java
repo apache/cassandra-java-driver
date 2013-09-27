@@ -153,8 +153,8 @@ public class ColumnMetadata {
             TableMetadata table = column.getTable();
             String ksName = table.getKeyspace().getName();
             return isCustomIndex()
-                 ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s'", name, ksName, table.getName(), column.getName(), customClassName)
-                 : String.format("CREATE INDEX %s ON %s.%s (%s)", name, ksName, table.getName(), column.getName());
+                 ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s';", name, ksName, table.getName(), column.getName(), customClassName)
+                 : String.format("CREATE INDEX %s ON %s.%s (%s);", name, ksName, table.getName(), column.getName());
         }
 
         private static IndexMetadata build(ColumnMetadata column, Map<String, String> indexColumns) {
