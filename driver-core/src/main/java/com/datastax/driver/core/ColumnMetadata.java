@@ -145,7 +145,7 @@ public class ColumnMetadata {
          */
         public String asCQLQuery() {
             TableMetadata table = column.getTable();
-            return String.format("CREATE INDEX %s ON %s.%s (%s)", name, table.getKeyspace().getName(), table.getName(), column.getName());
+            return String.format("CREATE INDEX %s ON %s.%s (%s);", name, table.getKeyspace().getName(), table.getName(), column.getName());
         }
 
         private static IndexMetadata build(ColumnMetadata column, Row row) {
