@@ -312,7 +312,7 @@ public class TableMetadata {
         and(sb, formatted).append("replicate_on_write = ").append(options.replicateOnWrite);
         and(sb, formatted).append("gc_grace_seconds = ").append(options.gcGrace);
         and(sb, formatted).append("bloom_filter_fp_chance = ").append(options.bfFpChance);
-        and(sb, formatted).append("caching = ").append(options.caching);
+        and(sb, formatted).append("caching = '").append(options.caching).append("'");
         if (options.comment != null)
             and(sb, formatted).append("comment = '").append(options.comment).append("'");
         and(sb, formatted).append("compaction = ").append(formatOptionMap(options.compaction));
