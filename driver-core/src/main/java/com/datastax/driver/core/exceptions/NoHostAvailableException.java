@@ -68,7 +68,7 @@ public class NoHostAvailableException extends DriverException {
         // For small cluster, ship the whole error detail in the error message.
         // This is helpful when debugging on a localhost/test cluster in particular.
         if (errors.size() == 0)
-            return String.format("All host(s) tried for query failed (no host was tried)");
+            return "All host(s) tried for query failed (no host was tried)";
 
         if (errors.size() <= 3) {
             StringBuilder sb = new StringBuilder();
