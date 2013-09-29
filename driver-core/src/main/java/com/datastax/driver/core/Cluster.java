@@ -724,8 +724,11 @@ public class Cluster {
             // notion of their state and no real way to know until we connect to them
             // (since the node status is not exposed by C* in the System tables). This
             // may not be correct.
-            for (InetAddress address : contactPoints)
-                addHost(address, false).setUp();
+            for (InetAddress address : contactPoints) {
+                Host host = addHost(address, false);
+                if (host != null)
+                    host.setUp();
+            }
 
             loadBalancingPolicy().init(Cluster.this, metadata.allHosts());
 
