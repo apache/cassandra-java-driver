@@ -12,6 +12,7 @@ CHANGELOG
 - [new] Allow defering cluster initialization (Cluster.Builder#deferInitialization)
   (JAVA-161)
 - [new] Add truncate statement in query builder (JAVA-117).
+- [new] Support empty IN in the query builder (JAVA-106).
 - [bug] Fix spurious "No current pool set; this should not happen" error
   message (JAVA-166)
 - [bug] Fix potential overflow in RoundRobinPolicy and correctly errors if
