@@ -11,6 +11,7 @@ CHANGELOG
   add latency awareness to a wrapped load balancing policy (JAVA-129).
 - [new] Allow defering cluster initialization (Cluster.Builder#deferInitialization)
   (JAVA-161)
+- [new] Add truncate statement in query builder (JAVA-117).
 - [bug] Fix spurious "No current pool set; this should not happen" error
   message (JAVA-166)
 - [bug] Fix potential overflow in RoundRobinPolicy and correctly errors if
