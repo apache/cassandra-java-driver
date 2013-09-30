@@ -15,6 +15,9 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.nio.ByteBuffer;
+import java.util.List;
+
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -26,7 +29,7 @@ public class Truncate extends BuiltStatement {
     private final String table;
 
     Truncate(String keyspace, String table) {
-        super();
+        super(keyspace);
         this.keyspace = keyspace;
         this.table = table;
     }
@@ -38,7 +41,7 @@ public class Truncate extends BuiltStatement {
     }
 
     @Override
-    protected StringBuilder buildQueryString() {
+    protected StringBuilder buildQueryString(List<ByteBuffer> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("TRUNCATE ");
