@@ -144,6 +144,12 @@ public class Cluster {
      * Creates a new session on this cluster.
      *
      * @return a new session on this cluster sets to no keyspace.
+     *
+     * @throws NoHostAvailableException if the Cluster has not been initialized yet
+     * ({@link #init} has not be called and this is the first connect call) and
+     * no host amongst the contact points can be reached.
+     * @throws AuthenticationException if an authentication error occurs
+     * while contacting the initial contact points.
      */
     public Session connect() {
         return manager.newSession();
@@ -157,8 +163,12 @@ public class Cluster {
      * @return a new session on this cluster sets to keyspace
      * {@code keyspaceName}.
      *
-     * @throws NoHostAvailableException if no host can be contacted to set the
-     * {@code keyspace}.
+     * @throws NoHostAvailableException if the Cluster has not been initialized yet
+     * ({@link #init} has not be called and this is the first connect call) and
+     * no host amongst the contact points can be reached, or if no host can be
+     * contacted to set the {@code keyspace}.
+     * @throws AuthenticationException if an authentication error occurs
+     * while contacting the initial contact points.
      */
     public Session connect(String keyspace) {
         Session session = connect();
@@ -188,11 +198,20 @@ public class Cluster {
      * Returns read-only metadata on the connected cluster.
      * <p>
      * This includes the known nodes with their status as seen by the driver,
-     * as well as the schema definitions.
+     * as well as the schema definitions. Since this return metadata on the
+     * connected cluster, this method may trigger the creation of a connection
+     * if none has been established yet (neither {@code init()} nor {@code connect()}
+     * has been called yet).
      *
      * @return the cluster metadata.
+     *
+     * @throws NoHostAvailableException if the Cluster has not been initialized yet
+     * and no host amongst the contact points can be reached.
+     * @throws AuthenticationException if an authentication error occurs
+     * while contacting the initial contact points.
      */
     public Metadata getMetadata() {
+        manager.init();
         return manager.metadata;
     }
 

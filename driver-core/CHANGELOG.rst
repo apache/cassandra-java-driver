@@ -10,6 +10,8 @@ CHANGELOG
   default by making use the new ability to send values alongside the query string.
 - [new] The query builder has been updated for new CQL features (JAVA-140).
 - [bug] Fix exception when a conditional write timeout C* side.
+- [bug] Ensure connection is created when Cluster metadata are asked for
+  (JAVA-182).
 
 
 2.0.0-beta1:
