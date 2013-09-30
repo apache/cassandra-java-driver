@@ -708,7 +708,6 @@ public class Cluster {
             return this;
         }
 
-
         /**
          * The configuration that will be used for the new cluster.
          * <p>
@@ -824,7 +823,6 @@ public class Cluster {
         }
 
         private void init() {
-
             if (!isInit.compareAndSet(false, true))
                 return;
 

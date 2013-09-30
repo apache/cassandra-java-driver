@@ -44,6 +44,8 @@ CHANGELOG
   withSocketOptions methods (JAVA-163).
 - [new] A new LatencyAwarePolicy wrapping policy has been added, allowing to
   add latency awareness to a wrapped load balancing policy (JAVA-129).
+- [new] Allow defering cluster initialization (Cluster.Builder#deferInitialization)
+  (JAVA-161)
 - [bug] Fix spurious "No current pool set; this should not happen" error
   message (JAVA-166)
 - [bug] Fix potential overflow in RoundRobinPolicy and correctly errors if
