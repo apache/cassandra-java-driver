@@ -693,7 +693,9 @@ class Connection {
                 SSLEngine engine = sslOptions.context.createSSLEngine();
                 engine.setUseClientMode(true);
                 engine.setEnabledCipherSuites(sslOptions.cipherSuites);
-                pipeline.addLast("ssl", new SslHandler(engine));
+                SslHandler handler = new SslHandler(engine);
+                handler.setCloseOnSSLException(true);
+                pipeline.addLast("ssl", handler);
             }
 
             //pipeline.addLast("debug", new LoggingHandler(InternalLogLevel.INFO));
