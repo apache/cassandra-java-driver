@@ -736,7 +736,9 @@ class Connection extends org.apache.cassandra.transport.Connection
             engine.setUseClientMode(true);
             engine.setEnabledCipherSuites(options.cipherSuites);
             ChannelPipeline pipeline = super.getPipeline();
-            pipeline.addFirst("ssl", new SslHandler(engine));
+            SslHandler handler = new SslHandler(engine);
+            handler.setCloseOnSSLException(true);
+            pipeline.addFirst("ssl", handler);
             return pipeline;
         }
     }
