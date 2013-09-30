@@ -122,6 +122,7 @@ public class KeyspaceMetadata {
         StringBuilder sb = new StringBuilder();
 
         sb.append(asCQLQuery()).append("\n");
+        sb.append("USE ").append(name).append(";\n");
 
         for (TableMetadata tm : tables.values())
             sb.append("\n").append(tm.exportAsString()).append("\n");
