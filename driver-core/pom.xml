@@ -21,7 +21,7 @@
     <version>1.0.4-SNAPSHOT</version>
   </parent>
   <artifactId>cassandra-driver-core</artifactId>
-  <packaging>bundle</packaging>
+  <packaging>jar</packaging>
   <name>DataStax Java Driver for Apache Cassandra - Core</name>
   <description>A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's binary protocol.</description>
   <url>https://github.com/datastax/java-driver</url>
@@ -110,32 +110,6 @@
               <compilerArgument>-Xlint:all</compilerArgument>
               <showWarnings>true</showWarnings>
               <showDeprecation>true</showDeprecation>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <extensions>true</extensions>
-            <version>2.4.0</version>
-            <executions>
-              <execution>
-                <id>bundle-manifest</id>
-                <phase>process-classes</phase>
-                <goals>
-                  <goal>manifest</goal>
-                </goals>
-              </execution>
-            </executions>
-            <configuration>
-              <instructions>
-                <Bundle-SymbolicName>com.datastax.driver.core</Bundle-SymbolicName>
-                <Bundle-Version>${project.version}</Bundle-Version>
-                <_include>-osgi.bnd</_include>
-              </instructions>
-              <supportedProjectTypes>
-                <supportedProjectType>jar</supportedProjectType>
-                <supportedProjectType>bundle</supportedProjectType>
-              </supportedProjectTypes>
             </configuration>
           </plugin>
         </plugins>
