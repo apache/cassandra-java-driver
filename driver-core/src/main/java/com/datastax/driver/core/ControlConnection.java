@@ -344,12 +344,20 @@ class ControlConnection implements Host.StateListener {
 
         for (Row row : peersFuture.get()) {
 
+            InetAddress peer = row.getInet("peer");
             InetAddress addr = row.getInet("rpc_address");
-            if (addr == null) {
-                addr = row.getInet("peer");
+
+            if (peer.equals(connection.address) || (addr != null && addr.equals(connection.address))) {
+                // Some DSE versions were inserting a line for the local node in peers (with mostly null values). This has been fixed, but if we
+                // detect that's the case, ignore it as it's not really a big deal.
+                logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connection.address);
+                continue;
+            } else if (addr == null) {
                 logger.error("No rpc_address found for host {} in {}'s peers system table. That should not happen but using address {} instead", addr, connection.address, addr);
+                addr = peer;
             } else if (addr.equals(bindAllAddress)) {
-                addr = row.getInet("peer");
+                logger.warn("Host {} has 0.0.0.0 as rpc_address, using listen_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.");
+                addr = peer;
             }
 
             foundHosts.add(addr);
