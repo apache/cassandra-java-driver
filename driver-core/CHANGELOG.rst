@@ -50,6 +50,8 @@ CHANGELOG
   a balancing policy throws (JAVA-184)
 - [bug] Don't release Stream ID for timeouted queries (unless we do get back
   the response)
+- [bug] Correctly escape identifiers and use fully qualified table names when
+  exporting schema as string.
 
 
 1.0.3:

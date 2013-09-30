@@ -151,10 +151,12 @@ public class ColumnMetadata {
          */
         public String asCQLQuery() {
             TableMetadata table = column.getTable();
-            String ksName = table.getKeyspace().getName();
+            String ksName = TableMetadata.escapeId(table.getKeyspace().getName());
+            String cfName = TableMetadata.escapeId(table.getName());
+            String colName = TableMetadata.escapeId(column.getName());
             return isCustomIndex()
-                 ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s';", name, ksName, table.getName(), column.getName(), customClassName)
-                 : String.format("CREATE INDEX %s ON %s.%s (%s);", name, ksName, table.getName(), column.getName());
+                 ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s';", name, ksName, cfName, colName, customClassName)
+                 : String.format("CREATE INDEX %s ON %s.%s (%s);", name, ksName, cfName, colName);
         }
 
         private static IndexMetadata build(ColumnMetadata column, Map<String, String> indexColumns) {
@@ -175,7 +177,7 @@ public class ColumnMetadata {
 
     @Override
     public String toString() {
-        return name + " " + type;
+        return TableMetadata.escapeId(name) + " " + type;
     }
 
     // Temporary class that is used to make building the schema easier. Not meant to be

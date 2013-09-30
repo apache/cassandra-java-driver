@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -34,6 +35,8 @@ public class TableMetadata {
     private static final String DEFAULT_KEY_ALIAS    = "key";
     private static final String DEFAULT_COLUMN_ALIAS = "column";
     private static final String DEFAULT_VALUE_ALIAS  = "value";
+
+    private static final Pattern lowercaseId = Pattern.compile("[a-z][a-z0-9_]*");
 
     private static final Comparator<ColumnMetadata> columnMetadataComparator = new Comparator<ColumnMetadata>() {
         public int compare(ColumnMetadata c1, ColumnMetadata c2) {
@@ -274,10 +277,18 @@ public class TableMetadata {
         return asCQLQuery(false);
     }
 
+    // Escape a CQL3 identifier based on its value as read from the schema
+    // tables. Because it cames from Cassandra, we could just always quote it,
+    // but to get a nicer output we don't do it if it's not necessary.
+    static String escapeId(String ident) {
+        // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
+        return lowercaseId.matcher(ident).matches() ? ident : '"' + ident + '"';
+    }
+
     private String asCQLQuery(boolean formatted) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("CREATE TABLE ").append(name).append(" (");
+        sb.append("CREATE TABLE ").append(escapeId(keyspace.getName())).append(".").append(escapeId(name)).append(" (");
         newLine(sb, formatted);
         for (ColumnMetadata cm : columns.values())
             newLine(sb.append(spaces(4, formatted)).append(cm).append(","), formatted);
@@ -291,12 +302,12 @@ public class TableMetadata {
             boolean first = true;
             for (ColumnMetadata cm : partitionKey) {
                 if (first) first = false; else sb.append(", ");
-                sb.append(cm.getName());
+                sb.append(escapeId(cm.getName()));
             }
             sb.append(")");
         }
         for (ColumnMetadata cm : clusteringKey)
-            sb.append(", ").append(cm.getName());
+            sb.append(", ").append(escapeId(cm.getName()));
         sb.append(")");
         newLine(sb, formatted);
         // end PK
