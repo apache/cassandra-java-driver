@@ -60,6 +60,10 @@ public class QueryBuilderTest {
         select = select().distinct().column("longName").as("a").ttl("longName").as("ttla").from("foo").limit(bindMarker("limit"));
         assertEquals(select.toString(), query);
 
+        query = "SELECT a FROM foo WHERE k IN ();";
+        select = select("a").from("foo").where(in("k"));
+        assertEquals(select.toString(), query);
+
         query = "SELECT count(*) FROM foo;";
         select = select().countAll().from("foo");
         assertEquals(select.toString(), query);
@@ -87,13 +91,6 @@ public class QueryBuilderTest {
         query = "SELECT * FROM words WHERE w='WA(!:gS)r(UfW';";
         select = select().all().from("words").where(eq("w", "WA(!:gS)r(UfW"));
         assertEquals(select.toString(), query);
-
-        try {
-            select = select("a").from("foo").where(in("a"));
-            fail();
-        } catch (IllegalArgumentException e) {
-            assertEquals(e.getMessage(), "Missing values for IN clause");
-        }
 
         try {
             select = select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));

@@ -121,7 +121,7 @@ abstract class BuiltStatement extends RegularStatement {
 
     // TODO: Correctly document the InvalidTypeException
     void maybeAddRoutingKey(String name, Object value) {
-        if (routingKey == null || name == null || value instanceof BindMarker)
+        if (routingKey == null || name == null || value == null || value instanceof BindMarker)
             return;
 
         for (int i = 0; i < partitionKey.size(); i++) {
