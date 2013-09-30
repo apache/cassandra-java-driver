@@ -838,8 +838,8 @@ public class Cluster {
                 // (since the node status is not exposed by C* in the System tables). This
                 // may not be correct.
                 Host host = addHost(address, false);
-                host.setUp();
                 if (host != null) {
+                    host.setUp();
                     for (Host.StateListener listener : listeners)
                         listener.onAdd(host);
                 }
