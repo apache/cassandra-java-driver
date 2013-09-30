@@ -51,7 +51,6 @@ import org.slf4j.LoggerFactory;
  * A connection to a Cassandra Node.
  */
 class Connection {
-    public static final int MAX_STREAM_PER_CONNECTION = 128;
 
     private static final Logger logger = LoggerFactory.getLogger(Connection.class);
 
@@ -181,6 +180,10 @@ class Connection {
         return isDefunct;
     }
 
+    public int maxAvailableStreams() {
+        return dispatcher.streamIdHandler.maxAvailableStreams();
+    }
+
     public ConnectionException lastException() {
         return exception;
     }
@@ -266,12 +269,12 @@ class Connection {
          * never leave a handler that won't get an answer or be errored out.
          */
         if (isDefunct) {
-            dispatcher.removeHandler(handler.streamId);
+            dispatcher.removeHandler(handler.streamId, true);
             throw new ConnectionException(address, "Write attempt on defunct connection");
         }
 
         if (isClosed()) {
-            dispatcher.removeHandler(handler.streamId);
+            dispatcher.removeHandler(handler.streamId, true);
             throw new ConnectionException(address, "Connection has been closed");
         }
 
@@ -292,7 +295,7 @@ class Connection {
                     logger.debug("[{}] Error writing request {}", name, request);
                     // Remove this handler from the dispatcher so it don't get notified of the error
                     // twice (we will fail that method already)
-                    dispatcher.removeHandler(handler.streamId);
+                    dispatcher.removeHandler(handler.streamId, true);
 
                     ConnectionException ce;
                     if (writeFuture.getCause() instanceof java.nio.channels.ClosedChannelException) {
@@ -455,12 +458,19 @@ class Connection {
             assert old == null;
         }
 
-        public void removeHandler(int streamId) {
+        public void removeHandler(int streamId, boolean releaseStreamId) {
+
+            // If we don't release the ID, mark first so that we can rely later on the fact that if
+            // we receive a response for an ID with no handler, it's that this ID has been marked.
+            if (!releaseStreamId)
+                streamIdHandler.mark(streamId);
+
             ResponseHandler handler = pending.remove(streamId);
             if (handler != null)
                 handler.cancelTimeout();
 
-            streamIdHandler.release(streamId);
+            if (releaseStreamId)
+                streamIdHandler.release(streamId);
         }
 
         @Override
@@ -491,6 +501,7 @@ class Connection {
                      *   2) This request has timeouted. In that case, we've already switched to another host (or errored out
                      *      to the user). So log it for debugging purpose, but it's fine ignoring otherwise.
                      */
+                    streamIdHandler.unmark(streamId);
                     logger.debug("[{}] Response received on stream {} but no handler set anymore (either the request has timeouted or it was closed due to another error). Received message is {}", name, streamId, response);
                     return;
                 }
@@ -651,7 +662,11 @@ class Connection {
         }
 
         public void cancelHandler() {
-            connection.dispatcher.removeHandler(streamId);
+            // We haven't really received a response: we want to remove the handle because we gave up on that
+            // request and there is no point in holding the handler, but we don't release the streamId. If we
+            // were, a new request could reuse that ID but get the answer to the request we just gave up on instead
+            // of its own answer, and we would have no way to detect that.
+            connection.dispatcher.removeHandler(streamId, false);
         }
 
         private TimerTask onTimeoutTask() {

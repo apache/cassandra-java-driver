@@ -34,6 +34,11 @@ class HostConnectionPool {
 
     private static final int MAX_SIMULTANEOUS_CREATION = 1;
 
+    // When a request timeout, we may never release its stream ID. So over time, a given connection
+    // may get less an less available streams. When the number of available ones go below the
+    // following threshold, we just replace the connection by a new one.
+    private static final int MIN_AVAILABLE_STREAMS = 96;
+
     public final Host host;
     public volatile HostDistance hostDistance;
     private final Session.Manager manager;
@@ -120,7 +125,7 @@ class HostConnectionPool {
         while (true) {
             int inFlight = leastBusy.inFlight.get();
 
-            if (inFlight >= Connection.MAX_STREAM_PER_CONNECTION) {
+            if (inFlight >= leastBusy.maxAvailableStreams()) {
                 leastBusy = waitForConnection(timeout, unit);
                 break;
             }
@@ -197,7 +202,7 @@ class HostConnectionPool {
             while (true) {
                 int inFlight = leastBusy.inFlight.get();
 
-                if (inFlight >= Connection.MAX_STREAM_PER_CONNECTION)
+                if (inFlight >= leastBusy.maxAvailableStreams())
                     break;
 
                 if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1))
@@ -228,10 +233,20 @@ class HostConnectionPool {
 
             if (connections.size() > options().getCoreConnectionsPerHost(hostDistance) && inFlight <= options().getMinSimultaneousRequestsPerConnectionThreshold(hostDistance)) {
                 trashConnection(connection);
+            } else if (connection.maxAvailableStreams() < MIN_AVAILABLE_STREAMS) {
+                replaceConnection(connection);
             } else {
                 signalAvailableConnection();
             }
         }
+    }
+
+    // Trash the connection and create a new one, but we don't call trashConnection
+    // directly because we want to make sure the connection is always trashed.
+    private void replaceConnection(Connection connection) {
+        open.decrementAndGet();
+        maybeSpawnNewConnection();
+        doTrashConnection(connection);
     }
 
     private boolean trashConnection(Connection connection) {
@@ -244,12 +259,17 @@ class HostConnectionPool {
             if (open.compareAndSet(opened, opened - 1))
                 break;
         }
+
+        doTrashConnection(connection);
+        return true;
+    }
+
+    private void doTrashConnection(Connection connection) {
         trash.add(connection);
         connections.remove(connection);
 
         if (connection.inFlight.get() == 0 && trash.remove(connection))
             close(connection);
-        return true;
     }
 
     private boolean addConnectionIfUnderMaximum() {
