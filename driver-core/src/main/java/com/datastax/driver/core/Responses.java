@@ -492,6 +492,9 @@ class Responses {
         public static final Message.Decoder<AuthChallenge> decoder = new Message.Decoder<AuthChallenge>() {
             public AuthChallenge decode(ChannelBuffer body) {
                 ByteBuffer b = CBUtil.readValue(body);
+                if (b == null)
+                    return new AuthChallenge(null);
+
                 byte[] token = new byte[b.remaining()];
                 b.get(token);
                 return new AuthChallenge(token);
@@ -511,6 +514,9 @@ class Responses {
         public static final Message.Decoder<AuthSuccess> decoder = new Message.Decoder<AuthSuccess>() {
             public AuthSuccess decode(ChannelBuffer body) {
                 ByteBuffer b = CBUtil.readValue(body);
+                if (b == null)
+                    return new AuthSuccess(null);
+
                 byte[] token = new byte[b.remaining()];
                 b.get(token);
                 return new AuthSuccess(token);

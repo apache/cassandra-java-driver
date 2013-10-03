@@ -12,6 +12,7 @@ CHANGELOG
 - [bug] Fix exception when a conditional write timeout C* side.
 - [bug] Ensure connection is created when Cluster metadata are asked for
   (JAVA-182).
+- [bug] Fix potential NPE during authentication (JAVA-187)
 
 
 2.0.0-beta1:
