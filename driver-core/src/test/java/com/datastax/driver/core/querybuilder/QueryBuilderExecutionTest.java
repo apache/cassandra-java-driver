@@ -13,14 +13,29 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.core;
+package com.datastax.driver.core.querybuilder;
 
-import java.util.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.in;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.set;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.update;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.RegularStatement;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.TestUtils;
 
 public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeCluster {
 
