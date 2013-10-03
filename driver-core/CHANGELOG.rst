@@ -6,6 +6,8 @@ CHANGELOG
 
 - [api] BoundStatement#setX(String, X) methods now set all values (if there is
   more than one) having the provided name, not just the first occurence.
+- [api] The Authenticator interface now has a onAuthenticationSuccess method that
+  allows to handle the potential last token sent by the server.
 - [new] The query builder don't serialize large values to strings anymore by
   default by making use the new ability to send values alongside the query string.
 - [new] The query builder has been updated for new CQL features (JAVA-140).

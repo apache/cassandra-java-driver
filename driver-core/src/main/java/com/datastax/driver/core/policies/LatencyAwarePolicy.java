@@ -196,7 +196,8 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
      * by the returned iterator, but only only after all non-excluded host of the
      * child policy have been returned.
      *
-     * @param query the query for which to build the plan.
+     * @param loggedKeyspace the currently logged keyspace.
+     * @param statement the statement for which to build the plan.
      * @return the new query plan.
      */
     @Override

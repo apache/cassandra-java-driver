@@ -155,6 +155,7 @@ class Connection {
         switch (authResponse.type) {
             case AUTH_SUCCESS:
                 logger.trace("Authentication complete");
+                authenticator.onAuthenticationSuccess(((Responses.AuthSuccess)authResponse).token);
                 break;
             case AUTH_CHALLENGE:
                 byte[] responseToServer = authenticator.evaluateChallenge(((Responses.AuthChallenge)authResponse).token);

@@ -87,5 +87,10 @@ public class PlainTextAuthProvider implements AuthProvider {
         public byte[] evaluateChallenge(byte[] challenge) {
             return null;
         }
+
+        @Override
+        public void onAuthenticationSuccess(byte[] token) {
+            // no-op, the server should send nothing anyway
+        }
     }
 }
