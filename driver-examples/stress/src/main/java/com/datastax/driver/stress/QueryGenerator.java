@@ -19,6 +19,7 @@ import java.util.Iterator;
 
 import com.datastax.driver.core.*;
 
+import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
 public abstract class QueryGenerator implements Iterator<QueryGenerator.Request> {
@@ -30,6 +31,8 @@ public abstract class QueryGenerator implements Iterator<QueryGenerator.Request>
     }
 
     public interface Builder {
+        public String name();
+        public OptionParser addOptions(OptionParser parser);
         public void createSchema(OptionSet options, Session session);
         public QueryGenerator create(int id, int iterations, OptionSet options, Session session);
     }

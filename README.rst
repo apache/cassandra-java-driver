@@ -35,16 +35,9 @@ it in your application using the following Maven dependency::
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>1.0.3</version>
+      <version>2.0.0-beta1</version>
     </dependency>
-    
-**DSE users** should use the following Maven dependency (*note the version is set to 1.0.3-dse*)::
 
-    <dependency>
-      <groupId>com.datastax.cassandra</groupId>
-      <artifactId>cassandra-driver-core</artifactId>
-      <version>1.0.3-dse</version>
-    </dependency>
 
 Troubleshooting
 ~~~~~~~~~~~~~~~

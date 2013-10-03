@@ -85,7 +85,7 @@
           <version>2.9.1</version>
           <configuration>
             <!-- I can haz math in my javadoc (see http://zverovich.net/2012/01/14/beautiful-math-in-javadoc.html) -->
-            <additionalparam>-header &apos;&lt;script type=&quot;text/javascript&quot; src=&quot;http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot;&gt;&lt;/script&gt;&apos;</additionalparam>
+            <additionalparam>-header '&lt;script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"&gt;&lt;/script&gt;'</additionalparam>
           </configuration>
           <executions>
             <execution>

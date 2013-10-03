@@ -22,6 +22,7 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.Bytes;
 
+import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
 public class Generators {
@@ -33,9 +34,13 @@ public class Generators {
     };
 
     private static void createCassandraStressTables(Session session, OptionSet options) {
+
         try {
-            session.execute("CREATE KEYSPACE stress WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
-        } catch (AlreadyExistsException e) { /* It's ok, ignore */ }
+            session.execute("DROP KEYSPACE stress;");
+        } catch (QueryValidationException e) { /* Fine, ignore */ }
+
+
+        session.execute("CREATE KEYSPACE stress WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
 
         session.execute("USE stress");
 
@@ -45,9 +50,10 @@ public class Generators {
             sb.append(", C").append(i).append(" blob");
         sb.append(")");
 
-        try {
-            session.execute(sb.toString());
-        } catch (AlreadyExistsException e) { /* It's ok, ignore */ }
+        if (options.has("with-compact-storage"))
+            sb.append(" WITH COMPACT STORAGE");
+
+        session.execute(sb.toString());
     }
 
     private static ByteBuffer makeValue(final int valueSize) {
@@ -57,6 +63,20 @@ public class Generators {
     }
 
     public static final QueryGenerator.Builder CASSANDRA_INSERTER = new QueryGenerator.Builder() {
+
+        public String name() {
+            return "insert";
+        }
+
+        public OptionParser addOptions(OptionParser parser) {
+            String msg = "Simple insertion of CQL3 rows without prepared statements. The inserted rows have a fixed set of columns but no clustering columns.";
+            parser.formatHelpWith(Stress.Help.formatFor(name(), msg));
+
+            parser.accepts("columns-per-row", "Number of columns per CQL3 row").withRequiredArg().ofType(Integer.class).defaultsTo(5);
+            parser.accepts("value-size", "The size in bytes for column values").withRequiredArg().ofType(Integer.class).defaultsTo(34);
+            parser.accepts("with-compact-storage", "Use COMPACT STORAGE on the table used");
+            return parser;
+        }
 
         public void createSchema(OptionSet options, Session session) {
             createCassandraStressTables(session, options);
@@ -98,6 +118,20 @@ public class Generators {
     };
 
     public static final QueryGenerator.Builder CASSANDRA_PREPARED_INSERTER = new QueryGenerator.Builder() {
+
+        public String name() {
+            return "insert_prepared";
+        }
+
+        public OptionParser addOptions(OptionParser parser) {
+            String msg = "Simple insertion of CQL3 rows using prepared statements. The inserted rows have a fixed set of columns but no clustering columns.";
+            parser.formatHelpWith(Stress.Help.formatFor(name(), msg));
+
+            parser.accepts("columns-per-row", "Number of columns per CQL3 row").withRequiredArg().ofType(Integer.class).defaultsTo(5);
+            parser.accepts("value-size", "The size in bytes for column values").withRequiredArg().ofType(Integer.class).defaultsTo(34);
+            parser.accepts("with-compact-storage", "Use COMPACT STORAGE on the table used");
+            return parser;
+        }
 
         public void createSchema(OptionSet options, Session session) {
             createCassandraStressTables(session, options);
