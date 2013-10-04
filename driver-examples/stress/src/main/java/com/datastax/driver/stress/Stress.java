@@ -21,6 +21,8 @@ import java.util.*;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.*;
 
+import org.apache.log4j.PropertyConfigurator;
+
 import joptsimple.*;
 
 /**
@@ -34,9 +36,11 @@ public class Stress {
 
     private static final Map<String, QueryGenerator.Builder> generators = new HashMap<String, QueryGenerator.Builder>();
     static {
+        PropertyConfigurator.configure(System.getProperty("log4j.configuration", "./conf/log4j.properties"));
+
         QueryGenerator.Builder[] gs = new QueryGenerator.Builder[] {
-            Generators.CASSANDRA_INSERTER,
-            Generators.CASSANDRA_PREPARED_INSERTER
+            Generators.INSERTER,
+            Generators.READER
         };
 
         for (QueryGenerator.Builder b : gs)
@@ -49,8 +53,9 @@ public class Stress {
             accepts("n", "Number of requests to perform (default: unlimited)").withRequiredArg().ofType(Integer.class);
             accepts("t", "Level of concurrency to use").withRequiredArg().ofType(Integer.class).defaultsTo(50);
             accepts("async", "Make asynchronous requests instead of blocking ones");
-            accepts("csv", "Save metrics into csv instead of displaying on stdout");
             accepts("ip", "The hosts ip to connect to").withRequiredArg().ofType(String.class).defaultsTo("127.0.0.1");
+            accepts("report-file", "The name of csv file to use for reporting results").withRequiredArg().ofType(String.class).defaultsTo("last.csv");
+            accepts("print-delay", "The delay in seconds at which to report on the console").withRequiredArg().ofType(Integer.class).defaultsTo(5);
         }};
         String msg = "Where <generator> can be one of " + generators.keySet() + "\n"
                    + "You can get more help on a particular generator with: stress <generator> -h";
@@ -145,7 +150,7 @@ public class Stress {
         }
 
         public void prepare(Session session) {
-            genBuilder.createSchema(options, session);
+            genBuilder.prepare(options, session);
         }
 
         public QueryGenerator newGenerator(int id, Session session, int iterations) {
@@ -191,13 +196,15 @@ public class Stress {
         int requests = options.has("n") ? (Integer)options.valueOf("n") : -1;
         int concurrency = (Integer)options.valueOf("t");
 
-        boolean async = options.has("async");
-        boolean useCsv = options.has("csv");
+        String reportFileName = (String)options.valueOf("report-file");
 
-        System.out.println("Initializing stress test...");
-        System.out.println("request count: " + (requests == -1 ? "unlimited" : requests));
-        System.out.println("concurrency: " + concurrency);
-        System.out.println("mode: " + (async ? "asynchronous" : "blocking"));
+        boolean async = options.has("async");
+
+        int iterations = (requests  == -1 ? -1 : requests / concurrency);
+        System.out.println("Initializing stress test:");
+        System.out.println("  request count: " + (requests == -1 ? "unlimited" : requests));
+        System.out.println("  concurrency:   " + concurrency + " (" + iterations + " requests/thread)");
+        System.out.println("  mode:          " + (async ? "asynchronous" : "blocking"));
 
         try {
             // Create session to hosts
@@ -218,26 +225,30 @@ public class Stress {
             Metadata metadata = cluster.getMetadata();
             System.out.println(String.format("Connected to cluster '%s' on %s.", metadata.getClusterName(), metadata.getAllHosts()));
 
-            System.out.println("Creating schema...");
+            System.out.println("Preparing test...");
             stresser.prepare(session);
 
-            Reporter reporter = new Reporter(useCsv);
+            Reporter reporter = new Reporter((Integer)options.valueOf("print-delay"), reportFileName, args, requests);
 
             Consumer[] consumers = new Consumer[concurrency];
             for (int i = 0; i < concurrency; i++) {
-                int iterations = (requests  == -1 ? -1 : requests / concurrency);
                 QueryGenerator generator = stresser.newGenerator(i, session, iterations);
                 consumers[i] = async ? new AsynchronousConsumer(session, generator, reporter) :
                                        new BlockingConsumer(session, generator, reporter);
             }
 
             System.out.println("Starting to stress test...");
+            System.out.println();
+
+            reporter.start();
 
             for (Consumer consumer : consumers)
                 consumer.start();
 
             for (Consumer consumer : consumers)
                 consumer.join();
+
+            reporter.stop();
 
             System.out.println("Stress test successful.");
             System.exit(0);
