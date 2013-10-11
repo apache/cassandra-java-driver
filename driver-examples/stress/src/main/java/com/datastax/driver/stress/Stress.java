@@ -57,6 +57,8 @@ public class Stress {
             accepts("ip", "The hosts ip to connect to").withRequiredArg().ofType(String.class).defaultsTo("127.0.0.1");
             accepts("report-file", "The name of csv file to use for reporting results").withRequiredArg().ofType(String.class).defaultsTo("last.csv");
             accepts("print-delay", "The delay in seconds at which to report on the console").withRequiredArg().ofType(Integer.class).defaultsTo(5);
+            accepts("compression", "Use compression (SNAPPY)");
+            accepts("connections-per-host", "The number of connections per hosts (default: based on the number of threads)").withRequiredArg().ofType(Integer.class);
         }};
         String msg = "Where <generator> can be one of " + generators.keySet() + "\n"
                    + "You can get more help on a particular generator with: stress <generator> -h";
@@ -202,24 +204,38 @@ public class Stress {
         boolean async = options.has("async");
 
         int iterations = (requests  == -1 ? -1 : requests / concurrency);
+
+        final int maxRequestsPerConnection = 128;
+        int maxConnections = options.has("connections-per-host")
+                           ? (Integer)options.valueOf("connections-per-host")
+                           : concurrency / maxRequestsPerConnection + 1;
+
+        PoolingOptions pools = new PoolingOptions();
+        pools.setMaxSimultaneousRequestsPerConnectionThreshold(HostDistance.LOCAL, concurrency);
+        pools.setCoreConnectionsPerHost(HostDistance.LOCAL, maxConnections);
+        pools.setMaxConnectionsPerHost(HostDistance.LOCAL, maxConnections);
+        pools.setCoreConnectionsPerHost(HostDistance.REMOTE, maxConnections);
+        pools.setMaxConnectionsPerHost(HostDistance.REMOTE, maxConnections);
+
         System.out.println("Initializing stress test:");
-        System.out.println("  request count: " + (requests == -1 ? "unlimited" : requests));
-        System.out.println("  concurrency:   " + concurrency + " (" + iterations + " requests/thread)");
-        System.out.println("  mode:          " + (async ? "asynchronous" : "blocking"));
+        System.out.println("  request count:        " + (requests == -1 ? "unlimited" : requests));
+        System.out.println("  concurrency:          " + concurrency + " (" + iterations + " requests/thread)");
+        System.out.println("  mode:                 " + (async ? "asynchronous" : "blocking"));
+        System.out.println("  per-host connections: " + maxConnections);
+        System.out.println("  compression:          " + options.has("compression"));
+
+        SocketOptions socket = new SocketOptions();
+        socket.setTcpNoDelay(true);
 
         try {
             // Create session to hosts
-            Cluster cluster = new Cluster.Builder().addContactPoints(String.valueOf(options.valueOf("ip"))).build();
+            Cluster cluster = new Cluster.Builder()
+                                         .addContactPoints(String.valueOf(options.valueOf("ip")))
+                                         .withPoolingOptions(pools)
+                                         .build();
 
-            final int maxRequestsPerConnection = 128;
-            int maxConnections = concurrency / maxRequestsPerConnection + 1;
-
-            PoolingOptions pools = cluster.getConfiguration().getPoolingOptions();
-            pools.setMaxSimultaneousRequestsPerConnectionThreshold(HostDistance.LOCAL, concurrency);
-            pools.setCoreConnectionsPerHost(HostDistance.LOCAL, maxConnections);
-            pools.setMaxConnectionsPerHost(HostDistance.LOCAL, maxConnections);
-            pools.setCoreConnectionsPerHost(HostDistance.REMOTE, maxConnections);
-            pools.setMaxConnectionsPerHost(HostDistance.REMOTE, maxConnections);
+            if (options.has("compression"))
+                cluster.getConfiguration().getProtocolOptions().setCompression(ProtocolOptions.Compression.SNAPPY);
 
             Session session = cluster.connect();
 
