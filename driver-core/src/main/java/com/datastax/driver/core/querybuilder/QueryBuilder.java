@@ -21,14 +21,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.TableMetadata;
 
 /**
  * Static methods to build a CQL3 query.
  * <p>
  * The queries built by this builder will provide a value for the
- * {@link com.datastax.driver.core.Query#getRoutingKey} method only when a
+ * {@link com.datastax.driver.core.Statement#getRoutingKey} method only when a
  * {@link com.datastax.driver.core.TableMetadata} is provided to the builder.
  * It is thus advised to do so if a {@link com.datastax.driver.core.policies.TokenAwarePolicy}
  * is in use.
@@ -40,8 +40,6 @@ import com.datastax.driver.core.TableMetadata;
  * Note that it could be convenient to use an 'import static' to use the methods of this class.
  */
 public final class QueryBuilder {
-
-    static final Object BIND_MARKER = new Object() {};
 
     private QueryBuilder() {}
 
@@ -65,7 +63,8 @@ public final class QueryBuilder {
      * column selection and at least a FROM clause to complete the query).
      */
     public static Select.Selection select() {
-        return new Select.Selection();
+        // Note: the fact we return Select.Selection as return type is on purpose.
+        return new Select.SelectionOrAlias();
     }
 
     /**
@@ -166,9 +165,9 @@ public final class QueryBuilder {
      * using {@link #unloggedBatch}).
      *
      * @param statements the statements to batch.
-     * @return a new {@code Statement} that batch {@code statements}.
+     * @return a new {@code RegularStatement} that batch {@code statements}.
      */
-    public static Batch batch(Statement... statements) {
+    public static Batch batch(RegularStatement... statements) {
         return new Batch(statements, true);
     }
 
@@ -186,11 +185,42 @@ public final class QueryBuilder {
      * resulting batch will be a COUNTER one.
      *
      * @param statements the statements to batch.
-     * @return a new {@code Statement} that batch {@code statements} without
+     * @return a new {@code RegularStatement} that batch {@code statements} without
      * using the batch log.
      */
-    public static Batch unloggedBatch(Statement... statements) {
+    public static Batch unloggedBatch(RegularStatement... statements) {
         return new Batch(statements, false);
+    }
+
+    /**
+     * Creates a new TRUNCATE query.
+     *
+     * @param table the name of the table to truncate.
+     * @return the truncation query.
+     */
+    public static Truncate truncate(String table) {
+        return new Truncate(null, table);
+    }
+
+    /**
+     * Creates a new TRUNCATE query.
+     *
+     * @param keyspace the name of the keyspace to use.
+     * @param table the name of the table to truncate.
+     * @return the truncation query.
+     */
+    public static Truncate truncate(String keyspace, String table) {
+        return new Truncate(keyspace, table);
+    }
+
+    /**
+     * Creates a new TRUNCATE query.
+     *
+     * @param table the table to truncate.
+     * @return the truncation query.
+     */
+    public static Truncate truncate(TableMetadata table) {
+        return new Truncate(table);
     }
 
     /**
@@ -341,7 +371,17 @@ public final class QueryBuilder {
         if (timestamp < 0)
             throw new IllegalArgumentException("Invalid timestamp, must be positive");
 
-        return new Using("TIMESTAMP", timestamp);
+        return new Using.WithValue("TIMESTAMP", timestamp);
+    }
+
+    /**
+     * Option to prepare the timestamp (in microseconds) for a modification query (insert, update or delete).
+     *
+     * @param marker bind marker to use for the timestamp.
+     * @return the corresponding option.
+     */
+    public static Using timestamp(BindMarker marker) {
+        return new Using.WithMarker("TIMESTAMP", marker);
     }
 
     /**
@@ -356,7 +396,17 @@ public final class QueryBuilder {
         if (ttl < 0)
             throw new IllegalArgumentException("Invalid ttl, must be positive");
 
-        return new Using("TTL", ttl);
+        return new Using.WithValue("TTL", ttl);
+    }
+
+    /**
+     * Option to prepare the ttl (in seconds) for a modification query (insert, update or delete).
+     *
+     * @param marker bind marker to use for the ttl.
+     * @return the corresponding option
+     */
+    public static Using ttl(BindMarker marker) {
+        return new Using.WithMarker("TTL", marker);
     }
 
     /**
@@ -594,7 +644,7 @@ public final class QueryBuilder {
     }
 
     /**
-     * An object representing a bind marker (a question mark).
+     * An object representing an anonymous bind marker (a question mark).
      * <p>
      * This can be used wherever a value is expected. For instance, one can do:
      * <pre>
@@ -607,33 +657,54 @@ public final class QueryBuilder {
      *
      * @return an object representing a bind marker.
      */
-    public static Object bindMarker() {
-        return BIND_MARKER;
+    public static BindMarker bindMarker() {
+        return BindMarker.ANONYMOUS;
     }
 
     /**
-     * Creates a raw string value.
+     * An object representing a named bind marker.
+     * <p>
+     * This can be used wherever a value is expected. For instance, one can do:
+     * <pre>
+     * {@code
+     *     Insert i = QueryBuilder.insertInto("test").value("k", 0)
+     *                                               .value("c", QueryBuilder.bindMarker("c_val"));
+     *     PreparedState p = session.prepare(i.toString());
+     * }
+     * </pre>
+     * <p>
+     * Please note that named bind makers are only supported starting with Cassandra 2.0.1.
      *
-     * This allows inputing a string value that is not interpreted/escapted by
-     * the query builder in any way. By default, the query builder escape
-     * single quotes and recognize function calls in string values. This
-     * function avoid both of those behavior.
+     * @param name the name for the bind marker.
+     * @return an object representing a bind marker named {@code name}.
+     */
+    public static BindMarker bindMarker(String name) {
+        return new BindMarker(name);
+    }
+
+    /**
+     * Protects a value from any interpretation by the query builder.
      * <p>
      * The following table exemplify the behavior of this function:
      * <table border=1>
      *   <tr><th>Code</th><th>Resulting query string</th></tr>
      *   <tr><td>{@code select().from("t").where(eq("c", "C'est la vie!")); }</td><td>{@code "SELECT * FROM t WHERE c='C''est la vie!';"}</td></tr>
-     *   <tr><td>{@code select().from("t").where(eq("c", raw("C'est la vie!"))); }</td><td>{@code "SELECT * FROM t WHERE c='C'est la vie!';"}</td></tr>
-     *   <tr><td>{@code select().from("t").where(eq("c", "now()")); }</td><td>{@code "SELECT * FROM t WHERE c=now();"}</td></tr>
-     *   <tr><td>{@code select().from("t").where(eq("c", raw("now()"))); }</td><td>{@code "SELECT * FROM t WHERE c='now()';"}</td></tr>
+     *   <tr><td>{@code select().from("t").where(eq("c", raw("C'est la vie!"))); }</td><td>{@code "SELECT * FROM t WHERE c=C'est la vie!;"}</td></tr>
+     *   <tr><td>{@code select().from("t").where(eq("c", raw("'C'est la vie!'"))); }</td><td>{@code "SELECT * FROM t WHERE c='C'est la vie!';"}</td></tr>
+     *   <tr><td>{@code select().from("t").where(eq("c", "now()")); }</td><td>{@code "SELECT * FROM t WHERE c='now()';"}</td></tr>
+     *   <tr><td>{@code select().from("t").where(eq("c", raw("now()"))); }</td><td>{@code "SELECT * FROM t WHERE c=now();"}</td></tr>
      * </table>
-     * <i>Note: the 2nd example in this table is not a valid CQL3 query as the quote is not correctly escaped.</i>
+     * <i>Note: the 2nd and 3rd examples in this table are not a valid CQL3 queries.</i>
+     * <p>
+     * The use of that method is generally discouraged since it lead to security risks. However,
+     * if you know what you are doing, it allows to escape the interprations done by the
+     * QueryBuilder.
      *
-     * @param str the string value to use
+     * @param str the raw value to use as a string
      * @return the value but protected from being interpreted/escaped by the query builder.
      */
     public static Object raw(String str) {
-        return new Utils.RawString("'" + str + "'");
+        return new Utils.RawString(str);
     }
 
     /**

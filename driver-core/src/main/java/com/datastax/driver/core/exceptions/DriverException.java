@@ -18,21 +18,23 @@ package com.datastax.driver.core.exceptions;
 /**
  * Top level class for exceptions thrown by the driver.
  */
-public abstract class DriverException extends RuntimeException {
+public class DriverException extends RuntimeException {
+
+    private static final long serialVersionUID = 0;
 
     DriverException() {
         super();
     }
 
-    DriverException(String message) {
+    public DriverException(String message) {
         super(message);
     }
 
-    DriverException(Throwable cause) {
+    public DriverException(Throwable cause) {
         super(cause);
     }
 
-    DriverException(String message, Throwable cause) {
+    public DriverException(String message, Throwable cause) {
         super(message, cause);
     }
 
@@ -47,5 +49,7 @@ public abstract class DriverException extends RuntimeException {
      *
      * @return a copy/clone of this exception.
      */
-    public abstract DriverException copy();
+    public DriverException copy() {
+        return new DriverException(getMessage(), this);
+    }
 }

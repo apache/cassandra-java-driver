@@ -15,9 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.util.*;
-
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
@@ -31,13 +28,13 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      * Test RetryPolicy to ensure the basic unit get tests for the RetryDecisions.
      */
     public static class TestRetryPolicy implements RetryPolicy {
-        public RetryDecision onReadTimeout(Query query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
+        public RetryDecision onReadTimeout(Statement query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
             return RetryDecision.rethrow();
         }
-        public RetryDecision onWriteTimeout(Query query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
+        public RetryDecision onWriteTimeout(Statement query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
             return RetryDecision.rethrow();
         }
-        public RetryDecision onUnavailable(Query query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
+        public RetryDecision onUnavailable(Statement query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
             return RetryDecision.rethrow();
         }
         public static void testRetryDecision() {
@@ -100,11 +97,11 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
 
     public void defaultPolicyTest(Cluster.Builder builder) throws Throwable {
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
-        createSchema(c.session);
-
-        // FIXME: Race condition where the nodes are not fully up yet and assertQueried reports slightly different numbers with fallthrough*Policy
-        Thread.sleep(5000);
         try {
+            createSchema(c.session);
+            // FIXME: Race condition where the nodes are not fully up yet and assertQueried reports slightly different numbers with fallthrough*Policy
+            Thread.sleep(5000);
+
             init(c, 12);
             query(c, 12);
 
@@ -278,11 +275,11 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      */
     public void downgradingConsistencyRetryPolicy(Cluster.Builder builder) throws Throwable {
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
-        createSchema(c.session, 3);
-
-        // FIXME: Race condition where the nodes are not fully up yet and assertQueried reports slightly different numbers
-        Thread.sleep(5000);
         try {
+            createSchema(c.session, 3);
+            // FIXME: Race condition where the nodes are not fully up yet and assertQueried reports slightly different numbers
+            Thread.sleep(5000);
+
             init(c, 12, ConsistencyLevel.ALL);
             query(c, 12, ConsistencyLevel.ALL);
 
@@ -349,9 +346,9 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
     public void alwaysIgnoreRetryPolicyTest() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(AlwaysIgnoreRetryPolicy.INSTANCE));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
-        createSchema(c.session);
 
         try {
+            createSchema(c.session);
             init(c, 12);
             query(c, 12);
 
@@ -450,9 +447,9 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
     public void alwaysRetryRetryPolicyTest() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(AlwaysRetryRetryPolicy.INSTANCE));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
-        createSchema(c.session);
 
         try {
+            createSchema(c.session);
             init(c, 12);
             query(c, 12);
 

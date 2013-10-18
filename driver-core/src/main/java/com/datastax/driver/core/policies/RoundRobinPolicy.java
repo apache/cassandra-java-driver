@@ -74,12 +74,14 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
      * call to this method, the {@code i}th host of the plans returned will cycle
      * over all the hosts of the cluster in a round-robin fashion.
      *
-     * @param query the query for which to build the plan.
+     * @param loggedKeyspace the keyspace currently logged in on for this
+     * query.
+     * @param statement the query for which to build the plan.
      * @return a new query plan, i.e. an iterator indicating which host to
      * try first for querying, which one to use as failover, etc...
      */
     @Override
-    public Iterator<Host> newQueryPlan(Query query) {
+    public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement) {
 
         // We clone liveHosts because we want a version of the list that
         // cannot change concurrently of the query plan iterator (this
@@ -104,7 +106,10 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
                     return endOfData();
 
                 remaining--;
-                return hosts.get(idx++ % hosts.size());
+                int c = idx++ % hosts.size();
+                if (c < 0)
+                    c += hosts.size();
+                return hosts.get(c);
             }
         };
     }

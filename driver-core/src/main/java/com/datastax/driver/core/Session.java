@@ -16,9 +16,10 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -28,9 +29,6 @@ import com.google.common.util.concurrent.Uninterruptibles;
 
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
-
-import org.apache.cassandra.transport.Message;
-import org.apache.cassandra.transport.messages.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,19 +78,13 @@ public class Session {
     }
 
     /**
-     * Executes the provided query.
+     * Executes the provided query using the provided value.
      *
-     * This method blocks until at least some result has been received from the
-     * database. However, for SELECT queries, it does not guarantee that the
-     * result has been received in full. But it does guarantee that some
-     * response has been received from the database, and in particular
-     * guarantee that if the request is invalid, an exception will be thrown
-     * by this method.
+     * This is a convenience method for {@code execute(new SimpleStatement(query, values))}.
      *
-     * @param query the CQL query to execute (that can be either a {@code
-     * Statement} or a {@code BoundStatement}). If it is a {@code
-     * BoundStatement}, all variables must have been bound (the statement must
-     * be ready).
+     * @param query the CQL query to execute.
+     * @param values values required for the execution of {@code query}. See
+     * {@link SimpleStatement#SimpleStatement(String, Object...)} for more detail.
      * @return the result of the query. That result will never be null but can
      * be empty (and will be for any non SELECT query).
      *
@@ -103,11 +95,35 @@ public class Session {
      * the query with the requested consistency level successfully.
      * @throws QueryValidationException if the query if invalid (syntax error,
      * unauthorized or any other validation problem).
-     * @throws IllegalStateException if {@code query} is a {@code BoundStatement}
-     * but {@code !query.isReady()}.
      */
-    public ResultSet execute(Query query) {
-        return executeAsync(query).getUninterruptibly();
+    public ResultSet execute(String query, Object... values) {
+        return execute(new SimpleStatement(query, values));
+    }
+
+    /**
+     * Executes the provided query.
+     *
+     * This method blocks until at least some result has been received from the
+     * database. However, for SELECT queries, it does not guarantee that the
+     * result has been received in full. But it does guarantee that some
+     * response has been received from the database, and in particular
+     * guarantee that if the request is invalid, an exception will be thrown
+     * by this method.
+     *
+     * @param statement the CQL query to execute (that can be any {@code Statement}).
+     * @return the result of the query. That result will never be null but can
+     * be empty (and will be for any non SELECT query).
+     *
+     * @throws NoHostAvailableException if no host in the cluster can be
+     * contacted successfully to execute this query.
+     * @throws QueryExecutionException if the query triggered an execution
+     * exception, i.e. an exception thrown by Cassandra when it cannot execute
+     * the query with the requested consistency level successfully.
+     * @throws QueryValidationException if the query if invalid (syntax error,
+     * unauthorized or any other validation problem).
+     */
+    public ResultSet execute(Statement statement) {
+        return executeAsync(statement).getUninterruptibly();
     }
 
     /**
@@ -123,6 +139,20 @@ public class Session {
     }
 
     /**
+     * Executes the provided query asynchronously using the provided values.
+     *
+     * This is a convenience method for {@code executeAsync(new SimpleStatement(query, values))}.
+     *
+     * @param query the CQL query to execute.
+     * @param values values required for the execution of {@code query}. See
+     * {@link SimpleStatement#SimpleStatement(String, Object...)} for more detail.
+     * @return a future on the result of the query.
+     */
+    public ResultSetFuture executeAsync(String query, Object... values) {
+        return executeAsync(new SimpleStatement(query, values));
+    }
+
+    /**
      * Executes the provided query asynchronously.
      *
      * This method does not block. It returns as soon as the query has been
@@ -135,80 +165,92 @@ public class Session {
      * DELETE), you will need to access the ResultSetFuture (that is call one of
      * its get method to make sure the query was successful.
      *
-     * @param query the CQL query to execute (that can be either a {@code
-     * Statement} or a {@code BoundStatement}). If it is a {@code
-     * BoundStatement}, all variables must have been bound (the statement must
-     * be ready).
+     * @param statement the CQL query to execute (that can be either any {@code Statement}.
      * @return a future on the result of the query.
-     *
-     * @throws IllegalStateException if {@code query} is a {@code BoundStatement}
-     * but {@code !query.isReady()}.
      */
-    public ResultSetFuture executeAsync(Query query) {
-
-        if (query instanceof Statement) {
-            return manager.executeQuery(new QueryMessage(((Statement)query).getQueryString(), ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
-        } else {
-            assert query instanceof BoundStatement : query;
-
-            BoundStatement bs = (BoundStatement)query;
-            return manager.executeQuery(new ExecuteMessage(bs.statement.id, Arrays.asList(bs.values), ConsistencyLevel.toCassandraCL(query.getConsistencyLevel())), query);
-        }
+    public ResultSetFuture executeAsync(Statement statement) {
+        return manager.executeQuery(manager.makeRequestMessage(statement, null), statement);
     }
 
     /**
-     * Prepares the provided query.
+     * Prepares the provided query string.
      *
-     * @param query the CQL query to prepare
+     * @param query the CQL query string to prepare
      * @return the prepared statement corresponding to {@code query}.
      *
      * @throws NoHostAvailableException if no host in the cluster can be
-     * contacted successfully to execute this query.
+     * contacted successfully to prepare this query.
      */
     public PreparedStatement prepare(String query) {
-        Connection.Future future = new Connection.Future(new PrepareMessage(query));
-        manager.execute(future, Query.DEFAULT);
+        Connection.Future future = new Connection.Future(new Requests.Prepare(query));
+        manager.execute(future, Statement.DEFAULT);
         return toPreparedStatement(query, future);
     }
 
     /**
-     * Shuts down this session instance.
+     * Prepares the provided query.
      * <p>
-     * This closes all connections used by this sessions. Note that if you want
-     * to shut down the full {@code Cluster} instance this session is part of,
-     * you should use {@link Cluster#shutdown} instead (which will call this
-     * method for all session but also release some additional resources).
-     * <p>
-     * This method has no effect if the session was already shutdown.
+     * This method is essentially a shortcut for {@code prepare(statement.getQueryString())},
+     * but note that the resulting {@code PreparedStamenent} will inherit the query properties
+     * set on {@code statement}. Concretely, this means that in the following code:
+     * <pre>
+     *   RegularStatement toPrepare = new SimpleStatement("SELECT * FROM test WHERE k=?").setConsistencyLevel(ConsistencyLevel.QUORUM);
+     *   PreparedStatement prepared = session.prepare(toPrepare);
+     *   session.execute(prepared.bind("someValue"));
+     * </pre>
+     * the final execution will be performed with Quorum consistency.
+     *
+     * @param statement the statement to prepare
+     * @return the prepared statement corresponding to {@code statement}.
+     *
+     * @throws NoHostAvailableException if no host in the cluster can be
+     * contacted successfully to prepare this statement.
+     * @throws IllegalArgumentException if {@code statement.getValues() != null}
+     * (values for executing a prepared statement should be provided after preparation
+     * though the {@link PreparedStatement#bind} method or through a corresponding
+     * {@link BoundStatement}).
      */
-    public void shutdown() {
-        shutdown(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+    public PreparedStatement prepare(RegularStatement statement) {
+        if (statement.getValues() != null)
+            throw new IllegalArgumentException("A statement to prepare should not have values");
+
+        PreparedStatement prepared = prepare(statement.toString());
+
+        ByteBuffer routingKey = statement.getRoutingKey();
+        if (routingKey != null)
+            prepared.setRoutingKey(routingKey);
+        prepared.setConsistencyLevel(statement.getConsistencyLevel());
+        if (statement.isTracing())
+            prepared.enableTracing();
+        prepared.setRetryPolicy(statement.getRetryPolicy());
+
+        return prepared;
     }
 
     /**
-     * Shutdown this session instance, only waiting a definite amount of time.
-     * <p>
-     * This closes all connections used by this sessions. Note that if you want
-     * to shutdown the full {@code Cluster} instance this session is part of,
-     * you should use {@link Cluster#shutdown} instead (which will call this
-     * method for all session but also release some additional resources).
-     * <p>
-     * Note that this method is not thread safe in the sense that if another
-     * shutdown is perform in parallel, it might return {@code true} even if
-     * the instance is not yet fully shutdown.
+     * Initiates a shutdown of this session instance.
      *
-     * @param timeout how long to wait for the session to shutdown.
-     * @param unit the unit for the timeout.
-     * @return {@code true} if the session has been properly shutdown within
-     * the {@code timeout}, {@code false} otherwise.
+     * This method is asynchronous and return a future on the completion
+     * of the shutdown process. As soon a the session is shutdown, no
+     * new request will be accepted, but already submitted queries are
+     * allowed to complete. Shutdown closes all connections of this
+     * session  and reclaims all resources used by it.
+     * <p>
+     * If for some reason you wish to expedite this process, the
+     * {@link ShutdownFuture#force} can be called on the result future.
+     * <p>
+     * This method has no particular effect if the session was already shut
+     * down (in which case the returned future will return immediately).
+     * <p>
+     * Note that if you want to shut down the full {@code Cluster} instance
+     * this session is part of, you should use {@link Cluster#shutdown} instead
+     * (which will call this method for all sessions but also release some
+     * additional resources).
+     *
+     * @return a future on the completion of the shutdown process.
      */
-    public boolean shutdown(long timeout, TimeUnit unit) {
-        try {
-            return manager.shutdown(timeout, unit);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        }
+    public ShutdownFuture shutdown() {
+        return manager.shutdown();
     }
 
     /**
@@ -221,15 +263,14 @@ public class Session {
     }
 
     private PreparedStatement toPreparedStatement(String query, Connection.Future future) {
-
         try {
             Message.Response response = Uninterruptibles.getUninterruptibly(future);
             switch (response.type) {
                 case RESULT:
-                    ResultMessage rm = (ResultMessage)response;
+                    Responses.Result rm = (Responses.Result)response;
                     switch (rm.kind) {
                         case PREPARED:
-                            ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
+                            Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
                             PreparedStatement stmt = PreparedStatement.fromMessage(pmsg, manager.cluster.getMetadata(), query, manager.poolsState.keyspace);
                             try {
                                 manager.cluster.manager.prepare(pmsg.statementId, stmt, future.getAddress());
@@ -244,19 +285,16 @@ public class Session {
                             throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
                     }
                 case ERROR:
-                    ResultSetFuture.extractCause(ResultSetFuture.convertException(((ErrorMessage)response).error));
-                    break;
+                    throw ((Responses.Error)response).asException(future.getAddress());
                 default:
                     throw new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type));
             }
-            throw new AssertionError();
         } catch (ExecutionException e) {
-            ResultSetFuture.extractCauseFromExecutionException(e);
-            throw new AssertionError();
+            throw ResultSetFuture.extractCauseFromExecutionException(e);
         }
     }
 
-    static class Manager implements Host.StateListener {
+    static class Manager {
 
         final Cluster cluster;
 
@@ -264,7 +302,7 @@ public class Session {
 
         final HostConnectionPool.PoolState poolsState;
 
-        final AtomicBoolean isShutdown = new AtomicBoolean(false);
+        final AtomicReference<ShutdownFuture> shutdownFuture = new AtomicReference<ShutdownFuture>();
 
         public Manager(Cluster cluster, Collection<Host> hosts) {
             this.cluster = cluster;
@@ -273,19 +311,13 @@ public class Session {
             this.poolsState = new HostConnectionPool.PoolState();
 
             // Create pool to initial nodes (and wait for them to be created)
-            for (Host host : hosts)
-            {
-                try
-                {
-                    addOrRenewPool(host).get();
-                }
-                catch (ExecutionException e)
-                {
+            for (Host host : hosts) {
+                try {
+                    addOrRenewPool(host, false).get();
+                } catch (ExecutionException e) {
                     // This is not supposed to happen
                     throw new DriverInternalError(e);
-                }
-                catch (InterruptedException e)
-                {
+                } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
             }
@@ -311,37 +343,49 @@ public class Session {
             return cluster.manager.executor;
         }
 
-        private boolean shutdown(long timeout, TimeUnit unit) throws InterruptedException {
-
-            if (!isShutdown.compareAndSet(false, true))
-                return true;
-
-            long start = System.nanoTime();
-            boolean success = true;
-            for (HostConnectionPool pool : pools.values())
-                success &= pool.shutdown(timeout - Cluster.timeSince(start, unit), unit);
-            return success;
+        boolean isShutdown() {
+            return shutdownFuture.get() != null;
         }
 
-        private ListenableFuture<?> addOrRenewPool(final Host host) {
+        private ShutdownFuture shutdown() {
+
+            ShutdownFuture future = shutdownFuture.get();
+            if (future != null)
+                return future;
+
+            List<ShutdownFuture> futures = new ArrayList<ShutdownFuture>(pools.size());
+            for (HostConnectionPool pool : pools.values())
+                futures.add(pool.shutdown());
+
+            future = new ShutdownFuture.Forwarding(futures);
+
+            return shutdownFuture.compareAndSet(null, future)
+                 ? future
+                 : shutdownFuture.get(); // We raced, it's ok, return the future that was actually set
+        }
+
+        ListenableFuture<Boolean> addOrRenewPool(final Host host, final boolean isHostAddition) {
             final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
             if (distance == HostDistance.IGNORED)
-                return Futures.immediateFuture(null);
+                return Futures.immediateFuture(true);
 
             // Creating a pool is somewhat long since it has to create the connection, so do it asynchronously.
-            return executor().submit(new Runnable() {
-                public void run() {
+            return executor().submit(new Callable<Boolean>() {
+                public Boolean call() {
                     logger.debug("Adding {} to list of queried hosts", host);
                     try {
                         HostConnectionPool previous = pools.put(host, new HostConnectionPool(host, distance, Session.Manager.this));
                         if (previous != null)
                             previous.shutdown(); // The previous was probably already shutdown but that's ok
+                        return true;
                     } catch (AuthenticationException e) {
                         logger.error("Error creating pool to {} ({})", host, e.getMessage());
-                        cluster.manager.signalConnectionFailure(host, new ConnectionException(e.getHost(), e.getMessage()));
+                        cluster.manager.signalConnectionFailure(host, new ConnectionException(e.getHost(), e.getMessage()), isHostAddition);
+                        return false;
                     } catch (ConnectionException e) {
                         logger.debug("Error creating pool to {} ({})", host, e.getMessage());
-                        cluster.manager.signalConnectionFailure(host, e);
+                        cluster.manager.signalConnectionFailure(host, e, isHostAddition);
+                        return false;
                     }
                 }
             });
@@ -369,14 +413,14 @@ public class Session {
          * This method ensures that all hosts for which a pool should exist
          * have one, and hosts that shouldn't don't.
          */
-        private void updateCreatedPools() {
+        void updateCreatedPools() {
             for (Host h : cluster.getMetadata().allHosts()) {
                 HostDistance dist = loadBalancingPolicy().distance(h);
                 HostConnectionPool pool = pools.get(h);
 
                 if (pool == null) {
                     if (dist != HostDistance.IGNORED && h.isUp())
-                        addOrRenewPool(h);
+                        addOrRenewPool(h, false);
                 } else if (dist != pool.hostDistance) {
                     if (dist == HostDistance.IGNORED) {
                         removePool(h);
@@ -387,16 +431,6 @@ public class Session {
             }
         }
 
-        @Override
-        public void onUp(Host host) {
-            addOrRenewPool(host).addListener(new Runnable() {
-                public void run() {
-                    updateCreatedPools();
-                }
-            }, MoreExecutors.sameThreadExecutor());
-        }
-
-        @Override
         public void onDown(Host host) {
             // Note that with well behaved balancing policy (that ignore dead nodes), the removePool call is not necessary
             // since updateCreatedPools should take care of it. But better protect against non well behaving policies.
@@ -407,12 +441,6 @@ public class Session {
             }, MoreExecutors.sameThreadExecutor());
         }
 
-        @Override
-        public void onAdd(Host host) {
-            onUp(host);
-        }
-
-        @Override
         public void onRemove(Host host) {
             onDown(host);
         }
@@ -420,13 +448,54 @@ public class Session {
         public void setKeyspace(String keyspace) {
             long timeout = configuration().getSocketOptions().getConnectTimeoutMillis();
             try {
-                Future<?> future = executeQuery(new QueryMessage("use " + keyspace, ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT);
+                Future<?> future = executeQuery(new Requests.Query("use " + keyspace), Statement.DEFAULT);
                 // Note: using the connection timeout is perfectly correct, we should probably change that someday
                 Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
             } catch (TimeoutException e) {
                 throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
             } catch (ExecutionException e) {
-                ResultSetFuture.extractCauseFromExecutionException(e);
+                throw ResultSetFuture.extractCauseFromExecutionException(e);
+            }
+        }
+
+        public Message.Request makeRequestMessage(Statement statement, ByteBuffer pagingState) {
+
+            ConsistencyLevel consistency = statement.getConsistencyLevel();
+            if (consistency == null)
+                consistency = configuration().getQueryOptions().getConsistencyLevel();
+
+            ConsistencyLevel serialConsistency = statement.getSerialConsistencyLevel();
+            if (serialConsistency == null)
+                serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
+
+            return makeRequestMessage(statement, consistency, serialConsistency, pagingState);
+        }
+
+        public Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState) {
+            int fetchSize = statement.getFetchSize();
+            if (fetchSize <= 0)
+                fetchSize = configuration().getQueryOptions().getFetchSize();
+            if (fetchSize == Integer.MAX_VALUE)
+                fetchSize = -1;
+
+            if (statement instanceof RegularStatement) {
+                RegularStatement rs = (RegularStatement)statement;
+                ByteBuffer[] rawValues = rs.getValues();
+                List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
+                String qString = rs.getQueryString();
+                Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false, fetchSize, pagingState, scl);
+                return new Requests.Query(qString, options);
+            } else if (statement instanceof BoundStatement) {
+                BoundStatement bs = (BoundStatement)statement;
+                boolean skipMetadata = bs.statement.resultSetMetadata != null;
+                Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.values), skipMetadata, fetchSize, pagingState, scl);
+                return new Requests.Execute(bs.statement.id, options);
+            } else {
+                assert statement instanceof BatchStatement : statement;
+                assert pagingState == null;
+                BatchStatement bs = (BatchStatement)statement;
+                BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
+                return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl);
             }
         }
 
@@ -436,8 +505,8 @@ public class Session {
          * This method will find a suitable node to connect to using the
          * {@link LoadBalancingPolicy} and handle host failover.
          */
-        public void execute(RequestHandler.Callback callback, Query query) {
-            new RequestHandler(this, callback, query).sendRequest();
+        public void execute(RequestHandler.Callback callback, Statement statement) {
+            new RequestHandler(this, callback, statement).sendRequest();
         }
 
         public void prepare(String query, InetAddress toExclude) throws InterruptedException {
@@ -450,7 +519,7 @@ public class Session {
                 Connection c = null;
                 try {
                     c = entry.getValue().borrowConnection(200, TimeUnit.MILLISECONDS);
-                    c.write(new PrepareMessage(query)).get();
+                    c.write(new Requests.Prepare(query)).get();
                 } catch (ConnectionException e) {
                     // Again, not being able to prepare the query right now is no big deal, so just ignore
                 } catch (BusyConnectionException e) {
@@ -468,12 +537,12 @@ public class Session {
             }
         }
 
-        public ResultSetFuture executeQuery(Message.Request msg, Query query) {
-            if (query.isTracing())
+        public ResultSetFuture executeQuery(Message.Request msg, Statement statement) {
+            if (statement.isTracing())
                 msg.setTracingRequested();
 
             ResultSetFuture future = new ResultSetFuture(this, msg);
-            execute(future.callback, query);
+            execute(future.callback, statement);
             return future;
         }
     }

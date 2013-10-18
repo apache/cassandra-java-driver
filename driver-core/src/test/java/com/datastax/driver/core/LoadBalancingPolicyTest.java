@@ -15,9 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.util.*;
-
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
@@ -28,18 +25,15 @@ import com.datastax.driver.core.exceptions.UnavailableException;
 import static com.datastax.driver.core.TestUtils.*;
 
 public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
-    private static final boolean DEBUG = false;
-
-    private PreparedStatement prepared;
 
     @Test(groups = "long")
     public void roundRobinTest() throws Throwable {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy());
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
-        createSchema(c.session);
         try {
 
+            createSchema(c.session);
             init(c, 12);
             query(c, 12);
 
@@ -79,9 +73,9 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy());
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, 2, builder);
-        createSchema(c.session);
         try {
 
+            createSchema(c.session);
             init(c, 12);
             query(c, 12);
 
@@ -118,9 +112,9 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc2"));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, 2, builder);
-        createMultiDCSchema(c.session);
         try {
 
+            createMultiDCSchema(c.session);
             init(c, 12);
             query(c, 12);
 
@@ -143,9 +137,9 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc2", 1));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, 2, builder);
-        createMultiDCSchema(c.session);
         try {
 
+            createMultiDCSchema(c.session);
             init(c, 12);
             query(c, 12);
 
@@ -273,9 +267,9 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
     public void tokenAwareTest(boolean usePrepared) throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
-        createSchema(c.session);
         try {
 
+            createSchema(c.session);
             init(c, 12);
             query(c, 12);
 
@@ -337,9 +331,9 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
     public void tokenAwareWithRF2Test() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
-        createSchema(c.session, 2);
         try {
 
+            createSchema(c.session, 2);
             init(c, 12);
             query(c, 12);
 

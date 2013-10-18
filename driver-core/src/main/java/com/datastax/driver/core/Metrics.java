@@ -18,11 +18,11 @@ package com.datastax.driver.core;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.yammer.metrics.core.Counter;
-import com.yammer.metrics.core.Gauge;
-import com.yammer.metrics.core.MetricsRegistry;
-import com.yammer.metrics.core.Timer;
-import com.yammer.metrics.reporting.JmxReporter;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.JmxReporter;
 
 /**
  * Metrics exposed by the driver.
@@ -39,30 +39,30 @@ import com.yammer.metrics.reporting.JmxReporter;
 public class Metrics {
 
     private final Cluster.Manager manager;
-    private final MetricsRegistry registry = new MetricsRegistry();
+    private final MetricRegistry registry = new MetricRegistry();
     private final JmxReporter jmxReporter;
     private final Errors errors = new Errors();
 
-    private final Timer requests = registry.newTimer(Metrics.class, "requests");
+    private final Timer requests = registry.timer("requests");
 
-    private final Gauge<Integer> knownHosts = registry.newGauge(Metrics.class, "known-hosts", new Gauge<Integer>() {
+    private final Gauge<Integer> knownHosts = registry.register("known-hosts", new Gauge<Integer>() {
         @Override
-        public Integer value() {
+        public Integer getValue() {
             return manager.metadata.allHosts().size();
         }
     });
-    private final Gauge<Integer> connectedTo = registry.newGauge(Metrics.class, "connected-to", new Gauge<Integer>() {
+    private final Gauge<Integer> connectedTo = registry.register("connected-to", new Gauge<Integer>() {
         @Override
-        public Integer value() {
+        public Integer getValue() {
             Set<Host> s = new HashSet<Host>();
             for (Session session : manager.sessions)
                 s.addAll(session.manager.pools.keySet());
             return s.size();
         }
     });
-    private final Gauge<Integer> openConnections = registry.newGauge(Metrics.class, "open-connections", new Gauge<Integer>() {
+    private final Gauge<Integer> openConnections = registry.register("open-connections", new Gauge<Integer>() {
         @Override
-        public Integer value() {
+        public Integer getValue() {
             int value = manager.controlConnection.isOpen() ? 1 : 0;
             for (Session session : manager.sessions)
                 for (HostConnectionPool pool : session.manager.pools.values())
@@ -74,7 +74,7 @@ public class Metrics {
     Metrics(Cluster.Manager manager) {
         this.manager = manager;
         if (manager.configuration.getMetricsOptions().isJMXReportingEnabled()) {
-            this.jmxReporter = new JmxReporter(registry);
+            this.jmxReporter = JmxReporter.forRegistry(registry).inDomain(manager.clusterName + "-metrics").build();
             this.jmxReporter.start();
         } else {
             this.jmxReporter = null;
@@ -86,15 +86,17 @@ public class Metrics {
      * <p>
      * The metrics registry allows you to easily use the reporters that ships
      * with <a href="http://metrics.codahale.com/manual/core/#reporters">Metrics</a>
-     * or a custom written one. For instance, if {@code metrics} is {@code this} object,
-     * you can easily export the metrics to csv files using:
+     * or a custom written one.
+     * <p>
+     * For instance, if {@code metrics} is {@code this} object, you could export the
+     * metrics to csv files using:
      * <pre>
-     *     com.yammer.metrics.reporting.CsvReporter.enable(metrics.getRegistry(), new File("measurements/"), 1, TimeUnit.SECONDS);
+     *     com.codahale.metrics.CsvReporter.forRegistry(metrics.getRegistry()).build(new File("measurements/")).start(1, TimeUnit.SECONDS);
      * </pre>
      *
      * @return the registry containing all metrics.
      */
-    public MetricsRegistry getRegistry() {
+    public MetricRegistry getRegistry() {
         return registry;
     }
 
@@ -155,7 +157,7 @@ public class Metrics {
 
     void shutdown() {
         if (jmxReporter != null)
-            jmxReporter.shutdown();
+            jmxReporter.stop();
     }
 
     /**
@@ -163,16 +165,16 @@ public class Metrics {
      */
     public class Errors {
 
-        private final Counter connectionErrors = registry.newCounter(Errors.class, "connection-errors");
+        private final Counter connectionErrors = registry.counter("connection-errors");
 
-        private final Counter writeTimeouts = registry.newCounter(Errors.class, "write-timeouts");
-        private final Counter readTimeouts = registry.newCounter(Errors.class, "read-timeouts");
-        private final Counter unavailables = registry.newCounter(Errors.class, "unavailables");
+        private final Counter writeTimeouts = registry.counter("write-timeouts");
+        private final Counter readTimeouts = registry.counter("read-timeouts");
+        private final Counter unavailables = registry.counter("unavailables");
 
-        private final Counter otherErrors = registry.newCounter(Errors.class, "other-errors");
+        private final Counter otherErrors = registry.counter("other-errors");
 
-        private final Counter retries = registry.newCounter(Errors.class, "retries");
-        private final Counter ignores = registry.newCounter(Errors.class, "ignores");
+        private final Counter retries = registry.counter("retries");
+        private final Counter ignores = registry.counter("ignores");
 
         /**
          * Returns the number of connection to Cassandra nodes errors.

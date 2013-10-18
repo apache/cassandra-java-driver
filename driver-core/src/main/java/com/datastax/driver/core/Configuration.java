@@ -21,10 +21,14 @@ import com.datastax.driver.core.policies.*;
  * The configuration of the cluster.
  * It configures the following:
  * <ul>
- *   <li>Cassandra binary protocol level configuration (compression).</li>
+ *   <li>Cassandra protocol level configuration (compression).</li>
  *   <li>Connection pooling configurations.</li>
  *   <li>low-level TCP configuration options (tcpNoDelay, keepAlive, ...).</li>
+ *   <li>Metrics related options.</li>
+ *   <li>Query related options (default consistency level, fechSize, ...).</li>
  * </ul>
+ * This is also where you get the configured policies, though those cannot be changed
+ * (they are set during the built of the Cluster object).
  */
 public class Configuration {
 
@@ -34,8 +38,7 @@ public class Configuration {
     private final PoolingOptions poolingOptions;
     private final SocketOptions socketOptions;
     private final MetricsOptions metricsOptions;
-
-    private final AuthInfoProvider authProvider;
+    private final QueryOptions queryOptions;
 
     /*
      * Creates a configuration object.
@@ -45,8 +48,8 @@ public class Configuration {
              new ProtocolOptions(),
              new PoolingOptions(),
              new SocketOptions(),
-             AuthInfoProvider.NONE,
-             new MetricsOptions());
+             new MetricsOptions(),
+             new QueryOptions());
     }
 
     /**
@@ -57,29 +60,20 @@ public class Configuration {
      * @param poolingOptions the pooling options to use
      * @param socketOptions the socket options to use
      * @param metricsOptions the metrics options, or null to disable metrics.
+     * @param queryOptions defaults related to queries.
      */
     public Configuration(Policies policies,
                          ProtocolOptions protocolOptions,
                          PoolingOptions poolingOptions,
                          SocketOptions socketOptions,
-                         MetricsOptions metricsOptions) {
-        this(policies, protocolOptions, poolingOptions, socketOptions, AuthInfoProvider.NONE, metricsOptions);
-    }
-
-    // TODO: ultimately we should expose this, but we don't want to expose the AuthInfoProvider yet as it
-    // will change soon
-    Configuration(Policies policies,
-                         ProtocolOptions protocolOptions,
-                         PoolingOptions poolingOptions,
-                         SocketOptions socketOptions,
-                         AuthInfoProvider authProvider,
-                         MetricsOptions metricsOptions) {
+                         MetricsOptions metricsOptions,
+                         QueryOptions queryOptions) {
         this.policies = policies;
         this.protocolOptions = protocolOptions;
         this.poolingOptions = poolingOptions;
         this.socketOptions = socketOptions;
-        this.authProvider = authProvider;
         this.metricsOptions = metricsOptions;
+        this.queryOptions = queryOptions;
     }
 
     void register(Cluster.Manager manager) {
@@ -136,12 +130,11 @@ public class Configuration {
     }
 
     /**
-     * Returns the authentication provider used to connect to the Cassandra cluster.
+     * Returns the queries configuration.
      *
-     * @return the authentication provider in use.
+     * @return the queries options.
      */
-    // Not exposed yet on purpose
-    AuthInfoProvider getAuthInfoProvider() {
-        return authProvider;
+    public QueryOptions getQueryOptions() {
+        return queryOptions;
     }
 }

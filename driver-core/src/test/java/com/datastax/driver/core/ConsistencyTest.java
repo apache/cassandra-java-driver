@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
 import java.util.*;
 
 import org.testng.annotations.Test;
@@ -32,9 +31,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
     public void testRFOneTokenAware() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
-        createSchema(c.session, 1);
         try {
 
+            createSchema(c.session, 1);
             init(c, 12, ConsistencyLevel.ONE);
             query(c, 12, ConsistencyLevel.ONE);
 
@@ -130,9 +129,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
     public void testRFTwoTokenAware() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
-        createSchema(c.session, 2);
         try {
 
+            createSchema(c.session, 2);
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
@@ -228,9 +227,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
     public void testRFThreeTokenAware() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
-        createSchema(c.session, 3);
         try {
 
+            createSchema(c.session, 3);
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
@@ -321,13 +320,14 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             c.discard();
         }
     }
+
     @Test(groups = "long")
     public void testRFOneDowngradingCL() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy())).withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
-        createSchema(c.session, 1);
         try {
 
+            createSchema(c.session, 1);
             init(c, 12, ConsistencyLevel.ONE);
             query(c, 12, ConsistencyLevel.ONE);
 
@@ -423,9 +423,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
     public void testRFTwoDowngradingCL() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy())).withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
-        createSchema(c.session, 2);
         try {
 
+            createSchema(c.session, 2);
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
@@ -533,9 +533,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
 
     public void testRFThreeDowngradingCL(Cluster.Builder builder) throws Throwable {
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
-        createSchema(c.session, 3);
         try {
 
+            createSchema(c.session, 3);
             init(c, 12, ConsistencyLevel.ALL);
             query(c, 12, ConsistencyLevel.ALL);
 
@@ -640,9 +640,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
     public void testRFThreeDowngradingCLTwoDCs() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy())).withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, 3, builder);
-        createMultiDCSchema(c.session, 3, 3);
         try {
 
+            createMultiDCSchema(c.session, 3, 3);
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
@@ -734,24 +734,23 @@ public class ConsistencyTest extends AbstractPoliciesTest {
     public void testRFThreeDowngradingCLTwoDCsDCAware() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy("dc2"))).withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, 3, builder);
-        createMultiDCSchema(c.session, 3, 3);
         try {
 
+            createMultiDCSchema(c.session, 3, 3);
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
             assertQueried(CCMBridge.IP_PREFIX + "1", 0);
             assertQueried(CCMBridge.IP_PREFIX + "2", 0);
             assertQueried(CCMBridge.IP_PREFIX + "3", 0);
-            // BUG: JAVA-88
-            //assertQueried(CCMBridge.IP_PREFIX + "4", 12);
-            //assertQueried(CCMBridge.IP_PREFIX + "5", 0);
-            //assertQueried(CCMBridge.IP_PREFIX + "6", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "4", 4);
+            assertQueried(CCMBridge.IP_PREFIX + "5", 4);
+            assertQueried(CCMBridge.IP_PREFIX + "6", 4);
 
             resetCoordinators();
             c.cassandraCluster.forceStop(2);
             // FIXME: This sleep is needed to allow the waitFor() to work
-            Thread.sleep(20000);
+            //Thread.sleep(20000);
             waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
 
             List<ConsistencyLevel> acceptedList = Arrays.asList(

@@ -34,7 +34,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
 
-        String sparse = "CREATE TABLE sparse (\n"
+        String sparse = "CREATE TABLE ks.sparse (\n"
                       + "    k text,\n"
                       + "    c1 int,\n"
                       + "    c2 float,\n"
@@ -43,7 +43,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                       + "    PRIMARY KEY (k, c1, c2)\n"
                       + ");";
 
-        String st = "CREATE TABLE static (\n"
+        String st = "CREATE TABLE ks.static (\n"
                   + "    k text,\n"
                   + "    i int,\n"
                   + "    m map<text, timeuuid>,\n"
@@ -51,7 +51,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                   + "    PRIMARY KEY (k)\n"
                   + ");";
 
-        String compactStatic = "CREATE TABLE compact_static (\n"
+        String compactStatic = "CREATE TABLE ks.compact_static (\n"
                              + "    k text,\n"
                              + "    i int,\n"
                              + "    t timeuuid,\n"
@@ -59,14 +59,14 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                              + "    PRIMARY KEY (k)\n"
                              + ") WITH COMPACT STORAGE;";
 
-        String compactDynamic = "CREATE TABLE compact_dynamic (\n"
+        String compactDynamic = "CREATE TABLE ks.compact_dynamic (\n"
                               + "    k text,\n"
                               + "    c int,\n"
                               + "    v timeuuid,\n"
                               + "    PRIMARY KEY (k, c)\n"
                               + ") WITH COMPACT STORAGE;";
 
-        String compactComposite = "CREATE TABLE compact_composite (\n"
+        String compactComposite = "CREATE TABLE ks.compact_composite (\n"
                                 + "    k text,\n"
                                 + "    c1 int,\n"
                                 + "    c2 float,\n"
@@ -81,7 +81,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
         compact.put("compact_dynamic", compactDynamic);
         compact.put("compact_composite", compactComposite);
 
-        withOptions = "CREATE TABLE with_options (\n"
+        withOptions = "CREATE TABLE ks.with_options (\n"
                     + "    k text,\n"
                     + "    i int,\n"
                     + "    PRIMARY KEY (k)\n"
@@ -90,7 +90,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                     + "   AND replicate_on_write = true\n"
                     + "   AND gc_grace_seconds = 42\n"
                     + "   AND bloom_filter_fp_chance = 0.01\n"
-                    + "   AND caching = ALL\n"
+                    + "   AND caching = 'ALL'\n"
                     + "   AND comment = 'My awesome table'\n"
                     + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
                     + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };";

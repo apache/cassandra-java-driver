@@ -16,10 +16,6 @@
 package com.datastax.driver.core;
 import com.datastax.driver.core.exceptions.*;
 
-import java.net.InetAddress;
-import java.util.HashMap;
-
-import org.apache.commons.lang.StringUtils;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.TestUtils.waitForDown;
@@ -71,10 +67,9 @@ public class ExceptionsTest {
             try {
                 c.session.execute(cqlCommands[2]);
             } catch (AlreadyExistsException e) {
-                // TODO: Pending CASSANDRA-5362 this won't work. So let's re-enable this once C* 1.2.4
                 // is released
-                //assertEquals(e.getKeyspace(), keyspace.toLowerCase());
-                //assertEquals(e.getTable(), table.toLowerCase());
+                assertEquals(e.getKeyspace(), keyspace.toLowerCase());
+                assertEquals(e.getTable(), table.toLowerCase());
                 assertEquals(e.wasTableCreation(), true);
             }
         } catch (Throwable e) {
@@ -82,14 +77,6 @@ public class ExceptionsTest {
         } finally {
             c.discard();
         }
-    }
-
-    /**
-     * Placeholder test for the AuthenticationException.
-     * Testing pending CCM authenticated sessions integration.
-     */
-    public void authenticationException() throws Exception {
-        // TODO: Modify CCM to accept authenticated sessions
     }
 
     /**
@@ -106,7 +93,7 @@ public class ExceptionsTest {
             try {
                 throw new DriverInternalError(e1);
             } catch (DriverInternalError e2) {
-                assertTrue(StringUtils.contains(e2.getMessage(), errorMessage));
+                assertTrue(e2.getMessage().contains(errorMessage));
 
                 DriverInternalError copy = (DriverInternalError) e2.copy();
                 assertEquals(copy.getMessage(), e2.getMessage());
@@ -172,14 +159,11 @@ public class ExceptionsTest {
      */
     @Test(groups = "short")
     public void noHostAvailableException() throws Exception {
-        String ipAddress = "255.255.255.255";
-        HashMap<InetAddress, String> errorsHashMap = new HashMap<InetAddress, String>();
-        errorsHashMap.put(InetAddress.getByName(ipAddress), "[/255.255.255.255] Cannot connect");
-
         try {
             Cluster.builder().addContactPoints("255.255.255.255").build();
         } catch (NoHostAvailableException e) {
-            assertEquals(e.getErrors(), errorsHashMap);
+            assertEquals(e.getErrors().size(), 1);
+            assertTrue(e.getErrors().values().iterator().next().toString().contains("[/255.255.255.255] Cannot connect"));
 
             NoHostAvailableException copy = (NoHostAvailableException) e.copy();
             assertEquals(copy.getMessage(), e.getMessage());
@@ -335,7 +319,7 @@ public class ExceptionsTest {
             } catch (UnavailableException e) {
                 String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
                 assertEquals(e.getMessage(), expectedError);
-                assertEquals(e.getConsistency(), ConsistencyLevel.ALL);
+                assertEquals(e.getConsistencyLevel(), ConsistencyLevel.ALL);
                 assertEquals(e.getRequiredReplicas(), replicationFactor);
                 assertEquals(e.getAliveReplicas(), replicationFactor - 1);
             }
@@ -345,7 +329,7 @@ public class ExceptionsTest {
             } catch (UnavailableException e) {
                 String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
                 assertEquals(e.getMessage(), expectedError);
-                assertEquals(e.getConsistency(), ConsistencyLevel.ALL);
+                assertEquals(e.getConsistencyLevel(), ConsistencyLevel.ALL);
                 assertEquals(e.getRequiredReplicas(), replicationFactor);
                 assertEquals(e.getAliveReplicas(), replicationFactor - 1);
             }

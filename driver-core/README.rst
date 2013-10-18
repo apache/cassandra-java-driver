@@ -36,20 +36,19 @@ The features provided by the core module includes:
 Prerequisite
 ------------
 
-The driver uses the binary protocol that was introduced in Cassandra 1.2.
-It only works with a version of Cassandra greater than or equal to 1.2. 
-The beta2 1.2 works with the driver, but not the beta1 1.2 release.
-Furthermore, the binary protocol server is not started with the default 
-configuration file in Cassandra 1.2. You must edit the cassandra.yaml file:
+The driver uses Casandra's native protocol, and this version 2.0 uses the second
+version of that protocol. As such, this version of the driver requires a version
+of Cassandra greater than or equal to 2.0 (for Cassandra 1.2 please use the
+version 1.0 of the driver).
 
-    start_native_transport: true
+If you are having issues connecting to the cluster (seeing ``NoHostAvailableConnection``
+exceptions) please check the `connection requirements <https://github.com/datastax/java-driver/wiki/Connection-requirements>`_.
 
-If you want to run the (currently few) unit tests provided with this driver,
-you will also need to have ccm installed (http://github.com/pcmanus/ccm) as the
-tests use it. Also note that the first time you run the tests, ccm will
-download/compile the source of C* under the hood, which may require some time
-(that depends on your Internet connection or machine).
-
+If you want to run the unit tests provided with this driver, you will also need
+to have ccm installed (http://github.com/pcmanus/ccm) as the tests use it. Also
+note that the first time you run the tests, ccm will download/compile the
+source of C* under the hood, which may require some time (that depends on your
+Internet connection or machine).
 
 Installing
 ----------
@@ -60,8 +59,9 @@ it in your application using the following Maven dependency::
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>1.0.2</version>
+      <version>2.0.0-beta1</version>
     </dependency>
+
 
 Getting Started
 ---------------

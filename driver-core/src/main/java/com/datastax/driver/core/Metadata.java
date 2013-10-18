@@ -21,6 +21,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.google.common.collect.ImmutableSet;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,9 +37,7 @@ public class Metadata {
     volatile String clusterName;
     private final ConcurrentMap<InetAddress, Host> hosts = new ConcurrentHashMap<InetAddress, Host>();
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
-
-    @SuppressWarnings("unchecked")
-    private volatile TokenMap<? extends Token> tokenMap;
+    private volatile TokenMap tokenMap;
 
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
@@ -47,7 +47,7 @@ public class Metadata {
     synchronized void rebuildSchema(String keyspace, String table, ResultSet ks, ResultSet cfs, ResultSet cols) {
 
         Map<String, List<Row>> cfDefs = new HashMap<String, List<Row>>();
-        Map<String, Map<String, List<Row>>> colsDefs = new HashMap<String, Map<String, List<Row>>>();
+        Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = new HashMap<String, Map<String, Map<String, ColumnMetadata.Raw>>>();
 
         // Gather cf defs
         for (Row row : cfs) {
@@ -64,17 +64,18 @@ public class Metadata {
         for (Row row : cols) {
             String ksName = row.getString(KeyspaceMetadata.KS_NAME);
             String cfName = row.getString(TableMetadata.CF_NAME);
-            Map<String, List<Row>> colsByCf = colsDefs.get(ksName);
+            Map<String, Map<String, ColumnMetadata.Raw>> colsByCf = colsDefs.get(ksName);
             if (colsByCf == null) {
-                colsByCf = new HashMap<String, List<Row>>();
+                colsByCf = new HashMap<String, Map<String, ColumnMetadata.Raw>>();
                 colsDefs.put(ksName, colsByCf);
             }
-            List<Row> l = colsByCf.get(cfName);
+            Map<String, ColumnMetadata.Raw> l = colsByCf.get(cfName);
             if (l == null) {
-                l = new ArrayList<Row>();
+                l = new HashMap<String, ColumnMetadata.Raw>();
                 colsByCf.put(cfName, l);
             }
-            l.add(row);
+            ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row);
+            l.put(c.name, c);
         }
 
         if (table == null) {
@@ -117,24 +118,28 @@ public class Metadata {
         }
     }
 
-    private static void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, List<Row>> colsDefs) {
+    private static void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs) {
         boolean hasColumns = (colsDefs != null) && !colsDefs.isEmpty();
         for (Row cfRow : cfRows) {
             String cfName = cfRow.getString(TableMetadata.CF_NAME);
-            TableMetadata tm = TableMetadata.build(ksm, cfRow, hasColumns);
-
-            if (!hasColumns || colsDefs.get(cfName) == null)
-                continue;
-
-            for (Row colRow : colsDefs.get(cfName)) {
-                ColumnMetadata.build(tm, colRow);
-            }
+            Map<String, ColumnMetadata.Raw> cols = colsDefs.get(cfName);
+            if (cols == null)
+                cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
+            TableMetadata tm = TableMetadata.build(ksm, cfRow, cols);
         }
     }
 
-    @SuppressWarnings("unchecked")
     synchronized void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
-        this.tokenMap = TokenMap.build(partitioner, allTokens);
+        if (allTokens.isEmpty())
+            return;
+
+        Token.Factory factory = partitioner == null
+                              ? (tokenMap == null ? null : tokenMap.factory)
+                              : Token.getFactory(partitioner);
+        if (factory == null)
+            return;
+
+        this.tokenMap = TokenMap.build(factory, allTokens, keyspaces.values());
     }
 
     Host add(InetAddress address) {
@@ -162,6 +167,7 @@ public class Metadata {
      * Note that this method is a best effort method. Consumers should not rely
      * too heavily on the result of this method not being stale (or even empty).
      *
+     * @param keyspace the name of the keyspace to get replicas for.
      * @param partitionKey the partition key for which to find the set of
      * replica.
      * @return the (immutable) set of replicas for {@code partitionKey} as know
@@ -169,13 +175,13 @@ public class Metadata {
      * this information. It is also not guarantee that the returned set won't
      * be empty (which is then some form of staleness).
      */
-    @SuppressWarnings("unchecked")
-    public Set<Host> getReplicas(ByteBuffer partitionKey) {
+    public Set<Host> getReplicas(String keyspace, ByteBuffer partitionKey) {
         TokenMap current = tokenMap;
         if (current == null) {
             return Collections.emptySet();
         } else {
-            return current.getReplicas(current.factory.hash(partitionKey));
+            Set<Host> hosts = current.getReplicas(keyspace, current.factory.hash(partitionKey));
+            return hosts == null ? Collections.<Host>emptySet() : hosts;
         }
     }
 
@@ -240,63 +246,73 @@ public class Metadata {
         return sb.toString();
     }
 
-    static class TokenMap<T extends Token<T>> {
+    static class TokenMap {
 
-        private final Token.Factory<T> factory;
-        private final Map<T, Set<Host>> tokenToHosts;
-        private final List<T> ring;
+        private final Token.Factory factory;
+        private final Map<String, Map<Token, Set<Host>>> tokenToHosts;
+        private final List<Token> ring;
 
-        private TokenMap(Token.Factory<T> factory, Map<T, Set<Host>> tokenToHosts, List<T> ring) {
+        private TokenMap(Token.Factory factory, Map<String, Map<Token, Set<Host>>> tokenToHosts, List<Token> ring) {
             this.factory = factory;
             this.tokenToHosts = tokenToHosts;
             this.ring = ring;
         }
 
-        public static <T extends Token<T>> TokenMap<T> build(String partitioner, Map<Host, Collection<String>> allTokens) {
+        public static TokenMap build(Token.Factory factory, Map<Host, Collection<String>> allTokens, Collection<KeyspaceMetadata> keyspaces) {
 
-            @SuppressWarnings("unchecked")
-            Token.Factory<T> factory = (Token.Factory<T>)Token.getFactory(partitioner);
-            if (factory == null)
-                return null;
-
-            Map<T, Set<Host>> tokenToHosts = new HashMap<T, Set<Host>>();
-            Set<T> allSorted = new TreeSet<T>();
+            Map<Token, Host> tokenToPrimary = new HashMap<Token, Host>();
+            Set<Token> allSorted = new TreeSet<Token>();
 
             for (Map.Entry<Host, Collection<String>> entry : allTokens.entrySet()) {
                 Host host = entry.getKey();
                 for (String tokenStr : entry.getValue()) {
                     try {
-                        T t = factory.fromString(tokenStr);
+                        Token t = factory.fromString(tokenStr);
                         allSorted.add(t);
-                        Set<Host> hosts = tokenToHosts.get(t);
-                        if (hosts == null) {
-                            hosts = new HashSet<Host>();
-                            tokenToHosts.put(t, hosts);
-                        }
-                        hosts.add(host);
+                        tokenToPrimary.put(t, host);
                     } catch (IllegalArgumentException e) {
                         // If we failed parsing that token, skip it
                     }
                 }
             }
-            // Make all the inet set immutable so we can share them publicly safely
-            for (Map.Entry<T, Set<Host>> entry: tokenToHosts.entrySet()) {
-                entry.setValue(Collections.unmodifiableSet(entry.getValue()));
+
+            List<Token> ring = new ArrayList<Token>(allSorted);
+
+            Map<String, Map<Token, Set<Host>>> tokenToHosts = new HashMap<String, Map<Token, Set<Host>>>();
+            for (KeyspaceMetadata keyspace : keyspaces)
+            {
+                ReplicationStrategy strategy = keyspace.replicationStrategy();
+                if (strategy == null) {
+                    tokenToHosts.put(keyspace.getName(), makeNonReplicatedMap(tokenToPrimary));
+                } else {
+                    tokenToHosts.put(keyspace.getName(), strategy.computeTokenToReplicaMap(tokenToPrimary, ring));
+                }
             }
-            return new TokenMap<T>(factory, tokenToHosts, new ArrayList<T>(allSorted));
+            return new TokenMap(factory, tokenToHosts, ring);
         }
 
-        private Set<Host> getReplicas(T token) {
+        private Set<Host> getReplicas(String keyspace, Token token) {
+
+            Map<Token, Set<Host>> keyspaceHosts = tokenToHosts.get(keyspace);
+            if (keyspaceHosts == null)
+                return Collections.emptySet();
 
             // Find the primary replica
             int i = Collections.binarySearch(ring, token);
             if (i < 0) {
-                i = (i + 1) * (-1);
+                i = -i - 1;
                 if (i >= ring.size())
                     i = 0;
             }
 
-            return tokenToHosts.get(ring.get(i));
+            return keyspaceHosts.get(ring.get(i));
+        }
+
+        private static Map<Token, Set<Host>> makeNonReplicatedMap(Map<Token, Host> input) {
+            Map<Token, Set<Host>> output = new HashMap<Token, Set<Host>>(input.size());
+            for (Map.Entry<Token, Host> entry : input.entrySet())
+                output.put(entry.getKey(), ImmutableSet.of(entry.getValue()));
+            return output;
         }
     }
 }

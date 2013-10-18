@@ -17,22 +17,89 @@ package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
 /**
- * A simple {@code Statement} implementation built directly from a query
+ * A simple {@code RegularStatement} implementation built directly from a query
  * string.
  */
-public class SimpleStatement extends Statement {
+public class SimpleStatement extends RegularStatement {
 
     private final String query;
+    private final ByteBuffer[] values;
+
     private volatile ByteBuffer routingKey;
+    private volatile String keyspace;
 
     /**
-     * Creates a new {@code SimpleStatement} with the provided query string.
+     * Creates a new {@code SimpleStatement} with the provided query string (and no values).
      *
      * @param query the query string.
      */
     public SimpleStatement(String query) {
         this.query = query;
+        this.values = null;
+    }
+
+    /**
+     * Creates a new {@code SimpleStatement} with the provided query string and values.
+     * <p>
+     * This version of SimpleStatement is useful when you do not want to execute a
+     * query only once (and thus do not want to resort to prepared statement), but
+     * do not want to convert all column values to string (typically, if you have blob
+     * values, encoding them to a hexidecimal string is not very efficient). In
+     * that case, you can provide a query string with bind marker to this constructor
+     * along with the values for those bind variables. When executed, the server will
+     * prepare the provided, bind the provided values to that prepare statement and
+     * execute the resulting statement. Thus,
+     * <pre>
+     *   session.execute(new SimpleStatement(query, value1, value2, value3));
+     * </pre>
+     * is functionally equivalent to
+     * <pre>
+     *   PreparedStatement ps = session.prepare(query);
+     *   session.execute(ps.bind(value1, value2, value3));
+     * </pre>
+     * except that the former version:
+     * <ul>
+     *   <li>Requires only one round-trip to a Cassandra node.</li>
+     *   <li>Does not left any prepared statement stored in memory (neither client or
+     *   server side) once it has been executed.</li>
+     * </ul>
+     * <p>
+     * Note that the type of the {@code values} provided to this method will
+     * not be validated by the driver as is done by {@link BoundStatement#bind} since
+     * {@code query} is not parsed (and hence the driver cannot know what those value
+     * should be). If too much or too little values are provided or if a value is not
+     * a valid one for the variable it is bound to, an
+     * {@link com.datastax.driver.core.exceptions.InvalidQueryException} will be thrown
+     * by Cassandra at execution time. An {@code IllegalArgumentException} may be
+     * thrown by this constructor however if one of the value does not correspond to
+     * any CQL3 type (for instance, if it is a custom class).
+     *
+     * @param query the query string.
+     * @param values values required for the execution of {@code query}.
+     *
+     * @throws IllegalArgumentException if one of {@code values} is not of a type
+     * corresponding to a CQL3 type, i.e. is not a Class that could be returned
+     * by {@link DataType#asJavaClass}.
+     */
+    public SimpleStatement(String query, Object... values) {
+        this.query = query;
+        this.values = convert(values);
+    }
+
+    private static ByteBuffer[] convert(Object[] values) {
+        ByteBuffer[] serializedValues = new ByteBuffer[values.length];
+        for (int i = 0; i < values.length; i++) {
+            try {
+                serializedValues[i] = DataType.serializeValue(values[i]);
+            } catch (IllegalArgumentException e) {
+                // Catch and rethrow to provide a more helpful error message (one that include which value is bad)
+                throw new IllegalArgumentException(String.format("Value %d of type %s does not correspond to any CQL3 type", i, values[i].getClass()));
+            }
+        }
+        return serializedValues;
     }
 
     /**
@@ -45,6 +112,11 @@ public class SimpleStatement extends Statement {
         return query;
     }
 
+    @Override
+    public ByteBuffer[] getValues() {
+        return values;
+    }
+
     /**
      * Returns the routing key for the query.
      * <p>
@@ -52,10 +124,10 @@ public class SimpleStatement extends Statement {
      * {@link #setRoutingKey}, this method will return {@code null} to
      * avoid having to parse the query string to retrieve the partition key.
      *
-     * @return the routing key set through {@link #setRoutingKey} is such a key
+     * @return the routing key set through {@link #setRoutingKey} if such a key
      * was set, {@code null} otherwise.
      *
-     * @see Query#getRoutingKey
+     * @see Statement#getRoutingKey
      */
     @Override
     public ByteBuffer getRoutingKey() {
@@ -76,10 +148,48 @@ public class SimpleStatement extends Statement {
      * @param routingKey the raw (binary) value to use as routing key.
      * @return this {@code SimpleStatement} object.
      *
-     * @see Query#getRoutingKey
+     * @see Statement#getRoutingKey
      */
     public SimpleStatement setRoutingKey(ByteBuffer routingKey) {
         this.routingKey = routingKey;
+        return this;
+    }
+
+    /**
+     * Returns the keyspace this query operates on.
+     * <p>
+     * Unless the keyspace has been explicitly set through {@link #setKeyspace},
+     * this method will return {@code null} to avoid having to parse the query
+     * string.
+     *
+     * @return the keyspace set through {@link #setKeyspace} if such keyspace was
+     * set, {@code null} otherwise.
+     *
+     * @see Statement#getKeyspace
+     */
+    @Override
+    public String getKeyspace() {
+        return keyspace;
+    }
+
+    /**
+     * Sets the keyspace this query operates on.
+     * <p>
+     * This method allows you to manually provide a keyspace for this query. It
+     * is thus optional since the value returned by this method is only an hint
+     * for token aware load balancing policy but is never mandatory.
+     * <p>
+     * Do note that if the query does not use a fully qualified keyspace, then
+     * you do not need to set the keyspace through that method as the
+     * currently logged in keyspace will be used.
+     *
+     * @param keyspace the name of the keyspace this query operates on.
+     * @return this {@code SimpleStatement} object.
+     *
+     * @see Statement#getKeyspace
+     */
+    public SimpleStatement setKeyspace(String keyspace) {
+        this.keyspace = keyspace;
         return this;
     }
 
@@ -94,7 +204,7 @@ public class SimpleStatement extends Statement {
      * the routing key.
      * @return this {@code SimpleStatement} object.
      *
-     * @see Query#getRoutingKey
+     * @see Statement#getRoutingKey
      */
     public SimpleStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
         this.routingKey = compose(routingKeyComponents);

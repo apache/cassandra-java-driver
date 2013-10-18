@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
@@ -22,12 +23,21 @@ import java.util.concurrent.atomic.AtomicLongArray;
  */
 class StreamIdGenerator {
 
+    private static final int MAX_STREAM_PER_CONNECTION = 128;
+
     private static final long MAX_UNSIGNED_LONG = -1L;
 
     // Stream IDs are one byte long, signed and we only handle positive values
     // (negative stream IDs are for server side initiated streams). So we have
     // 128 different stream IDs and two longs are enough.
     private final AtomicLongArray bits = new AtomicLongArray(2);
+
+    // If a query timeout, we'll stop waiting for it. However in that case, we
+    // can't release/reuse the ID because we don't know if the response is lost
+    // or will just come back to use sometimes in the future. In that case, we
+    // just "mark" the fact that we have one less available ID and marked counts
+    // how many marks we've put.
+    private final AtomicInteger marked = new AtomicInteger(0);
 
     public StreamIdGenerator() {
         bits.set(0, MAX_UNSIGNED_LONG);
@@ -52,6 +62,18 @@ class StreamIdGenerator {
         } else {
             atomicClear(1, streamId - 64);
         }
+    }
+
+    public void mark(int streamId) {
+        marked.incrementAndGet();
+    }
+
+    public void unmark(int streamId) {
+        marked.decrementAndGet();
+    }
+
+    public int maxAvailableStreams() {
+        return MAX_STREAM_PER_CONNECTION - marked.get();
     }
 
     // Returns >= 0 if found and set an id, -1 if no bits are available.

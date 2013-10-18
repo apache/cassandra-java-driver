@@ -23,14 +23,10 @@ import java.util.concurrent.*;
 
 import com.google.common.base.Objects;
 
-import org.apache.cassandra.transport.Event;
-import org.apache.cassandra.transport.messages.RegisterMessage;
-import org.apache.cassandra.transport.messages.QueryMessage;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.policies.*;
+import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
@@ -81,10 +77,12 @@ class ControlConnection implements Host.StateListener {
         setNewConnection(reconnectInternal());
     }
 
-    public boolean shutdown(long timeout, TimeUnit unit) throws InterruptedException {
+    public ShutdownFuture shutdown() {
+        // We don't have to be fancy here. We just set a flag so that we stop trying to reconnect (and thus change the
+        // connection used) and shutdown the current one.
         isShutdown = true;
         Connection connection = connectionRef.get();
-        return connection != null ? connection.close(timeout, unit) : true;
+        return connection == null ? ShutdownFuture.immediateFuture() : connection.close();
     }
 
     private void reconnect() {
@@ -134,7 +132,7 @@ class ControlConnection implements Host.StateListener {
             // Host might be null in the case the host has been removed, but it means this has
             // been reported already so it's fine.
             if (host != null) {
-                cluster.signalConnectionFailure(host, connection.lastException());
+                cluster.signalConnectionFailure(host, connection.lastException(), false);
                 return;
             }
         }
@@ -146,19 +144,14 @@ class ControlConnection implements Host.StateListener {
     private void setNewConnection(Connection newConnection) {
         logger.debug("[Control connection] Successfully connected to {}", newConnection.address);
         Connection old = connectionRef.getAndSet(newConnection);
-        if (old != null && !old.isClosed()) {
-            try {
-                old.close(0, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
+        if (old != null && !old.isClosed())
+            old.close();
     }
 
     private Connection reconnectInternal() {
 
-        Iterator<Host> iter = cluster.loadBalancingPolicy().newQueryPlan(Query.DEFAULT);
-        Map<InetAddress, String> errors = null;
+        Iterator<Host> iter = cluster.loadBalancingPolicy().newQueryPlan(null, Statement.DEFAULT);
+        Map<InetAddress, Throwable> errors = null;
 
         Host host = null;
         try {
@@ -167,10 +160,10 @@ class ControlConnection implements Host.StateListener {
                 try {
                     return tryConnect(host);
                 } catch (ConnectionException e) {
-                    errors = logError(host, e.getMessage(), errors, iter);
-                    cluster.signalConnectionFailure(host, e);
+                    errors = logError(host, e, errors, iter);
+                    cluster.signalConnectionFailure(host, e, false);
                 } catch (ExecutionException e) {
-                    errors = logError(host, e.getMessage(), errors, iter);
+                    errors = logError(host, e.getCause(), errors, iter);
                 }
             }
         } catch (InterruptedException e) {
@@ -179,23 +172,24 @@ class ControlConnection implements Host.StateListener {
 
             // Indicates that all remaining hosts are skipped due to the interruption
             if (host != null)
-                errors = logError(host, "Connection thread interrupted", errors, iter);
+                errors = logError(host, new DriverException("Connection thread interrupted"), errors, iter);
             while (iter.hasNext())
-                errors = logError(iter.next(), "Connection thread interrupted", errors, iter);
+                errors = logError(iter.next(), new DriverException("Connection thread interrupted"), errors, iter);
         }
-        throw new NoHostAvailableException(errors == null ? Collections.<InetAddress, String>emptyMap() : errors);
+        throw new NoHostAvailableException(errors == null ? Collections.<InetAddress, Throwable>emptyMap() : errors);
     }
 
-    private static Map<InetAddress, String> logError(Host host, String msg, Map<InetAddress, String> errors, Iterator<Host> iter) {
+    private static Map<InetAddress, Throwable> logError(Host host, Throwable exception, Map<InetAddress, Throwable> errors, Iterator<Host> iter) {
         if (errors == null)
-            errors = new HashMap<InetAddress, String>();
-        errors.put(host.getAddress(), msg);
+            errors = new HashMap<InetAddress, Throwable>();
+
+        errors.put(host.getAddress(), exception);
 
         if (logger.isDebugEnabled()) {
             if (iter.hasNext()) {
-                logger.debug("[Control connection] error on {} connection ({}), trying next host", host, msg);
+                logger.debug("[Control connection] error on {} connection ({}), trying next host", host, exception.getMessage());
             } else {
-                logger.debug("[Control connection] error on {} connection ({}), no more host to try", host, msg);
+                logger.debug("[Control connection] error on {} connection ({}), no more host to try", host, exception.getMessage());
             }
         }
         return errors;
@@ -206,15 +200,15 @@ class ControlConnection implements Host.StateListener {
 
         try {
             logger.trace("[Control connection] Registering for events");
-            List<Event.Type> evs = Arrays.asList(new Event.Type[]{
-                Event.Type.TOPOLOGY_CHANGE,
-                Event.Type.STATUS_CHANGE,
-                Event.Type.SCHEMA_CHANGE,
+            List<ProtocolEvent.Type> evs = Arrays.asList(new ProtocolEvent.Type[]{
+                ProtocolEvent.Type.TOPOLOGY_CHANGE,
+                ProtocolEvent.Type.STATUS_CHANGE,
+                ProtocolEvent.Type.SCHEMA_CHANGE,
             });
-            connection.write(new RegisterMessage(evs));
+            connection.write(new Requests.Register(evs));
 
             logger.debug(String.format("[Control connection] Refreshing node list and token map"));
-            refreshNodeListAndTokenMap(connection);
+            refreshNodeListAndTokenMap(connection, cluster);
 
             logger.debug("[Control connection] Refreshing schema");
             refreshSchema(connection, null, null, cluster);
@@ -252,10 +246,10 @@ class ControlConnection implements Host.StateListener {
         }
 
         ResultSetFuture ksFuture = table == null
-                                 ? new ResultSetFuture(null, new QueryMessage(SELECT_KEYSPACES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL))
+                                 ? new ResultSetFuture(null, new Requests.Query(SELECT_KEYSPACES + whereClause))
                                  : null;
-        ResultSetFuture cfFuture = new ResultSetFuture(null, new QueryMessage(SELECT_COLUMN_FAMILIES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-        ResultSetFuture colsFuture = new ResultSetFuture(null, new QueryMessage(SELECT_COLUMNS + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+        ResultSetFuture cfFuture = new ResultSetFuture(null, new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause));
+        ResultSetFuture colsFuture = new ResultSetFuture(null, new Requests.Query(SELECT_COLUMNS + whereClause));
 
         if (ksFuture != null)
             connection.write(ksFuture.callback);
@@ -263,6 +257,10 @@ class ControlConnection implements Host.StateListener {
         connection.write(colsFuture.callback);
 
         cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get());
+        // If the table is null, we either rebuild all from scratch or have an updated keyspace. In both case, rebuild the token map
+        // since some replication on some keyspace may have changed
+        if (table == null)
+            refreshNodeListAndTokenMap(connection, cluster);
     }
 
     public void refreshNodeListAndTokenMap() {
@@ -273,7 +271,7 @@ class ControlConnection implements Host.StateListener {
 
         logger.debug(String.format("[Control connection] Refreshing node list and token map"));
         try {
-            refreshNodeListAndTokenMap(c);
+            refreshNodeListAndTokenMap(c, cluster);
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refeshing node list and token map ({})", e.getMessage());
             signalError();
@@ -291,23 +289,23 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    private void updateLocationInfo(Host host, String datacenter, String rack) {
+    private static void updateLocationInfo(Host host, String datacenter, String rack, Cluster.Manager cluster) {
         if (Objects.equal(host.getDatacenter(), datacenter) && Objects.equal(host.getRack(), rack))
             return;
 
         // If the dc/rack information changes, we need to update the load balancing policy.
-        // For what, we remove and re-add the node against the policy. Not the most elegant, and assumes
+        // For that, we remove and re-add the node against the policy. Not the most elegant, and assumes
         // that the policy will update correctly, but in practice this should work.
         cluster.loadBalancingPolicy().onDown(host);
         host.setLocationInfo(datacenter, rack);
         cluster.loadBalancingPolicy().onAdd(host);
     }
 
-    private void refreshNodeListAndTokenMap(Connection connection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    private static void refreshNodeListAndTokenMap(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         // Make sure we're up to date on nodes and tokens
 
-        ResultSetFuture peersFuture = new ResultSetFuture(null, new QueryMessage(SELECT_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-        ResultSetFuture localFuture = new ResultSetFuture(null, new QueryMessage(SELECT_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+        ResultSetFuture peersFuture = new ResultSetFuture(null, new Requests.Query(SELECT_PEERS));
+        ResultSetFuture localFuture = new ResultSetFuture(null, new Requests.Query(SELECT_LOCAL));
         connection.write(peersFuture.callback);
         connection.write(localFuture.callback);
 
@@ -329,7 +327,7 @@ class ControlConnection implements Host.StateListener {
             if (host == null) {
                 logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
-                updateLocationInfo(host, localRow.getString("data_center"), localRow.getString("rack"));
+                updateLocationInfo(host, localRow.getString("data_center"), localRow.getString("rack"), cluster);
 
                 Set<String> tokens = localRow.getSet("tokens", String.class);
                 if (partitioner != null && !tokens.isEmpty())
@@ -344,12 +342,20 @@ class ControlConnection implements Host.StateListener {
 
         for (Row row : peersFuture.get()) {
 
+            InetAddress peer = row.getInet("peer");
             InetAddress addr = row.getInet("rpc_address");
-            if (addr == null) {
-                addr = row.getInet("peer");
+
+            if (peer.equals(connection.address) || (addr != null && addr.equals(connection.address))) {
+                // Some DSE versions were inserting a line for the local node in peers (with mostly null values). This has been fixed, but if we
+                // detect that's the case, ignore it as it's not really a big deal.
+                logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connection.address);
+                continue;
+            } else if (addr == null) {
                 logger.error("No rpc_address found for host {} in {}'s peers system table. That should not happen but using address {} instead", addr, connection.address, addr);
+                addr = peer;
             } else if (addr.equals(bindAllAddress)) {
-                addr = row.getInet("peer");
+                logger.warn("Host {} has 0.0.0.0 as rpc_address, using listen_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.");
+                addr = peer;
             }
 
             foundHosts.add(addr);
@@ -364,7 +370,7 @@ class ControlConnection implements Host.StateListener {
                 // We don't know that node, add it.
                 host = cluster.addHost(foundHosts.get(i), true);
             }
-            updateLocationInfo(host, dcs.get(i), racks.get(i));
+            updateLocationInfo(host, dcs.get(i), racks.get(i), cluster);
 
             if (partitioner != null && !allTokens.get(i).isEmpty())
                 tokenMap.put(host, allTokens.get(i));
@@ -376,8 +382,7 @@ class ControlConnection implements Host.StateListener {
             if (!host.getAddress().equals(connection.address) && !foundHostsSet.contains(host.getAddress()))
                 cluster.removeHost(host);
 
-        if (partitioner != null)
-            cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
+        cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
     }
 
     static boolean waitForSchemaAgreement(Connection connection, Metadata metadata) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
@@ -386,8 +391,8 @@ class ControlConnection implements Host.StateListener {
         long elapsed = 0;
         while (elapsed < MAX_SCHEMA_AGREEMENT_WAIT_MS) {
 
-            ResultSetFuture peersFuture = new ResultSetFuture(null, new QueryMessage(SELECT_SCHEMA_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-            ResultSetFuture localFuture = new ResultSetFuture(null, new QueryMessage(SELECT_SCHEMA_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+            ResultSetFuture peersFuture = new ResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_PEERS));
+            ResultSetFuture localFuture = new ResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_LOCAL));
             connection.write(peersFuture.callback);
             connection.write(localFuture.callback);
 

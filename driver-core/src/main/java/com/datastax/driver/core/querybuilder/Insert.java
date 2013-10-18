@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,28 +27,26 @@ import com.datastax.driver.core.TableMetadata;
  */
 public class Insert extends BuiltStatement {
 
-    private final String keyspace;
     private final String table;
     private final List<Object> names = new ArrayList<Object>();
     private final List<Object> values = new ArrayList<Object>();
     private final Options usings;
+    private boolean ifNotExists;
 
     Insert(String keyspace, String table) {
-        super();
-        this.keyspace = keyspace;
+        super(keyspace);
         this.table = table;
         this.usings = new Options(this);
     }
 
     Insert(TableMetadata table) {
         super(table);
-        this.keyspace = table.getKeyspace().getName();
         this.table = table.getName();
         this.usings = new Options(this);
     }
 
     @Override
-    protected String buildQueryString() {
+    StringBuilder buildQueryString(List<ByteBuffer> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("INSERT INTO ");
@@ -57,15 +56,17 @@ public class Insert extends BuiltStatement {
         builder.append("(");
         Utils.joinAndAppendNames(builder, ",", names);
         builder.append(") VALUES (");
-        Utils.joinAndAppendValues(builder, ",", values);
+        Utils.joinAndAppendValues(builder, ",", values, variables);
         builder.append(")");
+
+        if (ifNotExists)
+            builder.append(" IF NOT EXISTS");
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings);
+            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
         }
-
-        return builder.toString();
+        return builder;
     }
 
     /**
@@ -78,7 +79,7 @@ public class Insert extends BuiltStatement {
     public Insert value(String name, Object value) {
         names.add(name);
         values.add(value);
-        setDirty();
+        checkForBindMarkers(value);
         maybeAddRoutingKey(name, value);
         return this;
     }
@@ -99,10 +100,11 @@ public class Insert extends BuiltStatement {
             throw new IllegalArgumentException(String.format("Got %d names but %d values", names.length, values.length));
         this.names.addAll(Arrays.asList(names));
         this.values.addAll(Arrays.asList(values));
-        setDirty();
 
-        for (int i = 0; i < names.length; i++)
+        for (int i = 0; i < names.length; i++) {
+            checkForBindMarkers(values[i]);
             maybeAddRoutingKey(names[i], values[i]);
+        }
         return this;
     }
 
@@ -114,6 +116,25 @@ public class Insert extends BuiltStatement {
      */
     public Options using(Using using) {
         return usings.and(using);
+    }
+
+    /**
+     * Sets the 'IF NOT EXISTS' option for this INSERT statement.
+     * <p>
+     * An insert with that option will not succeed unless the row does not
+     * exist at the time the insertion is execution. The existence check and
+     * insertions are done transactionally in the sense that if multiple
+     * clients attempt to create a given row with this option, then at most one
+     * may succeed.
+     * <p>
+     * Please keep in mind that using this option has a non negligible
+     * performance impact and should be avoided when possible.
+     *
+     * @return this INSERT statement.
+     */
+    public Insert ifNotExists() {
+        this.ifNotExists = true;
+        return this;
     }
 
     /**
@@ -135,7 +156,7 @@ public class Insert extends BuiltStatement {
          */
         public Options and(Using using) {
             usings.add(using);
-            setDirty();
+            checkForBindMarkers(using);
             return this;
         }
 

@@ -22,7 +22,6 @@ import java.util.concurrent.Executors;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.yammer.metrics.core.Meter;
 import com.yammer.metrics.core.TimerContext;
 
 import com.datastax.driver.core.ResultSet;

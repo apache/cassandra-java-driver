@@ -80,7 +80,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
     @Test(groups = "short")
     public void intRoutingBatchKeyTest() throws Exception {
 
-        Statement query;
+        RegularStatement query;
         TableMetadata table = cluster.getMetadata().getKeyspace(TestUtils.SIMPLE_KEYSPACE).getTable(TABLE_INT);
         assertNotNull(table);
 
@@ -88,7 +88,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         bb.putInt(0, 42);
 
         String batch_query;
-        Query batch;
+        Statement batch;
         ResultSet rs;
 
         query = select().from(table).where(eq("k", 42));

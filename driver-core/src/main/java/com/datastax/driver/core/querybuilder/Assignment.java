@@ -15,13 +15,14 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import static com.datastax.driver.core.querybuilder.Utils.*;
 
 public abstract class Assignment extends Utils.Appendeable {
 
-    protected final String name;
+    final String name;
 
     private Assignment(String name) {
         this.name = name;
@@ -37,15 +38,21 @@ public abstract class Assignment extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb) {
+        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb);
             sb.append("=");
-            appendValue(value, sb);
+            appendValue(value, sb, variables);
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            return Utils.containsBindMarker(value);
         }
     }
 
     static class CounterAssignment extends Assignment {
 
+        // TODO: should be object to allow for bind markers
         private final long value;
         private final boolean isIncr;
 
@@ -61,15 +68,20 @@ public abstract class Assignment extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb) {
+        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb).append("=");
             appendName(name, sb).append(isIncr ? "+" : "-").append(value);
         }
 
+        @Override
+        boolean containsBindMarker() {
+            return Utils.containsBindMarker(value);
+        }
     }
 
     static class ListPrependAssignment extends Assignment {
 
+        // TODO: should be object to allow for bind markers
         private final List<?> value;
 
         ListPrependAssignment(String name, List<?> value) {
@@ -78,11 +90,16 @@ public abstract class Assignment extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb) {
+        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb).append("=");
             appendList(value, sb);
             sb.append("+");
             appendName(name, sb);
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            return Utils.containsBindMarker(value);
         }
     }
 
@@ -98,9 +115,14 @@ public abstract class Assignment extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb) {
+        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb).append("[").append(idx).append("]=");
-            appendValue(value, sb);
+            appendValue(value, sb, variables);
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            return Utils.containsBindMarker(value);
         }
     }
 
@@ -116,10 +138,15 @@ public abstract class Assignment extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb) {
+        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb).append("=");
             appendName(name, sb).append(isAdd ? "+" : "-");
-            appendCollection(collection, sb);
+            appendCollection(collection, sb, variables);
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            return Utils.containsBindMarker(collection);
         }
     }
 
@@ -135,11 +162,16 @@ public abstract class Assignment extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb) {
+        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb).append("[");
-            appendValue(key, sb);
+            appendValue(key, sb, variables);
             sb.append("]=");
-            appendValue(value, sb);
+            appendValue(value, sb, variables);
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            return Utils.containsBindMarker(key) || Utils.containsBindMarker(value);
         }
     }
 }

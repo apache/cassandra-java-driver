@@ -48,7 +48,7 @@ public class UnavailableException extends QueryExecutionException {
      *
      * @return the consistency level of the operation triggering this unavailable exception.
      */
-    public ConsistencyLevel getConsistency() {
+    public ConsistencyLevel getConsistencyLevel() {
         return consistency;
     }
 

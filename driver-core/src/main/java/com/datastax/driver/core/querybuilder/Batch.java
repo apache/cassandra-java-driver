@@ -19,22 +19,23 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.RegularStatement;
 
 /**
  * A built BATCH statement.
  */
 public class Batch extends BuiltStatement {
 
-    private final List<Statement> statements;
+    private final List<RegularStatement> statements;
     private final boolean logged;
     private final Options usings;
     private ByteBuffer routingKey;
 
-    Batch(Statement[] statements, boolean logged) {
+    Batch(RegularStatement[] statements, boolean logged) {
+        super((String)null);
         this.statements = statements.length == 0
-                        ? new ArrayList<Statement>()
-                        : new ArrayList<Statement>(statements.length);
+                        ? new ArrayList<RegularStatement>()
+                        : new ArrayList<RegularStatement>(statements.length);
         this.logged = logged;
         this.usings = new Options(this);
 
@@ -43,7 +44,7 @@ public class Batch extends BuiltStatement {
     }
 
     @Override
-    protected String buildQueryString() {
+    StringBuilder buildQueryString(List<ByteBuffer> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append(isCounterOp()
@@ -52,18 +53,33 @@ public class Batch extends BuiltStatement {
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings);
+            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
         }
         builder.append(" ");
 
         for (int i = 0; i < statements.size(); i++) {
-            String str = statements.get(i).getQueryString();
-            builder.append(str);
-            if (!str.trim().endsWith(";"))
-                builder.append(";");
+            RegularStatement stmt = statements.get(i);
+            if (stmt instanceof BuiltStatement) {
+                BuiltStatement bst = (BuiltStatement)stmt;
+                builder.append(maybeAddSemicolon(bst.buildQueryString(variables)));
+
+            } else {
+                String str = stmt.getQueryString();
+                builder.append(str);
+                if (!str.trim().endsWith(";"))
+                    builder.append(";");
+
+                if (variables != null) {
+                    ByteBuffer[] vars = stmt.getValues();
+                    if (vars != null) {
+                        for (int idx = 0; idx < vars.length; idx++)
+                            variables.add(vars[idx]);
+                    }
+                }
+            }
         }
         builder.append("APPLY BATCH;");
-        return builder.toString();
+        return builder;
     }
 
     /**
@@ -75,7 +91,7 @@ public class Batch extends BuiltStatement {
      * @throws IllegalArgumentException if counter and non-counter operations
      * are mixed.
      */
-    public Batch add(Statement statement) {
+    public Batch add(RegularStatement statement) {
         boolean isCounterOp = statement instanceof BuiltStatement && ((BuiltStatement) statement).isCounterOp();
 
         if (this.isCounterOp == null)
@@ -84,7 +100,14 @@ public class Batch extends BuiltStatement {
             throw new IllegalArgumentException("Cannot mix counter operations and non-counter operations in a batch statement");
 
         this.statements.add(statement);
-        setDirty();
+
+        if (statement instanceof BuiltStatement)
+            this.hasBindMarkers = ((BuiltStatement)statement).hasBindMarkers;
+        else
+            // For non-BuiltStatement, we cannot know if it includes a bind makers. So we assume it does.
+            this.hasBindMarkers = true;
+
+        checkForBindMarkers(null);
 
         if (routingKey == null && statement.getRoutingKey() != null)
             routingKey = statement.getRoutingKey();
@@ -114,6 +137,16 @@ public class Batch extends BuiltStatement {
     }
 
     /**
+     * Returns the keyspace of the first statement in this batch.
+     *
+     * @return the keyspace of the first statement in this batch.
+     */
+    @Override
+    public String getKeyspace() {
+        return statements.isEmpty() ? null : statements.get(0).getKeyspace();
+    }
+
+    /**
      * The options of a BATCH statement.
      */
     public static class Options extends BuiltStatement.ForwardingStatement<Batch> {
@@ -132,7 +165,7 @@ public class Batch extends BuiltStatement {
          */
         public Options and(Using using) {
             usings.add(using);
-            setDirty();
+            checkForBindMarkers(using);
             return this;
         }
 
@@ -142,7 +175,7 @@ public class Batch extends BuiltStatement {
          * @param statement the statement to add.
          * @return the BATCH statement these options are part of.
          */
-        public Batch add(Statement statement) {
+        public Batch add(RegularStatement statement) {
             return this.statement.add(statement);
         }
     }

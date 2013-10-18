@@ -15,11 +15,12 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 public abstract class Clause extends Utils.Appendeable {
 
-    protected final String name;
+    final String name;
 
     private Clause(String name) {
         this.name = name;
@@ -43,14 +44,19 @@ public abstract class Clause extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb) {
+        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             Utils.appendName(name, sb).append(op);
-            Utils.appendValue(value, sb);
+            Utils.appendValue(value, sb, variables);
         }
 
         @Override
         Object firstValue() {
             return value;
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            return Utils.containsBindMarker(value);
         }
     }
 
@@ -62,19 +68,40 @@ public abstract class Clause extends Utils.Appendeable {
             super(name);
             this.values = values;
 
-            if (values == null || values.size() == 0)
+            if (values == null)
                 throw new IllegalArgumentException("Missing values for IN clause");
         }
 
         @Override
-        void appendTo(StringBuilder sb) {
+        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+
+            // We special case the case of just one bind marker because there is little
+            // reasons to do:
+            //    ... IN (?) ...
+            // since in that case it's more elegant to use an equal. On the other side,
+            // it is a lot more useful to do:
+            //    ... IN ? ...
+            // which binds the variable to the full list the IN is on.
+            if (values.size() == 1 && values.get(0) instanceof BindMarker) {
+                Utils.appendName(name, sb).append("IN ").append(values.get(0));
+                return;
+            }
+
             Utils.appendName(name, sb).append(" IN (");
-            Utils.joinAndAppendValues(sb, ",", values).append(")");
+            Utils.joinAndAppendValues(sb, ",", values, variables).append(")");
         }
 
         @Override
         Object firstValue() {
-            return values.get(0);
+            return values.isEmpty() ? null : values.get(0);
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            for (Object value : values)
+                if (Utils.containsBindMarker(value))
+                    return true;
+            return false;
         }
     }
 }

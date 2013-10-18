@@ -37,8 +37,8 @@ public class CCMBridge {
 
     private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d(-\\w+)?";
 
-    private static final File CASSANDRA_DIR;
-    private static final String CASSANDRA_VERSION;
+    static final File CASSANDRA_DIR;
+    static final String CASSANDRA_VERSION;
     static {
         String version = System.getProperty("cassandra.version");
         if (version.matches(CASSANDRA_VERSION_REGEXP)) {
@@ -146,6 +146,14 @@ public class CCMBridge {
         execute("ccm node%d decommission", n);
     }
 
+    public void updateConfig(String name, String value) {
+        execute("ccm updateconf %s:%s", name, value);
+    }
+
+    public void populate(int n) {
+        execute("ccm populate -n %d -i %s", n, IP_PREFIX);
+    }
+
     private void execute(String command, Object... args) {
         try {
             String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
@@ -221,7 +229,7 @@ public class CCMBridge {
                 session = cluster.connect();
             } catch (NoHostAvailableException e) {
                 erroredOut = true;
-                for (Map.Entry<InetAddress, String> entry : e.getErrors().entrySet())
+                for (Map.Entry<InetAddress, Throwable> entry : e.getErrors().entrySet())
                     logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
                 throw new RuntimeException(e);
             }
@@ -292,24 +300,23 @@ public class CCMBridge {
             if (nbNodes == 0)
                 throw new IllegalArgumentException();
 
-            return new CCMCluster(CCMBridge.create("test", nbNodes), builder);
+            return new CCMCluster(CCMBridge.create("test", nbNodes), builder, nbNodes);
         }
 
         public static CCMCluster create(int nbNodesDC1, int nbNodesDC2, Cluster.Builder builder) {
             if (nbNodesDC1 == 0)
                 throw new IllegalArgumentException();
 
-            return new CCMCluster(CCMBridge.create("test", nbNodesDC1, nbNodesDC2), builder);
+            return new CCMCluster(CCMBridge.create("test", nbNodesDC1, nbNodesDC2), builder, nbNodesDC1 + nbNodesDC2);
         }
 
-        private CCMCluster(CCMBridge cassandraCluster, Cluster.Builder builder) {
+        private CCMCluster(CCMBridge cassandraCluster, Cluster.Builder builder, int totalNodes) {
             this.cassandraCluster = cassandraCluster;
             try {
                 this.cluster = builder.addContactPoints(IP_PREFIX + "1").build();
                 this.session = cluster.connect();
-
             } catch (NoHostAvailableException e) {
-                for (Map.Entry<InetAddress, String> entry : e.getErrors().entrySet())
+                for (Map.Entry<InetAddress, Throwable> entry : e.getErrors().entrySet())
                     logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
                 throw new RuntimeException(e);
             }

@@ -17,12 +17,14 @@ package com.datastax.driver.core;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.util.concurrent.MoreExecutors;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
 
@@ -32,13 +34,17 @@ class HostConnectionPool {
 
     private static final int MAX_SIMULTANEOUS_CREATION = 1;
 
+    // When a request timeout, we may never release its stream ID. So over time, a given connection
+    // may get less an less available streams. When the number of available ones go below the
+    // following threshold, we just replace the connection by a new one.
+    private static final int MIN_AVAILABLE_STREAMS = 96;
+
     public final Host host;
     public volatile HostDistance hostDistance;
     private final Session.Manager manager;
 
     private final List<Connection> connections;
     private final AtomicInteger open;
-    private final AtomicBoolean isShutdown = new AtomicBoolean();
     private final Set<Connection> trash = new CopyOnWriteArraySet<Connection>();
 
     private volatile int waiter = 0;
@@ -48,6 +54,8 @@ class HostConnectionPool {
     private final Runnable newConnectionTask;
 
     private final AtomicInteger scheduledForCreation = new AtomicInteger();
+
+    private final AtomicReference<ShutdownFuture> shutdownFuture = new AtomicReference<ShutdownFuture>();
 
     public HostConnectionPool(Host host, HostDistance hostDistance, Session.Manager manager) throws ConnectionException {
         assert hostDistance != HostDistance.IGNORED;
@@ -84,7 +92,7 @@ class HostConnectionPool {
     }
 
     public Connection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
-        if (isShutdown.get())
+        if (isShutdown())
             // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
             // That being said, maybe having a specific exception could be cleaner.
             throw new ConnectionException(host.getAddress(), "Pool is shutdown");
@@ -117,7 +125,7 @@ class HostConnectionPool {
         while (true) {
             int inFlight = leastBusy.inFlight.get();
 
-            if (inFlight >= Connection.MAX_STREAM_PER_CONNECTION) {
+            if (inFlight >= leastBusy.maxAvailableStreams()) {
                 leastBusy = waitForConnection(timeout, unit);
                 break;
             }
@@ -194,7 +202,7 @@ class HostConnectionPool {
             while (true) {
                 int inFlight = leastBusy.inFlight.get();
 
-                if (inFlight >= Connection.MAX_STREAM_PER_CONNECTION)
+                if (inFlight >= leastBusy.maxAvailableStreams())
                     break;
 
                 if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1))
@@ -211,7 +219,7 @@ class HostConnectionPool {
         int inFlight = connection.inFlight.decrementAndGet();
 
         if (connection.isDefunct()) {
-            if (manager.cluster.manager.signalConnectionFailure(host, connection.lastException()))
+            if (manager.cluster.manager.signalConnectionFailure(host, connection.lastException(), false))
                 shutdown();
             else
                 replace(connection);
@@ -225,10 +233,20 @@ class HostConnectionPool {
 
             if (connections.size() > options().getCoreConnectionsPerHost(hostDistance) && inFlight <= options().getMinSimultaneousRequestsPerConnectionThreshold(hostDistance)) {
                 trashConnection(connection);
+            } else if (connection.maxAvailableStreams() < MIN_AVAILABLE_STREAMS) {
+                replaceConnection(connection);
             } else {
                 signalAvailableConnection();
             }
         }
+    }
+
+    // Trash the connection and create a new one, but we don't call trashConnection
+    // directly because we want to make sure the connection is always trashed.
+    private void replaceConnection(Connection connection) {
+        open.decrementAndGet();
+        maybeSpawnNewConnection();
+        doTrashConnection(connection);
     }
 
     private boolean trashConnection(Connection connection) {
@@ -241,12 +259,17 @@ class HostConnectionPool {
             if (open.compareAndSet(opened, opened - 1))
                 break;
         }
+
+        doTrashConnection(connection);
+        return true;
+    }
+
+    private void doTrashConnection(Connection connection) {
         trash.add(connection);
         connections.remove(connection);
 
         if (connection.inFlight.get() == 0 && trash.remove(connection))
             close(connection);
-        return true;
     }
 
     private boolean addConnectionIfUnderMaximum() {
@@ -279,7 +302,7 @@ class HostConnectionPool {
         } catch (ConnectionException e) {
             open.decrementAndGet();
             logger.debug("Connection error to {} while creating additional connection", host);
-            if (manager.cluster.manager.signalConnectionFailure(host, e))
+            if (manager.cluster.manager.signalConnectionFailure(host, e, false))
                 shutdown();
             return false;
         } catch (AuthenticationException e) {
@@ -326,40 +349,44 @@ class HostConnectionPool {
     }
 
     public boolean isShutdown() {
-        return isShutdown.get();
+        return shutdownFuture.get() != null;
     }
 
-    public void shutdown() {
-        try {
-            shutdown(0, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
+    public ShutdownFuture shutdown() {
 
-    public boolean shutdown(long timeout, TimeUnit unit) throws InterruptedException {
-        if (!isShutdown.compareAndSet(false, true))
-            return true;
+        ShutdownFuture future = shutdownFuture.get();
+        if (future != null)
+            return future;
 
         logger.debug("Shutting down pool");
 
         // Wake up all threads that waits
         signalAllAvailableConnection();
-        return discardAvailableConnections(timeout, unit);
+
+        future = new ShutdownFuture.Forwarding(discardAvailableConnections());
+
+        return shutdownFuture.compareAndSet(null, future)
+             ? future
+             : shutdownFuture.get(); // We raced, it's ok, return the future that was actually set
     }
 
     public int opened() {
         return open.get();
     }
 
-    private boolean discardAvailableConnections(long timeout, TimeUnit unit) throws InterruptedException {
-        long start = System.nanoTime();
-        boolean success = true;
+    private List<ShutdownFuture> discardAvailableConnections() {
+
+        List<ShutdownFuture> futures = new ArrayList<ShutdownFuture>(connections.size());
         for (Connection connection : connections) {
-            success &= connection.close(timeout - Cluster.timeSince(start, unit), unit);
-            open.decrementAndGet();
+            ShutdownFuture future = connection.close();
+            future.addListener(new Runnable() {
+                public void run() {
+                    open.decrementAndGet();
+                }
+            }, MoreExecutors.sameThreadExecutor());
+            futures.add(future);
         }
-        return success;
+        return futures;
     }
 
     // This creates connections if we have less than core connections (if we

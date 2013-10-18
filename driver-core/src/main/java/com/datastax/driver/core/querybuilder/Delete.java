@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,15 +26,13 @@ import com.datastax.driver.core.TableMetadata;
  */
 public class Delete extends BuiltStatement {
 
-    private final String keyspace;
     private final String table;
     private final List<Object> columnNames;
     private final Where where;
     private final Options usings;
 
     Delete(String keyspace, String table, List<Object> columnNames) {
-        super();
-        this.keyspace = keyspace;
+        super(keyspace);
         this.table = table;
         this.columnNames = columnNames;
         this.where = new Where(this);
@@ -42,7 +41,6 @@ public class Delete extends BuiltStatement {
 
     Delete(TableMetadata table, List<Object> columnNames) {
         super(table);
-        this.keyspace = table.getKeyspace().getName();
         this.table = table.getName();
         this.columnNames = columnNames;
         this.where = new Where(this);
@@ -50,7 +48,7 @@ public class Delete extends BuiltStatement {
     }
 
     @Override
-    protected String buildQueryString() {
+    StringBuilder buildQueryString(List<ByteBuffer> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("DELETE ");
@@ -63,15 +61,15 @@ public class Delete extends BuiltStatement {
         Utils.appendName(table, builder);
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings);
+            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
         }
 
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
-            Utils.joinAndAppend(builder, " AND ", where.clauses);
+            Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
         }
 
-        return builder.toString();
+        return builder;
     }
 
     /**
@@ -126,7 +124,7 @@ public class Delete extends BuiltStatement {
         {
             clauses.add(clause);
             statement.maybeAddRoutingKey(clause.name(), clause.firstValue());
-            setDirty();
+            checkForBindMarkers(clause);
             return this;
         }
 
@@ -160,7 +158,7 @@ public class Delete extends BuiltStatement {
          */
         public Options and(Using using) {
             usings.add(using);
-            setDirty();
+            checkForBindMarkers(using);
             return this;
         }
 
@@ -180,9 +178,9 @@ public class Delete extends BuiltStatement {
      */
     public static class Builder {
 
-        protected List<Object> columnNames;
+        List<Object> columnNames;
 
-        protected Builder() {}
+        Builder() {}
 
         Builder(List<Object> columnNames) {
             this.columnNames = columnNames;

@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,35 +30,37 @@ public class Select extends BuiltStatement {
 
     private static final List<Object> COUNT_ALL = Collections.<Object>singletonList(new Utils.FCall("count", new Utils.RawString("*")));
 
-    private final String keyspace;
     private final String table;
+    private final boolean isDistinct;
     private final List<Object> columnNames;
     private final Where where;
     private List<Ordering> orderings;
-    private int limit = -1;
+    private Object limit;
     private boolean allowFiltering;
 
-    Select(String keyspace, String table, List<Object> columnNames) {
-        super();
-        this.keyspace = keyspace;
+    Select(String keyspace, String table, List<Object> columnNames, boolean isDistinct) {
+        super(keyspace);
         this.table = table;
+        this.isDistinct = isDistinct;
         this.columnNames = columnNames;
         this.where = new Where(this);
     }
 
-    Select(TableMetadata table, List<Object> columnNames) {
+    Select(TableMetadata table, List<Object> columnNames, boolean isDistinct) {
         super(table);
-        this.keyspace = table.getKeyspace().getName();
         this.table = table.getName();
+        this.isDistinct = isDistinct;
         this.columnNames = columnNames;
         this.where = new Where(this);
     }
 
     @Override
-    protected String buildQueryString() {
+    StringBuilder buildQueryString(List<ByteBuffer> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("SELECT ");
+        if (isDistinct)
+            builder.append("DISTINCT ");
         if (columnNames == null) {
             builder.append("*");
         } else {
@@ -70,15 +73,15 @@ public class Select extends BuiltStatement {
 
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
-            Utils.joinAndAppend(builder, " AND ", where.clauses);
+            Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
         }
 
         if (orderings != null) {
             builder.append(" ORDER BY ");
-            Utils.joinAndAppend(builder, ",", orderings);
+            Utils.joinAndAppend(builder, ",", orderings, variables);
         }
 
-        if (limit > 0) {
+        if (limit != null) {
             builder.append(" LIMIT ").append(limit);
         }
 
@@ -86,7 +89,7 @@ public class Select extends BuiltStatement {
             builder.append(" ALLOW FILTERING");
         }
 
-        return builder.toString();
+        return builder;
     }
 
     /**
@@ -124,7 +127,8 @@ public class Select extends BuiltStatement {
             throw new IllegalStateException("An ORDER BY clause has already been provided");
 
         this.orderings = Arrays.asList(orderings);
-        setDirty();
+        for (int i = 0; i < orderings.length; i++)
+            checkForBindMarkers(orderings[i]);
         return this;
     }
 
@@ -142,11 +146,29 @@ public class Select extends BuiltStatement {
         if (limit <= 0)
             throw new IllegalArgumentException("Invalid LIMIT value, must be strictly positive");
 
-        if (this.limit > 0)
+        if (this.limit != null)
             throw new IllegalStateException("A LIMIT value has already been provided");
 
         this.limit = limit;
-        setDirty();
+        checkForBindMarkers(null);
+        return this;
+    }
+
+    /**
+     * Adds a prepared LIMIT clause to this statement.
+     *
+     * @param marker the marker to use for the limit.
+     * @return this statement.
+     *
+     * @throws IllegalStateException if a LIMIT clause has already been
+     * provided.
+     */
+    public Select limit(BindMarker marker) {
+        if (this.limit != null)
+            throw new IllegalStateException("A LIMIT value has already been provided");
+
+        this.limit = marker;
+        checkForBindMarkers(marker);
         return this;
     }
 
@@ -177,11 +199,10 @@ public class Select extends BuiltStatement {
          * @param clause the clause to add.
          * @return this WHERE clause.
          */
-        public Where and(Clause clause)
-        {
+        public Where and(Clause clause) {
             clauses.add(clause);
             statement.maybeAddRoutingKey(clause.name(), clause.firstValue());
-            setDirty();
+            checkForBindMarkers(clause);
             return this;
         }
 
@@ -220,9 +241,10 @@ public class Select extends BuiltStatement {
      */
     public static class Builder {
 
-        protected List<Object> columnNames;
+        List<Object> columnNames;
+        boolean isDistinct;
 
-        protected Builder() {}
+        Builder() {}
 
         Builder(List<Object> columnNames) {
             this.columnNames = columnNames;
@@ -246,7 +268,7 @@ public class Select extends BuiltStatement {
          * @return a newly built SELECT statement that selects from {@code keyspace.table}.
          */
         public Select from(String keyspace, String table) {
-            return new Select(keyspace, table, columnNames);
+            return new Select(keyspace, table, columnNames, isDistinct);
         }
 
         /**
@@ -256,14 +278,126 @@ public class Select extends BuiltStatement {
          * @return a newly built SELECT statement that selects from {@code table}.
          */
         public Select from(TableMetadata table) {
-            return new Select(table, columnNames);
+            return new Select(table, columnNames, isDistinct);
         }
     }
 
     /**
      * An Selection clause for an in-construction SELECT statement.
      */
-    public static class Selection extends Builder {
+    public static abstract class Selection extends Builder {
+
+        /**
+         * Uses DISTINCT selection.
+         *
+         * @return this in-build SELECT statement.
+         */
+        public Selection distinct() {
+            this.isDistinct = true;
+            return this;
+        }
+
+        /**
+         * Selects all columns (i.e. "SELECT *  ...")
+         *
+         * @return an in-build SELECT statement.
+         *
+         * @throws IllegalStateException if some columns had already been selected for this builder.
+         */
+        public abstract Builder all();
+
+        /**
+         * Selects the count of all returned rows (i.e. "SELECT count(*) ...").
+         *
+         * @return an in-build SELECT statement.
+         *
+         * @throws IllegalStateException if some columns had already been selected for this builder.
+         */
+        public abstract Builder countAll();
+
+        /**
+         * Selects the provided column.
+         *
+         * @param name the new column name to add.
+         * @return this in-build SELECT statement
+         */
+        public abstract SelectionOrAlias column(String name);
+
+        /**
+         * Selects the write time of provided column.
+         * <p>
+         * This is a shortcut for {@code fcall("writetime", QueryBuilder.column(name))}.
+         *
+         * @param name the name of the column to select the write time of.
+         * @return this in-build SELECT statement
+         */
+        public abstract SelectionOrAlias writeTime(String name);
+
+        /**
+         * Selects the ttl of provided column.
+         * <p>
+         * This is a shortcut for {@code fcall("ttl", QueryBuilder.column(name))}.
+         *
+         * @param name the name of the column to select the ttl of.
+         * @return this in-build SELECT statement
+         */
+        public abstract SelectionOrAlias ttl(String name);
+
+        /**
+         * Creates a function call.
+         * <p>
+         * Please note that the parameters are interpreted as values, and so
+         * {@code fcall("textToBlob", "foo")} will generate the string
+         * {@code "textToBlob('foo')"}. If you want to generate
+         * {@code "textToBlob(foo)"}, i.e. if the argument must be interpreted
+         * as a column name (in a select clause), you will need to use the
+         * {@link QueryBuilder#column} method, and so 
+         * {@code fcall("textToBlob", QueryBuilder.column(foo)}.
+         */
+        public abstract SelectionOrAlias fcall(String name, Object... parameters);
+    }
+
+    /**
+     * An Selection clause for an in-construction SELECT statement.
+     * <p>
+     * This only differs from {@link Selection} in that you can add an
+     * alias for the previously selected item through {@link SelectionOrAlias#as}.
+     */
+    public static class SelectionOrAlias extends Selection {
+
+        private Object previousSelection;
+
+        SelectionOrAlias() {}
+
+        /**
+         * Adds an alias for the just selected item.
+         *
+         * @param alias the name of the alias to use.
+         * @return this in-build SELECT statement
+         */
+        public Selection as(String alias) {
+            assert previousSelection != null;
+            Object a = new Utils.Alias(previousSelection, alias);
+            previousSelection = null;
+            return addName(a);
+        }
+
+        // We don't return SelectionOrAlias on purpose
+        private Selection addName(Object name) {
+            if (columnNames == null)
+                columnNames = new ArrayList<Object>();
+
+            columnNames.add(name);
+            return this;
+        }
+
+        private SelectionOrAlias queueName(Object name) {
+            if (previousSelection != null)
+                addName(previousSelection);
+
+            previousSelection = name;
+            return this;
+        }
 
         /**
          * Selects all columns (i.e. "SELECT *  ...")
@@ -275,6 +409,8 @@ public class Select extends BuiltStatement {
         public Builder all() {
             if (columnNames != null)
                 throw new IllegalStateException(String.format("Some columns (%s) have already been selected.", columnNames));
+            if (previousSelection != null)
+                throw new IllegalStateException(String.format("Some columns ([%s]) have already been selected.", previousSelection));
 
             return (Builder)this;
         }
@@ -289,17 +425,11 @@ public class Select extends BuiltStatement {
         public Builder countAll() {
             if (columnNames != null)
                 throw new IllegalStateException(String.format("Some columns (%s) have already been selected.", columnNames));
+            if (previousSelection != null)
+                throw new IllegalStateException(String.format("Some columns ([%s]) have already been selected.", previousSelection));
 
             columnNames = COUNT_ALL;
             return (Builder)this;
-        }
-
-        private Selection addName(Object name) {
-            if (columnNames == null)
-                columnNames = new ArrayList<Object>();
-
-            columnNames.add(name);
-            return this;
         }
 
         /**
@@ -308,8 +438,8 @@ public class Select extends BuiltStatement {
          * @param name the new column name to add.
          * @return this in-build SELECT statement
          */
-        public Selection column(String name) {
-            return addName(name);
+        public SelectionOrAlias column(String name) {
+            return queueName(name);
         }
 
         /**
@@ -320,8 +450,8 @@ public class Select extends BuiltStatement {
          * @param name the name of the column to select the write time of.
          * @return this in-build SELECT statement
          */
-        public Selection writeTime(String name) {
-            return addName(new Utils.FCall("writetime", new Utils.CName(name)));
+        public SelectionOrAlias writeTime(String name) {
+            return queueName(new Utils.FCall("writetime", new Utils.CName(name)));
         }
 
         /**
@@ -332,8 +462,8 @@ public class Select extends BuiltStatement {
          * @param name the name of the column to select the ttl of.
          * @return this in-build SELECT statement
          */
-        public Selection ttl(String name) {
-            return addName(new Utils.FCall("ttl", new Utils.CName(name)));
+        public SelectionOrAlias ttl(String name) {
+            return queueName(new Utils.FCall("ttl", new Utils.CName(name)));
         }
 
         /**
@@ -347,8 +477,35 @@ public class Select extends BuiltStatement {
          * {@link QueryBuilder#column} method, and so 
          * {@code fcall("textToBlob", QueryBuilder.column(foo)}.
          */
-        public Selection fcall(String name, Object... parameters) {
-            return addName(new Utils.FCall(name, parameters));
+        public SelectionOrAlias fcall(String name, Object... parameters) {
+            return queueName(new Utils.FCall(name, parameters));
+        }
+
+        /**
+         * Adds the table to select from.
+         *
+         * @param keyspace the name of the keyspace to select from.
+         * @param table the name of the table to select from.
+         * @return a newly built SELECT statement that selects from {@code keyspace.table}.
+         */
+        @Override
+        public Select from(String keyspace, String table) {
+            if (previousSelection != null)
+                addName(previousSelection);
+            return super.from(keyspace, table);
+        }
+
+        /**
+         * Adds the table to select from.
+         *
+         * @param table the table to select from.
+         * @return a newly built SELECT statement that selects from {@code table}.
+         */
+        @Override
+        public Select from(TableMetadata table) {
+            if (previousSelection != null)
+                addName(previousSelection);
+            return super.from(table);
         }
     }
 }

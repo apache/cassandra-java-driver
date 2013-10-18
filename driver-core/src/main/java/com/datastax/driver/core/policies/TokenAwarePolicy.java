@@ -32,7 +32,7 @@ import com.datastax.driver.core.*;
  * <ul>
  *   <li>the {@code distance} method is inherited from the child policy.</li>
  *   <li>the iterator return by the {@code newQueryPlan} method will first
- *   return the {@code LOCAL} replicas for the query (based on {@link Query#getRoutingKey})
+ *   return the {@code LOCAL} replicas for the query (based on {@link Statement#getRoutingKey})
  *   <i>if possible</i> (i.e. if the query {@code getRoutingKey} method
  *   doesn't return {@code null} and if {@link Metadata#getReplicas}
  *   returns a non empty set of replicas for that partition key). If no
@@ -84,22 +84,26 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
      * <p>
      * The returned plan will first return replicas (whose {@code HostDistance}
      * for the child policy is {@code LOCAL}) for the query if it can determine
-     * them (i.e. mainly if {@code query.getRoutingKey()} is not {@code null}).
+     * them (i.e. mainly if {@code statement.getRoutingKey()} is not {@code null}).
      * Following what it will return the plan of the child policy.
      *
-     * @param query the query for which to build the plan.
+     * @param statement the query for which to build the plan.
      * @return the new query plan.
      */
     @Override
-    public Iterator<Host> newQueryPlan(final Query query) {
+    public Iterator<Host> newQueryPlan(final String loggedKeyspace, final Statement statement) {
 
-        ByteBuffer partitionKey = query.getRoutingKey();
-        if (partitionKey == null)
-            return childPolicy.newQueryPlan(query);
+        ByteBuffer partitionKey = statement.getRoutingKey();
+        String keyspace = statement.getKeyspace();
+        if (keyspace == null)
+            keyspace = loggedKeyspace;
 
-        final Set<Host> replicas = clusterMetadata.getReplicas(partitionKey);
+        if (partitionKey == null || keyspace == null)
+            return childPolicy.newQueryPlan(keyspace, statement);
+
+        final Set<Host> replicas = clusterMetadata.getReplicas(keyspace, partitionKey);
         if (replicas.isEmpty())
-            return childPolicy.newQueryPlan(query);
+            return childPolicy.newQueryPlan(loggedKeyspace, statement);
 
         return new AbstractIterator<Host>() {
 
@@ -115,7 +119,7 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
                 }
 
                 if (childIterator == null)
-                    childIterator = childPolicy.newQueryPlan(query);
+                    childIterator = childPolicy.newQueryPlan(loggedKeyspace, statement);
 
                 while (childIterator.hasNext()) {
                     Host host = childIterator.next();

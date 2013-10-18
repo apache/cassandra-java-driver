@@ -24,6 +24,7 @@ import com.datastax.driver.core.ConsistencyLevel;
  * cannot be achieved with the requested consistency level within the rpc
  * timeout set for Cassandra.
  */
+@SuppressWarnings("serial")
 public abstract class QueryTimeoutException extends QueryExecutionException {
 
     private final ConsistencyLevel consistency;

@@ -15,16 +15,9 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.util.*;
-
-import org.testng.annotations.Test;
-
-import static org.testng.Assert.*;
-
 import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.Query;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.WriteType;
-import static com.datastax.driver.core.TestUtils.*;
 
 public class AlwaysIgnoreRetryPolicy implements RetryPolicy {
 
@@ -32,15 +25,15 @@ public class AlwaysIgnoreRetryPolicy implements RetryPolicy {
 
     private AlwaysIgnoreRetryPolicy() {}
 
-    public RetryDecision onReadTimeout(Query query, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
+    public RetryDecision onReadTimeout(Statement statement, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
         return RetryDecision.ignore();
     }
 
-    public RetryDecision onWriteTimeout(Query query, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
+    public RetryDecision onWriteTimeout(Statement statement, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
         return RetryDecision.ignore();
     }
 
-    public RetryDecision onUnavailable(Query query, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
+    public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
         return RetryDecision.ignore();
     }
 }

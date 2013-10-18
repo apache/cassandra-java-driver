@@ -19,11 +19,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
-
-import org.apache.cassandra.transport.Message;
-import org.apache.cassandra.transport.messages.ErrorMessage;
-import org.apache.cassandra.transport.messages.ResultMessage;
 
 import com.datastax.driver.core.exceptions.*;
 
@@ -36,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * Note that this class implements <a href="http://code.google.com/p/guava-libraries/">Guava</a>'s {@code
  * ListenableFuture} and can so be used with Guava's future utilities.
  */
-public class ResultSetFuture extends SimpleFuture<ResultSet> {
+public class ResultSetFuture extends AbstractFuture<ResultSet> {
 
     private static final Logger logger = LoggerFactory.getLogger(ResultSetFuture.class);
 
@@ -53,9 +50,15 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
     class ResponseCallback implements RequestHandler.Callback {
 
         private final Message.Request request;
+        private volatile RequestHandler handler;
 
         ResponseCallback(Message.Request request) {
             this.request = request;
+        }
+
+        @Override
+        public void register(RequestHandler handler) {
+            this.handler = handler;
         }
 
         @Override
@@ -64,20 +67,20 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
         }
 
         @Override
-        public void onSet(Connection connection, Message.Response response, ExecutionInfo info) {
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Statement statement, long latency) {
             try {
                 switch (response.type) {
                     case RESULT:
-                        ResultMessage rm = (ResultMessage)response;
+                        Responses.Result rm = (Responses.Result)response;
                         switch (rm.kind) {
                             case SET_KEYSPACE:
                                 // propagate the keyspace change to other connections
-                                session.poolsState.setKeyspace(((ResultMessage.SetKeyspace)rm).keyspace);
-                                set(ResultSet.fromMessage(rm, session, info));
+                                session.poolsState.setKeyspace(((Responses.Result.SetKeyspace)rm).keyspace);
+                                set(ResultSet.fromMessage(rm, session, info, statement));
                                 break;
                             case SCHEMA_CHANGE:
-                                ResultMessage.SchemaChange scc = (ResultMessage.SchemaChange)rm;
-                                ResultSet rs = ResultSet.fromMessage(rm, session, info);
+                                Responses.Result.SchemaChange scc = (Responses.Result.SchemaChange)rm;
+                                ResultSet rs = ResultSet.fromMessage(rm, session, info, statement);
                                 switch (scc.change) {
                                     case CREATED:
                                         if (scc.columnFamily.isEmpty()) {
@@ -111,12 +114,12 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
                                 }
                                 break;
                             default:
-                                set(ResultSet.fromMessage(rm, session, info));
+                                set(ResultSet.fromMessage(rm, session, info, statement));
                                 break;
                         }
                         break;
                     case ERROR:
-                        setException(convertException(((ErrorMessage)response).error));
+                        setException(((Responses.Error)response).asException(connection.address));
                         break;
                     default:
                         // This mean we have probably have a bad node, so defunct the connection
@@ -130,16 +133,31 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
             }
         }
 
-        // This is only called for internal calls, so don't bother with ExecutionInfo
         @Override
-        public void onSet(Connection connection, Message.Response response) {
-            onSet(connection, response, null);
+        public void onSet(Connection connection, Message.Response response, long latency) {
+            // This is only called for internal calls (i.e, when the callback is not wrapped in ResponseHandler),
+            // so don't bother with ExecutionInfo.
+            onSet(connection, response, null, null, latency);
         }
 
         @Override
-        public void onException(Connection connection, Exception exception) {
+        public void onException(Connection connection, Exception exception, long latency) {
             setException(exception);
         }
+
+        @Override
+        public void onTimeout(Connection connection, long latency) {
+            // This is only called for internal calls (i.e, when the callback is not wrapped in ResponseHandler).
+            // So just set an exception for the final result, which should be handled correctly by said internal call.
+            setException(new ConnectionException(connection.address, "Operation Timeouted"));
+        }
+    }
+
+    // We sometimes need (in the driver) to set the future from outside this class,
+    // but AbstractFuture#set is protected so this method. We don't want it public
+    // however, no particular reason to give users rope to hang themselves.
+    void setResult(ResultSet rs) {
+        set(rs);
     }
 
     /**
@@ -166,8 +184,7 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
         try {
             return Uninterruptibles.getUninterruptibly(this);
         } catch (ExecutionException e) {
-            extractCauseFromExecutionException(e);
-            throw new AssertionError();
+            throw extractCauseFromExecutionException(e);
         }
     }
 
@@ -199,12 +216,52 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
         try {
             return Uninterruptibles.getUninterruptibly(this, timeout, unit);
         } catch (ExecutionException e) {
-            extractCauseFromExecutionException(e);
-            throw new AssertionError();
+            throw extractCauseFromExecutionException(e);
         }
     }
 
-    static void extractCauseFromExecutionException(ExecutionException e) {
+    /**
+     * Attempts to cancel the execution of the request corresponding to this
+     * future. This attempt will fail if the request has already returned.
+     * <p>
+     * Please note that this only cancle the request driver side, but nothing
+     * is done to interrupt the execution of the request Cassandra side (and that even
+     * if {@code mayInterruptIfRunning} is true) since  Cassandra does not
+     * support such interruption.
+     * <p>
+     * This method can be used to ensure no more work is performed driver side
+     * (which, while it doesn't include stopping a request already submitted
+     * to a Cassandra node, may include not retrying another Cassandra host on
+     * failure/timeout) if the ResultSet is not going to be retried. Typically,
+     * the code to wait for a request result for a maximum of 1 second could
+     * look like:
+     * <pre>
+     *   ResultSetFuture future = session.executeAsync(...some query...);
+     *   try {
+     *       ResultSet result = future.get(1, TimeUnit.SECONDS);
+     *       ... process result ...
+     *   } catch (TimeoutException e) {
+     *       future.cancel(true); // Ensure any ressource used by this query driver
+     *                            // side is released immediately
+     *       ... handle timeout ...
+     *   }
+     * <pre>
+     *
+     * @param mayInterruptIfRunning the value of this parameter is currently
+     * ignored.
+     * @return {@code false} if the future could not be cancelled (it has already
+     * completed normally); {@code true} otherwise.
+     */
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+        if (!super.cancel(mayInterruptIfRunning))
+            return false;
+
+        callback.handler.cancel();
+        return true;
+    }
+
+    static RuntimeException extractCauseFromExecutionException(ExecutionException e) {
         // We could just rethrow e.getCause(). However, the cause of the ExecutionException has likely been
         // created on the I/O thread receiving the response. Which means that the stacktrace associated
         // with said cause will make no mention of the current thread. This is painful for say, finding
@@ -214,49 +271,5 @@ public class ResultSetFuture extends SimpleFuture<ResultSet> {
             throw ((DriverException)e.getCause()).copy();
         else
             throw new DriverInternalError("Unexpected exception thrown", e.getCause());
-    }
-
-    static void extractCause(Throwable cause) {
-        // Same as above
-        if (cause instanceof DriverException)
-            throw ((DriverException)cause).copy();
-        throw new DriverInternalError("Unexpected exception thrown", cause);
-    }
-
-    static Exception convertException(org.apache.cassandra.exceptions.TransportException te) {
-        switch (te.code()) {
-            case SERVER_ERROR:
-                return new DriverInternalError("An unexpected error occured server side: " + te.getMessage());
-            case PROTOCOL_ERROR:
-                return new DriverInternalError("An unexpected protocol error occured. This is a bug in this library, please report: " + te.getMessage());
-            case UNAVAILABLE:
-                org.apache.cassandra.exceptions.UnavailableException ue = (org.apache.cassandra.exceptions.UnavailableException)te;
-                return new UnavailableException(ConsistencyLevel.from(ue.consistency), ue.required, ue.alive);
-            case OVERLOADED:
-                return new DriverInternalError("Queried host was overloaded; this shouldn't happen, another node should have been tried");
-            case IS_BOOTSTRAPPING:
-                return new DriverInternalError("Queried host was boostrapping; this shouldn't happen, another node should have been tried");
-            case TRUNCATE_ERROR:
-                return new TruncateException(te.getMessage());
-            case WRITE_TIMEOUT:
-                org.apache.cassandra.exceptions.WriteTimeoutException wte = (org.apache.cassandra.exceptions.WriteTimeoutException)te;
-                return new WriteTimeoutException(ConsistencyLevel.from(wte.consistency), WriteType.from(wte.writeType), wte.received, wte.blockFor);
-            case READ_TIMEOUT:
-                org.apache.cassandra.exceptions.ReadTimeoutException rte = (org.apache.cassandra.exceptions.ReadTimeoutException)te;
-                return new ReadTimeoutException(ConsistencyLevel.from(rte.consistency), rte.received, rte.blockFor, rte.dataPresent);
-            case SYNTAX_ERROR:
-                return new SyntaxError(te.getMessage());
-            case UNAUTHORIZED:
-                return new UnauthorizedException(te.getMessage());
-            case INVALID:
-                return new InvalidQueryException(te.getMessage());
-            case CONFIG_ERROR:
-                return new InvalidConfigurationInQueryException(te.getMessage());
-            case ALREADY_EXISTS:
-                org.apache.cassandra.exceptions.AlreadyExistsException aee = (org.apache.cassandra.exceptions.AlreadyExistsException)te;
-                return new AlreadyExistsException(aee.ksName, aee.cfName);
-            default:
-                return new DriverInternalError("Unknown error return code: " + te.code());
-        }
     }
 }

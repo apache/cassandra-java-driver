@@ -17,8 +17,6 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
-import org.apache.cassandra.cql3.ColumnSpecification;
-
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
@@ -92,25 +90,25 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     }
 
     /**
-     * Returns whether this metadata contains a given column.
+     * Returns whether this metadata contains a given name.
      *
-     * @param name the name of column.
-     * @return {@code true} if this metadata contains the column named {@code  name},
+     * @param name the name to check.
+     * @return {@code true} if this metadata contains the column named {@code name},
      * {@code false} otherwise.
      */
     public boolean contains(String name) {
-        return findIdx(name) >= 0;
+        return findAllIdx(name) != null;
     }
 
     /**
-     * The index in this metadata of the povided column name, if present.
+     * The first index in this metadata of the povided name, if present.
      *
      * @param name the name of the column.
-     * @return the index of {@code name} in this metadata if this metadata
+     * @return the index of the first occurrence of {@code name} in this metadata if
      * {@code contains(name)}, -1 otherwise.
      */
     public int getIndexOf(String name) {
-        return findIdx(name);
+        return findFirstIdx(name);
     }
 
     /**
@@ -159,15 +157,15 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     }
 
     /**
-     * Returns the type of column {@code name} in this metadata.
+     * Returns the type of the first occurence of {@code name} in this metadata.
      *
      * @param name the name of the column.
-     * @return the type of column {@code name} in this metadata.
+     * @return the type of (the first occurence of) {@code name} in this metadata.
      *
-     * @throws IllegalArgumentException if {@code name} is not one of the columns in this metadata.
+     * @throws IllegalArgumentException if {@code name} is not in this metadata.
      */
     public DataType getType(String name) {
-        return getType(getIdx(name));
+        return getType(getFirstIdx(name));
     }
 
     /**
@@ -183,15 +181,15 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     }
 
     /**
-     * Returns the keyspace of column {@code name} in this metadata.
+     * Returns the keyspace of the first occurence of {@code name} in this metadata.
      *
      * @param name the name of the column.
-     * @return the keyspace of column {@code name} in this metadata.
+     * @return the keyspace of (the first occurrence of) column {@code name} in this metadata.
      *
-     * @throws IllegalArgumentException if {@code name} is not one of the columns in this metadata.
+     * @throws IllegalArgumentException if {@code name} is not in this metadata.
      */
     public String getKeyspace(String name) {
-        return getKeyspace(getIdx(name));
+        return getKeyspace(getFirstIdx(name));
     }
 
     /**
@@ -207,15 +205,15 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     }
 
     /**
-     * Returns the table of column {@code name} in this metadata.
+     * Returns the table of first occurence of {@code name} in this metadata.
      *
      * @param name the name of the column.
-     * @return the table of column {@code name} in this metadata.
+     * @return the table of (the first occurence of) column {@code name} in this metadata.
      *
-     * @throws IllegalArgumentException if {@code name} is not one of the columns in this metadata.
+     * @throws IllegalArgumentException if {@code name} is not in this metadata.
      */
     public String getTable(String name) {
-        return getTable(getIdx(name));
+        return getTable(getFirstIdx(name));
     }
 
     @Override
@@ -232,7 +230,13 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         return sb.toString();
     }
 
-    int findIdx(String name) {
+    int findFirstIdx(String name) {
+
+        int[] indexes = findAllIdx(name);
+        return indexes == null ? -1 : indexes[0];
+    }
+
+    int[] findAllIdx(String name) {
         boolean caseSensitive = false;
         if (name.length() >= 2 && name.charAt(0) == '"' && name.charAt(name.length() - 1) == '"') {
             name = name.substring(1, name.length() - 1);
@@ -240,34 +244,39 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         }
 
         int[] indexes = byName.get(name.toLowerCase());
-        if (indexes == null) {
-            return -1;
-        } else if (indexes.length == 1) {
-            return indexes[0];
-        } else {
-            for (int i = 0; i < indexes.length; i++) {
-                int idx = indexes[i];
-                if (caseSensitive) {
-                    if (name.equals(byIdx[idx].name))
-                        return idx;
-                } else {
-                    if (name.toLowerCase().equals(byIdx[idx].name))
-                        return idx;
-                }
-            }
-            if (caseSensitive)
-                return -1;
-            else
-                return indexes[0];
+        if (!caseSensitive || indexes == null)
+            return indexes;
+
+        // First, optimistic and assume all are matching
+        int nbMatch = 0;
+        for (int i = 0; i < indexes.length; i++)
+            if (name.equals(byIdx[indexes[i]].name))
+                nbMatch++;
+
+        if (nbMatch == indexes.length)
+            return indexes;
+
+        int[] result = new int[nbMatch];
+        int j = 0;
+        for (int i = 0; i < indexes.length; i++) {
+            int idx = indexes[i];
+            if (name.equals(byIdx[idx].name))
+                result[j++] = idx;
         }
+
+        return result;
     }
 
-    int getIdx(String name) {
-        int idx = findIdx(name);
-        if (idx < 0)
+    int[] getAllIdx(String name) {
+        int[] indexes = findAllIdx(name);
+        if (indexes == null)
             throw new IllegalArgumentException(name + " is not a column defined in this metadata");
 
-        return idx;
+        return indexes;
+    }
+
+    int getFirstIdx(String name) {
+        return getAllIdx(name)[0];
     }
 
     void checkBounds(int i) {
@@ -313,10 +322,6 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
             this.table = table;
             this.name = name;
             this.type = type;
-        }
-
-        static Definition fromTransportSpecification(ColumnSpecification spec) {
-            return new Definition(spec.ksName, spec.cfName, spec.name.toString(), Codec.rawTypeToDataType(spec.type));
         }
 
         /**

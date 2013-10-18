@@ -17,10 +17,6 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
-import org.apache.cassandra.exceptions.RequestValidationException;
-import org.apache.cassandra.db.marshal.AbstractType;
-import org.apache.cassandra.db.marshal.TypeParser;
-
 /**
  * Describes a Column.
  */
@@ -28,36 +24,28 @@ public class ColumnMetadata {
 
     private static final String COLUMN_NAME = "column_name";
     private static final String VALIDATOR = "validator";
-    private static final String INDEX = "component_index";
+    private static final String COMPONENT_INDEX = "component_index";
+    private static final String KIND = "type";
+
+    private static final String INDEX_TYPE = "index_type";
+    private static final String INDEX_OPTIONS = "index_options";
+    private static final String INDEX_NAME = "index_name";
+    private static final String CUSTOM_INDEX_CLASS = "class_name";
 
     private final TableMetadata table;
     private final String name;
     private final DataType type;
     private final IndexMetadata index;
 
-    ColumnMetadata(TableMetadata table, String name, DataType type, Row row) {
+    private ColumnMetadata(TableMetadata table, String name, DataType type, Map<String, String> indexColumns) {
         this.table = table;
         this.name = name;
         this.type = type;
-        this.index = IndexMetadata.build(this, row);
+        this.index = IndexMetadata.build(this, indexColumns);
     }
 
-    static ColumnMetadata build(TableMetadata tm, Row row) {
-        try {
-            String name = row.getString(COLUMN_NAME);
-
-            String validator = row.getString(VALIDATOR);
-            // Ugly special case for TimestampType as we don't have it yet. We should get rid of that later.
-            if (validator.equals("org.apache.cassandra.db.marshal.TimestampType"))
-                validator = "org.apache.cassandra.db.marshal.DateType";
-            AbstractType<?> t = TypeParser.parse(validator);
-            ColumnMetadata cm = new ColumnMetadata(tm, name, Codec.rawTypeToDataType(t), row);
-            tm.add(cm);
-            return cm;
-        } catch (RequestValidationException e) {
-            // The server will have validated the type
-            throw new RuntimeException(e);
-        }
+    static ColumnMetadata fromRaw(TableMetadata tm, Raw raw) {
+        return new ColumnMetadata(tm, raw.name, raw.dataType, raw.indexColumns);
     }
 
     /**
@@ -102,22 +90,14 @@ public class ColumnMetadata {
      */
     public static class IndexMetadata {
 
-        private static final String INDEX_TYPE = "index_type";
-        private static final String INDEX_OPTIONS = "index_options";
-        private static final String INDEX_NAME = "index_name";
-
         private final ColumnMetadata column;
         private final String name;
-        // It doesn't make sense to expose the index type, not the index
-        // options for CQL3 at this point since the notion doesn't exist yet in CQL3.
-        // But keeping the variable internally so we don't forget it exists.
-        private final String type;
-        private final Map<String, String> options = new HashMap<String, String>();
+        private final String customClassName; // will be null, unless it's a custom index
 
-        private IndexMetadata(ColumnMetadata column, String name, String type) {
+        private IndexMetadata(ColumnMetadata column, String name, String customClassName) {
             this.column = column;
             this.name = name;
-            this.type = type;
+            this.customClassName = customClassName;
         }
 
         /**
@@ -139,6 +119,29 @@ public class ColumnMetadata {
         }
 
         /**
+         * Returns whether this index is a custom one.
+         * <p>
+         * If it is indeed a custome index, {@link #getIndexClassName} will
+         * return the name of the class used in Cassandra to implement that
+         * index.
+         *
+         * @return {@code true} if this metadata represents a custom index.
+         */
+        public boolean isCustomIndex() {
+            return customClassName != null;
+        }
+
+        /**
+         * The name of the class used to implement the custom index, if it is one.
+         *
+         * @return the name of the class used Cassandra side to implement this
+         * custom index if {@code isCustomIndex() == true}, {@code null} otherwise.
+         */
+        public String getIndexClassName() {
+            return customClassName;
+        }
+
+        /**
          * Returns a CQL query representing this index.
          *
          * This method returns a single 'CREATE INDEX' query corresponding to
@@ -148,24 +151,67 @@ public class ColumnMetadata {
          */
         public String asCQLQuery() {
             TableMetadata table = column.getTable();
-            return String.format("CREATE INDEX %s ON %s.%s (%s)", name, table.getKeyspace().getName(), table.getName(), column.getName());
+            String ksName = TableMetadata.escapeId(table.getKeyspace().getName());
+            String cfName = TableMetadata.escapeId(table.getName());
+            String colName = TableMetadata.escapeId(column.getName());
+            return isCustomIndex()
+                 ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s';", name, ksName, cfName, colName, customClassName)
+                 : String.format("CREATE INDEX %s ON %s.%s (%s);", name, ksName, cfName, colName);
         }
 
-        private static IndexMetadata build(ColumnMetadata column, Row row) {
-            if (row == null)
+        private static IndexMetadata build(ColumnMetadata column, Map<String, String> indexColumns) {
+            if (indexColumns.isEmpty())
                 return null;
 
-            String type = row.getString(INDEX_TYPE);
+            String type = indexColumns.get(INDEX_TYPE);
             if (type == null)
                 return null;
 
-            return new IndexMetadata(column, type, row.getString(INDEX_NAME));
-        
+            if (!type.equalsIgnoreCase("CUSTOM") || !indexColumns.containsKey(INDEX_OPTIONS))
+                return new IndexMetadata(column, indexColumns.get(INDEX_NAME), null);
+
+            Map<String, String> indexOptions = TableMetadata.fromJsonMap(indexColumns.get(INDEX_OPTIONS));
+            return new IndexMetadata(column, indexColumns.get(INDEX_NAME), indexOptions.get(CUSTOM_INDEX_CLASS));
         }
     }
 
     @Override
     public String toString() {
-        return name + " " + type;
+        return TableMetadata.escapeId(name) + " " + type;
+    }
+
+    // Temporary class that is used to make building the schema easier. Not meant to be
+    // exposed publicly at all.
+    static class Raw {
+        public enum Kind { PARTITION_KEY, CLUSTERING_KEY, REGULAR, COMPACT_VALUE }
+
+        public final String name;
+        public final Kind kind;
+        public final int componentIndex;
+        public final DataType dataType;
+
+        public final Map<String, String> indexColumns = new HashMap<String, String>();
+
+        Raw(String name, Kind kind, int componentIndex, DataType dataType) {
+            this.name = name;
+            this.kind = kind;
+            this.componentIndex = componentIndex;
+            this.dataType = dataType;
+        }
+
+        static Raw fromRow(Row row) {
+            String name = row.getString(COLUMN_NAME);
+            Kind kind = row.isNull(KIND) ? Kind.REGULAR : Enum.valueOf(Kind.class, row.getString(KIND).toUpperCase());
+            int componentIndex = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
+            DataType dataType = CassandraTypeParser.parseOne(row.getString(VALIDATOR));
+
+            Raw c = new Raw(name, kind, componentIndex, dataType);
+
+            for (String str : Arrays.asList(INDEX_TYPE, INDEX_NAME, INDEX_OPTIONS))
+                if (!row.isNull(str))
+                    c.indexColumns.put(str, row.getString(str));
+
+            return c;
+        }
     }
 }

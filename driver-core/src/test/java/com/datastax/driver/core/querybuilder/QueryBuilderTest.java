@@ -24,7 +24,8 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
-import com.datastax.driver.core.Query;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Statement;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class QueryBuilderTest {
@@ -33,7 +34,7 @@ public class QueryBuilderTest {
     public void selectTest() throws Exception {
 
         String query;
-        Query select;
+        Statement select;
 
         query = "SELECT * FROM foo WHERE k=4 AND c>'a' AND c<='z';";
         select = select().all().from("foo").where(eq("k", 4)).and(gt("c", "a")).and(lte("c", "z"));
@@ -55,12 +56,17 @@ public class QueryBuilderTest {
         select = select().writeTime("a").ttl("a").from("foo").allowFiltering();
         assertEquals(select.toString(), query);
 
+        query = "SELECT DISTINCT longName AS a,ttl(longName) AS ttla FROM foo LIMIT :limit;";
+        select = select().distinct().column("longName").as("a").ttl("longName").as("ttla").from("foo").limit(bindMarker("limit"));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT a FROM foo WHERE k IN ();";
+        select = select("a").from("foo").where(in("k"));
+        assertEquals(select.toString(), query);
+
         query = "SELECT count(*) FROM foo;";
         select = select().countAll().from("foo");
         assertEquals(select.toString(), query);
-
-        // Ensure getQueryString() == to.String()
-        assertEquals(select().countAll().from("foo").getQueryString(), query);
 
         query = "SELECT intToBlob(b) FROM foo;";
         select = select().fcall("intToBlob", column("b")).from("foo");
@@ -85,13 +91,6 @@ public class QueryBuilderTest {
         query = "SELECT * FROM words WHERE w='WA(!:gS)r(UfW';";
         select = select().all().from("words").where(eq("w", "WA(!:gS)r(UfW"));
         assertEquals(select.toString(), query);
-
-        try {
-            select = select("a").from("foo").where(in("a"));
-            fail();
-        } catch (IllegalArgumentException e) {
-            assertEquals(e.getMessage(), "Missing values for IN clause");
-        }
 
         try {
             select = select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));
@@ -130,17 +129,18 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
+    @SuppressWarnings("serial")
     public void insertTest() throws Exception {
 
         String query;
-        Query insert;
+        Statement insert;
 
         query = "INSERT INTO foo(a,b,\"C\",d) VALUES (123,'127.0.0.1','foo''bar',{'x':3,'y':2}) USING TIMESTAMP 42 AND TTL 24;";
         insert = insertInto("foo")
                    .value("a", 123)
                    .value("b", InetAddress.getByName("127.0.0.1"))
                    .value(quote("C"), "foo'bar")
-                   .value("d", new TreeMap(){{ put("x", 3); put("y", 2); }})
+                   .value("d", new TreeMap<String, Integer>(){{ put("x", 3); put("y", 2); }})
                    .using(timestamp(42)).and(ttl(24));
         assertEquals(insert.toString(), query);
 
@@ -151,21 +151,21 @@ public class QueryBuilderTest {
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo(a,b) VALUES ({2,3,4},3.4) USING TTL 24 AND TIMESTAMP 42;";
-        insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet(){{ add(2); add(3); add(4); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
+        insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
 
-        query = "INSERT INTO foo.bar(a,b) VALUES ({2,3,4},3.4) USING TTL 24 AND TIMESTAMP 42;";
+        query = "INSERT INTO foo.bar(a,b) VALUES ({2,3,4},3.4) USING TTL ? AND TIMESTAMP ?;";
         insert = insertInto("foo", "bar")
-                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet(){{ add(2); add(3); add(4); }}, 3.4 })
-                    .using(ttl(24))
-                    .and(timestamp(42));
+                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 })
+                    .using(ttl(bindMarker()))
+                    .and(timestamp(bindMarker()));
         assertEquals(insert.toString(), query);
 
         // commutative result of TIMESTAMP
         query = "INSERT INTO foo.bar(a,b,c) VALUES ({2,3,4},3.4,123) USING TIMESTAMP 42;";
         insert = insertInto("foo", "bar")
                     .using(timestamp(42))
-                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet(){{ add(2); add(3); add(4); }}, 3.4 })
+                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 })
                     .value("c", 123);
         assertEquals(insert.toString(), query);
 
@@ -174,7 +174,7 @@ public class QueryBuilderTest {
         insert = insertInto("foo")
                     .using(timestamp(42))
                     .value("c", 123)
-                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet(){{ add(2); add(3); add(4); }}, 3.4 });
+                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 });
         assertEquals(insert.toString(), query);
 
         try {
@@ -183,13 +183,19 @@ public class QueryBuilderTest {
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Got 2 names but 3 values");
         }
+
+        // CAS test
+        query = "INSERT INTO foo(k,x) VALUES (0,1) IF NOT EXISTS;";
+        insert = insertInto("foo").value("k", 0).value("x", 1).ifNotExists();
+        assertEquals(insert.toString(), query);
     }
 
     @Test(groups = "unit")
+    @SuppressWarnings("serial")
     public void updateTest() throws Exception {
 
         String query;
-        Query update;
+        Statement update;
 
         query = "UPDATE foo.bar USING TIMESTAMP 42 SET a=12,b=[3,2,1],c=c+3 WHERE k=2;";
         update = update("foo", "bar").using(timestamp(42)).with(set("a", 12)).and(set("b", Arrays.asList(3, 2, 1))).and(incr("c", 3)).where(eq("k", 2));
@@ -208,13 +214,13 @@ public class QueryBuilderTest {
         assertEquals(update.toString(), query);
 
         query = "UPDATE foo SET b=b-[1,2,3],c=c+{1},d=d+{2,3,4};";
-        update = update("foo").with(discardAll("b", Arrays.asList(1, 2, 3))).and(add("c", 1)).and(addAll("d", new TreeSet(){{ add(2); add(3); add(4); }}));
+        update = update("foo").with(discardAll("b", Arrays.asList(1, 2, 3))).and(add("c", 1)).and(addAll("d", new TreeSet<Integer>(){{ add(2); add(3); add(4); }}));
         assertEquals(update.toString(), query);
 
         query = "UPDATE foo SET b=b-{2,3,4},c['k']='v',d=d+{'x':3,'y':2};";
-        update = update("foo").with(removeAll("b", new TreeSet(){{ add(2); add(3); add(4); }}))
+        update = update("foo").with(removeAll("b", new TreeSet<Integer>(){{ add(2); add(3); add(4); }}))
                     .and(put("c", "k", "v"))
-                    .and(putAll("d", new TreeMap(){{ put("x", 3); put("y", 2); }}));
+                    .and(putAll("d", new TreeMap<String, Integer>(){{ put("x", 3); put("y", 2); }}));
         assertEquals(update.toString(), query);
 
         query = "UPDATE foo USING TTL 400;";
@@ -243,13 +249,18 @@ public class QueryBuilderTest {
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid ttl, must be positive");
         }
+
+        // CAS test
+        query = "UPDATE foo SET x=4 WHERE k=0 IF x=1;";
+        update = update("foo").with(set("x", 4)).where(eq("k", 0)).onlyIf(eq("x", 1));
+        assertEquals(update.toString(), query);
     }
 
     @Test(groups = "unit")
     public void deleteTest() throws Exception {
 
         String query;
-        Query delete;
+        Statement delete;
 
         query = "DELETE a,b,c FROM foo USING TIMESTAMP 0 WHERE k=1;";
         delete = delete("a", "b", "c").from("foo").using(timestamp(0)).where(eq("k", 1));
@@ -290,9 +301,10 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
+    @SuppressWarnings("serial")
     public void batchTest() throws Exception {
         String query;
-        Query batch;
+        Statement batch;
 
         query = "BEGIN BATCH USING TIMESTAMP 42 ";
         query += "INSERT INTO foo(a,b) VALUES ({2,3,4},3.4);";
@@ -300,7 +312,7 @@ public class QueryBuilderTest {
         query += "DELETE a[3],b['foo'],c FROM foo WHERE k=1;";
         query += "APPLY BATCH;";
         batch = batch()
-            .add(insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet(){{ add(2); add(3); add(4); }}, 3.4 }))
+            .add(insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 }))
             .add(update("foo").with(setIdx("a", 2, "foo")).and(prependAll("b", Arrays.asList(3, 2, 1))).and(remove("c", "a")).where(eq("k", 2)))
             .add(delete().listElt("a", 3).mapElt("b", "foo").column("c").from("foo").where(eq("k", 1)))
             .using(timestamp(42));
@@ -312,12 +324,14 @@ public class QueryBuilderTest {
         query += "APPLY BATCH;";
         batch = batch(delete().listElt("a", 3).from("foo").where(eq("k", 1)));
         assertEquals(batch.toString(), query);
+
+        assertEquals(batch().toString(), "BEGIN BATCH APPLY BATCH;");
     }
 
     @Test(groups = "unit")
     public void batchCounterTest() throws Exception {
         String query;
-        Query batch;
+        Statement batch;
 
         // Test value increments
         query = "BEGIN COUNTER BATCH USING TIMESTAMP 42 ";
@@ -388,7 +402,7 @@ public class QueryBuilderTest {
     @Test(groups = "unit", expectedExceptions={IllegalArgumentException.class})
     public void batchMixedCounterTest() throws Exception {
         String query;
-        Query batch;
+        Statement batch;
 
         batch = batch()
             .add(update("foo").with(incr("a", 1)))
@@ -400,7 +414,7 @@ public class QueryBuilderTest {
     @Test(groups = "unit")
     public void markerTest() throws Exception {
         String query;
-        Query insert;
+        Statement insert;
 
         query = "INSERT INTO test(k,c) VALUES (0,?);";
         insert = insertInto("test")
@@ -413,13 +427,13 @@ public class QueryBuilderTest {
     public void rawEscapingTest() throws Exception {
 
         String query;
-        Query select;
+        Statement select;
 
         query = "SELECT * FROM t WHERE c='C''est la vie!';";
         select = select().from("t").where(eq("c", "C'est la vie!"));
         assertEquals(select.toString(), query);
 
-        query = "SELECT * FROM t WHERE c='C'est la vie!';";
+        query = "SELECT * FROM t WHERE c=C'est la vie!;";
         select = select().from("t").where(eq("c", raw("C'est la vie!")));
         assertEquals(select.toString(), query);
 
@@ -428,7 +442,7 @@ public class QueryBuilderTest {
         assertEquals(select.toString(), query);
 
         query = "SELECT * FROM t WHERE c='now()';";
-        select = select().from("t").where(eq("c", raw("now()")));
+        select = select().from("t").where(eq("c", raw("'now()'")));
         assertEquals(select.toString(), query);
     }
 
@@ -437,7 +451,7 @@ public class QueryBuilderTest {
     public void selectInjectionTests() throws Exception {
 
         String query;
-        Query select;
+        Statement select;
 
         query = "SELECT * FROM \"foo WHERE k=4\";";
         select = select().all().from("foo WHERE k=4");
@@ -490,10 +504,11 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
+    @SuppressWarnings("serial")
     public void insertInjectionTest() throws Exception {
 
         String query;
-        Query insert;
+        Statement insert;
 
         query = "INSERT INTO foo(a) VALUES ('123); --comment');";
         insert = insertInto("foo").value("a", "123); --comment");
@@ -504,7 +519,7 @@ public class QueryBuilderTest {
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo(a,b) VALUES ({'2''} space','3','4'},3.4) USING TTL 24 AND TIMESTAMP 42;";
-        insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet(){{ add("2'} space"); add("3"); add("4"); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
+        insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<String>(){{ add("2'} space"); add("3"); add("4"); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
     }
 
@@ -512,7 +527,7 @@ public class QueryBuilderTest {
     public void updateInjectionTest() throws Exception {
 
         String query;
-        Query update;
+        Statement update;
 
         query = "UPDATE foo.bar USING TIMESTAMP 42 SET a=12 WHERE k='2 OR 1=1';";
         update = update("foo", "bar").using(timestamp(42)).with(set("a", 12)).where(eq("k", "2 OR 1=1"));
@@ -531,7 +546,7 @@ public class QueryBuilderTest {
     public void deleteInjectionTests() throws Exception {
 
         String query;
-        Query delete;
+        Statement delete;
 
         query = "DELETE  FROM \"foo WHERE k=4\";";
         delete = delete().from("foo WHERE k=4");
@@ -569,5 +584,35 @@ public class QueryBuilderTest {
         query = "DELETE  FROM foo WHERE token(\"k)>0 OR token(k\")>token(42);";
         delete = delete().from("foo").where(gt(token("k)>0 OR token(k"), fcall("token", 42)));
         assertEquals(delete.toString(), query);
+    }
+
+    @Test(groups = "unit")
+    public void statementForwardingTest() throws Exception {
+
+        Update upd = update("foo");
+        upd.setConsistencyLevel(ConsistencyLevel.QUORUM);
+        upd.enableTracing();
+
+        Statement query = upd.using(timestamp(42)).with(set("a", 12)).and(incr("c", 3)).where(eq("k", 2));
+
+        assertEquals(query.getConsistencyLevel(), ConsistencyLevel.QUORUM);
+        assertTrue(query.isTracing());
+    }
+
+    @Test(groups = "unit")
+    public void rejectUnknownValueTest() throws Exception {
+
+        try {
+            update("foo").with(set("a", new byte[13])).where(eq("k", 2)).toString();
+            fail("Byte arrays should not be valid, ByteBuffer should be used instead");
+        } catch (IllegalArgumentException e) {
+            // Ok, that's what we expect
+        }
+    }
+
+    @Test(groups = "unit")
+    public void truncateTest() throws Exception {
+        assertEquals(truncate("foo").toString(), "TRUNCATE foo;");
+        assertEquals(truncate("foo", quote("Bar")).toString(), "TRUNCATE foo.\"Bar\";");
     }
 }

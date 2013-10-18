@@ -18,10 +18,7 @@ package com.datastax.driver.core;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.apache.cassandra.utils.MD5Digest;
-import org.apache.cassandra.transport.messages.ResultMessage;
-
-import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.policies.RetryPolicy;
 
 /**
  * Represents a prepared statement, a query with bound variables that has been
@@ -31,10 +28,21 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
  * for the bound variables. A prepared statement and the values for its
  * bound variables constitute a BoundStatement and can be executed (by
  * {@link Session#execute}).
+ * <p>
+ * A {@code PreparedStatement} object allows you to define specific defaults
+ * for the different properties of a {@link Statement} (Consistency level, tracing, ...),
+ * in which case those properties will be inherited as default by every
+ * BoundedStatement created from the {PreparedStatement}. The default for those
+ * {@code PreparedStatement} properties is the same that in {@link Statement} if the
+ * PreparedStatement is created by {@link Session#prepare(String)} but will inherit
+ * of the properties of the {@link RegularStatement} used for the preparation if
+ * {@link Session#prepare(RegularStatement)} is used.
  */
 public class PreparedStatement {
 
     final ColumnDefinitions metadata;
+    final ColumnDefinitions resultSetMetadata;
+
     final MD5Digest id;
     final String query;
     final String queryKeyspace;
@@ -43,45 +51,44 @@ public class PreparedStatement {
     final int[] routingKeyIndexes;
 
     volatile ConsistencyLevel consistency;
+    volatile boolean traceQuery;
+    volatile RetryPolicy retryPolicy;
 
-    private PreparedStatement(ColumnDefinitions metadata, MD5Digest id, int[] routingKeyIndexes, String query, String queryKeyspace) {
+    private PreparedStatement(ColumnDefinitions metadata, ColumnDefinitions resultSetMetadata, MD5Digest id, int[] routingKeyIndexes, String query, String queryKeyspace) {
         this.metadata = metadata;
+        this.resultSetMetadata = resultSetMetadata;
         this.id = id;
         this.routingKeyIndexes = routingKeyIndexes;
         this.query = query;
         this.queryKeyspace = queryKeyspace;
     }
 
-    static PreparedStatement fromMessage(ResultMessage.Prepared msg, Metadata clusterMetadata, String query, String queryKeyspace) {
-        switch (msg.kind) {
-            case PREPARED:
-                ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[msg.metadata.names.size()];
-                if (defs.length == 0)
-                    return new PreparedStatement(new ColumnDefinitions(defs), msg.statementId, null, query, queryKeyspace);
+    static PreparedStatement fromMessage(Responses.Result.Prepared msg, Metadata clusterMetadata, String query, String queryKeyspace) {
+        assert msg.metadata.columns != null;
 
-                List<ColumnMetadata> partitionKeyColumns = null;
-                int[] pkIndexes = null;
-                KeyspaceMetadata km = clusterMetadata.getKeyspace(msg.metadata.names.get(0).ksName);
-                if (km != null) {
-                    TableMetadata tm = km.getTable(msg.metadata.names.get(0).cfName);
-                    if (tm != null) {
-                        partitionKeyColumns = tm.getPartitionKey();
-                        pkIndexes = new int[partitionKeyColumns.size()];
-                        for (int i = 0; i < pkIndexes.length; ++i)
-                            pkIndexes[i] = -1;
-                    }
-                }
+        ColumnDefinitions defs = msg.metadata.columns;
 
-                // Note: we rely on the fact CQL queries cannot span multiple tables. If that change, we'll have to get smarter.
-                for (int i = 0; i < defs.length; i++) {
-                    defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(msg.metadata.names.get(i));
-                    maybeGetIndex(defs[i].getName(), i, partitionKeyColumns, pkIndexes);
-                }
+        if (defs.size() == 0)
+            return new PreparedStatement(defs, msg.resultMetadata.columns, msg.statementId, null, query, queryKeyspace);
 
-                return new PreparedStatement(new ColumnDefinitions(defs), msg.statementId, allSet(pkIndexes) ? pkIndexes : null, query, queryKeyspace);
-            default:
-                throw new DriverInternalError(String.format("%s response received when prepared statement received was expected", msg.kind));
+        List<ColumnMetadata> partitionKeyColumns = null;
+        int[] pkIndexes = null;
+        KeyspaceMetadata km = clusterMetadata.getKeyspace(defs.getKeyspace(0));
+        if (km != null) {
+            TableMetadata tm = km.getTable(defs.getTable(0));
+            if (tm != null) {
+                partitionKeyColumns = tm.getPartitionKey();
+                pkIndexes = new int[partitionKeyColumns.size()];
+                for (int i = 0; i < pkIndexes.length; ++i)
+                    pkIndexes[i] = -1;
+            }
         }
+
+        // Note: we rely on the fact CQL queries cannot span multiple tables. If that change, we'll have to get smarter.
+        for (int i = 0; i < defs.size(); i++)
+            maybeGetIndex(defs.getName(i), i, partitionKeyColumns, pkIndexes);
+
+        return new PreparedStatement(defs, msg.resultMetadata.columns, msg.statementId, allSet(pkIndexes) ? pkIndexes : null, query, queryKeyspace);
     }
 
     private static void maybeGetIndex(String name, int j, List<ColumnMetadata> pkColumns, int[] pkIndexes) {
@@ -161,7 +168,7 @@ public class PreparedStatement {
      * @param routingKey the raw (binary) value to use as routing key.
      * @return this {@code PreparedStatement} object.
      *
-     * @see Query#getRoutingKey
+     * @see Statement#getRoutingKey
      */
     public PreparedStatement setRoutingKey(ByteBuffer routingKey) {
         this.routingKey = routingKey;
@@ -179,7 +186,7 @@ public class PreparedStatement {
      * the routing key.
      * @return this {@code PreparedStatement} object.
      *
-     * @see Query#getRoutingKey
+     * @see Statement#getRoutingKey
      */
     public PreparedStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
         this.routingKey = SimpleStatement.compose(routingKeyComponents);
@@ -245,5 +252,67 @@ public class PreparedStatement {
      */
     public String getQueryKeyspace() {
         return queryKeyspace;
+    }
+
+    /**
+     * Convenience method to enables tracing for all bound statements created
+     * from this prepared statement.
+     *
+     * @return this {@code Query} object.
+     */
+    public PreparedStatement enableTracing() {
+        this.traceQuery = true;
+        return this;
+    }
+
+    /**
+     * Convenience method to disable tracing for all bound statements created
+     * from this prepared statement.
+     *
+     * @return this {@code PreparedStatement} object.
+     */
+    public PreparedStatement disableTracing() {
+        this.traceQuery = false;
+        return this;
+    }
+
+    /**
+     * Returns whether tracing is enabled for this prepared statement, i.e. if
+     * BoundStatement created from it will use tracing by default.
+     *
+     * @return {@code true} if this prepared statement has tracing enabled,
+     * {@code false} otherwise.
+     */
+    public boolean isTracing() {
+        return traceQuery;
+    }
+
+    /**
+     * Convenience method to set a default retry policy for the {@code BoundStatement}
+     * created from this prepared statement.
+     * <p>
+     * Note that this method is competely optional. By default, the retry policy
+     * used is the one returned {@link com.datastax.driver.core.policies.Policies#getRetryPolicy}
+     * in the cluster configuration. This method is only useful if you want
+     * to override this default policy for the {@code BoundStatement} created from
+     * this {@code PreparedStatement}.
+     * to punctually override the default policy for this request.
+     *
+     * @param policy the retry policy to use for this prepared statement.
+     * @return this {@code PreparedStatement} object.
+     */
+    public PreparedStatement setRetryPolicy(RetryPolicy policy) {
+        this.retryPolicy = policy;
+        return this;
+    }
+
+    /**
+     * Returns the retry policy sets for this prepared statement, if any.
+     *
+     * @return the retry policy sets specifically for this prepared statement or
+     * {@code null} if none have been set.
+     */
+    public RetryPolicy getRetryPolicy() {
+        return retryPolicy;
     }
 }

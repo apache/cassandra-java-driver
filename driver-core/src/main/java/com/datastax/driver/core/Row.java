@@ -21,8 +21,6 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.apache.cassandra.db.marshal.*;
-
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
@@ -81,7 +79,7 @@ public class Row {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      */
     public boolean isNull(String name) {
-        return isNull(metadata.getIdx(name));
+        return isNull(metadata.getFirstIdx(name));
     }
 
     /**
@@ -101,7 +99,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return false;
 
-        return BooleanType.instance.compose(value);
+        return TypeCodec.BooleanCodec.instance.deserializeNoBoxing(value);
     }
 
     /**
@@ -116,7 +114,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type BOOLEAN.
      */
     public boolean getBool(String name) {
-        return getBool(metadata.getIdx(name));
+        return getBool(metadata.getFirstIdx(name));
     }
 
     /**
@@ -136,7 +134,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return 0;
 
-        return Int32Type.instance.compose(value);
+        return TypeCodec.IntCodec.instance.deserializeNoBoxing(value);
     }
 
     /**
@@ -151,7 +149,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type INT.
      */
     public int getInt(String name) {
-        return getInt(metadata.getIdx(name));
+        return getInt(metadata.getFirstIdx(name));
     }
 
     /**
@@ -171,7 +169,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return 0L;
 
-        return LongType.instance.compose(value);
+        return TypeCodec.LongCodec.instance.deserializeNoBoxing(value);
     }
 
     /**
@@ -186,7 +184,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code i} is not of type BIGINT or COUNTER.
      */
     public long getLong(String name) {
-        return getLong(metadata.getIdx(name));
+        return getLong(metadata.getFirstIdx(name));
     }
 
     /**
@@ -206,7 +204,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return DateType.instance.compose(value);
+        return TypeCodec.DateCodec.instance.deserialize(value);
     }
 
     /**
@@ -221,7 +219,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type TIMESTAMP.
      */
     public Date getDate(String name) {
-        return getDate(metadata.getIdx(name));
+        return getDate(metadata.getFirstIdx(name));
     }
 
     /**
@@ -241,7 +239,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return 0.0f;
 
-        return FloatType.instance.compose(value);
+        return TypeCodec.FloatCodec.instance.deserializeNoBoxing(value);
     }
 
     /**
@@ -256,7 +254,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type FLOAT.
      */
     public float getFloat(String name) {
-        return getFloat(metadata.getIdx(name));
+        return getFloat(metadata.getFirstIdx(name));
     }
 
     /**
@@ -276,7 +274,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return 0.0;
 
-        return DoubleType.instance.compose(value);
+        return TypeCodec.DoubleCodec.instance.deserializeNoBoxing(value);
     }
 
     /**
@@ -291,7 +289,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type DOUBLE.
      */
     public double getDouble(String name) {
-        return getDouble(metadata.getIdx(name));
+        return getDouble(metadata.getFirstIdx(name));
     }
 
     /**
@@ -334,7 +332,7 @@ public class Row {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      */
     public ByteBuffer getBytesUnsafe(String name) {
-        return getBytesUnsafe(metadata.getIdx(name));
+        return getBytesUnsafe(metadata.getFirstIdx(name));
     }
 
     /**
@@ -370,7 +368,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code i} type is not of type BLOB.
      */
     public ByteBuffer getBytes(String name) {
-        return getBytes(metadata.getIdx(name));
+        return getBytes(metadata.getFirstIdx(name));
     }
 
     /**
@@ -394,8 +392,8 @@ public class Row {
             return null;
 
         return type == DataType.Name.ASCII
-             ? AsciiType.instance.compose(value)
-             : UTF8Type.instance.compose(value);
+             ? TypeCodec.StringCodec.asciiInstance.deserialize(value)
+             : TypeCodec.StringCodec.utf8Instance.deserialize(value);
     }
 
     /**
@@ -411,7 +409,7 @@ public class Row {
      * VARCHAR, TEXT or ASCII.
      */
     public String getString(String name) {
-        return getString(metadata.getIdx(name));
+        return getString(metadata.getFirstIdx(name));
     }
 
     /**
@@ -431,7 +429,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return IntegerType.instance.compose(value);
+        return TypeCodec.BigIntegerCodec.instance.deserialize(value);
     }
 
     /**
@@ -446,7 +444,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type VARINT.
      */
     public BigInteger getVarint(String name) {
-        return getVarint(metadata.getIdx(name));
+        return getVarint(metadata.getFirstIdx(name));
     }
 
     /**
@@ -466,7 +464,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return DecimalType.instance.compose(value);
+        return TypeCodec.DecimalCodec.instance.deserialize(value);
     }
 
     /**
@@ -481,7 +479,7 @@ public class Row {
      * @throws InvalidTypeException if column {@code name} is not of type DECIMAL.
      */
     public BigDecimal getDecimal(String name) {
-        return getDecimal(metadata.getIdx(name));
+        return getDecimal(metadata.getFirstIdx(name));
     }
 
     /**
@@ -503,8 +501,8 @@ public class Row {
             return null;
 
         return type == DataType.Name.UUID
-             ? UUIDType.instance.compose(value)
-             : TimeUUIDType.instance.compose(value);
+             ? TypeCodec.UUIDCodec.instance.deserialize(value)
+             : TypeCodec.TimeUUIDCodec.instance.deserialize(value);
     }
 
     /**
@@ -520,7 +518,7 @@ public class Row {
      * UUID or TIMEUUID.
      */
     public UUID getUUID(String name) {
-        return getUUID(metadata.getIdx(name));
+        return getUUID(metadata.getFirstIdx(name));
     }
 
     /**
@@ -540,7 +538,7 @@ public class Row {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return InetAddressType.instance.compose(value);
+        return TypeCodec.InetCodec.instance.deserialize(value);
     }
 
     /**
@@ -556,7 +554,7 @@ public class Row {
      * INET.
      */
     public InetAddress getInet(String name) {
-        return getInet(metadata.getIdx(name));
+        return getInet(metadata.getFirstIdx(name));
     }
 
     /**
@@ -587,8 +585,7 @@ public class Row {
         if (value == null)
             return Collections.<T>emptyList();
 
-        // TODO: we could avoid the getCodec call if we kept a reference to the original message.
-        return Codec.<List<T>>getCodec(type).compose(value);
+        return (List<T>)type.codec().deserialize(value);
     }
 
     /**
@@ -607,7 +604,7 @@ public class Row {
      * elements are not of class {@code elementsClass}.
      */
     public <T> List<T> getList(String name, Class<T> elementsClass) {
-        return getList(metadata.getIdx(name), elementsClass);
+        return getList(metadata.getFirstIdx(name), elementsClass);
     }
 
     /**
@@ -638,7 +635,7 @@ public class Row {
         if (value == null)
             return Collections.<T>emptySet();
 
-        return Codec.<Set<T>>getCodec(type).compose(value);
+        return (Set<T>)type.codec().deserialize(value);
     }
 
     /**
@@ -657,7 +654,7 @@ public class Row {
      * elements are not of class {@code elementsClass}.
      */
     public <T> Set<T> getSet(String name, Class<T> elementsClass) {
-        return getSet(metadata.getIdx(name), elementsClass);
+        return getSet(metadata.getFirstIdx(name), elementsClass);
     }
 
     /**
@@ -691,7 +688,7 @@ public class Row {
         if (value == null)
             return Collections.<K, V>emptyMap();
 
-        return Codec.<Map<K, V>>getCodec(type).compose(value);
+        return (Map<K, V>)type.codec().deserialize(value);
     }
 
     /**
@@ -712,7 +709,7 @@ public class Row {
      * class {@code valuesClass}.
      */
     public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass) {
-        return getMap(metadata.getIdx(name), keysClass, valuesClass);
+        return getMap(metadata.getFirstIdx(name), keysClass, valuesClass);
     }
 
     @Override
@@ -726,7 +723,7 @@ public class Row {
             if (bb == null)
                 sb.append("NULL");
             else
-                sb.append(Codec.getCodec(metadata.getType(i)).getString(bb));
+                sb.append(metadata.getType(i).codec().deserialize(bb).toString());
         }
         sb.append("]");
         return sb.toString();

@@ -150,20 +150,18 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * The order of the local node in the returned query plan will follow a
      * Round-robin algorithm.
      *
-     * @param query the query for which to build the plan.
+     * @param loggedKeyspace the keyspace currently logged in on for this
+     * query.
+     * @param statement the query for which to build the plan.
      * @return a new query plan, i.e. an iterator indicating which host to
      * try first for querying, which one to use as failover, etc...
      */
     @Override
-    public Iterator<Host> newQueryPlan(Query query) {
+    public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement) {
 
         CopyOnWriteArrayList<Host> localLiveHosts = perDcLiveHosts.get(localDc);
         final List<Host> hosts = localLiveHosts == null ? Collections.<Host>emptyList() : cloneList(localLiveHosts);
         final int startIdx = index.getAndIncrement();
-
-        // Overflow protection; not theoretically thread safe but should be good enough
-        if (startIdx > Integer.MAX_VALUE - 10000)
-            index.set(0);
 
         return new AbstractIterator<Host>() {
 
@@ -179,12 +177,18 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
             protected Host computeNext() {
                 if (remainingLocal > 0) {
                     remainingLocal--;
-                    return hosts.get(idx++ % hosts.size());
+                    int c = idx++ % hosts.size();
+                    if (c < 0)
+                        c += hosts.size();
+                    return hosts.get(c);
                 }
 
                 if (currentDcHosts != null && currentDcRemaining > 0) {
                     currentDcRemaining--;
-                    return currentDcHosts.get(idx++ % currentDcHosts.size());
+                    int c = idx++ % currentDcHosts.size();
+                    if (c < 0)
+                        c += currentDcHosts.size();
+                    return currentDcHosts.get(c);
                 }
 
                 if (remoteDcs == null) {
