@@ -41,6 +41,12 @@ CHANGELOG
   first one (JAVA-88).
 
 
+1.0.5:
+------
+
+- [new] OSGi bundle (JAVA-142)
+
+
 1.0.4:
 ------
 
