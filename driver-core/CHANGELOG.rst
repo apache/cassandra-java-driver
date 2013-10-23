@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+2.0.0-rc1:
+----------
+
+- [new] Mark compression dependencies optional in maven (JAVA-199)
+
 2.0.0-beta2:
 ------------
 
