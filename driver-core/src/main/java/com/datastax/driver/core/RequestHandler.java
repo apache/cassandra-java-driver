@@ -66,6 +66,7 @@ class RequestHandler implements Connection.ResponseCallback {
     private volatile Connection.ResponseHandler connectionHandler;
 
     private final TimerContext timerContext;
+    private final long startTime;
 
     public RequestHandler(Session.Manager manager, Callback callback, Query query) {
         this.manager = manager;
@@ -79,6 +80,7 @@ class RequestHandler implements Connection.ResponseCallback {
         this.timerContext = metricsEnabled()
                           ? metrics().getRequestsTimer().time()
                           : null;
+        this.startTime = System.nanoTime();
     }
 
     private boolean metricsEnabled() {
@@ -90,13 +92,18 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     public void sendRequest() {
-
-        while (queryPlan.hasNext() && !isCanceled) {
-            Host host = queryPlan.next();
-            if (query(host))
-                return;
+        try {
+            while (queryPlan.hasNext() && !isCanceled) {
+                Host host = queryPlan.next();
+                logger.trace("Querying node {}", host);
+                if (query(host))
+                    return;
+            }
+            setFinalException(null, new NoHostAvailableException(errors == null ? Collections.<InetAddress, String>emptyMap() : errors));
+        } catch (Exception e) {
+            // Shouldn't happen really, but if ever the loadbalancing policy returned iterator throws, we don't want to block.
+            setFinalException(null, new DriverInternalError("An unexpected error happened while sending requests", e));
         }
-        setFinalException(null, new NoHostAvailableException(errors == null ? Collections.<InetAddress, String>emptyMap() : errors));
     }
 
     private boolean query(Host host) {
@@ -206,29 +213,32 @@ class RequestHandler implements Connection.ResponseCallback {
         }
         if (retryConsistencyLevel != null)
             info = info.withAchievedConsistency(retryConsistencyLevel);
-        callback.onSet(connection, response, info);
+        callback.onSet(connection, response, info, System.nanoTime() - startTime);
     }
 
     private void setFinalException(Connection connection, Exception exception) {
         if (timerContext != null)
             timerContext.stop();
-        callback.onException(connection, exception);
+        callback.onException(connection, exception, System.nanoTime() - startTime);
     }
 
     private void returnConnection(Connection connection) {
-        if (currentPool == null) {
-            // This should not happen but is probably not reason to fail completely
-            logger.error("No current pool set; this should not happen");
-        } else {
+        // In most case currentPool won't be null since we set it before sending the
+        // query. However, it's possible that for the same write we call both onSet
+        // and onException (especially if a node dies, we'll error out the handler and
+        // that may race with a result that just came in before the death). That fine
+        // though, but it means currentPool might be null (in which case the connection
+        // has been returned already to its pool anyway).
+        if (currentPool != null)
             currentPool.returnConnection(connection);
-        }
     }
 
     @Override
-    public void onSet(Connection connection, Message.Response response) {
+    public void onSet(Connection connection, Message.Response response, long latency) {
 
         returnConnection(connection);
 
+        Host queriedHost = current;
         try {
             switch (response.type) {
                 case RESULT:
@@ -355,6 +365,9 @@ class RequestHandler implements Connection.ResponseCallback {
             }
         } catch (Exception e) {
             setFinalException(connection, e);
+        } finally {
+            if (queriedHost != null)
+                manager.cluster.manager.reportLatency(queriedHost, latency);
         }
     }
 
@@ -367,7 +380,7 @@ class RequestHandler implements Connection.ResponseCallback {
             }
 
             @Override
-            public void onSet(Connection connection, Message.Response response) {
+            public void onSet(Connection connection, Message.Response response, long latency) {
                 // TODO should we check the response ?
                 switch (response.type) {
                     case RESULT:
@@ -393,12 +406,12 @@ class RequestHandler implements Connection.ResponseCallback {
             }
 
             @Override
-            public void onException(Connection connection, Exception exception) {
-                RequestHandler.this.onException(connection, exception);
+            public void onException(Connection connection, Exception exception, long latency) {
+                RequestHandler.this.onException(connection, exception, latency);
             }
 
             @Override
-            public void onTimeout(Connection connection) {
+            public void onTimeout(Connection connection, long latency) {
                 logError(connection.address, "Timeout waiting for response to prepare message");
                 retry(false, null);
             }
@@ -406,31 +419,41 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     @Override
-    public void onException(Connection connection, Exception exception) {
+    public void onException(Connection connection, Exception exception, long latency) {
 
         returnConnection(connection);
 
-        if (exception instanceof ConnectionException) {
-            if (metricsEnabled())
-                metrics().getErrorMetrics().getConnectionErrors().inc();
-            ConnectionException ce = (ConnectionException)exception;
-            logError(ce.address, ce.getMessage());
-            retry(false, null);
-            return;
-        }
+        Host queriedHost = current;
+        try {
+            if (exception instanceof ConnectionException) {
+                if (metricsEnabled())
+                    metrics().getErrorMetrics().getConnectionErrors().inc();
+                ConnectionException ce = (ConnectionException)exception;
+                logError(ce.address, ce.getMessage());
+                retry(false, null);
+                return;
+            }
 
-        setFinalException(connection, exception);
+            setFinalException(connection, exception);
+        } finally {
+            if (queriedHost != null)
+                manager.cluster.manager.reportLatency(queriedHost, latency);
+        }
     }
 
     @Override
-    public void onTimeout(Connection connection) {
+    public void onTimeout(Connection connection, long latency) {
         returnConnection(connection);
+        Host queriedHost = current;
         logError(connection.address, "Timeout during read");
         retry(false, null);
+
+        if (queriedHost != null)
+            manager.cluster.manager.reportLatency(queriedHost, latency);
     }
 
     interface Callback extends Connection.ResponseCallback {
-        public void onSet(Connection connection, Message.Response response, ExecutionInfo info);
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, long latency);
         public void register(RequestHandler handler);
     }
 }

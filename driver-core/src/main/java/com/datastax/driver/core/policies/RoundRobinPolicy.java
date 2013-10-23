@@ -104,7 +104,10 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
                     return endOfData();
 
                 remaining--;
-                return hosts.get(idx++ % hosts.size());
+                int c = idx++ % hosts.size();
+                if (c < 0)
+                    c += hosts.size();
+                return hosts.get(c);
             }
         };
     }

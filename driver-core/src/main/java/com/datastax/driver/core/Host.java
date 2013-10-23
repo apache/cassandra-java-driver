@@ -51,7 +51,6 @@ public class Host {
             throw new NullPointerException();
 
         this.address = address;
-        this.isUp = true;
         this.policy = policy.create(this);
         this.monitor = new HealthMonitor();
         this.defaultExecutionInfo = new ExecutionInfo(ImmutableList.of(this));
@@ -101,6 +100,14 @@ public class Host {
 
     /**
      * Returns whether the host is considered up by the driver.
+     * <p>
+     * Please note that this is only the view of the driver may not reflect the
+     * reality. In particular a node can be down but the driver hasn't detected
+     * it yet, or he can have been restarted but the driver hasn't detected it
+     * yet (in particular, for hosts to which the driver does not connect (because
+     * the {@code LoadBalancingPolicy.distance} method says so), this information
+     * may be durably inaccurate). This information should thus only be
+     * considered as best effort and should not be relied upon too strongly.
      *
      * @return whether the node is considered up.
      */

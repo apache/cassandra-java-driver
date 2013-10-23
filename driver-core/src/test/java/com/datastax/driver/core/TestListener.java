@@ -21,9 +21,14 @@ import org.testng.ITestResult;
 import org.testng.TestListenerAdapter;
 
 public class TestListener extends TestListenerAdapter {
+
     private long start_time = System.nanoTime();
     private int test_index = 0;
     private long totalTests = 0;
+
+    static {
+        System.out.println("[CCMBridge] Using Cassandra version: " + CCMBridge.CASSANDRA_VERSION);
+    }
 
     @Override
     public void onTestFailure(ITestResult tr) {

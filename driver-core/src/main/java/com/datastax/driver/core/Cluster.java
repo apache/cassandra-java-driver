@@ -21,8 +21,13 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.base.Predicates;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -64,9 +69,14 @@ public class Cluster {
 
     final Manager manager;
 
-    private Cluster(List<InetAddress> contactPoints, Configuration configuration) {
+    // Note: we don't want to make init part of Configuration. In 2.0, the default is not init
+    // so there is not point in breaking Configuration API for that. However, as a workaround
+    // until upgrade, we still want to allow optional lazy initialization of the control
+    // connection (see #JAVA-161)
+    private Cluster(List<InetAddress> contactPoints, Configuration configuration, boolean init) {
         this.manager = new Manager(contactPoints, configuration);
-        this.manager.init();
+        if (init)
+            this.manager.init();
     }
 
     /**
@@ -93,7 +103,7 @@ public class Cluster {
         if (contactPoints.isEmpty())
             throw new IllegalArgumentException("Cannot build a cluster without contact points");
 
-        return new Cluster(contactPoints, initializer.getConfiguration());
+        return new Cluster(contactPoints, initializer.getConfiguration(), true);
     }
 
     /**
@@ -113,6 +123,7 @@ public class Cluster {
      * @return a new session on this cluster sets to no keyspace.
      */
     public Session connect() {
+        manager.init(); // Calls init if deferInitialization was used. It's a no-op if it's already initialized.
         return manager.newSession();
     }
 
@@ -142,6 +153,7 @@ public class Cluster {
      * @return the cluster metadata.
      */
     public Metadata getMetadata() {
+        manager.init(); // Calls init if deferInitialization was used. It's a no-op if it's already initialized.
         return manager.metadata;
     }
 
@@ -188,12 +200,53 @@ public class Cluster {
      * Unregisters the provided listener from being notified on hosts events.
      * <p>
      * This method is a no-op if {@code listener} hadn't previously be
-     * registered against this monitor.
+     * registered against this Cluster.
      *
      * @param listener the {@link Host.StateListener} to unregister.
+     * @return this {@code Cluster} object;
      */
-    public void unregister(Host.StateListener listener) {
+    public Cluster unregister(Host.StateListener listener) {
         manager.listeners.remove(listener);
+        return this;
+    }
+
+    /**
+     * Registers the provided tracker to be updated with hosts read
+     * latencies.
+     * <p>
+     * Registering the same listener multiple times is a no-op.
+     * <p>
+     * Be warry that the registered tracker {@code update} method will be call
+     * very frequently (at the end of every query to a Cassandra host) and
+     * should thus not be costly.
+     * <p>
+     * The main use case for a {@code LatencyTracker} is so
+     * {@link LoadBalancingPolicy} can implement latency awareness
+     * Typically, {@link LatencyAwarePolicy} registers  it's own internal
+     * {@code LatencyTracker} (automatically, you don't have to call this
+     * method directly).
+     *
+     * @param tracker the new {@link LatencyTracker} to register.
+     * @return this {@code Cluster} object;
+     */
+    public Cluster register(LatencyTracker tracker) {
+        manager.trackers.add(tracker);
+        return this;
+    }
+
+    /**
+     * Unregisters the provided latency tracking from being updated
+     * with host read latencies.
+     * <p>
+     * This method is a no-op if {@code tracker} hadn't previously be
+     * registered against this Cluster.
+     *
+     * @param tracker the {@link LatencyTracker} to unregister.
+     * @return this {@code Cluster} object;
+     */
+    public Cluster unregister(LatencyTracker tracker) {
+        manager.trackers.remove(tracker);
+        return this;
     }
 
     /**
@@ -289,8 +342,10 @@ public class Cluster {
         private SSLOptions sslOptions = null;
         private boolean metricsEnabled = true;
         private boolean jmxEnabled = true;
-        private final PoolingOptions poolingOptions = new PoolingOptions();
-        private final SocketOptions socketOptions = new SocketOptions();
+        private PoolingOptions poolingOptions = new PoolingOptions();
+        private SocketOptions socketOptions = new SocketOptions();
+
+        private boolean deferInitialization = false;
 
         @Override
         public List<InetAddress> getContactPoints() {
@@ -528,9 +583,28 @@ public class Cluster {
          * @return the pooling options that will be used by this builder. You
          * can use the returned object to define the initial pooling options
          * for the built cluster.
+         *
+         * @deprecated you are now encouraged to use the {@link #withPoolingOptions}
+         * method. This method is deprecated and will be removed in the next major
+         * version of the driver.
          */
+        @Deprecated
         public PoolingOptions poolingOptions() {
             return poolingOptions;
+        }
+
+        /**
+         * Set the PoolingOptions to use for the newly created Cluster.
+         * <p>
+         * If no pooling options are set through this method, default pooling
+         * options will be used.
+         *
+         * @param options the pooling options to use.
+         * @return this builder.
+         */
+        public Builder withPoolingOptions(PoolingOptions options) {
+            this.poolingOptions = options;
+            return this;
         }
 
         /**
@@ -539,9 +613,51 @@ public class Cluster {
          * @return the socket options that will be used by this builder. You
          * can use the returned object to define the initial socket options
          * for the built cluster.
+         *
+         * @deprecated you are now encouraged to use the {@link #withPoolingOptions}
+         * method. This method is deprecated and will be removed in the next major
+         * version of the driver.
          */
+        @Deprecated
         public SocketOptions socketOptions() {
             return socketOptions;
+        }
+
+        /**
+         * Set the SocketOptions to use for the newly created Cluster.
+         * <p>
+         * If no socket options are set through this method, default socket
+         * options will be used.
+         *
+         * @param options the socket options to use.
+         * @return this builder.
+         */
+        public Builder withSocketOptions(SocketOptions options) {
+            this.socketOptions = options;
+            return this;
+        }
+
+        /**
+         * Defer the initialization of the created cluster.
+         * <p>
+         * By default, building the cluster (calling the {@link #build} method of this object)
+         * triggers the creation of a connection to one of the contact points.
+         * That connection is then used to fetch the metadata on the Cassandra
+         * cluster we are connected to (other nodes, schema, ...). If this
+         * method is used, the creation of that connection will be deferred until the first
+         * call to {@code connect()} or {@code getMetadata()} on the resulting {@code Cluster}
+         * object.
+         * <p>
+         * This method is useful when it is not convenient to deal with connection problems
+         * while creating the Cluster object. Note that this method only exists
+         * in the 1.X branch of the driver since deferred initialization is the default on
+         * the 2.X branch.
+         *
+         * @return this builder.
+         */
+        public Builder withDeferredInitialization() {
+            this.deferInitialization = true;
+            return this;
         }
 
         /**
@@ -582,7 +698,11 @@ public class Cluster {
          * while contacting the initial contact points
          */
         public Cluster build() {
-            return Cluster.buildFrom(this);
+            List<InetAddress> contactPoints = getContactPoints();
+            if (contactPoints.isEmpty())
+                throw new IllegalArgumentException("Cannot build a cluster without contact points");
+
+            return new Cluster(contactPoints, getConfiguration(), !deferInitialization);
         }
     }
 
@@ -602,6 +722,8 @@ public class Cluster {
      * user to be able to call the {@link #onUp} and {@link #onDown} methods.
      */
     class Manager implements Host.StateListener, Connection.DefaultResponseHandler {
+
+        private final AtomicBoolean isInit = new AtomicBoolean(false);
 
         // Initial contacts point
         final List<InetAddress> contactPoints;
@@ -631,7 +753,8 @@ public class Cluster {
         // this would yield a slightly less clear behavior.
         final Map<MD5Digest, PreparedStatement> preparedQueries = new ConcurrentHashMap<MD5Digest, PreparedStatement>();
 
-        private final Set<Host.StateListener> listeners = new CopyOnWriteArraySet<Host.StateListener>();
+        final Set<Host.StateListener> listeners = new CopyOnWriteArraySet<Host.StateListener>();
+        final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
 
         private Manager(List<InetAddress> contactPoints, Configuration configuration) {
             logger.debug("Starting new cluster with contact points " + contactPoints);
@@ -648,13 +771,19 @@ public class Cluster {
 
         }
 
-        // This is separated from the constructor because this reference the
-        // Cluster object, whose manager won't be properly initialized until
-        // the constructor returns.
         private void init() {
+            if (!isInit.compareAndSet(false, true))
+                return;
 
-            for (InetAddress address : contactPoints)
-                addHost(address, false);
+            // Note: we mark the initial contact point as UP, because we have no prior
+            // notion of their state and no real way to know until we connect to them
+            // (since the node status is not exposed by C* in the System tables). This
+            // may not be correct.
+            for (InetAddress address : contactPoints) {
+                Host host = addHost(address, false);
+                if (host != null)
+                    host.setUp();
+            }
 
             loadBalancingPolicy().init(Cluster.this, metadata.allHosts());
 
@@ -683,9 +812,17 @@ public class Cluster {
         }
 
         private Session newSession() {
+            init();
+
             Session session = new Session(Cluster.this, metadata.allHosts());
             sessions.add(session);
             return session;
+        }
+
+        void reportLatency(Host host, long latencyNanos) {
+            for (LatencyTracker tracker : trackers) {
+                tracker.update(host, latencyNanos);
+            }
         }
 
         private boolean shutdown(long timeout, TimeUnit unit) throws InterruptedException {
@@ -721,7 +858,7 @@ public class Cluster {
         }
 
         @Override
-        public void onUp(Host host) {
+        public void onUp(final Host host) {
             logger.trace("Host {} is UP", host);
 
             if (isShutdown.get())
@@ -729,8 +866,6 @@ public class Cluster {
 
             if (host.isUp())
                 return;
-
-            host.setUp();
 
             // If there is a reconnection attempt scheduled for that node, cancel it
             ScheduledFuture<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
@@ -749,29 +884,68 @@ public class Cluster {
             // Session#onUp() expects the load balancing policy to have been updated first, so that
             // Host distances are up to date. This mean the policy could return the node before the
             // new pool have been created. This is harmless if there is no prior pool since RequestHandler
-            // will ignore the node, but we do wan to make sure there is no prior pool so we don't
+            // will ignore the node, but we do want to make sure there is no prior pool so we don't
             // query from a pool we will shutdown right away.
             for (Session s : sessions)
                 s.manager.removePool(host);
             loadBalancingPolicy().onUp(host);
             controlConnection.onUp(host);
-            for (Session s : sessions)
-                s.manager.onUp(host);
 
-            for (Host.StateListener listener : listeners)
-                listener.onUp(host);
+            List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
+            for (Session s : sessions)
+                futures.add(s.manager.addOrRenewPool(host, false));
+
+            // Only mark the node up once all session have re-added their pool (if the loadbalancing
+            // policy says it should), so that Host.isUp() don't return true before we're reconnected
+            // to the node.
+            Futures.addCallback(Futures.allAsList(futures), new FutureCallback<List<Boolean>>() {
+                public void onSuccess(List<Boolean> poolCreationResults) {
+                    // If any of the creation failed, they will have signaled a connection failure
+                    // which will trigger a reconnection to the node. So don't bother marking UP.
+                    if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
+                        logger.debug("Connection pool cannot be created, not marking {} UP", host);
+                        return;
+                    }
+
+                    host.setUp();
+
+                    for (Host.StateListener listener : listeners)
+                        listener.onUp(host);
+
+                    // Now, check if there isn't pools to create/remove following the addition.
+                    // We do that now only so that it's not called before we've set the node up.
+                    for (Session s : sessions)
+                        s.manager.updateCreatedPools();
+                }
+
+                public void onFailure(Throwable t) {
+                    // That future is not really supposed to throw unexpected exceptions
+                    if (!(t instanceof InterruptedException))
+                        logger.error("Unexpected error while marking node UP: while this shouldn't happen, this shouldn't be critical", t);
+                }
+            });
         }
 
         @Override
         public void onDown(final Host host) {
+            onDown(host, false);
+        }
+
+        public void onDown(final Host host, final boolean isHostAddition) {
             logger.trace("Host {} is DOWN", host);
 
             if (isShutdown.get())
                 return;
 
-            if (!host.isUp())
+            // Note: we don't want to skip that method if !host.isUp() because we set isUp
+            // late in onUp, and so we can rely on isUp if there is an error during onUp.
+            // But if there is a reconnection attempt in progress already, then we know
+            // we've already gone through that method since the last successful onUp(), so
+            // we're good skipping it.
+            if (host.reconnectionAttempt.get() != null)
                 return;
 
+            boolean wasUp = host.isUp();
             host.setDown();
 
             loadBalancingPolicy().onDown(host);
@@ -779,8 +953,13 @@ public class Cluster {
             for (Session s : sessions)
                 s.manager.onDown(host);
 
-            for (Host.StateListener listener : listeners)
-                listener.onDown(host);
+            // Contrarily to other actions of that method, there is no reason to notify listeners
+            // unless the host was UP at the beginning of this function since even if a onUp fail
+            // mid-method, listeners won't  have been notified of the UP.
+            if (wasUp) {
+                for (Host.StateListener listener : listeners)
+                    listener.onDown(host);
+            }
 
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug("{} is down, scheduling connection retries", host);
@@ -792,7 +971,10 @@ public class Cluster {
 
                 protected void onReconnection(Connection connection) {
                     logger.debug("Successful reconnection to {}, setting host UP", host);
-                    onUp(host);
+                    if (isHostAddition)
+                        onAdd(host);
+                    else
+                        onUp(host);
                 }
 
                 protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
@@ -810,7 +992,7 @@ public class Cluster {
         }
 
         @Override
-        public void onAdd(Host host) {
+        public void onAdd(final Host host) {
             logger.trace("Adding new host {}", host);
 
             if (isShutdown.get())
@@ -825,11 +1007,40 @@ public class Cluster {
 
             loadBalancingPolicy().onAdd(host);
             controlConnection.onAdd(host);
-            for (Session s : sessions)
-                s.manager.onAdd(host);
 
-            for (Host.StateListener listener : listeners)
-                listener.onAdd(host);
+            List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
+            for (Session s : sessions)
+                futures.add(s.manager.addOrRenewPool(host, true));
+
+            // Only mark the node up once all session have added their pool (if the loadbalancing
+            // policy says it should), so that Host.isUp() don't return true before we're reconnected
+            // to the node.
+            Futures.addCallback(Futures.allAsList(futures), new FutureCallback<List<Boolean>>() {
+                public void onSuccess(List<Boolean> poolCreationResults) {
+                    // If any of the creation failed, they will have signaled a connection failure
+                    // which will trigger a reconnection to the node. So don't bother marking UP.
+                    if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
+                        logger.debug("Connection pool cannot be created, not marking {} UP", host);
+                        return;
+                    }
+
+                    host.setUp();
+
+                    for (Host.StateListener listener : listeners)
+                        listener.onAdd(host);
+
+                    // Now, check if there isn't pools to create/remove following the addition.
+                    // We do that now only so that it's not called before we've set the node up.
+                    for (Session s : sessions)
+                        s.manager.updateCreatedPools();
+                }
+
+                public void onFailure(Throwable t) {
+                    // That future is not really supposed to throw unexpected exceptions
+                    if (!(t instanceof InterruptedException))
+                        logger.error("Unexpected error while adding node: while this shouldn't happen, this shouldn't be critical", t);
+                }
+            });
         }
 
         @Override
@@ -849,14 +1060,10 @@ public class Cluster {
                 listener.onRemove(host);
         }
 
-        public boolean signalConnectionFailure(Host host, ConnectionException exception) {
-            // If already down, don't signal again
-            if (!host.isUp())
-                return true;
-
+        public boolean signalConnectionFailure(Host host, ConnectionException exception, boolean isHostAddition) {
             boolean isDown = host.signalConnectionFailure(exception);
             if (isDown)
-                onDown(host);
+                onDown(host, isHostAddition);
             return isDown;
         }
 

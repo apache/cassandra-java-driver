@@ -41,6 +41,7 @@ public abstract class TestUtils {
     public static final String INSERT_FORMAT = "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)";
     public static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
 
+    @SuppressWarnings("unchecked")
     public static BoundStatement setBoundValue(BoundStatement bs, String name, DataType type, Object value) {
         switch (type.getName()) {
             case ASCII:
@@ -151,6 +152,7 @@ public abstract class TestUtils {
     }
 
     // Always return the "same" value for each type
+    @SuppressWarnings("serial")
     public static Object getFixedValue(final DataType type) {
         try {
             switch (type.getName()) {
@@ -187,11 +189,11 @@ public abstract class TestUtils {
                 case TIMEUUID:
                     return UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66");
                 case LIST:
-                    return new ArrayList(){{ add(getFixedValue(type.getTypeArguments().get(0))); }};
+                    return new ArrayList<Object>(){{ add(getFixedValue(type.getTypeArguments().get(0))); }};
                 case SET:
-                    return new HashSet(){{ add(getFixedValue(type.getTypeArguments().get(0))); }};
+                    return new HashSet<Object>(){{ add(getFixedValue(type.getTypeArguments().get(0))); }};
                 case MAP:
-                    return new HashMap(){{ put(getFixedValue(type.getTypeArguments().get(0)), getFixedValue(type.getTypeArguments().get(1))); }};
+                    return new HashMap<Object, Object>(){{ put(getFixedValue(type.getTypeArguments().get(0)), getFixedValue(type.getTypeArguments().get(1))); }};
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -200,6 +202,7 @@ public abstract class TestUtils {
     }
 
     // Always return the "same" value for each type
+    @SuppressWarnings("serial")
     public static Object getFixedValue2(final DataType type) {
         try {
             switch (type.getName()) {
@@ -240,11 +243,11 @@ public abstract class TestUtils {
                 case TIMEUUID:
                     return UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66");
                 case LIST:
-                    return new ArrayList(){{ add(getFixedValue2(type.getTypeArguments().get(0))); }};
+                    return new ArrayList<Object>(){{ add(getFixedValue2(type.getTypeArguments().get(0))); }};
                 case SET:
-                    return new HashSet(){{ add(getFixedValue2(type.getTypeArguments().get(0))); }};
+                    return new HashSet<Object>(){{ add(getFixedValue2(type.getTypeArguments().get(0))); }};
                 case MAP:
-                    return new HashMap(){{ put(getFixedValue2(type.getTypeArguments().get(0)), getFixedValue2(type.getTypeArguments().get(1))); }};
+                    return new HashMap<Object, Object>(){{ put(getFixedValue2(type.getTypeArguments().get(0)), getFixedValue2(type.getTypeArguments().get(1))); }};
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -256,7 +259,7 @@ public abstract class TestUtils {
     // This is used because there is some delay between when a node has been
     // added through ccm and when it's actually available for querying
     public static void waitFor(String node, Cluster cluster) {
-        waitFor(node, cluster, 30, false, false);
+        waitFor(node, cluster, 60, false, false);
     }
 
     public static void waitFor(String node, Cluster cluster, int maxTry) {
@@ -264,11 +267,11 @@ public abstract class TestUtils {
     }
 
     public static void waitForDown(String node, Cluster cluster) {
-        waitFor(node, cluster, 30, true, false);
+        waitFor(node, cluster, 60, true, false);
     }
 
     public static void waitForDownWithWait(String node, Cluster cluster, int waitTime) {
-        waitFor(node, cluster, 30, true, false);
+        waitFor(node, cluster, 60, true, false);
 
         // FIXME: Once stop() works, remove this line
         try {
@@ -345,61 +348,5 @@ public abstract class TestUtils {
 
     private static boolean testHost(Host host, boolean testForDown) {
         return testForDown ? !host.isUp() : host.isUp();
-    }
-
-    // Check for all nodes to come online for up to 30 seconds
-    public static void waitForAllNodesToComeOnline(Session session, int totalNodes) {
-        int maxTry = 30;
-        for (int i = 0; i < maxTry; ++i) {
-            List<Row> rs = session.execute("SELECT * from system.peers").all();
-
-            // Don't count yourself in the peers list
-            if (rs.size() == totalNodes - 1) {
-                return;
-            }
-
-            // Throttle schema polling
-            try { Thread.sleep(1000); } catch (Exception e) {}
-        }
-
-        // Throw exception if not all nodes came online
-        throw new RuntimeException(String.format("Not all nodes came online within %s seconds.", maxTry));
-    }
-
-    // Check for a schema agreement with all nodes for up to 30 seconds
-    public static void waitForSchemaAgreement(Session session) {
-        int maxTry = 30;
-        UUID schemaVersion;
-        for (int i = 0; i < maxTry; ++i) {
-            schemaVersion = null;
-            List<Row> rs = session.execute("SELECT * from system.peers").all();
-
-            // Track disagreements
-            boolean schemaDisagreement = false;
-
-            for (Row row : rs) {
-                // Save the first schemaVersion
-                if (schemaVersion == null) {
-                    schemaVersion = row.getUUID("schema_version");
-                    continue;
-                }
-
-                // Compare all succeeding schemaVersions to the first schemaVersion
-                if (!schemaVersion.equals(row.getUUID("schema_version"))) {
-                    schemaDisagreement = true;
-                    break;
-                }
-            }
-
-            // Exit without an exception when a schema agreement has been reached
-            if (!schemaDisagreement)
-                return;
-
-            // Throttle schema polling
-            try { Thread.sleep(1000); } catch (Exception e) {}
-        }
-
-        // Throw exception if schema agreement is never reached
-        throw new RuntimeException(String.format("Schema agreement not reached within %s seconds.", maxTry));
     }
 }

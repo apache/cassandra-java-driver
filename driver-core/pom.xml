@@ -18,7 +18,7 @@
   <parent>
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>cassandra-driver-parent</artifactId>
-    <version>1.0.3-dse-SNAPSHOT</version>
+    <version>1.0.4-dse-SNAPSHOT</version>
   </parent>
   <artifactId>cassandra-driver-core</artifactId>
   <packaging>jar</packaging>
@@ -30,7 +30,7 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty</artifactId>
-      <version>3.6.3.Final</version>
+      <version>3.7.0.Final</version>
     </dependency>
 
     <dependency>
