@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.MapMaker;
 import com.google.common.collect.SetMultimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.FutureCallback;
@@ -733,7 +734,7 @@ public class Cluster {
         // new one join the cluster).
         // Note: we could move this down to the session level, but since prepared statement are global to a node,
         // this would yield a slightly less clear behavior.
-        final Map<MD5Digest, PreparedStatement> preparedQueries = new ConcurrentHashMap<MD5Digest, PreparedStatement>();
+        final Map<MD5Digest, PreparedStatement> preparedQueries = new MapMaker().weakKeys().weakValues().makeMap();
 
         final Set<Host.StateListener> listeners = new CopyOnWriteArraySet<Host.StateListener>();
         final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
