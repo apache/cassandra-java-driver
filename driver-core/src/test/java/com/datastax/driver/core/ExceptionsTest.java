@@ -23,7 +23,6 @@ import org.apache.commons.lang.StringUtils;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.TestUtils.waitForDown;
-import static com.datastax.driver.core.TestUtils.waitForSchemaAgreement;
 import static org.testng.Assert.*;
 
 /**
@@ -376,7 +375,6 @@ public class ExceptionsTest {
             c.session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, replicationFactor));
             c.session.execute("USE " + keyspace);
             c.session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
-            waitForSchemaAgreement(c.session);
 
             c.session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));

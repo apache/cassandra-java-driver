@@ -290,7 +290,7 @@ public class Session {
         }
     }
 
-    static class Manager implements Host.StateListener {
+    static class Manager {
 
         final Cluster cluster;
 
@@ -307,19 +307,13 @@ public class Session {
             this.poolsState = new HostConnectionPool.PoolState();
 
             // Create pool to initial nodes (and wait for them to be created)
-            for (Host host : hosts)
-            {
-                try
-                {
-                    addOrRenewPool(host).get();
-                }
-                catch (ExecutionException e)
-                {
+            for (Host host : hosts) {
+                try {
+                    addOrRenewPool(host, false).get();
+                } catch (ExecutionException e) {
                     // This is not supposed to happen
                     throw new DriverInternalError(e);
-                }
-                catch (InterruptedException e)
-                {
+                } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
             }
@@ -357,25 +351,28 @@ public class Session {
             return success;
         }
 
-        private ListenableFuture<?> addOrRenewPool(final Host host) {
+        ListenableFuture<Boolean> addOrRenewPool(final Host host, final boolean isHostAddition) {
             final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
             if (distance == HostDistance.IGNORED)
-                return Futures.immediateFuture(null);
+                return Futures.immediateFuture(true);
 
             // Creating a pool is somewhat long since it has to create the connection, so do it asynchronously.
-            return executor().submit(new Runnable() {
-                public void run() {
+            return executor().submit(new Callable<Boolean>() {
+                public Boolean call() {
                     logger.debug("Adding {} to list of queried hosts", host);
                     try {
                         HostConnectionPool previous = pools.put(host, new HostConnectionPool(host, distance, Session.Manager.this));
                         if (previous != null)
                             previous.shutdown(); // The previous was probably already shutdown but that's ok
+                        return true;
                     } catch (AuthenticationException e) {
                         logger.error("Error creating pool to {} ({})", host, e.getMessage());
-                        cluster.manager.signalConnectionFailure(host, new ConnectionException(e.getHost(), e.getMessage()));
+                        cluster.manager.signalConnectionFailure(host, new ConnectionException(e.getHost(), e.getMessage()), isHostAddition);
+                        return false;
                     } catch (ConnectionException e) {
                         logger.debug("Error creating pool to {} ({})", host, e.getMessage());
-                        cluster.manager.signalConnectionFailure(host, e);
+                        cluster.manager.signalConnectionFailure(host, e, isHostAddition);
+                        return false;
                     }
                 }
             });
@@ -403,14 +400,14 @@ public class Session {
          * This method ensures that all hosts for which a pool should exist
          * have one, and hosts that shouldn't don't.
          */
-        private void updateCreatedPools() {
+        void updateCreatedPools() {
             for (Host h : cluster.getMetadata().allHosts()) {
                 HostDistance dist = loadBalancingPolicy().distance(h);
                 HostConnectionPool pool = pools.get(h);
 
                 if (pool == null) {
                     if (dist != HostDistance.IGNORED && h.isUp())
-                        addOrRenewPool(h);
+                        addOrRenewPool(h, false);
                 } else if (dist != pool.hostDistance) {
                     if (dist == HostDistance.IGNORED) {
                         removePool(h);
@@ -421,16 +418,6 @@ public class Session {
             }
         }
 
-        @Override
-        public void onUp(Host host) {
-            addOrRenewPool(host).addListener(new Runnable() {
-                public void run() {
-                    updateCreatedPools();
-                }
-            }, MoreExecutors.sameThreadExecutor());
-        }
-
-        @Override
         public void onDown(Host host) {
             // Note that with well behaved balancing policy (that ignore dead nodes), the removePool call is not necessary
             // since updateCreatedPools should take care of it. But better protect against non well behaving policies.
@@ -441,12 +428,6 @@ public class Session {
             }, MoreExecutors.sameThreadExecutor());
         }
 
-        @Override
-        public void onAdd(Host host) {
-            onUp(host);
-        }
-
-        @Override
         public void onRemove(Host host) {
             onDown(host);
         }

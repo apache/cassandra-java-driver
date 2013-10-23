@@ -194,6 +194,37 @@ public final class QueryBuilder {
     }
 
     /**
+     * Creates a new TRUNCATE query.
+     *
+     * @param table the name of the table to truncate.
+     * @return the truncation query.
+     */
+    public static Truncate truncate(String table) {
+        return new Truncate(null, table);
+    }
+
+    /**
+     * Creates a new TRUNCATE query.
+     *
+     * @param keyspace the name of the keyspace to use.
+     * @param table the name of the table to truncate.
+     * @return the truncation query.
+     */
+    public static Truncate truncate(String keyspace, String table) {
+        return new Truncate(keyspace, table);
+    }
+
+    /**
+     * Creates a new TRUNCATE query.
+     *
+     * @param table the table to truncate.
+     * @return the truncation query.
+     */
+    public static Truncate truncate(TableMetadata table) {
+        return new Truncate(table);
+    }
+
+    /**
      * Quotes a columnName to make it case sensitive.
      *
      * @param columnName the column name to quote.

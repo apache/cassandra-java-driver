@@ -134,7 +134,8 @@ public class Metadata {
 
     @SuppressWarnings("unchecked")
     synchronized void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
-        this.tokenMap = TokenMap.build(partitioner, allTokens);
+        if (!allTokens.isEmpty())
+            this.tokenMap = TokenMap.build(partitioner, allTokens);
     }
 
     Host add(InetAddress address) {
@@ -279,6 +280,7 @@ public class Metadata {
                     }
                 }
             }
+
             // Make all the inet set immutable so we can share them publicly safely
             for (Map.Entry<T, Set<Host>> entry: tokenToHosts.entrySet()) {
                 entry.setValue(Collections.unmodifiableSet(entry.getValue()));

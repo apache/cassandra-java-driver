@@ -62,7 +62,7 @@ public abstract class Clause extends Utils.Appendeable {
             super(name);
             this.values = values;
 
-            if (values == null || values.size() == 0)
+            if (values == null)
                 throw new IllegalArgumentException("Missing values for IN clause");
         }
 
@@ -74,7 +74,7 @@ public abstract class Clause extends Utils.Appendeable {
 
         @Override
         Object firstValue() {
-            return values.get(0);
+            return values.isEmpty() ? null : values.get(0);
         }
     }
 }

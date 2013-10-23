@@ -56,6 +56,10 @@ public class QueryBuilderTest {
         select = select().writeTime("a").ttl("a").from("foo").allowFiltering();
         assertEquals(select.toString(), query);
 
+        query = "SELECT a FROM foo WHERE k IN ();";
+        select = select("a").from("foo").where(in("k"));
+        assertEquals(select.toString(), query);
+
         query = "SELECT count(*) FROM foo;";
         select = select().countAll().from("foo");
         assertEquals(select.toString(), query);
@@ -86,13 +90,6 @@ public class QueryBuilderTest {
         query = "SELECT * FROM words WHERE w='WA(!:gS)r(UfW';";
         select = select().all().from("words").where(eq("w", "WA(!:gS)r(UfW"));
         assertEquals(select.toString(), query);
-
-        try {
-            select = select("a").from("foo").where(in("a"));
-            fail();
-        } catch (IllegalArgumentException e) {
-            assertEquals(e.getMessage(), "Missing values for IN clause");
-        }
 
         try {
             select = select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));
@@ -131,6 +128,7 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
+    @SuppressWarnings("serial")
     public void insertTest() throws Exception {
 
         String query;
@@ -141,7 +139,7 @@ public class QueryBuilderTest {
                    .value("a", 123)
                    .value("b", InetAddress.getByName("127.0.0.1"))
                    .value(quote("C"), "foo'bar")
-                   .value("d", new TreeMap(){{ put("x", 3); put("y", 2); }})
+                   .value("d", new TreeMap<String, Integer>(){{ put("x", 3); put("y", 2); }})
                    .using(timestamp(42)).and(ttl(24));
         assertEquals(insert.toString(), query);
 
@@ -152,12 +150,12 @@ public class QueryBuilderTest {
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo(a,b) VALUES ({2,3,4},3.4) USING TTL 24 AND TIMESTAMP 42;";
-        insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet(){{ add(2); add(3); add(4); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
+        insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo.bar(a,b) VALUES ({2,3,4},3.4) USING TTL 24 AND TIMESTAMP 42;";
         insert = insertInto("foo", "bar")
-                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet(){{ add(2); add(3); add(4); }}, 3.4 })
+                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 })
                     .using(ttl(24))
                     .and(timestamp(42));
         assertEquals(insert.toString(), query);
@@ -166,7 +164,7 @@ public class QueryBuilderTest {
         query = "INSERT INTO foo.bar(a,b,c) VALUES ({2,3,4},3.4,123) USING TIMESTAMP 42;";
         insert = insertInto("foo", "bar")
                     .using(timestamp(42))
-                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet(){{ add(2); add(3); add(4); }}, 3.4 })
+                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 })
                     .value("c", 123);
         assertEquals(insert.toString(), query);
 
@@ -175,7 +173,7 @@ public class QueryBuilderTest {
         insert = insertInto("foo")
                     .using(timestamp(42))
                     .value("c", 123)
-                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet(){{ add(2); add(3); add(4); }}, 3.4 });
+                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 });
         assertEquals(insert.toString(), query);
 
         try {
@@ -187,6 +185,7 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
+    @SuppressWarnings("serial")
     public void updateTest() throws Exception {
 
         String query;
@@ -209,13 +208,13 @@ public class QueryBuilderTest {
         assertEquals(update.toString(), query);
 
         query = "UPDATE foo SET b=b-[1,2,3],c=c+{1},d=d+{2,3,4};";
-        update = update("foo").with(discardAll("b", Arrays.asList(1, 2, 3))).and(add("c", 1)).and(addAll("d", new TreeSet(){{ add(2); add(3); add(4); }}));
+        update = update("foo").with(discardAll("b", Arrays.asList(1, 2, 3))).and(add("c", 1)).and(addAll("d", new TreeSet<Integer>(){{ add(2); add(3); add(4); }}));
         assertEquals(update.toString(), query);
 
         query = "UPDATE foo SET b=b-{2,3,4},c['k']='v',d=d+{'x':3,'y':2};";
-        update = update("foo").with(removeAll("b", new TreeSet(){{ add(2); add(3); add(4); }}))
+        update = update("foo").with(removeAll("b", new TreeSet<Integer>(){{ add(2); add(3); add(4); }}))
                     .and(put("c", "k", "v"))
-                    .and(putAll("d", new TreeMap(){{ put("x", 3); put("y", 2); }}));
+                    .and(putAll("d", new TreeMap<String, Integer>(){{ put("x", 3); put("y", 2); }}));
         assertEquals(update.toString(), query);
 
         query = "UPDATE foo USING TTL 400;";
@@ -291,6 +290,7 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
+    @SuppressWarnings("serial")
     public void batchTest() throws Exception {
         String query;
         Query batch;
@@ -301,7 +301,7 @@ public class QueryBuilderTest {
         query += "DELETE a[3],b['foo'],c FROM foo WHERE k=1;";
         query += "APPLY BATCH;";
         batch = batch()
-            .add(insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet(){{ add(2); add(3); add(4); }}, 3.4 }))
+            .add(insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 }))
             .add(update("foo").with(setIdx("a", 2, "foo")).and(prependAll("b", Arrays.asList(3, 2, 1))).and(remove("c", "a")).where(eq("k", 2)))
             .add(delete().listElt("a", 3).mapElt("b", "foo").column("c").from("foo").where(eq("k", 1)))
             .using(timestamp(42));
@@ -491,6 +491,7 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
+    @SuppressWarnings("serial")
     public void insertInjectionTest() throws Exception {
 
         String query;
@@ -505,7 +506,7 @@ public class QueryBuilderTest {
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo(a,b) VALUES ({'2''} space','3','4'},3.4) USING TTL 24 AND TIMESTAMP 42;";
-        insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet(){{ add("2'} space"); add("3"); add("4"); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
+        insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<String>(){{ add("2'} space"); add("3"); add("4"); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
     }
 
@@ -592,8 +593,13 @@ public class QueryBuilderTest {
             update("foo").with(set("a", new byte[13])).where(eq("k", 2)).toString();
             fail("Byte arrays should not be valid, ByteBuffer should be used instead");
         } catch (IllegalArgumentException e) {
-            System.out.println(">> " + e);
             // Ok, that's what we expect
         }
+    }
+
+    @Test(groups = "unit")
+    public void truncateTest() throws Exception {
+        assertEquals(truncate("foo").toString(), "TRUNCATE foo;");
+        assertEquals(truncate("foo", quote("Bar")).toString(), "TRUNCATE foo.\"Bar\";");
     }
 }
