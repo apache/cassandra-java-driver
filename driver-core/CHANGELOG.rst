@@ -6,6 +6,7 @@ CHANGELOG
 
 - [new] OSGi bundle (JAVA-142)
 - [bug] Don't retain unused PreparedStatement in memory (JAVA-201)
+- [bug] Add missing clustering order info in TableMetadata
 
 
 1.0.4:
