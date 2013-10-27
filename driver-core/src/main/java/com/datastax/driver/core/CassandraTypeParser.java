@@ -92,7 +92,7 @@ class CassandraTypeParser {
         return type == null ? DataType.custom(className) : type;
     }
 
-    private static boolean isReversed(String className) {
+    public static boolean isReversed(String className) {
         return className.startsWith(REVERSED_TYPE);
     }
 
