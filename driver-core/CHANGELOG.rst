@@ -5,6 +5,14 @@ CHANGELOG
 ----------
 
 - [new] Mark compression dependencies optional in maven (JAVA-199)
+- [api] Renamed TableMetadata#getClusteringKey to
+        TableMetadata#getClusteringColumns.
+
+Merged from 1.0 branch:
+- [new] OSGi bundle (JAVA-142)
+- [bug] Don't retain unused PreparedStatement in memory (JAVA-201)
+- [bug] Add missing clustering order info in TableMetadata
+
 
 2.0.0-beta2:
 ------------

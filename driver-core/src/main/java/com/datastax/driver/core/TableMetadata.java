@@ -50,7 +50,7 @@ public class TableMetadata {
     private final KeyspaceMetadata keyspace;
     private final String name;
     private final List<ColumnMetadata> partitionKey;
-    private final List<ColumnMetadata> clusteringKey;
+    private final List<ColumnMetadata> clusteringColumns;
     private final Map<String, ColumnMetadata> columns;
     private final Options options;
     private final List<Order> clusteringOrder;
@@ -74,14 +74,14 @@ public class TableMetadata {
     private TableMetadata(KeyspaceMetadata keyspace,
                           String name,
                           List<ColumnMetadata> partitionKey,
-                          List<ColumnMetadata> clusteringKey,
+                          List<ColumnMetadata> clusteringColumns,
                           LinkedHashMap<String, ColumnMetadata> columns,
                           Options options,
                           List<Order> clusteringOrder) {
         this.keyspace = keyspace;
         this.name = name;
         this.partitionKey = partitionKey;
-        this.clusteringKey = clusteringKey;
+        this.clusteringColumns = clusteringColumns;
         this.columns = columns;
         this.options = options;
         this.clusteringOrder = clusteringOrder;
@@ -99,12 +99,12 @@ public class TableMetadata {
         boolean isCompact = isDense || !comparator.isComposite;
 
         List<ColumnMetadata> partitionKey = nullInitializedList(keyValidator.types.size());
-        List<ColumnMetadata> clusteringKey = nullInitializedList(clusteringSize);
+        List<ColumnMetadata> clusteringColumns = nullInitializedList(clusteringSize);
         List<Order> clusteringOrder = nullInitializedList(clusteringSize);
         // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
 
-        TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringKey, columns, new Options(row, isCompact), clusteringOrder);
+        TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringColumns, columns, new Options(row, isCompact), clusteringOrder);
 
         // We use this temporary set just so non PK columns are added in lexicographical order, which is the one of a
         // 'SELECT * FROM ...'
@@ -116,8 +116,8 @@ public class TableMetadata {
                 case PARTITION_KEY:
                     partitionKey.set(rawCol.componentIndex, col);
                     break;
-                case CLUSTERING_KEY:
-                    clusteringKey.set(rawCol.componentIndex, col);
+                case CLUSTERING_COLUMN:
+                    clusteringColumns.set(rawCol.componentIndex, col);
                     clusteringOrder.set(rawCol.componentIndex, rawCol.isReversed ? Order.DESC : Order.ASC);
                     break;
             }
@@ -125,7 +125,7 @@ public class TableMetadata {
 
         for (ColumnMetadata c : partitionKey)
             columns.put(c.getName(), c);
-        for (ColumnMetadata c : clusteringKey)
+        for (ColumnMetadata c : clusteringColumns)
             columns.put(c.getName(), c);
         for (ColumnMetadata c : otherColumns)
             columns.put(c.getName(), c);
@@ -137,7 +137,7 @@ public class TableMetadata {
     private static int findClusteringSize(Collection<ColumnMetadata.Raw> cols) {
         int maxId = -1;
         for (ColumnMetadata.Raw col : cols)
-            if (col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_KEY)
+            if (col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_COLUMN)
                 maxId = Math.max(maxId, col.componentIndex);
         return maxId + 1;
     }
@@ -184,7 +184,7 @@ public class TableMetadata {
      * The order of the columns in the list is consistent with
      * the order of the columns returned by a {@code SELECT * FROM thisTable}:
      * the first column is the partition key, next are the clustering
-     * keys in their defined order, and then the rest of the
+     * columns in their defined order, and then the rest of the
      * columns follow in alphabetic order.
      *
      * @return a list containing the metadata for the columns of this table.
@@ -203,9 +203,9 @@ public class TableMetadata {
      * @return the list of columns composing the primary key for this table.
      */
     public List<ColumnMetadata> getPrimaryKey() {
-        List<ColumnMetadata> pk = new ArrayList<ColumnMetadata>(partitionKey.size() + clusteringKey.size());
+        List<ColumnMetadata> pk = new ArrayList<ColumnMetadata>(partitionKey.size() + clusteringColumns.size());
         pk.addAll(partitionKey);
-        pk.addAll(clusteringKey);
+        pk.addAll(clusteringColumns);
         return pk;
     }
 
@@ -222,26 +222,26 @@ public class TableMetadata {
     }
 
     /**
-     * Returns the list of columns composing the clustering key for this table.
+     * Returns the list of clustering columns for this table.
      *
-     * @return the list of columns composing the clustering key for this table.
-     * If the clustering key is empty, an empty list is returned.
+     * @return the list of clustering columns for this table.
+     * If there is no clustering columns, an empty list is returned.
      */
-    public List<ColumnMetadata> getClusteringKey() {
-        return Collections.unmodifiableList(clusteringKey);
+    public List<ColumnMetadata> getClusteringColumns() {
+        return Collections.unmodifiableList(clusteringColumns);
     }
 
     /**
      * Returns the clustering order for this table.
      * <p>
-     * The returned contains the cluster order of each clustering key. The
+     * The returned contains the clustering order of each clustering column. The
      * {@code i}th element of the result correspond to the order (ascending or
-     * descending) of the {@code i}th clustering key (see
-     * {@link #getClusteringKey}). Note that a table defined without any
+     * descending) of the {@code i}th clustering column (see
+     * {@link #getClusteringColumns}). Note that a table defined without any
      * particular clustering order is equivalent to one for which all the
      * clustering key are in ascending order.
      *
-     * @return a list with the clustering order for each clustering key.
+     * @return a list with the clustering order for each clustering column.
      */
     public List<Order> getClusteringOrder() {
         return clusteringOrder;
@@ -346,7 +346,7 @@ public class TableMetadata {
             }
             sb.append(")");
         }
-        for (ColumnMetadata cm : clusteringKey)
+        for (ColumnMetadata cm : clusteringColumns)
             sb.append(", ").append(escapeId(cm.getName()));
         sb.append(")");
         newLine(sb, formatted);
@@ -373,12 +373,11 @@ public class TableMetadata {
         return sb.toString();
     }
 
-    private StringBuilder appendClusteringOrder(StringBuilder sb)
-    {
+    private StringBuilder appendClusteringOrder(StringBuilder sb) {
         sb.append("CLUSTERING ORDER BY (");
-        for (int i = 0; i < clusteringKey.size(); i++) {
+        for (int i = 0; i < clusteringColumns.size(); i++) {
             if (i > 0) sb.append(", ");
-            sb.append(clusteringKey.get(i).getName()).append(" ").append(clusteringOrder.get(i));
+            sb.append(clusteringColumns.get(i).getName()).append(" ").append(clusteringOrder.get(i));
         }
         return sb.append(")");
     }

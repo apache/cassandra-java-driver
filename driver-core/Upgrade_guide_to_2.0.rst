@@ -124,6 +124,9 @@ Other API Changes:
    UnavailableException#getConsistencyLevel for consistency with the method of
    QueryTimeoutException.
 
+9. The TableMetadata#getClusteringKey method has been renamed
+   TableMetadata#getClusteringColumns to match the "official" vocabulary.
+
 
 Non-breaking API Changes
 ------------------------
