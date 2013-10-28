@@ -116,7 +116,7 @@ public class TableMetadata {
                 case PARTITION_KEY:
                     partitionKey.set(rawCol.componentIndex, col);
                     break;
-                case CLUSTERING_COLUMN:
+                case CLUSTERING_KEY:
                     clusteringColumns.set(rawCol.componentIndex, col);
                     clusteringOrder.set(rawCol.componentIndex, rawCol.isReversed ? Order.DESC : Order.ASC);
                     break;
@@ -137,7 +137,7 @@ public class TableMetadata {
     private static int findClusteringSize(Collection<ColumnMetadata.Raw> cols) {
         int maxId = -1;
         for (ColumnMetadata.Raw col : cols)
-            if (col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_COLUMN)
+            if (col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_KEY)
                 maxId = Math.max(maxId, col.componentIndex);
         return maxId + 1;
     }

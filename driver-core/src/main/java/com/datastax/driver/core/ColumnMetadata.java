@@ -183,7 +183,7 @@ public class ColumnMetadata {
     // Temporary class that is used to make building the schema easier. Not meant to be
     // exposed publicly at all.
     static class Raw {
-        public enum Kind { PARTITION_KEY, CLUSTERING_COLUMN, REGULAR, COMPACT_VALUE }
+        public enum Kind { PARTITION_KEY, CLUSTERING_KEY, REGULAR, COMPACT_VALUE }
 
         public final String name;
         public final Kind kind;

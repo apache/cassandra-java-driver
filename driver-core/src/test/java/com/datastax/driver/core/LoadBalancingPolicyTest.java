@@ -337,7 +337,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             init(c, 12);
             query(c, 12);
 
-            // Not the best test ever, we should use OPP and check we do it the
+            // Not the best test ever, we should use OPP and check we do hit the
             // right nodes. But since M3P is hard-coded for now, let just check
             // we just hit only one node.
             assertQueried(CCMBridge.IP_PREFIX + "1", 0);
@@ -362,11 +362,9 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             query(c, 12);
 
             // Still only one node since RF=2
-            // TODO: this is broken because token awareness does not yet take the replication factor into
-            // account (JAVA-88). Once fixed, we should re-enable this
-            //assertQueried(CCMBridge.IP_PREFIX + "1", 12);
-            //assertQueried(CCMBridge.IP_PREFIX + "2", 0);
-            //assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "1", 12);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
 
         } catch (Throwable e) {
             c.errorOut();
