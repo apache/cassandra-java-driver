@@ -49,7 +49,7 @@ public enum ConsistencyLevel {
         this.code = code;
     }
 
-    public static ConsistencyLevel fromCode(int code) {
+    static ConsistencyLevel fromCode(int code) {
         if (code < 0 || code >= codeIdx.length)
             throw new DriverInternalError(String.format("Unknown code %d for a consistency level", code));
         return codeIdx[code];
