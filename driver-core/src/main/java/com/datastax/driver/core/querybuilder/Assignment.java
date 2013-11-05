@@ -52,14 +52,13 @@ public abstract class Assignment extends Utils.Appendeable {
 
     static class CounterAssignment extends Assignment {
 
-        // TODO: should be object to allow for bind markers
-        private final long value;
+        private final Object value;
         private final boolean isIncr;
 
-        CounterAssignment(String name, long value, boolean isIncr) {
+        CounterAssignment(String name, Object value, boolean isIncr) {
             super(name);
-            if (!isIncr && value < 0) {
-                this.value = -value;
+            if (!isIncr && value instanceof Long && ((Long)value) < 0) {
+                this.value = -((Long)value);
                 this.isIncr = true;
             } else {
                 this.value = value;
@@ -70,7 +69,8 @@ public abstract class Assignment extends Utils.Appendeable {
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb).append("=");
-            appendName(name, sb).append(isIncr ? "+" : "-").append(value);
+            appendName(name, sb).append(isIncr ? "+" : "-");
+            appendValue(value, sb);
         }
 
         @Override
@@ -81,10 +81,9 @@ public abstract class Assignment extends Utils.Appendeable {
 
     static class ListPrependAssignment extends Assignment {
 
-        // TODO: should be object to allow for bind markers
-        private final List<?> value;
+        private final Object value;
 
-        ListPrependAssignment(String name, List<?> value) {
+        ListPrependAssignment(String name, Object value) {
             super(name);
             this.value = value;
         }
@@ -92,7 +91,7 @@ public abstract class Assignment extends Utils.Appendeable {
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb).append("=");
-            appendList(value, sb);
+            appendValue(value, sb);
             sb.append("+");
             appendName(name, sb);
         }
@@ -141,7 +140,7 @@ public abstract class Assignment extends Utils.Appendeable {
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb).append("=");
             appendName(name, sb).append(isAdd ? "+" : "-");
-            appendCollection(collection, sb, variables);
+            appendValue(collection, sb);
         }
 
         @Override
