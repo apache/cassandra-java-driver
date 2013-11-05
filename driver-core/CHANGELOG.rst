@@ -58,6 +58,7 @@ Merged from 1.0 branch:
 ------
 
 - [new] OSGi bundle (JAVA-142)
+- [improvement] Make collections returned by Row immutable (JAVA-205)
 - [bug] Don't retain unused PreparedStatement in memory (JAVA-201)
 - [bug] Add missing clustering order info in TableMetadata
 
