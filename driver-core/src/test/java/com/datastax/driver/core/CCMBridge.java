@@ -107,6 +107,11 @@ public class CCMBridge {
         execute("ccm node%d start", n);
     }
 
+    public void start(int n, String option) {
+        logger.info("Starting: " + IP_PREFIX + n + " with " + option);
+        execute("ccm node%d start --jvm_arg=%s", n, option);
+    }
+
     public void stop(int n) {
         logger.info("Stopping: " + IP_PREFIX + n);
         execute("ccm node%d stop", n);
