@@ -343,6 +343,10 @@ public class Session {
             return cluster.manager.executor;
         }
 
+        public ListeningExecutorService blockingExecutor() {
+            return cluster.manager.blockingTasksExecutor;
+        }
+
         boolean isShutdown() {
             return shutdownFuture.get() != null;
         }
