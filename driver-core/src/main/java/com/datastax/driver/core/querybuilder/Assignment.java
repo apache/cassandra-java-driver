@@ -70,7 +70,7 @@ public abstract class Assignment extends Utils.Appendeable {
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb).append("=");
             appendName(name, sb).append(isIncr ? "+" : "-");
-            appendValue(value, sb);
+            appendValue(value, sb, variables);
         }
 
         @Override
@@ -91,7 +91,7 @@ public abstract class Assignment extends Utils.Appendeable {
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb).append("=");
-            appendValue(value, sb);
+            appendValue(value, sb, variables);
             sb.append("+");
             appendName(name, sb);
         }
@@ -140,7 +140,7 @@ public abstract class Assignment extends Utils.Appendeable {
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb).append("=");
             appendName(name, sb).append(isAdd ? "+" : "-");
-            appendValue(collection, sb);
+            appendValue(collection, sb, variables);
         }
 
         @Override
