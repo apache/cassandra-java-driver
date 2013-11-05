@@ -339,6 +339,10 @@ public class Session {
             return cluster.manager.executor;
         }
 
+        public ListeningExecutorService blockingExecutor() {
+            return cluster.manager.blockingTasksExecutor;
+        }
+
         private boolean shutdown(long timeout, TimeUnit unit) throws InterruptedException {
 
             if (!isShutdown.compareAndSet(false, true))

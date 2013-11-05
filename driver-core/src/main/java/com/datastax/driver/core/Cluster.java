@@ -68,6 +68,8 @@ public class Cluster {
 
     private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
 
+    private static final int DEFAULT_THREAD_KEEP_ALIVE = 30;
+
     final Manager manager;
 
     // Note: we don't want to make init part of Configuration. In 2.0, the default is not init
@@ -697,6 +699,18 @@ public class Cluster {
         return destUnit.convert(System.nanoTime() - startNanos, TimeUnit.NANOSECONDS);
     }
 
+    private static ListeningExecutorService makeExecutor(int threads, String name) {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(threads,
+                                                             threads,
+                                                             DEFAULT_THREAD_KEEP_ALIVE,
+                                                             TimeUnit.SECONDS,
+                                                             new LinkedBlockingQueue<Runnable>(),
+                                                             threadFactory(name));
+
+        executor.allowCoreThreadTimeOut(true);
+        return MoreExecutors.listeningDecorator(executor);
+    }
+
     /**
      * The sessions and hosts managed by this a Cluster instance.
      * <p>
@@ -726,7 +740,11 @@ public class Cluster {
         // applied in the order received.
         final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, threadFactory("Scheduled Tasks-%d"));
 
-        final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool(threadFactory("Cassandra Java Driver worker-%d")));
+        // Executor used for tasks that shouldn't be executed on an IO thread. Used for short-lived, generally non-blocking tasks
+        final ListeningExecutorService executor;
+
+        // An executor for tasks that migth block some time, like creating new connection, but are generally not too critical.
+        final ListeningExecutorService blockingTasksExecutor;
 
         final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
@@ -742,6 +760,9 @@ public class Cluster {
         private Manager(List<InetAddress> contactPoints, Configuration configuration) {
             logger.debug("Starting new cluster with contact points " + contactPoints);
 
+            this.executor = makeExecutor(Runtime.getRuntime().availableProcessors(), "Cassandra Java Driver worker-%d");
+            this.blockingTasksExecutor = makeExecutor(2, "Cassandra Java Driver blocking tasks worker-%d");
+
             this.configuration = configuration;
             this.metadata = new Metadata(this);
             this.contactPoints = contactPoints;
@@ -751,7 +772,6 @@ public class Cluster {
 
             this.metrics = configuration.getMetricsOptions() == null ? null : new Metrics(this);
             this.configuration.register(this);
-
         }
 
         private void init() {
