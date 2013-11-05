@@ -12,6 +12,7 @@ Merged from 1.0 branch:
 - [new] OSGi bundle (JAVA-142)
 - [bug] Don't retain unused PreparedStatement in memory (JAVA-201)
 - [bug] Add missing clustering order info in TableMetadata
+- [bug] Allow bind markers for collections in the query builder (JAVA-196)
 
 
 2.0.0-beta2:
