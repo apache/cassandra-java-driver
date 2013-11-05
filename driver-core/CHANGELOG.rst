@@ -8,6 +8,7 @@ CHANGELOG
 - [improvement] Make collections returned by Row immutable (JAVA-205)
 - [bug] Don't retain unused PreparedStatement in memory (JAVA-201)
 - [bug] Add missing clustering order info in TableMetadata
+- [bug] Allow bind markers for collections in the query builder (JAVA-196)
 
 
 1.0.4:
