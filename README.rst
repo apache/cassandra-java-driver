@@ -38,12 +38,12 @@ it in your application using the following Maven dependency::
       <version>1.0.3</version>
     </dependency>
     
-**DSE users** should use the following Maven dependency (*note the version is set to 1.0.3-dse*)::
+**DSE users** should use the following Maven dependency (*note the version is set to 1.0.4-dse*)::
 
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>1.0.3-dse</version>
+      <version>1.0.4-dse</version>
     </dependency>
 
 Troubleshooting
