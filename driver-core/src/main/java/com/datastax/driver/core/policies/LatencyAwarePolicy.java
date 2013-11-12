@@ -476,10 +476,10 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * Sets the retry period for the resulting latency aware policy.
          * <p>
          * The retry period defines how long a node may be penalized by the
-         * policy before it is given a 2nd change. More precisely, a node is excluded
-         * from query plans if both his calculated average latency is {@code exclusionThreshold}
+         * policy before it is given a 2nd chance. More precisely, a node is excluded
+         * from query plans if both its calculated average latency is {@code exclusionThreshold}
          * times slower than the fastest node average latency (at the time the query plan is
-         * computed) <b>and</b> his calculated average latency has been updated since
+         * computed) <b>and</b> its calculated average latency has been updated since
          * less than {@code retryPeriod}. Since penalized nodes will likely not see their
          * latency updated, this is basically how long the policy will exclude a node.
          *
@@ -506,7 +506,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * is slightly more costly. For this reason, the minimum is only
          * re-calculated at the given fixed rate and cached between re-calculation.
          * <p>
-         * The default update rate if <b>100 milliseconds</b>, which should be
+         * The default update rate is <b>100 milliseconds</b>, which should be
          * appropriate for most applications. In particular, note that while we
          * want to avoid to recompute the minimum for every query, that
          * computation is not particularly intensive either and there is no
@@ -527,7 +527,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         }
 
         /**
-         * Sets the minimimum number of measurements per-host to consider for
+         * Sets the minimum number of measurements per-host to consider for
          * the resulting latency aware policy.
          * <p>
          * Penalizing nodes is based on an average of their recently measured
@@ -537,7 +537,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * queries due to the JVM warmup). This is what this option controls.
          * If less that {@code minMeasure} data points have been collected for
          * a given host, the policy will never penalize that host. Note that
-         * the number of collected measurements for a given host is reseted if
+         * the number of collected measurements for a given host is reset if
          * the node is restarted.
          * <p>
          * The default for this option (if this method is not called) is <b>50</b>.
