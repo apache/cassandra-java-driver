@@ -62,7 +62,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
     private static final Logger logger = LoggerFactory.getLogger(LatencyAwarePolicy.class);
 
     private final LoadBalancingPolicy childPolicy;
-    private final Tracker latencyTracker;
+    public final Tracker latencyTracker;
     private final ScheduledExecutorService updaterService = Executors.newSingleThreadScheduledExecutor(threadFactory("LatencyAwarePolicy updater"));
 
     private final double exclusionThreshold;
@@ -259,7 +259,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         latencyTracker.resetHost(host);
     }
 
-    private class Tracker implements LatencyTracker {
+    public class Tracker implements LatencyTracker {
 
         private final ConcurrentMap<Host, HostLatencyTracker> latencies = new ConcurrentHashMap<Host, HostLatencyTracker>();
         private volatile long cachedMin = -1L;
@@ -308,11 +308,11 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         }
     }
 
-    private static class TimestampedAverage {
+    public static class TimestampedAverage {
 
-        private final long timestamp;
-        private final long average;
-        private final int nbMeasure;
+        public final long timestamp;
+        public final long average;
+        public final int nbMeasure;
 
         TimestampedAverage(long timestamp, long average, int nbMeasure) {
             this.timestamp = timestamp;
