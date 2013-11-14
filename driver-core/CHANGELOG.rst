@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+2.0.0:
+------
+
+- [new] Add LOCAL_ONE consistency level support (requires using
+  C* 2.0.2+) (JAVA-207)
+
+
 2.0.0-rc1:
 ----------
 
