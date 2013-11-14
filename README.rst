@@ -35,7 +35,7 @@ it in your application using the following Maven dependency::
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>2.0.0-beta2</version>
+      <version>2.0.0-rc1</version>
     </dependency>
 
 
