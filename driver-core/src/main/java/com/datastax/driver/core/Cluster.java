@@ -838,7 +838,7 @@ public class Cluster {
         // new one join the cluster).
         // Note: we could move this down to the session level, but since prepared statement are global to a node,
         // this would yield a slightly less clear behavior.
-        final Map<MD5Digest, PreparedStatement> preparedQueries = new MapMaker().weakKeys().weakValues().makeMap();
+        final Map<MD5Digest, PreparedStatement> preparedQueries = new MapMaker().weakValues().makeMap();
 
         final Set<Host.StateListener> listeners;
         final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
