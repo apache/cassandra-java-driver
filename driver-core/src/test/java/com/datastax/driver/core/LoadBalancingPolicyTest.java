@@ -18,6 +18,8 @@ package com.datastax.driver.core;
 import java.net.InetAddress;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
@@ -28,6 +30,7 @@ import com.datastax.driver.core.exceptions.UnavailableException;
 import static com.datastax.driver.core.TestUtils.*;
 
 public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
+    private static final Logger logger = LoggerFactory.getLogger(LoadBalancingPolicyTest.class);
     private static final boolean DEBUG = false;
 
     private PreparedStatement prepared;
@@ -381,5 +384,97 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             resetCoordinators();
             c.discard();
         }
+    }
+
+    @Test(groups = "long")
+    public void latencyAwareTest() throws Throwable {
+        //Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy());
+        LatencyAwarePolicy latencyAwarePolicyInstance = new LatencyAwarePolicy.Builder(new RoundRobinPolicy()).build();
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(latencyAwarePolicyInstance);
+        CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
+        try {
+
+            createSchema(c.session, 3);
+            int longTest = 500000;
+            int shortTest = 100000;
+            init(c, longTest);
+
+            query(c, longTest);
+            showLatencyStats(latencyAwarePolicyInstance);
+
+            resetCoordinators();
+            c.cassandraCluster.bootstrapNode(3);
+            waitFor(CCMBridge.IP_PREFIX + "3", c.cluster);
+
+            for (int i=0; i < 10; ++i) {
+
+                query(c, longTest);
+                showLatencyStats(latencyAwarePolicyInstance);
+
+            }
+
+            resetCoordinators();
+            c.cassandraCluster.stop(2);
+            waitForDown(CCMBridge.IP_PREFIX + "2", c.cluster);
+
+            for (int i=0; i < 10; ++i) {
+
+                query(c, shortTest);
+                showLatencyStats(latencyAwarePolicyInstance);
+
+            }
+
+        } catch (Throwable e) {
+            c.errorOut();
+            throw e;
+        } finally {
+            resetCoordinators();
+            c.discard();
+        }
+    }
+
+    private void showLatencyStats(LatencyAwarePolicy latencyAwarePolicyInstance) {
+        Map<Host, LatencyAwarePolicy.TimestampedAverage> currentLatencies = latencyAwarePolicyInstance.latencyTracker.currentLatencies();
+
+        // create a sorted list for easy printing
+        ArrayList<Host> hosts = new ArrayList<Host>();
+        for (int i=0; i < 3; ++i) {
+            try {
+                hosts.add(new Host(InetAddress.getByName(CCMBridge.IP_PREFIX + (i + 1)), new ConvictionPolicy.Simple.Factory()));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        long minLatency = Long.MAX_VALUE;
+        int totalQueried = 0;
+        for (Host host : hosts) {
+            LatencyAwarePolicy.TimestampedAverage latency = currentLatencies.get(host);
+            if (latency != null) {
+                if (latency.average < minLatency)
+                    minLatency = latency.average;
+                totalQueried += getQueried(host.toString().substring(1));
+            }
+        }
+
+        // print headers
+        logger.info(String.format("%20s %20s %20s %20s %20s %20s",
+                "host", "latency.average", "latency.nbMeasure", "queried.count",
+                "latency", "queried %"));
+
+        // print found metrics
+        for (Host host : hosts) {
+            LatencyAwarePolicy.TimestampedAverage latency = currentLatencies.get(host);
+            int queriedCount = getQueried(host.toString().substring(1));
+            if (latency != null)
+                logger.info(String.format("%20s %20s %20s %20s %19sx %20s",
+                        host, latency.average, latency.nbMeasure,
+                        queriedCount,
+                        (float) latency.average / minLatency,
+                        Math.round((float) queriedCount / totalQueried * 100)));
+        }
+
+        // generate a space during printing for easy readability
+        logger.info("");
     }
 }
