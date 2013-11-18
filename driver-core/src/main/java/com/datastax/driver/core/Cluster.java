@@ -838,7 +838,7 @@ public class Cluster {
         // new one join the cluster).
         // Note: we could move this down to the session level, but since prepared statement are global to a node,
         // this would yield a slightly less clear behavior.
-        final Map<MD5Digest, PreparedStatement> preparedQueries = new MapMaker().weakValues().makeMap();
+        final ConcurrentMap<MD5Digest, PreparedStatement> preparedQueries = new MapMaker().weakValues().makeMap();
 
         final Set<Host.StateListener> listeners;
         final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
@@ -1195,7 +1195,9 @@ public class Cluster {
         // Prepare a query on all nodes
         // Note that this *assumes* the query is valid.
         public void prepare(PreparedStatement stmt, InetAddress toExclude) throws InterruptedException {
-            preparedQueries.put(stmt.id, stmt);
+            if (preparedQueries.putIfAbsent(stmt.id, stmt) != null)
+                logger.warn("Re-preparing already prepared query {}. Please note that preparing the same query more than once is "
+                          + "generally an anti-pattern and will likely affect performance. Consider preparing the statement only once.", stmt.getQueryString());
             for (Session s : sessions)
                 s.manager.prepare(stmt.getQueryString(), toExclude);
         }
