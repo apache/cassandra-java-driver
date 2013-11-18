@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.MapMaker;
 import com.google.common.collect.SetMultimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.FutureCallback;
@@ -838,7 +837,10 @@ public class Cluster {
         // new one join the cluster).
         // Note: we could move this down to the session level, but since prepared statement are global to a node,
         // this would yield a slightly less clear behavior.
-        final Map<MD5Digest, PreparedStatement> preparedQueries = new MapMaker().weakKeys().weakValues().makeMap();
+        // Note: we use a WeakHashMap because we don't want to hold on PreparedStatment objects the user don't reference anymore (JAVA-213).
+        // We don't use Guava's MapMaker (or CacheBuilder) however because we want real equality of keys, not just identity (when we fetch the
+        // statement on an UNPREPARED in RequestHandler for instance).
+        final Map<MD5Digest, PreparedStatement> preparedQueries = Collections.synchronizedMap(new WeakHashMap<MD5Digest, PreparedStatement>());
 
         final Set<Host.StateListener> listeners;
         final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
@@ -1194,8 +1196,8 @@ public class Cluster {
 
         // Prepare a query on all nodes
         // Note that this *assumes* the query is valid.
-        public void prepare(MD5Digest digest, PreparedStatement stmt, InetAddress toExclude) throws InterruptedException {
-            preparedQueries.put(digest, stmt);
+        public void prepare(PreparedStatement stmt, InetAddress toExclude) throws InterruptedException {
+            preparedQueries.put(stmt.id, stmt);
             for (Session s : sessions)
                 s.manager.prepare(stmt.getQueryString(), toExclude);
         }
