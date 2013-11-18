@@ -25,6 +25,7 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -751,10 +752,7 @@ public class Cluster {
         // new one join the cluster).
         // Note: we could move this down to the session level, but since prepared statement are global to a node,
         // this would yield a slightly less clear behavior.
-        // Note: we use a WeakHashMap because we don't want to hold on PreparedStatment objects the user don't reference anymore (JAVA-213).
-        // We don't use Guava's MapMaker (or CacheBuilder) however because we want real equality of keys, not just identity (when we fetch the
-        // statement on an UNPREPARED in RequestHandler for instance).
-        final Map<MD5Digest, PreparedStatement> preparedQueries = Collections.synchronizedMap(new WeakHashMap<MD5Digest, PreparedStatement>());
+        final Map<MD5Digest, PreparedStatement> preparedQueries = new MapMaker().weakValues().makeMap();
 
         final Set<Host.StateListener> listeners = new CopyOnWriteArraySet<Host.StateListener>();
         final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
