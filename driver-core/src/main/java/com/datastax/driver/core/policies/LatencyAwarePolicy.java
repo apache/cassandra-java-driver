@@ -20,6 +20,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.slf4j.Logger;
@@ -117,27 +118,25 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
                      * we try to avoid flooding too). This is probably interesting information anyway since it
                      * gets an idea of which host perform badly.
                      */
-                    double currentMin = latencyTracker.getMinAverage();
-                    Map<Host, TimestampedAverage> currentLatencies = latencyTracker.currentLatencies();
                     Set<Host> excludedThisTick = new HashSet<Host>();
-                    long now = System.nanoTime();
-                    for (Map.Entry<Host, TimestampedAverage> entry : currentLatencies.entrySet()) {
+                    double currentMin = latencyTracker.getMinAverage();
+                    for (Map.Entry<Host, Snapshot.Stats> entry : getScoresSnapshot().getAllStats().entrySet()) {
                         Host host = entry.getKey();
-                        TimestampedAverage latency = entry.getValue();
-                        if (latency.nbMeasure < minMeasure)
+                        Snapshot.Stats stats = entry.getValue();
+                        if (stats.getMeasurementsCount() < minMeasure)
                             continue;
 
-                        if ((now - latency.timestamp) > retryPeriod) {
+                        if (stats.lastUpdatedSince() > retryPeriod) {
                             if (excludedAtLastTick.contains(host))
-                                logger.debug(String.format("Previously avoided host %s has not be queried since %.3fms: will be reconsidered.", host, inMS(now - latency.timestamp)));
+                                logger.debug(String.format("Previously avoided host %s has not be queried since %.3fms: will be reconsidered.", host, inMS(stats.lastUpdatedSince())));
                             continue;
                         }
 
-                        if (latency.average > ((long)(exclusionThreshold * currentMin))) {
+                        if (stats.getLatencyScore() > ((long)(exclusionThreshold * currentMin))) {
                             excludedThisTick.add(host);
                             if (!excludedAtLastTick.contains(host))
                                 logger.debug(String.format("Host %s has an average latency score of %.3fms, more than %f times more than the minimum %.3fms: will be avoided temporarily.",
-                                                          host, inMS(latency.average), exclusionThreshold, inMS(currentMin)));
+                                                          host, inMS(stats.getLatencyScore()), exclusionThreshold, inMS(currentMin)));
                             continue;
                         }
 
@@ -238,6 +237,26 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         };
     }
 
+    /**
+     * Returns a snapshot of the scores (latency averages) maintained by this
+     * policy.
+     *
+     * @return a new (immutable) {@link Snaphot} object containing the current
+     * latency scores maintained by this policy.
+     */
+    public Snapshot getScoresSnapshot() {
+        Map<Host, TimestampedAverage> currentLatencies = latencyTracker.currentLatencies();
+        ImmutableMap.Builder<Host, Snapshot.Stats> builder = ImmutableMap.builder();
+        long now = System.nanoTime();
+        for (Map.Entry<Host, TimestampedAverage> entry : currentLatencies.entrySet()) {
+            Host host = entry.getKey();
+            TimestampedAverage latency = entry.getValue();
+            Snapshot.Stats stats = new Snapshot.Stats(now - latency.timestamp, latency.average, latency.nbMeasure);
+            builder.put(host, stats);
+        }
+        return new Snapshot(builder.build());
+    }
+
     @Override
     public void onUp(Host host) {
         childPolicy.onUp(host);
@@ -260,6 +279,85 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         latencyTracker.resetHost(host);
     }
 
+    /**
+     * An immutable snapshot of the per-host scores (and stats in general)
+     * maintained by {@code LatencyAwarePolicy} to base its decision upon.
+     */
+    public static class Snapshot {
+        private final Map<Host, Stats> stats;
+
+        private Snapshot(Map<Host, Stats> stats) {
+            this.stats = stats;
+        }
+
+        /**
+         * A map with the stats for all hosts tracked by the {@code
+         * LatencyAwarePolicy} at the time of the snapshot.
+         *
+         * @return a immutable map with all the stats contained in this
+         * snapshot.
+         */
+        public Map<Host, Stats> getAllStats() {
+            return stats;
+        }
+
+        /**
+         * The {@code Stats} object for a given host.
+         *
+         * @param host the host to return the stats of.
+         * @return the {@code Stats} for {@code host} in this snapshot or
+         * {@code null} if the snapshot has not information on {@code host}.
+         */
+        public Stats getStats(Host host) {
+            return stats.get(host);
+        }
+
+        /**
+         * A snapshot of the statistics on a given host kept by {@code LatencyAwarePolicy}.
+         */
+        public static class Stats {
+            private final long lastUpdatedSince;
+            private final long average;
+            private final long nbMeasurements;
+
+            private Stats(long lastUpdatedSince, long average, long nbMeasurements) {
+                this.lastUpdatedSince = lastUpdatedSince;
+                this.average = average;
+                this.nbMeasurements = nbMeasurements;
+            }
+
+            /**
+             * The number of nanoseconds since the last latency update was recorded (at the time
+             * of the snapshot).
+             *
+             * @return The number of nanoseconds since the last latency update was recorded (at the time
+             * of the snapshot).
+             */
+            public long lastUpdatedSince() {
+                return lastUpdatedSince;
+            }
+
+            /**
+             * The latency score for the host this is the stats of at the time of the snapshot.
+             *
+             * @return the latency score for the host this is the stats of at the time of the snapshot,
+             * or {@code -1L} if not enough measurements have been taken to assign a score.
+             */
+            public long getLatencyScore() {
+                return average;
+            }
+
+            /**
+             * The number of recorded latency measurements for the host this is the stats of.
+             *
+             * @return the number of recorded latency measurements for the host this is the stats of.
+             */
+            public long getMeasurementsCount() {
+                return nbMeasurements;
+            }
+        }
+    }
+
     private class Tracker implements LatencyTracker {
 
         private final ConcurrentMap<Host, HostLatencyTracker> latencies = new ConcurrentHashMap<Host, HostLatencyTracker>();
@@ -268,7 +366,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         public void update(Host host, long newLatencyNanos) {
             HostLatencyTracker hostTracker = latencies.get(host);
             if (hostTracker == null) {
-                hostTracker = new HostLatencyTracker(scale);
+                hostTracker = new HostLatencyTracker(scale, (30L * minMeasure) / 100L);
                 HostLatencyTracker old = latencies.putIfAbsent(host, hostTracker);
                 if (old != null)
                     hostTracker = old;
@@ -313,9 +411,9 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
 
         private final long timestamp;
         private final long average;
-        private final int nbMeasure;
+        private final long nbMeasure;
 
-        TimestampedAverage(long timestamp, long average, int nbMeasure) {
+        TimestampedAverage(long timestamp, long average, long nbMeasure) {
             this.timestamp = timestamp;
             this.average = average;
             this.nbMeasure = nbMeasure;
@@ -324,11 +422,13 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
 
     private static class HostLatencyTracker {
 
+        private final long thresholdToAccount;
         private final double scale;
         private final AtomicReference<TimestampedAverage> current = new AtomicReference<TimestampedAverage>();
 
-        HostLatencyTracker(long scale) {
+        HostLatencyTracker(long scale, long thresholdToAccount) {
             this.scale = (double)scale; // We keep in double since that's how we'll use it.
+            this.thresholdToAccount = thresholdToAccount;
         }
 
         public void add(long newLatencyNanos) {
@@ -343,8 +443,12 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
 
             long currentTimestamp = System.nanoTime();
 
-            if (previous == null)
-                return new TimestampedAverage(currentTimestamp, newLatencyNanos, 1);
+            long nbMeasure = previous == null ? 1 : previous.nbMeasure + 1;
+            if (nbMeasure < thresholdToAccount)
+                return new TimestampedAverage(currentTimestamp, -1L, nbMeasure);
+
+            if (previous == null || previous.average < 0)
+                return new TimestampedAverage(currentTimestamp, newLatencyNanos, nbMeasure);
 
             // Note: it's possible for the delay to be 0, in which case newLatencyNanos will basically be
             // discarded. It's fine: nanoTime is precise enough in practice that even if it happens, it
@@ -363,7 +467,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
             double prevWeight = Math.log(scaledDelay+1) / scaledDelay;
             long newAverage = (long)((1.0 - prevWeight) * newLatencyNanos + prevWeight * previous.average);
 
-            return new TimestampedAverage(currentTimestamp, newAverage, previous.nbMeasure+1);
+            return new TimestampedAverage(currentTimestamp, newAverage, nbMeasure);
         }
 
         public TimestampedAverage getCurrentAverage() {
@@ -537,9 +641,15 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * Cassandra node will tend to perform relatively poorly on the first
          * queries due to the JVM warmup). This is what this option controls.
          * If less that {@code minMeasure} data points have been collected for
-         * a given host, the policy will never penalize that host. Note that
-         * the number of collected measurements for a given host is reseted if
-         * the node is restarted.
+         * a given host, the policy will never penalize that host. Also, the
+         * 30% first measurement will be entirely ignored (in other words, the
+         * {@code 30% * minMeasure} first measurement to a node are entirely
+         * ignored, while the {@code 70%} next ones are accounted in the latency
+         * computed but the node won't get convicted until we've had at least
+         * {@code minMeasure} measurements).
+         * <p>
+         * Note that the number of collected measurements for a given host is
+         * reseted if the node is restarted.
          * <p>
          * The default for this option (if this method is not called) is <b>50</b>.
          * Note that it is probably not a good idea to put this option too low
