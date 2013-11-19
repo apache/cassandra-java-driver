@@ -224,14 +224,12 @@ public class Stress {
         System.out.println("  per-host connections: " + maxConnections);
         System.out.println("  compression:          " + options.has("compression"));
 
-        SocketOptions socket = new SocketOptions();
-        socket.setTcpNoDelay(true);
-
         try {
             // Create session to hosts
             Cluster cluster = new Cluster.Builder()
                                          .addContactPoints(String.valueOf(options.valueOf("ip")))
                                          .withPoolingOptions(pools)
+                                         .withSocketOptions(new SocketOptions().setTcpNoDelay(true))
                                          .build();
 
             if (options.has("compression"))
