@@ -339,7 +339,8 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
             /**
              * The latency score for the host this is the stats of at the time of the snapshot.
              *
-             * @return the latency score for the host this is the stats of at the time of the snapshot.
+             * @return the latency score for the host this is the stats of at the time of the snapshot,
+             * or {@code -1L} if not enough measurements have been taken to assign a score.
              */
             public long getLatencyScore() {
                 return average;
@@ -364,7 +365,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         public void update(Host host, long newLatencyNanos) {
             HostLatencyTracker hostTracker = latencies.get(host);
             if (hostTracker == null) {
-                hostTracker = new HostLatencyTracker(scale);
+                hostTracker = new HostLatencyTracker(scale, (30L * minMeasure) / 100L);
                 HostLatencyTracker old = latencies.putIfAbsent(host, hostTracker);
                 if (old != null)
                     hostTracker = old;
@@ -420,11 +421,13 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
 
     private static class HostLatencyTracker {
 
+        private final long thresholdToAccount;
         private final double scale;
         private final AtomicReference<TimestampedAverage> current = new AtomicReference<TimestampedAverage>();
 
-        HostLatencyTracker(long scale) {
+        HostLatencyTracker(long scale, long thresholdToAccount) {
             this.scale = (double)scale; // We keep in double since that's how we'll use it.
+            this.thresholdToAccount = thresholdToAccount;
         }
 
         public void add(long newLatencyNanos) {
@@ -439,8 +442,12 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
 
             long currentTimestamp = System.nanoTime();
 
-            if (previous == null)
-                return new TimestampedAverage(currentTimestamp, newLatencyNanos, 1);
+            long nbMeasure = previous == null ? 1 : previous.nbMeasure + 1;
+            if (nbMeasure < thresholdToAccount)
+                return new TimestampedAverage(currentTimestamp, -1L, nbMeasure);
+
+            if (previous == null || previous.average < 0)
+                return new TimestampedAverage(currentTimestamp, newLatencyNanos, nbMeasure);
 
             // Note: it's possible for the delay to be 0, in which case newLatencyNanos will basically be
             // discarded. It's fine: nanoTime is precise enough in practice that even if it happens, it
@@ -459,7 +466,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
             double prevWeight = Math.log(scaledDelay+1) / scaledDelay;
             long newAverage = (long)((1.0 - prevWeight) * newLatencyNanos + prevWeight * previous.average);
 
-            return new TimestampedAverage(currentTimestamp, newAverage, previous.nbMeasure+1);
+            return new TimestampedAverage(currentTimestamp, newAverage, nbMeasure);
         }
 
         public TimestampedAverage getCurrentAverage() {
@@ -633,9 +640,15 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * Cassandra node will tend to perform relatively poorly on the first
          * queries due to the JVM warmup). This is what this option controls.
          * If less that {@code minMeasure} data points have been collected for
-         * a given host, the policy will never penalize that host. Note that
-         * the number of collected measurements for a given host is reseted if
-         * the node is restarted.
+         * a given host, the policy will never penalize that host. Also, the
+         * 30% first measurement will be entirely ignored (in other words, the
+         * {@code 30% * minMeasure} first measurement to a node are entirely
+         * ignored, while the {@code 70%} next ones are accounted in the latency
+         * computed but the node won't get convicted until we've had at least
+         * {@code minMeasure} measurements).
+         * <p>
+         * Note that the number of collected measurements for a given host is
+         * reseted if the node is restarted.
          * <p>
          * The default for this option (if this method is not called) is <b>50</b>.
          * Note that it is probably not a good idea to put this option too low
