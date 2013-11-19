@@ -7,6 +7,8 @@ CHANGELOG
 - [new] OSGi bundle (JAVA-142)
 - [improvement] Make collections returned by Row immutable (JAVA-205)
 - [improvement] Limit internal thread pool size (JAVA-203)
+- [improvement] New getter to obtain a snapshot of the scores maintained by
+  LatencyAwarePolicy.
 - [bug] Don't retain unused PreparedStatement in memory (JAVA-201, JAVA-213)
 - [bug] Add missing clustering order info in TableMetadata
 - [bug] Allow bind markers for collections in the query builder (JAVA-196)
