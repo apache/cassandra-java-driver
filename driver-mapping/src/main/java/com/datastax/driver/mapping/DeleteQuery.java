@@ -12,11 +12,11 @@ import com.datastax.driver.core.querybuilder.Clause;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Select;
 
-class DeleteQuery extends Statement{
-    private final EntityMapper mapper;
+class DeleteQuery<T> extends Statement{
+    private final EntityMapper<T> mapper;
     private final Map<String, Object> columns;
 
-    public DeleteQuery(EntityMapper mapper, Object entity) {
+    public DeleteQuery(EntityMapper<T> mapper, T entity) {
         this.mapper = mapper;
         this.columns = mapper.entityToColumns(entity);
         setConsistencyLevel(mapper.entityDef.defaultWriteCL);

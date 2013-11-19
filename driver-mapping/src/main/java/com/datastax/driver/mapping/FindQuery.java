@@ -10,15 +10,15 @@ import java.util.Map.Entry;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Select;
 
-/** 
+/**
  * A query that performs a find by example using the entity provided as constructor.
- *
  */
-class FindQuery extends Statement {
-    private final EntityMapper mapper;
+class FindQuery<T> extends Statement {
+
+    private final EntityMapper<T> mapper;
     private final Map<String, Object> columns;
 
-    public FindQuery(EntityMapper mapper, Object entity) {
+    public FindQuery(EntityMapper<T> mapper, T entity) {
         this.mapper = mapper;
         this.columns = mapper.entityToColumns(entity);
         setConsistencyLevel(mapper.entityDef.defaultReadCL);
@@ -38,5 +38,4 @@ class FindQuery extends Statement {
         }
         return select.getQueryString();
     }
-
 }

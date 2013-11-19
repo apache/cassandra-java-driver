@@ -47,7 +47,7 @@ public class Mapper {
     }
 
     public <T> Query find(T entity) {
-        return new FindQuery(getEntityMapper(entity.getClass()), entity);
+        return new FindQuery<T>((EntityMapper<T>)getEntityMapper(entity.getClass()), entity);
     }
 
     public <T> Query delete(T entity) {

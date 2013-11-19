@@ -71,7 +71,8 @@ class AnnotationParser {
     }
 
     private static <T> SubEntityDefinition<T> parseSubEntity(Class<? extends T> subEntityClass, EntityDefinition<T> entityDef) {
-        SubEntityDefinition subEntityDef = new SubEntityDefinition(entityDef, subEntityClass);
+
+        SubEntityDefinition<T> subEntityDef = new SubEntityDefinition<T>(entityDef, subEntityClass);
 
         // @InheritanceValue
         InheritanceValue inheritanceValue = subEntityClass.getAnnotation(InheritanceValue.class);

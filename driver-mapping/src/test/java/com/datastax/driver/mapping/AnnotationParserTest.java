@@ -1,9 +1,7 @@
 package com.datastax.driver.mapping;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-import org.junit.Test;
+import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 import com.datastax.driver.mapping.EntityDefinition.ColumnDefinition;
 
@@ -14,16 +12,16 @@ public class AnnotationParserTest {
 
         EntityDefinition<A> entityDef = AnnotationParser.parseEntity(A.class);
         assertNotNull(entityDef);
-        assertEquals("a", entityDef.tableName);
-        assertEquals("ks", entityDef.keyspaceName);
+        assertEquals(entityDef.tableName, "a");
+        assertEquals(entityDef.keyspaceName, "ks");
 
         assertEquals(1, entityDef.columns.size());
 
         ColumnDefinition columnDef = entityDef.columns.get(0);
-        assertEquals("p1", columnDef.fieldName);
-        assertEquals("c1", columnDef.columnName);
-        assertEquals("getP1", columnDef.readMethod.getName());
-        assertEquals("setP1", columnDef.writeMethod.getName());
+        assertEquals(columnDef.fieldName, "p1");
+        assertEquals(columnDef.columnName, "c1");
+        assertEquals(columnDef.readMethod.getName(), "getP1");
+        assertEquals(columnDef.writeMethod.getName(), "setP1");
     }
 
     @Test
@@ -31,9 +29,9 @@ public class AnnotationParserTest {
 
         EntityDefinition<Product> entityDef = AnnotationParser.parseEntity(Product.class);
         assertNotNull(entityDef);
-        assertEquals("product", entityDef.tableName);
-        assertEquals("product_type", entityDef.inheritanceColumn);
+        assertEquals(entityDef.tableName, "product");
+        assertEquals(entityDef.inheritanceColumn, "product_type");
 
-        assertEquals(3, entityDef.subEntities.size());
+        assertEquals(entityDef.subEntities.size(), 3);
     }
 }

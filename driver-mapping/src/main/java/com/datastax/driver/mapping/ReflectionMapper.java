@@ -28,13 +28,13 @@ class ReflectionMapper<T> extends EntityMapper<T> {
 
     final Map<String, ColumnMapper> columnNamesToMapper;
     final Map<String, SubEntityMapper> valueToMapper;
-    final Map<Class, SubEntityMapper> classToMapper;
+    final Map<Class<?>, SubEntityMapper> classToMapper;
 
     public ReflectionMapper(EntityDefinition<T> entityDef) {
         super(entityDef);
         columnNamesToMapper = new HashMap<String, ColumnMapper>();
         valueToMapper = new HashMap<String, SubEntityMapper>();
-        classToMapper = new HashMap<Class, SubEntityMapper>();
+        classToMapper = new HashMap<Class<?>, SubEntityMapper>();
 
         for (ColumnDefinition columnDef: entityDef.columns) {
             ColumnMapper columnMapper;

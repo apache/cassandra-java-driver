@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import com.datastax.driver.core.QueryTrace;
+import com.datastax.driver.core.ExecutionInfo;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
@@ -36,8 +36,8 @@ public class Result<T> implements Iterable<T> {
      *
      * @return the next result in this mapped result set or null if it is exhausted.
      */
-    public T fetchOne() {
-        Row row = rs.fetchOne();
+    public T one() {
+        Row row = rs.one();
         return row == null ? null : mapper.rowToEntity(row);
     }
 
@@ -48,8 +48,8 @@ public class Result<T> implements Iterable<T> {
      * @return a list containing the remaining results of this mapped result
      * set. The returned list is empty if and only the result set is exhausted.
      */
-    public List<T> fetchAll() {
-        List<Row> rows = rs.fetchAll();
+    public List<T> all() {
+        List<Row> rows = rs.all();
         List<T> entities = new ArrayList<T>(rows.size());
         for (Row row : rows) {
             entities.add(mapper.rowToEntity(row));
@@ -89,13 +89,14 @@ public class Result<T> implements Iterable<T> {
     }
 
     /**
-     * The query trace if tracing was enabled on this query.
+     * Returns information on the execution of this query.
+     * <p>
+     * The returned object includes basic information such as the queried hosts,
+     * but also the Cassandra query trace if tracing was enabled for the query.
      *
-     * @return the {@code QueryTrace} object for this query if tracing was
-     * enable for this query, or {@code null} otherwise.
+     * @return the execution info for this query.
      */
-    public QueryTrace getQueryTrace() {
-        return rs.getQueryTrace();
+    public ExecutionInfo getExecutionInfo() {
+        return rs.getExecutionInfo();
     }
-
 }

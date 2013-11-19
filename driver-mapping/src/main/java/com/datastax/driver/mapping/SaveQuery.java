@@ -11,11 +11,11 @@ import com.datastax.driver.core.querybuilder.Insert;
 /**
  * A query that performs an insert for the provided entity.
  */
-class SaveQuery extends Statement {
-    private final EntityMapper mapper;
+class SaveQuery<T> extends Statement {
+    private final EntityMapper<T> mapper;
     private final Map<String, Object> columns;
 
-    public SaveQuery(EntityMapper mapper, Object entity) {
+    public SaveQuery(EntityMapper<T> mapper, T entity) {
         this.mapper = mapper;
         this.columns = mapper.entityToColumns(entity);
         setConsistencyLevel(mapper.entityDef.defaultWriteCL);

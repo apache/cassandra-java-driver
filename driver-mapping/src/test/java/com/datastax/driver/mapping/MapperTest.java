@@ -1,12 +1,9 @@
 package com.datastax.driver.mapping;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import java.util.*;
 
-import java.util.Collection;
-import java.util.Collections;
-
-import org.junit.Test;
+import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
@@ -15,10 +12,10 @@ import com.datastax.driver.core.CCMBridge;
 public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
     protected Collection<String> getTableDefinitions() {
-        return Collections.singleton("CREATE TABLE a (c1 text PRIMARY KEY)");
+        return Arrays.asList("CREATE TABLE a (c1 text PRIMARY KEY)");
     }
 
-    @Test
+    @Test(groups = "short")
     public void testBasicEntity() throws Exception {
         Mapper m = new Mapper();
 
@@ -26,7 +23,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         a.setP1("abc");
         session.execute(m.save(a));
 
-        a = m.map(session.execute(m.find(a)), A.class).fetchOne();
-        assertEquals("abc", a.getP1());
+        a = m.map(session.execute(m.find(a)), A.class).one();
+        assertEquals(a.getP1(), "abc");
     }
 }
