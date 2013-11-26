@@ -432,7 +432,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
     }
 
     private void showLatencyStats(LatencyAwarePolicy latencyAwarePolicyInstance) {
-        Map<Host, LatencyAwarePolicy.TimestampedAverage> currentLatencies = latencyAwarePolicyInstance.latencyTracker.currentLatencies();
+        LatencyAwarePolicy.Snapshot currentLatencies = latencyAwarePolicyInstance.getScoresSnapshot();
 
         // create a sorted list for easy printing
         ArrayList<Host> hosts = new ArrayList<Host>();
@@ -447,10 +447,10 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
         long minLatency = Long.MAX_VALUE;
         int totalQueried = 0;
         for (Host host : hosts) {
-            LatencyAwarePolicy.TimestampedAverage latency = currentLatencies.get(host);
+            LatencyAwarePolicy.Snapshot.Stats latency = currentLatencies.getStats(host);
             if (latency != null) {
-                if (latency.average < minLatency)
-                    minLatency = latency.average;
+                if (latency.getLatencyScore() < minLatency)
+                    minLatency = latency.getLatencyScore();
                 totalQueried += getQueried(host.toString().substring(1));
             }
         }
@@ -462,13 +462,13 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
         // print found metrics
         for (Host host : hosts) {
-            LatencyAwarePolicy.TimestampedAverage latency = currentLatencies.get(host);
+            LatencyAwarePolicy.Snapshot.Stats latency = currentLatencies.getStats(host);
             int queriedCount = getQueried(host.toString().substring(1));
             if (latency != null)
                 logger.info(String.format("%20s %20s %20s %20s %19sx %20s",
-                        host, latency.average, latency.nbMeasure,
+                        host, latency.getLatencyScore(), latency.getMeasurementsCount(),
                         queriedCount,
-                        (float) latency.average / minLatency,
+                        (float) latency.getLatencyScore() / minLatency,
                         Math.round((float) queriedCount / totalQueried * 100)));
         }
 
