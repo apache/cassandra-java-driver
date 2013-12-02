@@ -16,6 +16,9 @@
 package com.datastax.driver.core;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,14 +35,19 @@ abstract class ReplicationStrategy {
     static ReplicationStrategy create(Map<String, String> replicationOptions) {
 
         String strategyClass = replicationOptions.get("class");
-        String repFactorString = replicationOptions.get("replication_factor");
-        if (strategyClass == null | repFactorString == null)
+        if (strategyClass == null)
             return null;
 
         try {
             if (strategyClass.contains("SimpleStrategy")) {
-                return new SimpleStrategy(Integer.parseInt(repFactorString));
-            } else if (strategyClass.contains("SimpleStrategy")) {
+            	//replication_factor is only specified for SimpleStrategy
+            	String repFactorString = replicationOptions.get("replication_factor");
+            	if (repFactorString == null) {
+            		return null;
+            	} else {
+            		return new SimpleStrategy(Integer.parseInt(repFactorString));
+            	}
+            } else if (strategyClass.contains("NetworkTopologyStrategy")) {
                 Map<String, Integer> dcRfs = new HashMap<String, Integer>();
                 for (Map.Entry<String, String> entry : replicationOptions.entrySet())
                 {
@@ -79,10 +87,12 @@ abstract class ReplicationStrategy {
 
             Map<Token, Set<Host>> replicaMap = new HashMap<Token, Set<Host>>(tokenToPrimary.size());
             for (int i = 0; i < ring.size(); i++) {
-                ImmutableSet.Builder<Host> builder = ImmutableSet.builder();
-                for (int j = 0; j < rf; j++)
-                    builder.add(tokenToPrimary.get(getTokenWrapping(i+j, ring)));
-                replicaMap.put(ring.get(i), builder.build());
+            	//handle consecutive sections in the ring assigned to the same host
+            	Set<Host> replicas = new LinkedHashSet<Host>();
+            	//we stop when reached the desired RF or ran out of nodes
+                for (int j = 0; j < ring.size() && replicas.size() < rf; j++)
+                    replicas.add(tokenToPrimary.get(getTokenWrapping(i+j, ring)));
+                replicaMap.put(ring.get(i), ImmutableSet.<Host>builder().addAll(replicas).build());
             }
             return replicaMap;
         }
@@ -98,36 +108,87 @@ abstract class ReplicationStrategy {
 
         Map<Token, Set<Host>> computeTokenToReplicaMap(Map<Token, Host> tokenToPrimary, List<Token> ring) {
 
-            Map<Token, Set<Host>> replicaMap = new HashMap<Token, Set<Host>>(tokenToPrimary.size());
+        	/*
+             * This is essentially a copy of org.apache.cassandra.locator.NetworkTopologyStrategy
+             */
+        	
+        	final Map<String, Set<String>> racks = getRacksInDcs(tokenToPrimary.values());
+            final Map<Token, Set<Host>> replicaMap = new HashMap<Token, Set<Host>>(tokenToPrimary.size());
             for (int i = 0; i < ring.size(); i++) {
-                Map<String, Integer> remainings = new HashMap<String, Integer>(replicationFactors);
-                ImmutableSet.Builder<Host> builder = ImmutableSet.builder();
-                for (int j = 0; j < ring.size(); j++) {
-                    Host h = tokenToPrimary.get(getTokenWrapping(j, ring));
+                Map<String, Set<Host>> allDcReplicas = new HashMap<String, Set<Host>>();
+                Map<String, Set<String>> seenRacks = new HashMap<String, Set<String>>();
+                Map<String, Set<Host>> skippedDcEndpoints = new HashMap<String, Set<Host>>();
+                for (String dc : replicationFactors.keySet()) {
+                	allDcReplicas.put(dc, new HashSet<Host>());
+                	seenRacks.put(dc, new HashSet<String>());
+                	//preserve order
+                	skippedDcEndpoints.put(dc, new LinkedHashSet<Host>());
+                }
+                
+                //preserve order - primary replica will be first
+                Set<Host> replicas = new LinkedHashSet<Host>();
+                //we stop the inner iteration if all DCs have enough replicas or we reach the end of the ring
+                for (int j = 0; j < ring.size() && !allDone(allDcReplicas); j++) {
+                    Host h = tokenToPrimary.get(getTokenWrapping(i + j, ring));
                     String dc = h.getDatacenter();
                     if (dc == null)
                         continue;
 
-                    Integer remaining = remainings.get(dc);
-                    if (remaining <= 0)
+                    Integer rf = replicationFactors.get(dc);
+                    Set<Host> dcReplicas = allDcReplicas.get(dc); 
+                    if (dcReplicas.size() >= rf)
                         continue;
 
-                    builder.add(h);
-                    remainings.put(dc, remaining - 1);
-                    if (allDone(remainings))
-                        break;
+                    //check if we already visited all racks in dc
+                    if (seenRacks.get(dc).size() == racks.get(dc).size()) {
+                    	replicas.add(h);
+                    	dcReplicas.add(h);
+                    } else {
+                    	String rack = h.getRack();
+                    	//is this a new rack?
+                    	if (seenRacks.get(dc).contains(rack)) {
+                    		skippedDcEndpoints.get(dc).add(h);
+                    	} else {
+                    		replicas.add(h);
+                    		dcReplicas.add(h);
+                    		seenRacks.get(dc).add(rack);
+                    		//check if we have run out of all racks
+                    		//if yes, add all those nodes that we skipped so far
+                    		if (seenRacks.get(dc).size() == racks.get(dc).size()) {
+                    			Iterator<Host> skippedIt = skippedDcEndpoints.get(dc).iterator();
+                    			while (skippedIt.hasNext() && dcReplicas.size() < rf) {
+                    				Host nextSkipped = skippedIt.next();
+                    				replicas.add(nextSkipped);
+                    				dcReplicas.add(nextSkipped);
+                    			}
+                    		}
+                    	}
+                    }
                 }
-                replicaMap.put(ring.get(i), builder.build());
+                replicaMap.put(ring.get(i), ImmutableSet.<Host>builder().addAll(replicas).build());
             }
             return replicaMap;
         }
 
-        private boolean allDone(Map<String, Integer> map)
+        private boolean allDone(Map<String, Set<Host>> map)
         {
-            for (Map.Entry<String, Integer> entry : map.entrySet())
-                if (entry.getValue() > 0)
+            for (Map.Entry<String, Set<Host>> entry : map.entrySet())
+                if (entry.getValue().size() < replicationFactors.get(entry.getKey()))
                     return false;
             return true;
+        }
+        
+        private Map<String, Set<String>> getRacksInDcs(Iterable<Host> hosts) {
+        	Map<String, Set<String>> result = new HashMap<String, Set<String>>();
+        	for (Host host : hosts) {
+        		Set<String> racks = result.get(host.getDatacenter());
+        		if (racks == null) {
+        			racks = new HashSet<String>();
+        			result.put(host.getDatacenter(), racks);
+        		}
+        		racks.add(host.getRack());
+        	}
+        	return result;
         }
     }
 }
