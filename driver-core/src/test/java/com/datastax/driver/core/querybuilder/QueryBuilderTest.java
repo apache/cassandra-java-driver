@@ -64,6 +64,10 @@ public class QueryBuilderTest {
         select = select("a").from("foo").where(in("k"));
         assertEquals(select.toString(), query);
 
+        query = "SELECT a FROM foo WHERE k IN ?;";
+        select = select("a").from("foo").where(in("k", bindMarker()));
+        assertEquals(select.toString(), query);
+
         query = "SELECT count(*) FROM foo;";
         select = select().countAll().from("foo");
         assertEquals(select.toString(), query);
