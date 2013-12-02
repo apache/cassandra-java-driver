@@ -51,6 +51,12 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                   + "    PRIMARY KEY (k)\n"
                   + ");";
 
+        String counters = "CREATE TABLE ks.counters (\n"
+                        + "    k text,\n"
+                        + "    c counter,\n"
+                        + "    PRIMARY KEY (k)\n"
+                        + ");";
+
         String compactStatic = "CREATE TABLE ks.compact_static (\n"
                              + "    k text,\n"
                              + "    i int,\n"
@@ -77,6 +83,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
 
         cql3.put("sparse", sparse);
         cql3.put("static", st);
+        cql3.put("counters", counters);
         compact.put("compact_static", compactStatic);
         compact.put("compact_dynamic", compactDynamic);
         compact.put("compact_composite", compactComposite);
