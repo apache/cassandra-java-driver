@@ -33,27 +33,27 @@ public class CCMBridge {
 
     private static final Logger logger = LoggerFactory.getLogger(CCMBridge.class);
 
-    public static final String IP_PREFIX;
+    public static String IP_PREFIX;
 
     private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d+(-\\w+)?";
 
-    static final File CASSANDRA_DIR;
-    static final String CASSANDRA_VERSION;
+    static File CASSANDRA_DIR;
+    static String CASSANDRA_VERSION;
     static {
-        String version = System.getProperty("cassandra.version");
-        if (version.matches(CASSANDRA_VERSION_REGEXP)) {
-            CASSANDRA_DIR = null;
-            CASSANDRA_VERSION = "-v " + version;
-        } else {
-            CASSANDRA_DIR = new File(version);
-            CASSANDRA_VERSION = "";
-        }
-
-        String ip_prefix = System.getProperty("ipprefix");
-        if (ip_prefix == null || ip_prefix.equals("")) {
-            ip_prefix = "127.0.1.";
-        }
-        IP_PREFIX = ip_prefix;
+//        String version = System.getProperty("cassandra.version");
+//        if (version.matches(CASSANDRA_VERSION_REGEXP)) {
+//            CASSANDRA_DIR = null;
+//            CASSANDRA_VERSION = "-v " + version;
+//        } else {
+//            CASSANDRA_DIR = new File(version);
+//            CASSANDRA_VERSION = "";
+//        }
+//
+//        String ip_prefix = System.getProperty("ipprefix");
+//        if (ip_prefix == null || ip_prefix.equals("")) {
+//            ip_prefix = "127.0.1.";
+//        }
+//        IP_PREFIX = ip_prefix;
     }
 
     private final Runtime runtime = Runtime.getRuntime();

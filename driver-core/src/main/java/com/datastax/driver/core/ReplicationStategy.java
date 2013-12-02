@@ -32,14 +32,18 @@ abstract class ReplicationStrategy {
     static ReplicationStrategy create(Map<String, String> replicationOptions) {
 
         String strategyClass = replicationOptions.get("class");
-        String repFactorString = replicationOptions.get("replication_factor");
-        if (strategyClass == null | repFactorString == null)
+        if (strategyClass == null)
             return null;
 
         try {
             if (strategyClass.contains("SimpleStrategy")) {
-                return new SimpleStrategy(Integer.parseInt(repFactorString));
-            } else if (strategyClass.contains("SimpleStrategy")) {
+            	String repFactorString = replicationOptions.get("replication_factor");
+            	if (repFactorString == null) {
+            		return null;
+            	} else {
+            		return new SimpleStrategy(Integer.parseInt(repFactorString));
+            	}
+            } else if (strategyClass.contains("NetworkTopologyStrategy")) {
                 Map<String, Integer> dcRfs = new HashMap<String, Integer>();
                 for (Map.Entry<String, String> entry : replicationOptions.entrySet())
                 {
