@@ -17,8 +17,6 @@ package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
 
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-
 /**
  * A simple {@code RegularStatement} implementation built directly from a query
  * string.

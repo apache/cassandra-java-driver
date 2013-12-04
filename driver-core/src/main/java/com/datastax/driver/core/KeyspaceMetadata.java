@@ -15,9 +15,11 @@
  */
 package com.datastax.driver.core;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import java.util.*;
 
 /**
  * Describes a keyspace defined in this cluster.

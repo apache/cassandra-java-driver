@@ -2,6 +2,7 @@ package com.datastax.driver.core;
 
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+
 import javax.net.ssl.SSLContext;
 
 /**

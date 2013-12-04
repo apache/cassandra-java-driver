@@ -15,19 +15,17 @@
  */
 package com.datastax.driver.stress;
 
-import java.util.Iterator;
+import static com.google.common.util.concurrent.Uninterruptibles.awaitUninterruptibly;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
-
-import static com.google.common.util.concurrent.Uninterruptibles.awaitUninterruptibly;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 
 public class AsynchronousConsumer implements Consumer {
 

@@ -17,10 +17,14 @@ package com.datastax.driver.stress;
 
 import java.util.Iterator;
 
-import com.datastax.driver.core.*;
-
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
 
 public abstract class QueryGenerator implements Iterator<QueryGenerator.Request> {
 

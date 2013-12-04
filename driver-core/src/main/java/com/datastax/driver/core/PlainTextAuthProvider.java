@@ -15,9 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import javax.security.sasl.SaslException;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
+
+import javax.security.sasl.SaslException;
 
 /**
  * A simple {@code AuthProvider} implementation.

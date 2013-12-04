@@ -15,9 +15,12 @@
  */
 package com.datastax.driver.core;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+
 import java.util.Arrays;
 
-import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 public class CassandraTypeParserTest {

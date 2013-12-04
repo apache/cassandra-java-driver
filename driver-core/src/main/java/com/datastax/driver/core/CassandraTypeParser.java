@@ -15,12 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
-import com.google.common.collect.ImmutableMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.utils.Bytes;
+import com.google.common.collect.ImmutableMap;
 
 /*
  * Helps transforming Cassandra types (as read in the schema tables) to

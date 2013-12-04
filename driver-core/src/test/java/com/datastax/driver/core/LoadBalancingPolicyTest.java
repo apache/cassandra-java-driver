@@ -15,14 +15,22 @@
  */
 package com.datastax.driver.core;
 
+import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
+import static com.datastax.driver.core.TestUtils.waitFor;
+import static com.datastax.driver.core.TestUtils.waitForDecommission;
+import static com.datastax.driver.core.TestUtils.waitForDown;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
-
-import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnavailableException;
-import static com.datastax.driver.core.TestUtils.*;
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.TokenAwarePolicy;
 
 public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 

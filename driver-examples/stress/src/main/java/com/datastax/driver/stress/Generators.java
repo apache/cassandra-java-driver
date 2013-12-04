@@ -18,12 +18,16 @@ package com.datastax.driver.stress;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.utils.Bytes;
-
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.KeyspaceMetadata;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.exceptions.QueryValidationException;
+import com.datastax.driver.core.utils.Bytes;
 
 public class Generators {
     private static ThreadLocal<Random> random = new ThreadLocal<Random>() {

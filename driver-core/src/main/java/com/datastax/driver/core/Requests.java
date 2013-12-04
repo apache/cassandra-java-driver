@@ -16,11 +16,14 @@
 package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
-import java.util.*;
-
-import com.google.common.collect.ImmutableMap;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
 
 import org.jboss.netty.buffer.ChannelBuffer;
+
+import com.google.common.collect.ImmutableMap;
 
 class Requests {
 

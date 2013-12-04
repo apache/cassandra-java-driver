@@ -15,22 +15,27 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
-import java.nio.ByteBuffer;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 

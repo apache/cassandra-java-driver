@@ -15,11 +15,12 @@
  */
 package com.datastax.driver.core;
 
+import static com.datastax.driver.core.TestUtils.waitFor;
+import static com.datastax.driver.core.TestUtils.waitForDecommission;
+import static com.datastax.driver.core.TestUtils.waitForDown;
+import static org.testng.Assert.assertEquals;
+
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.*;
-
-import static com.datastax.driver.core.TestUtils.*;
 
 /**
  * Simple test of the Sessions methods against a one node cluster.

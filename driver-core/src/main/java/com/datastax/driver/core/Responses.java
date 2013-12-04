@@ -15,13 +15,29 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
 import java.net.InetAddress;
-import java.util.*;
+import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 
-import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.exceptions.AlreadyExistsException;
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.InvalidConfigurationInQueryException;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.exceptions.ReadTimeoutException;
+import com.datastax.driver.core.exceptions.SyntaxError;
+import com.datastax.driver.core.exceptions.TruncateException;
+import com.datastax.driver.core.exceptions.UnauthorizedException;
+import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.WriteTimeoutException;
 import com.datastax.driver.core.utils.Bytes;
 
 class Responses {

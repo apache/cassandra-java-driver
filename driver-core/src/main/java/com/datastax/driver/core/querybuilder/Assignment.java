@@ -15,10 +15,11 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
-import java.util.*;
+import static com.datastax.driver.core.querybuilder.Utils.appendName;
+import static com.datastax.driver.core.querybuilder.Utils.appendValue;
 
-import static com.datastax.driver.core.querybuilder.Utils.*;
+import java.nio.ByteBuffer;
+import java.util.List;
 
 public abstract class Assignment extends Utils.Appendeable {
 

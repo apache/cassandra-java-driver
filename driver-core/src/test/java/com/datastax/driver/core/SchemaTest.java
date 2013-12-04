@@ -15,11 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import static org.testng.Assert.assertEquals;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.*;
 
 /**
  * Test we correctly process and print schema.

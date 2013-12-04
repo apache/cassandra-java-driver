@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Options to configure low-level socket options for the connections kept
  * to the Cassandra hosts.

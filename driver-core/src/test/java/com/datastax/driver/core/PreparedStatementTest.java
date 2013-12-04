@@ -15,14 +15,24 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import static com.datastax.driver.core.TestUtils.getFixedValue;
+import static com.datastax.driver.core.TestUtils.getFixedValue2;
+import static com.datastax.driver.core.TestUtils.getValue;
+import static com.datastax.driver.core.TestUtils.setBoundValue;
+import static com.datastax.driver.core.TestUtils.waitFor;
+import static com.datastax.driver.core.TestUtils.waitForDown;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
-
-import com.datastax.driver.core.exceptions.*;
-import static com.datastax.driver.core.TestUtils.*;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 /**
  * Prepared statement tests.

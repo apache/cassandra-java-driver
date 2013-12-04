@@ -16,14 +16,26 @@
 package com.datastax.driver.stress;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.*;
+import joptsimple.BuiltinHelpFormatter;
+import joptsimple.HelpFormatter;
+import joptsimple.OptionDescriptor;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
 
 import org.apache.log4j.PropertyConfigurator;
 
-import joptsimple.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.PoolingOptions;
+import com.datastax.driver.core.ProtocolOptions;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SocketOptions;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 /**
  * A simple stress tool to demonstrate the use of the driver.

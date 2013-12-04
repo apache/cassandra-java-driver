@@ -20,9 +20,12 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.Statement;
 import com.google.common.collect.AbstractIterator;
-
-import com.datastax.driver.core.*;
 
 /**
  * A wrapper load balancing policy that add token awareness to a child policy.

@@ -15,19 +15,26 @@
  */
 package com.datastax.driver.core;
 
-import java.io.*;
+import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
-import java.util.*;
-
-import com.datastax.driver.core.exceptions.*;
-import static com.datastax.driver.core.TestUtils.*;
-
-import com.google.common.io.Files;
+import java.util.Collection;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+
+import com.datastax.driver.core.exceptions.AlreadyExistsException;
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.google.common.io.Files;
 
 public class CCMBridge {
 

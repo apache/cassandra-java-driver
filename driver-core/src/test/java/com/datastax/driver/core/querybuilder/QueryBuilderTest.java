@@ -15,18 +15,59 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.add;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.addAll;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.append;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.appendAll;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.asc;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.column;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.decr;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.delete;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.desc;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.discard;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.discardAll;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.fcall;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.gt;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.gte;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.in;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.incr;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.lt;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.lte;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.prepend;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.prependAll;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.put;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.putAll;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.quote;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.raw;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.remove;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.removeAll;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.set;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.setIdx;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.timestamp;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.token;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.truncate;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.ttl;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.update;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.util.*;
+import java.util.Arrays;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
-
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Statement;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class QueryBuilderTest {
 

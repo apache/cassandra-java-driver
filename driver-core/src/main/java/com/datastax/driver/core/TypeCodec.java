@@ -29,10 +29,17 @@ import java.nio.charset.CharsetEncoder;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
-
 import com.datastax.driver.core.utils.Bytes;
 
 abstract class TypeCodec<T> {

@@ -15,12 +15,26 @@
  */
 package com.datastax.driver.core;
 
-import org.testng.annotations.Test;
-import static org.testng.Assert.*;
+import static com.datastax.driver.core.TestUtils.waitFor;
+import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
-import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.policies.*;
-import static com.datastax.driver.core.TestUtils.*;
+import org.testng.annotations.Test;
+
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.ReadTimeoutException;
+import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.WriteTimeoutException;
+import com.datastax.driver.core.policies.AlwaysIgnoreRetryPolicy;
+import com.datastax.driver.core.policies.AlwaysRetryRetryPolicy;
+import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
+import com.datastax.driver.core.policies.FallthroughRetryPolicy;
+import com.datastax.driver.core.policies.LoggingRetryPolicy;
+import com.datastax.driver.core.policies.RetryPolicy;
 
 public class RetryPolicyTest extends AbstractPoliciesTest {
 

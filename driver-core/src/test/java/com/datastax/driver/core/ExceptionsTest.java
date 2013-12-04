@@ -14,12 +14,25 @@
  *   limitations under the License.
  */
 package com.datastax.driver.core;
-import com.datastax.driver.core.exceptions.*;
+import static com.datastax.driver.core.TestUtils.waitForDown;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.core.TestUtils.waitForDown;
-import static org.testng.Assert.*;
+import com.datastax.driver.core.exceptions.AlreadyExistsException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.InvalidConfigurationInQueryException;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.ReadTimeoutException;
+import com.datastax.driver.core.exceptions.SyntaxError;
+import com.datastax.driver.core.exceptions.TraceRetrievalException;
+import com.datastax.driver.core.exceptions.TruncateException;
+import com.datastax.driver.core.exceptions.UnauthorizedException;
+import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.WriteTimeoutException;
 
 /**
  * Tests Exception classes with seperate clusters per test, when applicable

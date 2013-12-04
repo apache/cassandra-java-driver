@@ -15,6 +15,9 @@
  */
 package com.datastax.driver.core.utils;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Random;
@@ -22,7 +25,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.DataType;

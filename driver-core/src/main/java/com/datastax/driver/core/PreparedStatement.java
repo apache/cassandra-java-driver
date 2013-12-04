@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.policies.RetryPolicy;
 
 /**

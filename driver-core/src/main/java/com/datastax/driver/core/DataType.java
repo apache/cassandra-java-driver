@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -30,12 +30,11 @@ import java.util.UUID;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-
-import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * Data types supported by cassandra.
