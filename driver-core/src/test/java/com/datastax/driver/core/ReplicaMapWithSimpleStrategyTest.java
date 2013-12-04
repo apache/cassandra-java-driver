@@ -11,27 +11,26 @@ import com.google.common.collect.ImmutableMap;
 
 public class ReplicaMapWithSimpleStrategyTest extends AbstractReplicationStrategyTest {
 
+	private static ReplicationStrategy simpleStrategy(int replicationFactor) {
+		return ReplicationStrategy.create(ImmutableMap.<String, String>builder()//
+				.put("class", "SimpleStrategy")//
+				.put("replication_factor", String.valueOf(replicationFactor))//
+				.build());
+	}
+	
 	/*
 	 * ---------------------------------------------------------------------------
 	 * Ring, replication, etc... setup. These are reusable for the tests
+	 * This data is based on a real ring topology. Some tests are using
+	 * smaller and more specific topologies instead.
 	 * ---------------------------------------------------------------------------
 	 */
 	
-	private static final Map<String, String> replicationOptions = ImmutableMap.<String, String>builder()//
-			.put("class", "SimpleStrategy")//
-			.put("replication_factor", "3")//
-			.build();
+	private static final ReplicationStrategy exampleStrategy = simpleStrategy(3);
 	
-	private static final Map<String, String> replicationOptionsTooManyReplicas = ImmutableMap.<String, String>builder()//
-			.put("class", "SimpleStrategy")//
-			.put("replication_factor", "8")//
-			.build();
-	
-	private static final ReplicationStrategy strategy = ReplicationStrategy.create(replicationOptions);
-	
-	private static final ReplicationStrategy strategyTooManyReplicas = ReplicationStrategy.create(replicationOptionsTooManyReplicas);
+	private static final ReplicationStrategy exampleStrategyTooManyReplicas = simpleStrategy(8);
 
-	private static final List<Token> ring = ImmutableList.<Token>builder()
+	private static final List<Token> exampleRing = ImmutableList.<Token>builder()
 			.add(token("-9000000000000000000"))//
 			.add(token("-8000000000000000000"))// 
 			.add(token("-7000000000000000000"))//
@@ -52,7 +51,7 @@ public class ReplicaMapWithSimpleStrategyTest extends AbstractReplicationStrateg
 			.add(token("8000000000000000000"))//
 			.build();
 	
-	private static final Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
+	private static final Map<Token, Host> exampleTokenToPrimary = ImmutableMap.<Token, Host>builder()
 			.put(token("-9000000000000000000"), host("127.0.0.101"))//
 			.put(token("-8000000000000000000"), host("127.0.0.101"))//
 			.put(token("-7000000000000000000"), host("127.0.0.105"))//
@@ -80,8 +79,86 @@ public class ReplicaMapWithSimpleStrategyTest extends AbstractReplicationStrateg
 	 */
 	
 	@Test(groups = "unit")
-	public void simpleStrategyReplicaMapTest() {
+	public void simpleStrategySimpleTopologyTest() {
+		List<Token> ring = ImmutableList.<Token>builder()
+			.add(token("-9000000000000000000"))
+			.add(token("-4000000000000000000"))
+			.add(token("4000000000000000000"))
+			.add(token("9000000000000000000"))
+			.build();
+		
+		Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
+			.put(token("-9000000000000000000"), host("127.0.0.101"))
+			.put(token("-4000000000000000000"), host("127.0.0.102"))
+			.put(token("4000000000000000000"), host("127.0.0.101"))
+			.put(token("9000000000000000000"), host("127.0.0.102"))
+			.build();
+		
+		ReplicationStrategy strategy = simpleStrategy(2);
+		
 		Map<Token, Set<Host>> replicaMap = strategy.computeTokenToReplicaMap(tokenToPrimary, ring);
+		
+		assertReplicaPlacement(replicaMap, token("-9000000000000000000"), "127.0.0.101", "127.0.0.102");
+		assertReplicaPlacement(replicaMap, token("-4000000000000000000"), "127.0.0.102", "127.0.0.101");
+		assertReplicaPlacement(replicaMap, token("4000000000000000000"), "127.0.0.101", "127.0.0.102");
+		assertReplicaPlacement(replicaMap, token("9000000000000000000"), "127.0.0.102", "127.0.0.101");
+	}
+	
+	@Test(groups = "unit")
+	public void simpleStrategyConsecutiveRingSectionsTest() {
+		List<Token> ring = ImmutableList.<Token>builder()
+			.add(token("-9000000000000000000"))
+			.add(token("-4000000000000000000"))
+			.add(token("4000000000000000000"))
+			.add(token("9000000000000000000"))
+			.build();
+		
+		Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
+			.put(token("-9000000000000000000"), host("127.0.0.101"))
+			.put(token("-4000000000000000000"), host("127.0.0.101"))
+			.put(token("4000000000000000000"), host("127.0.0.102"))
+			.put(token("9000000000000000000"), host("127.0.0.102"))
+			.build();
+		
+		ReplicationStrategy strategy = simpleStrategy(2);
+		
+		Map<Token, Set<Host>> replicaMap = strategy.computeTokenToReplicaMap(tokenToPrimary, ring);
+		
+		assertReplicaPlacement(replicaMap, token("-9000000000000000000"), "127.0.0.101", "127.0.0.102");
+		assertReplicaPlacement(replicaMap, token("-4000000000000000000"), "127.0.0.101", "127.0.0.102");
+		assertReplicaPlacement(replicaMap, token("4000000000000000000"), "127.0.0.102", "127.0.0.101");
+		assertReplicaPlacement(replicaMap, token("9000000000000000000"), "127.0.0.102", "127.0.0.101");
+	}
+	
+	@Test(groups = "unit")
+	public void simpleStrategyUnbalancedRingTest() {
+		List<Token> ring = ImmutableList.<Token>builder()
+			.add(token("-9000000000000000000"))
+			.add(token("-4000000000000000000"))
+			.add(token("4000000000000000000"))
+			.add(token("9000000000000000000"))
+			.build();
+		
+		Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
+			.put(token("-9000000000000000000"), host("127.0.0.101"))
+			.put(token("-4000000000000000000"), host("127.0.0.101"))
+			.put(token("4000000000000000000"), host("127.0.0.102"))
+			.put(token("9000000000000000000"), host("127.0.0.101"))
+			.build();
+		
+		ReplicationStrategy strategy = simpleStrategy(2);
+		
+		Map<Token, Set<Host>> replicaMap = strategy.computeTokenToReplicaMap(tokenToPrimary, ring);
+		
+		assertReplicaPlacement(replicaMap, token("-9000000000000000000"), "127.0.0.101", "127.0.0.102");
+		assertReplicaPlacement(replicaMap, token("-4000000000000000000"), "127.0.0.101", "127.0.0.102");
+		assertReplicaPlacement(replicaMap, token("4000000000000000000"), "127.0.0.102", "127.0.0.101");
+		assertReplicaPlacement(replicaMap, token("9000000000000000000"), "127.0.0.101", "127.0.0.102");
+	}
+	
+	@Test(groups = "unit")
+	public void simpleStrategyExampleTopologyMapTest() {
+		Map<Token, Set<Host>> replicaMap = exampleStrategy.computeTokenToReplicaMap(exampleTokenToPrimary, exampleRing);
 		
 		assertReplicaPlacement(replicaMap, token("-9000000000000000000"), "127.0.0.101", "127.0.0.105", "127.0.0.103");
 		assertReplicaPlacement(replicaMap, token("-8000000000000000000"), "127.0.0.101", "127.0.0.105", "127.0.0.103");
@@ -104,8 +181,8 @@ public class ReplicaMapWithSimpleStrategyTest extends AbstractReplicationStrateg
 	}
 	
 	@Test(groups = "unit")
-	public void simpleStrategyMapTooManyReplicasTest() {
-		Map<Token, Set<Host>> replicaMap = strategyTooManyReplicas.computeTokenToReplicaMap(tokenToPrimary, ring);
+	public void simpleStrategyExampleTopologyTooManyReplicasTest() {
+		Map<Token, Set<Host>> replicaMap = exampleStrategyTooManyReplicas.computeTokenToReplicaMap(exampleTokenToPrimary, exampleRing);
 		
 		assertReplicaPlacement(replicaMap, token("-9000000000000000000"), "127.0.0.101", "127.0.0.105", "127.0.0.103", "127.0.0.102", "127.0.0.106", "127.0.0.104");
 		assertReplicaPlacement(replicaMap, token("-8000000000000000000"), "127.0.0.101", "127.0.0.105", "127.0.0.103", "127.0.0.102", "127.0.0.106", "127.0.0.104");

@@ -14,6 +14,13 @@ import java.util.Set;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
+/**
+ * Base class for replication strategy tests. Currently only supports testing 
+ * using the Murmur3Partitioner, which is the default anyway
+ * 
+ * @author davibo
+ *
+ */
 public class AbstractReplicationStrategyTest {
 	
 	private static final Token.Factory partitioner = Token.getFactory("Murmur3Partitioner");
@@ -45,6 +52,13 @@ public class AbstractReplicationStrategyTest {
 		return partitioner;
 	}
 	
+	/**
+	 * Convenience method to quickly create a mock host by a given address.
+	 * Specified address must be accessible, otherwise a RuntimeException is thrown
+	 * 
+	 * @param address
+	 * @return
+	 */
 	protected static HostMock host(String address) {
 		try {
 			return new HostMock(address);
@@ -53,6 +67,15 @@ public class AbstractReplicationStrategyTest {
 		}
 	}
 	
+	/**
+	 * Convenience method to quickly create a mock host by the given address
+	 * located in the given datacenter/rack
+	 * 
+	 * @param address
+	 * @param dc
+	 * @param rack
+	 * @return
+	 */
 	protected static HostMock host(String address, String dc, String rack) {
 		try {
 			return new HostMock(address, dc, rack);
@@ -61,10 +84,25 @@ public class AbstractReplicationStrategyTest {
 		}
 	}
 	
+	/**
+	 * Convenience method to cast a Host object into a MockHost.
+	 * Returns null if parameter host is not a mock
+	 * 
+	 * @param host
+	 * @return
+	 */
 	protected static HostMock asMock(Host host) { 
 		return (host instanceof HostMock ? (HostMock)host : null);
 	}
 	
+	/**
+	 * Convenience method to quickly retrieve a mock host's address as specified
+	 * if created by the <code>host(...)</code> methods. Returns null if 
+	 * given host is not a mock.
+	 * 
+	 * @param host
+	 * @return
+	 */
 	protected static String mockAddress(Host host) {
 		HostMock mock = asMock(host);
 		return mock == null ? null : mock.getMockAddress();
@@ -82,12 +120,26 @@ public class AbstractReplicationStrategyTest {
 		return builder.build();
 	}
 	
+	/**
+	 * Asserts that the replica map for a given token contains the expected list of replica hosts.
+	 * Hosts are checked in order, replica placement should be an ordered set
+	 * 
+	 * @param replicaMap
+	 * @param token
+	 * @param expected
+	 */
 	protected static void assertReplicaPlacement(Map<Token, Set<Host>> replicaMap, Token token, String... expected) {
 		Set<Host> replicaSet = replicaMap.get(token);
 		assertNotNull(replicaSet);
 		assertReplicasForToken(replicaSet, expected);
 	}
 	
+	/**
+	 * Checks if a given ordered set of replicas matches the expected list of replica hosts
+	 * 
+	 * @param replicaSet
+	 * @param expected
+	 */
 	protected static void assertReplicasForToken(Set<Host> replicaSet, String... expected) {
 		final String message = "Contents of replica set: " + replicaSet + " do not match expected hosts: " + Arrays.toString(expected);
 		assertEquals(replicaSet.size(), expected.length, message);
