@@ -7,3 +7,5 @@ testing/
 doc
 notes
 .DS_Store
+bin/
+test-output/
