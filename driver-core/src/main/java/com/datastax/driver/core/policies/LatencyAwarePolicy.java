@@ -31,8 +31,8 @@ import com.datastax.driver.core.*;
  * A wrapper load balancing policy that adds latency awareness to a child policy.
  * <p>
  * When used, this policy will collect the latencies of the queries to each
- * Cassandra and maintain, for each node, a latency score (an average). Based
- * on those scores, the policy will penalize (technically, it will ignore them
+ * Cassandra node and maintain a per-node latency score (an average). Based
+ * on these scores, the policy will penalize (technically, it will ignore them
  * unless no other nodes are up) the nodes that are slower than the best
  * performing node by more than some configurable amount (the exclusion
  * threshold).
@@ -42,18 +42,18 @@ import com.datastax.driver.core.*;
  * In other words, the latency score of a node is the average of its previously
  * measured latencies, but where older measurements gets an exponentially decreasing
  * weight. The exact weight applied to a newly received latency is based on the
- * delay elapsed since the previous measure (to account for the fact that
+ * time elapsed since the previous measure (to account for the fact that
  * latencies are not necessarily reported with equal regularity, neither
  * over time nor between different nodes).
  * <p>
- * Once a node is excluded from query plans (because its averaged latency grow
- * over the exclusion threshold), its latency score will not evolve anymore
- * (since it is not queried). To give a chance to those node to recover, the
+ * Once a node is excluded from query plans (because its averaged latency grew
+ * over the exclusion threshold), its latency score will not be updated anymore
+ * (since it is not queried). To give a chance to this node to recover, the
  * policy has a configurable retry period. The policy will not penalize a host
  * for which no measurement has been collected for more than this retry period.
  * <p>
  * Please see the {@link Builder} class and methods for more details on the
- * possible paramters of this policy.
+ * possible parameters of this policy.
  *
  * @since 1.0.4
  */
@@ -173,7 +173,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
     }
 
     /**
-     * Return the HostDistance for the provided host.
+     * Returns the HostDistance for the provided host.
      *
      * @param host the host of which to return the distance of.
      * @return the HostDistance to {@code host} as returned by the wrapped policy.
@@ -192,8 +192,8 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
      * (where {@code minLatency} is the (averaged) latency of the fastest
      * host).
      * <p>
-     * The hosts that are initally excluded due to their latency will be returned
-     * by the returned iterator, but only only after all non-excluded host of the
+     * The hosts that are initially excluded due to their latency will be returned
+     * by this iterator, but only only after all non-excluded hosts of the
      * child policy have been returned.
      *
      * @param loggedKeyspace the currently logged keyspace.
@@ -375,13 +375,13 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
      * Helper builder object to create a latency aware policy.
      * <p>
      * This helper allows to configure the different parameters used by
-     * {@code LatencyAwarePolicy}. The only mandatory option is the child
+     * {@code LatencyAwarePolicy}. The only mandatory parameter is the child
      * policy that will be wrapped with latency awareness. The other parameters
-     * can be set through the method of this builder but all have defaults (that
+     * can be set through the methods of this builder, but all have defaults (that
      * are documented in the javadoc of each method) if you don't.
      * <p>
-     * If you observe that the resulting policy exclude host too agressively or
-     * not enough so, the main parameter to check are the exclusion threashold
+     * If you observe that the resulting policy excludes hosts too aggressively or
+     * not enough so, the main parameters to check are the exclusion threshold
      * ({@link #withExclusionThreshold}) and scale ({@link #withScale}).
      *
      * @since 1.0.4
@@ -404,7 +404,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
 
         /**
          * Creates a new latency aware policy builder given the child policy
-         * that the resulting policy should wrap.
+         * that the resulting policy wraps.
          *
          * @param childPolicy the load balancing policy to wrap with latency
          * awareness.
@@ -416,11 +416,11 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         /**
          * Sets the exclusion threshold to use for the resulting latency aware policy.
          * <p>
-         * The exclusion threshold controls how much worst the average latency
-         * of a node must be compared to the faster performing one for it to be
+         * The exclusion threshold controls how much worse the average latency
+         * of a node must be compared to the fastest performing node for it to be
          * penalized by the policy.
          * <p>
-         * The default exclusion threshold (if this method is not called) is 2.
+         * The default exclusion threshold (if this method is not called) is <b>2</b>.
          * In other words, the resulting policy excludes nodes that are more than
          * twice slower than the fastest node.
          *
@@ -441,7 +441,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * Sets the scale to use for the resulting latency aware policy.
          * <p>
          * The {@code scale} provides control on how the weight given to older latencies
-         * decrease over time. For a given host, if a new latency \(l\) is received at
+         * decreases over time. For a given host, if a new latency \(l\) is received at
          * time \(t\), and the previously calculated average is \(prev\) calculated at
          * time \(t'\), then the newly calculated average \(avg\) for that host is calculated
          * thusly:
@@ -456,7 +456,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * weight 5% of the updated average. A bigger scale will get less weight to new
          * measurements (compared to previous ones), a smaller one will give them more weight.
          * <p>
-         * The default scale (if this method is not used) is of 10 milliseconds. If unsure, try
+         * The default scale (if this method is not used) is of <b>100 milliseconds</b>. If unsure, try
          * this default scale first and experiment only if it doesn't provide acceptable results
          * (hosts are excluded too quickly or not fast enough and tuning the exclusion threshold
          * doesn't help).
@@ -479,10 +479,10 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * The retry period defines how long a node may be penalized by the
          * policy before it is given a 2nd change. More precisely, a node is excluded
          * from query plans if both his calculated average latency is {@code exclusionThreshold}
-         * times slower than the fastest average latency (at the time the query plan is
+         * times slower than the fastest node average latency (at the time the query plan is
          * computed) <b>and</b> his calculated average latency has been updated since
          * less than {@code retryPeriod}. Since penalized nodes will likely not see their
-         * latency updated, this basically how long the policy will exclude a node.
+         * latency updated, this is basically how long the policy will exclude a node.
          *
          * @param retryPeriod the retry period to use.
          * @param unit the unit for {@code retryPeriod}.
@@ -498,21 +498,21 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         }
 
         /**
-         * Set the update rate for the resulting latency aware policy.
+         * Sets the update rate for the resulting latency aware policy.
          *
          * The update rate defines how often the minimum average latency is
          * recomputed. While the average latency score of each node is computed
          * iteratively (updated each time a new latency is collected), the
          * minimum score needs to be recomputed from scratch every time, which
-         * is slightly more costly. For that reason, that minimum is only
-         * re-calculated at fixed rate and cached between re-calculation.
+         * is slightly more costly. For this reason, the minimum is only
+         * re-calculated at the given fixed rate and cached between re-calculation.
          * <p>
-         * The default update rate if 100 milliseconds, which should be
+         * The default update rate if <b>100 milliseconds</b>, which should be
          * appropriate for most applications. In particular, note that while we
          * want to avoid to recompute the minimum for every query, that
          * computation is not particularly intensive either and there is no
          * reason to use a very slow rate (more than second is probably
-         * unecessarily slow for instance).
+         * unnecessarily slow for instance).
          *
          * @param updateRate the update rate to use.
          * @param unit the unit for {@code updateRate}.
@@ -532,17 +532,18 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * the resulting latency aware policy.
          * <p>
          * Penalizing nodes is based on an average of their recently measured
-         * average latency. That average is only meaningful if a minimum of
+         * average latency. This average is only meaningful if a minimum of
          * measurements have been collected (moreover, a newly started
          * Cassandra node will tend to perform relatively poorly on the first
          * queries due to the JVM warmup). This is what this option controls.
          * If less that {@code minMeasure} data points have been collected for
          * a given host, the policy will never penalize that host. Note that
-         * the number of collected measurements for a given host is resetted
+         * the number of collected measurements for a given host is reseted if
+         * the node is restarted.
          * <p>
-         * The default for this option (if this method is not called) is 50.
+         * The default for this option (if this method is not called) is <b>50</b>.
          * Note that it is probably not a good idea to put this option too low
-         * if only to avoid the influence of JVM warmup on newly restarted
+         * if only to avoid the influence of JVM warm-up on newly restarted
          * nodes.
          *
          * @param minMeasure the minimum measurements to consider.

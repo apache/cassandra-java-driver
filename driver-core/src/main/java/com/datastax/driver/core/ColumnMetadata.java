@@ -189,23 +189,27 @@ public class ColumnMetadata {
         public final Kind kind;
         public final int componentIndex;
         public final DataType dataType;
+        public final boolean isReversed;
 
         public final Map<String, String> indexColumns = new HashMap<String, String>();
 
-        Raw(String name, Kind kind, int componentIndex, DataType dataType) {
+        Raw(String name, Kind kind, int componentIndex, DataType dataType, boolean isReversed) {
             this.name = name;
             this.kind = kind;
             this.componentIndex = componentIndex;
             this.dataType = dataType;
+            this.isReversed = isReversed;
         }
 
         static Raw fromRow(Row row) {
             String name = row.getString(COLUMN_NAME);
             Kind kind = row.isNull(KIND) ? Kind.REGULAR : Enum.valueOf(Kind.class, row.getString(KIND).toUpperCase());
             int componentIndex = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
-            DataType dataType = CassandraTypeParser.parseOne(row.getString(VALIDATOR));
+            String validatorStr = row.getString(VALIDATOR);
+            boolean reversed = CassandraTypeParser.isReversed(validatorStr);
+            DataType dataType = CassandraTypeParser.parseOne(validatorStr);
 
-            Raw c = new Raw(name, kind, componentIndex, dataType);
+            Raw c = new Raw(name, kind, componentIndex, dataType, reversed);
 
             for (String str : Arrays.asList(INDEX_TYPE, INDEX_NAME, INDEX_OPTIONS))
                 if (!row.isNull(str))

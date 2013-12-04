@@ -36,4 +36,4 @@ else
     fi
 fi
 
-"$JAVA" -jar $STRESS_JAR $@
+"$JAVA" -Dlog4j.configuration="$SCRIPT_DIR/../conf/log4j.properties" -jar $STRESS_JAR $@

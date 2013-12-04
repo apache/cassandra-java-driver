@@ -46,11 +46,11 @@ public class AuthenticationTest {
         cassandraCluster = CCMBridge.create("test");
         cassandraCluster.populate(1);
         cassandraCluster.updateConfig("authenticator", "PasswordAuthenticator");
-        cassandraCluster.start(1);
+        cassandraCluster.start(1, "-Dcassandra.superuser_setup_delay_ms=0");
 
-        // Pre-1.2.4, we cannot override the pause before creating the default user,
-        // so we need to sleep for 10 seconds while we wait for it
-        TimeUnit.SECONDS.sleep(10);
+        // Even though we've override the default user setup delay, still wait
+        // one second to make sure we don't race
+        TimeUnit.SECONDS.sleep(1);
     }
 
     @AfterClass (groups = "short")

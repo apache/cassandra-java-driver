@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.MapMaker;
 import com.google.common.collect.SetMultimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.FutureCallback;
@@ -66,6 +67,8 @@ public class Cluster {
     // Some per-JVM number that allows to generate unique cluster names when
     // multiple Cluster instance are created in the same JVM.
     private static final AtomicInteger CLUSTER_ID = new AtomicInteger(0);
+
+    private static final int DEFAULT_THREAD_KEEP_ALIVE = 30;
 
     final Manager manager;
 
@@ -781,6 +784,17 @@ public class Cluster {
         return "cluster" + CLUSTER_ID.incrementAndGet();
     }
 
+    private static ListeningExecutorService makeExecutor(int threads, String name) {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(threads,
+                                                             threads,
+                                                             DEFAULT_THREAD_KEEP_ALIVE,
+                                                             TimeUnit.SECONDS,
+                                                             new LinkedBlockingQueue<Runnable>(),
+                                                             threadFactory(name));
+
+        executor.allowCoreThreadTimeOut(true);
+        return MoreExecutors.listeningDecorator(executor);
+    }
 
     /**
      * The sessions and hosts managed by this a Cluster instance.
@@ -812,7 +826,11 @@ public class Cluster {
         // applied in the order received.
         final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, threadFactory("Scheduled Tasks-%d"));
 
-        final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool(threadFactory("Cassandra Java Driver worker-%d")));
+        // Executor used for tasks that shouldn't be executed on an IO thread. Used for short-lived, generally non-blocking tasks
+        final ListeningExecutorService executor;
+
+        // An executor for tasks that migth block some time, like creating new connection, but are generally not too critical.
+        final ListeningExecutorService blockingTasksExecutor;
 
         final AtomicReference<ShutdownFuture> shutdownFuture = new AtomicReference<ShutdownFuture>();
 
@@ -820,7 +838,7 @@ public class Cluster {
         // new one join the cluster).
         // Note: we could move this down to the session level, but since prepared statement are global to a node,
         // this would yield a slightly less clear behavior.
-        final Map<MD5Digest, PreparedStatement> preparedQueries = new ConcurrentHashMap<MD5Digest, PreparedStatement>();
+        final Map<MD5Digest, PreparedStatement> preparedQueries = new MapMaker().weakKeys().weakValues().makeMap();
 
         final Set<Host.StateListener> listeners;
         final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
@@ -829,6 +847,10 @@ public class Cluster {
             logger.debug("Starting new cluster with contact points " + contactPoints);
 
             this.clusterName = clusterName == null ? generateClusterName() : clusterName;
+
+            this.executor = makeExecutor(Runtime.getRuntime().availableProcessors(), "Cassandra Java Driver worker-%d");
+            this.blockingTasksExecutor = makeExecutor(2, "Cassandra Java Driver blocking tasks worker-%d");
+
             this.configuration = configuration;
             this.metadata = new Metadata(this);
             this.contactPoints = contactPoints;

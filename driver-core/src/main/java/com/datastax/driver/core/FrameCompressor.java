@@ -120,7 +120,7 @@ abstract class FrameCompressor {
             try {
                 int written = compressor.compress(input, 0, input.length, output, INTEGER_BYTES, maxCompressedLength);
                 return frame.with(ChannelBuffers.wrappedBuffer(output, 0, INTEGER_BYTES + written));
-            } catch (LZ4Exception e) {
+            } catch (Exception e) {
                 throw new IOException(e);
             }
         }
@@ -141,7 +141,7 @@ abstract class FrameCompressor {
                     throw new IOException("Compressed lengths mismatch");
 
                 return frame.with(ChannelBuffers.wrappedBuffer(output));
-            } catch (LZ4Exception e) {
+            } catch (Exception e) {
                 throw new IOException(e);
             }
         }

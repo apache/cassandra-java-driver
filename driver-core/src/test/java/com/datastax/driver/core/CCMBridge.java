@@ -35,7 +35,7 @@ public class CCMBridge {
 
     public static final String IP_PREFIX;
 
-    private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d(-\\w+)?";
+    private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d+(-\\w+)?";
 
     static final File CASSANDRA_DIR;
     static final String CASSANDRA_VERSION;
@@ -105,6 +105,11 @@ public class CCMBridge {
     public void start(int n) {
         logger.info("Starting: " + IP_PREFIX + n);
         execute("ccm node%d start", n);
+    }
+
+    public void start(int n, String option) {
+        logger.info("Starting: " + IP_PREFIX + n + " with " + option);
+        execute("ccm node%d start --jvm_arg=%s", n, option);
     }
 
     public void stop(int n) {

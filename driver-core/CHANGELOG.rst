@@ -1,6 +1,22 @@
 CHANGELOG
 =========
 
+2.0.0-rc1:
+----------
+
+- [new] Mark compression dependencies optional in maven (JAVA-199).
+- [api] Renamed TableMetadata#getClusteringKey to TableMetadata#getClusteringColumns.
+
+Merged from 1.0 branch:
+
+- [new] OSGi bundle (JAVA-142)
+- [improvement] Make collections returned by Row immutable (JAVA-205)
+- [improvement] Limit internal thread pool size (JAVA-203)
+- [bug] Don't retain unused PreparedStatement in memory (JAVA-201)
+- [bug] Add missing clustering order info in TableMetadata
+- [bug] Allow bind markers for collections in the query builder (JAVA-196)
+
+
 2.0.0-beta2:
 ------------
 
@@ -39,6 +55,17 @@ CHANGELOG
 - [new] Generic authentication through SASL is now exposed.
 - [bug] TokenAwarePolicy now takes all replica into account, instead of only the
   first one (JAVA-88).
+
+
+1.0.5:
+------
+
+- [new] OSGi bundle (JAVA-142)
+- [improvement] Make collections returned by Row immutable (JAVA-205)
+- [improvement] Limit internal thread pool size (JAVA-203)
+- [bug] Don't retain unused PreparedStatement in memory (JAVA-201)
+- [bug] Add missing clustering order info in TableMetadata
+- [bug] Allow bind markers for collections in the query builder (JAVA-196)
 
 
 1.0.4:
