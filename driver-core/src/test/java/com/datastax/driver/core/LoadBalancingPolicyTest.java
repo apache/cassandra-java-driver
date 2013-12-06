@@ -31,9 +31,6 @@ import static com.datastax.driver.core.TestUtils.*;
 
 public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
     private static final Logger logger = LoggerFactory.getLogger(LoadBalancingPolicyTest.class);
-    private static final boolean DEBUG = false;
-
-    private PreparedStatement prepared;
 
     @Test(groups = "long")
     public void roundRobinTest() throws Throwable {
@@ -620,7 +617,8 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
                 if (debug) showLatencyStats(latencyAwarePolicyInstance, hosts);
             }
 
-            // ensure each node returns to taking up at least 25% of the queries
+            // ensure each node returns to taking up at least 25% of the queries since the stats should have reset to
+            // include the new averages by this point
             if (getQueried(hosts.get(0).toString().substring(1)) < 5000) {
                 logger.warn(String.format("%s queries sent to %s, which was less than the expected %s",
                         getQueried(hosts.get(0).toString().substring(1)), hosts.get(0), 5000));
@@ -647,7 +645,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             resetCoordinators();
 
 
-
+            // run this test for longer to ensure ramp-up time doesn't become a factor
             for (int i = 0; i < 20; ++i) {
                 query(c, testSize);
                 if (debug) showLatencyStats(latencyAwarePolicyInstance, hosts);
@@ -679,7 +677,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
 
 
-            // ensure that each node gets a noticable chunk of requests
+            // ensure that each node gets a noticable chunk of requests, even after 1 node left the ring
             if (getQueried(hosts.get(0).toString().substring(1)) < 10000) {
                 logger.warn(String.format("%s queries sent to %s, which was less than the expected %s",
                         getQueried(hosts.get(0).toString().substring(1)), hosts.get(0), 10000));
@@ -708,8 +706,12 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
         }
     }
 
+    /**
+     * Debugger test that outputs the stats held within the LatencyAwarePolicy.
+     * Not set to run with jUnit, but included for future manual debugging use.
+     * @throws Throwable
+     */
     public void latencyAwarePrintTest() throws Throwable {
-        //Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy());
         LatencyAwarePolicy latencyAwarePolicyInstance = new LatencyAwarePolicy.Builder(new RoundRobinPolicy()).build();
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(latencyAwarePolicyInstance);
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
@@ -731,29 +733,32 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             int shortTest = 100000;
             init(c, longTest);
 
+            // run a long test to fill up the stats
             query(c, longTest);
             showLatencyStats(latencyAwarePolicyInstance, hosts);
 
+            // add a new node
             resetCoordinators();
             c.cassandraCluster.bootstrapNode(3);
             waitFor(CCMBridge.IP_PREFIX + "3", c.cluster);
 
+            // run the long test 10 times and manually ensure the LAP directs
+            // traffic to nodes accordingly
             for (int i=0; i < 10; ++i) {
-
                 query(c, longTest);
                 showLatencyStats(latencyAwarePolicyInstance, hosts);
-
             }
 
+            // stop node 2
             resetCoordinators();
             c.cassandraCluster.stop(2);
             waitForDown(CCMBridge.IP_PREFIX + "2", c.cluster);
 
+            // manually ensure node 1 and node 3 are contacted and
+            // that the LAP handles node 2's loss well
             for (int i=0; i < 10; ++i) {
-
                 query(c, shortTest);
                 showLatencyStats(latencyAwarePolicyInstance, hosts);
-
             }
 
         } catch (Throwable e) {
@@ -765,11 +770,18 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
         }
     }
 
+    /**
+     * Helper for latencyAwarePrintTest().
+     * @param latencyAwarePolicyInstance
+     * @param hosts
+     */
     private void showLatencyStats(LatencyAwarePolicy latencyAwarePolicyInstance, ArrayList<Host> hosts) {
         LatencyAwarePolicy.Snapshot currentLatencies = latencyAwarePolicyInstance.getScoresSnapshot();
 
         long minLatency = Long.MAX_VALUE;
         int totalQueried = 0;
+
+        // calculate minLatency and totalQueried counts
         for (Host host : hosts) {
             LatencyAwarePolicy.Snapshot.Stats latency = currentLatencies.getStats(host);
             if (latency != null) {
