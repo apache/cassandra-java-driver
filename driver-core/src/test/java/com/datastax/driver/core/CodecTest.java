@@ -1,9 +1,21 @@
+/*
+ *      Copyright (C) 2012 DataStax Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package com.datastax.driver.core;
 
-import org.apache.cassandra.db.marshal.AbstractType;
-import org.apache.cassandra.db.marshal.ListType;
-import org.apache.cassandra.db.marshal.MapType;
-import org.apache.cassandra.db.marshal.SetType;
+import org.apache.cassandra.db.marshal.*;
 import org.apache.cassandra.utils.Pair;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -12,49 +24,80 @@ import java.util.*;
 
 import static com.datastax.driver.core.DataType.*;
 
-/**
- * User: Olve S. Hansen mailto:olve@vimond.com
- * Date: 06/12/13
- * Time: 23:37
- */
 public class CodecTest {
+
+    public static final DataType CUSTOM_FOO = DataType.custom("com.example.FooBar");
+
+    @Test(groups = "unit")
+    public void testCustomList() throws Exception {
+        ListType listType = (ListType) Codec.getCodec(DataType.list(CUSTOM_FOO));
+        Assert.assertNotNull(listType);
+        Assert.assertTrue(listType.valueComparator() instanceof BytesType);
+
+    }
+
+
+    @Test(groups = "unit")
+    public void testCustomSet() throws Exception {
+        SetType setType = (SetType) Codec.getCodec(DataType.set(CUSTOM_FOO));
+        Assert.assertNotNull(setType);
+        Assert.assertEquals(setType.nameComparator().getClass(),BytesType.class);
+    }
+
+
+    @Test(groups = "unit")
+    public void testCustomKeyMap() throws Exception {
+        MapType mapType = (MapType) Codec.getCodec(DataType.map(CUSTOM_FOO, text()));
+        Assert.assertNotNull(mapType);
+        Assert.assertEquals(mapType.nameComparator().getClass(),BytesType.class);
+        Assert.assertEquals(mapType.valueComparator().getClass(), UTF8Type.class);
+    }
+
+
+    @Test(groups = "unit")
+    public void testCustomValueMap() throws Exception {
+        MapType mapType = (MapType) Codec.getCodec(DataType.map(text(), CUSTOM_FOO));
+        Assert.assertNotNull(mapType);
+        Assert.assertEquals(mapType.nameComparator().getClass(), UTF8Type.class);
+        Assert.assertEquals(mapType.valueComparator().getClass(), BytesType.class);
+    }
+
 
     @Test(groups = "unit")
     public void testSetTypeCodec() throws Exception {
-        Map<DataType, SetType<?>> dateTypeSetTypeMap = new HashMap<DataType, SetType<?>>(Codec.buildSets());
+        Map<Name, SetType<?>> dateTypeSetTypeMap = new HashMap<Name, SetType<?>>(Codec.buildSets());
 
         final Set<DataType> dataTypes = new HashSet<DataType>(allPrimitiveTypes());
 
         //Special case: DataType varchar yields Codec.rawTypeToDataType(...) => text causing assertion fail
         //Solution: Remove DataType.varchar and check that it yields DataType.text
         Assert.assertTrue(dataTypes.remove(varchar()));
-        Assert.assertEquals(Codec.rawTypeToDataType(dateTypeSetTypeMap.get(varchar()).nameComparator()), text()) ;
-        dateTypeSetTypeMap.remove(varchar());
+        Assert.assertEquals(Codec.rawTypeToDataType(dateTypeSetTypeMap.get(varchar().getName()).nameComparator()), text()) ;
+        dateTypeSetTypeMap.remove(varchar().getName());
 
         for (DataType dataType : dataTypes) {
-            final SetType<?> setType = dateTypeSetTypeMap.remove(dataType);
+            final SetType<?> setType = dateTypeSetTypeMap.remove(dataType.getName());
             Assert.assertEquals(Codec.rawTypeToDataType(setType.nameComparator()),dataType) ;
         }
         Assert.assertTrue(dateTypeSetTypeMap.isEmpty(), "All map types should have been tested: "+dateTypeSetTypeMap);
-
     }
 
     @Test(groups = "unit")
     public void testListTypeCodec() throws Exception {
-        Map<DataType,ListType<?>> dateTypeListetTypeMap = new HashMap<DataType, ListType<?>>(Codec.buildLists());
+        Map<Name,ListType<?>> dateTypeListetTypeMap = new HashMap<Name, ListType<?>>(Codec.buildLists());
 
         final Set<DataType> dataTypes = new HashSet<DataType>(allPrimitiveTypes());
 
         //Special case: DataType varchar yields Codec.rawTypeToDataType(...) => text causing assertion fail
         //Solution: Remove DataType.varchar and check that it yields DataType.text
         Assert.assertTrue(dataTypes.remove(varchar()));
-        final AbstractType<?> rawType = dateTypeListetTypeMap.get(varchar()).valueComparator();
+        final AbstractType<?> rawType = dateTypeListetTypeMap.get(varchar().getName()).valueComparator();
         Assert.assertEquals(Codec.rawTypeToDataType(rawType), text()) ;
-        dateTypeListetTypeMap.remove(varchar());
+        dateTypeListetTypeMap.remove(varchar().getName());
 
 
         for (DataType dataType : dataTypes) {
-            final ListType<?> setType = dateTypeListetTypeMap.remove(dataType);
+            final ListType<?> setType = dateTypeListetTypeMap.remove(dataType.getName());
             Assert.assertEquals(Codec.rawTypeToDataType(setType.valueComparator()),dataType) ;
         }
         Assert.assertTrue(dateTypeListetTypeMap.isEmpty(), "All set types should have been tested: "+dateTypeListetTypeMap);
@@ -63,13 +106,13 @@ public class CodecTest {
 
     @Test(groups = "unit")
     public void testMapTypeCodec() throws Exception {
-        Map<Pair<DataType,DataType>,MapType<?,?>> dateTypeSetTypeMap =
-                new HashMap<Pair<DataType, DataType>, MapType<?, ?>>(Codec.buildMaps());
+        Map<Pair<Name,Name>,MapType<?,?>> dateTypeSetTypeMap =
+                new HashMap<Pair<Name, Name>, MapType<?, ?>>(Codec.buildMaps());
 
         for (DataType dataTypeArg1 : allPrimitiveTypes()) {
             for (DataType dataTypeArg2 : allPrimitiveTypes()) {
                 final Pair<DataType, DataType> pair = Pair.create(dataTypeArg1, dataTypeArg2);
-                final MapType<?, ?> mapType = dateTypeSetTypeMap.remove(pair);
+                final MapType<?, ?> mapType = dateTypeSetTypeMap.remove(convertToNamePair(pair));
 
                 testPairAgainstMapType(pair, mapType);
             }
@@ -77,9 +120,12 @@ public class CodecTest {
         Assert.assertTrue(dateTypeSetTypeMap.isEmpty(), "All map types should have been tested: "+dateTypeSetTypeMap);
     }
 
+    private Pair<Name, Name> convertToNamePair(Pair<DataType, DataType> pair) {
+        return Pair.create(pair.left.getName(), pair.right.getName());
+    }
+
 
     private void testPairAgainstMapType(Pair<DataType, DataType> pair, MapType<?, ?> mapType) {
-        System.out.println("testing pair: "+pair);
         DataType dataType = pair.left;
         DataType dataType1 = pair.right;
 
@@ -93,10 +139,5 @@ public class CodecTest {
 
         Assert.assertEquals(Codec.rawTypeToDataType(mapType.nameComparator()), dataType) ;
         Assert.assertEquals(Codec.rawTypeToDataType(mapType.valueComparator()),dataType1) ;
-    }
-
-
-    public void testRawTypeToDataType() throws Exception {
-
     }
 }
