@@ -7,6 +7,7 @@ CHANGELOG
 - [new] Add LOCAL_ONE consistency level support (requires using C* 2.0.2+) (JAVA-207)
 - [bug] Fix parsing of counter types (JAVA-219)
 - [bug] Fix missing whitespace for IN clause in the query builder (JAVA-218)
+- [bug] Fix replicas computation for token aware balancing (JAVA-221)
 
 Merged from 1.0 branch:
 
