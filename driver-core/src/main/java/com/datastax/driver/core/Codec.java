@@ -15,13 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
-import com.datastax.driver.core.DataType;
-
 import com.google.common.collect.ImmutableMap;
-
 import org.apache.cassandra.db.marshal.*;
+import org.apache.cassandra.utils.Pair;
+
+import java.util.Map;
 
 /**
  * Static method to code/decode serialized data given their types.
@@ -47,6 +45,47 @@ class Codec {
             .put(TimeUUIDType.instance,      DataType.timeuuid())
             .build();
 
+    private static Map<DataType, SetType<?>> SETS;
+    private static Map<DataType, ListType<?>> LISTS;
+    private static ImmutableMap<Pair<DataType, DataType>, MapType<?, ?>> MAPS;
+
+
+    static {
+        SETS = buildSets();
+        LISTS = buildLists();
+        MAPS = buildMaps();
+    }
+
+    protected static ImmutableMap<Pair<DataType, DataType>, MapType<?, ?>> buildMaps() {
+        ImmutableMap.Builder<Pair<DataType,DataType>, MapType<?,?>> mapsBuilder = ImmutableMap.builder();
+        for (DataType typeArg1 : DataType.allPrimitiveTypes()) {
+            for (DataType typeArg2 : DataType.allPrimitiveTypes()) {
+                mapsBuilder.put(Pair.create(typeArg1,typeArg2), MapType.getInstance(
+                        getCodec(typeArg1), getCodec(typeArg2)
+                ));
+            }
+        }
+        return mapsBuilder.build();
+    }
+
+    protected static ImmutableMap<DataType, ListType<?>> buildLists() {
+        ImmutableMap.Builder<DataType, ListType<?>> listsBuilder = ImmutableMap.builder();
+        for (DataType typeArg : DataType.allPrimitiveTypes()) {
+            listsBuilder.put(typeArg, ListType.getInstance(getCodec(typeArg)));
+        }
+        return listsBuilder.build();
+    }
+
+    protected static ImmutableMap<DataType, SetType<?>> buildSets() {
+        ImmutableMap.Builder<DataType, SetType<?>> setsBuilder = ImmutableMap.builder();
+        for (DataType typeArg : DataType.allPrimitiveTypes()) {
+            final AbstractType<Object> codec = getCodec(typeArg);
+            setsBuilder.put(typeArg, SetType.getInstance(codec));
+        }
+        return setsBuilder.build();
+    }
+
+    
     private Codec() {}
 
     @SuppressWarnings("unchecked")
@@ -72,9 +111,10 @@ class Codec {
             case VARCHAR:   return UTF8Type.instance;
             case VARINT:    return IntegerType.instance;
             case TIMEUUID:  return TimeUUIDType.instance;
-            case LIST:      return ListType.getInstance(getCodec(type.getTypeArguments().get(0)));
-            case SET:       return SetType.getInstance(getCodec(type.getTypeArguments().get(0)));
-            case MAP:       return MapType.getInstance(getCodec(type.getTypeArguments().get(0)), getCodec(type.getTypeArguments().get(1)));
+            case LIST:      return LISTS.get(type.getTypeArguments().get(0));
+            case SET:       return SETS.get(type.getTypeArguments().get(0));
+            case MAP:       return MAPS.get(Pair.create(type.getTypeArguments().get(0),
+                                                        type.getTypeArguments().get(1)));
             // We don't interpret custom values in any way
             case CUSTOM:    return BytesType.instance;
             default:        throw new RuntimeException("Unknown type");
