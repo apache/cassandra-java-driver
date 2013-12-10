@@ -15,13 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
-import com.datastax.driver.core.DataType;
-
 import com.google.common.collect.ImmutableMap;
-
+import com.google.common.collect.Maps;
 import org.apache.cassandra.db.marshal.*;
+
+import java.util.Map;
 
 /**
  * Static method to code/decode serialized data given their types.
@@ -47,6 +45,46 @@ class Codec {
             .put(TimeUUIDType.instance,      DataType.timeuuid())
             .build();
 
+    private static Map<DataType.Name, SetType<?>> SETS = buildSets();
+    private static Map<DataType.Name, ListType<?>> LISTS = buildLists();
+    private static Map<DataType.Name, Map<DataType.Name, MapType<?, ?>>> MAPS = buildMaps();
+
+
+    protected static Map<DataType.Name, Map<DataType.Name, MapType<?, ?>>> buildMaps() {
+
+        ImmutableMap.Builder<DataType.Name, Map<DataType.Name, MapType<?, ?>>> mapsBuilder = ImmutableMap.builder();
+
+        for (DataType typeArg1 : DataType.allPrimitiveTypes()) {
+            ImmutableMap.Builder<DataType.Name, MapType<?, ?>> innerMapsBuilder = ImmutableMap.builder();
+            for (DataType typeArg2 : DataType.allPrimitiveTypes()) {
+                innerMapsBuilder.put(
+                        typeArg2.getName(),
+                        MapType.getInstance(getCodec(typeArg1), getCodec(typeArg2))
+                );
+            }
+            mapsBuilder.put(typeArg1.getName(), Maps.newEnumMap(innerMapsBuilder.build()));
+        }
+        return Maps.newEnumMap(mapsBuilder.build());
+    }
+
+    protected static ImmutableMap<DataType.Name, ListType<?>> buildLists() {
+        ImmutableMap.Builder<DataType.Name, ListType<?>> listsBuilder = ImmutableMap.builder();
+        for (DataType typeArg : DataType.allPrimitiveTypes()) {
+            listsBuilder.put(typeArg.getName(), ListType.getInstance(getCodec(typeArg)));
+        }
+        return Maps.immutableEnumMap(listsBuilder.build());
+    }
+
+    protected static ImmutableMap<DataType.Name, SetType<?>> buildSets() {
+        ImmutableMap.Builder<DataType.Name, SetType<?>> setsBuilder = ImmutableMap.builder();
+        for (DataType typeArg : DataType.allPrimitiveTypes()) {
+            final AbstractType<Object> codec = getCodec(typeArg);
+            setsBuilder.put(typeArg.getName(), SetType.getInstance(codec));
+        }
+        return Maps.immutableEnumMap(setsBuilder.build());
+    }
+
+    
     private Codec() {}
 
     @SuppressWarnings("unchecked")
@@ -72,13 +110,41 @@ class Codec {
             case VARCHAR:   return UTF8Type.instance;
             case VARINT:    return IntegerType.instance;
             case TIMEUUID:  return TimeUUIDType.instance;
-            case LIST:      return ListType.getInstance(getCodec(type.getTypeArguments().get(0)));
-            case SET:       return SetType.getInstance(getCodec(type.getTypeArguments().get(0)));
-            case MAP:       return MapType.getInstance(getCodec(type.getTypeArguments().get(0)), getCodec(type.getTypeArguments().get(1)));
+            case LIST:      return getListType(type);
+            case SET:       return getSetType(type);
+            case MAP:       return getMapType(type);
             // We don't interpret custom values in any way
             case CUSTOM:    return BytesType.instance;
             default:        throw new RuntimeException("Unknown type");
         }
+    }
+
+    private static MapType<?, ?> getMapType(DataType type) {
+        final DataType dataTypeArg0 = type.getTypeArguments().get(0);
+        final DataType dateTypeArg1 = type.getTypeArguments().get(1);
+
+        if(dataTypeArg0.getName() == DataType.Name.CUSTOM || dateTypeArg1.getName() == DataType.Name.CUSTOM) {
+            return MapType.getInstance(getCodecInternal(dataTypeArg0), getCodecInternal(dateTypeArg1));
+        }
+        return MAPS.get(dataTypeArg0.getName()).get(dateTypeArg1.getName());
+    }
+
+    private static SetType<?> getSetType(DataType type) {
+        final DataType dataTypeArg0 = type.getTypeArguments().get(0);
+
+        if(dataTypeArg0.getName() == DataType.Name.CUSTOM) {
+            return SetType.getInstance(getCodecInternal(dataTypeArg0));
+        }
+        return SETS.get(type.getTypeArguments().get(0).getName());
+    }
+
+    private static ListType<?> getListType(final DataType type) {
+        final DataType dataTypeArg0 = type.getTypeArguments().get(0);
+
+        if(dataTypeArg0.getName() == DataType.Name.CUSTOM) {
+            return ListType.getInstance(getCodecInternal(dataTypeArg0));
+        }
+        return LISTS.get(type.getTypeArguments().get(0).getName());
     }
 
     public static DataType rawTypeToDataType(AbstractType<?> rawType) {
