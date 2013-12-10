@@ -19,6 +19,7 @@ import org.apache.cassandra.db.marshal.*;
 import org.apache.cassandra.utils.Pair;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import org.testng.collections.Maps;
 
 import java.util.*;
 
@@ -49,7 +50,7 @@ public class CodecTest {
     public void testCustomKeyMap() throws Exception {
         MapType mapType = (MapType) Codec.getCodec(DataType.map(CUSTOM_FOO, text()));
         Assert.assertNotNull(mapType);
-        Assert.assertEquals(mapType.nameComparator().getClass(),BytesType.class);
+        Assert.assertEquals(mapType.nameComparator().getClass(), BytesType.class);
         Assert.assertEquals(mapType.valueComparator().getClass(), UTF8Type.class);
     }
 
@@ -106,18 +107,20 @@ public class CodecTest {
 
     @Test(groups = "unit")
     public void testMapTypeCodec() throws Exception {
-        Map<Pair<Name,Name>,MapType<?,?>> dateTypeSetTypeMap =
-                new HashMap<Pair<Name, Name>, MapType<?, ?>>(Codec.buildMaps());
+        final Map<Name, Map<Name, MapType<?, ?>>> dateTypeMapTypeMap = Maps.newHashMap(Codec.buildMaps());
 
-        for (DataType dataTypeArg1 : allPrimitiveTypes()) {
-            for (DataType dataTypeArg2 : allPrimitiveTypes()) {
-                final Pair<DataType, DataType> pair = Pair.create(dataTypeArg1, dataTypeArg2);
-                final MapType<?, ?> mapType = dateTypeSetTypeMap.remove(convertToNamePair(pair));
+        for (DataType dataTypeArg0 : allPrimitiveTypes()) {
+            final Map<Name, MapType<?, ?>> innerNameToMapType = Maps.newHashMap(dateTypeMapTypeMap.get(dataTypeArg0.getName()));
 
-                testPairAgainstMapType(pair, mapType);
+            for (DataType dataTypeArg1 : allPrimitiveTypes()) {
+                final MapType<?, ?> mapType = innerNameToMapType.remove(dataTypeArg1.getName());
+                testPairAgainstMapType(dataTypeArg0, dataTypeArg1, mapType);
             }
+            Assert.assertTrue(innerNameToMapType.isEmpty(),
+                    "All inner map types should have been tested for outer type '"+dataTypeArg0+"': " + dateTypeMapTypeMap);
+            dateTypeMapTypeMap.remove(dataTypeArg0.getName());
         }
-        Assert.assertTrue(dateTypeSetTypeMap.isEmpty(), "All map types should have been tested: "+dateTypeSetTypeMap);
+        Assert.assertTrue(dateTypeMapTypeMap.isEmpty(), "All map types should have been tested: "+dateTypeMapTypeMap);
     }
 
     private Pair<Name, Name> convertToNamePair(Pair<DataType, DataType> pair) {
@@ -125,19 +128,16 @@ public class CodecTest {
     }
 
 
-    private void testPairAgainstMapType(Pair<DataType, DataType> pair, MapType<?, ?> mapType) {
-        DataType dataType = pair.left;
-        DataType dataType1 = pair.right;
-
+    private void testPairAgainstMapType(DataType dataTypeArg0, DataType dataTypeArg1, MapType<?, ?> mapType) {
         //Special case: DataType varchar yields Codec.rawTypeToDataType(...) => text causing assertion fail
         //Solution: Remove DataType.varchar and check that it yields DataType.text
 
         //In the map case this would be quite many combinations of text/varchar so I translate varchar to text
         //in order to expect text instead of varchar back from those cases:
-        if(dataType.equals(varchar())) dataType = text();
-        if(dataType1.equals(varchar())) dataType1 = text();
+        if(dataTypeArg0.equals(varchar())) dataTypeArg0 = text();
+        if(dataTypeArg1.equals(varchar())) dataTypeArg1 = text();
 
-        Assert.assertEquals(Codec.rawTypeToDataType(mapType.nameComparator()), dataType) ;
-        Assert.assertEquals(Codec.rawTypeToDataType(mapType.valueComparator()),dataType1) ;
+        Assert.assertEquals(Codec.rawTypeToDataType(mapType.nameComparator()), dataTypeArg0) ;
+        Assert.assertEquals(Codec.rawTypeToDataType(mapType.valueComparator()),dataTypeArg1) ;
     }
 }

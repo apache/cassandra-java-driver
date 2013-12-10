@@ -18,7 +18,6 @@ package com.datastax.driver.core;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.cassandra.db.marshal.*;
-import org.apache.cassandra.utils.Pair;
 
 import java.util.Map;
 
@@ -48,21 +47,24 @@ class Codec {
 
     private static Map<DataType.Name, SetType<?>> SETS = buildSets();
     private static Map<DataType.Name, ListType<?>> LISTS = buildLists();
-    private static Map<Pair<DataType.Name, DataType.Name>, MapType<?, ?>> MAPS = buildMaps();
+    private static Map<DataType.Name, Map<DataType.Name, MapType<?, ?>>> MAPS = buildMaps();
 
 
-    protected static ImmutableMap<Pair<DataType.Name, DataType.Name>, MapType<?, ?>> buildMaps() {
+    protected static Map<DataType.Name, Map<DataType.Name, MapType<?, ?>>> buildMaps() {
 
-        ImmutableMap.Builder<Pair<DataType.Name,DataType.Name>, MapType<?,?>> mapsBuilder = ImmutableMap.builder();
+        ImmutableMap.Builder<DataType.Name, Map<DataType.Name, MapType<?, ?>>> mapsBuilder = ImmutableMap.builder();
+
         for (DataType typeArg1 : DataType.allPrimitiveTypes()) {
+            ImmutableMap.Builder<DataType.Name, MapType<?, ?>> innerMapsBuilder = ImmutableMap.builder();
             for (DataType typeArg2 : DataType.allPrimitiveTypes()) {
-                mapsBuilder.put(
-                        Pair.create(typeArg1.getName(),typeArg2.getName()),
+                innerMapsBuilder.put(
+                        typeArg2.getName(),
                         MapType.getInstance(getCodec(typeArg1), getCodec(typeArg2))
                 );
             }
+            mapsBuilder.put(typeArg1.getName(), Maps.newEnumMap(innerMapsBuilder.build()));
         }
-        return mapsBuilder.build();
+        return Maps.newEnumMap(mapsBuilder.build());
     }
 
     protected static ImmutableMap<DataType.Name, ListType<?>> buildLists() {
@@ -124,7 +126,7 @@ class Codec {
         if(dataTypeArg0.getName() == DataType.Name.CUSTOM || dateTypeArg1.getName() == DataType.Name.CUSTOM) {
             return MapType.getInstance(getCodecInternal(dataTypeArg0), getCodecInternal(dateTypeArg1));
         }
-        return MAPS.get(Pair.create(dataTypeArg0.getName(), dateTypeArg1.getName()));
+        return MAPS.get(dataTypeArg0.getName()).get(dateTypeArg1.getName());
     }
 
     private static SetType<?> getSetType(DataType type) {
