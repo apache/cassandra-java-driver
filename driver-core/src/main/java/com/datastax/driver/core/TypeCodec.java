@@ -37,7 +37,7 @@ import com.datastax.driver.core.utils.Bytes;
 
 abstract class TypeCodec<T> {
 
-    private static EnumMap<DataType.Name, TypeCodec<?>> primitiveCodecs = new EnumMap<DataType.Name, TypeCodec<?>>(DataType.Name.class);
+    private static final Map<DataType.Name, TypeCodec<?>> primitiveCodecs = new EnumMap<DataType.Name, TypeCodec<?>>(DataType.Name.class);
     static {
         primitiveCodecs.put(DataType.Name.ASCII,     StringCodec.asciiInstance);
         primitiveCodecs.put(DataType.Name.BIGINT,    LongCodec.instance);
@@ -58,6 +58,28 @@ abstract class TypeCodec<T> {
         primitiveCodecs.put(DataType.Name.CUSTOM,    BytesCodec.instance);
     }
 
+    private static final Map<DataType.Name, TypeCodec<List<?>>> primitiveListsCodecs = new EnumMap<DataType.Name, TypeCodec<List<?>>>(DataType.Name.class);
+    private static final Map<DataType.Name, TypeCodec<Set<?>>> primitiveSetsCodecs = new EnumMap<DataType.Name, TypeCodec<Set<?>>>(DataType.Name.class);
+    private static final Map<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>> primitiveMapsCodecs = new EnumMap<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>>(DataType.Name.class);
+    static {
+        populatePrimitiveCollectionCodecs();
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void populatePrimitiveCollectionCodecs()
+    {
+        for (Map.Entry<DataType.Name, TypeCodec<?>> entry : primitiveCodecs.entrySet()) {
+            DataType.Name type = entry.getKey();
+            TypeCodec<?> codec = entry.getValue();
+            primitiveListsCodecs.put(type, new ListCodec(codec));
+            primitiveSetsCodecs.put(type, new SetCodec(codec));
+            Map<DataType.Name, TypeCodec<Map<?, ?>>> valueMap = new EnumMap<DataType.Name, TypeCodec<Map<?, ?>>>(DataType.Name.class);
+            for (Map.Entry<DataType.Name, TypeCodec<?>> valueEntry : primitiveCodecs.entrySet())
+                valueMap.put(valueEntry.getKey(), new MapCodec(codec, valueEntry.getValue()));
+            primitiveMapsCodecs.put(type, valueMap);
+        }
+    }
+
     private TypeCodec() {}
 
     public abstract T parse(String value);
@@ -70,16 +92,29 @@ abstract class TypeCodec<T> {
         return (TypeCodec<T>)primitiveCodecs.get(name);
     }
 
+    @SuppressWarnings("unchecked")
     static <T> TypeCodec<List<T>> listOf(DataType arg) {
-        return new ListCodec<T>(TypeCodec.<T>createFor(arg.getName()));
+        TypeCodec<List<?>> codec = primitiveListsCodecs.get(arg.getName());
+        return codec != null
+             ? (TypeCodec)codec
+             : new ListCodec<T>(TypeCodec.<T>createFor(arg.getName()));
     }
 
+    @SuppressWarnings("unchecked")
     static <T> TypeCodec<Set<T>> setOf(DataType arg) {
-        return new SetCodec<T>(TypeCodec.<T>createFor(arg.getName()));
+        TypeCodec<Set<?>> codec = primitiveSetsCodecs.get(arg.getName());
+        return codec != null
+             ? (TypeCodec)codec
+             : new SetCodec<T>(TypeCodec.<T>createFor(arg.getName()));
     }
 
+    @SuppressWarnings("unchecked")
     static <K, V> TypeCodec<Map<K, V>> mapOf(DataType keys, DataType values) {
-        return new MapCodec<K, V>(TypeCodec.<K>createFor(keys.getName()), TypeCodec.<V>createFor(values.getName()));
+        Map<DataType.Name, TypeCodec<Map<?, ?>>> valueCodecs = primitiveMapsCodecs.get(keys.getName());
+        TypeCodec<Map<?, ?>> codec = valueCodecs == null ? null : valueCodecs.get(values.getName());
+        return codec != null
+             ? (TypeCodec)codec
+             : new MapCodec<K, V>(TypeCodec.<K>createFor(keys.getName()), TypeCodec.<V>createFor(values.getName()));
     }
 
     /* This is ugly, but not sure how we can do much better/faster

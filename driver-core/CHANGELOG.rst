@@ -12,6 +12,8 @@ CHANGELOG
 Merged from 1.0 branch:
 
 - [bug] Fix regression from JAVA-201 (JAVA-213)
+- [improvement] New getter to obtain a snapshot of the scores maintained by
+  LatencyAwarePolicy.
 
 
 2.0.0-rc1:
@@ -78,6 +80,8 @@ Merged from 1.0 branch:
 - [improvement] Limit internal thread pool size (JAVA-203)
 - [improvement] New getter to obtain a snapshot of the scores maintained by
   LatencyAwarePolicy.
+- [improvement] Avoid synchronization when getting codec for collection
+  types (JAVA-222)
 - [bug] Don't retain unused PreparedStatement in memory (JAVA-201, JAVA-213)
 - [bug] Add missing clustering order info in TableMetadata
 - [bug] Allow bind markers for collections in the query builder (JAVA-196)
