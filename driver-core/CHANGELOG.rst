@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-2.0.0:
-------
+2.0.0-rc2:
+----------
 
 - [new] Add LOCAL_ONE consistency level support (requires using C* 2.0.2+) (JAVA-207)
 - [bug] Fix parsing of counter types (JAVA-219)
