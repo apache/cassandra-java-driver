@@ -24,7 +24,8 @@ public enum ConsistencyLevel
     QUORUM,
     ALL,
     LOCAL_QUORUM,
-    EACH_QUORUM;
+    EACH_QUORUM,
+    LOCAL_ONE;
 
     static org.apache.cassandra.db.ConsistencyLevel DEFAULT_CASSANDRA_CL = org.apache.cassandra.db.ConsistencyLevel.ONE;
 
@@ -38,6 +39,7 @@ public enum ConsistencyLevel
             case ALL: return ALL;
             case LOCAL_QUORUM: return LOCAL_QUORUM;
             case EACH_QUORUM: return EACH_QUORUM;
+            case LOCAL_ONE: return LOCAL_ONE;
         }
         throw new AssertionError();
     }
@@ -55,6 +57,7 @@ public enum ConsistencyLevel
             case ALL: return org.apache.cassandra.db.ConsistencyLevel.ALL;
             case LOCAL_QUORUM: return org.apache.cassandra.db.ConsistencyLevel.LOCAL_QUORUM;
             case EACH_QUORUM: return org.apache.cassandra.db.ConsistencyLevel.EACH_QUORUM;
+            case LOCAL_ONE: return org.apache.cassandra.db.ConsistencyLevel.LOCAL_ONE;
         }
         throw new AssertionError();
     }

@@ -5,6 +5,8 @@ CHANGELOG
 ------
 
 - [new] OSGi bundle (JAVA-142)
+- [new] Add support for ConsistencyLevel.LOCAL_ONE; note that this
+  require Cassandra 1.2.12+ (JAVA-207)
 - [improvement] Make collections returned by Row immutable (JAVA-205)
 - [improvement] Limit internal thread pool size (JAVA-203)
 - [improvement] New getter to obtain a snapshot of the scores maintained by
