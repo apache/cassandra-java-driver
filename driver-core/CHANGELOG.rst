@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+1.0.6:
+------
+
+- [improvement] Make most main objects interface to facilitate testing/mocking (JAVA-195)
+
+
 1.0.5:
 ------
 
