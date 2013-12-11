@@ -55,8 +55,8 @@ public class Metrics {
         @Override
         public Integer getValue() {
             Set<Host> s = new HashSet<Host>();
-            for (Session session : manager.sessions)
-                s.addAll(session.manager.pools.keySet());
+            for (SessionManager session : manager.sessions)
+                s.addAll(session.pools.keySet());
             return s.size();
         }
     });
@@ -64,8 +64,8 @@ public class Metrics {
         @Override
         public Integer getValue() {
             int value = manager.controlConnection.isOpen() ? 1 : 0;
-            for (Session session : manager.sessions)
-                for (HostConnectionPool pool : session.manager.pools.values())
+            for (SessionManager session : manager.sessions)
+                for (HostConnectionPool pool : session.pools.values())
                     value += pool.opened();
             return value;
         }

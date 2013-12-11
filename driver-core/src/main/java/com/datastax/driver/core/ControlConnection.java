@@ -245,16 +245,16 @@ class ControlConnection implements Host.StateListener {
                 whereClause += " AND columnfamily_name = '" + table + "'";
         }
 
-        ResultSetFuture ksFuture = table == null
-                                 ? new ResultSetFuture(null, new Requests.Query(SELECT_KEYSPACES + whereClause))
-                                 : null;
-        ResultSetFuture cfFuture = new ResultSetFuture(null, new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause));
-        ResultSetFuture colsFuture = new ResultSetFuture(null, new Requests.Query(SELECT_COLUMNS + whereClause));
+        DefaultResultSetFuture ksFuture = table == null
+                                        ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_KEYSPACES + whereClause))
+                                        : null;
+        DefaultResultSetFuture cfFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause));
+        DefaultResultSetFuture colsFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMNS + whereClause));
 
         if (ksFuture != null)
-            connection.write(ksFuture.callback);
-        connection.write(cfFuture.callback);
-        connection.write(colsFuture.callback);
+            connection.write(ksFuture);
+        connection.write(cfFuture);
+        connection.write(colsFuture);
 
         cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get());
         // If the table is null, we either rebuild all from scratch or have an updated keyspace. In both case, rebuild the token map
@@ -304,10 +304,10 @@ class ControlConnection implements Host.StateListener {
     private static void refreshNodeListAndTokenMap(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         // Make sure we're up to date on nodes and tokens
 
-        ResultSetFuture peersFuture = new ResultSetFuture(null, new Requests.Query(SELECT_PEERS));
-        ResultSetFuture localFuture = new ResultSetFuture(null, new Requests.Query(SELECT_LOCAL));
-        connection.write(peersFuture.callback);
-        connection.write(localFuture.callback);
+        DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS));
+        DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL));
+        connection.write(peersFuture);
+        connection.write(localFuture);
 
         String partitioner = null;
         Map<Host, Collection<String>> tokenMap = new HashMap<Host, Collection<String>>();
@@ -391,10 +391,10 @@ class ControlConnection implements Host.StateListener {
         long elapsed = 0;
         while (elapsed < MAX_SCHEMA_AGREEMENT_WAIT_MS) {
 
-            ResultSetFuture peersFuture = new ResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_PEERS));
-            ResultSetFuture localFuture = new ResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_LOCAL));
-            connection.write(peersFuture.callback);
-            connection.write(localFuture.callback);
+            DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_PEERS));
+            DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_LOCAL));
+            connection.write(peersFuture);
+            connection.write(localFuture);
 
             Set<UUID> versions = new HashSet<UUID>();
 

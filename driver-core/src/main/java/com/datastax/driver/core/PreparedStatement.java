@@ -128,13 +128,13 @@ public class PreparedStatement {
      * Creates a new BoundStatement object and bind its variables to the
      * provided values.
      * <p>
-     * This method is a convenience method for {@code new BoundStatement(this).bind(...)}.
-     * <p>
      * While the number of {@code values} cannot be greater than the number of bound
      * variables, the number of {@code values} may be fewer than the number of bound
      * variables. In that case, the remaining variables will have to be bound
      * to values by another mean because the resulting {@code BoundStatement}
      * being executable.
+     * <p>
+     * This method is a convenience for {@code bind().bind(...)}.
      *
      * @param values the values to bind to the variables of the newly created
      * BoundStatement.
@@ -151,6 +151,20 @@ public class PreparedStatement {
     public BoundStatement bind(Object... values) {
         BoundStatement bs = new BoundStatement(this);
         return bs.bind(values);
+    }
+
+    /**
+     * Creates a new BoundStatement object for this prepared statement.
+     * <p>
+     * This method do not bind any values to any of the prepared variables. Said
+     * values need to be bound on the resulting statement using BoundStatement's
+     * setters methods ({@link BoundStatement#setInt}, {@link BoundStatement#setLong}, ...).
+     *
+     * @return the newly created {@code BoundStatement}.
+     */
+    public BoundStatement bind()
+    {
+        return new BoundStatement(this);
     }
 
     /**

@@ -14,6 +14,7 @@ Merged from 1.0 branch:
 - [bug] Fix regression from JAVA-201 (JAVA-213)
 - [improvement] New getter to obtain a snapshot of the scores maintained by
   LatencyAwarePolicy.
+- [improvement] Make most main objects interface to facilitate testing/mocking (JAVA-195)
 
 
 2.0.0-rc1:

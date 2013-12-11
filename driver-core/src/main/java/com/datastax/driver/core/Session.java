@@ -45,16 +45,7 @@ import org.slf4j.LoggerFactory;
  * per application. However, a given session can only be set to one keyspace
  * at a time, so one instance per keyspace is necessary.
  */
-public class Session {
-
-    private static final Logger logger = LoggerFactory.getLogger(Session.class);
-
-    final Manager manager;
-
-    // Package protected, only Cluster should construct that.
-    Session(Cluster cluster, Collection<Host> hosts) {
-        this.manager = new Manager(cluster, hosts);
-    }
+public interface Session {
 
     /**
      * Executes the provided query.
@@ -73,9 +64,7 @@ public class Session {
      * @throws QueryValidationException if the query if invalid (syntax error,
      * unauthorized or any other validation problem).
      */
-    public ResultSet execute(String query) {
-        return execute(new SimpleStatement(query));
-    }
+    public ResultSet execute(String query);
 
     /**
      * Executes the provided query using the provided value.
@@ -96,9 +85,7 @@ public class Session {
      * @throws QueryValidationException if the query if invalid (syntax error,
      * unauthorized or any other validation problem).
      */
-    public ResultSet execute(String query, Object... values) {
-        return execute(new SimpleStatement(query, values));
-    }
+    public ResultSet execute(String query, Object... values);
 
     /**
      * Executes the provided query.
@@ -122,9 +109,7 @@ public class Session {
      * @throws QueryValidationException if the query if invalid (syntax error,
      * unauthorized or any other validation problem).
      */
-    public ResultSet execute(Statement statement) {
-        return executeAsync(statement).getUninterruptibly();
-    }
+    public ResultSet execute(Statement statement);
 
     /**
      * Executes the provided query asynchronously.
@@ -134,9 +119,7 @@ public class Session {
      * @param query the CQL query to execute.
      * @return a future on the result of the query.
      */
-    public ResultSetFuture executeAsync(String query) {
-        return executeAsync(new SimpleStatement(query));
-    }
+    public ResultSetFuture executeAsync(String query);
 
     /**
      * Executes the provided query asynchronously using the provided values.
@@ -148,9 +131,7 @@ public class Session {
      * {@link SimpleStatement#SimpleStatement(String, Object...)} for more detail.
      * @return a future on the result of the query.
      */
-    public ResultSetFuture executeAsync(String query, Object... values) {
-        return executeAsync(new SimpleStatement(query, values));
-    }
+    public ResultSetFuture executeAsync(String query, Object... values);
 
     /**
      * Executes the provided query asynchronously.
@@ -168,9 +149,7 @@ public class Session {
      * @param statement the CQL query to execute (that can be either any {@code Statement}.
      * @return a future on the result of the query.
      */
-    public ResultSetFuture executeAsync(Statement statement) {
-        return manager.executeQuery(manager.makeRequestMessage(statement, null), statement);
-    }
+    public ResultSetFuture executeAsync(Statement statement);
 
     /**
      * Prepares the provided query string.
@@ -181,11 +160,7 @@ public class Session {
      * @throws NoHostAvailableException if no host in the cluster can be
      * contacted successfully to prepare this query.
      */
-    public PreparedStatement prepare(String query) {
-        Connection.Future future = new Connection.Future(new Requests.Prepare(query));
-        manager.execute(future, Statement.DEFAULT);
-        return toPreparedStatement(query, future);
-    }
+    public PreparedStatement prepare(String query);
 
     /**
      * Prepares the provided query.
@@ -210,22 +185,7 @@ public class Session {
      * though the {@link PreparedStatement#bind} method or through a corresponding
      * {@link BoundStatement}).
      */
-    public PreparedStatement prepare(RegularStatement statement) {
-        if (statement.getValues() != null)
-            throw new IllegalArgumentException("A statement to prepare should not have values");
-
-        PreparedStatement prepared = prepare(statement.toString());
-
-        ByteBuffer routingKey = statement.getRoutingKey();
-        if (routingKey != null)
-            prepared.setRoutingKey(routingKey);
-        prepared.setConsistencyLevel(statement.getConsistencyLevel());
-        if (statement.isTracing())
-            prepared.enableTracing();
-        prepared.setRetryPolicy(statement.getRetryPolicy());
-
-        return prepared;
-    }
+    public PreparedStatement prepare(RegularStatement statement);
 
     /**
      * Initiates a shutdown of this session instance.
@@ -249,305 +209,12 @@ public class Session {
      *
      * @return a future on the completion of the shutdown process.
      */
-    public ShutdownFuture shutdown() {
-        return manager.shutdown();
-    }
+    public ShutdownFuture shutdown();
 
     /**
      * Returns the {@code Cluster} object this session is part of.
      *
      * @return the {@code Cluster} object this session is part of.
      */
-    public Cluster getCluster() {
-        return manager.cluster;
-    }
-
-    private PreparedStatement toPreparedStatement(String query, Connection.Future future) {
-        try {
-            Message.Response response = Uninterruptibles.getUninterruptibly(future);
-            switch (response.type) {
-                case RESULT:
-                    Responses.Result rm = (Responses.Result)response;
-                    switch (rm.kind) {
-                        case PREPARED:
-                            Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
-                            PreparedStatement stmt = PreparedStatement.fromMessage(pmsg, manager.cluster.getMetadata(), query, manager.poolsState.keyspace);
-                            try {
-                                manager.cluster.manager.prepare(stmt, future.getAddress());
-                            } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
-                                // This method doesn't propagate interruption, at least not for now. However, if we've
-                                // interrupted preparing queries on other node it's not a problem as we'll re-prepare
-                                // later if need be. So just ignore.
-                            }
-                            return stmt;
-                        default:
-                            throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
-                    }
-                case ERROR:
-                    throw ((Responses.Error)response).asException(future.getAddress());
-                default:
-                    throw new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type));
-            }
-        } catch (ExecutionException e) {
-            throw ResultSetFuture.extractCauseFromExecutionException(e);
-        }
-    }
-
-    static class Manager {
-
-        final Cluster cluster;
-
-        final ConcurrentMap<Host, HostConnectionPool> pools;
-
-        final HostConnectionPool.PoolState poolsState;
-
-        final AtomicReference<ShutdownFuture> shutdownFuture = new AtomicReference<ShutdownFuture>();
-
-        public Manager(Cluster cluster, Collection<Host> hosts) {
-            this.cluster = cluster;
-
-            this.pools = new ConcurrentHashMap<Host, HostConnectionPool>(hosts.size());
-            this.poolsState = new HostConnectionPool.PoolState();
-
-            // Create pool to initial nodes (and wait for them to be created)
-            for (Host host : hosts) {
-                try {
-                    addOrRenewPool(host, false).get();
-                } catch (ExecutionException e) {
-                    // This is not supposed to happen
-                    throw new DriverInternalError(e);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
-
-        public Connection.Factory connectionFactory() {
-            return cluster.manager.connectionFactory;
-        }
-
-        public Configuration configuration() {
-            return cluster.manager.configuration;
-        }
-
-        LoadBalancingPolicy loadBalancingPolicy() {
-            return cluster.manager.loadBalancingPolicy();
-        }
-
-        ReconnectionPolicy reconnectionPolicy() {
-            return cluster.manager.reconnectionPolicy();
-        }
-
-        public ListeningExecutorService executor() {
-            return cluster.manager.executor;
-        }
-
-        public ListeningExecutorService blockingExecutor() {
-            return cluster.manager.blockingTasksExecutor;
-        }
-
-        boolean isShutdown() {
-            return shutdownFuture.get() != null;
-        }
-
-        private ShutdownFuture shutdown() {
-
-            ShutdownFuture future = shutdownFuture.get();
-            if (future != null)
-                return future;
-
-            List<ShutdownFuture> futures = new ArrayList<ShutdownFuture>(pools.size());
-            for (HostConnectionPool pool : pools.values())
-                futures.add(pool.shutdown());
-
-            future = new ShutdownFuture.Forwarding(futures);
-
-            return shutdownFuture.compareAndSet(null, future)
-                 ? future
-                 : shutdownFuture.get(); // We raced, it's ok, return the future that was actually set
-        }
-
-        ListenableFuture<Boolean> addOrRenewPool(final Host host, final boolean isHostAddition) {
-            final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
-            if (distance == HostDistance.IGNORED)
-                return Futures.immediateFuture(true);
-
-            // Creating a pool is somewhat long since it has to create the connection, so do it asynchronously.
-            return executor().submit(new Callable<Boolean>() {
-                public Boolean call() {
-                    logger.debug("Adding {} to list of queried hosts", host);
-                    try {
-                        HostConnectionPool previous = pools.put(host, new HostConnectionPool(host, distance, Session.Manager.this));
-                        if (previous != null)
-                            previous.shutdown(); // The previous was probably already shutdown but that's ok
-                        return true;
-                    } catch (AuthenticationException e) {
-                        logger.error("Error creating pool to {} ({})", host, e.getMessage());
-                        cluster.manager.signalConnectionFailure(host, new ConnectionException(e.getHost(), e.getMessage()), isHostAddition);
-                        return false;
-                    } catch (ConnectionException e) {
-                        logger.debug("Error creating pool to {} ({})", host, e.getMessage());
-                        cluster.manager.signalConnectionFailure(host, e, isHostAddition);
-                        return false;
-                    }
-                }
-            });
-        }
-
-        ListenableFuture<?> removePool(Host host) {
-            final HostConnectionPool pool = pools.remove(host);
-            if (pool == null)
-                return Futures.immediateFuture(null);
-
-            // Shutdown can take some time and we don't care about holding the thread on that.
-            return executor().submit(new Runnable() {
-                public void run() {
-                    pool.shutdown();
-                }
-            });
-        }
-
-        /*
-         * When the set of live nodes change, the loadbalancer will change his
-         * mind on host distances. It might change it on the node that came/left
-         * but also on other nodes (for instance, if a node dies, another
-         * previously ignored node may be now considered).
-         *
-         * This method ensures that all hosts for which a pool should exist
-         * have one, and hosts that shouldn't don't.
-         */
-        void updateCreatedPools() {
-            for (Host h : cluster.getMetadata().allHosts()) {
-                HostDistance dist = loadBalancingPolicy().distance(h);
-                HostConnectionPool pool = pools.get(h);
-
-                if (pool == null) {
-                    if (dist != HostDistance.IGNORED && h.isUp())
-                        addOrRenewPool(h, false);
-                } else if (dist != pool.hostDistance) {
-                    if (dist == HostDistance.IGNORED) {
-                        removePool(h);
-                    } else {
-                        pool.hostDistance = dist;
-                    }
-                }
-            }
-        }
-
-        public void onDown(Host host) {
-            // Note that with well behaved balancing policy (that ignore dead nodes), the removePool call is not necessary
-            // since updateCreatedPools should take care of it. But better protect against non well behaving policies.
-            removePool(host).addListener(new Runnable() {
-                public void run() {
-                    updateCreatedPools();
-                }
-            }, MoreExecutors.sameThreadExecutor());
-        }
-
-        public void onRemove(Host host) {
-            onDown(host);
-        }
-
-        public void setKeyspace(String keyspace) {
-            long timeout = configuration().getSocketOptions().getConnectTimeoutMillis();
-            try {
-                Future<?> future = executeQuery(new Requests.Query("use " + keyspace), Statement.DEFAULT);
-                // Note: using the connection timeout is perfectly correct, we should probably change that someday
-                Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
-            } catch (TimeoutException e) {
-                throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
-            } catch (ExecutionException e) {
-                throw ResultSetFuture.extractCauseFromExecutionException(e);
-            }
-        }
-
-        public Message.Request makeRequestMessage(Statement statement, ByteBuffer pagingState) {
-
-            ConsistencyLevel consistency = statement.getConsistencyLevel();
-            if (consistency == null)
-                consistency = configuration().getQueryOptions().getConsistencyLevel();
-
-            ConsistencyLevel serialConsistency = statement.getSerialConsistencyLevel();
-            if (serialConsistency == null)
-                serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
-
-            return makeRequestMessage(statement, consistency, serialConsistency, pagingState);
-        }
-
-        public Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState) {
-            int fetchSize = statement.getFetchSize();
-            if (fetchSize <= 0)
-                fetchSize = configuration().getQueryOptions().getFetchSize();
-            if (fetchSize == Integer.MAX_VALUE)
-                fetchSize = -1;
-
-            if (statement instanceof RegularStatement) {
-                RegularStatement rs = (RegularStatement)statement;
-                ByteBuffer[] rawValues = rs.getValues();
-                List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
-                String qString = rs.getQueryString();
-                Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false, fetchSize, pagingState, scl);
-                return new Requests.Query(qString, options);
-            } else if (statement instanceof BoundStatement) {
-                BoundStatement bs = (BoundStatement)statement;
-                boolean skipMetadata = bs.statement.resultSetMetadata != null;
-                Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.values), skipMetadata, fetchSize, pagingState, scl);
-                return new Requests.Execute(bs.statement.id, options);
-            } else {
-                assert statement instanceof BatchStatement : statement;
-                assert pagingState == null;
-                BatchStatement bs = (BatchStatement)statement;
-                BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
-                return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl);
-            }
-        }
-
-        /**
-         * Execute the provided request.
-         *
-         * This method will find a suitable node to connect to using the
-         * {@link LoadBalancingPolicy} and handle host failover.
-         */
-        public void execute(RequestHandler.Callback callback, Statement statement) {
-            new RequestHandler(this, callback, statement).sendRequest();
-        }
-
-        public void prepare(String query, InetAddress toExclude) throws InterruptedException {
-            for (Map.Entry<Host, HostConnectionPool> entry : pools.entrySet()) {
-                if (entry.getKey().getAddress().equals(toExclude))
-                    continue;
-
-                // Let's not wait too long if we can't get a connection. Things
-                // will fix themselves once the user tries a query anyway.
-                Connection c = null;
-                try {
-                    c = entry.getValue().borrowConnection(200, TimeUnit.MILLISECONDS);
-                    c.write(new Requests.Prepare(query)).get();
-                } catch (ConnectionException e) {
-                    // Again, not being able to prepare the query right now is no big deal, so just ignore
-                } catch (BusyConnectionException e) {
-                    // Same as above
-                } catch (TimeoutException e) {
-                    // Same as above
-                } catch (ExecutionException e) {
-                    // We shouldn't really get exception while preparing a
-                    // query, so log this (but ignore otherwise as it's not a big deal)
-                    logger.error(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), e);
-                } finally {
-                    if (c != null)
-                        entry.getValue().returnConnection(c);
-                }
-            }
-        }
-
-        public ResultSetFuture executeQuery(Message.Request msg, Statement statement) {
-            if (statement.isTracing())
-                msg.setTracingRequested();
-
-            ResultSetFuture future = new ResultSetFuture(this, msg);
-            execute(future.callback, statement);
-            return future;
-        }
-    }
+    public Cluster getCluster();
 }

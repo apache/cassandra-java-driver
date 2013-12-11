@@ -72,6 +72,24 @@ public class Cluster {
 
     final Manager manager;
 
+    /**
+     * Constructs a new Cluster instance.
+     * <p>
+     * This constructor is mainly exposed so Cluster can be sub-classed as a mean to make testing/mocking
+     * easier or to "intecept" it's method call. Most users shouldn't extend this class however and
+     * should prefer either using the {@link #builder} or calling {@link #buildFrom} with a custom
+     * Initializer.
+     *
+     * @param contactPoints the list of contact points to use for the new cluster.
+     * @param configuration the configuration for the new cluster.
+     * @param init whether or not initialization should be perform by this constructor. Passing
+     * {@code false} is equivalent to using {@link Builder#withDeferredInitialization} on a
+     * {@code Cluster.Builder}.
+     */
+    protected Cluster(String name, List<InetAddress> contactPoints, Configuration configuration) {
+        this(name, contactPoints, configuration, Collections.<Host.StateListener>emptySet());
+    }
+
     private Cluster(String name, List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
         this.manager = new Manager(name, contactPoints, configuration, listeners);
     }
@@ -174,8 +192,8 @@ public class Cluster {
      * while contacting the initial contact points.
      */
     public Session connect(String keyspace) {
-        Session session = connect();
-        session.manager.setKeyspace(keyspace);
+        SessionManager session = (SessionManager)connect();
+        session.setKeyspace(keyspace);
         return session;
     }
 
@@ -810,7 +828,7 @@ public class Cluster {
 
         // Initial contacts point
         final List<InetAddress> contactPoints;
-        final Set<Session> sessions = new CopyOnWriteArraySet<Session>();
+        final Set<SessionManager> sessions = new CopyOnWriteArraySet<SessionManager>();
 
         final Metadata metadata;
         final Configuration configuration;
@@ -909,7 +927,7 @@ public class Cluster {
         private Session newSession() {
             init();
 
-            Session session = new Session(Cluster.this, metadata.allHosts());
+            SessionManager session = new SessionManager(Cluster.this, metadata.allHosts());
             sessions.add(session);
             return session;
         }
@@ -985,14 +1003,14 @@ public class Cluster {
             // new pool have been created. This is harmless if there is no prior pool since RequestHandler
             // will ignore the node, but we do want to make sure there is no prior pool so we don't
             // query from a pool we will shutdown right away.
-            for (Session s : sessions)
-                s.manager.removePool(host);
+            for (SessionManager s : sessions)
+                s.removePool(host);
             loadBalancingPolicy().onUp(host);
             controlConnection.onUp(host);
 
             List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
-            for (Session s : sessions)
-                futures.add(s.manager.addOrRenewPool(host, false));
+            for (SessionManager s : sessions)
+                futures.add(s.addOrRenewPool(host, false));
 
             // Only mark the node up once all session have re-added their pool (if the loadbalancing
             // policy says it should), so that Host.isUp() don't return true before we're reconnected
@@ -1013,8 +1031,8 @@ public class Cluster {
 
                     // Now, check if there isn't pools to create/remove following the addition.
                     // We do that now only so that it's not called before we've set the node up.
-                    for (Session s : sessions)
-                        s.manager.updateCreatedPools();
+                    for (SessionManager s : sessions)
+                        s.updateCreatedPools();
                 }
 
                 public void onFailure(Throwable t) {
@@ -1049,8 +1067,8 @@ public class Cluster {
 
             loadBalancingPolicy().onDown(host);
             controlConnection.onDown(host);
-            for (Session s : sessions)
-                s.manager.onDown(host);
+            for (SessionManager s : sessions)
+                s.onDown(host);
 
             // Contrarily to other actions of that method, there is no reason to notify listeners
             // unless the host was UP at the beginning of this function since even if a onUp fail
@@ -1108,8 +1126,8 @@ public class Cluster {
             controlConnection.onAdd(host);
 
             List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
-            for (Session s : sessions)
-                futures.add(s.manager.addOrRenewPool(host, true));
+            for (SessionManager s : sessions)
+                futures.add(s.addOrRenewPool(host, true));
 
             // Only mark the node up once all session have added their pool (if the loadbalancing
             // policy says it should), so that Host.isUp() don't return true before we're reconnected
@@ -1130,8 +1148,8 @@ public class Cluster {
 
                     // Now, check if there isn't pools to create/remove following the addition.
                     // We do that now only so that it's not called before we've set the node up.
-                    for (Session s : sessions)
-                        s.manager.updateCreatedPools();
+                    for (SessionManager s : sessions)
+                        s.updateCreatedPools();
                 }
 
                 public void onFailure(Throwable t) {
@@ -1152,8 +1170,8 @@ public class Cluster {
             logger.trace("Removing host {}", host);
             loadBalancingPolicy().onRemove(host);
             controlConnection.onRemove(host);
-            for (Session s : sessions)
-                s.manager.onRemove(host);
+            for (SessionManager s : sessions)
+                s.onRemove(host);
 
             for (Host.StateListener listener : listeners)
                 listener.onRemove(host);
@@ -1186,8 +1204,8 @@ public class Cluster {
         }
 
         public void ensurePoolsSizing() {
-            for (Session session : sessions) {
-                for (HostConnectionPool pool : session.manager.pools.values())
+            for (SessionManager session : sessions) {
+                for (HostConnectionPool pool : session.pools.values())
                     pool.ensureCoreConnections();
             }
         }
@@ -1198,8 +1216,8 @@ public class Cluster {
             if (preparedQueries.putIfAbsent(stmt.id, stmt) != null)
                 logger.warn("Re-preparing already prepared query {}. Please note that preparing the same query more than once is "
                           + "generally an anti-pattern and will likely affect performance. Consider preparing the statement only once.", stmt.getQueryString());
-            for (Session s : sessions)
-                s.manager.prepare(stmt.getQueryString(), toExclude);
+            for (SessionManager s : sessions)
+                s.prepare(stmt.getQueryString(), toExclude);
         }
 
         private void prepareAllQueries(Host host) throws InterruptedException {
@@ -1283,7 +1301,7 @@ public class Cluster {
         }
 
         // refresh the schema using the provided connection, and notice the future with the provided resultset once done
-        public void refreshSchema(final Connection connection, final ResultSetFuture future, final ResultSet rs, final String keyspace, final String table) {
+        public void refreshSchema(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final String keyspace, final String table) {
             if (logger.isDebugEnabled())
                 logger.debug("Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : "." + table);
 

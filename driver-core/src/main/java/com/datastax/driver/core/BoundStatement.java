@@ -46,9 +46,12 @@ public class BoundStatement extends Statement {
     /**
      * Creates a new {@code BoundStatement} from the provided prepared
      * statement.
-     *
      * @param statement the prepared statement from which to create a {@code BoundStatement}.
+     *
+     * @deprecated this constructor is now deprecated an will removed (made private) in
+     * version 2 of the driver. Instead, you are encouraged to use {@link PreparedStatement#bind()}.
      */
+    @Deprecated
     public BoundStatement(PreparedStatement statement) {
         this.statement = statement;
         this.values = new ByteBuffer[statement.getVariables().size()];
