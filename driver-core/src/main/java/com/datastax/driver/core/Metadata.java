@@ -36,7 +36,7 @@ public class Metadata {
     private final ConcurrentMap<InetAddress, Host> hosts = new ConcurrentHashMap<InetAddress, Host>();
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private volatile TokenMap<? extends Token> tokenMap;
 
     Metadata(Cluster.Manager cluster) {
@@ -170,7 +170,7 @@ public class Metadata {
      * this information. It is also not guarantee that the returned set won't
      * be empty (which is then some form of staleness).
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public Set<Host> getReplicas(ByteBuffer partitionKey) {
         TokenMap current = tokenMap;
         if (current == null) {

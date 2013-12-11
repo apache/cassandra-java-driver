@@ -28,69 +28,21 @@ import org.slf4j.LoggerFactory;
  *
  * Note that this class is not thread-safe.
  */
-public class ResultSet implements Iterable<Row> {
-
-    private static final Logger logger = LoggerFactory.getLogger(ResultSet.class);
-
-    private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque<List<ByteBuffer>>(0);
-
-    private final ColumnDefinitions metadata;
-    private final Queue<List<ByteBuffer>> rows;
-    private final ExecutionInfo info;
-
-    private ResultSet(ColumnDefinitions metadata, Queue<List<ByteBuffer>> rows, ExecutionInfo info) {
-        this.metadata = metadata;
-        this.rows = rows;
-        this.info = info;
-    }
-
-    static ResultSet fromMessage(ResultMessage msg, Session.Manager session, ExecutionInfo info) {
-
-        UUID tracingId = msg.getTracingId();
-        info = tracingId == null || info == null ? info : info.withTrace(new QueryTrace(tracingId, session));
-
-        switch (msg.kind) {
-            case VOID:
-                return empty(info);
-            case ROWS:
-                ResultMessage.Rows r = (ResultMessage.Rows)msg;
-                ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[r.result.metadata.names.size()];
-                for (int i = 0; i < defs.length; i++)
-                    defs[i] = ColumnDefinitions.Definition.fromTransportSpecification(r.result.metadata.names.get(i));
-
-                return new ResultSet(new ColumnDefinitions(defs), new ArrayDeque<List<ByteBuffer>>(r.result.rows), info);
-            case SET_KEYSPACE:
-            case SCHEMA_CHANGE:
-                return empty(info);
-            case PREPARED:
-                throw new RuntimeException("Prepared statement received when a ResultSet was expected");
-            default:
-                logger.error("Received unknow result type '{}'; returning empty result set", msg.kind);
-                return empty(info);
-        }
-    }
-
-    private static ResultSet empty(ExecutionInfo info) {
-        return new ResultSet(ColumnDefinitions.EMPTY, EMPTY_QUEUE, info);
-    }
+public interface ResultSet extends Iterable<Row> {
 
     /**
      * Returns the columns returned in this ResultSet.
      *
      * @return the columns returned in this ResultSet.
      */
-    public ColumnDefinitions getColumnDefinitions() {
-        return metadata;
-    }
+    public ColumnDefinitions getColumnDefinitions();
 
     /**
      * Returns whether this ResultSet has more results.
      *
      * @return whether this ResultSet has more results.
      */
-    public boolean isExhausted() {
-        return rows.isEmpty();
-    }
+    public boolean isExhausted();
 
     /**
      * Returns the the next result from this ResultSet.
@@ -98,9 +50,7 @@ public class ResultSet implements Iterable<Row> {
      * @return the next row in this resultSet or null if this ResultSet is
      * exhausted.
      */
-    public Row one() {
-        return Row.fromData(metadata, rows.poll());
-    }
+    public Row one();
 
     /**
      * Returns all the remaining rows in this ResultSet as a list.
@@ -108,15 +58,7 @@ public class ResultSet implements Iterable<Row> {
      * @return a list containing the remaining results of this ResultSet. The
      * returned list is empty if and only the ResultSet is exhausted.
      */
-    public List<Row> all() {
-        if (isExhausted())
-            return Collections.emptyList();
-
-        List<Row> result = new ArrayList<Row>(rows.size());
-        for (Row row : this)
-            result.add(row);
-        return result;
-    }
+    public List<Row> all();
 
     /**
      * Returns an iterator over the rows contained in this ResultSet.
@@ -131,25 +73,7 @@ public class ResultSet implements Iterable<Row> {
      * this ResultSet.
      */
     @Override
-    public Iterator<Row> iterator() {
-        return new Iterator<Row>() {
-
-            @Override
-            public boolean hasNext() {
-                return !rows.isEmpty();
-            }
-
-            @Override
-            public Row next() {
-                return Row.fromData(metadata, rows.poll());
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
-    }
+    public Iterator<Row> iterator();
 
     /**
      * Returns information on the execution of this query.
@@ -159,15 +83,5 @@ public class ResultSet implements Iterable<Row> {
      *
      * @return the execution info for this query.
      */
-    public ExecutionInfo getExecutionInfo() {
-        return info;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("ResultSet[ exhausted: ").append(isExhausted());
-        sb.append(", ").append(metadata).append("]");
-        return sb.toString();
-    }
+    public ExecutionInfo getExecutionInfo();
 }

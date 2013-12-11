@@ -52,7 +52,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
     private static final Logger logger = LoggerFactory.getLogger(RequestHandler.class);
 
-    private final Session.Manager manager;
+    private final SessionManager manager;
     private final Callback callback;
 
     private final Iterator<Host> queryPlan;
@@ -72,7 +72,7 @@ class RequestHandler implements Connection.ResponseCallback {
     private final TimerContext timerContext;
     private final long startTime;
 
-    public RequestHandler(Session.Manager manager, Callback callback, Query query) {
+    public RequestHandler(SessionManager manager, Callback callback, Query query) {
         this.manager = manager;
         this.callback = callback;
 

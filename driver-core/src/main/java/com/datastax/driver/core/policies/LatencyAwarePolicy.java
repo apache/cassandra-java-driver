@@ -240,7 +240,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
      * Returns a snapshot of the scores (latency averages) maintained by this
      * policy.
      *
-     * @return a new (immutable) {@link Snaphot} object containing the current
+     * @return a new (immutable) {@link Snapshot} object containing the current
      * latency scores maintained by this policy.
      */
     public Snapshot getScoresSnapshot() {
