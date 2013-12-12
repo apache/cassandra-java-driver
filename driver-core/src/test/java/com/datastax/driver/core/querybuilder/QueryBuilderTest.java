@@ -313,6 +313,8 @@ public class QueryBuilderTest {
         query += "APPLY BATCH;";
         batch = batch(delete().listElt("a", 3).from("foo").where(eq("k", 1)));
         assertEquals(batch.toString(), query);
+
+        assertEquals(batch().toString(), "BEGIN BATCH APPLY BATCH;");
     }
 
     @Test(groups = "unit")

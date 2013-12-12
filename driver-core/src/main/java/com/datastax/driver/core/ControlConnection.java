@@ -451,7 +451,7 @@ class ControlConnection implements Host.StateListener {
         if (current != null && current.address.equals(host.getAddress()) && reconnectionAttempt.get() == null) {
             // We might very be on an I/O thread when we reach this so we should not do that on this thread.
             // Besides, there is no reason to block the onDown method while we try to reconnect.
-            cluster.executor.submit(new Runnable() {
+            cluster.blockingTasksExecutor.submit(new Runnable() {
                 @Override
                 public void run() {
                     reconnect();

@@ -20,6 +20,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.slf4j.Logger;
@@ -31,8 +32,8 @@ import com.datastax.driver.core.*;
  * A wrapper load balancing policy that adds latency awareness to a child policy.
  * <p>
  * When used, this policy will collect the latencies of the queries to each
- * Cassandra and maintain, for each node, a latency score (an average). Based
- * on those scores, the policy will penalize (technically, it will ignore them
+ * Cassandra node and maintain a per-node latency score (an average). Based
+ * on these scores, the policy will penalize (technically, it will ignore them
  * unless no other nodes are up) the nodes that are slower than the best
  * performing node by more than some configurable amount (the exclusion
  * threshold).
@@ -42,18 +43,18 @@ import com.datastax.driver.core.*;
  * In other words, the latency score of a node is the average of its previously
  * measured latencies, but where older measurements gets an exponentially decreasing
  * weight. The exact weight applied to a newly received latency is based on the
- * delay elapsed since the previous measure (to account for the fact that
+ * time elapsed since the previous measure (to account for the fact that
  * latencies are not necessarily reported with equal regularity, neither
  * over time nor between different nodes).
  * <p>
- * Once a node is excluded from query plans (because its averaged latency grow
- * over the exclusion threshold), its latency score will not evolve anymore
- * (since it is not queried). To give a chance to those node to recover, the
+ * Once a node is excluded from query plans (because its averaged latency grew
+ * over the exclusion threshold), its latency score will not be updated anymore
+ * (since it is not queried). To give a chance to this node to recover, the
  * policy has a configurable retry period. The policy will not penalize a host
  * for which no measurement has been collected for more than this retry period.
  * <p>
  * Please see the {@link Builder} class and methods for more details on the
- * possible paramters of this policy.
+ * possible parameters of this policy.
  *
  * @since 1.0.4
  */
@@ -117,27 +118,25 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
                      * we try to avoid flooding too). This is probably interesting information anyway since it
                      * gets an idea of which host perform badly.
                      */
-                    double currentMin = latencyTracker.getMinAverage();
-                    Map<Host, TimestampedAverage> currentLatencies = latencyTracker.currentLatencies();
                     Set<Host> excludedThisTick = new HashSet<Host>();
-                    long now = System.nanoTime();
-                    for (Map.Entry<Host, TimestampedAverage> entry : currentLatencies.entrySet()) {
+                    double currentMin = latencyTracker.getMinAverage();
+                    for (Map.Entry<Host, Snapshot.Stats> entry : getScoresSnapshot().getAllStats().entrySet()) {
                         Host host = entry.getKey();
-                        TimestampedAverage latency = entry.getValue();
-                        if (latency.nbMeasure < minMeasure)
+                        Snapshot.Stats stats = entry.getValue();
+                        if (stats.getMeasurementsCount() < minMeasure)
                             continue;
 
-                        if ((now - latency.timestamp) > retryPeriod) {
+                        if (stats.lastUpdatedSince() > retryPeriod) {
                             if (excludedAtLastTick.contains(host))
-                                logger.debug(String.format("Previously avoided host %s has not be queried since %.3fms: will be reconsidered.", host, inMS(now - latency.timestamp)));
+                                logger.debug(String.format("Previously avoided host %s has not be queried since %.3fms: will be reconsidered.", host, inMS(stats.lastUpdatedSince())));
                             continue;
                         }
 
-                        if (latency.average > ((long)(exclusionThreshold * currentMin))) {
+                        if (stats.getLatencyScore() > ((long)(exclusionThreshold * currentMin))) {
                             excludedThisTick.add(host);
                             if (!excludedAtLastTick.contains(host))
                                 logger.debug(String.format("Host %s has an average latency score of %.3fms, more than %f times more than the minimum %.3fms: will be avoided temporarily.",
-                                                          host, inMS(latency.average), exclusionThreshold, inMS(currentMin)));
+                                                          host, inMS(stats.getLatencyScore()), exclusionThreshold, inMS(currentMin)));
                             continue;
                         }
 
@@ -173,7 +172,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
     }
 
     /**
-     * Return the HostDistance for the provided host.
+     * Returns the HostDistance for the provided host.
      *
      * @param host the host of which to return the distance of.
      * @return the HostDistance to {@code host} as returned by the wrapped policy.
@@ -192,8 +191,8 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
      * (where {@code minLatency} is the (averaged) latency of the fastest
      * host).
      * <p>
-     * The hosts that are initally excluded due to their latency will be returned
-     * by the returned iterator, but only only after all non-excluded host of the
+     * The hosts that are initially excluded due to their latency will be returned
+     * by this iterator, but only only after all non-excluded hosts of the
      * child policy have been returned.
      *
      * @param query the query for which to build the plan.
@@ -237,6 +236,26 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         };
     }
 
+    /**
+     * Returns a snapshot of the scores (latency averages) maintained by this
+     * policy.
+     *
+     * @return a new (immutable) {@link Snaphot} object containing the current
+     * latency scores maintained by this policy.
+     */
+    public Snapshot getScoresSnapshot() {
+        Map<Host, TimestampedAverage> currentLatencies = latencyTracker.currentLatencies();
+        ImmutableMap.Builder<Host, Snapshot.Stats> builder = ImmutableMap.builder();
+        long now = System.nanoTime();
+        for (Map.Entry<Host, TimestampedAverage> entry : currentLatencies.entrySet()) {
+            Host host = entry.getKey();
+            TimestampedAverage latency = entry.getValue();
+            Snapshot.Stats stats = new Snapshot.Stats(now - latency.timestamp, latency.average, latency.nbMeasure);
+            builder.put(host, stats);
+        }
+        return new Snapshot(builder.build());
+    }
+
     @Override
     public void onUp(Host host) {
         childPolicy.onUp(host);
@@ -259,6 +278,85 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         latencyTracker.resetHost(host);
     }
 
+    /**
+     * An immutable snapshot of the per-host scores (and stats in general)
+     * maintained by {@code LatencyAwarePolicy} to base its decision upon.
+     */
+    public static class Snapshot {
+        private final Map<Host, Stats> stats;
+
+        private Snapshot(Map<Host, Stats> stats) {
+            this.stats = stats;
+        }
+
+        /**
+         * A map with the stats for all hosts tracked by the {@code
+         * LatencyAwarePolicy} at the time of the snapshot.
+         *
+         * @return a immutable map with all the stats contained in this
+         * snapshot.
+         */
+        public Map<Host, Stats> getAllStats() {
+            return stats;
+        }
+
+        /**
+         * The {@code Stats} object for a given host.
+         *
+         * @param host the host to return the stats of.
+         * @return the {@code Stats} for {@code host} in this snapshot or
+         * {@code null} if the snapshot has not information on {@code host}.
+         */
+        public Stats getStats(Host host) {
+            return stats.get(host);
+        }
+
+        /**
+         * A snapshot of the statistics on a given host kept by {@code LatencyAwarePolicy}.
+         */
+        public static class Stats {
+            private final long lastUpdatedSince;
+            private final long average;
+            private final long nbMeasurements;
+
+            private Stats(long lastUpdatedSince, long average, long nbMeasurements) {
+                this.lastUpdatedSince = lastUpdatedSince;
+                this.average = average;
+                this.nbMeasurements = nbMeasurements;
+            }
+
+            /**
+             * The number of nanoseconds since the last latency update was recorded (at the time
+             * of the snapshot).
+             *
+             * @return The number of nanoseconds since the last latency update was recorded (at the time
+             * of the snapshot).
+             */
+            public long lastUpdatedSince() {
+                return lastUpdatedSince;
+            }
+
+            /**
+             * The latency score for the host this is the stats of at the time of the snapshot.
+             *
+             * @return the latency score for the host this is the stats of at the time of the snapshot,
+             * or {@code -1L} if not enough measurements have been taken to assign a score.
+             */
+            public long getLatencyScore() {
+                return average;
+            }
+
+            /**
+             * The number of recorded latency measurements for the host this is the stats of.
+             *
+             * @return the number of recorded latency measurements for the host this is the stats of.
+             */
+            public long getMeasurementsCount() {
+                return nbMeasurements;
+            }
+        }
+    }
+
     private class Tracker implements LatencyTracker {
 
         private final ConcurrentMap<Host, HostLatencyTracker> latencies = new ConcurrentHashMap<Host, HostLatencyTracker>();
@@ -267,7 +365,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         public void update(Host host, long newLatencyNanos) {
             HostLatencyTracker hostTracker = latencies.get(host);
             if (hostTracker == null) {
-                hostTracker = new HostLatencyTracker(scale);
+                hostTracker = new HostLatencyTracker(scale, (30L * minMeasure) / 100L);
                 HostLatencyTracker old = latencies.putIfAbsent(host, hostTracker);
                 if (old != null)
                     hostTracker = old;
@@ -312,9 +410,9 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
 
         private final long timestamp;
         private final long average;
-        private final int nbMeasure;
+        private final long nbMeasure;
 
-        TimestampedAverage(long timestamp, long average, int nbMeasure) {
+        TimestampedAverage(long timestamp, long average, long nbMeasure) {
             this.timestamp = timestamp;
             this.average = average;
             this.nbMeasure = nbMeasure;
@@ -323,11 +421,13 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
 
     private static class HostLatencyTracker {
 
+        private final long thresholdToAccount;
         private final double scale;
         private final AtomicReference<TimestampedAverage> current = new AtomicReference<TimestampedAverage>();
 
-        HostLatencyTracker(long scale) {
+        HostLatencyTracker(long scale, long thresholdToAccount) {
             this.scale = (double)scale; // We keep in double since that's how we'll use it.
+            this.thresholdToAccount = thresholdToAccount;
         }
 
         public void add(long newLatencyNanos) {
@@ -342,8 +442,12 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
 
             long currentTimestamp = System.nanoTime();
 
-            if (previous == null)
-                return new TimestampedAverage(currentTimestamp, newLatencyNanos, 1);
+            long nbMeasure = previous == null ? 1 : previous.nbMeasure + 1;
+            if (nbMeasure < thresholdToAccount)
+                return new TimestampedAverage(currentTimestamp, -1L, nbMeasure);
+
+            if (previous == null || previous.average < 0)
+                return new TimestampedAverage(currentTimestamp, newLatencyNanos, nbMeasure);
 
             // Note: it's possible for the delay to be 0, in which case newLatencyNanos will basically be
             // discarded. It's fine: nanoTime is precise enough in practice that even if it happens, it
@@ -362,7 +466,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
             double prevWeight = Math.log(scaledDelay+1) / scaledDelay;
             long newAverage = (long)((1.0 - prevWeight) * newLatencyNanos + prevWeight * previous.average);
 
-            return new TimestampedAverage(currentTimestamp, newAverage, previous.nbMeasure+1);
+            return new TimestampedAverage(currentTimestamp, newAverage, nbMeasure);
         }
 
         public TimestampedAverage getCurrentAverage() {
@@ -374,13 +478,13 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
      * Helper builder object to create a latency aware policy.
      * <p>
      * This helper allows to configure the different parameters used by
-     * {@code LatencyAwarePolicy}. The only mandatory option is the child
+     * {@code LatencyAwarePolicy}. The only mandatory parameter is the child
      * policy that will be wrapped with latency awareness. The other parameters
-     * can be set through the method of this builder but all have defaults (that
+     * can be set through the methods of this builder, but all have defaults (that
      * are documented in the javadoc of each method) if you don't.
      * <p>
-     * If you observe that the resulting policy exclude host too agressively or
-     * not enough so, the main parameter to check are the exclusion threashold
+     * If you observe that the resulting policy excludes hosts too aggressively or
+     * not enough so, the main parameters to check are the exclusion threshold
      * ({@link #withExclusionThreshold}) and scale ({@link #withScale}).
      *
      * @since 1.0.4
@@ -403,7 +507,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
 
         /**
          * Creates a new latency aware policy builder given the child policy
-         * that the resulting policy should wrap.
+         * that the resulting policy wraps.
          *
          * @param childPolicy the load balancing policy to wrap with latency
          * awareness.
@@ -415,11 +519,11 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         /**
          * Sets the exclusion threshold to use for the resulting latency aware policy.
          * <p>
-         * The exclusion threshold controls how much worst the average latency
-         * of a node must be compared to the faster performing one for it to be
+         * The exclusion threshold controls how much worse the average latency
+         * of a node must be compared to the fastest performing node for it to be
          * penalized by the policy.
          * <p>
-         * The default exclusion threshold (if this method is not called) is 2.
+         * The default exclusion threshold (if this method is not called) is <b>2</b>.
          * In other words, the resulting policy excludes nodes that are more than
          * twice slower than the fastest node.
          *
@@ -440,7 +544,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * Sets the scale to use for the resulting latency aware policy.
          * <p>
          * The {@code scale} provides control on how the weight given to older latencies
-         * decrease over time. For a given host, if a new latency \(l\) is received at
+         * decreases over time. For a given host, if a new latency \(l\) is received at
          * time \(t\), and the previously calculated average is \(prev\) calculated at
          * time \(t'\), then the newly calculated average \(avg\) for that host is calculated
          * thusly:
@@ -455,7 +559,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * weight 5% of the updated average. A bigger scale will get less weight to new
          * measurements (compared to previous ones), a smaller one will give them more weight.
          * <p>
-         * The default scale (if this method is not used) is of 10 milliseconds. If unsure, try
+         * The default scale (if this method is not used) is of <b>100 milliseconds</b>. If unsure, try
          * this default scale first and experiment only if it doesn't provide acceptable results
          * (hosts are excluded too quickly or not fast enough and tuning the exclusion threshold
          * doesn't help).
@@ -478,10 +582,10 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * The retry period defines how long a node may be penalized by the
          * policy before it is given a 2nd change. More precisely, a node is excluded
          * from query plans if both his calculated average latency is {@code exclusionThreshold}
-         * times slower than the fastest average latency (at the time the query plan is
+         * times slower than the fastest node average latency (at the time the query plan is
          * computed) <b>and</b> his calculated average latency has been updated since
          * less than {@code retryPeriod}. Since penalized nodes will likely not see their
-         * latency updated, this basically how long the policy will exclude a node.
+         * latency updated, this is basically how long the policy will exclude a node.
          *
          * @param retryPeriod the retry period to use.
          * @param unit the unit for {@code retryPeriod}.
@@ -497,21 +601,21 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         }
 
         /**
-         * Set the update rate for the resulting latency aware policy.
+         * Sets the update rate for the resulting latency aware policy.
          *
          * The update rate defines how often the minimum average latency is
          * recomputed. While the average latency score of each node is computed
          * iteratively (updated each time a new latency is collected), the
          * minimum score needs to be recomputed from scratch every time, which
-         * is slightly more costly. For that reason, that minimum is only
-         * re-calculated at fixed rate and cached between re-calculation.
+         * is slightly more costly. For this reason, the minimum is only
+         * re-calculated at the given fixed rate and cached between re-calculation.
          * <p>
-         * The default update rate if 100 milliseconds, which should be
+         * The default update rate if <b>100 milliseconds</b>, which should be
          * appropriate for most applications. In particular, note that while we
          * want to avoid to recompute the minimum for every query, that
          * computation is not particularly intensive either and there is no
          * reason to use a very slow rate (more than second is probably
-         * unecessarily slow for instance).
+         * unnecessarily slow for instance).
          *
          * @param updateRate the update rate to use.
          * @param unit the unit for {@code updateRate}.
@@ -531,17 +635,24 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * the resulting latency aware policy.
          * <p>
          * Penalizing nodes is based on an average of their recently measured
-         * average latency. That average is only meaningful if a minimum of
+         * average latency. This average is only meaningful if a minimum of
          * measurements have been collected (moreover, a newly started
          * Cassandra node will tend to perform relatively poorly on the first
          * queries due to the JVM warmup). This is what this option controls.
          * If less that {@code minMeasure} data points have been collected for
-         * a given host, the policy will never penalize that host. Note that
-         * the number of collected measurements for a given host is resetted
+         * a given host, the policy will never penalize that host. Also, the
+         * 30% first measurement will be entirely ignored (in other words, the
+         * {@code 30% * minMeasure} first measurement to a node are entirely
+         * ignored, while the {@code 70%} next ones are accounted in the latency
+         * computed but the node won't get convicted until we've had at least
+         * {@code minMeasure} measurements).
          * <p>
-         * The default for this option (if this method is not called) is 50.
+         * Note that the number of collected measurements for a given host is
+         * reseted if the node is restarted.
+         * <p>
+         * The default for this option (if this method is not called) is <b>50</b>.
          * Note that it is probably not a good idea to put this option too low
-         * if only to avoid the influence of JVM warmup on newly restarted
+         * if only to avoid the influence of JVM warm-up on newly restarted
          * nodes.
          *
          * @param minMeasure the minimum measurements to consider.

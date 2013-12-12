@@ -25,6 +25,7 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -66,6 +67,8 @@ import org.slf4j.LoggerFactory;
 public class Cluster {
 
     private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
+
+    private static final int DEFAULT_THREAD_KEEP_ALIVE = 30;
 
     final Manager manager;
 
@@ -714,6 +717,18 @@ public class Cluster {
         return destUnit.convert(System.nanoTime() - startNanos, TimeUnit.NANOSECONDS);
     }
 
+    private static ListeningExecutorService makeExecutor(int threads, String name) {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(threads,
+                                                             threads,
+                                                             DEFAULT_THREAD_KEEP_ALIVE,
+                                                             TimeUnit.SECONDS,
+                                                             new LinkedBlockingQueue<Runnable>(),
+                                                             threadFactory(name));
+
+        executor.allowCoreThreadTimeOut(true);
+        return MoreExecutors.listeningDecorator(executor);
+    }
+
     /**
      * The sessions and hosts managed by this a Cluster instance.
      * <p>
@@ -743,7 +758,11 @@ public class Cluster {
         // applied in the order received.
         final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, threadFactory("Scheduled Tasks-%d"));
 
-        final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool(threadFactory("Cassandra Java Driver worker-%d")));
+        // Executor used for tasks that shouldn't be executed on an IO thread. Used for short-lived, generally non-blocking tasks
+        final ListeningExecutorService executor;
+
+        // An executor for tasks that migth block some time, like creating new connection, but are generally not too critical.
+        final ListeningExecutorService blockingTasksExecutor;
 
         final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
@@ -751,13 +770,16 @@ public class Cluster {
         // new one join the cluster).
         // Note: we could move this down to the session level, but since prepared statement are global to a node,
         // this would yield a slightly less clear behavior.
-        final Map<MD5Digest, PreparedStatement> preparedQueries = new ConcurrentHashMap<MD5Digest, PreparedStatement>();
+        final ConcurrentMap<MD5Digest, PreparedStatement> preparedQueries = new MapMaker().weakValues().makeMap();
 
         final Set<Host.StateListener> listeners = new CopyOnWriteArraySet<Host.StateListener>();
         final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
 
         private Manager(List<InetAddress> contactPoints, Configuration configuration) {
             logger.debug("Starting new cluster with contact points " + contactPoints);
+
+            this.executor = makeExecutor(Runtime.getRuntime().availableProcessors(), "Cassandra Java Driver worker-%d");
+            this.blockingTasksExecutor = makeExecutor(2, "Cassandra Java Driver blocking tasks worker-%d");
 
             this.configuration = configuration;
             this.metadata = new Metadata(this);
@@ -768,7 +790,6 @@ public class Cluster {
 
             this.metrics = configuration.getMetricsOptions() == null ? null : new Metrics(this);
             this.configuration.register(this);
-
         }
 
         private void init() {
@@ -1095,8 +1116,10 @@ public class Cluster {
 
         // Prepare a query on all nodes
         // Note that this *assumes* the query is valid.
-        public void prepare(MD5Digest digest, PreparedStatement stmt, InetAddress toExclude) throws InterruptedException {
-            preparedQueries.put(digest, stmt);
+        public void prepare(PreparedStatement stmt, InetAddress toExclude) throws InterruptedException {
+            if (preparedQueries.putIfAbsent(stmt.id, stmt) != null)
+                logger.warn("Re-preparing already prepared query {}. Please note that preparing the same query more than once is "
+                          + "generally an anti-pattern and will likely affect performance. Consider preparing the statement only once.", stmt.getQueryString());
             for (Session s : sessions)
                 s.manager.prepare(stmt.getQueryString(), toExclude);
         }

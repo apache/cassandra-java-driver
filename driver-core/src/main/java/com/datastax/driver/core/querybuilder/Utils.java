@@ -114,7 +114,7 @@ abstract class Utils {
             sb.append("0x");
             sb.append(ByteBufferUtil.bytesToHex((ByteBuffer)value));
             return true;
-        } else if (value == QueryBuilder.BIND_MARKER) {
+        } else if (value == BindMarker.ANONYMOUS) {
             sb.append("?");
             return true;
         } else if (value instanceof FCall) {
@@ -217,7 +217,7 @@ abstract class Utils {
         return value != null
             && !(value instanceof FCall)
             && !(value instanceof CName)
-            && value != QueryBuilder.BIND_MARKER;
+            && value != BindMarker.ANONYMOUS;
     }
 
     static String toRawString(Object value) {

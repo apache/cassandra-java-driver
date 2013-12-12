@@ -21,35 +21,17 @@ import java.util.Random;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.*;
 
+import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
 import org.apache.cassandra.utils.ByteBufferUtil;
 
 public class Generators {
-
     private static ThreadLocal<Random> random = new ThreadLocal<Random>() {
         protected Random initialValue() {
             return new Random();
         }
     };
-
-    private static void createCassandraStressTables(Session session, OptionSet options) {
-        try {
-            session.execute("CREATE KEYSPACE stress WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
-        } catch (AlreadyExistsException e) { /* It's ok, ignore */ }
-
-        session.execute("USE stress");
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE Standard1 (key bigint PRIMARY KEY");
-        for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i)
-            sb.append(", C").append(i).append(" blob");
-        sb.append(")");
-
-        try {
-            session.execute(sb.toString());
-        } catch (AlreadyExistsException e) { /* It's ok, ignore */ }
-    }
 
     private static ByteBuffer makeValue(final int valueSize) {
         byte[] value = new byte[valueSize];
@@ -57,65 +39,104 @@ public class Generators {
         return ByteBuffer.wrap(value);
     }
 
-    public static final QueryGenerator.Builder CASSANDRA_INSERTER = new QueryGenerator.Builder() {
+    private static abstract class AbstractGenerator extends QueryGenerator {
+        protected int iteration;
 
-        public void createSchema(OptionSet options, Session session) {
-            createCassandraStressTables(session, options);
+        protected AbstractGenerator(int iterations) {
+            super(iterations);
         }
 
-        public QueryGenerator create(final int id,
-                                     final int iterations,
-                                     final OptionSet options,
-                                     final Session session) {
+        @Override
+        public int currentIteration() {
+            return iteration;
+        }
 
+        @Override
+        public boolean hasNext() {
+            return iterations == -1 || iteration < iterations;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static final QueryGenerator.Builder INSERTER = new QueryGenerator.Builder() {
+
+        public String name() {
+            return "insert";
+        }
+
+        public OptionParser addOptions(OptionParser parser) {
+            String msg = "Simple insertion of CQL3 rows (using prepared statements unless the --no-prepare option is used). "
+                       + "The inserted rows have a fixed set of columns but no clustering columns.";
+            parser.formatHelpWith(Stress.Help.formatFor(name(), msg));
+
+            parser.accepts("no-prepare", "Do no use prepared statement");
+            parser.accepts("columns-per-row", "Number of columns per CQL3 row").withRequiredArg().ofType(Integer.class).defaultsTo(5);
+            parser.accepts("value-size", "The size in bytes for column values").withRequiredArg().ofType(Integer.class).defaultsTo(34);
+            parser.accepts("with-compact-storage", "Use COMPACT STORAGE on the table used");
+            return parser;
+        }
+
+        public void prepare(OptionSet options, Session session) {
+
+            try {
+                session.execute("DROP KEYSPACE stress;");
+            } catch (QueryValidationException e) { /* Fine, ignore */ }
+
+            session.execute("CREATE KEYSPACE stress WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
+
+            session.execute("USE stress");
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("CREATE TABLE standard1 (key bigint PRIMARY KEY");
+            for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i)
+                sb.append(", C").append(i).append(" blob");
+            sb.append(")");
+
+            if (options.has("with-compact-storage"))
+                sb.append(" WITH COMPACT STORAGE");
+
+            session.execute(sb.toString());
+        }
+
+        public QueryGenerator create(int id, int iterations, OptionSet options, Session session) {
+
+            return options.has("no-prepare")
+                 ? createRegular(id, iterations, options)
+                 : createPrepared(id, iterations, options, session);
+        }
+
+        public QueryGenerator createRegular(int id, int iterations, OptionSet options) {
             final int valueSize = (Integer)options.valueOf("value-size");
             final int columnsPerRow = (Integer)options.valueOf("columns-per-row");
             final long prefix = (long) id << 32;
 
-            return new QueryGenerator(iterations) {
-                private int i;
-
-                public boolean hasNext() {
-                    return iterations == -1 || i < iterations;
-                }
-
+            return new AbstractGenerator(iterations) {
+                @Override
                 public QueryGenerator.Request next() {
                     StringBuilder sb = new StringBuilder();
-                    sb.append("UPDATE Standard1 SET ");
+                    sb.append("UPDATE standard1 SET ");
                     for (int i = 0; i < columnsPerRow; ++i) {
                         if (i > 0) sb.append(", ");
                         sb.append("C").append(i).append("='").append(ByteBufferUtil.bytesToHex(makeValue(valueSize))).append("'");
                     }
-                    sb.append(" WHERE key = ").append(prefix | i);
-                    ++i;
+                    sb.append(" WHERE key = ").append(prefix | iteration);
+                    ++iteration;
                     return new QueryGenerator.Request.SimpleQuery(new SimpleStatement(sb.toString()));
-                }
-
-                public void remove() {
-                    throw new UnsupportedOperationException();
                 }
             };
         }
-    };
 
-    public static final QueryGenerator.Builder CASSANDRA_PREPARED_INSERTER = new QueryGenerator.Builder() {
-
-        public void createSchema(OptionSet options, Session session) {
-            createCassandraStressTables(session, options);
-
-        }
-
-        public QueryGenerator create(final int id,
-                                     final int iterations,
-                                     final OptionSet options,
-                                     final Session session) {
-
-            final int columnsPerRow = (Integer)options.valueOf("columns-per-row");
+        public QueryGenerator createPrepared(int id, int iterations, OptionSet options, Session session) {
             final int valueSize = (Integer)options.valueOf("value-size");
+            final int columnsPerRow = (Integer)options.valueOf("columns-per-row");
             final long prefix = (long) id << 32;
 
             StringBuilder sb = new StringBuilder();
-            sb.append("UPDATE Standard1 SET ");
+            sb.append("UPDATE standard1 SET ");
             for (int i = 0; i < columnsPerRow; ++i) {
                 if (i > 0) sb.append(", ");
                 sb.append("C").append(i).append("=?");
@@ -124,24 +145,74 @@ public class Generators {
 
             final PreparedStatement stmt = session.prepare(sb.toString());
 
-            return new QueryGenerator(iterations) {
-                private int i;
-
-                public boolean hasNext() {
-                    return iterations == -1 || i < iterations;
-                }
-
+            return new AbstractGenerator(iterations) {
+                @Override
                 public QueryGenerator.Request next() {
                     BoundStatement b = stmt.bind();
-                    b.setLong("key", prefix | i);
+                    b.setLong("key", prefix | iteration);
                     for (int i = 0; i < columnsPerRow; ++i)
                         b.setBytes("c" + i, makeValue(valueSize));
-                    ++i;
+                    ++iteration;
                     return new QueryGenerator.Request.PreparedQuery(b);
                 }
+            };
+        }
+    };
 
-                public void remove() {
-                    throw new UnsupportedOperationException();
+    public static final QueryGenerator.Builder READER = new QueryGenerator.Builder() {
+
+        public String name() {
+            return "read";
+        }
+
+        public OptionParser addOptions(OptionParser parser) {
+            String msg = "Read the rows inserted with the insert generator. Use prepared statements unless the --no-prepare option is used.";
+            parser.formatHelpWith(Stress.Help.formatFor(name(), msg));
+
+            parser.accepts("no-prepare", "Do no use prepared statement");
+            return parser;
+        }
+
+        public void prepare(OptionSet options, Session session) {
+            KeyspaceMetadata ks = session.getCluster().getMetadata().getKeyspace("stress");
+            if (ks == null || ks.getTable("standard1") == null) {
+                System.err.println("There is nothing to reads, please run insert/insert_prepared first.");
+                System.exit(1);
+            }
+
+            session.execute("USE stress");
+        }
+
+        public QueryGenerator create(int id, int iterations, OptionSet options, Session session) {
+            return options.has("no-prepare")
+                 ? createRegular(id, iterations)
+                 : createPrepared(id, iterations, session);
+        }
+
+        public QueryGenerator createRegular(long id, int iterations) {
+            final long prefix = (long) id << 32;
+            return new AbstractGenerator(iterations) {
+                @Override
+                public QueryGenerator.Request next() {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("SELECT * FROM standard1 WHERE key = ").append(prefix | iteration);
+                    ++iteration;
+                    return new QueryGenerator.Request.SimpleQuery(new SimpleStatement(sb.toString()));
+                }
+            };
+        }
+
+        public QueryGenerator createPrepared(long id, int iterations, Session session) {
+            final long prefix = (long) id << 32;
+            final PreparedStatement stmt = session.prepare("SELECT * FROM standard1 WHERE key = ?");
+
+            return new AbstractGenerator(iterations) {
+                @Override
+                public QueryGenerator.Request next() {
+                    BoundStatement bs = stmt.bind();
+                    bs.setLong("key", prefix | iteration);
+                    ++iteration;
+                    return new QueryGenerator.Request.PreparedQuery(bs);
                 }
             };
         }

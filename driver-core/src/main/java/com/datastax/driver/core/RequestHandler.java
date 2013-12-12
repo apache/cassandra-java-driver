@@ -306,7 +306,9 @@ class RequestHandler implements Connection.ResponseCallback {
                                 return;
                             }
 
-                            logger.trace("Preparing required prepared query {} in keyspace {}", toPrepare.getQueryString(), toPrepare.getQueryKeyspace());
+                            logger.info("Query {} is not prepared on {}, preparing before retrying executing. "
+                                      + "Seeing this message a few times is fine, but seeing it a lot may be source of performance problems",
+                                        toPrepare.getQueryString(), connection.address);
                             String currentKeyspace = connection.keyspace();
                             String prepareKeyspace = toPrepare.getQueryKeyspace();
                             // This shouldn't happen in normal use, because a user shouldn't try to execute

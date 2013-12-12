@@ -99,7 +99,7 @@ class HostConnectionPool {
                 // We don't respect MAX_SIMULTANEOUS_CREATION here because it's  only to
                 // protect against creating connection in excess of core too quickly
                 scheduledForCreation.incrementAndGet();
-                manager.executor().submit(newConnectionTask);
+                manager.blockingExecutor().submit(newConnectionTask);
             }
             Connection c = waitForConnection(timeout, unit);
             c.setKeyspace(manager.poolsState.keyspace);
@@ -321,13 +321,13 @@ class HostConnectionPool {
         }
 
         logger.debug("Creating new connection on busy pool to {}", host);
-        manager.executor().submit(newConnectionTask);
+        manager.blockingExecutor().submit(newConnectionTask);
     }
 
     private void replace(final Connection connection) {
         connections.remove(connection);
 
-        manager.executor().submit(new Runnable() {
+        manager.blockingExecutor().submit(new Runnable() {
             @Override
             public void run() {
                 connection.close();
@@ -337,7 +337,7 @@ class HostConnectionPool {
     }
 
     private void close(final Connection connection) {
-        manager.executor().submit(new Runnable() {
+        manager.blockingExecutor().submit(new Runnable() {
             @Override
             public void run() {
                 connection.close();
@@ -396,7 +396,7 @@ class HostConnectionPool {
             // We don't respect MAX_SIMULTANEOUS_CREATION here because it's only to
             // protect against creating connection in excess of core too quickly
             scheduledForCreation.incrementAndGet();
-            manager.executor().submit(newConnectionTask);
+            manager.blockingExecutor().submit(newConnectionTask);
         }
     }
 
