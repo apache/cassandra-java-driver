@@ -18,6 +18,9 @@ package com.datastax.driver.core;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.db.marshal.*;
 
@@ -51,19 +54,38 @@ public class TableMetadata {
     private final List<ColumnMetadata> clusteringKey;
     private final Map<String, ColumnMetadata> columns;
     private final Options options;
+    private final List<Order> clusteringOrder;
+
+    /**
+     * Clustering orders.
+     * <p>
+     * This is used by {@link #getClusteringOrder} to indicate the clustering
+     * order of a table.
+     */
+    public static enum Order {
+        ASC, DESC;
+
+        static final Predicate<Order> isAscending = new Predicate<Order>() {
+            public boolean apply(Order o) {
+                return o == ASC;
+            }
+        };
+    }
 
     private TableMetadata(KeyspaceMetadata keyspace,
                           String name,
                           List<ColumnMetadata> partitionKey,
                           List<ColumnMetadata> clusteringKey,
                           LinkedHashMap<String, ColumnMetadata> columns,
-                          Options options) {
+                          Options options,
+                          List<Order> clusteringOrder) {
         this.keyspace = keyspace;
         this.name = name;
         this.partitionKey = partitionKey;
         this.clusteringKey = clusteringKey;
         this.columns = columns;
         this.options = options;
+        this.clusteringOrder = clusteringOrder;
     }
 
     static String fixTimestampType(String type) {
@@ -74,11 +96,6 @@ public class TableMetadata {
     static TableMetadata build(KeyspaceMetadata ksm, Row row, boolean hasColumnMetadata) {
         try {
             String name = row.getString(CF_NAME);
-
-            List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>();
-            List<ColumnMetadata> clusteringKey = new ArrayList<ColumnMetadata>();
-            // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
-            LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
 
             // First, figure out which kind of table we are
             boolean isCompact = false;
@@ -113,13 +130,20 @@ public class TableMetadata {
                 }
             }
 
-            TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringKey, columns, new Options(row, isCompact));
-
             // Partition key
             AbstractType<?> kt = TypeParser.parse(fixTimestampType(row.getString(KEY_VALIDATOR)));
             List<AbstractType<?>> keyTypes = kt instanceof CompositeType
                                            ? ((CompositeType)kt).types
                                            : Collections.<AbstractType<?>>singletonList(kt);
+
+
+            List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>(keyTypes.size());
+            List<ColumnMetadata> clusteringKey = new ArrayList<ColumnMetadata>(clusteringSize);
+            List<Order> clusteringOrder = new ArrayList<Order>(clusteringSize);
+            // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
+            LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
+
+            TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringKey, columns, new Options(row, isCompact), clusteringOrder);
 
             // check if key_aliases is null, and set to [] due to CASSANDRA-5101
             List<String> keyAliases = row.getString(KEY_ALIASES) == null ? Collections.<String>emptyList() : fromJsonList(row.getString(KEY_ALIASES));
@@ -136,10 +160,13 @@ public class TableMetadata {
             // Clustering key
             for (int i = 0; i < clusteringSize; i++) {
                 String cn = columnAliases.size() > i ? columnAliases.get(i) : DEFAULT_COLUMN_ALIAS + (i + 1);
-                DataType dt = Codec.rawTypeToDataType(columnTypes.get(i));
+                AbstractType<?> rawType = columnTypes.get(i);
+
+                DataType dt = Codec.rawTypeToDataType(rawType);
                 ColumnMetadata colMeta = new ColumnMetadata(tm, cn, dt, null);
                 columns.put(cn, colMeta);
                 clusteringKey.add(colMeta);
+                clusteringOrder.add(rawType instanceof ReversedType ? Order.DESC : Order.ASC);
             }
 
             // Value alias (if present)
@@ -238,6 +265,22 @@ public class TableMetadata {
      */
     public List<ColumnMetadata> getClusteringKey() {
         return Collections.unmodifiableList(clusteringKey);
+    }
+
+    /**
+     * Returns the clustering order for this table.
+     * <p>
+     * The returned contains the cluster order of each clustering key. The
+     * {@code i}th element of the result correspond to the order (ascending or
+     * descending) of the {@code i}th clustering key (see
+     * {@link #getClusteringKey}). Note that a table defined without any
+     * particular clustering order is equivalent to one for which all the
+     * clustering key are in ascending order.
+     *
+     * @return a list with the clustering order for each clustering key.
+     */
+    public List<Order> getClusteringOrder() {
+        return clusteringOrder;
     }
 
     /**
@@ -355,12 +398,13 @@ public class TableMetadata {
         // end PK
 
         // Options
-        if (options.isCompactStorage) {
-            sb.append(") WITH COMPACT STORAGE");
-            and(sb, formatted).append("read_repair_chance = ").append(options.readRepair);
-        } else {
-            sb.append(") WITH read_repair_chance = ").append(options.readRepair);
-        }
+        sb.append(") WITH ");
+
+        if (options.isCompactStorage)
+            and(sb.append("COMPACT STORAGE"), formatted);
+        if (!Iterables.all(clusteringOrder, Order.isAscending))
+            and(appendClusteringOrder(sb), formatted);
+        sb.append("read_repair_chance = ").append(options.readRepair);
         and(sb, formatted).append("dclocal_read_repair_chance = ").append(options.localReadRepair);
         and(sb, formatted).append("replicate_on_write = ").append(options.replicateOnWrite);
         and(sb, formatted).append("gc_grace_seconds = ").append(options.gcGrace);
@@ -372,6 +416,16 @@ public class TableMetadata {
         and(sb, formatted).append("compression = ").append(formatOptionMap(options.compression));
         sb.append(";");
         return sb.toString();
+    }
+
+    private StringBuilder appendClusteringOrder(StringBuilder sb)
+    {
+        sb.append("CLUSTERING ORDER BY (");
+        for (int i = 0; i < clusteringKey.size(); i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(clusteringKey.get(i).getName()).append(" ").append(clusteringOrder.get(i));
+        }
+        return sb.append(")");
     }
 
     private static String formatOptionMap(Map<String, String> m) {
@@ -412,6 +466,7 @@ public class TableMetadata {
             sb.append('\n');
         return sb;
     }
+
 
     public static class Options {
 

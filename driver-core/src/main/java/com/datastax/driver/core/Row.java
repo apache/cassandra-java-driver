@@ -567,7 +567,7 @@ public class Row {
      * @return the value of the {@code i}th column in this row as a list of
      * {@code elementsClass} objects. If the value is NULL, an empty list is
      * returned (note that Cassandra makes no difference between an empty list
-     * and column of type list that is not set).
+     * and column of type list that is not set). The returned list is immutable.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not a list or if its
@@ -588,7 +588,7 @@ public class Row {
             return Collections.<T>emptyList();
 
         // TODO: we could avoid the getCodec call if we kept a reference to the original message.
-        return Codec.<List<T>>getCodec(type).compose(value);
+        return Collections.unmodifiableList(Codec.<List<T>>getCodec(type).compose(value));
     }
 
     /**
@@ -599,7 +599,7 @@ public class Row {
      * @return the value of the {@code i}th column in this row as a list of
      * {@code elementsClass} objects. If the value is NULL, an empty list is
      * returned (note that Cassandra makes no difference between an empty list
-     * and column of type list that is not set).
+     * and column of type list that is not set). The returned list is immutable.
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
@@ -618,7 +618,7 @@ public class Row {
      * @return the value of the {@code i}th column in this row as a set of
      * {@code elementsClass} objects. If the value is NULL, an empty set is
      * returned (note that Cassandra makes no difference between an empty set
-     * and column of type set that is not set).
+     * and column of type set that is not set). The returned set is immutable.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not a set or if its
@@ -638,7 +638,7 @@ public class Row {
         if (value == null)
             return Collections.<T>emptySet();
 
-        return Codec.<Set<T>>getCodec(type).compose(value);
+        return Collections.unmodifiableSet(Codec.<Set<T>>getCodec(type).compose(value));
     }
 
     /**
@@ -649,7 +649,7 @@ public class Row {
      * @return the value of the {@code i}th column in this row as a set of
      * {@code elementsClass} objects. If the value is NULL, an empty set is
      * returned (note that Cassandra makes no difference between an empty set
-     * and column of type set that is not set).
+     * and column of type set that is not set). The returned set is immutable.
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
@@ -669,7 +669,8 @@ public class Row {
      * @return the value of the {@code i}th column in this row as a map of
      * {@code keysClass} to {@code valuesClass} objects. If the value is NULL,
      * an empty map is returned (note that Cassandra makes no difference
-     * between an empty map and column of type map that is not set).
+     * between an empty map and column of type map that is not set). The
+     * returned map is immutable.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not a map, if its
@@ -691,7 +692,7 @@ public class Row {
         if (value == null)
             return Collections.<K, V>emptyMap();
 
-        return Codec.<Map<K, V>>getCodec(type).compose(value);
+        return Collections.unmodifiableMap(Codec.<Map<K, V>>getCodec(type).compose(value));
     }
 
     /**
@@ -703,7 +704,8 @@ public class Row {
      * @return the value of the {@code i}th column in this row as a map of
      * {@code keysClass} to {@code valuesClass} objects. If the value is NULL,
      * an empty map is returned (note that Cassandra makes no difference
-     * between an empty map and column of type map that is not set).
+     * between an empty map and column of type map that is not set). The
+     * returned map is immutable.
      *
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.

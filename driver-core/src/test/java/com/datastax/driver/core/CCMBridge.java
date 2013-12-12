@@ -35,7 +35,7 @@ public class CCMBridge {
 
     public static final String IP_PREFIX;
 
-    private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d(-\\w+)?";
+    private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d+(-\\w+)?";
 
     static final File CASSANDRA_DIR;
     static final String CASSANDRA_VERSION;

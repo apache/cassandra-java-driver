@@ -22,8 +22,6 @@ import java.util.concurrent.Executors;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.yammer.metrics.core.Meter;
-import com.yammer.metrics.core.TimerContext;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
@@ -38,11 +36,11 @@ public class AsynchronousConsumer implements Consumer {
     private final CountDownLatch shutdownLatch = new CountDownLatch(1);
 
     private final Session session;
-    private final Iterator<QueryGenerator.Request> requests;
+    private final QueryGenerator requests;
     private final Reporter reporter;
 
     public AsynchronousConsumer(Session session,
-                                Iterator<QueryGenerator.Request> requests,
+                                QueryGenerator requests,
                                 Reporter reporter) {
         this.session = session;
         this.requests = requests;
@@ -76,13 +74,13 @@ public class AsynchronousConsumer implements Consumer {
 
     protected void handle(QueryGenerator.Request request) {
 
-        final TimerContext timerContext = reporter.latencies.time();
+        final Reporter.Context ctx = reporter.newRequest();
+
         ResultSetFuture resultSetFuture = request.executeAsync(session);
         Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
             @Override
             public void onSuccess(final ResultSet result) {
-                timerContext.stop();
-                reporter.requests.mark();
+                ctx.done();
                 request();
             }
 
@@ -90,8 +88,7 @@ public class AsynchronousConsumer implements Consumer {
             public void onFailure(final Throwable t) {
                 // Could do better I suppose
                 System.err.println("Error during request: " + t);
-                timerContext.stop();
-                reporter.requests.mark();
+                ctx.done();
                 request();
             }
         }, executorService);

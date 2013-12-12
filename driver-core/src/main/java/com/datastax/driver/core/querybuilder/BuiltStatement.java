@@ -81,7 +81,7 @@ abstract class BuiltStatement extends Statement {
 
     // TODO: Correctly document the InvalidTypeException
     void maybeAddRoutingKey(String name, Object value) {
-        if (routingKey == null || name == null || value == null || value == QueryBuilder.BIND_MARKER)
+        if (routingKey == null || name == null || value == null || value == BindMarker.ANONYMOUS)
             return;
 
         for (int i = 0; i < partitionKey.size(); i++) {
