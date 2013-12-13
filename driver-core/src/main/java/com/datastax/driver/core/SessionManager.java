@@ -141,7 +141,7 @@ class SessionManager implements Session {
                     switch (rm.kind) {
                         case PREPARED:
                             Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
-                            PreparedStatement stmt = PreparedStatement.fromMessage(pmsg, cluster.getMetadata(), query, poolsState.keyspace);
+                            DefaultPreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), query, poolsState.keyspace);
                             try {
                                 cluster.manager.prepare(stmt, future.getAddress());
                             } catch (InterruptedException e) {
@@ -315,9 +315,9 @@ class SessionManager implements Session {
             return new Requests.Query(qString, options);
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
-            boolean skipMetadata = bs.statement.resultSetMetadata != null;
+            boolean skipMetadata = bs.statement.getPreparedId().resultSetMetadata != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.values), skipMetadata, fetchSize, pagingState, scl);
-            return new Requests.Execute(bs.statement.id, options);
+            return new Requests.Execute(bs.statement.getPreparedId().id, options);
         } else {
             assert statement instanceof BatchStatement : statement;
             assert pagingState == null;

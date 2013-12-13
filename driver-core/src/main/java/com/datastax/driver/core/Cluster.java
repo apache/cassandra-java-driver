@@ -1213,7 +1213,7 @@ public class Cluster {
         // Prepare a query on all nodes
         // Note that this *assumes* the query is valid.
         public void prepare(PreparedStatement stmt, InetAddress toExclude) throws InterruptedException {
-            if (preparedQueries.putIfAbsent(stmt.id, stmt) != null)
+            if (preparedQueries.putIfAbsent(stmt.getPreparedId().id, stmt) != null)
                 logger.warn("Re-preparing already prepared query {}. Please note that preparing the same query more than once is "
                           + "generally an anti-pattern and will likely affect performance. Consider preparing the statement only once.", stmt.getQueryString());
             for (SessionManager s : sessions)

@@ -81,7 +81,7 @@ public class BatchStatement extends Statement {
                 // We handle BatchStatement in add() so ...
                 assert statement instanceof BoundStatement;
                 BoundStatement st = (BoundStatement)statement;
-                idAndVals.ids.add(st.statement.id);
+                idAndVals.ids.add(st.statement.getPreparedId().id);
                 idAndVals.values.add(Arrays.asList(st.values));
             }
         }

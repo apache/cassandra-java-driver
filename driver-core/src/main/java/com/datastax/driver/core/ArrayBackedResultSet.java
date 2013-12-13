@@ -98,7 +98,7 @@ class ArrayBackedResultSet implements ResultSet {
                 ColumnDefinitions columnDefs;
                 if (r.metadata.columns == null) {
                     assert statement instanceof BoundStatement;
-                    columnDefs = ((BoundStatement)statement).statement.resultSetMetadata;
+                    columnDefs = ((BoundStatement)statement).statement.getPreparedId().resultSetMetadata;
                     assert columnDefs != null;
                 } else {
                     columnDefs = r.metadata.columns;

@@ -51,7 +51,6 @@ public class BoundStatement extends Statement {
      * @deprecated this constructor is now deprecated an will removed (made private) in
      * version 2 of the driver. Instead, you are encouraged to use {@link PreparedStatement#bind()}.
      */
-    @Deprecated
     public BoundStatement(PreparedStatement statement) {
         this.statement = statement;
         this.values = new ByteBuffer[statement.getVariables().size()];
@@ -214,16 +213,17 @@ public class BoundStatement extends Statement {
      */
     @Override
     public ByteBuffer getRoutingKey() {
-        if (statement.routingKey != null)
-            return statement.routingKey;
+        if (statement.getRoutingKey() != null)
+            return statement.getRoutingKey();
 
-        if (statement.routingKeyIndexes != null) {
-            if (statement.routingKeyIndexes.length == 1) {
-                return values[statement.routingKeyIndexes[0]];
+        int[] rkIndexes = statement.getPreparedId().routingKeyIndexes;
+        if (rkIndexes != null) {
+            if (rkIndexes.length == 1) {
+                return values[rkIndexes[0]];
             } else {
-                ByteBuffer[] components = new ByteBuffer[statement.routingKeyIndexes.length];
+                ByteBuffer[] components = new ByteBuffer[rkIndexes.length];
                 for (int i = 0; i < components.length; ++i) {
-                    ByteBuffer value = values[statement.routingKeyIndexes[i]];
+                    ByteBuffer value = values[rkIndexes[i]];
                     if (value == null)
                         return null;
                     components[i] = value;
@@ -249,7 +249,7 @@ public class BoundStatement extends Statement {
      */
     @Override
     public String getKeyspace() {
-        return statement.metadata.size() == 0 ? null : statement.metadata.getKeyspace(0);
+        return statement.getPreparedId().metadata.size() == 0 ? null : statement.getPreparedId().metadata.getKeyspace(0);
     }
 
     /**
@@ -982,7 +982,7 @@ public class BoundStatement extends Statement {
     }
 
     private ColumnDefinitions metadata() {
-        return statement.metadata;
+        return statement.getVariables();
     }
 
     private BoundStatement setValue(int i, ByteBuffer value) {
