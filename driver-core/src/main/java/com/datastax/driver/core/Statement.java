@@ -25,6 +25,11 @@ package com.datastax.driver.core;
 public abstract class Statement extends Query {
 
     /**
+     * Creates a new Statement.
+     */
+    protected Statement() {}
+
+    /**
      * Returns the query string for this statement.
      *
      * @return a valid CQL query string.
