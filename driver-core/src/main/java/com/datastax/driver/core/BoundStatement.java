@@ -793,6 +793,8 @@ public class BoundStatement extends Statement {
 
     /**
      * Sets the {@code i}th value to the provided list.
+     * <p>
+     * Please note that {@code null} values are not supported inside collection by CQL.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -802,6 +804,8 @@ public class BoundStatement extends Statement {
      * @throws InvalidTypeException if column {@code i} is not a list type or
      * if the elements of {@code v} are not of the type of the elements of
      * column {@code i}.
+     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
+     * by CQL.
      */
     public <T> BoundStatement setList(int i, List<T> v) {
         DataType type = metadata().getType(i);
@@ -827,6 +831,8 @@ public class BoundStatement extends Statement {
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided list.
+     * <p>
+     * Please note that {@code null} values are not supported inside collection by CQL.
      *
      * @param name the name of the variable to set; if multiple variables
      * {@code name} are prepared, all of them are set.
@@ -838,6 +844,8 @@ public class BoundStatement extends Statement {
      * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
      * not a list type or if the elements of {@code v} are not of the type of
      * the elements of column {@code name}.
+     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
+     * by CQL.
      */
     public <T> BoundStatement setList(String name, List<T> v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -848,6 +856,8 @@ public class BoundStatement extends Statement {
 
     /**
      * Sets the {@code i}th value to the provided map.
+     * <p>
+     * Please note that {@code null} values are not supported inside collection by CQL.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -857,6 +867,8 @@ public class BoundStatement extends Statement {
      * @throws InvalidTypeException if column {@code i} is not a map type or
      * if the elements (keys or values) of {@code v} are not of the type of the
      * elements of column {@code i}.
+     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
+     * by CQL.
      */
     public <K, V> BoundStatement setMap(int i, Map<K, V> v) {
         DataType type = metadata().getType(i);
@@ -884,6 +896,8 @@ public class BoundStatement extends Statement {
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided map.
+     * <p>
+     * Please note that {@code null} values are not supported inside collection by CQL.
      *
      * @param name the name of the variable to set; if multiple variables
      * {@code name} are prepared, all of them are set.
@@ -895,6 +909,8 @@ public class BoundStatement extends Statement {
      * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
      * not a map type or if the elements (keys or values) of {@code v} are not of
      * the type of the elements of column {@code name}.
+     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
+     * by CQL.
      */
     public <K, V> BoundStatement setMap(String name, Map<K, V> v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -905,6 +921,8 @@ public class BoundStatement extends Statement {
 
     /**
      * Sets the {@code i}th value to the provided set.
+     * <p>
+     * Please note that {@code null} values are not supported inside collection by CQL.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
@@ -914,6 +932,8 @@ public class BoundStatement extends Statement {
      * @throws InvalidTypeException if column {@code i} is not a set type or
      * if the elements of {@code v} are not of the type of the elements of
      * column {@code i}.
+     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
+     * by CQL.
      */
     public <T> BoundStatement setSet(int i, Set<T> v) {
         DataType type = metadata().getType(i);
@@ -938,6 +958,8 @@ public class BoundStatement extends Statement {
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided set.
+     * <p>
+     * Please note that {@code null} values are not supported inside collection by CQL.
      *
      * @param name the name of the variable to set; if multiple variables
      * {@code name} are prepared, all of them are set.
@@ -949,6 +971,8 @@ public class BoundStatement extends Statement {
      * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
      * not a map type or if the elements of {@code v} are not of the type of
      * the elements of column {@code name}.
+     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
+     * by CQL.
      */
     public <T> BoundStatement setSet(String name, Set<T> v) {
         int[] indexes = metadata().getAllIdx(name);

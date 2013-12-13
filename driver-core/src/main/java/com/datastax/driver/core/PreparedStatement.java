@@ -162,8 +162,7 @@ public class PreparedStatement {
      *
      * @return the newly created {@code BoundStatement}.
      */
-    public BoundStatement bind()
-    {
+    public BoundStatement bind() {
         return new BoundStatement(this);
     }
 
