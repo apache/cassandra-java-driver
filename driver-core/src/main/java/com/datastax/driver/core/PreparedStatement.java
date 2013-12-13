@@ -57,7 +57,7 @@ public interface PreparedStatement {
      * to values by another mean because the resulting {@code BoundStatement}
      * being executable.
      * <p>
-     * This method is a convenience for {@code bind().bind(...)}.
+     * This method is a convenience for {@code new BoundStatement(this).bind(...)}.
      *
      * @param values the values to bind to the variables of the newly created
      * BoundStatement.
