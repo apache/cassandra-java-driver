@@ -15,26 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.Uninterruptibles;
-
-import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.policies.*;
-
-import org.apache.cassandra.transport.Message;
-import org.apache.cassandra.transport.messages.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.QueryExecutionException;
+import com.datastax.driver.core.exceptions.QueryValidationException;
 
 /**
  * A session holds connections to a Cassandra cluster, allowing it to be queried.

@@ -16,14 +16,15 @@
 package com.datastax.driver.core.querybuilder;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
-
 import com.datastax.driver.core.*;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeCluster {
 

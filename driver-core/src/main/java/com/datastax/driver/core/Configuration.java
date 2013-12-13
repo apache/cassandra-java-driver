@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.policies.*;
+import com.datastax.driver.core.policies.Policies;
 
 /**
  * The configuration of the cluster.

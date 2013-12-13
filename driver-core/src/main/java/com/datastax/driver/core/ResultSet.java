@@ -15,13 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-
-import org.apache.cassandra.transport.messages.ResultMessage;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * The result of a query.

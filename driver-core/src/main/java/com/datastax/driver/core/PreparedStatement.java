@@ -18,8 +18,8 @@ package com.datastax.driver.core;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.apache.cassandra.utils.MD5Digest;
 import org.apache.cassandra.transport.messages.ResultMessage;
+import org.apache.cassandra.utils.MD5Digest;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.policies.RetryPolicy;

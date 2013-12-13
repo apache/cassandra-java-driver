@@ -21,8 +21,6 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.apache.cassandra.db.marshal.*;
-
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**

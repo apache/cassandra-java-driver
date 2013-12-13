@@ -18,7 +18,9 @@ package com.datastax.driver.core.policies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Query;
+import com.datastax.driver.core.WriteType;
 
 /**
  * A retry policy that wraps another policy, logging the decision made by its sub-policy.

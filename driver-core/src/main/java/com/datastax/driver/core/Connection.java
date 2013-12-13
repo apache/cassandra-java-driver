@@ -15,27 +15,23 @@
  */
 package com.datastax.driver.core;
 
+import javax.net.ssl.SSLEngine;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
-import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.DriverInternalError;
-
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.cassandra.service.ClientState;
-import org.apache.cassandra.transport.*;
-import org.apache.cassandra.transport.messages.*;
-
+import org.apache.cassandra.transport.Frame;
+import org.apache.cassandra.transport.Message;
+import org.apache.cassandra.transport.messages.CredentialsMessage;
+import org.apache.cassandra.transport.messages.ErrorMessage;
+import org.apache.cassandra.transport.messages.QueryMessage;
+import org.apache.cassandra.transport.messages.StartupMessage;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -46,9 +42,11 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timeout;
 import org.jboss.netty.util.TimerTask;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
 
 // For LoggingHandler
 //import org.jboss.netty.handler.logging.LoggingHandler;

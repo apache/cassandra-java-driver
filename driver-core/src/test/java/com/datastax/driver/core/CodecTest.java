@@ -15,14 +15,16 @@
  */
 package com.datastax.driver.core;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import static com.datastax.driver.core.DataType.*;
 import org.apache.cassandra.db.marshal.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.testng.collections.Maps;
-
-import java.util.*;
-
-import static com.datastax.driver.core.DataType.*;
 
 public class CodecTest {
 

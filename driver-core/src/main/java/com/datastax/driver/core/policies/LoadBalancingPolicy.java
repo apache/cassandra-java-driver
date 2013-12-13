@@ -18,7 +18,10 @@ package com.datastax.driver.core.policies;
 import java.util.Collection;
 import java.util.Iterator;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.Query;
 
 /**
  * The policy that decides which Cassandra hosts to contact for each new query.
