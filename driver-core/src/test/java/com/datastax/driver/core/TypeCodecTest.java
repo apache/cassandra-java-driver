@@ -15,13 +15,9 @@
  */
 package com.datastax.driver.core;
 
+import static com.datastax.driver.core.DataType.text;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.testng.collections.Maps;
-
-import java.util.*;
-
-import static com.datastax.driver.core.DataType.*;
 
 public class TypeCodecTest {
 

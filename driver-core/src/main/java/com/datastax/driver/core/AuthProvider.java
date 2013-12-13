@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.AuthenticationException;
-
 import java.net.InetAddress;
+
+import com.datastax.driver.core.exceptions.AuthenticationException;
 
 /**
  * Provides {@link Authenticator} instances for use when connecting

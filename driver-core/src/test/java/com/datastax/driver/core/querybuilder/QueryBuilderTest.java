@@ -18,15 +18,15 @@ package com.datastax.driver.core.querybuilder;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.util.*;
+import java.util.Arrays;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
-
 import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.Statement;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class QueryBuilderTest {
 

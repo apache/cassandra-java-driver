@@ -18,11 +18,7 @@ package com.datastax.driver.core;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
-import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.*;
 
 /**
  * Metrics exposed by the driver.

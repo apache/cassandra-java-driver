@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.DataType;

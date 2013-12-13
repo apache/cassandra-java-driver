@@ -15,21 +15,17 @@
  */
 package com.datastax.driver.core;
 
+import javax.net.ssl.SSLEngine;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.net.ssl.SSLEngine;
 
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
-import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.DriverInternalError;
-
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -39,9 +35,11 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timeout;
 import org.jboss.netty.util.TimerTask;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
 
 // For LoggingHandler
 //import org.jboss.netty.handler.logging.LoggingHandler;
@@ -509,7 +507,7 @@ class Connection {
                 handler.cancelTimeout();
                 handler.callback.onSet(Connection.this, response, System.nanoTime() - handler.startTime);
 
-                // If we happen to be shutdown and we're the last outstand request, we need to signal the shutdown future
+                // If we happen to be shutdown and we're the last outstanding request, we need to signal the shutdown future
                 // (note: this is racy as the signaling can be called more than once, but that's not a problem)
                 if (isClosed() && pending.isEmpty())
                     shutdownFuture.get().force();

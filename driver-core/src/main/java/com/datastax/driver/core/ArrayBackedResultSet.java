@@ -23,11 +23,10 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
-
-import com.datastax.driver.core.exceptions.DriverInternalError;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.exceptions.DriverInternalError;
 
 /**
  * Default implementation of a result set, backed by an ArrayDeque of ArrayList.

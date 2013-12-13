@@ -15,16 +15,18 @@
  */
 package com.datastax.driver.core;
 
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.*;
 
 import com.google.common.util.concurrent.Uninterruptibles;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.policies.ReconnectionPolicy;
 
 abstract class AbstractReconnectionHandler implements Runnable {
 

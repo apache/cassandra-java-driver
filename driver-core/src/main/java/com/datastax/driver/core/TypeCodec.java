@@ -32,7 +32,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
-
 import com.datastax.driver.core.utils.Bytes;
 
 abstract class TypeCodec<T> {

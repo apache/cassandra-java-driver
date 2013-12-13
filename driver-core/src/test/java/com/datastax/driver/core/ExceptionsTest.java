@@ -14,12 +14,10 @@
  *   limitations under the License.
  */
 package com.datastax.driver.core;
-import com.datastax.driver.core.exceptions.*;
 
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.core.TestUtils.waitForDown;
-import static org.testng.Assert.*;
+import com.datastax.driver.core.exceptions.*;
 
 /**
  * Tests Exception classes with seperate clusters per test, when applicable

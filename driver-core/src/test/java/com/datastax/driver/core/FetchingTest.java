@@ -15,11 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
-import org.testng.annotations.Test;
+import java.util.Collection;
+import java.util.Collections;
 
 import static org.testng.Assert.*;
+import org.testng.annotations.Test;
 
 /**
  * Test ResultSet paging correct behavior.

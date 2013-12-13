@@ -19,11 +19,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.annotations.Test;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
+import org.testng.annotations.Test;
 
 public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest {
 

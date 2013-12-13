@@ -17,15 +17,11 @@ package com.datastax.driver.core;
 
 import java.io.IOException;
 
-import org.jboss.netty.buffer.ChannelBuffers;
-
-import org.xerial.snappy.Snappy;
-
-import net.jpountz.lz4.LZ4Exception;
 import net.jpountz.lz4.LZ4Factory;
-
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xerial.snappy.Snappy;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 

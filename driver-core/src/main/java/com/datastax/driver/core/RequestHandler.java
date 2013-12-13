@@ -15,24 +15,19 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
+import java.nio.ByteBuffer;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import com.datastax.driver.core.policies.RetryPolicy;
-import com.datastax.driver.core.exceptions.*;
-
+import com.codahale.metrics.*;
 import com.codahale.metrics.Timer;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.policies.RetryPolicy;
 
 /**
  * Handles a request to cassandra, dealing with host failover and retries on

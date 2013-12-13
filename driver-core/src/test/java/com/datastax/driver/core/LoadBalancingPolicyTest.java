@@ -15,14 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
-
-import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnavailableException;
-import static com.datastax.driver.core.TestUtils.*;
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.TokenAwarePolicy;
 
 public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 

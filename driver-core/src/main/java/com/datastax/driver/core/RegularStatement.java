@@ -28,6 +28,11 @@ import java.nio.ByteBuffer;
 public abstract class RegularStatement extends Statement {
 
     /**
+     * Creates a new RegularStatement.
+     */
+    protected RegularStatement() {}
+
+    /**
      * Returns the query string for this statement.
      *
      * @return a valid CQL query string.

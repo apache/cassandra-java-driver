@@ -15,8 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.jboss.netty.buffer.ChannelBuffer;

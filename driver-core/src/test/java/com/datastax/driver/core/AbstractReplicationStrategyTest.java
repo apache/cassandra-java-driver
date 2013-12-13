@@ -15,10 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -28,6 +24,7 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import static org.testng.Assert.*;
 
 /**
  * Base class for replication strategy tests. Currently only supports testing

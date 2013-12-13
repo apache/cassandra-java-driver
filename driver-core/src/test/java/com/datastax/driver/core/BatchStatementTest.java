@@ -15,11 +15,12 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.*;
 
 public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 

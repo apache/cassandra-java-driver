@@ -19,10 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.annotations.Test;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.testng.annotations.Test;
 
 public class SimpleStrategyTest extends AbstractReplicationStrategyTest {
 

@@ -18,8 +18,8 @@ package com.datastax.driver.core;
 import java.util.List;
 
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 
 /**
  * A future on the shutdown of a Cluster or Session instance.

@@ -15,19 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
 
-import com.google.common.util.concurrent.Futures;
+import java.util.Iterator;
+import java.util.List;
+
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
-
-import com.datastax.driver.core.exceptions.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The result of a query.

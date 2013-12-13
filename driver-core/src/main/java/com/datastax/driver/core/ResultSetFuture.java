@@ -15,16 +15,14 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import com.datastax.driver.core.exceptions.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.QueryExecutionException;
+import com.datastax.driver.core.exceptions.QueryValidationException;
 
 /**
  * A future on a {@link ResultSet}.

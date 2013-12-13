@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
