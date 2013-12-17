@@ -256,6 +256,7 @@ class Requests {
         public static final Message.Coder<Batch> coder = new Message.Coder<Batch>() {
             public void encode(Batch msg, ChannelBuffer dest) {
                 int queries = msg.queryOrIdList.size();
+                assert queries <= 0xFFFF;
 
                 dest.writeByte(fromType(msg.type));
                 dest.writeShort(queries);
