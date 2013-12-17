@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -167,9 +168,12 @@ public class Session {
      * contacted successfully to prepare this query.
      */
     public PreparedStatement prepare(String query) {
-        Connection.Future future = new Connection.Future(new PrepareMessage(query));
-        manager.execute(future, Query.DEFAULT);
-        return toPreparedStatement(query, future);
+        try {
+            return Uninterruptibles.getUninterruptibly(prepareAsync(query));
+        } catch (ExecutionException e) {
+            ResultSetFuture.extractCauseFromExecutionException(e);
+            throw new AssertionError();
+        }
     }
 
     /**
@@ -206,6 +210,52 @@ public class Session {
     }
 
     /**
+      * Prepares the provided query string asynchronously.
+      *
+      * @param query the CQL query string to prepare
+      * @return a future on the prepared statement corresponding to {@code query}.
+      *
+      * @throws NoHostAvailableException if no host in the cluster can be
+      * contacted successfully to prepare this query.
+      */
+     public ListenableFuture<PreparedStatement> prepareAsync(String query) {
+         Connection.Future future = new Connection.Future(new PrepareMessage(query));
+         manager.execute(future, Statement.DEFAULT);
+         return toPreparedStatement(query, future);
+     }
+     
+     /**
+      * Prepares the provided query asynchronously.
+      * <p>
+      * This method is essentially a shortcut for {@code prepareAsync(statement.getQueryString())},
+      * but note that the resulting {@code PreparedStamenent} will inherit the query properties
+      * set on {@code statement}.
+      * 
+      * @param statement the statement to prepare
+      * @return a future on the prepared statement corresponding to {@code statement}.
+      *
+      * @see Session#prepare(Statement)
+      */
+     public ListenableFuture<PreparedStatement> prepareAsync(final Statement statement) {
+         ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.getQueryString());
+
+         return Futures.transform(prepared, new Function<PreparedStatement, PreparedStatement>() {
+             @Override
+             public PreparedStatement apply(PreparedStatement prepared) {
+                 ByteBuffer routingKey = statement.getRoutingKey();
+                 if (routingKey != null)
+                     prepared.setRoutingKey(routingKey);
+                 prepared.setConsistencyLevel(statement.getConsistencyLevel());
+                 if (statement.isTracing())
+                     prepared.enableTracing();
+                 prepared.setRetryPolicy(statement.getRetryPolicy());
+
+                 return prepared;
+             }
+         });
+     }
+
+     /**
      * Shuts down this session instance.
      * <p>
      * This closes all connections used by this sessions. Note that if you want
@@ -254,40 +304,37 @@ public class Session {
         return manager.cluster;
     }
 
-    private PreparedStatement toPreparedStatement(String query, Connection.Future future) {
-
-        try {
-            Message.Response response = Uninterruptibles.getUninterruptibly(future);
-            switch (response.type) {
+    private ListenableFuture<PreparedStatement> toPreparedStatement(final String query, final Connection.Future future) {
+        return Futures.transform(future, new Function<Message.Response, PreparedStatement>() {
+            @Override
+            public PreparedStatement apply(Message.Response response) {
+                switch (response.type) {
                 case RESULT:
                     ResultMessage rm = (ResultMessage)response;
                     switch (rm.kind) {
-                        case PREPARED:
-                            ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
-                            PreparedStatement stmt = PreparedStatement.fromMessage(pmsg, manager.cluster.getMetadata(), query, manager.poolsState.keyspace);
-                            try {
-                                manager.cluster.manager.prepare(stmt, future.getAddress());
-                            } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
-                                // This method doesn't propagate interruption, at least not for now. However, if we've
-                                // interrupted preparing queries on other node it's not a problem as we'll re-prepare
-                                // later if need be. So just ignore.
-                            }
-                            return stmt;
-                        default:
-                            throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
+                    case PREPARED:
+                        ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
+                        PreparedStatement stmt = PreparedStatement.fromMessage(pmsg, manager.cluster.getMetadata(), query, manager.poolsState.keyspace);
+                        try {
+                            manager.cluster.manager.prepare(stmt, future.getAddress());
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            // This method doesn't propagate interruption, at least not for now. However, if we've
+                            // interrupted preparing queries on other node it's not a problem as we'll re-prepare
+                            // later if need be. So just ignore.
+                        }
+                        return stmt;
+                    default:
+                        throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
                     }
                 case ERROR:
                     ResultSetFuture.extractCause(ResultSetFuture.convertException(((ErrorMessage)response).error));
-                    break;
+                    throw new AssertionError();
                 default:
                     throw new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type));
+                }
             }
-            throw new AssertionError();
-        } catch (ExecutionException e) {
-            ResultSetFuture.extractCauseFromExecutionException(e);
-            throw new AssertionError();
-        }
+        });
     }
 
     static class Manager {
