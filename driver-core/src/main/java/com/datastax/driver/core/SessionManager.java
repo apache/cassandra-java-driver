@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.base.Function;
 import com.google.common.util.concurrent.*;
 import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.messages.*;
@@ -91,25 +92,47 @@ class SessionManager implements Session {
     }
 
     public PreparedStatement prepare(String query) {
+        try {
+            return Uninterruptibles.getUninterruptibly(prepareAsync(query));
+        } catch (ExecutionException e) {
+            DefaultResultSetFuture.extractCauseFromExecutionException(e);
+            throw new AssertionError();
+        }
+    }
+
+    public PreparedStatement prepare(Statement statement) {
+        try {
+            return Uninterruptibles.getUninterruptibly(prepareAsync(statement));
+        } catch (ExecutionException e) {
+            DefaultResultSetFuture.extractCauseFromExecutionException(e);
+            throw new AssertionError();
+        }
+    }
+
+    public ListenableFuture<PreparedStatement> prepareAsync(String query) {
         Connection.Future future = new Connection.Future(new PrepareMessage(query));
         execute(future, Query.DEFAULT);
         return toPreparedStatement(query, future);
     }
+    
+    public ListenableFuture<PreparedStatement> prepareAsync(final Statement statement) {
+        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.getQueryString());
+        return Futures.transform(prepared, new Function<PreparedStatement, PreparedStatement>() {
+            @Override
+            public PreparedStatement apply(PreparedStatement prepared) {
+                ByteBuffer routingKey = statement.getRoutingKey();
+                if (routingKey != null)
+                    prepared.setRoutingKey(routingKey);
+                prepared.setConsistencyLevel(statement.getConsistencyLevel());
+                if (statement.isTracing())
+                    prepared.enableTracing();
+                prepared.setRetryPolicy(statement.getRetryPolicy());
 
-    public PreparedStatement prepare(Statement statement) {
-        PreparedStatement prepared = prepare(statement.getQueryString());
-
-        ByteBuffer routingKey = statement.getRoutingKey();
-        if (routingKey != null)
-            prepared.setRoutingKey(routingKey);
-        prepared.setConsistencyLevel(statement.getConsistencyLevel());
-        if (statement.isTracing())
-            prepared.enableTracing();
-        prepared.setRetryPolicy(statement.getRetryPolicy());
-
-        return prepared;
+                return prepared;
+            }
+        });
     }
-
+    
     public void shutdown() {
         shutdown(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
     }
@@ -134,39 +157,36 @@ class SessionManager implements Session {
         return cluster;
     }
 
-    private PreparedStatement toPreparedStatement(String query, Connection.Future future) {
-        try {
-            Message.Response response = Uninterruptibles.getUninterruptibly(future);
-            switch (response.type) {
+    private ListenableFuture<PreparedStatement> toPreparedStatement(final String query, final Connection.Future future) {
+        return Futures.transform(future, new Function<Message.Response, PreparedStatement>() {
+            public PreparedStatement apply(Message.Response response) {
+                switch (response.type) {
                 case RESULT:
                     ResultMessage rm = (ResultMessage)response;
                     switch (rm.kind) {
-                        case PREPARED:
-                            ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
-                            PreparedStatement stmt = PreparedStatement.fromMessage(pmsg, cluster.getMetadata(), query, poolsState.keyspace);
-                            try {
-                                cluster.manager.prepare(stmt, future.getAddress());
-                            } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
-                                // This method doesn't propagate interruption, at least not for now. However, if we've
-                                // interrupted preparing queries on other node it's not a problem as we'll re-prepare
-                                // later if need be. So just ignore.
-                            }
-                            return stmt;
-                        default:
-                            throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
+                    case PREPARED:
+                        ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
+                        PreparedStatement stmt = PreparedStatement.fromMessage(pmsg, cluster.getMetadata(), query, poolsState.keyspace);
+                        try {
+                            cluster.manager.prepare(stmt, future.getAddress());
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            // This method doesn't propagate interruption, at least not for now. However, if we've
+                            // interrupted preparing queries on other node it's not a problem as we'll re-prepare
+                            // later if need be. So just ignore.
+                        }
+                        return stmt;
+                    default:
+                        throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
                     }
                 case ERROR:
                     DefaultResultSetFuture.extractCause(DefaultResultSetFuture.convertException(((ErrorMessage)response).error));
-                    break;
+                    throw new AssertionError();
                 default:
                     throw new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type));
+                }
             }
-            throw new AssertionError();
-        } catch (ExecutionException e) {
-            DefaultResultSetFuture.extractCauseFromExecutionException(e);
-            throw new AssertionError();
-        }
+        });
     }
 
     Connection.Factory connectionFactory() {

@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.QueryExecutionException;
 import com.datastax.driver.core.exceptions.QueryValidationException;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * A session holds connections to a Cassandra cluster, allowing it to be queried.
@@ -148,6 +149,31 @@ public interface Session {
      * contacted successfully to prepare this statement.
      */
     public PreparedStatement prepare(Statement statement);
+
+    /**
+     * Prepares the provided query string asynchronously.
+     *
+     * @param query the CQL query string to prepare
+     * @return a future on the prepared statement corresponding to {@code query}.
+     *
+     * @throws NoHostAvailableException if no host in the cluster can be
+     * contacted successfully to prepare this query.
+     */
+    public ListenableFuture<PreparedStatement> prepareAsync(String query);
+
+    /**
+     * Prepares the provided query asynchronously.
+     * <p>
+     * This method is essentially a shortcut for {@code prepareAsync(statement.getQueryString())},
+     * but note that the resulting {@code PreparedStamenent} will inherit the query properties
+     * set on {@code statement}.
+     * 
+     * @param statement the statement to prepare
+     * @return a future on the prepared statement corresponding to {@code statement}.
+     *
+     * @see Session#prepare(Statement)
+     */
+    public ListenableFuture<PreparedStatement> prepareAsync(final Statement statement);
 
     /**
      * Shuts down this session instance.
