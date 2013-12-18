@@ -144,8 +144,7 @@ class DefaultResultSetFuture extends SimpleFuture<ResultSet> implements ResultSe
         try {
             return Uninterruptibles.getUninterruptibly(this);
         } catch (ExecutionException e) {
-            extractCauseFromExecutionException(e);
-            throw new AssertionError();
+            throw extractCauseFromExecutionException(e);
         }
     }
 
@@ -153,8 +152,7 @@ class DefaultResultSetFuture extends SimpleFuture<ResultSet> implements ResultSe
         try {
             return Uninterruptibles.getUninterruptibly(this, timeout, unit);
         } catch (ExecutionException e) {
-            extractCauseFromExecutionException(e);
-            throw new AssertionError();
+            throw extractCauseFromExecutionException(e);
         }
     }
 
@@ -167,7 +165,7 @@ class DefaultResultSetFuture extends SimpleFuture<ResultSet> implements ResultSe
         return true;
     }
 
-    static void extractCauseFromExecutionException(ExecutionException e) {
+    static RuntimeException extractCauseFromExecutionException(ExecutionException e) {
         // We could just rethrow e.getCause(). However, the cause of the ExecutionException has likely been
         // created on the I/O thread receiving the response. Which means that the stacktrace associated
         // with said cause will make no mention of the current thread. This is painful for say, finding
