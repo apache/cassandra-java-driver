@@ -5,6 +5,7 @@ CHANGELOG
 ------
 
 - [improvement] Make most main objects interface to facilitate testing/mocking (JAVA-195)
+- [bug] Fix potential thread leaks when shutting down Metrics (JAVA-232)
 
 
 1.0.5:
