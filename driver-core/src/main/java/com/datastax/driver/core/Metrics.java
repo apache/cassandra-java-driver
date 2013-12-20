@@ -156,6 +156,7 @@ public class Metrics {
     void shutdown() {
         if (jmxReporter != null)
             jmxReporter.shutdown();
+        registry.shutdown();
     }
 
     /**
