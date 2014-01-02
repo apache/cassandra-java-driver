@@ -420,7 +420,6 @@ public class TableMetadata {
         return sb;
     }
 
-
     public static class Options {
 
         private static final String COMMENT                  = "comment";
