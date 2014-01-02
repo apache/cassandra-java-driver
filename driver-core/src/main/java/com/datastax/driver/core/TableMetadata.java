@@ -416,8 +416,7 @@ public class TableMetadata {
         return sb.toString();
     }
 
-    private StringBuilder appendClusteringOrder(StringBuilder sb)
-    {
+    private StringBuilder appendClusteringOrder(StringBuilder sb) {
         sb.append("CLUSTERING ORDER BY (");
         for (int i = 0; i < clusteringKey.size(); i++) {
             if (i > 0) sb.append(", ");
@@ -464,7 +463,6 @@ public class TableMetadata {
             sb.append('\n');
         return sb;
     }
-
 
     public static class Options {
 
