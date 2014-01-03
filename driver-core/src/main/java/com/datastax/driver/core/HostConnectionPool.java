@@ -131,7 +131,7 @@ class HostConnectionPool {
 
         if (leastBusy == null) {
             // We could have raced with a shutdown since the last check
-            if (isShutdown.get())
+            if (isShutdown())
                 throw new ConnectionException(host.getAddress(), "Pool is shutdown");
             // This might maybe happen if the number of core connections per host is 0 and a connection was trashed between
             // the previous check to connections and now. But in that case, the line above will have trigger the creation of
