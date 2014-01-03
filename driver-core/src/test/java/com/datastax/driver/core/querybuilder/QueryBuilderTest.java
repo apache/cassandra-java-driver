@@ -15,6 +15,10 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Statement;
+import org.testng.annotations.Test;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -23,10 +27,9 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
-import static org.testng.Assert.*;
-import org.testng.annotations.Test;
-
-import com.datastax.driver.core.ConsistencyLevel;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class QueryBuilderTest {
 

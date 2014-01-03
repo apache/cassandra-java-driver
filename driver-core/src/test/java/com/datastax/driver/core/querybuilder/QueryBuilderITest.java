@@ -16,12 +16,23 @@
 package com.datastax.driver.core.querybuilder;
 
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
-import static org.testng.Assert.*;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.TestUtils;
+import com.datastax.driver.core.exceptions.SyntaxError;
 import org.testng.annotations.Test;
 
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.SyntaxError;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.TreeSet;
+
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
 
 public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
 

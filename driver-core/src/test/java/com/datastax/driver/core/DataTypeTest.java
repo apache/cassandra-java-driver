@@ -15,16 +15,19 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import org.testng.annotations.Test;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
+import java.util.*;
 
-import static org.testng.Assert.*;
-import org.testng.annotations.Test;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 
 /**
