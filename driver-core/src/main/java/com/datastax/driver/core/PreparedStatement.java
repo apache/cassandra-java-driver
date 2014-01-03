@@ -67,6 +67,9 @@ public interface PreparedStatement {
      * than there is of bound variables in this statement.
      * @throws InvalidTypeException if any of the provided value is not of
      * correct type to be bound to the corresponding bind variable.
+     * @throws NullPointerException if one of {@code values} is a collection
+     * (List, Set or Map) containing a null value. Nulls are not supported in
+     * collections by CQL.
      *
      * @see BoundStatement#bind
      */
