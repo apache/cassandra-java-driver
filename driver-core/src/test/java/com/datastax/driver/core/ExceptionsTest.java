@@ -19,6 +19,10 @@ import org.testng.annotations.Test;
 
 import com.datastax.driver.core.exceptions.*;
 
+import static com.datastax.driver.core.TestUtils.waitForDown;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 /**
  * Tests Exception classes with seperate clusters per test, when applicable
  */

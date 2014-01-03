@@ -16,11 +16,6 @@
 package com.datastax.driver.core;
 
 
-import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
-import org.testng.annotations.Test;
-
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.ReadTimeoutException;
 import com.datastax.driver.core.exceptions.UnavailableException;
@@ -29,6 +24,14 @@ import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
+import org.testng.annotations.Test;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class ConsistencyTest extends AbstractPoliciesTest {
 
