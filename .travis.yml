@@ -1,0 +1,6 @@
+language: java
+install: mvn --quiet install
+jdk:
+  - openjdk7
+  - openjdk6
+  - oraclejdk7
