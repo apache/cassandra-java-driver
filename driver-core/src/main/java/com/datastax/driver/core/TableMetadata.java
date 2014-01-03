@@ -18,10 +18,10 @@ package com.datastax.driver.core;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.map.ObjectMapper;
 
 /**
  * Describes a Table.
