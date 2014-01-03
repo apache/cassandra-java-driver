@@ -129,16 +129,26 @@ class HostConnectionPool {
         if (minInFlight >= options().getMaxSimultaneousRequestsPerConnectionThreshold(hostDistance) && connections.size() < options().getMaxConnectionsPerHost(hostDistance))
             maybeSpawnNewConnection();
 
-        while (true) {
-            int inFlight = leastBusy.inFlight.get();
+        if (leastBusy == null) {
+            // We could have raced with a shutdown since the last check
+            if (isShutdown.get())
+                throw new ConnectionException(host.getAddress(), "Pool is shutdown");
+            // This might maybe happen if the number of core connections per host is 0 and a connection was trashed between
+            // the previous check to connections and now. But in that case, the line above will have trigger the creation of
+            // a new connection, so just wait that connection and move on
+            leastBusy = waitForConnection(timeout, unit);
+        } else {
+            while (true) {
+                int inFlight = leastBusy.inFlight.get();
 
-            if (inFlight >= leastBusy.maxAvailableStreams()) {
-                leastBusy = waitForConnection(timeout, unit);
-                break;
+                if (inFlight >= leastBusy.maxAvailableStreams()) {
+                    leastBusy = waitForConnection(timeout, unit);
+                    break;
+                }
+
+                if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1))
+                    break;
             }
-
-            if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1))
-                break;
         }
         leastBusy.setKeyspace(manager.poolsState.keyspace);
         return leastBusy;
@@ -206,14 +216,18 @@ class HostConnectionPool {
                 }
             }
 
-            while (true) {
-                int inFlight = leastBusy.inFlight.get();
+            // If we race with shutdown, leastBusy could be null. In that case we just loop and we'll throw on the next
+            // iteration anyway
+            if (leastBusy != null) {
+                while (true) {
+                    int inFlight = leastBusy.inFlight.get();
 
-                if (inFlight >= leastBusy.maxAvailableStreams())
-                    break;
+                    if (inFlight >= leastBusy.maxAvailableStreams())
+                        break;
 
-                if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1))
-                    return leastBusy;
+                    if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1))
+                        return leastBusy;
+                }
             }
 
             remaining = timeout - Cluster.timeSince(start, unit);
