@@ -16,8 +16,8 @@
 package com.datastax.driver.core;
 
 import com.google.common.collect.ImmutableMap;
-import static org.testng.Assert.*;
 import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 public class ReplicationStrategyTest {
 

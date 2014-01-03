@@ -15,9 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.TestUtils.*;
-import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+
+import static com.datastax.driver.core.TestUtils.*;
 
 /**
  * Simple test of the Sessions methods against a one node cluster.

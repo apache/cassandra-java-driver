@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core;
 
+import org.testng.annotations.Test;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
-import org.testng.annotations.Test;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;

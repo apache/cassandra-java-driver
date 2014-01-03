@@ -20,10 +20,11 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.testng.Assert.*;
+
 import static com.datastax.driver.core.TestUtils.*;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-import static org.testng.Assert.*;
 
 public abstract class AbstractPoliciesTest {
     private static final boolean DEBUG = false;

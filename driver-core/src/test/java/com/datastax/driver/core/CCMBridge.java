@@ -23,8 +23,6 @@ import java.net.InetAddress;
 import java.util.Collection;
 import java.util.Map;
 
-import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
-import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
 import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +32,7 @@ import org.testng.annotations.BeforeClass;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import static com.datastax.driver.core.TestUtils.*;
 
 public class CCMBridge {
 

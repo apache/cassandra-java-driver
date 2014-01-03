@@ -18,8 +18,8 @@ package com.datastax.driver.core;
 import java.util.Collection;
 import java.util.Collections;
 
-import static org.testng.Assert.*;
 import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 /**
  * Test ResultSet paging correct behavior.

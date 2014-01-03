@@ -16,10 +16,12 @@
 package com.datastax.driver.core;
 
 
-import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
+import java.util.Arrays;
+import java.util.List;
+
+import org.testng.annotations.Test;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
-import org.testng.annotations.Test;
 
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.ReadTimeoutException;
@@ -29,6 +31,7 @@ import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
+import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
 
 public class ConsistencyTest extends AbstractPoliciesTest {
 
@@ -50,9 +53,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             c.cassandraCluster.forceStop(2);
             waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
 
-            List<ConsistencyLevel> acceptedList = Arrays.asList(
-                                                    ConsistencyLevel.ANY
-                                                  );
+            List<ConsistencyLevel> acceptedList = Arrays.asList(ConsistencyLevel.ANY);
 
             List<ConsistencyLevel> failList = Arrays.asList(
                                                     ConsistencyLevel.ONE,

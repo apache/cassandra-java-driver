@@ -19,9 +19,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
-import org.testng.annotations.Test;
 
 /**
  * Simple test of the Sessions methods against a one node cluster.

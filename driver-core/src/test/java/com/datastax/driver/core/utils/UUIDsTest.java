@@ -23,6 +23,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import com.datastax.driver.core.DataType;
 

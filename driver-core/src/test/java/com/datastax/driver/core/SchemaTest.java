@@ -17,8 +17,8 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
-import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
 
 /**
  * Test we correctly process and print schema.

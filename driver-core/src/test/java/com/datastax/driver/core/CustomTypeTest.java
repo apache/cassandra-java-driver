@@ -21,8 +21,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
 
 /**
  * Test we "support" custom types.

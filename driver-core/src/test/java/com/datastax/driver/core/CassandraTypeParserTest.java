@@ -17,8 +17,8 @@ package com.datastax.driver.core;
 
 import java.util.Arrays;
 
-import static org.testng.Assert.*;
 import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 public class CassandraTypeParserTest {
 
