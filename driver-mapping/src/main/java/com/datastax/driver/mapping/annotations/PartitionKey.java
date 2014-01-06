@@ -18,5 +18,5 @@ public @interface PartitionKey {
     /**
      * Ordinal to add when the partition key has multiple components.
      */
-    int value() default 1;
+    int value() default 0;
 }

@@ -1,5 +1,6 @@
 package com.datastax.driver.mapping;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -32,8 +33,11 @@ public class Result<T> implements Iterable<T> {
 
     private T map(Row row) {
         T entity = mapper.newEntity();
-        for (ColumnMapper<T> cm : mapper.allColumns())
-            cm.setValue(entity, cm.getDataType().deserialize(row.getBytesUnsafe(cm.getColumnName())));
+        for (ColumnMapper<T> cm : mapper.allColumns()) {
+            ByteBuffer bytes = row.getBytesUnsafe(cm.getColumnName());
+            if (bytes != null)
+                cm.setValue(entity, cm.getDataType().deserialize(bytes));
+        }
         return entity;
     }
 
