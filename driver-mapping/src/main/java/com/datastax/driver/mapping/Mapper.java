@@ -42,16 +42,19 @@ public class Mapper {
      * @param entity the entity to save.
      * @return a query that saves {@code entity} (based on it's defined mapping).
      */
+    @SuppressWarnings("unchecked")
     public <T> Query save(T entity) {
-        return new SaveQuery(getEntityMapper(entity.getClass()), entity);
+        return new SaveQuery<T>(getEntityMapper((Class<T>)entity.getClass()), entity);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> Query find(T entity) {
-        return new FindQuery<T>((EntityMapper<T>)getEntityMapper(entity.getClass()), entity);
+        return new FindQuery<T>(getEntityMapper((Class<T>)entity.getClass()), entity);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> Query delete(T entity) {
-        return new DeleteQuery(getEntityMapper(entity.getClass()), entity);
+        return new DeleteQuery<T>(getEntityMapper((Class<T>)entity.getClass()), entity);
     }
 
     @SuppressWarnings("unchecked")
@@ -61,8 +64,7 @@ public class Mapper {
             synchronized (mappers) {
                 mapper = (EntityMapper<T>)mappers.get(clazz);
                 if (mapper == null) {
-                    EntityDefinition<T> def = AnnotationParser.parseEntity(clazz);
-                    mapper = new ReflectionMapper<T>(def);
+                    mapper = AnnotationParser.parseEntity(clazz, ReflectionMapper.factory());
                     Map<Class<?>, EntityMapper<?>> newMappers = new HashMap<Class<?>, EntityMapper<?>>(mappers);
                     newMappers.put(clazz, mapper);
                     mappers = newMappers;

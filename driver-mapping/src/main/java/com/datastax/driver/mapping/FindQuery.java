@@ -16,26 +16,27 @@ import com.datastax.driver.core.querybuilder.Select;
 class FindQuery<T> extends Statement {
 
     private final EntityMapper<T> mapper;
-    private final Map<String, Object> columns;
+    private final T entity;
 
     public FindQuery(EntityMapper<T> mapper, T entity) {
         this.mapper = mapper;
-        this.columns = mapper.entityToColumns(entity);
-        setConsistencyLevel(mapper.entityDef.defaultReadCL);
+        this.entity = entity;
     }
 
     @Override
     public ByteBuffer getRoutingKey() {
+        // TODO
         return null;
     }
 
     @Override
     public String getQueryString() {
-        Select select = select().all().from(mapper.entityDef.tableName);
+        Select select = select().all().from(mapper.keyspace, mapper.table);
         Select.Where whereClause = select.where();
-        for (Entry<String, Object> entry : columns.entrySet()) {
-            whereClause.and(eq(entry.getKey(), entry.getValue()));
-        }
+        for (ColumnMapper<T> cm : mapper.partitionKeys)
+            whereClause.and(eq(cm.columnName, cm.getValue(entity)));
+        for (ColumnMapper<T> cm : mapper.clusteringColumns)
+            whereClause.and(eq(cm.columnName, cm.getValue(entity)));
         return select.getQueryString();
     }
 }

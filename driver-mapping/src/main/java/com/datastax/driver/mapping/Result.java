@@ -30,6 +30,13 @@ public class Result<T> implements Iterable<T> {
         return rs.isExhausted();
     }
 
+    private T map(Row row) {
+        T entity = mapper.newEntity();
+        for (ColumnMapper<T> cm : mapper.allColumns())
+            cm.setValue(entity, cm.getDataType().deserialize(row.getBytesUnsafe(cm.getColumnName())));
+        return entity;
+    }
+
     /**
      * Returns the next result (i.e. the entity corresponding to the next row
      * in the result set).
@@ -38,7 +45,7 @@ public class Result<T> implements Iterable<T> {
      */
     public T one() {
         Row row = rs.one();
-        return row == null ? null : mapper.rowToEntity(row);
+        return row == null ? null : map(row);
     }
 
     /**
@@ -52,7 +59,7 @@ public class Result<T> implements Iterable<T> {
         List<Row> rows = rs.all();
         List<T> entities = new ArrayList<T>(rows.size());
         for (Row row : rows) {
-            entities.add(mapper.rowToEntity(row));
+            entities.add(map(row));
         }
         return entities;
     }
@@ -78,8 +85,7 @@ public class Result<T> implements Iterable<T> {
             }
 
             public T next() {
-                Row row = rowIterator.next();
-                return mapper.rowToEntity(row);
+                return map(rowIterator.next());
             }
 
             public void remove() {

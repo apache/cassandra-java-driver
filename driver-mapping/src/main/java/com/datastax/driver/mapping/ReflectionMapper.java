@@ -1,260 +1,139 @@
 package com.datastax.driver.mapping;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.UUID;
-
-import antlr.ByteBuffer;
-
-import com.datastax.driver.core.Row;
-import com.datastax.driver.mapping.EntityDefinition.ColumnDefinition;
-import com.datastax.driver.mapping.EntityDefinition.EnumColumnDefinition;
-import com.datastax.driver.mapping.EntityDefinition.SubEntityDefinition;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * An {@link EntityMapper} implementation that use reflection to read and write fields
  * of an entity.
  */
 class ReflectionMapper<T> extends EntityMapper<T> {
-    /* TODO: a more efficient implementation should be added but would be overkill
+
+    private static ReflectionFactory factory = new ReflectionFactory();
+
+    /*
+     * TODO: a more efficient implementation should be added but would be overkill
      * for now as queries are currently moved around as Statements rather than 
      * as PS.
      */
 
-    final Map<String, ColumnMapper> columnNamesToMapper;
-    final Map<String, SubEntityMapper> valueToMapper;
-    final Map<Class<?>, SubEntityMapper> classToMapper;
+    private ReflectionMapper(Class<T> entityClass, String keyspace, String table) {
+        super(entityClass, keyspace, table);
+    }
 
-    public ReflectionMapper(EntityDefinition<T> entityDef) {
-        super(entityDef);
-        columnNamesToMapper = new HashMap<String, ColumnMapper>();
-        valueToMapper = new HashMap<String, SubEntityMapper>();
-        classToMapper = new HashMap<Class<?>, SubEntityMapper>();
+    public static Factory factory() {
+        return factory;
+    }
 
-        for (ColumnDefinition columnDef: entityDef.columns) {
-            ColumnMapper columnMapper;
-            if (columnDef instanceof EnumColumnDefinition) {
-                columnMapper = new EnumColumnMapper((EnumColumnDefinition)columnDef);
+    @Override
+    public T newEntity() {
+        try {
+            return entityClass.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Can't create an instance of " + entityClass.getName());
+        }
+    }
+
+    private static class LiteralMapper<T> extends ColumnMapper<T> {
+
+        private final Method readMethod;
+        private final Method writeMethod;
+
+        private LiteralMapper(Field field, int position, PropertyDescriptor pd) {
+            super(field, position);
+            this.readMethod = pd.getReadMethod();
+            this.writeMethod = pd.getWriteMethod();
+        }
+
+        @Override
+        public Object getValue(T entity) {
+            try {
+                return readMethod.invoke(entity);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Could not get field '" + fieldName + "'");
+            } catch (Exception e) {
+                throw new IllegalStateException("Unable to access getter for '" + fieldName + "' in " + entity.getClass().getName(), e);
+            }
+        }
+
+        @Override
+        public void setValue(Object entity, Object value) {
+            try {
+                writeMethod.invoke(entity, value);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Could not set field '" + fieldName + "' to value '" + value + "'");
+            } catch (Exception e) {
+                throw new IllegalStateException("Unable to access setter for '" + fieldName + "' in " + entity.getClass().getName(), e);
+            }
+        }
+
+    }
+
+    private static class EnumMapper<T> extends LiteralMapper<T> {
+
+        private final EnumType enumType;
+        private final Map<String, Object> fromString;
+
+        private EnumMapper(Field field, int position, PropertyDescriptor pd, EnumType enumType) {
+            super(field, position, pd);
+            this.enumType = enumType;
+
+            if (enumType == EnumType.STRING) {
+                fromString = new HashMap<String, Object>(javaType.getEnumConstants().length);
+                for (Object constant : javaType.getEnumConstants())
+                    fromString.put(constant.toString().toLowerCase(), constant);
+
             } else {
-                columnMapper = new LiteralColumnMapper(columnDef);
+                fromString = null;
             }
-            columnNamesToMapper.put(columnDef.columnName, columnMapper);
-        }
-
-        for (SubEntityDefinition<T> subEntityDef : entityDef.subEntities) {
-            SubEntityMapper subEntityMapper = new SubEntityMapper(subEntityDef);
-            valueToMapper.put(subEntityDef.inheritanceColumnValue, subEntityMapper);
-            classToMapper.put(subEntityDef.subEntityClass, subEntityMapper);
-        }
-    }
-
-    @Override
-    public Map<String, Object> entityToColumns(T entity) {
-        Map<String, Object> columns = new HashMap<String, Object>();
-        Map<String, ColumnMapper> columnMappers;
-        if (entityDef.inheritanceColumn != null) {
-            SubEntityMapper mapper = classToMapper.get(entity.getClass());
-            String inheritanceColumn = mapper.subEntityDef.parentEntity.inheritanceColumn;
-            String inheritanceValue = mapper.subEntityDef.inheritanceColumnValue;
-            columns.put(inheritanceColumn, inheritanceValue);
-            columnMappers = mapper.columnNamesToMapper;
-        } else {
-            columnMappers = columnNamesToMapper;
-        }
-        for (ColumnMapper columnMapper : columnMappers.values()) {
-            String name = columnMapper.getColumnDef().columnName;
-            Object value = columnMapper.getField(entity);
-            columns.put(name, value);
-        }
-        return columns;
-    }
-
-    @Override
-    public T rowToEntity(Row row) {
-        T entity;
-        Map<String, ColumnMapper> columnMappers;
-        if (entityDef.inheritanceColumn == null) {
-            try {
-                entity = entityDef.entityClass.newInstance();
-            } catch (Exception e) {
-                throw new RuntimeException("Can't create an instance of " + entityDef.entityClass.getName());
-            }
-            columnMappers = columnNamesToMapper;
-        } else {
-            Object inheritanceValue = row.getString(entityDef.inheritanceColumn);
-            if (inheritanceValue == null) {
-                throw new IllegalArgumentException("Undefined value of inheritance column '" 
-                        + entityDef.inheritanceColumn + "', can't create an entity");
-            }
-            SubEntityMapper subEntityMapper = valueToMapper.get(inheritanceValue);
-            if (subEntityMapper == null) {
-                throw new IllegalArgumentException("Value '" + inheritanceValue + 
-                        "' hasn't been defined in any @InheritanceValue annotation on referenced subclasses, can't create an entity");
-            }
-            try {
-                entity = subEntityMapper.subEntityDef.subEntityClass.newInstance();
-            } catch (Exception e) {
-                throw new RuntimeException("Can't create an instance of " + subEntityMapper.subEntityDef.subEntityClass.getName());
-            }
-            columnMappers = subEntityMapper.columnNamesToMapper;
-        }
-
-        for (Entry<String, ColumnMapper> entry : columnMappers.entrySet()) {
-            ColumnMapper columnMapper = entry.getValue();
-            columnMapper.setField(entity, getColumn(row, columnMapper.getColumnDef()));
-        }
-        return entity;
-    }
-
-    private Object getColumn(Row row, ColumnDefinition def) {
-        String name = def.columnName;
-        Class type = def.javaType;
-        if (type == String.class)
-            return row.getString(name);
-        if (type == ByteBuffer.class)
-            return row.getBytes(name);
-        if (type == Boolean.class || type == boolean.class)
-            return row.getBool(name);
-        if (type == Long.class || type == long.class)
-            return row.getLong(name);
-        if (type == BigDecimal.class)
-            return row.getDecimal(name);
-        if (type == Double.class || type == double.class)
-            return row.getDouble(name);
-        if (type == Float.class || type == float.class)
-            return row.getFloat(name);
-        if (type == InetAddress.class)
-            return row.getInet(name);
-        if (type == Integer.class || type == int.class)
-            return row.getInt(name);
-        if (type == Date.class)
-            return row.getDate(name);
-        if (type == UUID.class)
-            return row.getUUID(name);
-        if (type == BigInteger.class)
-            return row.getVarint(name);
-
-        throw new UnsupportedOperationException("Unsupported type '" + type.getName() + "'");
-
-    }
-
-    interface ColumnMapper {
-        void setField(Object entity, Object value);
-
-        Object getField(Object entity);
-
-        ColumnDefinition getColumnDef();
-    }
-
-    class LiteralColumnMapper implements ColumnMapper {
-        final ColumnDefinition columnDef;
-
-        LiteralColumnMapper(ColumnDefinition columnDef) {
-            this.columnDef = columnDef;
         }
 
         @Override
-        public void setField(Object entity, Object value) {
-            try {
-                columnDef.writeMethod.invoke(entity, value);
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Could not set field '" + columnDef.fieldName + "' to value '" + value + "'");
-            } catch (Exception e) {
-                throw new IllegalStateException("Unable to access setter for '" + columnDef.fieldName + "' in " + entity.getClass().getName(), e);
+        public Object getValue(T entity) {
+            Object value = super.getValue(entity);
+            switch (enumType) {
+                case STRING:
+                    return value.toString();
+                case ORDINAL:
+                    return ((Enum)value).ordinal();
             }
-
+            throw new AssertionError();
         }
 
         @Override
-        public Object getField(Object entity) {
-            Object value;
-            try {
-                value = columnDef.readMethod.invoke(entity);
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Could not get field '" + columnDef.fieldName + "'");
-            } catch (Exception e) {
-                throw new IllegalStateException("Unable to access setter for '" + columnDef.fieldName + "' in " + entity.getClass().getName(), e);
+        public void setValue(Object entity, Object value) {
+            Object converted = null;
+            switch (enumType) {
+                case STRING:
+                    converted = fromString.get(value.toString().toLowerCase());
+                    break;
+                case ORDINAL:
+                    converted = javaType.getEnumConstants()[(Integer)converted];
+                    break;
             }
-
-            return value;
-        }
-
-        @Override
-        public ColumnDefinition getColumnDef() {
-            return columnDef;
-        }
-
-
-    }
-
-    class EnumColumnMapper implements ColumnMapper {
-        final EnumColumnDefinition columnDef;
-
-        EnumColumnMapper(EnumColumnDefinition columnDef) {
-            this.columnDef = columnDef;
-        }
-
-        @Override
-        public void setField(Object entity, Object value) {
-            Object enm = columnDef.valueToEnum.get(value);
-            try {
-                columnDef.writeMethod.invoke(entity, enm);
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Could not set field '" + columnDef.fieldName + "' to value '" + value + "'");
-            } catch (Exception e) {
-                throw new IllegalStateException("Unable to access setter for '" + columnDef.fieldName + "' in " + entity.getClass().getName(), e);
-            }
-
-        }
-
-        @Override
-        public Object getField(Object entity) {
-            Object enm;
-            try {
-                enm = columnDef.writeMethod.invoke(entity);
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Could not get field '" + columnDef.fieldName + "'");
-            } catch (Exception e) {
-                throw new IllegalStateException("Unable to access setter for '" + columnDef.fieldName + "' in " + entity.getClass().getName(), e);
-            }
-
-            return columnDef.enumToValue.get(enm);
-        }
-
-        @Override
-        public ColumnDefinition getColumnDef() {
-            return columnDef;
+            super.setValue(entity, converted);
         }
     }
 
-    class SubEntityMapper {
-        final SubEntityDefinition<T> subEntityDef;
-        final Map<String, ColumnMapper> columnNamesToMapper;
-        final Map<String, ColumnMapper> fieldNamesToMapper;
+    private static class ReflectionFactory implements Factory {
 
-        public SubEntityMapper(SubEntityDefinition<T> subEntityDef) {
-            this.subEntityDef = subEntityDef;
-            columnNamesToMapper = new HashMap<String, ColumnMapper>();
-            fieldNamesToMapper = new HashMap<String, ColumnMapper>();
-
-            for (ColumnDefinition columnDef: subEntityDef.columns) {
-                ColumnMapper columnMapper;
-                if (columnDef instanceof EnumColumnDefinition) {
-                    columnMapper = new EnumColumnMapper((EnumColumnDefinition)columnDef);
-                } else {
-                    columnMapper = new LiteralColumnMapper(columnDef);
-                }
-                columnNamesToMapper.put(columnDef.columnName, columnMapper);
-                fieldNamesToMapper.put(columnDef.fieldName, columnMapper);
+        public <T> ColumnMapper<T> createColumnMapper(Class<T> entityClass, Field field, int position) {
+            String fieldName = field.getName();
+            try {
+                PropertyDescriptor pd = new PropertyDescriptor(fieldName, field.getDeclaringClass());
+                return field.getType().isEnum()
+                     ? new EnumMapper<T>(field, position, pd, AnnotationParser.enumType(field))
+                     : new LiteralMapper<T>(field, position, pd);
+            } catch (IntrospectionException e) {
+                throw new IllegalArgumentException("Cannot find matching getter and setter for field '" + fieldName + "'");
             }
+        }
 
-            SubEntityMapper.this.columnNamesToMapper.putAll(ReflectionMapper.this.columnNamesToMapper);
+        public <T> EntityMapper<T> create(Class<T> entityClass, String keyspace, String table) {
+            return new ReflectionMapper<T>(entityClass, keyspace, table);
         }
     }
-
 }

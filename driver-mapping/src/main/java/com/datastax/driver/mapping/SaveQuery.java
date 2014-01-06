@@ -13,24 +13,25 @@ import com.datastax.driver.core.querybuilder.Insert;
  */
 class SaveQuery<T> extends Statement {
     private final EntityMapper<T> mapper;
-    private final Map<String, Object> columns;
+    private final T entity;
 
     public SaveQuery(EntityMapper<T> mapper, T entity) {
         this.mapper = mapper;
-        this.columns = mapper.entityToColumns(entity);
-        setConsistencyLevel(mapper.entityDef.defaultWriteCL);
+        this.entity = entity;
     }
 
     @Override
     public ByteBuffer getRoutingKey() {
+        // TODO
         return null;
     }
 
     @Override
     public String getQueryString() {
-        Insert insert = insertInto(mapper.entityDef.tableName)
-                        .values(columns.keySet().toArray(new String[columns.size()]),
-                                columns.values().toArray());
+        Insert insert = insertInto(mapper.keyspace, mapper.table);
+        for (ColumnMapper<T> cm : mapper.allColumns())
+            insert.value(cm.getColumnName(), cm.getValue(entity));
+
         return insert.getQueryString();
     }
 }

@@ -5,9 +5,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.TYPE)
+import com.datastax.driver.mapping.EnumType;
+
+@Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Inheritance {
-    Class<?>[] subClasses();
-    String column();
+public @interface Enumerated {
+    EnumType value() default EnumType.STRING;
 }

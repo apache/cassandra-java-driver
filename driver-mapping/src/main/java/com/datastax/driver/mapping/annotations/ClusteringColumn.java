@@ -6,17 +6,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation for fields that map to a CQL partition key (or one of it's
- * component if the partition key is composite).
+ * Annotation for fields that map to a CQL clustering column.
  * <p>
- * If the partition key of the mapped table is composite, it is mandatory
+ * If the mapped table has multiple clustering columns, it is mandatory
  * to specify the ordinal parameter to avoid ordering ambiguity.
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface PartitionKey {
+public @interface ClusteringColumn {
     /**
-     * Ordinal to add when the partition key has multiple components.
+     * Ordinal to add when several clustering columns are declared within a single
+     * entity.
      */
     int value() default 1;
 }

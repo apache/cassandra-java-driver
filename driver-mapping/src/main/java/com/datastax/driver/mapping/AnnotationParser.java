@@ -1,142 +1,113 @@
 package com.datastax.driver.mapping;
 
-import java.beans.IntrospectionException;
-import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import com.datastax.driver.mapping.EntityDefinition.ColumnDefinition;
-import com.datastax.driver.mapping.EntityDefinition.EnumColumnDefinition;
-import com.datastax.driver.mapping.EntityDefinition.SubEntityDefinition;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.EnumMapping;
-import com.datastax.driver.mapping.annotations.EnumValue;
-import com.datastax.driver.mapping.annotations.Inheritance;
-import com.datastax.driver.mapping.annotations.InheritanceValue;
-import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.Transcient;
+import com.datastax.driver.mapping.annotations.*;
 
 /**
- * Parses entities for Cassandra mapping annotation and build an {@link EntityDefinition} from it. 
+ * Static metods that facilitates parsing class annotations into the corresponding {@link EntityMapper}.
  */
 class AnnotationParser {
 
-    public static <T> EntityDefinition<T> parseEntity(Class<T> entityClass) {
+    private static final Comparator<Field> fieldComparator = new Comparator<Field>() {
+        public int compare(Field f1, Field f2) {
+            return position(f2) - position(f1);
+        }
+    };
 
-        EntityDefinition<T> entityDef = new EntityDefinition<T>(entityClass);
+    private AnnotationParser() {}
 
-        // @Table
+    public static <T> EntityMapper<T> parseEntity(Class<T> entityClass, EntityMapper.Factory factory) {
         Table table = entityClass.getAnnotation(Table.class);
-        if (table == null) {
+        if (table == null)
             throw new IllegalArgumentException("@Table annotation was not found on class " + entityClass.getName());
-        }
-        entityDef.tableName = table.name();
-        entityDef.keyspaceName = table.keyspace();
 
-        // @Inheritance
-        Inheritance inheritance = entityClass.getAnnotation(Inheritance.class);
-        if (inheritance != null) {
-            entityDef.inheritanceColumn = inheritance.column();
-            Map<String, SubEntityDefinition<T>> subEntities = new HashMap<String, SubEntityDefinition<T>>();
-            for (Class<?> subClass : inheritance.subClasses()) {
-                InheritanceValue inheritanceValue = subClass.getAnnotation(InheritanceValue.class);
-                if (inheritanceValue == null) {
-                    throw new IllegalArgumentException("Class " + subClass.getName() + " declared as subclass in @Inheritance annotation on "
-                            + entityClass.getName() + " but is not annotated with @InheritanceValue.");
-                }
-                if (!entityClass.isAssignableFrom(subClass)) {
-                    throw new IllegalArgumentException("Class " + subClass.getName() + " declared as subclass in @Inheritance annotation on "
-                            + entityClass.getName() + " but is not an actual subclass.");
-                }
-                if (subEntities.containsKey(inheritanceValue.value())) {
-                    Class<?> conflictingClass = subEntities.get(inheritanceValue.value()).subEntityClass;
-                    throw new IllegalArgumentException(subClass.getName() + " and " + conflictingClass.getName()
-                            + " both define '" + inheritanceValue.value() + "' as value in their @InheritanceValue annotation");
-                }
-                SubEntityDefinition<T> subEntityDef = parseSubEntity((Class<? extends T>)subClass, entityDef);
-                subEntities.put(inheritanceValue.value(), subEntityDef);
-            }
-            entityDef.subEntities.addAll(subEntities.values());
-        }
+        EntityMapper<T> mapper = factory.create(entityClass, table.keyspace().isEmpty() ? null : table.keyspace(), table.name());
+
+        List<Field> pks = new ArrayList<Field>();
+        List<Field> ccs = new ArrayList<Field>();
+        List<Field> rgs = new ArrayList<Field>();
 
         for (Field field : entityClass.getDeclaredFields()) {
-            Transcient transcient = field.getAnnotation(Transcient.class);
-            if (transcient == null) {
-                // Any field annotated as Transcient is ignored
-                entityDef.columns.add(parseColumn(field));
+            switch (kind(field)) {
+                case PARTITION_KEY:
+                    pks.add(field);
+                    break;
+                case CLUSTERING_COLUMN:
+                    ccs.add(field);
+                    break;
+                default:
+                    rgs.add(field);
+                    break;
             }
         }
-        return entityDef;
+
+        Collections.sort(pks, fieldComparator);
+        Collections.sort(ccs, fieldComparator);
+
+        validateOrder(pks, "@PartitionKey");
+        validateOrder(ccs, "@ClusteringColumn");
+
+        mapper.addColumns(convert(pks, factory, mapper.entityClass),
+                          convert(ccs, factory, mapper.entityClass),
+                          convert(rgs, factory, mapper.entityClass));
+        return mapper;
     }
 
-    private static <T> SubEntityDefinition<T> parseSubEntity(Class<? extends T> subEntityClass, EntityDefinition<T> entityDef) {
-
-        SubEntityDefinition<T> subEntityDef = new SubEntityDefinition<T>(entityDef, subEntityClass);
-
-        // @InheritanceValue
-        InheritanceValue inheritanceValue = subEntityClass.getAnnotation(InheritanceValue.class);
-        if (inheritanceValue == null) {
-            throw new IllegalArgumentException("@InheritanceValue annotation was not found on class" + subEntityClass.getName());
+    private static <T> List<ColumnMapper<T>> convert(List<Field> fields, EntityMapper.Factory factory, Class<T> klass) {
+        List<ColumnMapper<T>> mappers = new ArrayList<ColumnMapper<T>>(fields.size());
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
+            int pos = position(field);
+            mappers.add(factory.createColumnMapper(klass, field, pos < 0 ? i : pos));
         }
-        subEntityDef.inheritanceColumnValue = inheritanceValue.value();
-        for (Field field : subEntityClass.getDeclaredFields()) {
-            Transcient transcient = field.getAnnotation(Transcient.class);
-            if (transcient == null) {
-                // Any field annotated as Transcient is ignored
-                subEntityDef.columns.add(parseColumn(field));
-            }
-        }
-        return subEntityDef;
-
+        return mappers;
     }
 
-    private static ColumnDefinition parseColumn(Field field) {
+    private static void validateOrder(List<Field> fields, String annotation) {
+        for (int i = 0; i < fields.size(); i++) {
+            int pos = position(fields.get(i));
+            if (pos < i)
+                throw new IllegalArgumentException("Missing ordering value " + i + " for " + annotation + " annotation");
+            else if (pos > i)
+                throw new IllegalArgumentException("Duplicate ordering value " + i + " for " + annotation + " annotation");
+        }
+    }
+
+    private static int position(Field field) {
+        switch (kind(field)) {
+            case PARTITION_KEY:
+                return field.getAnnotation(PartitionKey.class).value();
+            case CLUSTERING_COLUMN:
+                return field.getAnnotation(ClusteringColumn.class).value();
+            default:
+                return -1;
+        }
+    }
+
+    public static ColumnMapper.Kind kind(Field field) {
+        PartitionKey pk = field.getAnnotation(PartitionKey.class);
+        ClusteringColumn cc = field.getAnnotation(ClusteringColumn.class);
+        if (pk != null && cc != null)
+            throw new IllegalArgumentException("Field " + field.getName() + " cannot have both the @PartitionKey and @ClusteringColumn annotations");
+
+        return pk != null
+             ? ColumnMapper.Kind.PARTITION_KEY
+             : (cc != null ? ColumnMapper.Kind.CLUSTERING_COLUMN : ColumnMapper.Kind.REGULAR);
+    }
+
+    public static EnumType enumType(Field field) {
         Class<?> type = field.getType();
+        if (!type.isEnum())
+            return null;
 
-        ColumnDefinition columnDef;
-        if (type.isEnum()) {
-            // Enum
-            EnumColumnDefinition enumColumnDef = new EnumColumnDefinition();
-            EnumMapping enumerated = field.getAnnotation(EnumMapping.class);
-            EnumMappingType enumType = (enumerated == null) ? EnumMappingType.STRING : enumerated.value();
-            for (int i = 0; i < type.getEnumConstants().length; i++) {
-                Enum<?> en = (Enum<?>)type.getEnumConstants()[i];
-                EnumValue enumValue;
-                try {
-                    enumValue = type.getField(en.name()).getAnnotation(EnumValue.class);
-                } catch (Exception e) {
-                    throw new IllegalStateException("Could not access element '" + en.name() + "' of enum " + type.getName());
-                }
-                String value;
-                if (enumValue != null) {
-                    enumColumnDef.hasCustomValues = true;
-                    value = enumValue.value();
-                } else {
-                    value = (enumType == EnumMappingType.STRING) ? en.name() : Integer.toString(en.ordinal());
-                }
-                enumColumnDef.valueToEnum.put(value, en);
-                enumColumnDef.enumToValue.put(en, value);
-            }
-            columnDef = enumColumnDef;
-        } else {
-            // Column
-            columnDef = new ColumnDefinition();
-        }
+        Enumerated enumerated = field.getAnnotation(Enumerated.class);
+        return (enumerated == null) ? EnumType.STRING : enumerated.value();
+    }
 
+    public static String columnName(Field field) {
         Column column = field.getAnnotation(Column.class);
-        String columnName = (column == null) ? field.getName() : column.name();
-        columnDef.columnName = columnName;
-        columnDef.javaType = type;
-        columnDef.fieldName = field.getName();
-        try {
-            PropertyDescriptor pd = new PropertyDescriptor(columnDef.fieldName, field.getDeclaringClass());
-            columnDef.readMethod = pd.getReadMethod();
-            columnDef.writeMethod = pd.getWriteMethod();
-        } catch (IntrospectionException e) {
-            throw new RuntimeException("Can't find matching getter and setter for field '" + columnDef.fieldName + "'");
-        }
-
-        return columnDef;
+        return (column == null) ? field.getName() : column.name();
     }
 }

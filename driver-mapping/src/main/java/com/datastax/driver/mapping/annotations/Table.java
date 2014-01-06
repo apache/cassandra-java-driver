@@ -12,6 +12,4 @@ import com.datastax.driver.core.ConsistencyLevel;
 public @interface Table {
     String name();
     String keyspace() default "";
-    ConsistencyLevel defaultReadConsistencyLevel() default ConsistencyLevel.ONE;
-    ConsistencyLevel defaultWriteConsistencyLevel() default ConsistencyLevel.ONE;
 }
