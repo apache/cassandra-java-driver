@@ -478,6 +478,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             // Test successful writes
             for (ConsistencyLevel cl : acceptedList) {
                 try {
+                    // BUG: (sometimes) java.lang.AssertionError: Test failed at CL.THREE with message:
+                    // Cassandra timeout during write query at consistency TWO
+                    // (2 replica were required but only 1 acknowledged the write)
                     init(c, 12, cl);
                 } catch (Exception e) {
                     fail(String.format("Test failed at CL.%s with message: %s", cl, e.getMessage()));
@@ -608,6 +611,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             // Test successful reads
             for (ConsistencyLevel cl : acceptedList) {
                 try {
+                    // BUG: (sometimes) com.datastax.driver.core.exceptions.ReadTimeoutException:
+                    // Cassandra timeout during read query at consistency TWO
+                    // (2 responses were required but only 1 replica responded)
                     query(c, 12, cl);
                 } catch (InvalidQueryException e) {
                     List<String> acceptableErrorMessages = Arrays.asList(
