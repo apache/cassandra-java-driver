@@ -349,6 +349,10 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             c.cassandraCluster.bootstrapNode(3);
             waitFor(CCMBridge.IP_PREFIX + "3", c.cluster);
 
+            // BUG: Even this line doesn't fix what's typically a race condition.
+            // Occasionally 12 requests will go to IP+2, sometimes IP+3. About a 50-50 shot.
+            Thread.sleep(20000);
+
             query(c, 12);
 
             // We should still be hitting only one node

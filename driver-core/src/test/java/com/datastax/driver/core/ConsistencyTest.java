@@ -780,6 +780,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             assertQueried(CCMBridge.IP_PREFIX + "1", 0);
             assertQueried(CCMBridge.IP_PREFIX + "2", 0);
             assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+            // BUG: Expects 4, but receives all 12
             assertQueried(CCMBridge.IP_PREFIX + "4", 4);
             assertQueried(CCMBridge.IP_PREFIX + "5", 4);
             assertQueried(CCMBridge.IP_PREFIX + "6", 4);
