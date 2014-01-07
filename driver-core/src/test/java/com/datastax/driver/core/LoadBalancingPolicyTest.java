@@ -152,26 +152,6 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
             resetCoordinators();
             c.cassandraCluster.bootstrapNode(5, "dc3");
-            // BUG:
-            /**
-             * java.lang.NullPointerException
-                 at com.datastax.driver.core.ReplicationStrategy$NetworkTopologyStrategy.computeTokenToReplicaMap(ReplicationStategy.java:122)
-                 at com.datastax.driver.core.Metadata$TokenMap.build(Metadata.java:287)
-                 at com.datastax.driver.core.Metadata.rebuildTokenMap(Metadata.java:141)
-                 at com.datastax.driver.core.ControlConnection.refreshNodeListAndTokenMap(ControlConnection.java:386)
-                 at com.datastax.driver.core.ControlConnection.refreshNodeListAndTokenMap(ControlConnection.java:275)
-                 at com.datastax.driver.core.ControlConnection.onAdd(ControlConnection.java:463)
-                 at com.datastax.driver.core.Cluster$Manager.onAdd(Cluster.java:1118)
-                 at com.datastax.driver.core.Cluster$Manager$2.onReconnection(Cluster.java:1084)
-                 at com.datastax.driver.core.AbstractReconnectionHandler.run(AbstractReconnectionHandler.java:90)
-                 at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:471)
-                 at java.util.concurrent.FutureTask.run(FutureTask.java:262)
-                 at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:178)
-                 at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:292)
-                 at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
-                 at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:615)
-                 at java.lang.Thread.run(Thread.java:724)
-             */
             waitFor(CCMBridge.IP_PREFIX + "5", c.cluster);
 
             query(c, 12);

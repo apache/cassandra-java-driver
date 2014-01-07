@@ -54,15 +54,7 @@ public class FetchingTest extends CCMBridge.PerClassSingleNodeCluster {
                 assertEquals(rs.one().getInt(0), i);
             }
 
-            // BUG:
-            /**
-             * com.datastax.driver.core.exceptions.DriverInternalError: An unexpected error occured server side on /127.0.1.1: java.lang.IllegalArgumentException: Illegal Capacity: -1
-                 at com.datastax.driver.core.exceptions.DriverInternalError.copy(DriverInternalError.java:42)
-                 at com.datastax.driver.core.DefaultResultSetFuture.extractCauseFromExecutionException(DefaultResultSetFuture.java:256)
-                 at com.datastax.driver.core.ArrayBackedResultSet.fetchMoreResultsBlocking(ArrayBackedResultSet.java:197)
-                 at com.datastax.driver.core.ArrayBackedResultSet.isExhausted(ArrayBackedResultSet.java:135)
-                 at com.datastax.driver.core.FetchingTest.simplePagingTest(FetchingTest.java:57)
-             */
+            // BUG: CASSANDRA-6555
             assertTrue(rs.isExhausted());
             assertTrue(rs.isFullyFetched());
 
