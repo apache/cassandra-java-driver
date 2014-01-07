@@ -7,6 +7,7 @@ CHANGELOG
 - [improvement] Make most main objects interface to facilitate testing/mocking (JAVA-195)
 - [bug] Fix potential thread leaks when shutting down Metrics (JAVA-232)
 - [bug] Fix potential NPE in HostConnectionPool (JAVA-231)
+- [bug] Avoid NPE when node is in an unconfigured DC (JAVA-244)
 
 
 2.0.0-rc2:

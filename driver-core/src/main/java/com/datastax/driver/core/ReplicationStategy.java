@@ -114,7 +114,7 @@ abstract class ReplicationStrategy {
                 for (int j = 0; j < ring.size() && !allDone(allDcReplicas); j++) {
                     Host h = tokenToPrimary.get(getTokenWrapping(i + j, ring));
                     String dc = h.getDatacenter();
-                    if (dc == null)
+                    if (dc == null || !allDcReplicas.containsKey(dc))
                         continue;
 
                     Integer rf = replicationFactors.get(dc);
