@@ -100,7 +100,10 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 } catch (WriteTimeoutException e) {
                     // expected to fail when the client hasn't marked the
                     // node as DOWN yet
+                } catch (DriverInternalError e) {
+                    // BUG: CASSANDRA-6545
                 }
+
             }
 
             // Test reads which should fail
@@ -119,6 +122,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 } catch (UnavailableException e) {
                     // expected to fail when the client has already marked the
                     // node as DOWN
+                } catch (DriverInternalError e) {
+                    // BUG: CASSANDRA-6545
                 }
             }
 
@@ -198,6 +203,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 } catch (WriteTimeoutException e) {
                     // expected to fail when the client hasn't marked the
                     // node as DOWN yet
+                } catch (DriverInternalError e) {
+                    // BUG: CASSANDRA-6545
                 }
             }
 
@@ -217,6 +224,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 } catch (UnavailableException e) {
                     // expected to fail when the client has already marked the
                     // node as DOWN
+                } catch (DriverInternalError e) {
+                    // BUG: CASSANDRA-6545
                 }
             }
 
@@ -296,6 +305,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 } catch (WriteTimeoutException e) {
                     // expected to fail when the client hasn't marked the
                     // node as DOWN yet
+                } catch (DriverInternalError e) {
+                    // BUG: CASSANDRA-6545
                 }
             }
 
@@ -315,6 +326,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 } catch (UnavailableException e) {
                     // expected to fail when the client has already marked the
                     // node as DOWN
+                } catch (DriverInternalError e) {
+                    // BUG: CASSANDRA-6545
                 }
             }
 
@@ -394,6 +407,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 } catch (WriteTimeoutException e) {
                     // expected to fail when the client hasn't marked the
                     // node as DOWN yet
+                } catch (DriverInternalError e) {
+                    // BUG: CASSANDRA-6545
                 }
             }
 
@@ -413,6 +428,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 } catch (UnavailableException e) {
                     // expected to fail when the client has already marked the
                     // node as DOWN
+                } catch (DriverInternalError e) {
+                    // BUG: CASSANDRA-6545
                 }
             }
 
@@ -494,6 +511,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 } catch (WriteTimeoutException e) {
                     // expected to fail when the client hasn't marked the
                     // node as DOWN yet
+                } catch (DriverInternalError e) {
+                    // BUG: CASSANDRA-6545
                 }
             }
 
@@ -513,6 +532,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 } catch (UnavailableException e) {
                     // expected to fail when the client has already marked the
                     // node as DOWN
+                } catch (DriverInternalError e) {
+                    // BUG: CASSANDRA-6545
                 }
             }
 
@@ -611,6 +632,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 } catch (WriteTimeoutException e) {
                     // expected to fail when the client hasn't marked the
                     // node as DOWN yet
+                } catch (DriverInternalError e) {
+                    // BUG: CASSANDRA-6545
                 }
             }
 
@@ -630,6 +653,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 } catch (UnavailableException e) {
                     // expected to fail when the client has already marked the
                     // node as DOWN
+                } catch (DriverInternalError e) {
+                    // BUG: CASSANDRA-6545
                 }
             }
 
