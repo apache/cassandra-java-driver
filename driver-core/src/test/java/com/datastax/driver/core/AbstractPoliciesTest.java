@@ -134,7 +134,7 @@ public abstract class AbstractPoliciesTest {
             else
                 c.session.execute(new SimpleStatement(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", SIMPLE_TABLE)).setConsistencyLevel(cl));
 
-        prepared = c.session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?").setConsistencyLevel(cl);
+        prepared = null;
     }
 
 
@@ -155,6 +155,10 @@ public abstract class AbstractPoliciesTest {
 
     protected void query(CCMBridge.CCMCluster c, int n, boolean usePrepared, ConsistencyLevel cl) {
         if (usePrepared) {
+            if (prepared == null) {
+                prepared = c.session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?").setConsistencyLevel(cl);
+            }
+
             BoundStatement bs = prepared.bind(0);
             for (int i = 0; i < n; ++i)
                 addCoordinator(c.session.execute(bs));
