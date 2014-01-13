@@ -56,7 +56,7 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_PEERS = "SELECT * FROM system.peers";
     private static final String SELECT_LOCAL = "SELECT * FROM system.local WHERE key='local'";
 
-    private static final String SELECT_SCHEMA_PEERS = "SELECT peer, rpc_address, schema_version FROM system.peers";
+    private static final String SELECT_SCHEMA_PEERS = "SELECT peer, schema_version FROM system.peers";
     private static final String SELECT_SCHEMA_LOCAL = "SELECT schema_version FROM system.local WHERE key='local'";
 
     private final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
@@ -333,21 +333,16 @@ class ControlConnection implements Host.StateListener {
 
     private static InetSocketAddress addressToUseForPeerHost(Row peersRow, InetSocketAddress connectedHost, Cluster.Manager cluster) {
         InetAddress peer = peersRow.getInet("peer");
-        InetAddress addr = peersRow.getInet("rpc_address");
 
-        if (peer.equals(connectedHost.getAddress()) || (addr != null && addr.equals(connectedHost.getAddress()))) {
+        if (peer.equals(connectedHost.getAddress())) {
             // Some DSE versions were inserting a line for the local node in peers (with mostly null values). This has been fixed, but if we
             // detect that's the case, ignore it as it's not really a big deal.
             logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connectedHost);
             return null;
-        } else if (addr == null) {
-            logger.error("No rpc_address found for host {} in {}'s peers system table. That should not happen but using address {} instead", peer, connectedHost, peer);
-            addr = peer;
-        } else if (addr.equals(bindAllAddress)) {
-            logger.warn("Found host with 0.0.0.0 as rpc_address, using listen_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.", peer);
-            addr = peer;
         }
-        return cluster.translateAddress(addr);
+        // Always use the peer address which will be the publicly
+        // accessible IP address to connect to the Cassandra peer.
+        return cluster.translateAddress(peer);
     }
 
     private Row fetchNodeInfo(Host host, Connection c) {
