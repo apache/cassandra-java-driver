@@ -260,7 +260,8 @@ public abstract class TestUtils {
     // This is used because there is some delay between when a node has been
     // added through ccm and when it's actually available for querying
     public static void waitFor(String node, Cluster cluster) {
-        waitFor(node, cluster, 60, false, false);
+        // BUG: Used to be a 60 second wait: CASSANDRA-6558
+        waitFor(node, cluster, 250, false, false);
     }
 
     public static void waitFor(String node, Cluster cluster, int maxTry) {
@@ -268,11 +269,13 @@ public abstract class TestUtils {
     }
 
     public static void waitForDown(String node, Cluster cluster) {
-        waitFor(node, cluster, 60, true, false);
+        // BUG: Used to be a 60 second wait: CASSANDRA-6558
+        waitFor(node, cluster, 250, true, false);
     }
 
     public static void waitForDownWithWait(String node, Cluster cluster, int waitTime) {
-        waitFor(node, cluster, 60, true, false);
+        // BUG: Used to be a 60 second wait: CASSANDRA-6558
+        waitFor(node, cluster, 250, true, false);
 
         // FIXME: Once stop() works, remove this line
         try {

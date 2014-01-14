@@ -54,6 +54,7 @@ public class FetchingTest extends CCMBridge.PerClassSingleNodeCluster {
                 assertEquals(rs.one().getInt(0), i);
             }
 
+            // BUG: CASSANDRA-6555
             assertTrue(rs.isExhausted());
             assertTrue(rs.isFullyFetched());
 
