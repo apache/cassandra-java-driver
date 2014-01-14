@@ -248,7 +248,7 @@ public class CCMBridge {
         @AfterClass(groups = {"short", "long"})
         public static void discardCluster() {
             if (cluster != null)
-                cluster.shutdown();
+                cluster.close();
 
             if (cassandraCluster == null) {
                 logger.error("No cluster to discard");
@@ -338,7 +338,7 @@ public class CCMBridge {
 
         public void discard() {
             if (cluster != null)
-                cluster.shutdown();
+                cluster.close();
 
             if (cassandraCluster == null) {
                 logger.error("No cluster to discard");
