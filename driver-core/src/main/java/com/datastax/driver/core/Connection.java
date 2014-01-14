@@ -69,7 +69,7 @@ class Connection {
     private volatile boolean isDefunct;
     private volatile ConnectionException exception;
 
-    private final AtomicReference<ConnectionShutdownFuture> shutdownFuture = new AtomicReference<ConnectionShutdownFuture>();
+    private final AtomicReference<ConnectionCloseFuture> closeFuture = new AtomicReference<ConnectionCloseFuture>();
 
     /**
      * Create a new connection to a Cassandra node.
@@ -193,7 +193,7 @@ class Connection {
         exception = e;
         isDefunct = true;
         dispatcher.errorOutAllHandler(e);
-        close();
+        closeAsync();
         return e;
     }
 
@@ -311,16 +311,16 @@ class Connection {
     }
 
     public boolean isClosed() {
-        return shutdownFuture.get() != null;
+        return closeFuture.get() != null;
     }
 
-    public ShutdownFuture close() {
+    public CloseFuture closeAsync() {
 
-        ConnectionShutdownFuture future = new ConnectionShutdownFuture();
-        if (!shutdownFuture.compareAndSet(null, future))
+        ConnectionCloseFuture future = new ConnectionCloseFuture();
+        if (!closeFuture.compareAndSet(null, future))
         {
-            // Shutdown had already been called, return the existing future
-            return shutdownFuture.get();
+            // close had already been called, return the existing future
+            return closeFuture.get();
         }
 
         logger.trace("[{}] closing connection", name);
@@ -510,10 +510,10 @@ class Connection {
                 handler.cancelTimeout();
                 handler.callback.onSet(Connection.this, response, System.nanoTime() - handler.startTime);
 
-                // If we happen to be shutdown and we're the last outstanding request, we need to signal the shutdown future
+                // If we happen to be closed and we're the last outstanding request, we need to signal the close future
                 // (note: this is racy as the signaling can be called more than once, but that's not a problem)
                 if (isClosed() && pending.isEmpty())
-                    shutdownFuture.get().force();
+                    closeFuture.get().force();
             }
         }
 
@@ -563,10 +563,10 @@ class Connection {
         }
     }
 
-    private class ConnectionShutdownFuture extends ShutdownFuture {
+    private class ConnectionCloseFuture extends CloseFuture {
 
         @Override
-        public ConnectionShutdownFuture force() {
+        public ConnectionCloseFuture force() {
             // Note: we must not call releaseExternalResources on the bootstrap, because this shutdown the executors, which are shared
 
             // This method can be thrown during Connection ctor, at which point channel is not yet set. This is ok.
@@ -584,9 +584,9 @@ class Connection {
             future.addListener(new ChannelFutureListener() {
                 public void operationComplete(ChannelFuture future) {
                     if (future.getCause() != null)
-                        ConnectionShutdownFuture.this.setException(future.getCause());
+                        ConnectionCloseFuture.this.setException(future.getCause());
                     else
-                        ConnectionShutdownFuture.this.set(null);
+                        ConnectionCloseFuture.this.set(null);
                 }
             });
             return this;

@@ -48,10 +48,11 @@ Main API changes:
    in the same JVM). As a result, tools that were polling JMX informations will
    have to be updated accordingly.
 
-5. The Cluster and Session shutdown API has changed. There is now only one
-   shutdown method that is asynchronous but return a Future on the completion
-   of shutdown. Also, shutdown now waits for ongoing queries to complete by
-   default (but you can force the closing of all connections if you want to).
+5. The Cluster and Session shutdown API has changed. There is now a closeAsync
+   that is asynchronous but return a Future on the completion of the shutdown
+   process. And there is also a close shortcut that does the same but block.
+   Also, close now waits for ongoing queries to complete by default (but you
+   can force the closing of all connections if you want to).
 
 6. The QueryBuilder#raw method does not automatically add quotes anymore, but
    rather ouptut its result without an change (as the raw name implies). This

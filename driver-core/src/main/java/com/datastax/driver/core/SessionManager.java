@@ -40,7 +40,7 @@ class SessionManager implements Session {
     final Cluster cluster;
     final ConcurrentMap<Host, HostConnectionPool> pools;
     final HostConnectionPool.PoolState poolsState;
-    final AtomicReference<ShutdownFuture> shutdownFuture = new AtomicReference<ShutdownFuture>();
+    final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
     // Package protected, only Cluster should construct that.
     SessionManager(Cluster cluster, Collection<Host> hosts) {
@@ -109,20 +109,30 @@ class SessionManager implements Session {
         return prepared;
     }
 
-    public ShutdownFuture shutdown() {
-        ShutdownFuture future = shutdownFuture.get();
+    public CloseFuture closeAsync() {
+        CloseFuture future = closeFuture.get();
         if (future != null)
             return future;
 
-        List<ShutdownFuture> futures = new ArrayList<ShutdownFuture>(pools.size());
+        List<CloseFuture> futures = new ArrayList<CloseFuture>(pools.size());
         for (HostConnectionPool pool : pools.values())
-            futures.add(pool.shutdown());
+            futures.add(pool.closeAsync());
 
-        future = new ShutdownFuture.Forwarding(futures);
+        future = new CloseFuture.Forwarding(futures);
 
-        return shutdownFuture.compareAndSet(null, future)
+        return closeFuture.compareAndSet(null, future)
             ? future
-            : shutdownFuture.get(); // We raced, it's ok, return the future that was actually set
+            : closeFuture.get(); // We raced, it's ok, return the future that was actually set
+    }
+
+    public void close() {
+        try {
+            closeAsync().get();
+        } catch (ExecutionException e) {
+            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     public Cluster getCluster() {
@@ -185,8 +195,8 @@ class SessionManager implements Session {
         return cluster.manager.blockingTasksExecutor;
     }
 
-    boolean isShutdown() {
-        return shutdownFuture.get() != null;
+    boolean isClosed() {
+        return closeFuture.get() != null;
     }
 
     ListenableFuture<Boolean> addOrRenewPool(final Host host, final boolean isHostAddition) {
@@ -201,8 +211,8 @@ class SessionManager implements Session {
                 try {
                     HostConnectionPool previous = pools.put(host, new HostConnectionPool(host, distance, SessionManager.this));
                     if (previous != null)
-            previous.shutdown(); // The previous was probably already shutdown but that's ok
-        return true;
+                        previous.closeAsync(); // The previous was probably already shutdown but that's ok
+                    return true;
                 } catch (AuthenticationException e) {
                     logger.error("Error creating pool to {} ({})", host, e.getMessage());
                     cluster.manager.signalConnectionFailure(host, new ConnectionException(e.getHost(), e.getMessage()), isHostAddition);
@@ -221,10 +231,10 @@ class SessionManager implements Session {
         if (pool == null)
             return Futures.immediateFuture(null);
 
-        // Shutdown can take some time and we don't care about holding the thread on that.
+        // closeAsync can take some time and we don't care about holding the thread on that.
         return executor().submit(new Runnable() {
             public void run() {
-                pool.shutdown();
+                pool.closeAsync();
             }
         });
     }

@@ -97,7 +97,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
     private boolean query(Host host) {
         currentPool = manager.pools.get(host);
-        if (currentPool == null || currentPool.isShutdown())
+        if (currentPool == null || currentPool.isClosed())
             return false;
 
         Connection connection = null;

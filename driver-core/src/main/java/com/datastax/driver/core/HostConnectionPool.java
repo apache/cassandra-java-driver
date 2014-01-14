@@ -62,7 +62,7 @@ class HostConnectionPool {
 
     private final AtomicInteger scheduledForCreation = new AtomicInteger();
 
-    private final AtomicReference<ShutdownFuture> shutdownFuture = new AtomicReference<ShutdownFuture>();
+    private final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
     public HostConnectionPool(Host host, HostDistance hostDistance, SessionManager manager) throws ConnectionException {
         assert hostDistance != HostDistance.IGNORED;
@@ -99,7 +99,7 @@ class HostConnectionPool {
     }
 
     public Connection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
-        if (isShutdown())
+        if (isClosed())
             // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
             // That being said, maybe having a specific exception could be cleaner.
             throw new ConnectionException(host.getAddress(), "Pool is shutdown");
@@ -131,7 +131,7 @@ class HostConnectionPool {
 
         if (leastBusy == null) {
             // We could have raced with a shutdown since the last check
-            if (isShutdown())
+            if (isClosed())
                 throw new ConnectionException(host.getAddress(), "Pool is shutdown");
             // This might maybe happen if the number of core connections per host is 0 and a connection was trashed between
             // the previous check to connections and now. But in that case, the line above will have trigger the creation of
@@ -203,7 +203,7 @@ class HostConnectionPool {
                 timeout = 0; // this will make us stop the loop if we don't get a connection right away
             }
 
-            if (isShutdown())
+            if (isClosed())
                 throw new ConnectionException(host.getAddress(), "Pool is shutdown");
 
             int minInFlight = Integer.MAX_VALUE;
@@ -241,7 +241,7 @@ class HostConnectionPool {
 
         if (connection.isDefunct()) {
             if (manager.cluster.manager.signalConnectionFailure(host, connection.lastException(), false))
-                shutdown();
+                closeAsync();
             else
                 replace(connection);
         } else {
@@ -305,7 +305,7 @@ class HostConnectionPool {
                 break;
         }
 
-        if (isShutdown()) {
+        if (isClosed()) {
             open.decrementAndGet();
             return false;
         }
@@ -324,13 +324,13 @@ class HostConnectionPool {
             open.decrementAndGet();
             logger.debug("Connection error to {} while creating additional connection", host);
             if (manager.cluster.manager.signalConnectionFailure(host, e, false))
-                shutdown();
+                closeAsync();
             return false;
         } catch (AuthenticationException e) {
             // This shouldn't really happen in theory
             open.decrementAndGet();
             logger.error("Authentication error while creating additional connection (error is: {})", e.getMessage());
-            shutdown();
+            closeAsync();
             return false;
         }
     }
@@ -354,7 +354,7 @@ class HostConnectionPool {
         manager.blockingExecutor().submit(new Runnable() {
             @Override
             public void run() {
-                connection.close();
+                connection.closeAsync();
                 addConnectionIfUnderMaximum();
             }
         });
@@ -364,18 +364,18 @@ class HostConnectionPool {
         manager.blockingExecutor().submit(new Runnable() {
             @Override
             public void run() {
-                connection.close();
+                connection.closeAsync();
             }
         });
     }
 
-    public boolean isShutdown() {
-        return shutdownFuture.get() != null;
+    public boolean isClosed() {
+        return closeFuture.get() != null;
     }
 
-    public ShutdownFuture shutdown() {
+    public CloseFuture closeAsync() {
 
-        ShutdownFuture future = shutdownFuture.get();
+        CloseFuture future = closeFuture.get();
         if (future != null)
             return future;
 
@@ -384,22 +384,22 @@ class HostConnectionPool {
         // Wake up all threads that waits
         signalAllAvailableConnection();
 
-        future = new ShutdownFuture.Forwarding(discardAvailableConnections());
+        future = new CloseFuture.Forwarding(discardAvailableConnections());
 
-        return shutdownFuture.compareAndSet(null, future)
+        return closeFuture.compareAndSet(null, future)
              ? future
-             : shutdownFuture.get(); // We raced, it's ok, return the future that was actually set
+             : closeFuture.get(); // We raced, it's ok, return the future that was actually set
     }
 
     public int opened() {
         return open.get();
     }
 
-    private List<ShutdownFuture> discardAvailableConnections() {
+    private List<CloseFuture> discardAvailableConnections() {
 
-        List<ShutdownFuture> futures = new ArrayList<ShutdownFuture>(connections.size());
+        List<CloseFuture> futures = new ArrayList<CloseFuture>(connections.size());
         for (Connection connection : connections) {
-            ShutdownFuture future = connection.close();
+            CloseFuture future = connection.closeAsync();
             future.addListener(new Runnable() {
                 public void run() {
                     open.decrementAndGet();
@@ -413,7 +413,7 @@ class HostConnectionPool {
     // This creates connections if we have less than core connections (if we
     // have more than core, connection will just get trash when we can).
     public void ensureCoreConnections() {
-        if (isShutdown())
+        if (isClosed())
             return;
 
         // Note: this process is a bit racy, but it doesn't matter since we're still guaranteed to not create

@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.io.Closeable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
@@ -55,7 +56,7 @@ import com.datastax.driver.core.policies.*;
  * the nodes currently in the cluster as well as new nodes joining the cluster
  * subsequently.
  */
-public class Cluster {
+public class Cluster implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
 
@@ -322,24 +323,40 @@ public class Cluster {
 
     /**
      * Initiates a shutdown of this cluster instance.
-     *
+     * <p>
      * This method is asynchronous and return a future on the completion
      * of the shutdown process. As soon a the cluster is shutdown, no
      * new request will be accepted, but already submitted queries are
-     * allowed to complete. Shutdown closes all connections from all
+     * allowed to complete. This method closes all connections from all
      * sessions and reclaims all ressources used by this Cluster
      * instance.
      * <p>
      * If for some reason you wish to expedite this process, the
-     * {@link ShutdownFuture#force} can be called on the result future.
+     * {@link CloseFuture#force} can be called on the result future.
      * <p>
-     * This method has no particular effect if the cluster was already shut
-     * down (in which case the returned future will return immediately).
+     * This method has no particular effect if the cluster was already closed
+     * (in which case the returned future will return immediately).
      *
-     * @return a future on the completion of the shtudown process.
+     * @return a future on the completion of the shutdown process.
      */
-    public ShutdownFuture shutdown() {
-        return manager.shutdown();
+    public CloseFuture closeAsync() {
+        return manager.close();
+    }
+
+    /**
+     * Initiates a shutdown of this cluster instance and blocks until
+     * that shutdown completes.
+     * <p>
+     * This method is a shortcut for {@code closeAsync().get()}.
+     */
+    public void close() {
+        try {
+            closeAsync().get();
+        } catch (ExecutionException e) {
+            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     /**
@@ -842,7 +859,7 @@ public class Cluster {
         // An executor for tasks that migth block some time, like creating new connection, but are generally not too critical.
         final ListeningExecutorService blockingTasksExecutor;
 
-        final AtomicReference<ShutdownFuture> shutdownFuture = new AtomicReference<ShutdownFuture>();
+        final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
         // All the queries that have been prepared (we keep them so we can re-prepared them when a node fail or a
         // new one join the cluster).
@@ -899,7 +916,7 @@ public class Cluster {
             try {
                 controlConnection.connect();
             } catch (NoHostAvailableException e) {
-                shutdown();
+                close();
                 throw e;
             }
         }
@@ -930,13 +947,13 @@ public class Cluster {
             }
         }
 
-        boolean isShutdown() {
-            return shutdownFuture.get() != null;
+        boolean isClosed() {
+            return closeFuture.get() != null;
         }
 
-        private ShutdownFuture shutdown() {
+        private CloseFuture close() {
 
-            ShutdownFuture future = shutdownFuture.get();
+            CloseFuture future = closeFuture.get();
             if (future != null)
                 return future;
 
@@ -953,24 +970,24 @@ public class Cluster {
                 metrics.shutdown();
 
             // Then we shutdown all connections
-            List<ShutdownFuture> futures = new ArrayList<ShutdownFuture>(sessions.size() + 1);
-            futures.add(controlConnection.shutdown());
+            List<CloseFuture> futures = new ArrayList<CloseFuture>(sessions.size() + 1);
+            futures.add(controlConnection.closeAsync());
             for (Session session : sessions)
-                futures.add(session.shutdown());
+                futures.add(session.closeAsync());
 
-            future = new ClusterShutdownFuture(futures);
+            future = new ClusterCloseFuture(futures);
 
             // The rest will happen asynchonrously, when all connections are successfully closed
-            return shutdownFuture.compareAndSet(null, future)
+            return closeFuture.compareAndSet(null, future)
                  ? future
-                 : shutdownFuture.get(); // We raced, it's ok, return the future that was actually set
+                 : closeFuture.get(); // We raced, it's ok, return the future that was actually set
         }
 
         @Override
         public void onUp(final Host host) {
             logger.trace("Host {} is UP", host);
 
-            if (isShutdown())
+            if (isClosed())
                 return;
 
             if (host.isUp())
@@ -1043,7 +1060,7 @@ public class Cluster {
         public void onDown(final Host host, final boolean isHostAddition) {
             logger.trace("Host {} is DOWN", host);
 
-            if (isShutdown())
+            if (isClosed())
                 return;
 
             // Note: we don't want to skip that method if !host.isUp() because we set isUp
@@ -1104,7 +1121,7 @@ public class Cluster {
         public void onAdd(final Host host) {
             logger.trace("Adding new host {}", host);
 
-            if (isShutdown())
+            if (isClosed())
                 return;
 
             try {
@@ -1154,7 +1171,7 @@ public class Cluster {
 
         @Override
         public void onRemove(Host host) {
-            if (isShutdown())
+            if (isClosed())
                 return;
 
             host.setDown();
@@ -1267,7 +1284,7 @@ public class Cluster {
                         }
                     }
                 } finally {
-                    connection.close();
+                    connection.closeAsync();
                 }
             } catch (ConnectionException e) {
                 // Ignore, not a big deal
@@ -1419,14 +1436,14 @@ public class Cluster {
             return 0;
         }
 
-        private class ClusterShutdownFuture extends ShutdownFuture.Forwarding {
+        private class ClusterCloseFuture extends CloseFuture.Forwarding {
 
-            ClusterShutdownFuture(List<ShutdownFuture> futures) {
+            ClusterCloseFuture(List<CloseFuture> futures) {
                 super(futures);
             }
 
             @Override
-            public ShutdownFuture force() {
+            public CloseFuture force() {
                 reconnectionExecutor.shutdownNow();
                 scheduledTasksExecutor.shutdownNow();
                 executor.shutdownNow();

@@ -78,12 +78,12 @@ class ControlConnection implements Host.StateListener {
         setNewConnection(reconnectInternal());
     }
 
-    public ShutdownFuture shutdown() {
+    public CloseFuture closeAsync() {
         // We don't have to be fancy here. We just set a flag so that we stop trying to reconnect (and thus change the
         // connection used) and shutdown the current one.
         isShutdown = true;
         Connection connection = connectionRef.get();
-        return connection == null ? ShutdownFuture.immediateFuture() : connection.close();
+        return connection == null ? CloseFuture.immediateFuture() : connection.closeAsync();
     }
 
     private void reconnect() {
@@ -146,7 +146,7 @@ class ControlConnection implements Host.StateListener {
         logger.debug("[Control connection] Successfully connected to {}", newConnection.address);
         Connection old = connectionRef.getAndSet(newConnection);
         if (old != null && !old.isClosed())
-            old.close();
+            old.closeAsync();
     }
 
     private Connection reconnectInternal() {
