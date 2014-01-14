@@ -355,7 +355,7 @@ class ControlConnection implements Host.StateListener {
                 logger.error("No rpc_address found for host {} in {}'s peers system table. That should not happen but using address {} instead", addr, connection.address, addr);
                 addr = peer;
             } else if (addr.equals(bindAllAddress)) {
-                logger.warn("Host {} has 0.0.0.0 as rpc_address, using listen_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.");
+                logger.warn("Peer has 0.0.0.0 as rpc_address, using peer address {} to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.", peer);
                 addr = peer;
             }
 
