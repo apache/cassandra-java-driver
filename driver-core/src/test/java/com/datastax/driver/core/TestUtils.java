@@ -286,6 +286,11 @@ public abstract class TestUtils {
         waitFor(node, cluster, maxTry, true, false);
     }
 
+    public static void stopAndWait(CCMBridge.CCMCluster c, int node) {
+        c.cassandraCluster.stop(node);
+        waitForDownWithWait(CCMBridge.IP_PREFIX + node, c.cluster, 5);
+    }
+
     public static void waitForDecommission(String node, Cluster cluster) {
         waitFor(node, cluster, 30, true, true);
     }
