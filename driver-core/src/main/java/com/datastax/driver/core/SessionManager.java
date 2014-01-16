@@ -144,8 +144,9 @@ class SessionManager implements Session {
                         case PREPARED:
                             ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
                             PreparedStatement stmt = PreparedStatement.fromMessage(pmsg, cluster.getMetadata(), query, poolsState.keyspace);
+                            cluster.manager.addPrepared(stmt);
                             try {
-                                cluster.manager.prepare(stmt, future.getAddress());
+                                prepare(stmt.getQueryString(), future.getAddress());
                             } catch (InterruptedException e) {
                                 Thread.currentThread().interrupt();
                                 // This method doesn't propagate interruption, at least not for now. However, if we've
