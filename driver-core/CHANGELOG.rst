@@ -5,6 +5,7 @@ CHANGELOG
 ------
 
 - [improvement] Make most main objects interface to facilitate testing/mocking (JAVA-195)
+- [improvement] Avoid preparing a statement multiple time per host with multiple sessions
 - [bug] Fix potential thread leaks when shutting down Metrics (JAVA-232)
 - [bug] Fix potential NPE in HostConnectionPool (JAVA-231)
 
