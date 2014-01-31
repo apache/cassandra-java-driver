@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import org.apache.cassandra.db.marshal.*;
@@ -404,7 +405,8 @@ public class TableMetadata {
             and(appendClusteringOrder(sb), formatted);
         sb.append("read_repair_chance = ").append(options.readRepair);
         and(sb, formatted).append("dclocal_read_repair_chance = ").append(options.localReadRepair);
-        and(sb, formatted).append("replicate_on_write = ").append(options.replicateOnWrite);
+        if (options.replicateOnWrite.isPresent())
+            and(sb, formatted).append("replicate_on_write = ").append(options.replicateOnWrite.get());
         and(sb, formatted).append("gc_grace_seconds = ").append(options.gcGrace);
         and(sb, formatted).append("bloom_filter_fp_chance = ").append(options.bfFpChance);
         and(sb, formatted).append("caching = '").append(options.caching).append("'");
@@ -488,7 +490,7 @@ public class TableMetadata {
         private final String comment;
         private final double readRepair;
         private final double localReadRepair;
-        private final boolean replicateOnWrite;
+        private final Optional<Boolean> replicateOnWrite;
         private final int gcGrace;
         private final double bfFpChance;
         private final String caching;
@@ -501,7 +503,9 @@ public class TableMetadata {
             this.comment = row.isNull(COMMENT) ? "" : row.getString(COMMENT);
             this.readRepair = row.getDouble(READ_REPAIR);
             this.localReadRepair = row.getDouble(LOCAL_READ_REPAIR);
-            this.replicateOnWrite = row.isNull(REPLICATE_ON_WRITE) ? true : row.getBool(REPLICATE_ON_WRITE);
+            this.replicateOnWrite = row.getColumnDefinitions().contains(REPLICATE_ON_WRITE)
+                                        ? Optional.of(row.getBool(REPLICATE_ON_WRITE))
+                                        : Optional.<Boolean>absent();
             this.gcGrace = row.getInt(GC_GRACE);
             this.bfFpChance = row.isNull(BF_FP_CHANCE) ? DEFAULT_BF_FP_CHANCE : row.getDouble(BF_FP_CHANCE);
             this.caching = row.getString(CACHING);
@@ -553,10 +557,14 @@ public class TableMetadata {
          * Returns whether replicateOnWrite is set for this table.
          *
          * This is only meaningful for tables holding counters.
+         * Post C* 2.1 (CASSANDRA-6504) this is not stored in
+         * system.schema_columnfamilies, so there may not even
+         * be a replicate_on_write setting for a given table, hence
+         * the Optional<Boolean>
          *
          * @return whether replicateOnWrite is set for this table.
          */
-        public boolean getReplicateOnWrite() {
+        public Optional<Boolean> getReplicateOnWrite() {
             return replicateOnWrite;
         }
 
