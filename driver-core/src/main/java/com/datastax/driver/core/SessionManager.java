@@ -149,8 +149,11 @@ class SessionManager implements Session {
                         case PREPARED:
                             Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
                             DefaultPreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), query, poolsState.keyspace);
+                            cluster.manager.addPrepared(stmt);
                             try {
-                                cluster.manager.prepare(stmt, future.getAddress());
+                                // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
+                                // If that changes, we'll have to make sure this propagate to other sessions too.
+                                prepare(stmt.getQueryString(), future.getAddress());
                             } catch (InterruptedException e) {
                                 Thread.currentThread().interrupt();
                                 // This method doesn't propagate interruption, at least not for now. However, if we've
@@ -344,7 +347,7 @@ class SessionManager implements Session {
         new RequestHandler(this, callback, statement).sendRequest();
     }
 
-    void prepare(String query, InetAddress toExclude) throws InterruptedException {
+    private void prepare(String query, InetAddress toExclude) throws InterruptedException {
         for (Map.Entry<Host, HostConnectionPool> entry : pools.entrySet()) {
             if (entry.getKey().getAddress().equals(toExclude))
                 continue;

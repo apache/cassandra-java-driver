@@ -11,6 +11,10 @@ CHANGELOG
 - [bug] Fix potential NPE in HostConnectionPool (JAVA-231)
 - [bug] Avoid NPE when node is in an unconfigured DC (JAVA-244)
 
+Merged from 1.0 branch:
+
+- [improvement] Avoid preparing a statement multiple time per host with multiple sessions
+
 
 2.0.0-rc2:
 ----------
