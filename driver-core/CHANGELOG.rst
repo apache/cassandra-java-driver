@@ -14,6 +14,7 @@ CHANGELOG
 Merged from 1.0 branch:
 
 - [improvement] Avoid preparing a statement multiple time per host with multiple sessions
+- [bug] Make sure connections are returned to the right pools (JAVA-255)
 
 
 2.0.0-rc2:

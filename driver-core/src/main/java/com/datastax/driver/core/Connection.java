@@ -79,7 +79,7 @@ class Connection {
      * @throws ConnectionException if the connection attempts fails or is
      * refused by the server.
      */
-    private Connection(String name, InetAddress address, Factory factory) throws ConnectionException, InterruptedException {
+    protected Connection(String name, InetAddress address, Factory factory) throws ConnectionException, InterruptedException {
         this.address = address;
         this.factory = factory;
         this.name = name;
@@ -383,6 +383,19 @@ class Connection {
 
             String name = address.toString() + "-" + getIdGenerator(host).getAndIncrement();
             return new Connection(name, address, this);
+        }
+
+        /**
+         * Same as open, but associate the created connection to the provided connection pool.
+         */
+        public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException {
+            InetAddress address = pool.host.getAddress();
+
+            if (isShutdown)
+                throw new ConnectionException(address, "Connection factory is shut down");
+
+            String name = address.toString() + "-" + getIdGenerator(pool.host).getAndIncrement();
+            return new PooledConnection(name, address, this, pool);
         }
 
         private AtomicInteger getIdGenerator(Host host) {
