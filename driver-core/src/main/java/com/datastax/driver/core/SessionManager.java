@@ -307,7 +307,7 @@ class SessionManager implements Session {
 
             // Let's not wait too long if we can't get a connection. Things
             // will fix themselves once the user tries a query anyway.
-            Connection c = null;
+            PooledConnection c = null;
             try {
                 c = entry.getValue().borrowConnection(200, TimeUnit.MILLISECONDS);
                 c.write(new PrepareMessage(query)).get();
@@ -323,7 +323,7 @@ class SessionManager implements Session {
                 logger.error(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), e);
             } finally {
                 if (c != null)
-                    entry.getValue().returnConnection(c);
+                    c.release();
             }
         }
     }

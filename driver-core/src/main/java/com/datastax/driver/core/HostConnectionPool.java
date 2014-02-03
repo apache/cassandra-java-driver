@@ -48,7 +48,7 @@ class HostConnectionPool {
     public volatile HostDistance hostDistance;
     private final SessionManager manager;
 
-    private final List<Connection> connections;
+    private final List<PooledConnection> connections;
     private final AtomicInteger open;
     private final AtomicBoolean isShutdown = new AtomicBoolean();
     private final Set<Connection> trash = new CopyOnWriteArraySet<Connection>();
@@ -76,16 +76,16 @@ class HostConnectionPool {
         };
 
         // Create initial core connections
-        List<Connection> l = new ArrayList<Connection>(options().getCoreConnectionsPerHost(hostDistance));
+        List<PooledConnection> l = new ArrayList<PooledConnection>(options().getCoreConnectionsPerHost(hostDistance));
         try {
             for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
-                l.add(manager.connectionFactory().open(host));
+                l.add(manager.connectionFactory().open(this));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             // If asked to interrupt, we can skip opening core connections, the pool will still work.
             // But we ignore otherwise cause I'm not sure we can do much better currently.
         }
-        this.connections = new CopyOnWriteArrayList<Connection>(l);
+        this.connections = new CopyOnWriteArrayList<PooledConnection>(l);
         this.open = new AtomicInteger(connections.size());
 
         logger.trace("Created connection pool to host {}", host);
@@ -95,7 +95,7 @@ class HostConnectionPool {
         return manager.configuration().getPoolingOptions();
     }
 
-    public Connection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
+    public PooledConnection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
         if (isShutdown.get())
             // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
             // That being said, maybe having a specific exception could be cleaner.
@@ -108,14 +108,14 @@ class HostConnectionPool {
                 scheduledForCreation.incrementAndGet();
                 manager.blockingExecutor().submit(newConnectionTask);
             }
-            Connection c = waitForConnection(timeout, unit);
+            PooledConnection c = waitForConnection(timeout, unit);
             c.setKeyspace(manager.poolsState.keyspace);
             return c;
         }
 
         int minInFlight = Integer.MAX_VALUE;
-        Connection leastBusy = null;
-        for (Connection connection : connections) {
+        PooledConnection leastBusy = null;
+        for (PooledConnection connection : connections) {
             int inFlight = connection.inFlight.get();
             if (inFlight < minInFlight) {
                 minInFlight = inFlight;
@@ -188,7 +188,7 @@ class HostConnectionPool {
         }
     }
 
-    private Connection waitForConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
+    private PooledConnection waitForConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
         long start = System.nanoTime();
         long remaining = timeout;
         do {
@@ -204,8 +204,8 @@ class HostConnectionPool {
                 throw new ConnectionException(host.getAddress(), "Pool is shutdown");
 
             int minInFlight = Integer.MAX_VALUE;
-            Connection leastBusy = null;
-            for (Connection connection : connections) {
+            PooledConnection leastBusy = null;
+            for (PooledConnection connection : connections) {
                 int inFlight = connection.inFlight.get();
                 if (inFlight < minInFlight) {
                     minInFlight = inFlight;
@@ -233,7 +233,12 @@ class HostConnectionPool {
         throw new TimeoutException();
     }
 
-    public void returnConnection(Connection connection) {
+    public void returnConnection(PooledConnection connection) {
+        if (isShutdown.get()) {
+            close(connection);
+            return;
+        }
+
         int inFlight = connection.inFlight.decrementAndGet();
 
         if (connection.isDefunct()) {
@@ -261,13 +266,13 @@ class HostConnectionPool {
 
     // Trash the connection and create a new one, but we don't call trashConnection
     // directly because we want to make sure the connection is always trashed.
-    private void replaceConnection(Connection connection) {
+    private void replaceConnection(PooledConnection connection) {
         open.decrementAndGet();
         maybeSpawnNewConnection();
         doTrashConnection(connection);
     }
 
-    private boolean trashConnection(Connection connection) {
+    private boolean trashConnection(PooledConnection connection) {
         // First, make sure we don't go below core connections
         for(;;) {
             int opened = open.get();
@@ -282,7 +287,7 @@ class HostConnectionPool {
         return true;
     }
 
-    private void doTrashConnection(Connection connection) {
+    private void doTrashConnection(PooledConnection connection) {
         trash.add(connection);
         connections.remove(connection);
 
@@ -309,7 +314,7 @@ class HostConnectionPool {
 
         // Now really open the connection
         try {
-            connections.add(manager.connectionFactory().open(host));
+            connections.add(manager.connectionFactory().open(this));
             signalAvailableConnection();
             return true;
         } catch (InterruptedException e) {

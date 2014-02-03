@@ -105,7 +105,7 @@ class RequestHandler implements Connection.ResponseCallback {
         if (currentPool == null || currentPool.isShutdown())
             return false;
 
-        Connection connection = null;
+        PooledConnection connection = null;
         try {
             // Note: this is not perfectly correct to use getConnectTimeoutMillis(), but
             // until we provide a more fancy to control query timeouts, it's not a bad solution either
@@ -123,13 +123,13 @@ class RequestHandler implements Connection.ResponseCallback {
             if (metricsEnabled())
                 metrics().getErrorMetrics().getConnectionErrors().inc();
             if (connection != null)
-                currentPool.returnConnection(connection);
+                connection.release();
             logError(host.getAddress(), e.getMessage());
             return false;
         } catch (BusyConnectionException e) {
             // The pool shoudln't have give us a busy connection unless we've maxed up the pool, so move on to the next host.
             if (connection != null)
-                currentPool.returnConnection(connection);
+                connection.release();
             logError(host.getAddress(), e.getMessage());
             return false;
         } catch (TimeoutException e) {
@@ -138,7 +138,7 @@ class RequestHandler implements Connection.ResponseCallback {
             return false;
         } catch (RuntimeException e) {
             if (connection != null)
-                currentPool.returnConnection(connection);
+                connection.release();
             logger.error("Unexpected error while querying " + host.getAddress(), e);
             logError(host.getAddress(), e.getMessage());
             return false;
@@ -216,21 +216,10 @@ class RequestHandler implements Connection.ResponseCallback {
         callback.onException(connection, exception, System.nanoTime() - startTime);
     }
 
-    private void returnConnection(Connection connection) {
-        // In most case currentPool won't be null since we set it before sending the
-        // query. However, it's possible that for the same write we call both onSet
-        // and onException (especially if a node dies, we'll error out the handler and
-        // that may race with a result that just came in before the death). That fine
-        // though, but it means currentPool might be null (in which case the connection
-        // has been returned already to its pool anyway).
-        if (currentPool != null)
-            currentPool.returnConnection(connection);
-    }
-
     @Override
     public void onSet(Connection connection, Message.Response response, long latency) {
-
-        returnConnection(connection);
+        if (connection instanceof PooledConnection)
+            ((PooledConnection)connection).release();
 
         Host queriedHost = current;
         try {
@@ -416,8 +405,8 @@ class RequestHandler implements Connection.ResponseCallback {
 
     @Override
     public void onException(Connection connection, Exception exception, long latency) {
-
-        returnConnection(connection);
+        if (connection instanceof PooledConnection)
+            ((PooledConnection)connection).release();
 
         Host queriedHost = current;
         try {
@@ -439,7 +428,9 @@ class RequestHandler implements Connection.ResponseCallback {
 
     @Override
     public void onTimeout(Connection connection, long latency) {
-        returnConnection(connection);
+        if (connection instanceof PooledConnection)
+            ((PooledConnection)connection).release();
+
         Host queriedHost = current;
         logError(connection.address, "Timeout during read");
         retry(false, null);

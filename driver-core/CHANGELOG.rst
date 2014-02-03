@@ -8,6 +8,7 @@ CHANGELOG
 - [improvement] Avoid preparing a statement multiple time per host with multiple sessions
 - [bug] Fix potential thread leaks when shutting down Metrics (JAVA-232)
 - [bug] Fix potential NPE in HostConnectionPool (JAVA-231)
+- [bug] Make sure connections are returned to the right pools (JAVA-255)
 
 
 1.0.5:
