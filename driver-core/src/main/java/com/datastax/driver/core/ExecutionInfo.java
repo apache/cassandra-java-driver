@@ -100,6 +100,11 @@ public class ExecutionInfo
      * policy, this method will <b>always</b> return {@code null}. However, it
      * might occasionally return a non-{@code null} with say,
      * {@link com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy}.
+     *
+     * @return {@code null} if the original consistency level of the query was
+     * achieved, or the consistency level that was ultimately achieved if the
+     * {@code RetryPolicy} triggered a retry at a different consistency level
+     * than the original one.
      */
     public ConsistencyLevel getAchievedConsistencyLevel() {
         return achievedConsistency;
