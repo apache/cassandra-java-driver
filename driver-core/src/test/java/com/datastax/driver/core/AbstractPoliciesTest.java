@@ -99,6 +99,17 @@ public abstract class AbstractPoliciesTest {
         }
     }
 
+    protected int getQueried(String host) {
+        try {
+            if (coordinators.containsKey(InetAddress.getByName(host)))
+                return coordinators.get(InetAddress.getByName(host));
+            else
+                return 0;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     protected void failDebug(String message) {
         if (DEBUG)
             System.out.println(message);
