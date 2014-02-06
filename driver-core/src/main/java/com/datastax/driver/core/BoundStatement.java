@@ -863,8 +863,12 @@ public class BoundStatement extends Query {
         return statement.metadata;
     }
 
-    private BoundStatement setValue(int i, ByteBuffer value) {
+    public BoundStatement setValue(int i, ByteBuffer value) {
         values[i] = value;
         return this;
+    }
+
+    public ByteBuffer[] getValues() {
+        return Arrays.copyOf(values, values.length);
     }
 }
