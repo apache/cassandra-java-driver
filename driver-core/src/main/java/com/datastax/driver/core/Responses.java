@@ -172,22 +172,30 @@ class Responses {
 
     public static abstract class Result extends Message.Response {
 
-        public static final Message.Decoder<Result> decoder = new Message.Decoder<Result>() {
+        public static final Message.Decoder<Result> decoderV1 = new Message.Decoder<Result>() {
             public Result decode(ChannelBuffer body) {
                 Kind kind = Kind.fromId(body.readInt());
-                return kind.subDecoder.decode(body);
+                return kind.subDecoderV1.decode(body);
+            }
+        };
+
+        public static final Message.Decoder<Result> decoderV2 = new Message.Decoder<Result>() {
+            public Result decode(ChannelBuffer body) {
+                Kind kind = Kind.fromId(body.readInt());
+                return kind.subDecoderV2.decode(body);
             }
         };
 
         public enum Kind {
-            VOID         (1, Void.subcodec),
-            ROWS         (2, Rows.subcodec),
-            SET_KEYSPACE (3, SetKeyspace.subcodec),
-            PREPARED     (4, Prepared.subcodec),
-            SCHEMA_CHANGE(5, SchemaChange.subcodec);
+            VOID         (1, Void.subcodec, Void.subcodec),
+            ROWS         (2, Rows.subcodec, Rows.subcodec),
+            SET_KEYSPACE (3, SetKeyspace.subcodec, SetKeyspace.subcodec),
+            PREPARED     (4, Prepared.subcodecV1, Prepared.subcodecV2),
+            SCHEMA_CHANGE(5, SchemaChange.subcodec, SchemaChange.subcodec);
 
             private final int id;
-            private final Message.Decoder<Result> subDecoder;
+            private final Message.Decoder<Result> subDecoderV1;
+            private final Message.Decoder<Result> subDecoderV2;
 
             private static final Kind[] ids;
             static {
@@ -202,9 +210,10 @@ class Responses {
                 }
             }
 
-            private Kind(int id, Message.Decoder<Result> subDecoder) {
+            private Kind(int id, Message.Decoder<Result> subDecoderV1, Message.Decoder<Result> subDecoderV2) {
                 this.id = id;
-                this.subDecoder = subDecoder;
+                this.subDecoderV1 = subDecoderV1;
+                this.subDecoderV2 = subDecoderV2;
             }
 
             public static Kind fromId(int id) {
@@ -289,6 +298,8 @@ class Responses {
                         return i;
                     }
                 }
+
+                static final Metadata EMPTY = new Metadata(0, null, null);
 
                 public final int columnCount;
                 public final ColumnDefinitions columns; // Can be null if no metadata was asked by the query
@@ -408,7 +419,15 @@ class Responses {
 
         public static class Prepared extends Result {
 
-            public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+            public static final Message.Decoder<Result> subcodecV1 = new Message.Decoder<Result>() {
+                public Result decode(ChannelBuffer body) {
+                    MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
+                    Rows.Metadata metadata = Rows.Metadata.decode(body);
+                    return new Prepared(id, metadata, Rows.Metadata.EMPTY);
+                }
+            };
+
+            public static final Message.Decoder<Result> subcodecV2 = new Message.Decoder<Result>() {
                 public Result decode(ChannelBuffer body) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
                     Rows.Metadata metadata = Rows.Metadata.decode(body);
@@ -489,7 +508,14 @@ class Responses {
 
     public static class AuthChallenge extends Message.Response {
 
-        public static final Message.Decoder<AuthChallenge> decoder = new Message.Decoder<AuthChallenge>() {
+        public static final Message.Decoder<AuthChallenge> decoderV1 = new Message.Decoder<AuthChallenge>() {
+            public AuthChallenge decode(ChannelBuffer body) {
+                // AUTH_CHALLENGE is protocol v2 only.
+                throw new DriverInternalError("Got AUTH_CHALLENGE in protocol V1, this shouldn't happend since AUTH_CHALLENGE is a protocol V2 only message");
+            }
+        };
+
+        public static final Message.Decoder<AuthChallenge> decoderV2 = new Message.Decoder<AuthChallenge>() {
             public AuthChallenge decode(ChannelBuffer body) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
@@ -511,7 +537,14 @@ class Responses {
 
     public static class AuthSuccess extends Message.Response {
 
-        public static final Message.Decoder<AuthSuccess> decoder = new Message.Decoder<AuthSuccess>() {
+        public static final Message.Decoder<AuthSuccess> decoderV1 = new Message.Decoder<AuthSuccess>() {
+            public AuthSuccess decode(ChannelBuffer body) {
+                // AUTH_SUCCESS is protocol v2 only.
+                throw new DriverInternalError("Got AUTH_SUCCESS in protocol V1, this shouldn't happend since AUTH_SUCCESS is a protocol V2 only message");
+            }
+        };
+
+        public static final Message.Decoder<AuthSuccess> decoderV2 = new Message.Decoder<AuthSuccess>() {
             public AuthSuccess decode(ChannelBuffer body) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)

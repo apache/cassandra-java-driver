@@ -62,6 +62,28 @@ class Requests {
         }
     }
 
+    // Only for protocol v1
+    public static class Credentials extends Message.Request {
+
+        public static final Message.Coder<Credentials> coder = new Message.Coder<Credentials>() {
+
+            public void encode(Credentials msg, ChannelBuffer dest) {
+                CBUtil.writeStringMap(msg.credentials, dest);
+            }
+
+            public int encodedSize(Credentials msg) {
+                return CBUtil.sizeOfStringMap(msg.credentials);
+            }
+        };
+
+        private final Map<String, String> credentials;
+
+        public Credentials(Map<String, String> credentials) {
+            super(Message.Request.Type.CREDENTIALS);
+            this.credentials = credentials;
+        }
+    }
+
     public static class Options extends Message.Request {
 
         public static final Message.Coder<Options> coder = new Message.Coder<Options>()
@@ -85,7 +107,19 @@ class Requests {
 
     public static class Query extends Message.Request {
 
-        public static final Message.Coder<Query> coder = new Message.Coder<Query>() {
+        public static final Message.Coder<Query> coderV1 = new Message.Coder<Query>() {
+            public void encode(Query msg, ChannelBuffer dest) {
+                CBUtil.writeLongString(msg.query, dest);
+                CBUtil.writeConsistencyLevel(msg.options.consistency, dest);
+            }
+
+            public int encodedSize(Query msg) {
+                return CBUtil.sizeOfLongString(msg.query)
+                     + CBUtil.sizeOfConsistencyLevel(msg.options.consistency);
+            }
+        };
+
+        public static final Message.Coder<Query> coderV2 = new Message.Coder<Query>() {
             public void encode(Query msg, ChannelBuffer dest) {
                 CBUtil.writeLongString(msg.query, dest);
                 msg.options.encode(dest);
@@ -118,7 +152,21 @@ class Requests {
 
     public static class Execute extends Message.Request {
 
-        public static final Message.Coder<Execute> coder = new Message.Coder<Execute>() {
+        public static final Message.Coder<Execute> coderV1 = new Message.Coder<Execute>() {
+            public void encode(Execute msg, ChannelBuffer dest) {
+                CBUtil.writeBytes(msg.statementId.bytes, dest);
+                CBUtil.writeValueList(msg.options.values, dest);
+                CBUtil.writeConsistencyLevel(msg.options.consistency, dest);
+            }
+
+            public int encodedSize(Execute msg) {
+                return CBUtil.sizeOfBytes(msg.statementId.bytes)
+                     + CBUtil.sizeOfValueList(msg.options.values)
+                     + CBUtil.sizeOfConsistencyLevel(msg.options.consistency);
+            }
+        };
+
+        public static final Message.Coder<Execute> coderV2 = new Message.Coder<Execute>() {
             public void encode(Execute msg, ChannelBuffer dest) {
                 CBUtil.writeBytes(msg.statementId.bytes, dest);
                 msg.options.encode(dest);
