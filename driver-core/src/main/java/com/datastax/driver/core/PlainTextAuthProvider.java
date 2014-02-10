@@ -18,6 +18,9 @@ package com.datastax.driver.core;
 import javax.security.sasl.SaslException;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
+import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
 
 /**
  * A simple {@code AuthProvider} implementation.
@@ -28,7 +31,7 @@ import java.nio.charset.Charset;
  * authentication using the PLAIN mechanism for version 2 of the
  * CQL native protocol.
  */
-public class PlainTextAuthProvider implements AuthProvider {
+public class PlainTextAuthProvider extends ProtocolV1Authenticator implements AuthProvider {
 
     private final String username;
     private final String password;
@@ -92,5 +95,10 @@ public class PlainTextAuthProvider implements AuthProvider {
         public void onAuthenticationSuccess(byte[] token) {
             // no-op, the server should send nothing anyway
         }
+    }
+
+    Map<String, String> getCredentials() {
+        return ImmutableMap.of("username", username,
+                               "password", password);
     }
 }

@@ -48,6 +48,14 @@ public class ProtocolOptions {
             return compressor;
         }
 
+        static Compression fromString(String str) {
+            for (Compression c : values()) {
+                if (c.protocolName.equalsIgnoreCase(str))
+                    return c;
+            }
+            return null;
+        }
+
         @Override
         public String toString() {
             return protocolName;

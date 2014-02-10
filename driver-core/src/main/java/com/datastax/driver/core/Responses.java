@@ -158,10 +158,25 @@ class Responses {
         };
 
         public final Map<String, List<String>> supported;
+        public final Set<ProtocolOptions.Compression> supportedCompressions = EnumSet.noneOf(ProtocolOptions.Compression.class);
 
         public Supported(Map<String, List<String>> supported) {
             super(Message.Response.Type.SUPPORTED);
             this.supported = supported;
+
+            parseCompressions();
+        }
+
+        private void parseCompressions() {
+            List<String> compList = supported.get(Requests.Startup.COMPRESSION_OPTION);
+            if (compList == null)
+                return;
+
+            for (String compStr : compList) {
+                ProtocolOptions.Compression compr = ProtocolOptions.Compression.fromString(compStr);
+                if (compr != null)
+                    supportedCompressions.add(compr);
+            }
         }
 
         @Override

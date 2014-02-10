@@ -52,8 +52,8 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
 
-    private static final String SELECT_PEERS = "SELECT peer, data_center, rack, tokens, rpc_address FROM system.peers";
-    private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens, partitioner FROM system.local WHERE key='local'";
+    private static final String SELECT_PEERS = "SELECT peer, data_center, rack, tokens, rpc_address, release_version, cql_version FROM system.peers";
+    private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens, partitioner, release_version, cql_version FROM system.local WHERE key='local'";
 
     private static final String SELECT_SCHEMA_PEERS = "SELECT peer, rpc_address, schema_version FROM system.peers";
     private static final String SELECT_SCHEMA_LOCAL = "SELECT schema_version FROM system.local WHERE key='local'";
@@ -71,7 +71,7 @@ class ControlConnection implements Host.StateListener {
     }
 
     // Only for the initial connection. Does not schedule retries if it fails
-    public void connect() {
+    public void connect() throws UnsupportedProtocolVersionException {
         if (isShutdown)
             return;
 
@@ -101,6 +101,10 @@ class ControlConnection implements Host.StateListener {
                         return reconnectInternal();
                     } catch (NoHostAvailableException e) {
                         throw new ConnectionException(null, e.getMessage());
+                    } catch (UnsupportedProtocolVersionException e) {
+                        // reconnectInternal only propagate those if we've not decided on the protocol version yet,
+                        // which should only happen on the initial connection and thus in connect() but never here.
+                        throw new AssertionError();
                     }
                 }
 
@@ -121,6 +125,10 @@ class ControlConnection implements Host.StateListener {
                     return true;
                 }
             }.start();
+        } catch (UnsupportedProtocolVersionException e) {
+            // reconnectInternal only propagate those if we've not decided on the protocol version yet,
+            // which should only happen on the initial connection and thus in connect() but never here.
+            throw new AssertionError();
         }
     }
 
@@ -149,7 +157,7 @@ class ControlConnection implements Host.StateListener {
             old.closeAsync();
     }
 
-    private Connection reconnectInternal() {
+    private Connection reconnectInternal() throws UnsupportedProtocolVersionException {
 
         Iterator<Host> iter = cluster.loadBalancingPolicy().newQueryPlan(null, Statement.DEFAULT);
         Map<InetAddress, Throwable> errors = null;
@@ -164,6 +172,13 @@ class ControlConnection implements Host.StateListener {
                     errors = logError(host, e, errors, iter);
                     cluster.signalConnectionFailure(host, e, false);
                 } catch (ExecutionException e) {
+                    errors = logError(host, e.getCause(), errors, iter);
+                } catch (UnsupportedProtocolVersionException e) {
+                    // If it's the very first node we've connected to, rethrow the exception and
+                    // Cluster.init() will handle it. Otherwise, just mark this node in error.
+                    if (cluster.protocolVersion() < 1)
+                        throw e;
+                    logger.debug("Ignoring host {}: {}", host, e.getMessage());
                     errors = logError(host, e.getCause(), errors, iter);
                 }
             }
@@ -196,7 +211,7 @@ class ControlConnection implements Host.StateListener {
         return errors;
     }
 
-    private Connection tryConnect(Host host) throws ConnectionException, ExecutionException, InterruptedException {
+    private Connection tryConnect(Host host) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException {
         Connection connection = cluster.connectionFactory.open(host);
 
         try {
@@ -329,6 +344,7 @@ class ControlConnection implements Host.StateListener {
                 logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
                 updateLocationInfo(host, localRow.getString("data_center"), localRow.getString("rack"), cluster);
+                host.setVersions(localRow.getString("release_version"), localRow.getString("cql_version"));
 
                 Set<String> tokens = localRow.getSet("tokens", String.class);
                 if (partitioner != null && !tokens.isEmpty())
@@ -339,6 +355,8 @@ class ControlConnection implements Host.StateListener {
         List<InetAddress> foundHosts = new ArrayList<InetAddress>();
         List<String> dcs = new ArrayList<String>();
         List<String> racks = new ArrayList<String>();
+        List<String> cassandraVersions = new ArrayList<String>();
+        List<String> cqlVersions = new ArrayList<String>();
         List<Set<String>> allTokens = new ArrayList<Set<String>>();
 
         for (Row row : peersFuture.get()) {
@@ -362,16 +380,25 @@ class ControlConnection implements Host.StateListener {
             foundHosts.add(addr);
             dcs.add(row.getString("data_center"));
             racks.add(row.getString("rack"));
+            cassandraVersions.add(row.getString("release_version"));
+            cqlVersions.add(row.getString("cql_version"));
             allTokens.add(row.getSet("tokens", String.class));
         }
 
         for (int i = 0; i < foundHosts.size(); i++) {
             Host host = cluster.metadata.getHost(foundHosts.get(i));
+            boolean isNew = false;
             if (host == null) {
-                // We don't know that node, add it.
-                host = cluster.addHost(foundHosts.get(i), true);
+                // We don't know that node, create the Host object but wait until we've set the known
+                // info before signaling the addition.
+                host = cluster.metadata.add(foundHosts.get(i));
+                isNew = true;
             }
             updateLocationInfo(host, dcs.get(i), racks.get(i), cluster);
+            host.setVersions(cassandraVersions.get(i), cqlVersions.get(i));
+
+            if (isNew)
+                cluster.signalAddedHost(host);
 
             if (partitioner != null && !allTokens.get(i).isEmpty())
                 tokenMap.put(host, allTokens.get(i));

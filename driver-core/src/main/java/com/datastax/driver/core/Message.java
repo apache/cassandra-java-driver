@@ -179,12 +179,18 @@ abstract class Message {
             boolean isTracing = frame.header.flags.contains(Frame.Header.Flag.TRACING);
             UUID tracingId = isTracing ? CBUtil.readUUID(frame.body) : null;
 
-            Response response = Response.Type.fromOpcode(frame.header.opcode).decoder.decode(frame.body);
+            Response response = Response.Type.fromOpcode(frame.header.opcode).decoder(frame.header.version).decode(frame.body);
             return response.setTracingId(tracingId).setStreamId(frame.header.streamId);
         }
     }
 
     public static class ProtocolEncoder extends OneToOneEncoder {
+
+        private final int protocolVersion;
+
+        public ProtocolEncoder(int version) {
+            this.protocolVersion = version;
+        }
 
         @SuppressWarnings("unchecked")
         public Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) {
@@ -196,11 +202,11 @@ abstract class Message {
             if (request.isTracingRequested())
                 flags.add(Frame.Header.Flag.TRACING);
 
-            Coder<Request> coder = (Coder<Request>)request.type.coder;
+            Coder<Request> coder = (Coder<Request>)request.type.coder(protocolVersion);
             ChannelBuffer body = ChannelBuffers.buffer(coder.encodedSize(request));
             coder.encode(request, body);
 
-            return Frame.create(request.type.opcode, request.getStreamId(), flags, body);
+            return Frame.create(protocolVersion, request.type.opcode, request.getStreamId(), flags, body);
         }
     }
 }

@@ -79,14 +79,15 @@ class Connection {
      * @throws ConnectionException if the connection attempts fails or is
      * refused by the server.
      */
-    protected Connection(String name, InetAddress address, Factory factory) throws ConnectionException, InterruptedException {
+    protected Connection(String name, InetAddress address, Factory factory) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
         this.address = address;
         this.factory = factory;
         this.name = name;
 
         ClientBootstrap bootstrap = factory.newBootstrap();
         ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
-        bootstrap.setPipelineFactory(new PipelineFactory(this, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
+        int protocolVersion = factory.protocolVersion == 1 ? 1 : 2;
+        bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
 
         ChannelFuture future = bootstrap.connect(new InetSocketAddress(address, factory.getPort()));
 
@@ -106,7 +107,7 @@ class Connection {
         }
 
         logger.trace("[{}] Connection opened successfully", name);
-        initializeTransport();
+        initializeTransport(protocolVersion);
         logger.trace("[{}] Transport initialized and ready", name);
     }
 
@@ -119,9 +120,8 @@ class Connection {
         return " (" + msg + ")";
     }
 
-    private void initializeTransport() throws ConnectionException, InterruptedException {
+    private void initializeTransport(int version) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
         try {
-
             ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
             Message.Response response = write(new Requests.Startup(compression)).get();
             switch (response.type) {
@@ -131,12 +131,10 @@ class Connection {
                     throw defunct(new TransportException(address, String.format("Error initializing connection: %s", ((Responses.Error)response).message)));
                 case AUTHENTICATE:
                     Authenticator authenticator = factory.authProvider.newAuthenticator(address);
-                    byte[] initialResponse = authenticator.initialResponse();
-                    if (null == initialResponse)
-                        initialResponse = new byte[0];
-
-                    Message.Response authResponse = write(new Requests.AuthResponse(initialResponse)).get();
-                    waitForAuthCompletion(authResponse, authenticator);
+                    if (version == 1)
+                        authenticateV1(authenticator);
+                    else
+                        authenticateV2(authenticator);
                     break;
                 default:
                     throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type)));
@@ -146,6 +144,31 @@ class Connection {
         } catch (ExecutionException e) {
             throw defunct(new ConnectionException(address, String.format("Unexpected error during transport initialization (%s)", e.getCause()), e.getCause()));
         }
+    }
+
+    private void authenticateV1(Authenticator authenticator) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+        if (!(authenticator instanceof ProtocolV1Authenticator))
+            throw new AuthenticationException(address, String.format("Cannot use authenticator %s with protocol version 1, only plain text authentication is supported with this protocol version"));
+
+        Requests.Credentials creds = new Requests.Credentials(((ProtocolV1Authenticator)authenticator).getCredentials());
+        Message.Response authResponse = write(creds).get();
+        switch (authResponse.type) {
+            case READY:
+                break;
+            case ERROR:
+                throw new AuthenticationException(address, ((Responses.Error)authResponse).message);
+            default:
+                throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a CREDENTIALS message", authResponse.type)));
+        }
+    }
+
+    private void authenticateV2(Authenticator authenticator) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+        byte[] initialResponse = authenticator.initialResponse();
+        if (null == initialResponse)
+            initialResponse = new byte[0];
+
+        Message.Response authResponse = write(new Requests.AuthResponse(initialResponse)).get();
+        waitForAuthCompletion(authResponse, authenticator);
     }
 
     private void waitForAuthCompletion(Message.Response authResponse, Authenticator authenticator)
@@ -354,6 +377,8 @@ class Connection {
         public final AuthProvider authProvider;
         private volatile boolean isShutdown;
 
+        volatile int protocolVersion = -1;
+
         public Factory(Cluster.Manager manager, AuthProvider authProvider) {
             this(manager, manager.configuration, authProvider);
         }
@@ -375,7 +400,7 @@ class Connection {
          *
          * @throws ConnectionException if connection attempt fails.
          */
-        public Connection open(Host host) throws ConnectionException, InterruptedException {
+        public Connection open(Host host) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
             InetAddress address = host.getAddress();
 
             if (isShutdown)
@@ -388,7 +413,7 @@ class Connection {
         /**
          * Same as open, but associate the created connection to the provided connection pool.
          */
-        public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException {
+        public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
             InetAddress address = pool.host.getAddress();
 
             if (isShutdown)
@@ -715,15 +740,18 @@ class Connection {
     private static class PipelineFactory implements ChannelPipelineFactory {
         // Stateless handlers
         private static final Message.ProtocolDecoder messageDecoder = new Message.ProtocolDecoder();
-        private static final Message.ProtocolEncoder messageEncoder = new Message.ProtocolEncoder();
+        private static final Message.ProtocolEncoder messageEncoderV1 = new Message.ProtocolEncoder(1);
+        private static final Message.ProtocolEncoder messageEncoderV2 = new Message.ProtocolEncoder(2);
         private static final Frame.Encoder frameEncoder = new Frame.Encoder();
 
+        private final int protocolVersion;
         private final Connection connection;
         private final FrameCompressor compressor;
         private final SSLOptions sslOptions;
 
-        public PipelineFactory(Connection connection, FrameCompressor compressor, SSLOptions sslOptions) {
+        public PipelineFactory(Connection connection, int protocolVersion, FrameCompressor compressor, SSLOptions sslOptions) {
             this.connection = connection;
+            this.protocolVersion = protocolVersion;
             this.compressor = compressor;
             this.sslOptions = sslOptions;
         }
@@ -743,7 +771,7 @@ class Connection {
 
             //pipeline.addLast("debug", new LoggingHandler(InternalLogLevel.INFO));
 
-            pipeline.addLast("frameDecoder", new Frame.Decoder());
+            pipeline.addLast("frameDecoder", new Frame.Decoder(protocolVersion));
             pipeline.addLast("frameEncoder", frameEncoder);
 
             if (compressor != null) {
@@ -752,7 +780,7 @@ class Connection {
             }
 
             pipeline.addLast("messageDecoder", messageDecoder);
-            pipeline.addLast("messageEncoder", messageEncoder);
+            pipeline.addLast("messageEncoder", protocolVersion == 1 ? messageEncoderV1 : messageEncoderV2);
 
             pipeline.addLast("dispatcher", connection.dispatcher);
 

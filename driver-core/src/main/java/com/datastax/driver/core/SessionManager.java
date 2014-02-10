@@ -220,6 +220,10 @@ class SessionManager implements Session {
                     logger.error("Error creating pool to {} ({})", host, e.getMessage());
                     cluster.manager.signalConnectionFailure(host, new ConnectionException(e.getHost(), e.getMessage()), isHostAddition);
                     return false;
+                } catch (UnsupportedProtocolVersionException e) {
+                    logger.error("Error creating pool to {} ({})", host, e.getMessage());
+                    cluster.manager.signalConnectionFailure(host, new ConnectionException(e.address, e.getMessage()), isHostAddition);
+                    return false;
                 } catch (ConnectionException e) {
                     logger.debug("Error creating pool to {} ({})", host, e.getMessage());
                     cluster.manager.signalConnectionFailure(host, e, isHostAddition);

@@ -15,26 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
+import java.util.Map;
 
-/**
- * A connection that is associated to a pool.
- */
-class PooledConnection extends Connection {
-
-    private final HostConnectionPool pool;
-
-    PooledConnection(String name, InetAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
-        super(name, address, factory);
-        this.pool = pool;
-    }
-
-    /**
-     * Return the pooled connection to it's pool.
-     * The connection should generally not be reuse after that.
-     */
-    public void release()
-    {
-        pool.returnConnection(this);
-    }
+// Not an interface because we don't want to expose. We only support password autentication
+// for the protocol V1 similarly to what the driver 1.x branch do.
+abstract class ProtocolV1Authenticator {
+    abstract Map<String, String> getCredentials();
 }

@@ -20,6 +20,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.collect.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A Cassandra node.
@@ -28,10 +30,9 @@ import com.google.common.collect.ImmutableList;
  */
 public class Host {
 
-    private final InetAddress address;
+    private static final Logger logger = LoggerFactory.getLogger(Host.class);
 
-    private volatile String datacenter;
-    private volatile String rack;
+    private final InetAddress address;
 
     private volatile boolean isUp;
     private final ConvictionPolicy policy;
@@ -40,6 +41,11 @@ public class Host {
     final AtomicReference<ScheduledFuture<?>> reconnectionAttempt = new AtomicReference<ScheduledFuture<?>>();
 
     final ExecutionInfo defaultExecutionInfo;
+
+    private volatile String datacenter;
+    private volatile String rack;
+    private volatile String cassandraVersion;
+    private volatile String cqlVersion;
 
     // ClusterMetadata keeps one Host object per inet address, so don't use
     // that constructor unless you know what you do (use ClusterMetadata.getHost typically).
@@ -57,6 +63,11 @@ public class Host {
         this.rack = rack;
     }
 
+    void setVersions(String cassandraVersion, String cqlVersion) {
+        this.cassandraVersion = cassandraVersion;
+        this.cqlVersion = cqlVersion;
+    }
+
     /**
      * Returns the node address.
      *
@@ -68,7 +79,7 @@ public class Host {
 
     /**
      * Returns the name of the datacenter this host is part of.
-     *
+     * <p>
      * The returned datacenter name is the one as known by Cassandra. 
      * It is also possible for this information to be unavailable. In that
      * case this method returns {@code null}, and the caller should always be aware
@@ -82,7 +93,7 @@ public class Host {
 
     /**
      * Returns the name of the rack this host is part of.
-     *
+     * <p>
      * The returned rack name is the one as known by Cassandra.
      * It is also possible for this information to be unavailable. In that case
      * this method returns {@code null}, and the caller should always aware of this
@@ -95,11 +106,29 @@ public class Host {
     }
 
     /**
+     * The Cassandra version the host is running.
+     *
+     * @return the Cassandra version the host is running.
+     */
+    public String getCassandraVersion() {
+        return cassandraVersion;
+    }
+
+    /**
+     * The CQL version the host is supporting.
+     *
+     * @return the (biggest) CQL version the host is supporting.
+     */
+    public String getCQLVersion() {
+        return cqlVersion;
+    }
+
+    /**
      * Returns whether the host is considered up by the driver.
      * <p>
-     * Please note that this is only the view of the driver may not reflect the
+     * Please note that this is only the view of the driver and may not reflect
      * reality. In particular a node can be down but the driver hasn't detected
-     * it yet, or he can have been restarted but the driver hasn't detected it
+     * it yet, or it can have been restarted and the driver hasn't detected it
      * yet (in particular, for hosts to which the driver does not connect (because
      * the {@code LoadBalancingPolicy.distance} method says so), this information
      * may be durably inaccurate). This information should thus only be
@@ -109,6 +138,23 @@ public class Host {
      */
     public boolean isUp() {
         return isUp;
+    }
+
+    boolean supportsProtocolV2() {
+        // If for some reason the cassandraVersion is not properly set, assume we do support V2. If
+        // the host doesn't we'll just figure it out when we'll try to connect to it.
+        if (cassandraVersion == null)
+            return true;
+
+        try {
+            return Integer.valueOf(cassandraVersion.split("\\.", 2)[0].trim()) >= 2;
+        } catch (NumberFormatException e) {
+            // This is weird so inform something is wrong, but as for cassandraVersion we can just
+            // return true for now, this method is just an optim to avoid connecting to node we know
+            // don't support V2.
+            logger.info("Cannot parse Cassandra version number '{}' for host {}", cassandraVersion, this);
+            return true;
+        }
     }
 
     @Override

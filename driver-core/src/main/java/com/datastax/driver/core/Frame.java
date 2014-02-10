@@ -51,8 +51,7 @@ class Frame {
         this.body = body;
     }
 
-    public static Frame create(ChannelBuffer fullFrame) {
-
+    private static Frame create(ChannelBuffer fullFrame) {
         assert fullFrame.readableBytes() >= Header.LENGTH : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
 
         int version = fullFrame.readByte();
@@ -69,14 +68,13 @@ class Frame {
         return new Frame(header, fullFrame);
     }
 
-    public static Frame create(int opcode, int streamId, EnumSet<Header.Flag> flags, ChannelBuffer body) {
-        Header header = new Header(Header.CURRENT_VERSION, flags, streamId, opcode);
+    public static Frame create(int version, int opcode, int streamId, EnumSet<Header.Flag> flags, ChannelBuffer body) {
+        Header header = new Header(version, flags, streamId, opcode);
         return new Frame(header, body);
     }
 
     public static class Header {
 
-        public static final int CURRENT_VERSION = 2;
         public static final int LENGTH = 8;
 
         public final int version;
@@ -128,8 +126,11 @@ class Frame {
 
         private static final int MAX_FRAME_LENTH = 256 * 1024 * 1024; // 256 MB
 
-        public Decoder() {
+        private final int protocolVersion;
+
+        public Decoder(int protocolVersion) {
             super(MAX_FRAME_LENTH, 4, 4, 0, 0, true);
+            this.protocolVersion = protocolVersion;
         }
 
         @Override
@@ -144,8 +145,8 @@ class Frame {
                 int firstByte = buffer.getByte(0);
                 int version = firstByte & 0x7F;
 
-                if (version != Header.CURRENT_VERSION)
-                    throw new DriverInternalError("Server response from unsupported protocol version: " + version);
+                if (version != protocolVersion)
+                    throw new DriverInternalError(String.format("Server response from unexpected protocol version. Expecting %d but got %d ", protocolVersion, version));
 
                 // Validate the opcode (this will throw if it's not a response)
                 if (buffer.readableBytes() >= 4)
@@ -167,16 +168,14 @@ class Frame {
 
     public static class Encoder extends OneToOneEncoder {
 
-        // We'll only send requests...
-        private static int VERSION_AND_DIRECTION = 0x02;
-
         public Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws IOException {
             assert msg instanceof Frame : "Expecting frame, got " + msg;
 
             Frame frame = (Frame)msg;
 
             ChannelBuffer header = ChannelBuffers.buffer(Frame.Header.LENGTH);
-            header.writeByte(VERSION_AND_DIRECTION);
+            // We don't bother with the direction, we only send requests.
+            header.writeByte(frame.header.version);
             header.writeByte(Header.Flag.serialize(frame.header.flags));
             header.writeByte(frame.header.streamId);
             header.writeByte(frame.header.opcode);

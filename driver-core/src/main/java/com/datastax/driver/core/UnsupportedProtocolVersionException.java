@@ -18,23 +18,20 @@ package com.datastax.driver.core;
 import java.net.InetAddress;
 
 /**
- * A connection that is associated to a pool.
+ * Indicates that we've attempted to connect to a 1.2 C* node with version 2 of
+ * the protocol.
  */
-class PooledConnection extends Connection {
+class UnsupportedProtocolVersionException extends Exception {
 
-    private final HostConnectionPool pool;
+    private static final long serialVersionUID = 0;
 
-    PooledConnection(String name, InetAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
-        super(name, address, factory);
-        this.pool = pool;
-    }
+    public final InetAddress address;
+    public final int versionUnsupported;
 
-    /**
-     * Return the pooled connection to it's pool.
-     * The connection should generally not be reuse after that.
-     */
-    public void release()
+    public UnsupportedProtocolVersionException(InetAddress address, int versionUnsupported)
     {
-        pool.returnConnection(this);
+        super(String.format("[%s] Host %s does not support protocol version %d", address, address, versionUnsupported));
+        this.address = address;
+        this.versionUnsupported = versionUnsupported;
     }
 }

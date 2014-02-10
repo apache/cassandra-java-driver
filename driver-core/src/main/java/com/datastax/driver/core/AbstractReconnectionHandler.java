@@ -45,14 +45,15 @@ abstract class AbstractReconnectionHandler implements Runnable {
         this.currentAttempt = currentAttempt;
     }
 
-    protected abstract Connection tryReconnect() throws ConnectionException, InterruptedException;
+    protected abstract Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException;
     protected abstract void onReconnection(Connection connection);
 
     protected boolean onConnectionException(ConnectionException e, long nextDelayMs) { return true; }
     protected boolean onUnknownException(Exception e, long nextDelayMs) { return true; }
 
-    // Retrying on authentication error is unlikely to work
+    // Retrying on authentication or unsupported protocol version error is unlikely to work
     protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) { return false; }
+    protected boolean onUnsupportedProtocolVersionException(UnsupportedProtocolVersionException e, long nextDelayMs) { return false; }
 
     public void start() {
         long firstDelay = schedule.nextDelayMs();
@@ -108,6 +109,15 @@ abstract class AbstractReconnectionHandler implements Runnable {
             // If interrupted, skip this attempt but still skip scheduling reconnections
             Thread.currentThread().interrupt();
             reschedule(schedule.nextDelayMs());
+        } catch (UnsupportedProtocolVersionException e) {
+            logger.error(e.getMessage());
+            long nextDelay = schedule.nextDelayMs();
+            if (onUnsupportedProtocolVersionException(e, nextDelay)) {
+                reschedule(nextDelay);
+            } else {
+                logger.error("Retry against {} have been suspended. It won't be retried unless the node is restarted.", e.address);
+                currentAttempt.compareAndSet(localFuture, null);
+            }
         } catch (Exception e) {
             long nextDelay = schedule.nextDelayMs();
             if (onUnknownException(e, nextDelay))

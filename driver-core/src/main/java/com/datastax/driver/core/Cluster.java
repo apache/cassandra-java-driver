@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.*;
 
@@ -903,7 +904,7 @@ public class Cluster implements Closeable {
                 // notion of their state and no real way to know until we connect to them
                 // (since the node status is not exposed by C* in the System tables). This
                 // may not be correct.
-                Host host = addHost(address, false);
+                Host host = metadata.add(address);
                 if (host != null) {
                     host.setUp();
                     for (Host.StateListener listener : listeners)
@@ -914,11 +915,25 @@ public class Cluster implements Closeable {
             loadBalancingPolicy().init(Cluster.this, metadata.allHosts());
 
             try {
-                controlConnection.connect();
+                while (true) {
+                    try {
+                        controlConnection.connect();
+                    } catch (UnsupportedProtocolVersionException e) {
+                        assert connectionFactory.protocolVersion < 1;
+                        // For now, all C* version supports the protocol version 1
+                        if (e.versionUnsupported <= 1)
+                            throw new DriverInternalError("Got a node that don't even support the protocol version 1, this makes no sense", e);
+                        connectionFactory.protocolVersion = e.versionUnsupported - 1;
+                    }
+                }
             } catch (NoHostAvailableException e) {
                 close();
                 throw e;
             }
+        }
+
+        int protocolVersion() {
+            return connectionFactory.protocolVersion;
         }
 
         Cluster getCluster() {
@@ -983,6 +998,12 @@ public class Cluster implements Closeable {
                  : closeFuture.get(); // We raced, it's ok, return the future that was actually set
         }
 
+        void logUnsupportedVersionProtocol(Host host) {
+            logger.warn("Detected new Cassandra host {} but ignoring it since it does not support the version 2 of the native protocol "
+                      + "which is currently in use. If you want to force the use of the version 1 of the native protocol, use "
+                      + "Cluster.Builder#usingProtocolVersion() when creating the Cluster instance.", host);
+        }
+
         @Override
         public void onUp(final Host host) {
             logger.trace("Host {} is UP", host);
@@ -1005,6 +1026,9 @@ public class Cluster implements Closeable {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 // Don't propagate because we don't want to prevent other listener to run
+            } catch (UnsupportedProtocolVersionException e) {
+                logUnsupportedVersionProtocol(host);
+                return;
             }
 
             // Session#onUp() expects the load balancing policy to have been updated first, so that
@@ -1091,7 +1115,7 @@ public class Cluster implements Closeable {
             logger.debug("{} is down, scheduling connection retries", host);
             new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
 
-                protected Connection tryReconnect() throws ConnectionException, InterruptedException {
+                protected Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
                     return connectionFactory.open(host);
                 }
 
@@ -1129,6 +1153,9 @@ public class Cluster implements Closeable {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 // Don't propagate because we don't want to prevent other listener to run
+            } catch (UnsupportedProtocolVersionException e) {
+                logUnsupportedVersionProtocol(host);
+                return;
             }
 
             loadBalancingPolicy().onAdd(host);
@@ -1193,13 +1220,15 @@ public class Cluster implements Closeable {
             return isDown;
         }
 
-        public Host addHost(InetAddress address, boolean signal) {
-            Host newHost = metadata.add(address);
-            if (newHost != null && signal) {
-                logger.info("New Cassandra host {} added", newHost);
-                onAdd(newHost);
+        public void signalAddedHost(Host newHost) {
+
+            if (connectionFactory.protocolVersion == 2 && !newHost.supportsProtocolV2()) {
+                logUnsupportedVersionProtocol(newHost);
+                return;
             }
-            return newHost;
+
+            logger.info("New Cassandra host {} added", newHost);
+            onAdd(newHost);
         }
 
         public void removeHost(Host host) {
@@ -1225,7 +1254,7 @@ public class Cluster implements Closeable {
                           + "generally an anti-pattern and will likely affect performance. Consider preparing the statement only once.", stmt.getQueryString());
         }
 
-        private void prepareAllQueries(Host host) throws InterruptedException {
+        private void prepareAllQueries(Host host) throws InterruptedException, UnsupportedProtocolVersionException {
             if (preparedQueries.isEmpty())
                 return;
 
@@ -1344,7 +1373,7 @@ public class Cluster implements Closeable {
             logger.debug("Received event {}, scheduling delivery", response);
 
             // When handle is called, the current thread is a network I/O  thread, and we don't want to block
-            // it (typically addHost() will create the connection pool to the new node, which can take time)
+            // it (typically adding a new host will create the connection pool to the new node, which can take time)
             // Besides, up events are usually sent a bit too early (since they're triggered once gossip is up,
             // but that before the client-side server is up) so adds a 1 second delay in that case.
             // TODO: this delay is honestly quite random. We should do something on the C* side to fix that.
@@ -1356,7 +1385,9 @@ public class Cluster implements Closeable {
                             ProtocolEvent.TopologyChange tpc = (ProtocolEvent.TopologyChange)event;
                             switch (tpc.change) {
                                 case NEW_NODE:
-                                    addHost(tpc.node.getAddress(), true);
+                                    Host newHost = metadata.add(tpc.node.getAddress());
+                                    if (newHost != null)
+                                        signalAddedHost(newHost);
                                     break;
                                 case REMOVED_NODE:
                                     removeHost(metadata.getHost(tpc.node.getAddress()));
@@ -1373,7 +1404,9 @@ public class Cluster implements Closeable {
                                     Host hostUp = metadata.getHost(stc.node.getAddress());
                                     if (hostUp == null) {
                                         // first time we heard about that node apparently, add it
-                                        addHost(stc.node.getAddress(), true);
+                                        Host newHost = metadata.add(stc.node.getAddress());
+                                        if (newHost != null)
+                                            signalAddedHost(newHost);
                                     } else {
                                         onUp(hostUp);
                                     }
