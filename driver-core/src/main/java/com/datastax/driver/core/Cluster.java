@@ -153,7 +153,12 @@ public class Cluster {
      */
     public Session connect(String keyspace) {
         SessionManager session = (SessionManager)connect();
-        session.setKeyspace(keyspace);
+        try {
+            session.setKeyspace(keyspace);
+        } catch (RuntimeException e) {
+            session.shutdown();
+            throw e;
+        }
         return session;
     }
 

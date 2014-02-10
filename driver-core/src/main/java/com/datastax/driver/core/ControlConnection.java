@@ -219,7 +219,11 @@ class ControlConnection implements Host.StateListener {
             refreshSchema(connection, null, null, cluster);
             return connection;
         } catch (BusyConnectionException e) {
+            connection.close(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
             throw new DriverInternalError("Newly created connection should not be busy");
+        } catch (RuntimeException e) {
+            connection.close(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            throw e;
         }
     }
 
