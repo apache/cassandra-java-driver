@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 
@@ -314,27 +315,47 @@ class SessionManager implements Session {
     }
 
     Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState) {
+        int protoVersion = cluster.manager.protocolVersion();
         int fetchSize = statement.getFetchSize();
-        if (fetchSize <= 0)
+
+        if (protoVersion == 1) {
+            assert pagingState == null;
+            // We don't let the user change the fetchSize globally if the proto v1 is used, so we just need to
+            // check for the case of a per-statement override
+            if (fetchSize <= 0)
+                fetchSize = -1;
+            else if (fetchSize != Integer.MAX_VALUE)
+                throw new UnsupportedFeatureException("Paging is not supported");
+        } else if (fetchSize <= 0) {
             fetchSize = configuration().getQueryOptions().getFetchSize();
+        }
+
         if (fetchSize == Integer.MAX_VALUE)
             fetchSize = -1;
 
         if (statement instanceof RegularStatement) {
             RegularStatement rs = (RegularStatement)statement;
             ByteBuffer[] rawValues = rs.getValues();
+
+            if (protoVersion == 1 && rawValues != null)
+                throw new UnsupportedFeatureException("Binary values are not supported");
+
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
             String qString = rs.getQueryString();
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false, fetchSize, pagingState, scl);
             return new Requests.Query(qString, options);
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
-            boolean skipMetadata = bs.statement.getPreparedId().resultSetMetadata != null;
+            boolean skipMetadata = protoVersion != 1 && bs.statement.getPreparedId().resultSetMetadata != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.values), skipMetadata, fetchSize, pagingState, scl);
             return new Requests.Execute(bs.statement.getPreparedId().id, options);
         } else {
             assert statement instanceof BatchStatement : statement;
             assert pagingState == null;
+
+            if (protoVersion == 1)
+                throw new UnsupportedFeatureException("Protocol level batchingn is not supported");
+
             BatchStatement bs = (BatchStatement)statement;
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
             return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl);

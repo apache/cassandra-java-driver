@@ -223,8 +223,14 @@ public abstract class Statement {
      * performance. If in doubt, leaving the default is probably a good
      * idea.
      * <p>
-     * Also note that only {@code SELECT} queries only ever make use of that
-     * setting.
+     * Only {@code SELECT} queries only ever make use of that setting.
+     * <p>
+     * Note: Paging is not supported with the native protocol version 1. If
+     * you call this method with {@code fetchSize &gt; 0} and
+     * {@code fetchSize != Integer.MAX_VALUE} and the protocol version is in
+     * use (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion}
+     * or you use Cassandra 1.2), you will get {@link UnsupportedProtocolVersionException}
+     * when submitting this statement for execution.
      *
      * @param fetchSize the fetch size to use. If {@code fetchSize &lte; 0},
      * the default fetch size will be used. To disable paging of the

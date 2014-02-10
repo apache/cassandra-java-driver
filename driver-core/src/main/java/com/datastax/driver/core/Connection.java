@@ -379,11 +379,7 @@ class Connection {
 
         volatile int protocolVersion;
 
-        public Factory(Cluster.Manager manager) {
-            this(manager, manager.configuration);
-        }
-
-        private Factory(DefaultResponseHandler defaultHandler, Configuration configuration) {
+        Factory(DefaultResponseHandler defaultHandler, Configuration configuration) {
             this.defaultHandler = defaultHandler;
             this.configuration = configuration;
             this.authProvider = configuration.getProtocolOptions().getAuthProvider();

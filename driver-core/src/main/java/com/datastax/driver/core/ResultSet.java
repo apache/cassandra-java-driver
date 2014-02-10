@@ -23,7 +23,20 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * The result of a query.
- *
+ * <p>
+ * The retrieval of the rows of a ResultSet is generally paged (a first page
+ * of result is fetched and the next one is only fetched once all the results
+ * of the first one has been consumed). The size of the pages can be configured
+ * either globally through {@link QueryOptions#setFetchSize} or per-statement
+ * with {@link Statement#setFetchSize}. Though new pages are automatically (and
+ * transparently) fetched when needed, it is possible to force the retrieval
+ * of the next page early through {@link #fetchMoreResults}. Please note however
+ * that this ResultSet paging is not available with the version 1 of the native
+ * protocol (i.e. with Cassandra 1.2 or if version 1 has been explicitely requested
+ * through {@link Cluster.Builder#withProtocolVersion}). If the protocol version 1
+ * is in use, a ResultSet is always fetched in it's entirely and it's up to the
+ * client to make sure that no query can yield ResultSet that won't hold in memory.
+ * <p>
  * Note that this class is not thread-safe.
  */
 public interface ResultSet extends Iterable<Row> {
@@ -52,9 +65,16 @@ public interface ResultSet extends Iterable<Row> {
 
     /**
      * Returns all the remaining rows in this ResultSet as a list.
+     * <p>
+     * Note that, contrarly to {@code iterator()} or successive calls to
+     * {@code one()}, this method forces fetching the full content of the ResultSet
+     * at once, holding it all in memory in particular. It is thus recommended
+     * to prefer iterations through {@code iterator()} when possible, especially
+     * if the ResultSet can be big.
      *
      * @return a list containing the remaining results of this ResultSet. The
-     * returned list is empty if and only the ResultSet is exhausted.
+     * returned list is empty if and only the ResultSet is exhausted. The ResultSet
+     * will be exhausted after a call to this method.
      */
     public List<Row> all();
 

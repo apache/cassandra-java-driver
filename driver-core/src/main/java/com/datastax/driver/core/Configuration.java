@@ -79,6 +79,7 @@ public class Configuration {
     void register(Cluster.Manager manager) {
         protocolOptions.register(manager);
         poolingOptions.register(manager);
+        queryOptions.register(manager);
     }
 
     /**

@@ -24,6 +24,13 @@ import java.util.List;
 /**
  * A statement that group a number of {@link Statement} so they get executed as
  * a batch.
+ * <p>
+ * Note: BatchStatement is not supported with the native protocol version 1: you
+ * will get an {@link UnsupportedProtocolVersionException} when submitting one if
+ * version 1 of the protocol is in use (i.e. if you've force version 1 through
+ * {@link Cluster.Builder#withProtocolVersion} or you use Cassandra 1.2). Note
+ * however that you can still use <a href="http://cassandra.apache.org/doc/cql3/CQL.html#batchStmt">CQL Batch statements</a>
+ * even with the protocol version 1.
  */
 public class BatchStatement extends Statement {
 

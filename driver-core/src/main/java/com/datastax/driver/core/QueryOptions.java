@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+
 /**
  * Options related to defaults for individual queries.
  */
@@ -38,12 +40,17 @@ public class QueryOptions {
     private volatile ConsistencyLevel consistency = DEFAULT_CONSISTENCY_LEVEL;
     private volatile ConsistencyLevel serialConsistency = DEFAULT_SERIAL_CONSISTENCY_LEVEL;
     private volatile int fetchSize = DEFAULT_FETCH_SIZE;
+    private volatile Cluster.Manager manager;
 
     /**
      * Creates a new {@code QueryOptions} instance using the {@code DEFAULT_CONSISTENCY_LEVEL},
      * {@code DEFAULT_SERIAL_CONSISTENCY_LEVEL} and {@code DEFAULT_FETCH_SIZE}.
      */
     public QueryOptions() {}
+
+    void register(Cluster.Manager manager) {
+        this.manager = manager;
+    }
 
     /**
      * Sets the default consistency level to use for queries.
@@ -106,10 +113,19 @@ public class QueryOptions {
      * @return this {@code QueryOptions} instance.
      *
      * @throws IllegalArgumentException if {@code fetchSize &lte; 0}.
+     * @throws UnsupportedFeatureException if version 1 of the native protocol is in
+     * use and {@code fetchSize != Integer.MAX_VALUE} as paging is not supported by
+     * version 1 of the protocol. See {@link Cluster.Builder#withProtocolVersion}
+     * for more details on protocol versions.
      */
     public QueryOptions setFetchSize(int fetchSize) {
         if (fetchSize <= 0)
             throw new IllegalArgumentException("Invalid fetchSize, should be > 0, got " + fetchSize);
+
+        int version = manager == null ? -1 : manager.protocolVersion();
+        if (fetchSize != Integer.MAX_VALUE && version == 1)
+            throw new UnsupportedFeatureException("Paging is not supported");
+
         this.fetchSize = fetchSize;
         return this;
     }

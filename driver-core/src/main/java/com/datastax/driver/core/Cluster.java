@@ -926,18 +926,18 @@ public class Cluster implements Closeable {
             logger.debug("Starting new cluster with contact points " + contactPoints);
 
             this.clusterName = clusterName == null ? generateClusterName() : clusterName;
+            this.configuration = configuration;
+            this.configuration.register(this);
 
             this.executor = makeExecutor(Runtime.getRuntime().availableProcessors(), "Cassandra Java Driver worker-%d");
             this.blockingTasksExecutor = makeExecutor(2, "Cassandra Java Driver blocking tasks worker-%d");
 
-            this.configuration = configuration;
             this.metadata = new Metadata(this);
             this.contactPoints = contactPoints;
-            this.connectionFactory = new Connection.Factory(this);
+            this.connectionFactory = new Connection.Factory(this, configuration);
             this.controlConnection = new ControlConnection(this);
 
             this.metrics = configuration.getMetricsOptions() == null ? null : new Metrics(this);
-            this.configuration.register(this);
             this.listeners = new CopyOnWriteArraySet<Host.StateListener>(listeners);
         }
 

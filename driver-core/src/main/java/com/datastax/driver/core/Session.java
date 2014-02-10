@@ -68,6 +68,9 @@ public interface Session extends Closeable {
      * the query with the requested consistency level successfully.
      * @throws QueryValidationException if the query if invalid (syntax error,
      * unauthorized or any other validation problem).
+     * @throws UnsupportedFeatureException if version 1 of the protocol
+     * is in use (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion}
+     * or you use Cassandra 1.2).
      */
     public ResultSet execute(String query, Object... values);
 
@@ -92,6 +95,10 @@ public interface Session extends Closeable {
      * the query with the requested consistency level successfully.
      * @throws QueryValidationException if the query if invalid (syntax error,
      * unauthorized or any other validation problem).
+     * @throws UnsupportedFeatureException if the protocol version 1 is in use and
+     * a feature not supported has been used. Features that are not supported by
+     * the version protocol 1 include: BatchStatement, ResultSet paging and binary
+     * values in RegularStatement.
      */
     public ResultSet execute(Statement statement);
 
@@ -114,6 +121,10 @@ public interface Session extends Closeable {
      * @param values values required for the execution of {@code query}. See
      * {@link SimpleStatement#SimpleStatement(String, Object...)} for more detail.
      * @return a future on the result of the query.
+     *
+     * @throws UnsupportedFeatureException if version 1 of the protocol
+     * is in use (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion}
+     * or you use Cassandra 1.2).
      */
     public ResultSetFuture executeAsync(String query, Object... values);
 
@@ -132,6 +143,11 @@ public interface Session extends Closeable {
      *
      * @param statement the CQL query to execute (that can be either any {@code Statement}.
      * @return a future on the result of the query.
+     *
+     * @throws UnsupportedFeatureException if the protocol version 1 is in use and
+     * a feature not supported has been used. Features that are not supported by
+     * the version protocol 1 include: BatchStatement, ResultSet paging and binary
+     * values in RegularStatement.
      */
     public ResultSetFuture executeAsync(Statement statement);
 
