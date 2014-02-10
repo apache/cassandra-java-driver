@@ -67,7 +67,10 @@ public class ProtocolOptions {
      */
     public static final int DEFAULT_PORT = 9042;
 
+    private volatile Cluster.Manager manager;
+
     private final int port;
+    final int initialProtocolVersion; // What the user asked us. Will be -1 by default.
 
     private final SSLOptions sslOptions; // null if no SSL
     private final AuthProvider authProvider;
@@ -91,7 +94,7 @@ public class ProtocolOptions {
      * @param port the port to use for the binary protocol.
      */
     public ProtocolOptions(int port) {
-        this(port, null, AuthProvider.NONE);
+        this(port, -1, null, AuthProvider.NONE);
     }
 
     /**
@@ -99,18 +102,27 @@ public class ProtocolOptions {
      * and SSL context.
      *
      * @param port the port to use for the binary protocol.
+     * @param protocolVersion the protocol version to use. This can be a negative number, in which case the
+     * version uses will be the biggest version supported by the <em>first</em> node the driver connects to.
+     * Otherwise, it must be either 1 or 2 to force using a particular protocol version. See
+     * {@link Cluster.Builder#withProtocolVersion} for more details.
      * @param sslOptions the SSL options to use. Use {@code null} if SSL is not
      * to be used.
      * @param authProvider the {@code AuthProvider} to use for authentication against
      * the Cassandra nodes.
      */
-    public ProtocolOptions(int port, SSLOptions sslOptions, AuthProvider authProvider) {
+    public ProtocolOptions(int port, int protocolVersion, SSLOptions sslOptions, AuthProvider authProvider) {
         this.port = port;
+        this.initialProtocolVersion = protocolVersion;
         this.sslOptions = sslOptions;
         this.authProvider = authProvider;
+
+        if (protocolVersion >= 0 && protocolVersion != 1 && protocolVersion != 2)
+            throw new IllegalArgumentException(String.format("Unsupported protocol version %d; valid values are 1, 2 or negative (for auto-detect).", protocolVersion));
     }
 
     void register(Cluster.Manager manager) {
+        this.manager = manager;
     }
 
     /**
@@ -120,6 +132,19 @@ public class ProtocolOptions {
      */
     public int getPort() {
         return port;
+    }
+
+    /**
+     * The protocol version used by the Cluster instance.
+     *
+     * @return the protocol version in use. This might return a negative value if a particular
+     * version hasn't been forced by the user (using say {Cluster.Builder#withProtocolVersion})
+     * <em>and</em> this Cluster instance has not yet connected to any node (but as soon as the
+     * Cluster instance is connected, this is guaranteed to return either 1 or 2). Note that
+     * nodes that do not support this protocol version will be ignored.
+     */
+    public int getProtocolVersion() {
+        return manager.connectionFactory.protocolVersion;
     }
 
     /**

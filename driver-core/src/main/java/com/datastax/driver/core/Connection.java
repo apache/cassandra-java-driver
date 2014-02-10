@@ -377,16 +377,17 @@ class Connection {
         public final AuthProvider authProvider;
         private volatile boolean isShutdown;
 
-        volatile int protocolVersion = -1;
+        volatile int protocolVersion;
 
-        public Factory(Cluster.Manager manager, AuthProvider authProvider) {
-            this(manager, manager.configuration, authProvider);
+        public Factory(Cluster.Manager manager) {
+            this(manager, manager.configuration);
         }
 
-        private Factory(DefaultResponseHandler defaultHandler, Configuration configuration, AuthProvider authProvider) {
+        private Factory(DefaultResponseHandler defaultHandler, Configuration configuration) {
             this.defaultHandler = defaultHandler;
             this.configuration = configuration;
-            this.authProvider = authProvider;
+            this.authProvider = configuration.getProtocolOptions().getAuthProvider();
+            this.protocolVersion = configuration.getProtocolOptions().initialProtocolVersion;
         }
 
         public int getPort() {

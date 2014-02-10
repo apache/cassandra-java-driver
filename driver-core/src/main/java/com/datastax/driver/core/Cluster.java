@@ -430,6 +430,7 @@ public class Cluster implements Closeable {
         private String clusterName;
         private final List<InetAddress> addresses = new ArrayList<InetAddress>();
         private int port = ProtocolOptions.DEFAULT_PORT;
+        private int protocolVersion = -1;
         private AuthProvider authProvider = AuthProvider.NONE;
 
         private LoadBalancingPolicy loadBalancingPolicy;
@@ -480,7 +481,7 @@ public class Cluster implements Closeable {
 
         /**
          * The port to use to connect to the Cassandra host.
-         *
+         * <p>
          * If not set through this method, the default port (9042) will be used
          * instead.
          *
@@ -493,8 +494,58 @@ public class Cluster implements Closeable {
         }
 
         /**
-         * Adds a contact point.
+         * The native protocol version to use.
+         * <p>
+         * The driver supports both version 1 and 2 of the native protocol. Version 2
+         * of the protocol has more features and should be prefered, but it is only
+         * supported by Cassandra 2.0 and above, so you will have to use version 1 with
+         * Cassandra 1.2 nodes.
+         * <p>
+         * By default, the driver will "auto-detect" which protocol version it can use
+         * when connecting to the first node. More precisely, it will try the version
+         * 2 first and will fallback to version 1 if it is not supported by that first
+         * node it connects to. Please note that once the version is "auto-detected",
+         * it won't change: if the first node the driver connects to is a Cassandra 1.2
+         * node and auto-detection is used (the default), then the native protocol
+         * version 1 will be use for the lifetime of the Cluster instance.
+         * <p>
+         * This method allows to force the use of a particular protocol version. Forcing
+         * version 1 is always fine since all Cassandra version (at least all those
+         * supporting the native protocol in the first place) so far supports it. However,
+         * please note that a number of features of the driver won't be available if that
+         * version of thr protocol is in use, including result set paging,
+         * {@link BatchStatement}, executing a non-prepared query with binary values
+         * ({@link Session#execute(String, Object...)}), ... (those methods will throw
+         * an UnsupportedFeatureException). Using the protocol version 1 should thus
+         * only be considered when using Cassandra 1.2, until nodes have been upgraded
+         * to Cassandra 2.0.
+         * <p>
+         * If version 2 of the protocol is used, then Cassandra 1.2 nodes will be ignored
+         * (the driver won't connect to them).
+         * <p>
+         * The default behavior (auto-detection) is fine in almost all case, but you may
+         * want to force a particular version if you have a Cassandra cluster with mixed
+         * 1.2/2.0 nodes (i.e. during a Cassandra upgrade).
          *
+         * @param version the native protocol version to use. The versions supported by
+         * this driver are version 1 and 2. Negative values are also supported to trigger
+         * auto-detection (see above) but this is the default (so you don't have to call
+         * this method for that behavior).
+         * @return this Builder.
+         *
+         * @throws IllegalArgumentException if {@code version} is neither 1, 2 or a
+         * negative value.
+         */
+        public Builder withProtocolVersion(int version) {
+            if (version >= 0 && version != 1 && version != 2)
+                throw new IllegalArgumentException(String.format("Unsupported protocol version %d; valid values are 1, 2 or negative (for auto-detect).", version));
+            this.protocolVersion = version;
+            return this;
+        }
+
+        /**
+         * Adds a contact point.
+         * <p>
          * Contact points are addresses of Cassandra nodes that the driver uses
          * to discover the cluster topology. Only one contact point is required
          * (the driver will retrieve the address of the other nodes
@@ -521,7 +572,7 @@ public class Cluster implements Closeable {
 
         /**
          * Adds contact points.
-         *
+         * <p>
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
          *
@@ -543,7 +594,7 @@ public class Cluster implements Closeable {
 
         /**
          * Adds contact points.
-         *
+         * <p>
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
          *
@@ -664,7 +715,7 @@ public class Cluster implements Closeable {
          * <p>
          * Calling this method will use default SSL options (see {@link SSLOptions#SSLOptions()}).
          * This is thus a shortcut for {@code withSSL(new SSLOptions())}.
-         *
+         * <p>
          * Note that if SSL is enabled, the driver will not connect to any
          * Cassandra nodes that doesn't have SSL enabled and it is strongly
          * advised to enable SSL on every Cassandra node if you plan on using
@@ -775,7 +826,7 @@ public class Cluster implements Closeable {
                 retryPolicy == null ? Policies.defaultRetryPolicy() : retryPolicy
             );
             return new Configuration(policies,
-                                     new ProtocolOptions(port, sslOptions, authProvider).setCompression(compression),
+                                     new ProtocolOptions(port, protocolVersion, sslOptions, authProvider).setCompression(compression),
                                      poolingOptions == null ? new PoolingOptions() : poolingOptions,
                                      socketOptions == null ? new SocketOptions() : socketOptions,
                                      metricsEnabled ? new MetricsOptions(jmxEnabled) : null,
@@ -790,7 +841,7 @@ public class Cluster implements Closeable {
         /**
          * Builds the cluster with the configured set of initial contact points
          * and policies.
-         *
+         * <p>
          * This is a convenience method for {@code Cluster.buildFrom(this)}.
          *
          * @return the newly built Cluster instance.
@@ -882,8 +933,7 @@ public class Cluster implements Closeable {
             this.configuration = configuration;
             this.metadata = new Metadata(this);
             this.contactPoints = contactPoints;
-            this.connectionFactory = new Connection.Factory(this, configuration.getProtocolOptions().getAuthProvider());
-
+            this.connectionFactory = new Connection.Factory(this);
             this.controlConnection = new ControlConnection(this);
 
             this.metrics = configuration.getMetricsOptions() == null ? null : new Metrics(this);
