@@ -335,6 +335,13 @@ class SessionManager implements Session {
 
         if (statement instanceof RegularStatement) {
             RegularStatement rs = (RegularStatement)statement;
+
+            // It saddens me that we special case for the query builder here, but for now this is simpler.
+            // We could provide a general API in RegularStatement instead at some point but it's unclear what's
+            // the cleanest way to do that is right now (and it's probably not really that useful anyway).
+            if (protoVersion == 1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
+                ((com.datastax.driver.core.querybuilder.BuiltStatement)rs).setForceNoValues(true);
+
             ByteBuffer[] rawValues = rs.getValues();
 
             if (protoVersion == 1 && rawValues != null)
@@ -354,7 +361,7 @@ class SessionManager implements Session {
             assert pagingState == null;
 
             if (protoVersion == 1)
-                throw new UnsupportedFeatureException("Protocol level batchingn is not supported");
+                throw new UnsupportedFeatureException("Protocol level batching is not supported");
 
             BatchStatement bs = (BatchStatement)statement;
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();

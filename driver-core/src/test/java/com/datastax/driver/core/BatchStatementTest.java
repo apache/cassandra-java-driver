@@ -22,6 +22,8 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+
 public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
@@ -59,6 +61,10 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             assertEquals(r.getString("v"), 0);
 
             assertTrue(rs.isExhausted());
+        } catch (UnsupportedFeatureException e) {
+            // This is expected when testing the protocol v1
+            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != 1)
+                throw e;
         } catch (Throwable t) {
             errorOut();
         }

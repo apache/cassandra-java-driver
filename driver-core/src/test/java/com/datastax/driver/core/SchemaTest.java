@@ -102,7 +102,10 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                     + "   AND caching = 'ALL'\n"
                     + "   AND comment = 'My awesome table'\n"
                     + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
-                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };";
+                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 }\n"
+                    + "   AND default_time_to_live = 0\n"
+                    + "   AND speculative_retry = 'NONE'\n"
+                    + "   AND index_interval = 128;";
 
         List<String> allDefs = new ArrayList<String>();
         allDefs.addAll(cql3.values());

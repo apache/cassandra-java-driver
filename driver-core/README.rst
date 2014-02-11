@@ -36,10 +36,10 @@ The features provided by the core module includes:
 Prerequisite
 ------------
 
-The driver uses Casandra's native protocol, and this version 2.0 uses the second
-version of that protocol. As such, this version of the driver requires a version
-of Cassandra greater than or equal to 2.0 (for Cassandra 1.2 please use the
-version 1.0 of the driver).
+The driver uses Casandra's native protocol which is available starting from
+Cassandra 1.2. Some of the features (result set paging, BatchStatement, ...) of
+this version 2.0 of the driver require Cassandra 2.0 however and will throw
+'unsupported feature' exceptions if used against a Cassandra 1.2 cluster.
 
 If you are having issues connecting to the cluster (seeing ``NoHostAvailableConnection``
 exceptions) please check the `connection requirements <https://github.com/datastax/java-driver/wiki/Connection-requirements>`_.

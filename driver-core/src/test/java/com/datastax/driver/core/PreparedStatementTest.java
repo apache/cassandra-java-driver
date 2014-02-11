@@ -22,6 +22,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import static com.datastax.driver.core.TestUtils.*;
 
 /**
@@ -380,25 +381,31 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void batchTest() throws Exception {
 
-        PreparedStatement ps1 = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, ?)");
-        PreparedStatement ps2 = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, 'bar')");
+        try {
+            PreparedStatement ps1 = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, ?)");
+            PreparedStatement ps2 = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, 'bar')");
 
-        BatchStatement bs = new BatchStatement();
-        bs.add(ps1.bind("one", "foo"));
-        bs.add(ps2.bind("two"));
-        bs.add(new SimpleStatement("INSERT INTO " + SIMPLE_TABLE2 + " (k, v) VALUES ('three', 'foobar')"));
+            BatchStatement bs = new BatchStatement();
+            bs.add(ps1.bind("one", "foo"));
+            bs.add(ps2.bind("two"));
+            bs.add(new SimpleStatement("INSERT INTO " + SIMPLE_TABLE2 + " (k, v) VALUES ('three', 'foobar')"));
 
-        session.execute(bs);
+            session.execute(bs);
 
-        List<Row> all = session.execute("SELECT * FROM " + SIMPLE_TABLE2).all();
+            List<Row> all = session.execute("SELECT * FROM " + SIMPLE_TABLE2).all();
 
-        assertEquals("three", all.get(0).getString("k"));
-        assertEquals("foobar", all.get(0).getString("v"));
+            assertEquals("three", all.get(0).getString("k"));
+            assertEquals("foobar", all.get(0).getString("v"));
 
-        assertEquals("one", all.get(1).getString("k"));
-        assertEquals("foo", all.get(1).getString("v"));
+            assertEquals("one", all.get(1).getString("k"));
+            assertEquals("foo", all.get(1).getString("v"));
 
-        assertEquals("two", all.get(2).getString("k"));
-        assertEquals("bar", all.get(2).getString("v"));
+            assertEquals("two", all.get(2).getString("k"));
+            assertEquals("bar", all.get(2).getString("v"));
+        } catch (UnsupportedFeatureException e) {
+            // This is expected when testing the protocol v1
+            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != 1)
+                throw e;
+        }
     }
 }

@@ -44,8 +44,7 @@ public class Host {
 
     private volatile String datacenter;
     private volatile String rack;
-    private volatile String cassandraVersion;
-    private volatile String cqlVersion;
+    private volatile VersionNumber cassandraVersion;
 
     // ClusterMetadata keeps one Host object per inet address, so don't use
     // that constructor unless you know what you do (use ClusterMetadata.getHost typically).
@@ -63,9 +62,12 @@ public class Host {
         this.rack = rack;
     }
 
-    void setVersions(String cassandraVersion, String cqlVersion) {
-        this.cassandraVersion = cassandraVersion;
-        this.cqlVersion = cqlVersion;
+    void setVersion(String cassandraVersion) {
+        try {
+            this.cassandraVersion = VersionNumber.parse(cassandraVersion);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Error parsing Cassandra version {}. This shouldn't have happened", cassandraVersion);
+        }
     }
 
     /**
@@ -110,17 +112,8 @@ public class Host {
      *
      * @return the Cassandra version the host is running.
      */
-    public String getCassandraVersion() {
+    public VersionNumber getCassandraVersion() {
         return cassandraVersion;
-    }
-
-    /**
-     * The CQL version the host is supporting.
-     *
-     * @return the (biggest) CQL version the host is supporting.
-     */
-    public String getCQLVersion() {
-        return cqlVersion;
     }
 
     /**
@@ -138,23 +131,6 @@ public class Host {
      */
     public boolean isUp() {
         return isUp;
-    }
-
-    boolean supportsProtocolV2() {
-        // If for some reason the cassandraVersion is not properly set, assume we do support V2. If
-        // the host doesn't we'll just figure it out when we'll try to connect to it.
-        if (cassandraVersion == null)
-            return true;
-
-        try {
-            return Integer.valueOf(cassandraVersion.split("\\.", 2)[0].trim()) >= 2;
-        } catch (NumberFormatException e) {
-            // This is weird so inform something is wrong, but as for cassandraVersion we can just
-            // return true for now, this method is just an optim to avoid connecting to node we know
-            // don't support V2.
-            logger.info("Cannot parse Cassandra version number '{}' for host {}", cassandraVersion, this);
-            return true;
-        }
     }
 
     @Override

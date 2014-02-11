@@ -128,7 +128,11 @@ class Connection {
                 case READY:
                     break;
                 case ERROR:
-                    throw defunct(new TransportException(address, String.format("Error initializing connection: %s", ((Responses.Error)response).message)));
+                    Responses.Error error = (Responses.Error)response;
+                    // Testing for a specific string is a tad fragile but well, we don't have much choice
+                    if (error.code == ExceptionCode.PROTOCOL_ERROR && error.message.contains("Invalid or unsupported protocol version"))
+                        throw unsupportedProtocolVersionException(version);
+                    throw defunct(new TransportException(address, String.format("Error initializing connection: %s", error.message)));
                 case AUTHENTICATE:
                     Authenticator authenticator = factory.authProvider.newAuthenticator(address);
                     if (version == 1)
@@ -146,9 +150,19 @@ class Connection {
         }
     }
 
+    private UnsupportedProtocolVersionException unsupportedProtocolVersionException(int triedVersion) {
+        // Almost like defunct, but we don't want to wrap that exception inside a ConnectionException and
+        // we know it's happening while initializing the transport so we can simplify slightly
+        logger.debug("Got unsupported protocol version error from {} for version {}", address, triedVersion);
+        isDefunct = true;
+        closeAsync();
+        return new UnsupportedProtocolVersionException(address, triedVersion);
+    }
+
     private void authenticateV1(Authenticator authenticator) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         if (!(authenticator instanceof ProtocolV1Authenticator))
-            throw new AuthenticationException(address, String.format("Cannot use authenticator %s with protocol version 1, only plain text authentication is supported with this protocol version"));
+            throw new AuthenticationException(address, String.format("Cannot use authenticator %s with protocol version 1, "
+                                                                   + "only plain text authentication is supported with this protocol version", authenticator));
 
         Requests.Credentials creds = new Requests.Credentials(((ProtocolV1Authenticator)authenticator).getCredentials());
         Message.Response authResponse = write(creds).get();
@@ -768,7 +782,7 @@ class Connection {
 
             //pipeline.addLast("debug", new LoggingHandler(InternalLogLevel.INFO));
 
-            pipeline.addLast("frameDecoder", new Frame.Decoder(protocolVersion));
+            pipeline.addLast("frameDecoder", new Frame.Decoder());
             pipeline.addLast("frameEncoder", frameEncoder);
 
             if (compressor != null) {

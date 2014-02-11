@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,6 +49,10 @@ public class ColumnMetadata {
 
     static ColumnMetadata fromRaw(TableMetadata tm, Raw raw) {
         return new ColumnMetadata(tm, raw.name, raw.dataType, raw.indexColumns);
+    }
+
+    static ColumnMetadata forAlias(TableMetadata tm, String name, DataType type) {
+        return new ColumnMetadata(tm, name, type, Collections.<String, String>emptyMap());
     }
 
     /**
@@ -203,9 +208,12 @@ public class ColumnMetadata {
             this.isReversed = isReversed;
         }
 
-        static Raw fromRow(Row row) {
+        static Raw fromRow(Row row, VersionNumber version) {
+
             String name = row.getString(COLUMN_NAME);
-            Kind kind = row.isNull(KIND) ? Kind.REGULAR : Enum.valueOf(Kind.class, row.getString(KIND).toUpperCase());
+            Kind kind = version.getMajor() < 2 || row.isNull(KIND)
+                      ? Kind.REGULAR
+                      : Enum.valueOf(Kind.class, row.getString(KIND).toUpperCase());
             int componentIndex = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
             String validatorStr = row.getString(VALIDATOR);
             boolean reversed = CassandraTypeParser.isReversed(validatorStr);

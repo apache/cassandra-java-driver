@@ -22,7 +22,10 @@ import java.util.List;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.policies.RetryPolicy;
 
-abstract class BuiltStatement extends RegularStatement {
+/**
+ * Common ancestor to the query builder built statements.
+ */
+public abstract class BuiltStatement extends RegularStatement {
 
     private final List<ColumnMetadata> partitionKey;
     private final ByteBuffer[] routingKey;
@@ -164,16 +167,24 @@ abstract class BuiltStatement extends RegularStatement {
     /**
      * Allows to force this builder to not generate values (through its {@code getValues()} method).
      * <p>
-     * By default and for performance reasons, the query builder will not
-     * serialize all values provided to strings.  This means that the
-     * {@link #getQueryString} may return a query string with bind markers
-     * (where and when is at the discretion of the builder) and {@link #getValues}
-     * will return the binary values for those markers. This method allows to force
-     * the builder to not generate binary values but rather to serialize them
-     * all in the query string. In practice, this means that if you call
-     * {@code setForceNoValues(true)}, you are guarateed that {@code getValues()}
-     * will return {@code null} and that the string returned by {@code getQueryString()}
-     * will contain no other bind markers than the one inputed by the user.
+     * By default (and unless the protocol version 1 is in use, see below) and
+     * for performance reasons, the query builder will not serialize all values
+     * provided to strings. This means that the {@link #getQueryString} may
+     * return a query string with bind markers (where and when is at the
+     * discretion of the builder) and {@link #getValues} will return the binary
+     * values for those markers. This method allows to force the builder to not
+     * generate binary values but rather to serialize them all in the query
+     * string. In practice, this means that if you call {@code
+     * setForceNoValues(true)}, you are guarateed that {@code getValues()} will
+     * return {@code null} and that the string returned by {@code
+     * getQueryString()} will contain no other bind markers than the one
+     * inputed by the user.
+     * <p>
+     * If the native protocol version 1 is in use, the driver will default
+     * to not generating values since those are not supported by that version of
+     * the protocol. In practice, the driver will automatically call this method
+     * with {@code true} as argument prior to execution. Hence, calling this
+     * method when the protocol version 1 is in use is basically a no-op.
      * <p>
      * Note that this method is mainly useful for debugging purpose. In general,
      * the default behavior should be the correct and most efficient one.
@@ -245,6 +256,12 @@ abstract class BuiltStatement extends RegularStatement {
         @Override
         boolean isCounterOp() {
             return statement.isCounterOp();
+        }
+
+        @Override
+        public RegularStatement setForceNoValues(boolean forceNoValues) {
+            statement.setForceNoValues(forceNoValues);
+            return this;
         }
 
         @Override

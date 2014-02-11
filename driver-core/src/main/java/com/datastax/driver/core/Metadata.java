@@ -43,7 +43,7 @@ public class Metadata {
     }
 
     // Synchronized to make it easy to detect dropped keyspaces
-    synchronized void rebuildSchema(String keyspace, String table, ResultSet ks, ResultSet cfs, ResultSet cols) {
+    synchronized void rebuildSchema(String keyspace, String table, ResultSet ks, ResultSet cfs, ResultSet cols, VersionNumber cassandraVersion) {
 
         Map<String, List<Row>> cfDefs = new HashMap<String, List<Row>>();
         Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = new HashMap<String, Map<String, Map<String, ColumnMetadata.Raw>>>();
@@ -73,7 +73,7 @@ public class Metadata {
                 l = new HashMap<String, ColumnMetadata.Raw>();
                 colsByCf.put(cfName, l);
             }
-            ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row);
+            ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row, cassandraVersion);
             l.put(c.name, c);
         }
 
@@ -85,7 +85,7 @@ public class Metadata {
                 KeyspaceMetadata ksm = KeyspaceMetadata.build(ksRow);
 
                 if (cfDefs.containsKey(ksName)) {
-                    buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName));
+                    buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), cassandraVersion);
                 }
                 addedKs.add(ksName);
                 keyspaces.put(ksName, ksm);
@@ -113,18 +113,17 @@ public class Metadata {
             }
 
             if (cfDefs.containsKey(keyspace))
-                buildTableMetadata(ksm, cfDefs.get(keyspace), colsDefs.get(keyspace));
+                buildTableMetadata(ksm, cfDefs.get(keyspace), colsDefs.get(keyspace), cassandraVersion);
         }
     }
 
-    private static void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs) {
-        boolean hasColumns = (colsDefs != null) && !colsDefs.isEmpty();
+    private void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, VersionNumber cassandraVersion) {
         for (Row cfRow : cfRows) {
             String cfName = cfRow.getString(TableMetadata.CF_NAME);
             Map<String, ColumnMetadata.Raw> cols = colsDefs.get(cfName);
             if (cols == null)
                 cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
-            TableMetadata tm = TableMetadata.build(ksm, cfRow, cols);
+            TableMetadata tm = TableMetadata.build(ksm, cfRow, cols, cassandraVersion);
         }
     }
 

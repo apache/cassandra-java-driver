@@ -126,11 +126,8 @@ class Frame {
 
         private static final int MAX_FRAME_LENTH = 256 * 1024 * 1024; // 256 MB
 
-        private final int protocolVersion;
-
-        public Decoder(int protocolVersion) {
+        public Decoder() {
             super(MAX_FRAME_LENTH, 4, 4, 0, 0, true);
-            this.protocolVersion = protocolVersion;
         }
 
         @Override
@@ -144,9 +141,6 @@ class Frame {
 
                 int firstByte = buffer.getByte(0);
                 int version = firstByte & 0x7F;
-
-                if (version != protocolVersion)
-                    throw new DriverInternalError(String.format("Server response from unexpected protocol version. Expecting %d but got %d ", protocolVersion, version));
 
                 // Validate the opcode (this will throw if it's not a response)
                 if (buffer.readableBytes() >= 4)

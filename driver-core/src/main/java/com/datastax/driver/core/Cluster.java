@@ -968,11 +968,13 @@ public class Cluster implements Closeable {
                 while (true) {
                     try {
                         controlConnection.connect();
+                        return;
                     } catch (UnsupportedProtocolVersionException e) {
                         assert connectionFactory.protocolVersion < 1;
                         // For now, all C* version supports the protocol version 1
                         if (e.versionUnsupported <= 1)
                             throw new DriverInternalError("Got a node that don't even support the protocol version 1, this makes no sense", e);
+                        logger.debug("{}: retrying with version {}", e.getMessage(), e.versionUnsupported - 1);
                         connectionFactory.protocolVersion = e.versionUnsupported - 1;
                     }
                 }
@@ -1270,9 +1272,12 @@ public class Cluster implements Closeable {
             return isDown;
         }
 
-        public void signalAddedHost(Host newHost) {
+        private boolean supportsProtocolV2(Host newHost) {
+            return newHost.getCassandraVersion() == null || newHost.getCassandraVersion().getMajor() >= 2;
+        }
 
-            if (connectionFactory.protocolVersion == 2 && !newHost.supportsProtocolV2()) {
+        public void signalAddedHost(Host newHost) {
+            if (connectionFactory.protocolVersion == 2 && !supportsProtocolV2(newHost)) {
                 logUnsupportedVersionProtocol(newHost);
                 return;
             }

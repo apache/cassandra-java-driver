@@ -52,8 +52,8 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
 
-    private static final String SELECT_PEERS = "SELECT peer, data_center, rack, tokens, rpc_address, release_version, cql_version FROM system.peers";
-    private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens, partitioner, release_version, cql_version FROM system.local WHERE key='local'";
+    private static final String SELECT_PEERS = "SELECT peer, data_center, rack, tokens, rpc_address, release_version FROM system.peers";
+    private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens, partitioner, release_version FROM system.local WHERE key='local'";
 
     private static final String SELECT_SCHEMA_PEERS = "SELECT peer, rpc_address, schema_version FROM system.peers";
     private static final String SELECT_SCHEMA_LOCAL = "SELECT schema_version FROM system.local WHERE key='local'";
@@ -272,7 +272,19 @@ class ControlConnection implements Host.StateListener {
         connection.write(cfFuture);
         connection.write(colsFuture);
 
-        cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get());
+        Host host = cluster.metadata.getHost(connection.address);
+        // Neither host, nor it's version should be null. But instead of dying if there is a race or something, we can kind of try to infer
+        // a Cassandra version from the protocol version (this is not full proof, we can have the protocol 1 against C* 2.0+, but it's worth
+        // a shot, and since we log in this case, it should be relatively easy to debug when if this ever fail).
+        VersionNumber cassandraVersion;
+        if (host == null || host.getCassandraVersion() == null) {
+            cassandraVersion = cluster.protocolVersion() == 1 ? VersionNumber.parse("1.2.0") : VersionNumber.parse("2.0.0");
+            logger.warn("Cannot find Cassandra version for host {} to parse the schema, using {} based on protocol version in use. "
+                      + "If parsing the schema fails, this could be the cause", connection.address, cassandraVersion);
+        } else {
+            cassandraVersion = host.getCassandraVersion();
+        }
+        cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get(), cassandraVersion);
         // If the table is null, we either rebuild all from scratch or have an updated keyspace. In both case, rebuild the token map
         // since some replication on some keyspace may have changed
         if (table == null)
@@ -344,7 +356,7 @@ class ControlConnection implements Host.StateListener {
                 logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
                 updateLocationInfo(host, localRow.getString("data_center"), localRow.getString("rack"), cluster);
-                host.setVersions(localRow.getString("release_version"), localRow.getString("cql_version"));
+                host.setVersion(localRow.getString("release_version"));
 
                 Set<String> tokens = localRow.getSet("tokens", String.class);
                 if (partitioner != null && !tokens.isEmpty())
@@ -356,7 +368,6 @@ class ControlConnection implements Host.StateListener {
         List<String> dcs = new ArrayList<String>();
         List<String> racks = new ArrayList<String>();
         List<String> cassandraVersions = new ArrayList<String>();
-        List<String> cqlVersions = new ArrayList<String>();
         List<Set<String>> allTokens = new ArrayList<Set<String>>();
 
         for (Row row : peersFuture.get()) {
@@ -381,7 +392,6 @@ class ControlConnection implements Host.StateListener {
             dcs.add(row.getString("data_center"));
             racks.add(row.getString("rack"));
             cassandraVersions.add(row.getString("release_version"));
-            cqlVersions.add(row.getString("cql_version"));
             allTokens.add(row.getSet("tokens", String.class));
         }
 
@@ -395,7 +405,7 @@ class ControlConnection implements Host.StateListener {
                 isNew = true;
             }
             updateLocationInfo(host, dcs.get(i), racks.get(i), cluster);
-            host.setVersions(cassandraVersions.get(i), cqlVersions.get(i));
+            host.setVersion(cassandraVersions.get(i));
 
             if (isNew)
                 cluster.signalAddedHost(host);

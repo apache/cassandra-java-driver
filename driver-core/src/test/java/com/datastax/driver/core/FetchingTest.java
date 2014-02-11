@@ -21,6 +21,8 @@ import java.util.Collections;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+
 /**
  * Test ResultSet paging correct behavior.
  */
@@ -57,6 +59,10 @@ public class FetchingTest extends CCMBridge.PerClassSingleNodeCluster {
             assertTrue(rs.isExhausted());
             assertTrue(rs.isFullyFetched());
 
+        } catch (UnsupportedFeatureException e) {
+            // This is expected when testing the protocol v1
+            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != 1)
+                throw e;
         } catch (Throwable e) {
             errorOut();
             throw e;

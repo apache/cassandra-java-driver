@@ -109,7 +109,7 @@ class CassandraTypeParser {
 
         String next = parser.parseNextName();
         if (!isComposite(next))
-            return new ParseResult(parseOne(className));
+            return new ParseResult(parseOne(className), isReversed(next));
 
         List<String> subClassNames = parser.getTypeParameters();
         int count = subClassNames.size();
@@ -125,24 +125,32 @@ class CassandraTypeParser {
         }
 
         List<DataType> types = new ArrayList<DataType>(count);
-        for (int i = 0; i < count; i++)
+        List<Boolean> reversed = new ArrayList<Boolean>(count);
+        for (int i = 0; i < count; i++) {
             types.add(parseOne(subClassNames.get(i)));
+            reversed.add(isReversed(subClassNames.get(i)));
+        }
 
-        return new ParseResult(true, types, collections);
+        return new ParseResult(true, types, reversed, collections);
     }
 
     static class ParseResult {
         public final boolean isComposite;
         public final List<DataType> types;
+        public final List<Boolean> reversed;
         public final Map<String, DataType> collections;
 
-        private ParseResult(DataType type) {
-            this(false, Collections.<DataType>singletonList(type), Collections.<String, DataType>emptyMap());
+        private ParseResult(DataType type, boolean reversed) {
+            this(false,
+                 Collections.<DataType>singletonList(type),
+                 Collections.<Boolean>singletonList(reversed),
+                 Collections.<String, DataType>emptyMap());
         }
 
-        private ParseResult(boolean isComposite, List<DataType> types, Map<String, DataType> collections) {
+        private ParseResult(boolean isComposite, List<DataType> types, List<Boolean> reversed, Map<String, DataType> collections) {
             this.isComposite = isComposite;
             this.types = types;
+            this.reversed = reversed;
             this.collections = collections;
         }
     }
