@@ -102,10 +102,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                     + "   AND caching = 'ALL'\n"
                     + "   AND comment = 'My awesome table'\n"
                     + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
-                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 }\n"
-                    + "   AND default_time_to_live = 0\n"
-                    + "   AND speculative_retry = 'NONE'\n"
-                    + "   AND index_interval = 128;";
+                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };";
 
         List<String> allDefs = new ArrayList<String>();
         allDefs.addAll(cql3.values());
@@ -148,6 +145,16 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void schemaExportOptionsTest() {
         TableMetadata metadata = cluster.getMetadata().getKeyspace(TestUtils.SIMPLE_KEYSPACE).getTable("with_options");
-        assertEquals(metadata.exportAsString(), withOptions);
+
+        String withOpts = withOptions;
+        // With C* 2.0 we'll have a few additional options
+        if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() > 1) {
+            // Strip the last ';'
+            withOpts = withOpts.substring(0, withOpts.length() - 1) + "\n";
+            withOpts += "   AND default_time_to_live = 0\n"
+                     +  "   AND speculative_retry = '99.0PERCENTILE'\n"
+                     +  "   AND index_interval = 128;";
+        }
+        assertEquals(metadata.exportAsString(), withOpts);
     }
 }
