@@ -53,7 +53,7 @@ public class KeyspaceMetadata {
 
         Map<String, String> replicationOptions = new HashMap<String, String>();
         replicationOptions.put("class", row.getString(STRATEGY_CLASS));
-        replicationOptions.putAll(TableMetadata.fromJsonMap(row.getString(STRATEGY_OPTIONS)));
+        replicationOptions.putAll(SimpleJSONParser.parseStringMap(row.getString(STRATEGY_OPTIONS)));
 
         return new KeyspaceMetadata(name, durableWrites, replicationOptions);
     }

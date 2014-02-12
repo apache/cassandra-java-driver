@@ -177,7 +177,7 @@ public class ColumnMetadata {
             if (!type.equalsIgnoreCase("CUSTOM") || !indexColumns.containsKey(INDEX_OPTIONS))
                 return new IndexMetadata(column, indexColumns.get(INDEX_NAME), null);
 
-            Map<String, String> indexOptions = TableMetadata.fromJsonMap(indexColumns.get(INDEX_OPTIONS));
+            Map<String, String> indexOptions = SimpleJSONParser.parseStringMap(indexColumns.get(INDEX_OPTIONS));
             return new IndexMetadata(column, indexColumns.get(INDEX_NAME), indexOptions.get(CUSTOM_INDEX_CLASS));
         }
     }

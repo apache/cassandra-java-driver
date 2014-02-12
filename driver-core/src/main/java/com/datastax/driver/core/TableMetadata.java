@@ -18,8 +18,6 @@ package com.datastax.driver.core;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 
@@ -102,7 +100,7 @@ public class TableMetadata {
         CassandraTypeParser.ParseResult comparator = CassandraTypeParser.parseWithComposite(row.getString(COMPARATOR));
         List<String> columnAliases = cassandraVersion.getMajor() >= 2 || row.getString(COLUMN_ALIASES) == null
                                    ? Collections.<String>emptyList()
-                                   : fromJsonList(row.getString(COLUMN_ALIASES));
+                                   : SimpleJSONParser.parseStringList(row.getString(COLUMN_ALIASES));
 
         int clusteringSize = findClusteringSize(comparator, rawCols.values(), columnAliases, cassandraVersion);
         boolean isDense = clusteringSize != comparator.types.size() - 1;
@@ -123,7 +121,9 @@ public class TableMetadata {
         if (cassandraVersion.getMajor() < 2) {
             // In C* 1.2, only the REGULAR columns are in the columns schema table, so we need to add the names from
             // the aliases (and make sure we handle default aliases).
-            List<String> keyAliases = row.getString(KEY_ALIASES) == null ? Collections.<String>emptyList() : fromJsonList(row.getString(KEY_ALIASES));
+            List<String> keyAliases = row.getString(KEY_ALIASES) == null
+                                    ? Collections.<String>emptyList()
+                                    : SimpleJSONParser.parseStringList(row.getString(KEY_ALIASES));
             for (int i = 0; i < partitionKey.size(); i++) {
                 String alias = keyAliases.size() > i ? keyAliases.get(i) : (i == 0 ? DEFAULT_KEY_ALIAS : DEFAULT_KEY_ALIAS + (i + 1));
                 partitionKey.set(i, ColumnMetadata.forAlias(tm, alias, keyValidator.types.get(i)));
@@ -305,27 +305,6 @@ public class TableMetadata {
      */
     public Options getOptions() {
         return options;
-    }
-
-    // :_(
-    private static ObjectMapper jsonMapper = new ObjectMapper(new JsonFactory());
-
-    @SuppressWarnings("unchecked")
-    static List<String> fromJsonList(String json) {
-        try {
-            return jsonMapper.readValue(json, List.class);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    static Map<String, String> fromJsonMap(String json) {
-        try {
-            return jsonMapper.readValue(json, Map.class);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     void add(ColumnMetadata column) {
@@ -547,9 +526,9 @@ public class TableMetadata {
             this.indexInterval = version.getMajor() < 2 || row.isNull(INDEX_INTERVAL) ? DEFAULT_INDEX_INTERVAL : row.getInt(INDEX_INTERVAL);
 
             this.compaction.put("class", row.getString(COMPACTION_CLASS));
-            this.compaction.putAll(fromJsonMap(row.getString(COMPACTION_OPTIONS)));
+            this.compaction.putAll(SimpleJSONParser.parseStringMap(row.getString(COMPACTION_OPTIONS)));
 
-            this.compression.putAll(fromJsonMap(row.getString(COMPRESSION_PARAMS)));
+            this.compression.putAll(SimpleJSONParser.parseStringMap(row.getString(COMPRESSION_PARAMS)));
         }
 
         /**
