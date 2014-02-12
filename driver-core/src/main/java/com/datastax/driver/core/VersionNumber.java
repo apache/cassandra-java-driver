@@ -29,7 +29,7 @@ import com.google.common.base.Objects;
  */
 public class VersionNumber implements Comparable<VersionNumber> {
 
-    private static final String VERSION_REGEXP = "(\\d+)\\.(\\d+)\\.(\\d+)(\\-[.\\w]+)?";
+    private static final String VERSION_REGEXP = "(\\d+)\\.(\\d+)(\\.\\d+)?(\\-[.\\w]+)?";
     private static final Pattern pattern = Pattern.compile(VERSION_REGEXP);
 
     private final int major;
@@ -46,6 +46,9 @@ public class VersionNumber implements Comparable<VersionNumber> {
 
     /**
      * Parse a version from a string (of the form X.Y.Z[-label]).
+     * <p>
+     * We also parse shorter versions like X.Y[-label] for convenience, but this parse
+     * the same as X.Y.0[-label].
      *
      * @param version the string to parse
      * @throws IllegalArgumentException if the provided string does not
@@ -59,7 +62,9 @@ public class VersionNumber implements Comparable<VersionNumber> {
         try {
             int major = Integer.parseInt(matcher.group(1));
             int minor = Integer.parseInt(matcher.group(2));
-            int patch = Integer.parseInt(matcher.group(3));
+
+            String pa = matcher.group(3);
+            int patch = pa == null || pa.isEmpty() ? 0 : Integer.parseInt(pa.substring(1)); // dropping the initial '.' since it's included this time
 
             String pr = matcher.group(4);
             String preRelease = pr == null || pr.isEmpty() ? null : pr.substring(1); // dropping the initial '-'
