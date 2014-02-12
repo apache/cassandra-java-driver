@@ -1051,8 +1051,8 @@ public class Cluster implements Closeable {
         }
 
         void logUnsupportedVersionProtocol(Host host) {
-            logger.warn("Detected new Cassandra host {} but ignoring it since it does not support the version 2 of the native protocol "
-                      + "which is currently in use. If you want to force the use of the version 1 of the native protocol, use "
+            logger.warn("Detected added or restarted Cassandra host {} but ignoring it since it does not support the version 2 of the native "
+                      + "protocol which is currently in use. If you want to force the use of the version 1 of the native protocol, use "
                       + "Cluster.Builder#usingProtocolVersion() when creating the Cluster instance.", host);
         }
 
@@ -1065,6 +1065,11 @@ public class Cluster implements Closeable {
 
             if (host.isUp())
                 return;
+
+            if (connectionFactory.protocolVersion == 2 && !supportsProtocolV2(host)) {
+                logUnsupportedVersionProtocol(host);
+                return;
+            }
 
             // If there is a reconnection attempt scheduled for that node, cancel it
             ScheduledFuture<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
@@ -1173,6 +1178,9 @@ public class Cluster implements Closeable {
 
                 protected void onReconnection(Connection connection) {
                     logger.debug("Successful reconnection to {}, setting host UP", host);
+                    // Make sure we have up-to-date infos on that host before adding it (so we typically
+                    // catch that an upgraded node uses a new cassandra version).
+                    controlConnection.refreshNodeInfo(host);
                     if (isHostAddition)
                         onAdd(host);
                     else
@@ -1195,10 +1203,15 @@ public class Cluster implements Closeable {
 
         @Override
         public void onAdd(final Host host) {
-            logger.trace("Adding new host {}", host);
-
             if (isClosed())
                 return;
+
+            logger.info("New Cassandra host {} added", host);
+
+            if (connectionFactory.protocolVersion == 2 && !supportsProtocolV2(host)) {
+                logUnsupportedVersionProtocol(host);
+                return;
+            }
 
             try {
                 prepareAllQueries(host);
@@ -1274,16 +1287,6 @@ public class Cluster implements Closeable {
 
         private boolean supportsProtocolV2(Host newHost) {
             return newHost.getCassandraVersion() == null || newHost.getCassandraVersion().getMajor() >= 2;
-        }
-
-        public void signalAddedHost(Host newHost) {
-            if (connectionFactory.protocolVersion == 2 && !supportsProtocolV2(newHost)) {
-                logUnsupportedVersionProtocol(newHost);
-                return;
-            }
-
-            logger.info("New Cassandra host {} added", newHost);
-            onAdd(newHost);
         }
 
         public void removeHost(Host host) {
@@ -1441,8 +1444,12 @@ public class Cluster implements Closeable {
                             switch (tpc.change) {
                                 case NEW_NODE:
                                     Host newHost = metadata.add(tpc.node.getAddress());
-                                    if (newHost != null)
-                                        signalAddedHost(newHost);
+                                    if (newHost != null) {
+                                        // Make sure we have up-to-date infos on that host before adding it (so we typically
+                                        // catch that an upgraded node uses a new cassandra version).
+                                        controlConnection.refreshNodeInfo(newHost);
+                                        onAdd(newHost);
+                                    }
                                     break;
                                 case REMOVED_NODE:
                                     removeHost(metadata.getHost(tpc.node.getAddress()));
@@ -1458,11 +1465,21 @@ public class Cluster implements Closeable {
                                 case UP:
                                     Host hostUp = metadata.getHost(stc.node.getAddress());
                                     if (hostUp == null) {
-                                        // first time we heard about that node apparently, add it
-                                        Host newHost = metadata.add(stc.node.getAddress());
-                                        if (newHost != null)
-                                            signalAddedHost(newHost);
+                                        hostUp = metadata.add(stc.node.getAddress());
+                                        // If hostUp is still null, it means we didn't knew about it the line before but
+                                        // got beaten at adding it to the metadata by another thread. In that case, it's
+                                        // fine to let the other thread win and ignore the notification here
+                                        if (hostUp == null)
+                                            return;
+
+                                        // Make sure we have up-to-date infos on that host before adding it (so we typically
+                                        // catch that an upgraded node uses a new cassandra version).
+                                        controlConnection.refreshNodeInfo(hostUp);
+                                        onAdd(hostUp);
                                     } else {
+                                        // Make sure we have up-to-date infos on that host before adding it (so we typically
+                                        // catch that an upgraded node uses a new cassandra version).
+                                        controlConnection.refreshNodeInfo(hostUp);
                                         onUp(hostUp);
                                     }
                                     break;
@@ -1472,9 +1489,8 @@ public class Cluster implements Closeable {
                                     // But it is unlikely, and don't have too much consequence since we'll try reconnecting
                                     // right away, so we favor the detection to make the Host.isUp method more reliable.
                                     Host hostDown = metadata.getHost(stc.node.getAddress());
-                                    if (hostDown != null) {
+                                    if (hostDown != null)
                                         onDown(hostDown);
-                                    }
                                     break;
                             }
                             break;

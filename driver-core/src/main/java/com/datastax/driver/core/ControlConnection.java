@@ -52,8 +52,8 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
 
-    private static final String SELECT_PEERS = "SELECT peer, data_center, rack, tokens, rpc_address, release_version FROM system.peers";
-    private static final String SELECT_LOCAL = "SELECT cluster_name, data_center, rack, tokens, partitioner, release_version FROM system.local WHERE key='local'";
+    private static final String SELECT_PEERS = "SELECT * FROM system.peers";
+    private static final String SELECT_LOCAL = "SELECT * FROM system.local WHERE key='local'";
 
     private static final String SELECT_SCHEMA_PEERS = "SELECT peer, rpc_address, schema_version FROM system.peers";
     private static final String SELECT_SCHEMA_LOCAL = "SELECT schema_version FROM system.local WHERE key='local'";
@@ -297,7 +297,7 @@ class ControlConnection implements Host.StateListener {
         if (c == null)
             return;
 
-        logger.debug(String.format("[Control connection] Refreshing node list and token map"));
+        logger.debug("[Control connection] Refreshing node list and token map");
         try {
             refreshNodeListAndTokenMap(c, cluster);
         } catch (ConnectionException e) {
@@ -307,6 +307,46 @@ class ControlConnection implements Host.StateListener {
             // If we're being shutdown during refresh, this can happen. That's fine so don't scare the user.
             if (!isShutdown)
                 logger.error("[Control connection] Unexpected error while refeshing node list and token map", e);
+            signalError();
+        } catch (BusyConnectionException e) {
+            logger.debug("[Control connection] Connection is busy, reconnecting");
+            signalError();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.debug("[Control connection] Interrupted while refreshing node list and token map, skipping it.");
+        }
+    }
+
+    public void refreshNodeInfo(Host host) {
+
+        Connection c = connectionRef.get();
+        // At startup, when we add the initial nodes, this will be null, which is ok
+        if (c == null)
+            return;
+
+        logger.debug("[Control connection] Refreshing node info on {}", host);
+        try {
+            DefaultResultSetFuture future = c.address.equals(host.getAddress())
+                                          ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL))
+                                          : new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.getAddress().getHostAddress() + "'"));
+            c.write(future);
+            ResultSet rs = future.get();
+            // It's possible our peers selection returns nothing, but that's fine, this method is best effort really.
+            if (rs.isExhausted()) {
+                logger.debug("[control connection] Asked to refresh node info for {} but host not found in {} system table (this can happen)", host.getAddress(), c.address);
+                return;
+            }
+
+            Row row = rs.one();
+            updateLocationInfo(host, row.getString("data_center"), row.getString("rack"), cluster);
+            host.setVersion(row.getString("release_version"));
+        } catch (ConnectionException e) {
+            logger.debug("[Control connection] Connection error while refeshing node info ({})", e.getMessage());
+            signalError();
+        } catch (ExecutionException e) {
+            // If we're being shutdown during refresh, this can happen. That's fine so don't scare the user.
+            if (!isShutdown)
+                logger.debug("[Control connection] Unexpected error while refeshing node info", e);
             signalError();
         } catch (BusyConnectionException e) {
             logger.debug("[Control connection] Connection is busy, reconnecting");
@@ -407,11 +447,11 @@ class ControlConnection implements Host.StateListener {
             updateLocationInfo(host, dcs.get(i), racks.get(i), cluster);
             host.setVersion(cassandraVersions.get(i));
 
-            if (isNew)
-                cluster.signalAddedHost(host);
-
             if (partitioner != null && !allTokens.get(i).isEmpty())
                 tokenMap.put(host, allTokens.get(i));
+
+            if (isNew)
+                cluster.onAdd(host);
         }
 
         // Removes all those that seems to have been removed (since we lost the control connection)
