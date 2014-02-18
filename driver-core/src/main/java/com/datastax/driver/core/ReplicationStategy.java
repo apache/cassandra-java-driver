@@ -119,7 +119,7 @@ abstract class ReplicationStrategy {
 
                     Integer rf = replicationFactors.get(dc);
                     Set<Host> dcReplicas = allDcReplicas.get(dc);
-                    if (dcReplicas.size() >= rf)
+                    if (rf == null || dcReplicas.size() >= rf)
                         continue;
 
                     String rack = h.getRack();
