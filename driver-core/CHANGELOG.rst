@@ -7,6 +7,7 @@ CHANGELOG
 - [improvement] The protocol version 1 is now supported (features only supported by the
   version 2 of the protocol throw UnsupportedFeatureException).
 - [improvement] Make most main objects interface to facilitate testing/mocking (JAVA-195)
+- [improvement] Adds new getStatements and clear methods to BatchStatement.
 - [api] Renamed shutdown to closeAsync and ShutdownFuture to CloseFuture. Clustering
   and Session also now implement Closeable (JAVA-247).
 - [bug] Fix potential thread leaks when shutting down Metrics (JAVA-232)

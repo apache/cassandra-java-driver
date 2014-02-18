@@ -18,8 +18,11 @@ package com.datastax.driver.core;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import com.google.common.collect.ImmutableList;
 
 /**
  * A statement that group a number of {@link Statement} so they get executed as
@@ -52,7 +55,7 @@ public class BatchStatement extends Statement {
 
         /**
          * A counter batch. Note that such batch is the only type that can contain counter
-         * operation and it can only contain these.
+         * operations and it can only contain these.
          */
         COUNTER
     };
@@ -145,6 +148,26 @@ public class BatchStatement extends Statement {
     public BatchStatement addAll(Iterable<? extends Statement> statements) {
         for (Statement statement : statements)
             add(statement);
+        return this;
+    }
+
+    /**
+     * The statements that have been added to this batch so far.
+     *
+     * @return an (immutable) collection of the statements that have been added
+     * to this batch so far.
+     */
+    public Collection<Statement> getStatements() {
+        return ImmutableList.copyOf(statements);
+    }
+
+    /**
+     * Clears this batch, removing all statements added so far.
+     *
+     * @return this (now empty) {@code BatchStatement}.
+     */
+    public BatchStatement clear() {
+        statements.clear();
         return this;
     }
 
