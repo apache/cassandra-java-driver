@@ -17,8 +17,9 @@ CHANGELOG
 
 Merged from 1.0 branch:
 
+- [new] Added Session#prepareAsync calls (JAVA-224)
+- [new] Added Cluster#getLoggedKeyspace (JAVA-249)
 - [improvement] Avoid preparing a statement multiple time per host with multiple sessions
-- [improvement] Adds Session#prepareAsync calls (JAVA-224)
 - [bug] Make sure connections are returned to the right pools (JAVA-255)
 
 

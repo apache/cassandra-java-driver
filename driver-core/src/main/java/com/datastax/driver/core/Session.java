@@ -34,6 +34,17 @@ import com.google.common.util.concurrent.ListenableFuture;
 public interface Session extends Closeable {
 
     /**
+     * The keyspace to which this Session is currently logged in, if any.
+     * <p>
+     * This correspond to the name passed to {@link Cluster#connect(String)}, or to the
+     * last keyspace logged into through a "USE" CQL query if one was used.
+     *
+     * @return the name of the keyspace to which this Session is currently
+     * logged in, or {@code null} if the session is logged to no keyspace.
+     */
+    public String getLoggedKeyspace();
+
+    /**
      * Executes the provided query.
      *
      * This is a convenience method for {@code execute(new SimpleStatement(query))}.
