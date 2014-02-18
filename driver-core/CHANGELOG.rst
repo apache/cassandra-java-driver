@@ -13,6 +13,7 @@ CHANGELOG
 - [bug] Fix potential thread leaks when shutting down Metrics (JAVA-232)
 - [bug] Fix potential NPE in HostConnectionPool (JAVA-231)
 - [bug] Avoid NPE when node is in an unconfigured DC (JAVA-244)
+- [bug] Don't block for scheduled reconnections on Cluster#close (JAVA-258)
 
 Merged from 1.0 branch:
 

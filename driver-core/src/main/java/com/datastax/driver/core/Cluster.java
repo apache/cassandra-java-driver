@@ -1028,10 +1028,12 @@ public class Cluster implements Closeable {
 
             logger.debug("Shutting down");
 
-            // We start by shutting down the executors. This does mean we won't handle notifications anymore, nor
-            // reconnect to nodes, etc..., but since we're shutting down, that's all right.
-            reconnectionExecutor.shutdown();
-            scheduledTasksExecutor.shutdown();
+            // If we're shutting down, there is no point in waiting on scheduled reconnections, nor on notifications
+            // delivery so we use shutdownNow
+            reconnectionExecutor.shutdownNow();
+            scheduledTasksExecutor.shutdownNow();
+
+            // but for the worker executor, we want to let submitted tasks finish unless the shutdown is forced.
             executor.shutdown();
 
             // We also closes the metrics
@@ -1546,10 +1548,8 @@ public class Cluster implements Closeable {
 
             @Override
             public CloseFuture force() {
-                reconnectionExecutor.shutdownNow();
-                scheduledTasksExecutor.shutdownNow();
+                // The only ExecutorService we haven't forced yet is executor
                 executor.shutdownNow();
-
                 return super.force();
             }
 
