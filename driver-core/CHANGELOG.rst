@@ -11,6 +11,7 @@ CHANGELOG
 - [bug] Fix potential thread leaks when shutting down Metrics (JAVA-232)
 - [bug] Fix potential NPE in HostConnectionPool (JAVA-231)
 - [bug] Make sure connections are returned to the right pools (JAVA-255)
+- [bug] Use date string in query build to work-around CASSANDRA-6718 (JAVA-264)
 
 
 1.0.5:
