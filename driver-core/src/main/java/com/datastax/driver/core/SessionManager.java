@@ -67,6 +67,10 @@ class SessionManager implements Session {
         }
     }
 
+    public String getLoggedKeyspace() {
+        return poolsState.keyspace;
+    }
+
     public ResultSet execute(String query) {
         return execute(new SimpleStatement(query));
     }
@@ -299,7 +303,7 @@ class SessionManager implements Session {
         long timeout = configuration().getSocketOptions().getConnectTimeoutMillis();
         try {
             Future<?> future = executeQuery(new QueryMessage("use " + keyspace, ConsistencyLevel.DEFAULT_CASSANDRA_CL), Query.DEFAULT);
-            // Note: using the connection timeout is perfectly correct, we should probably change that someday
+            // Note: using the connection timeout isn't perfectly correct, we should probably change that someday
             Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
