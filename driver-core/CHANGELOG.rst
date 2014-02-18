@@ -18,6 +18,7 @@ CHANGELOG
 Merged from 1.0 branch:
 
 - [improvement] Avoid preparing a statement multiple time per host with multiple sessions
+- [improvement] Adds Session#prepareAsync calls (JAVA-224)
 - [bug] Make sure connections are returned to the right pools (JAVA-255)
 
 

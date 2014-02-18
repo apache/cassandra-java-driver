@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.base.Function;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,26 +89,46 @@ class SessionManager implements Session {
     }
 
     public PreparedStatement prepare(String query) {
+        try {
+            return Uninterruptibles.getUninterruptibly(prepareAsync(query));
+        } catch (ExecutionException e) {
+            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+        }
+    }
+
+    public PreparedStatement prepare(RegularStatement statement) {
+        try {
+            return Uninterruptibles.getUninterruptibly(prepareAsync(statement));
+        } catch (ExecutionException e) {
+            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+        }
+    }
+
+    public ListenableFuture<PreparedStatement> prepareAsync(String query) {
         Connection.Future future = new Connection.Future(new Requests.Prepare(query));
         execute(future, Statement.DEFAULT);
         return toPreparedStatement(query, future);
     }
 
-    public PreparedStatement prepare(RegularStatement statement) {
+    public ListenableFuture<PreparedStatement> prepareAsync(final RegularStatement statement) {
         if (statement.getValues() != null)
             throw new IllegalArgumentException("A statement to prepare should not have values");
 
-        PreparedStatement prepared = prepare(statement.toString());
+        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.toString());
+        return Futures.transform(prepared, new Function<PreparedStatement, PreparedStatement>() {
+            @Override
+            public PreparedStatement apply(PreparedStatement prepared) {
+                ByteBuffer routingKey = statement.getRoutingKey();
+                if (routingKey != null)
+                    prepared.setRoutingKey(routingKey);
+                prepared.setConsistencyLevel(statement.getConsistencyLevel());
+                if (statement.isTracing())
+                    prepared.enableTracing();
+                prepared.setRetryPolicy(statement.getRetryPolicy());
 
-        ByteBuffer routingKey = statement.getRoutingKey();
-        if (routingKey != null)
-            prepared.setRoutingKey(routingKey);
-        prepared.setConsistencyLevel(statement.getConsistencyLevel());
-        if (statement.isTracing())
-            prepared.enableTracing();
-        prepared.setRetryPolicy(statement.getRetryPolicy());
-
-        return prepared;
+                return prepared;
+            }
+        });
     }
 
     public CloseFuture closeAsync() {
@@ -140,39 +161,38 @@ class SessionManager implements Session {
         return cluster;
     }
 
-    private PreparedStatement toPreparedStatement(String query, Connection.Future future) {
-        try {
-            Message.Response response = Uninterruptibles.getUninterruptibly(future);
-            switch (response.type) {
-                case RESULT:
-                    Responses.Result rm = (Responses.Result)response;
-                    switch (rm.kind) {
-                        case PREPARED:
-                            Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
-                            DefaultPreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), query, poolsState.keyspace);
-                            cluster.manager.addPrepared(stmt);
-                            try {
-                                // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
-                                // If that changes, we'll have to make sure this propagate to other sessions too.
-                                prepare(stmt.getQueryString(), future.getAddress());
-                            } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
-                                // This method doesn't propagate interruption, at least not for now. However, if we've
-                                // interrupted preparing queries on other node it's not a problem as we'll re-prepare
-                                // later if need be. So just ignore.
-                            }
-                            return stmt;
-                        default:
-                            throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
-                    }
-                case ERROR:
-                    throw ((Responses.Error)response).asException(future.getAddress());
-                default:
-                    throw new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type));
+    private ListenableFuture<PreparedStatement> toPreparedStatement(final String query, final Connection.Future future) {
+        return Futures.transform(future, new Function<Message.Response, PreparedStatement>() {
+            public PreparedStatement apply(Message.Response response) {
+                switch (response.type) {
+                    case RESULT:
+                        Responses.Result rm = (Responses.Result)response;
+                        switch (rm.kind) {
+                            case PREPARED:
+                                Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
+                                DefaultPreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), query, poolsState.keyspace);
+                                cluster.manager.addPrepared(stmt);
+                                try {
+                                    // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
+                                    // If that changes, we'll have to make sure this propagate to other sessions too.
+                                    prepare(stmt.getQueryString(), future.getAddress());
+                                } catch (InterruptedException e) {
+                                    Thread.currentThread().interrupt();
+                                    // This method doesn't propagate interruption, at least not for now. However, if we've
+                                    // interrupted preparing queries on other node it's not a problem as we'll re-prepare
+                                    // later if need be. So just ignore.
+                                }
+                                return stmt;
+                            default:
+                                throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
+                        }
+                    case ERROR:
+                        throw ((Responses.Error)response).asException(future.getAddress());
+                    default:
+                        throw new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type));
+                }
             }
-        } catch (ExecutionException e) {
-            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
-        }
+        });
     }
 
     Connection.Factory connectionFactory() {

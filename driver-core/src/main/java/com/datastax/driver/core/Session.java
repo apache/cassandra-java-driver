@@ -17,6 +17,8 @@ package com.datastax.driver.core;
 
 import java.io.Closeable;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 /**
  * A session holds connections to a Cassandra cluster, allowing it to be queried.
  *
@@ -104,7 +106,7 @@ public interface Session extends Closeable {
 
     /**
      * Executes the provided query asynchronously.
-     *
+     * <p>
      * This is a convenience method for {@code executeAsync(new SimpleStatement(query))}.
      *
      * @param query the CQL query to execute.
@@ -136,7 +138,7 @@ public interface Session extends Closeable {
      * this method does not guarantee that the query is valid or has even been
      * submitted to a live node. Any exception pertaining to the failure of the
      * query will be thrown when accessing the {@link ResultSetFuture}.
-     *
+     * <p>
      * Note that for queries that doesn't return a result (INSERT, UPDATE and
      * DELETE), you will need to access the ResultSetFuture (that is call one of
      * its get method to make sure the query was successful.
@@ -186,6 +188,37 @@ public interface Session extends Closeable {
      * {@link BoundStatement}).
      */
     public PreparedStatement prepare(RegularStatement statement);
+
+    /**
+     * Prepares the provided query string asynchronously.
+     * <p>
+     * This method is equilavent to {@link #prepare(String)} except that it
+     * does not block but return a future instead. Any error during preparation will
+     * be thrown when accessing the future, not by this method itself.
+     *
+     * @param query the CQL query string to prepare
+     * @return a future on the prepared statement corresponding to {@code query}.
+     */
+    public ListenableFuture<PreparedStatement> prepareAsync(String query);
+
+    /**
+     * Prepares the provided query asynchronously.
+     * <p>
+     * This method is essentially a shortcut for {@code prepareAsync(statement.getQueryString())},
+     * but with the additional effect that the resulting {@code
+     * PreparedStamenent} will inherit the query properties set on {@code statement}.
+     *
+     * @param statement the statement to prepare
+     * @return a future on the prepared statement corresponding to {@code statement}.
+     *
+     * @see Session#prepare(Statement)
+     *
+     * @throws IllegalArgumentException if {@code statement.getValues() != null}
+     * (values for executing a prepared statement should be provided after preparation
+     * though the {@link PreparedStatement#bind} method or through a corresponding
+     * {@link BoundStatement}).
+     */
+    public ListenableFuture<PreparedStatement> prepareAsync(RegularStatement statement);
 
     /**
      * Initiates a shutdown of this session instance.
