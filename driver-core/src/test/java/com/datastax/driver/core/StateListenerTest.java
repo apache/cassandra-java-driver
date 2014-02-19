@@ -36,7 +36,7 @@ public class StateListenerTest {
             cluster.register(listener);
 
             c.cassandraCluster.bootstrapNode(2);
-            waitFor(CCMBridge.IP_PREFIX + "2", cluster);
+            waitFor(CCMBridge.IP_PREFIX + '2', cluster);
 
             // We sleep slightly before checking the listener because the node is marked UP
             // just before the listeners are called, and since waitFor is based on isUP,
@@ -45,17 +45,17 @@ public class StateListenerTest {
             assertEquals(listener.adds, 1);
 
             c.cassandraCluster.forceStop(1);
-            waitForDown(CCMBridge.IP_PREFIX + "1", cluster);
+            waitForDown(CCMBridge.IP_PREFIX + '1', cluster);
             Thread.sleep(500);
             assertEquals(listener.downs, 1);
 
             c.cassandraCluster.start(1);
-            waitFor(CCMBridge.IP_PREFIX + "1", cluster);
+            waitFor(CCMBridge.IP_PREFIX + '1', cluster);
             Thread.sleep(500);
             assertEquals(listener.ups, 1);
 
             c.cassandraCluster.decommissionNode(2);
-            waitForDecommission(CCMBridge.IP_PREFIX + "2", cluster);
+            waitForDecommission(CCMBridge.IP_PREFIX + '2', cluster);
             Thread.sleep(500);
             assertEquals(listener.removes, 1);
         } catch (Throwable e) {

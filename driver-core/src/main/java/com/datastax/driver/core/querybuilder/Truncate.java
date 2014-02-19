@@ -46,7 +46,7 @@ public class Truncate extends BuiltStatement {
 
         builder.append("TRUNCATE ");
         if (keyspace != null)
-            Utils.appendName(keyspace, builder).append(".");
+            Utils.appendName(keyspace, builder).append('.');
         Utils.appendName(table, builder);
 
         return builder;

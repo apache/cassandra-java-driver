@@ -239,7 +239,7 @@ public class Metadata {
         StringBuilder sb = new StringBuilder();
 
         for (KeyspaceMetadata ksm : keyspaces.values())
-            sb.append(ksm.exportAsString()).append("\n");
+            sb.append(ksm.exportAsString()).append('\n');
 
         return sb.toString();
     }

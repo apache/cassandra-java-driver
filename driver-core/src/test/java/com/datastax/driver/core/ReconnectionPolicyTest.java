@@ -128,7 +128,7 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
             query(c, 12);
 
             // Ensure a basic test works
-            assertQueried(CCMBridge.IP_PREFIX + "1", 12);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 12);
             resetCoordinators();
             c.cassandraCluster.forceStop(1);
 
@@ -154,7 +154,7 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
                 // Continue testing queries each second
                 try {
                     query(c, 12);
-                    assertQueried(CCMBridge.IP_PREFIX + "1", 12);
+                    assertQueried(CCMBridge.IP_PREFIX + '1', 12);
                     resetCoordinators();
 
                     // Ensure the time when the query completes successfully is what was expected
@@ -168,7 +168,7 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
 
                 // The the same query once more, just to be sure
                 query(c, 12);
-                assertQueried(CCMBridge.IP_PREFIX + "1", 12);
+                assertQueried(CCMBridge.IP_PREFIX + '1', 12);
                 resetCoordinators();
 
                 // Ensure the reconnection times reset
@@ -195,7 +195,7 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
                     // Continue testing queries each second
                     try {
                         query(c, 12);
-                        assertQueried(CCMBridge.IP_PREFIX + "1", 12);
+                        assertQueried(CCMBridge.IP_PREFIX + '1', 12);
                         resetCoordinators();
 
                         // Ensure the time when the query completes successfully is what was expected

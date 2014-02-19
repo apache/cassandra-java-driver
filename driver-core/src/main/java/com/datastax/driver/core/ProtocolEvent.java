@@ -117,7 +117,7 @@ class ProtocolEvent {
 
         @Override
         public String toString() {
-            return change + " " + keyspace + (table.isEmpty() ? "" : "." + table);
+            return change + " " + keyspace + (table.isEmpty() ? "" : '.' + table);
         }
     }
 

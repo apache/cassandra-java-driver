@@ -30,7 +30,7 @@ public class FetchingTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
-        return Collections.singletonList(String.format("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))"));
+        return Collections.singletonList("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
     }
 
     @Test(groups = "short")

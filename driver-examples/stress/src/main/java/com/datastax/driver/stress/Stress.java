@@ -59,7 +59,7 @@ public class Stress {
             accepts("compression", "Use compression (SNAPPY)");
             accepts("connections-per-host", "The number of connections per hosts (default: based on the number of threads)").withRequiredArg().ofType(Integer.class);
         }};
-        String msg = "Where <generator> can be one of " + generators.keySet() + "\n"
+        String msg = "Where <generator> can be one of " + generators.keySet() + '\n'
                    + "You can get more help on a particular generator with: stress <generator> -h";
         parser.formatHelpWith(Help.formatFor("<generator>", msg));
         return parser;

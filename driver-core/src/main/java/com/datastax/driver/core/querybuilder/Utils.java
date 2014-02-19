@@ -94,7 +94,7 @@ abstract class Utils {
         if (bb == null)
             return appendValue(value, sb, false);
 
-        sb.append("?");
+        sb.append('?');
         variables.add(bb);
         return sb;
     }
@@ -147,10 +147,10 @@ abstract class Utils {
             sb.append(value);
             return true;
         } else if (value instanceof InetAddress) {
-            sb.append("'").append(((InetAddress)value).getHostAddress()).append("'");
+            sb.append('\'').append(((InetAddress)value).getHostAddress()).append('\'');
             return true;
         } else if (value instanceof Date) {
-            sb.append("'").append(dateFormat.get().format((Date)value)).append("'");
+            sb.append('\'').append(dateFormat.get().format((Date)value)).append('\'');
             return true;
         } else if (value instanceof ByteBuffer) {
             sb.append(Bytes.toHexString((ByteBuffer)value));
@@ -160,13 +160,13 @@ abstract class Utils {
             return true;
         } else if (value instanceof FCall) {
             FCall fcall = (FCall)value;
-            sb.append(fcall.name).append("(");
+            sb.append(fcall.name).append('(');
             for (int i = 0; i < fcall.parameters.length; i++) {
                 if (i > 0)
-                    sb.append(",");
+                    sb.append(',');
                 appendValue(fcall.parameters[i], sb, null);
             }
-            sb.append(")");
+            sb.append(')');
             return true;
         } else if (value instanceof CName) {
             appendName(((CName)value).name, sb);
@@ -201,7 +201,7 @@ abstract class Utils {
             boolean wasCollection = appendValueIfCollection(value, sb, false);
             assert wasCollection;
         } else {
-            sb.append("?");
+            sb.append('?');
             variables.add(bb);
         }
         return sb;
@@ -212,13 +212,13 @@ abstract class Utils {
     }
 
     private static StringBuilder appendList(List<?> l, StringBuilder sb, boolean rawValue) {
-        sb.append("[");
+        sb.append('[');
         for (int i = 0; i < l.size(); i++) {
             if (i > 0)
-                sb.append(",");
+                sb.append(',');
             appendFlatValue(l.get(i), sb, rawValue);
         }
-        sb.append("]");
+        sb.append(']');
         return sb;
     }
 
@@ -227,13 +227,13 @@ abstract class Utils {
     }
 
     private static StringBuilder appendSet(Set<?> s, StringBuilder sb, boolean rawValue) {
-        sb.append("{");
+        sb.append('{');
         boolean first = true;
         for (Object elt : s) {
-            if (first) first = false; else sb.append(",");
+            if (first) first = false; else sb.append(',');
             appendFlatValue(elt, sb, rawValue);
         }
-        sb.append("}");
+        sb.append('}');
         return sb;
     }
 
@@ -256,23 +256,23 @@ abstract class Utils {
     }
 
     private static StringBuilder appendMap(Map<?, ?> m, StringBuilder sb, boolean rawValue) {
-        sb.append("{");
+        sb.append('{');
         boolean first = true;
         for (Map.Entry<?, ?> entry : m.entrySet()) {
             if (first)
                 first = false;
             else
-                sb.append(",");
+                sb.append(',');
             appendFlatValue(entry.getKey(), sb, rawValue);
-            sb.append(":");
+            sb.append(':');
             appendFlatValue(entry.getValue(), sb, rawValue);
         }
-        sb.append("}");
+        sb.append('}');
         return sb;
     }
 
     private static StringBuilder appendValueString(String value, StringBuilder sb) {
-        return sb.append("'").append(replace(value, '\'', "''")).append("'");
+        return sb.append('\'').append(replace(value, '\'', "''")).append('\'');
     }
 
     static boolean isRawValue(Object value) {
@@ -292,7 +292,7 @@ abstract class Utils {
         if (cnamePattern.matcher(name).matches() || name.startsWith("\"") || name.startsWith("token("))
             sb.append(name);
         else
-            sb.append("\"").append(name).append("\"");
+            sb.append('"').append(name).append('"');
         return sb;
     }
 
@@ -303,13 +303,13 @@ abstract class Utils {
             appendName(((CName)name).name, sb);
         } else if (name instanceof FCall) {
             FCall fcall = (FCall)name;
-            sb.append(fcall.name).append("(");
+            sb.append(fcall.name).append('(');
             for (int i = 0; i < fcall.parameters.length; i++) {
                 if (i > 0)
-                    sb.append(",");
+                    sb.append(',');
                 appendValue(fcall.parameters[i], sb, null);
             }
-            sb.append(")");
+            sb.append(')');
         } else if (name instanceof Alias) {
             Alias alias = (Alias)name;
             appendName(alias.column, sb);
@@ -382,13 +382,13 @@ abstract class Utils {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append(name).append("(");
+            sb.append(name).append('(');
             for (int i = 0; i < parameters.length; i++) {
                 if (i > 0)
-                    sb.append(",");
+                    sb.append(',');
                 sb.append(parameters[i]);
             }
-            sb.append(")");
+            sb.append(')');
             return sb.toString();
         }
     }

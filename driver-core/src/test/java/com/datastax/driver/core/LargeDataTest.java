@@ -283,7 +283,7 @@ public class LargeDataTest {
         for (int i = 0; i < 330; ++i) {
             tableDeclaration.append(String.format(", %s INT", createColumnName(i)));
         }
-        tableDeclaration.append(")");
+        tableDeclaration.append(')');
         c.session.execute(tableDeclaration.toString());
 
         try {
@@ -319,7 +319,7 @@ public class LargeDataTest {
         for (int i = 0; i < 330; ++i) {
             tableDeclaration.append(String.format(", %s INT", createColumnName(i)));
         }
-        tableDeclaration.append(")");
+        tableDeclaration.append(')');
         c.session.execute(tableDeclaration.toString());
 
         try {

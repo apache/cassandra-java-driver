@@ -57,7 +57,7 @@ public class Delete extends BuiltStatement {
 
         builder.append(" FROM ");
         if (keyspace != null)
-            Utils.appendName(keyspace, builder).append(".");
+            Utils.appendName(keyspace, builder).append('.');
         Utils.appendName(table, builder);
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
@@ -261,7 +261,7 @@ public class Delete extends BuiltStatement {
         public Selection listElt(String columnName, int idx) {
             StringBuilder sb = new StringBuilder();
             Utils.appendName(columnName, sb);
-            return column(sb.append("[").append(idx).append("]").toString());
+            return column(sb.append('[').append(idx).append(']').toString());
         }
 
         /**
@@ -274,9 +274,9 @@ public class Delete extends BuiltStatement {
         public Selection mapElt(String columnName, Object key) {
             StringBuilder sb = new StringBuilder();
             Utils.appendName(columnName, sb);
-            sb.append("[");
+            sb.append('[');
             Utils.appendFlatValue(key, sb);
-            return column(sb.append("]").toString());
+            return column(sb.append(']').toString());
         }
     }
 }

@@ -106,8 +106,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             init(c, 12);
             query(c, 12);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 6);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 6);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 6);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 6);
 
             resetCoordinators();
 
@@ -125,7 +125,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
 
                     // Force an UnavailableException to be performed once
                     if (readTimeoutOnce && !unavailableOnce) {
-                        waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
+                        waitForDownWithWait(CCMBridge.IP_PREFIX + '2', c.cluster, 5);
                     }
 
                     // Bring back node to ensure other errors are not thrown on restart
@@ -153,8 +153,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             assertTrue(unavailableOnce, "Hit testing race condition. [Never encountered an UnavailableException.] (Shouldn't be an issue.):\n");
 
             // A weak test to ensure that the nodes were contacted
-            assertQueriedAtLeast(CCMBridge.IP_PREFIX + "1", 1);
-            assertQueriedAtLeast(CCMBridge.IP_PREFIX + "2", 1);
+            assertQueriedAtLeast(CCMBridge.IP_PREFIX + '1', 1);
+            assertQueriedAtLeast(CCMBridge.IP_PREFIX + '2', 1);
 
             resetCoordinators();
 
@@ -173,7 +173,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
 
                     // Force an UnavailableException to be performed once
                     if (writeTimeoutOnce && !unavailableOnce) {
-                        waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
+                        waitForDownWithWait(CCMBridge.IP_PREFIX + '2', c.cluster, 5);
                     }
 
                     // Bring back node to ensure other errors are not thrown on restart
@@ -216,7 +216,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
 
                     // Force an UnavailableException to be performed once
                     if (writeTimeoutOnce && !unavailableOnce) {
-                        waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
+                        waitForDownWithWait(CCMBridge.IP_PREFIX + '2', c.cluster, 5);
                     }
 
                     // Bring back node to ensure other errors are not thrown on restart
@@ -284,23 +284,23 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.ALL);
             query(c, 12, ConsistencyLevel.ALL);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 4);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 4);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 4);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 4);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 4);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 4);
 
             resetCoordinators();
             c.cassandraCluster.forceStop(2);
-            waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 10);
+            waitForDownWithWait(CCMBridge.IP_PREFIX + '2', c.cluster, 10);
 
             query(c, 12, ConsistencyLevel.ALL);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 6);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 6);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 6);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 6);
 
             resetCoordinators();
             c.cassandraCluster.forceStop(1);
-            waitForDownWithWait(CCMBridge.IP_PREFIX + "1", c.cluster, 5);
+            waitForDownWithWait(CCMBridge.IP_PREFIX + '1', c.cluster, 5);
             Thread.sleep(5000);
 
             try {
@@ -311,25 +311,25 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
 
             query(c, 12, ConsistencyLevel.QUORUM);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 12);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 12);
 
             resetCoordinators();
 
             query(c, 12, ConsistencyLevel.TWO);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 12);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 12);
 
             resetCoordinators();
 
             query(c, 12, ConsistencyLevel.ONE);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 12);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 12);
 
         } catch (Throwable e) {
             c.errorOut();
@@ -353,8 +353,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             init(c, 12);
             query(c, 12);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 6);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 6);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 6);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 6);
 
             resetCoordinators();
 
@@ -365,13 +365,13 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             }
 
             // A weak test to ensure that the nodes were contacted
-            assertQueried(CCMBridge.IP_PREFIX + "1", 120);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 120);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
             resetCoordinators();
 
 
             c.cassandraCluster.start(2);
-            waitFor(CCMBridge.IP_PREFIX + "2", c.cluster);
+            waitFor(CCMBridge.IP_PREFIX + '2', c.cluster);
 
             // Test successful reads
             for (int i = 0; i < 10; ++i) {
@@ -379,8 +379,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             }
 
             // A weak test to ensure that the nodes were contacted
-            assertQueriedAtLeast(CCMBridge.IP_PREFIX + "1", 1);
-            assertQueriedAtLeast(CCMBridge.IP_PREFIX + "2", 1);
+            assertQueriedAtLeast(CCMBridge.IP_PREFIX + '1', 1);
+            assertQueriedAtLeast(CCMBridge.IP_PREFIX + '2', 1);
             resetCoordinators();
 
 
@@ -454,8 +454,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             init(c, 12);
             query(c, 12);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 6);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 6);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 6);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 6);
 
             resetCoordinators();
 
@@ -469,13 +469,13 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
                 t1.interrupt();
 
             // A weak test to ensure that the nodes were contacted
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
             resetCoordinators();
 
 
             c.cassandraCluster.start(2);
-            waitFor(CCMBridge.IP_PREFIX + "2", c.cluster);
+            waitFor(CCMBridge.IP_PREFIX + '2', c.cluster);
 
             // Test successful reads
             for (int i = 0; i < 10; ++i) {
@@ -483,8 +483,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             }
 
             // A weak test to ensure that the nodes were contacted
-            assertQueriedAtLeast(CCMBridge.IP_PREFIX + "1", 1);
-            assertQueriedAtLeast(CCMBridge.IP_PREFIX + "2", 1);
+            assertQueriedAtLeast(CCMBridge.IP_PREFIX + '1', 1);
+            assertQueriedAtLeast(CCMBridge.IP_PREFIX + '2', 1);
             resetCoordinators();
 
 

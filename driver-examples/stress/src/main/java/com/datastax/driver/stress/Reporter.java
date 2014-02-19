@@ -75,7 +75,7 @@ public class Reporter implements Runnable {
         StringBuilder sb = new StringBuilder();
         sb.append("stress");
         for (String arg : args)
-            sb.append(" ").append(arg);
+            sb.append(' ').append(arg);
         return sb.toString();
     }
 
