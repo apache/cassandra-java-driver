@@ -222,7 +222,7 @@ public interface Session extends Closeable {
      * @param statement the statement to prepare
      * @return a future on the prepared statement corresponding to {@code statement}.
      *
-     * @see Session#prepare(Statement)
+     * @see Session#prepare(RegularStatement)
      *
      * @throws IllegalArgumentException if {@code statement.getValues() != null}
      * (values for executing a prepared statement should be provided after preparation
