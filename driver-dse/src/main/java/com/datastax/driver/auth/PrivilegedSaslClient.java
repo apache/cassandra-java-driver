@@ -43,6 +43,7 @@ public class PrivilegedSaslClient
             put(Sasl.SERVER_AUTH, "true");
             put(Sasl.QOP, "auth");
     }};
+    private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
     /**
      * Used to respond to server challenges with SASL tokens
@@ -108,7 +109,7 @@ public class PrivilegedSaslClient
                 {
                     try
                     {
-                        return saslClient.evaluateChallenge(new byte[0]);
+                        return saslClient.evaluateChallenge(EMPTY_BYTE_ARRAY);
                     } catch (Exception e)
                     {
                         throw new RuntimeException(e);
