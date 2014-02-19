@@ -118,7 +118,7 @@ public class SocketOptions {
      *   <li>the read timeout is only approximate and only control the timeout to one Cassandra
      *   host, not the full query (see {@link #getReadTimeoutMillis} for more details). If a
      *   high level of precision on the timeout to a request is required, you should use
-     *   the {@link ResultSetFuture#get(long, TimeUnit)} method.
+     *   the {@link ResultSetFuture#get(long, java.util.concurrent.TimeUnit)} method.
      *   </li>
      * </ul>
      * <p>
