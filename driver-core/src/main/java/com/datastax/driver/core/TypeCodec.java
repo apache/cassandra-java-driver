@@ -649,13 +649,71 @@ abstract class TypeCodec<T> {
 
         protected UUIDCodec() {}
 
+        @SuppressWarnings("CharUsedInArithmeticContext")
         @Override
         public UUID parse(String value) {
-            try {
-                return UUID.fromString(value);
-            } catch (IllegalArgumentException e) {
+            if (value.length() != 36)
                 throw new InvalidTypeException(String.format("Cannot parse UUID value from \"%s\"", value));
-            }
+
+            long lo;
+            long hi;
+            lo = hi = 0;
+
+            for (int i = 0, j = 0; i < 36; ++j) {
+                // Need to bypass hyphens:
+
+                switch (i) {
+                    case 8:
+                    case 13:
+                    case 18:
+                    case 23:
+                        if (value.charAt(i) != '-')
+                            throw new InvalidTypeException(String.format("Cannot parse UUID value from \"%s\"", value));
+
+                        ++i;
+                } // switch
+
+                int curr;
+                char c = value.charAt(i);
+
+                if (c >= '0' && c <= '9')
+                    curr = (c - '0');
+
+                else if (c >= 'a' && c <= 'f')
+                    curr = (c - 'a' + 10);
+
+                else if (c >= 'A' && c <= 'F')
+                    curr = (c - 'A' + 10);
+
+                else
+                    throw new InvalidTypeException(String.format("Cannot parse UUID value from \"%s\"", value));
+
+                curr = (curr << 4);
+
+                c = value.charAt(++i);
+
+                if (c >= '0' && c <= '9')
+                    curr |= (c - '0');
+
+                else if (c >= 'a' && c <= 'f')
+                    curr |= (c - 'a' + 10);
+
+                else if (c >= 'A' && c <= 'F')
+                    curr |= (c - 'A' + 10);
+
+                else
+                    throw new InvalidTypeException(String.format("Cannot parse UUID value from \"%s\"", value));
+
+                if (j < 8)
+                    hi = (hi << 8) | curr;
+
+                else
+                    lo = (lo << 8) | curr;
+
+                ++i;
+            } // for
+
+            return new UUID(hi, lo);
         }
 
         @Override
