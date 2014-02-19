@@ -178,41 +178,46 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
 
             @Override
             protected Host computeNext() {
-                if (remainingLocal > 0) {
-                    remainingLocal--;
-                    int c = idx++ % hosts.size();
-                    if (c < 0)
-                        c += hosts.size();
-                    return hosts.get(c);
+                while (true) {
+                    if (remainingLocal > 0) {
+                        remainingLocal--;
+                        int c = idx++ % hosts.size();
+                        if (c < 0) {
+                            c += hosts.size();
+                        }
+                        return hosts.get(c);
+                    }
+
+                    if (currentDcHosts != null && currentDcRemaining > 0) {
+                        currentDcRemaining--;
+                        int c = idx++ % currentDcHosts.size();
+                        if (c < 0) {
+                            c += currentDcHosts.size();
+                        }
+                        return currentDcHosts.get(c);
+                    }
+
+                    if (remoteDcs == null) {
+                        Set<String> copy = new HashSet<String>(perDcLiveHosts.keySet());
+                        copy.remove(localDc);
+                        remoteDcs = copy.iterator();
+                    }
+
+                    if (!remoteDcs.hasNext()) {
+                        return endOfData();
+                    }
+
+                    String nextRemoteDc = remoteDcs.next();
+                    CopyOnWriteArrayList<Host> nextDcHosts = perDcLiveHosts.get(nextRemoteDc);
+                    if (nextDcHosts != null) {
+                        // Clone for thread safety
+                        List<Host> dcHosts = cloneList(nextDcHosts);
+                        currentDcHosts = dcHosts.subList(0, Math.min(dcHosts.size(), usedHostsPerRemoteDc));
+                        currentDcRemaining = currentDcHosts.size();
+                    }
+
+
                 }
-
-                if (currentDcHosts != null && currentDcRemaining > 0) {
-                    currentDcRemaining--;
-                    int c = idx++ % currentDcHosts.size();
-                    if (c < 0)
-                        c += currentDcHosts.size();
-                    return currentDcHosts.get(c);
-                }
-
-                if (remoteDcs == null) {
-                    Set<String> copy = new HashSet<String>(perDcLiveHosts.keySet());
-                    copy.remove(localDc);
-                    remoteDcs = copy.iterator();
-                }
-
-                if (!remoteDcs.hasNext())
-                    return endOfData();
-
-                String nextRemoteDc = remoteDcs.next();
-                CopyOnWriteArrayList<Host> nextDcHosts = perDcLiveHosts.get(nextRemoteDc);
-                if (nextDcHosts != null) {
-                    // Clone for thread safety
-                    List<Host> dcHosts = cloneList(nextDcHosts);
-                    currentDcHosts = dcHosts.subList(0, Math.min(dcHosts.size(), usedHostsPerRemoteDc));
-                    currentDcRemaining = currentDcHosts.size();
-                }
-
-                return computeNext();
             }
         };
     }

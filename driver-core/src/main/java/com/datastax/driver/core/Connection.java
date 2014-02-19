@@ -118,7 +118,7 @@ class Connection {
         String msg = t.getMessage() == null || t.getMessage().isEmpty()
                    ? t.toString()
                    : t.getMessage();
-        return " (" + msg + ")";
+        return " (" + msg + ')';
     }
 
     private void initializeTransport(int version) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
@@ -250,7 +250,7 @@ class Connection {
             logger.trace("[{}] Setting keyspace {}", name, keyspace);
             long timeout = factory.getConnectTimeoutMillis();
             // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
-            Future future = write(new Requests.Query("USE \"" + keyspace + "\""));
+            Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
             Message.Response response = Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
             switch (response.type) {
                 case RESULT:
@@ -418,7 +418,7 @@ class Connection {
             if (isShutdown)
                 throw new ConnectionException(address, "Connection factory is shut down");
 
-            String name = address.toString() + "-" + getIdGenerator(host).getAndIncrement();
+            String name = address.toString() + '-' + getIdGenerator(host).getAndIncrement();
             return new Connection(name, address, this);
         }
 
@@ -431,7 +431,7 @@ class Connection {
             if (isShutdown)
                 throw new ConnectionException(address, "Connection factory is shut down");
 
-            String name = address.toString() + "-" + getIdGenerator(pool.host).getAndIncrement();
+            String name = address.toString() + '-' + getIdGenerator(pool.host).getAndIncrement();
             return new PooledConnection(name, address, this, pool);
         }
 

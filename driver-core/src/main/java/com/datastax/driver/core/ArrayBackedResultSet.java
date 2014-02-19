@@ -291,7 +291,7 @@ class ArrayBackedResultSet implements ResultSet {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("ResultSet[ exhausted: ").append(isExhausted());
-        sb.append(", ").append(metadata).append("]");
+        sb.append(", ").append(metadata).append(']');
         return sb.toString();
     }
 

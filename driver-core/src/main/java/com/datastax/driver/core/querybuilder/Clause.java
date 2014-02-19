@@ -88,7 +88,7 @@ public abstract class Clause extends Utils.Appendeable {
             }
 
             Utils.appendName(name, sb).append(" IN (");
-            Utils.joinAndAppendValues(sb, ",", values, variables).append(")");
+            Utils.joinAndAppendValues(sb, ",", values, variables).append(')');
         }
 
         @Override

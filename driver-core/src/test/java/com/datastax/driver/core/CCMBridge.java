@@ -55,7 +55,7 @@ public class CCMBridge {
         }
 
         String ip_prefix = System.getProperty("ipprefix");
-        if (ip_prefix == null || ip_prefix.equals("")) {
+        if (ip_prefix == null || ip_prefix.isEmpty()) {
             ip_prefix = "127.0.1.";
         }
         IP_PREFIX = ip_prefix;
@@ -235,7 +235,7 @@ public class CCMBridge {
             schemaCreated = false;
             cassandraCluster = CCMBridge.create("test", 1);
             try {
-                cluster = Cluster.builder().addContactPoints(IP_PREFIX + "1").build();
+                cluster = Cluster.builder().addContactPoints(IP_PREFIX + '1').build();
                 session = cluster.connect();
             } catch (NoHostAvailableException e) {
                 erroredOut = true;
@@ -323,7 +323,7 @@ public class CCMBridge {
         private CCMCluster(CCMBridge cassandraCluster, Cluster.Builder builder, int totalNodes) {
             this.cassandraCluster = cassandraCluster;
             try {
-                this.cluster = builder.addContactPoints(IP_PREFIX + "1").build();
+                this.cluster = builder.addContactPoints(IP_PREFIX + '1').build();
                 this.session = cluster.connect();
             } catch (NoHostAvailableException e) {
                 for (Map.Entry<InetAddress, Throwable> entry : e.getErrors().entrySet())

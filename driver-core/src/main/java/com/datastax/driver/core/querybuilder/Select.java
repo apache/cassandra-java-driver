@@ -62,13 +62,13 @@ public class Select extends BuiltStatement {
         if (isDistinct)
             builder.append("DISTINCT ");
         if (columnNames == null) {
-            builder.append("*");
+            builder.append('*');
         } else {
             Utils.joinAndAppendNames(builder, ",", columnNames);
         }
         builder.append(" FROM ");
         if (keyspace != null)
-            Utils.appendName(keyspace, builder).append(".");
+            Utils.appendName(keyspace, builder).append('.');
         Utils.appendName(table, builder);
 
         if (!where.clauses.isEmpty()) {

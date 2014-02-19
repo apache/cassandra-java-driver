@@ -51,13 +51,13 @@ public class Insert extends BuiltStatement {
 
         builder.append("INSERT INTO ");
         if (keyspace != null)
-            Utils.appendName(keyspace, builder).append(".");
+            Utils.appendName(keyspace, builder).append('.');
         Utils.appendName(table, builder);
-        builder.append("(");
+        builder.append('(');
         Utils.joinAndAppendNames(builder, ",", names);
         builder.append(") VALUES (");
         Utils.joinAndAppendValues(builder, ",", values, variables);
-        builder.append(")");
+        builder.append(')');
 
         if (ifNotExists)
             builder.append(" IF NOT EXISTS");

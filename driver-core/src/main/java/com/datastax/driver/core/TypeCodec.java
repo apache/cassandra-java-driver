@@ -30,6 +30,7 @@ import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
@@ -585,6 +586,7 @@ abstract class TypeCodec<T> {
         };
 
         public static final DateCodec instance = new DateCodec();
+        private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
 
         private DateCodec() {}
 
@@ -615,7 +617,7 @@ abstract class TypeCodec<T> {
 
         @Override
         public Date parse(String value) {
-            if (value.matches("^\\d+$")) {
+            if (IS_LONG_PATTERN.matcher(value).matches()) {
                 try {
                     return new Date(Long.parseLong(value));
                 } catch (NumberFormatException e) {

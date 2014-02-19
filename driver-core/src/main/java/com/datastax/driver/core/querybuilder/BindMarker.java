@@ -39,6 +39,6 @@ public class BindMarker {
         if (name == null)
             return "?";
 
-        return Utils.appendName(name, new StringBuilder(name.length() + 1).append(":")).toString();
+        return Utils.appendName(name, new StringBuilder(name.length() + 1).append(':')).toString();
     }
 }

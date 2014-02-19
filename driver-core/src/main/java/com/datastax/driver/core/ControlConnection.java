@@ -223,7 +223,7 @@ class ControlConnection implements Host.StateListener {
             });
             connection.write(new Requests.Register(evs));
 
-            logger.debug(String.format("[Control connection] Refreshing node list and token map"));
+            logger.debug("[Control connection] Refreshing node list and token map");
             refreshNodeListAndTokenMap(connection, cluster);
 
             logger.debug("[Control connection] Refreshing schema");
@@ -235,7 +235,7 @@ class ControlConnection implements Host.StateListener {
     }
 
     public void refreshSchema(String keyspace, String table) throws InterruptedException {
-        logger.debug("[Control connection] Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : "." + table);
+        logger.debug("[Control connection] Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : '.' + table);
         try {
             refreshSchema(connectionRef.get(), keyspace, table, cluster);
         } catch (ConnectionException e) {
@@ -256,9 +256,9 @@ class ControlConnection implements Host.StateListener {
         // Make sure we're up to date on schema
         String whereClause = "";
         if (keyspace != null) {
-            whereClause = " WHERE keyspace_name = '" + keyspace + "'";
+            whereClause = " WHERE keyspace_name = '" + keyspace + '\'';
             if (table != null)
-                whereClause += " AND columnfamily_name = '" + table + "'";
+                whereClause += " AND columnfamily_name = '" + table + '\'';
         }
 
         DefaultResultSetFuture ksFuture = table == null
@@ -328,7 +328,7 @@ class ControlConnection implements Host.StateListener {
         try {
             DefaultResultSetFuture future = c.address.equals(host.getAddress())
                                           ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL))
-                                          : new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.getAddress().getHostAddress() + "'"));
+                                          : new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.getAddress().getHostAddress() + '\''));
             c.write(future);
             ResultSet rs = future.get();
             // It's possible our peers selection returns nothing, but that's fine, this method is best effort really.

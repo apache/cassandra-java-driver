@@ -227,9 +227,9 @@ public final class QueryBuilder {
      */
     public static String quote(String columnName) {
         StringBuilder sb = new StringBuilder();
-        sb.append("\"");
+        sb.append('"');
         Utils.appendName(columnName, sb);
-        sb.append("\"");
+        sb.append('"');
         return sb.toString();
     }
 
@@ -243,7 +243,7 @@ public final class QueryBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("token(");
         Utils.appendName(columnName, sb);
-        sb.append(")");
+        sb.append(')');
         return sb.toString();
     }
 
@@ -259,7 +259,7 @@ public final class QueryBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("token(");
         Utils.joinAndAppendNames(sb, ",", Arrays.asList((Object[])columnNames));
-        sb.append(")");
+        sb.append(')');
         return sb.toString();
     }
 

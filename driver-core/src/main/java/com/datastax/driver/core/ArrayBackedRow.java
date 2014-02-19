@@ -316,7 +316,7 @@ class ArrayBackedRow implements Row {
             else
                 sb.append(metadata.getType(i).codec().deserialize(bb).toString());
         }
-        sb.append("]");
+        sb.append(']');
         return sb.toString();
     }
 }

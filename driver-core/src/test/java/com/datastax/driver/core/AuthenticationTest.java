@@ -61,7 +61,7 @@ public class AuthenticationTest {
     @Test(groups = "short")
     public void testAuthenticatedConnection() throws InterruptedException {
         try {
-            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "1")
+            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
                                                 .withCredentials("cassandra", "cassandra")
                                                 .build()
                                                 .connect();
@@ -76,7 +76,7 @@ public class AuthenticationTest {
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
     public void testConnectionAttemptWithIncorrectCredentialsIsRefused() throws InterruptedException {
         try {
-            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "1")
+            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
                    .withCredentials("bogus", "bogus")
                    .build()
                    .connect();
@@ -91,7 +91,7 @@ public class AuthenticationTest {
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
     public void testConnectionAttemptWithoutCredentialsIsRefused() throws InterruptedException {
         try {
-            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "1")
+            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
                               .build()
                               .connect();
         } catch (NoHostAvailableException e) {

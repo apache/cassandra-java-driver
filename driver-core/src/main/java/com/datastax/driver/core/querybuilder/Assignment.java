@@ -41,7 +41,7 @@ public abstract class Assignment extends Utils.Appendeable {
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb);
-            sb.append("=");
+            sb.append('=');
             appendValue(value, sb, variables);
         }
 
@@ -69,7 +69,7 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
-            appendName(name, sb).append("=");
+            appendName(name, sb).append('=');
             appendName(name, sb).append(isIncr ? "+" : "-");
             appendValue(value, sb, variables);
         }
@@ -91,9 +91,9 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
-            appendName(name, sb).append("=");
+            appendName(name, sb).append('=');
             appendValue(value, sb, variables);
-            sb.append("+");
+            sb.append('+');
             appendName(name, sb);
         }
 
@@ -116,7 +116,7 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
-            appendName(name, sb).append("[").append(idx).append("]=");
+            appendName(name, sb).append('[').append(idx).append("]=");
             appendValue(value, sb, variables);
         }
 
@@ -139,7 +139,7 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
-            appendName(name, sb).append("=");
+            appendName(name, sb).append('=');
             appendName(name, sb).append(isAdd ? "+" : "-");
             appendValue(collection, sb, variables);
         }
@@ -163,7 +163,7 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
-            appendName(name, sb).append("[");
+            appendName(name, sb).append('[');
             appendValue(key, sb, variables);
             sb.append("]=");
             appendValue(value, sb, variables);

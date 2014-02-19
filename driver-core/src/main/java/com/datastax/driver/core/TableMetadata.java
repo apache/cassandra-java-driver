@@ -334,7 +334,7 @@ public class TableMetadata {
             if (index == null)
                 continue;
 
-            sb.append("\n").append(index.asCQLQuery());
+            sb.append('\n').append(index.asCQLQuery());
         }
         return sb.toString();
     }
@@ -359,27 +359,27 @@ public class TableMetadata {
     private String asCQLQuery(boolean formatted) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("CREATE TABLE ").append(Metadata.escapeId(keyspace.getName())).append(".").append(Metadata.escapeId(name)).append(" (");
+        sb.append("CREATE TABLE ").append(Metadata.escapeId(keyspace.getName())).append('.').append(Metadata.escapeId(name)).append(" (");
         newLine(sb, formatted);
         for (ColumnMetadata cm : columns.values())
-            newLine(sb.append(spaces(4, formatted)).append(cm).append(","), formatted);
+            newLine(sb.append(spaces(4, formatted)).append(cm).append(','), formatted);
 
         // PK
         sb.append(spaces(4, formatted)).append("PRIMARY KEY (");
         if (partitionKey.size() == 1) {
             sb.append(partitionKey.get(0).getName());
         } else {
-            sb.append("(");
+            sb.append('(');
             boolean first = true;
             for (ColumnMetadata cm : partitionKey) {
                 if (first) first = false; else sb.append(", ");
                 sb.append(Metadata.escapeId(cm.getName()));
             }
-            sb.append(")");
+            sb.append(')');
         }
         for (ColumnMetadata cm : clusteringColumns)
             sb.append(", ").append(Metadata.escapeId(cm.getName()));
-        sb.append(")");
+        sb.append(')');
         newLine(sb, formatted);
         // end PK
 
@@ -396,17 +396,17 @@ public class TableMetadata {
             and(sb, formatted).append("replicate_on_write = ").append(options.replicateOnWrite);
         and(sb, formatted).append("gc_grace_seconds = ").append(options.gcGrace);
         and(sb, formatted).append("bloom_filter_fp_chance = ").append(options.bfFpChance);
-        and(sb, formatted).append("caching = '").append(options.caching).append("'");
+        and(sb, formatted).append("caching = '").append(options.caching).append('\'');
         if (options.comment != null)
-            and(sb, formatted).append("comment = '").append(options.comment).append("'");
+            and(sb, formatted).append("comment = '").append(options.comment).append('\'');
         and(sb, formatted).append("compaction = ").append(formatOptionMap(options.compaction));
         and(sb, formatted).append("compression = ").append(formatOptionMap(options.compression));
         if (cassandraVersion.getMajor() >= 2) {
             and(sb, formatted).append("default_time_to_live = ").append(options.defaultTTL);
-            and(sb, formatted).append("speculative_retry = '").append(options.speculativeRetry).append("'");
+            and(sb, formatted).append("speculative_retry = '").append(options.speculativeRetry).append('\'');
             and(sb, formatted).append("index_interval = ").append(options.indexInterval);
         }
-        sb.append(";");
+        sb.append(';');
         return sb.toString();
     }
 
@@ -414,9 +414,9 @@ public class TableMetadata {
         sb.append("CLUSTERING ORDER BY (");
         for (int i = 0; i < clusteringColumns.size(); i++) {
             if (i > 0) sb.append(", ");
-            sb.append(clusteringColumns.get(i).getName()).append(" ").append(clusteringOrder.get(i));
+            sb.append(clusteringColumns.get(i).getName()).append(' ').append(clusteringOrder.get(i));
         }
-        return sb.append(")");
+        return sb.append(')');
     }
 
     private static String formatOptionMap(Map<String, String> m) {
@@ -425,12 +425,12 @@ public class TableMetadata {
         boolean first = true;
         for (Map.Entry<String, String> entry : m.entrySet()) {
             if (first) first = false; else sb.append(", ");
-            sb.append("'").append(entry.getKey()).append("'");
+            sb.append('\'').append(entry.getKey()).append('\'');
             sb.append(" : ");
             try {
                 sb.append(Integer.parseInt(entry.getValue()));
             } catch (NumberFormatException e) {
-                sb.append("'").append(entry.getValue()).append("'");
+                sb.append('\'').append(entry.getValue()).append('\'');
             }
         }
         sb.append(" }");

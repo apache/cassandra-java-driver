@@ -339,14 +339,14 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
                 // Create the value to be a list of the same 5 elements
                 value = "[";
                 for (int i = 0; i < 5; i++)
-                    value += key + ",";
-                value = value.substring(0, value.length() - 1) + "]";
+                    value += key + ',';
+                value = value.substring(0, value.length() - 1) + ']';
 
                 insertStatements.add(String.format(COLLECTION_INSERT_FORMAT, tableName, key, value));
             } else {
                 DataType typeArgument = sampleValueMap.keySet().iterator().next();
                 key = helperStringifiedData(typeArgument);
-                value = "{" + key + "}";
+                value = '{' + key + '}';
 
                 insertStatements.add(String.format(COLLECTION_INSERT_FORMAT, tableName, key, value));
             }

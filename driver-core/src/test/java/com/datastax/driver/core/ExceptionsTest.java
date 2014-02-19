@@ -313,7 +313,7 @@ public class ExceptionsTest {
 
             c.cassandraCluster.stop(2);
 
-            waitForDown(CCMBridge.IP_PREFIX + "2", c.cluster);
+            waitForDown(CCMBridge.IP_PREFIX + '2', c.cluster);
 
             try{
                 c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));

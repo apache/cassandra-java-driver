@@ -224,9 +224,9 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
             if (i != 0)
                 sb.append(", ");
             Definition def = byIdx[i];
-            sb.append(def.name).append("(").append(def.type).append(")");
+            sb.append(def.name).append('(').append(def.type).append(')');
         }
-        sb.append("]");
+        sb.append(']');
         return sb.toString();
     }
 
