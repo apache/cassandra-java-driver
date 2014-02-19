@@ -77,9 +77,9 @@ public class NoHostAvailableException extends DriverException {
             for (Map.Entry<InetAddress, Throwable> entry : errors.entrySet())
             {
                 if (n++ > 0) sb.append(", ");
-                sb.append(entry.getKey()).append(" (").append(entry.getValue()).append(")");
+                sb.append(entry.getKey()).append(" (").append(entry.getValue()).append(')');
             }
-            return sb.append(")").toString();
+            return sb.append(')').toString();
         }
         return String.format("All host(s) tried for query failed (tried: %s - use getErrors() for details)", errors.keySet());
     }

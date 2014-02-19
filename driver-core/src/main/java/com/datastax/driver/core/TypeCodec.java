@@ -30,6 +30,7 @@ import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
@@ -217,25 +218,25 @@ abstract class TypeCodec<T> {
         private static final Charset asciiCharset = Charset.forName("US-ASCII");
 
         // We don't want to recreate the decoders/encoders everytime and they're not threadSafe.
-        private static ThreadLocal<CharsetDecoder> utf8Decoders = new ThreadLocal<CharsetDecoder>() {
+        private static final ThreadLocal<CharsetDecoder> utf8Decoders = new ThreadLocal<CharsetDecoder>() {
             @Override
             protected CharsetDecoder initialValue() {
                 return utf8Charset.newDecoder();
             }
         };
-        private static ThreadLocal<CharsetDecoder> asciiDecoders = new ThreadLocal<CharsetDecoder>() {
+        private static final ThreadLocal<CharsetDecoder> asciiDecoders = new ThreadLocal<CharsetDecoder>() {
             @Override
             protected CharsetDecoder initialValue() {
                 return asciiCharset.newDecoder();
             }
         };
-        private static ThreadLocal<CharsetEncoder> utf8Encoders = new ThreadLocal<CharsetEncoder>() {
+        private static final ThreadLocal<CharsetEncoder> utf8Encoders = new ThreadLocal<CharsetEncoder>() {
             @Override
             protected CharsetEncoder initialValue() {
                 return utf8Charset.newEncoder();
             }
         };
-        private static ThreadLocal<CharsetEncoder> asciiEncoders = new ThreadLocal<CharsetEncoder>() {
+        private static final ThreadLocal<CharsetEncoder> asciiEncoders = new ThreadLocal<CharsetEncoder>() {
             @Override
             protected CharsetEncoder initialValue() {
                 return asciiCharset.newEncoder();
@@ -585,6 +586,7 @@ abstract class TypeCodec<T> {
         };
 
         public static final DateCodec instance = new DateCodec();
+        private static final Pattern PARSE_PATTERN = Pattern.compile("^\\d+$");
 
         private DateCodec() {}
 
@@ -593,7 +595,7 @@ abstract class TypeCodec<T> {
          * to parse date strings). It is copied here so as to not create a dependency on apache commons "just
          * for this".
          */
-        private Date parseDate(String str, final String[] parsePatterns) throws ParseException {
+        private static Date parseDate(String str, final String[] parsePatterns) throws ParseException {
             SimpleDateFormat parser = new SimpleDateFormat();
             parser.setLenient(false);
 
@@ -615,7 +617,7 @@ abstract class TypeCodec<T> {
 
         @Override
         public Date parse(String value) {
-            if (value.matches("^\\d+$")) {
+            if (PARSE_PATTERN.matcher(value).matches()) {
                 try {
                     return new Date(Long.parseLong(value));
                 } catch (NumberFormatException e) {
@@ -647,13 +649,71 @@ abstract class TypeCodec<T> {
 
         protected UUIDCodec() {}
 
+        @SuppressWarnings("CharUsedInArithmeticContext")
         @Override
         public UUID parse(String value) {
-            try {
-                return UUID.fromString(value);
-            } catch (IllegalArgumentException e) {
+            if (value.length() != 36)
                 throw new InvalidTypeException(String.format("Cannot parse UUID value from \"%s\"", value));
-            }
+
+            long lo;
+            long hi;
+            lo = hi = 0;
+
+            for (int i = 0, j = 0; i < 36; ++j) {
+                // Need to bypass hyphens:
+
+                switch (i) {
+                    case 8:
+                    case 13:
+                    case 18:
+                    case 23:
+                        if (value.charAt(i) != '-')
+                            throw new InvalidTypeException(String.format("Cannot parse UUID value from \"%s\"", value));
+
+                        ++i;
+                } // switch
+
+                int curr;
+                char c = value.charAt(i);
+
+                if (c >= '0' && c <= '9')
+                    curr = (c - '0');
+
+                else if (c >= 'a' && c <= 'f')
+                    curr = (c - 'a' + 10);
+
+                else if (c >= 'A' && c <= 'F')
+                    curr = (c - 'A' + 10);
+
+                else
+                    throw new InvalidTypeException(String.format("Cannot parse UUID value from \"%s\"", value));
+
+                curr = (curr << 4);
+
+                c = value.charAt(++i);
+
+                if (c >= '0' && c <= '9')
+                    curr |= (c - '0');
+
+                else if (c >= 'a' && c <= 'f')
+                    curr |= (c - 'a' + 10);
+
+                else if (c >= 'A' && c <= 'F')
+                    curr |= (c - 'A' + 10);
+
+                else
+                    throw new InvalidTypeException(String.format("Cannot parse UUID value from \"%s\"", value));
+
+                if (j < 8)
+                    hi = (hi << 8) | curr;
+
+                else
+                    lo = (lo << 8) | curr;
+
+                ++i;
+            } // for
+
+            return new UUID(hi, lo);
         }
 
         @Override

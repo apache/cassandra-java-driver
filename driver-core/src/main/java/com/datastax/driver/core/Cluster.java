@@ -604,8 +604,7 @@ public class Cluster implements Closeable {
          * @see Builder#addContactPoint
          */
         public Builder addContactPoints(InetAddress... addresses) {
-            for (InetAddress address : addresses)
-                this.addresses.add(address);
+            Collections.addAll(this.addresses, addresses);
             return this;
         }
 
@@ -1399,7 +1398,7 @@ public class Cluster implements Closeable {
         // refresh the schema using the provided connection, and notice the future with the provided resultset once done
         public void refreshSchema(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final String keyspace, final String table) {
             if (logger.isDebugEnabled())
-                logger.debug("Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : "." + table);
+                logger.debug("Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : '.' + table);
 
             executor.submit(new Runnable() {
                 @Override

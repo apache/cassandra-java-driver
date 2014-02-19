@@ -53,9 +53,9 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         for (DataType type : DataType.allPrimitiveTypes()) {
             if (exclude(type))
                 continue;
-            sb.append(", c_").append(type).append(" ").append(type);
+            sb.append(", c_").append(type).append(' ').append(type);
         }
-        sb.append(")");
+        sb.append(')');
         defs.add(sb.toString());
 
         sb = new StringBuilder();
@@ -63,9 +63,9 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         for (DataType type : DataType.allPrimitiveTypes()) {
             if (exclude(type))
                 continue;
-            sb.append(", c_list_").append(type).append(" list<").append(type).append(">");
+            sb.append(", c_list_").append(type).append(" list<").append(type).append('>');
         }
-        sb.append(")");
+        sb.append(')');
         defs.add(sb.toString());
 
         sb = new StringBuilder();
@@ -74,9 +74,9 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             // This must be handled separatly
             if (exclude(type))
                 continue;
-            sb.append(", c_set_").append(type).append(" set<").append(type).append(">");
+            sb.append(", c_set_").append(type).append(" set<").append(type).append('>');
         }
-        sb.append(")");
+        sb.append(')');
         defs.add(sb.toString());
 
         sb = new StringBuilder();
@@ -90,10 +90,10 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 // This must be handled separatly
                 if (exclude(valueType))
                     continue;
-                sb.append(", c_map_").append(keyType).append("_").append(valueType).append(" map<").append(keyType).append(",").append(valueType).append(">");
+                sb.append(", c_map_").append(keyType).append('_').append(valueType).append(" map<").append(keyType).append(',').append(valueType).append('>');
             }
         }
-        sb.append(")");
+        sb.append(')');
         defs.add(sb.toString());
 
         defs.add(String.format("CREATE TABLE %s (k text PRIMARY KEY, i int)", SIMPLE_TABLE));
@@ -245,7 +245,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 if (exclude(rawValueType))
                     continue;
 
-                String name = "c_map_" + rawKeyType + "_" + rawValueType;
+                String name = "c_map_" + rawKeyType + '_' + rawValueType;
                 DataType type = DataType.map(rawKeyType, rawValueType);
                 Map<Object, Object> value = (Map<Object, Object>)getFixedValue(type);;
                 PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
@@ -275,7 +275,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 if (exclude(rawValueType))
                     continue;
 
-                String name = "c_map_" + rawKeyType + "_" + rawValueType;
+                String name = "c_map_" + rawKeyType + '_' + rawValueType;
                 DataType type = DataType.map(rawKeyType, rawValueType);
                 Map<Object, Object> value = (Map<Object, Object>)getFixedValue2(type);;
                 PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
@@ -290,7 +290,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private void reprepareOnNewlyUpNodeTest(String ks, Session session) throws Exception {
 
-        ks = ks == null ? "" : ks + ".";
+        ks = ks == null ? "" : ks + '.';
 
         session.execute("INSERT INTO " + ks + "test (k, i) VALUES ('123', 17)");
         session.execute("INSERT INTO " + ks + "test (k, i) VALUES ('124', 18)");
@@ -300,10 +300,10 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(session.execute(ps.bind("123")).one().getInt("i"), 17);
 
         cassandraCluster.stop();
-        waitForDown(CCMBridge.IP_PREFIX + "1", cluster);
+        waitForDown(CCMBridge.IP_PREFIX + '1', cluster);
 
         cassandraCluster.start();
-        waitFor(CCMBridge.IP_PREFIX + "1", cluster);
+        waitFor(CCMBridge.IP_PREFIX + '1', cluster);
 
         try
         {

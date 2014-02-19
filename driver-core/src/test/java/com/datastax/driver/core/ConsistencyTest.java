@@ -42,9 +42,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.ONE);
             query(c, 12, ConsistencyLevel.ONE);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
 
             resetCoordinators();
             stopAndWait(c, 2);
@@ -137,9 +137,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
 
             resetCoordinators();
             stopAndWait(c, 2);
@@ -234,9 +234,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
 
             resetCoordinators();
             stopAndWait(c, 2);
@@ -331,9 +331,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.ONE);
             query(c, 12, ConsistencyLevel.ONE);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
 
             resetCoordinators();
             stopAndWait(c, 2);
@@ -423,9 +423,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
 
             resetCoordinators();
             stopAndWait(c, 2);
@@ -489,14 +489,14 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             try {
                 // This test catches TokenAwarePolicy
                 // However, full tests in LoadBalancingPolicyTest.java
-                assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-                assertQueried(CCMBridge.IP_PREFIX + "2", 12);
-                assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+                assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+                assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+                assertQueried(CCMBridge.IP_PREFIX + '3', 0);
             } catch (AssertionError e) {
                 // This test catches RoundRobinPolicy
-                assertQueried(CCMBridge.IP_PREFIX + "1", 4);
-                assertQueried(CCMBridge.IP_PREFIX + "2", 4);
-                assertQueried(CCMBridge.IP_PREFIX + "3", 4);
+                assertQueried(CCMBridge.IP_PREFIX + '1', 4);
+                assertQueried(CCMBridge.IP_PREFIX + '2', 4);
+                assertQueried(CCMBridge.IP_PREFIX + '3', 4);
             }
 
             resetCoordinators();
@@ -548,12 +548,12 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 12);
-            assertQueried(CCMBridge.IP_PREFIX + "4", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "5", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "6", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '4', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '5', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '6', 0);
 
             resetCoordinators();
             stopAndWait(c, 2);
@@ -639,12 +639,12 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "4", 12);
-            assertQueried(CCMBridge.IP_PREFIX + "5", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "6", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '4', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '5', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '6', 0);
 
             resetCoordinators();
             c.cassandraCluster.stop(2);

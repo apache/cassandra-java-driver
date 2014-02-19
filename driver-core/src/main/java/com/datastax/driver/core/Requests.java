@@ -146,7 +146,7 @@ class Requests {
 
         @Override
         public String toString() {
-            return "QUERY " + query + "(" + options + ")";
+            return "QUERY " + query + '(' + options + ')';
         }
     }
 
@@ -189,7 +189,7 @@ class Requests {
 
         @Override
         public String toString() {
-            return "EXECUTE " + statementId + " (" + options + ")";
+            return "EXECUTE " + statementId + " (" + options + ')';
         }
     }
 

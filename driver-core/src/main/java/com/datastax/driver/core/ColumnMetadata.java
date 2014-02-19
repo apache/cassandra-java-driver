@@ -184,7 +184,7 @@ public class ColumnMetadata {
 
     @Override
     public String toString() {
-        return TableMetadata.escapeId(name) + " " + type;
+        return TableMetadata.escapeId(name) + ' ' + type;
     }
 
     // Temporary class that is used to make building the schema easier. Not meant to be

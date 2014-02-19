@@ -17,6 +17,7 @@ package com.datastax.driver.core.querybuilder;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.datastax.driver.core.RegularStatement;
@@ -55,7 +56,7 @@ public class Batch extends BuiltStatement {
             builder.append(" USING ");
             Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
         }
-        builder.append(" ");
+        builder.append(' ');
 
         for (int i = 0; i < statements.size(); i++) {
             RegularStatement stmt = statements.get(i);
@@ -67,13 +68,12 @@ public class Batch extends BuiltStatement {
                 String str = stmt.getQueryString();
                 builder.append(str);
                 if (!str.trim().endsWith(";"))
-                    builder.append(";");
+                    builder.append(';');
 
                 if (variables != null) {
                     ByteBuffer[] vars = stmt.getValues();
                     if (vars != null) {
-                        for (int idx = 0; idx < vars.length; idx++)
-                            variables.add(vars[idx]);
+                        Collections.addAll(variables, vars);
                     }
                 }
             }

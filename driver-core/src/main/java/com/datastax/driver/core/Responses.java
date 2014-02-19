@@ -366,10 +366,10 @@ class Responses {
                     StringBuilder sb = new StringBuilder();
 
                     if (columns == null) {
-                        sb.append("[").append(columnCount).append(" columns]");
+                        sb.append('[').append(columnCount).append(" columns]");
                     } else {
                         for (ColumnDefinitions.Definition column : columns) {
-                            sb.append("[").append(column.getName());
+                            sb.append('[').append(column.getName());
                             sb.append(" (").append(column.getType()).append(")]");
                         }
                     }
@@ -464,7 +464,7 @@ class Responses {
 
             @Override
             public String toString() {
-                return "RESULT PREPARED " + statementId + " " + metadata + " (resultMetadata=" + resultMetadata + ")";
+                return "RESULT PREPARED " + statementId + ' ' + metadata + " (resultMetadata=" + resultMetadata + ')';
             }
         }
 
@@ -495,7 +495,7 @@ class Responses {
 
             @Override
             public String toString() {
-                return "RESULT schema change " + change + " on " + keyspace + (columnFamily.isEmpty() ? "" : "." + columnFamily);
+                return "RESULT schema change " + change + " on " + keyspace + (columnFamily.isEmpty() ? "" : '.' + columnFamily);
             }
         }
     }

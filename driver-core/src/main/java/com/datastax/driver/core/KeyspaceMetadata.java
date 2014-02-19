@@ -123,10 +123,10 @@ public class KeyspaceMetadata {
     public String exportAsString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(asCQLQuery()).append("\n");
+        sb.append(asCQLQuery()).append('\n');
 
         for (TableMetadata tm : tables.values())
-            sb.append("\n").append(tm.exportAsString()).append("\n");
+            sb.append('\n').append(tm.exportAsString()).append('\n');
 
         return sb.toString();
     }
@@ -144,14 +144,14 @@ public class KeyspaceMetadata {
         StringBuilder sb = new StringBuilder();
 
         sb.append("CREATE KEYSPACE ").append(name).append(" WITH ");
-        sb.append("REPLICATION = { 'class' : '").append(replication.get("class")).append("'");
+        sb.append("REPLICATION = { 'class' : '").append(replication.get("class")).append('\'');
         for (Map.Entry<String, String> entry : replication.entrySet()) {
             if (entry.getKey().equals("class"))
                 continue;
-            sb.append(", '").append(entry.getKey()).append("': '").append(entry.getValue()).append("'");
+            sb.append(", '").append(entry.getKey()).append("': '").append(entry.getValue()).append('\'');
         }
         sb.append(" } AND DURABLE_WRITES = ").append(durableWrites);
-        sb.append(";");
+        sb.append(';');
         return sb.toString();
     }
 

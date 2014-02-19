@@ -93,7 +93,7 @@ public class Generators {
             sb.append("CREATE TABLE standard1 (key bigint PRIMARY KEY");
             for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i)
                 sb.append(", C").append(i).append(" blob");
-            sb.append(")");
+            sb.append(')');
 
             if (options.has("with-compact-storage"))
                 sb.append(" WITH COMPACT STORAGE");
@@ -120,7 +120,7 @@ public class Generators {
                     sb.append("UPDATE standard1 SET ");
                     for (int i = 0; i < columnsPerRow; ++i) {
                         if (i > 0) sb.append(", ");
-                        sb.append("C").append(i).append("='").append(Bytes.toHexString(makeValue(valueSize))).append("'");
+                        sb.append('C').append(i).append("='").append(Bytes.toHexString(makeValue(valueSize))).append('\'');
                     }
                     sb.append(" WHERE key = ").append(prefix | iteration);
                     ++iteration;
@@ -138,7 +138,7 @@ public class Generators {
             sb.append("UPDATE standard1 SET ");
             for (int i = 0; i < columnsPerRow; ++i) {
                 if (i > 0) sb.append(", ");
-                sb.append("C").append(i).append("=?");
+                sb.append('C').append(i).append("=?");
             }
             sb.append(" WHERE key = ?");
 

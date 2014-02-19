@@ -123,7 +123,7 @@ class SimpleJSONParser {
      * the closing double-quote.
      */
     private String nextString() {
-        assert input.charAt(idx-1) == '"' : "Char is '" + input.charAt(idx-1) + "'";
+        assert input.charAt(idx-1) == '"' : "Char is '" + input.charAt(idx-1) + '\'';
         StringBuilder sb = new StringBuilder();
         while (true) {
             char c = nextChar();
