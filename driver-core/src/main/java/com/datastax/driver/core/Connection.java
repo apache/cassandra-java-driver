@@ -51,6 +51,7 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
 class Connection {
 
     private static final Logger logger = LoggerFactory.getLogger(Connection.class);
+    private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
     public final InetAddress address;
     private final String name;
@@ -179,7 +180,7 @@ class Connection {
     private void authenticateV2(Authenticator authenticator) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         byte[] initialResponse = authenticator.initialResponse();
         if (null == initialResponse)
-            initialResponse = new byte[0];
+            initialResponse = EMPTY_BYTE_ARRAY;
 
         Message.Response authResponse = write(new Requests.AuthResponse(initialResponse)).get();
         waitForAuthCompletion(authResponse, authenticator);
