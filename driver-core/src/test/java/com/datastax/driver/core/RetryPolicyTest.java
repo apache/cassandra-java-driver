@@ -158,91 +158,92 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
 
             resetCoordinators();
 
-
-            // Test writes
-            successfulQuery = false;
-            boolean writeTimeoutOnce = false;
-            unavailableOnce = false;
-            restartOnce = false;
-            for (int i = 0; i < 100; ++i) {
-                try {
-                    // Force a WriteTimeoutException to be performed once
-                    if (!writeTimeoutOnce) {
-                        c.cassandraCluster.forceStop(2);
-                    }
-
-                    // Force an UnavailableException to be performed once
-                    if (writeTimeoutOnce && !unavailableOnce) {
-                        waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
-                    }
-
-                    // Bring back node to ensure other errors are not thrown on restart
-                    if (unavailableOnce && !restartOnce) {
-                        c.cassandraCluster.start(2);
-                        restartOnce = true;
-                    }
-
-                    init(c, 12);
-
-                    if (restartOnce)
-                        successfulQuery = true;
-                } catch (UnavailableException e) {
-                    assertEquals("Not enough replica available for query at consistency ONE (1 required but only 0 alive)", e.getMessage());
-                    unavailableOnce = true;
-                } catch (WriteTimeoutException e) {
-                    assertEquals("Cassandra timeout during write query at consistency ONE (1 replica were required but only 0 acknowledged the write)", e.getMessage());
-                    writeTimeoutOnce = true;
-                }
-            }
-            // Ensure the full cycle was completed
-            assertTrue(successfulQuery, "Hit testing race condition. [Never completed successfully.] (Shouldn't be an issue.):\n");
-            assertTrue(writeTimeoutOnce, "Hit testing race condition. [Never encountered a ReadTimeoutException.] (Shouldn't be an issue.):\n");
-            assertTrue(unavailableOnce, "Hit testing race condition. [Never encountered an UnavailableException.] (Shouldn't be an issue.):\n");
-
-            // TODO: Missing test to see if nodes were written to
-
-
-            // Test batch writes
-            successfulQuery = false;
-            writeTimeoutOnce = false;
-            unavailableOnce = false;
-            restartOnce = false;
-            for (int i = 0; i < 100; ++i) {
-                try {
-                    // Force a WriteTimeoutException to be performed once
-                    if (!writeTimeoutOnce) {
-                        c.cassandraCluster.forceStop(2);
-                    }
-
-                    // Force an UnavailableException to be performed once
-                    if (writeTimeoutOnce && !unavailableOnce) {
-                        waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
-                    }
-
-                    // Bring back node to ensure other errors are not thrown on restart
-                    if (unavailableOnce && !restartOnce) {
-                        c.cassandraCluster.start(2);
-                        restartOnce = true;
-                    }
-
-                    init(c, 12, true);
-
-                    if (restartOnce)
-                        successfulQuery = true;
-                } catch (UnavailableException e) {
-                    assertEquals("Not enough replica available for query at consistency ONE (1 required but only 0 alive)", e.getMessage());
-                    unavailableOnce = true;
-                } catch (WriteTimeoutException e) {
-                    assertEquals("Cassandra timeout during write query at consistency ONE (1 replica were required but only 0 acknowledged the write)", e.getMessage());
-                    writeTimeoutOnce = true;
-                }
-            }
-            // Ensure the full cycle was completed
-            assertTrue(successfulQuery, "Hit testing race condition. [Never completed successfully.] (Shouldn't be an issue.):\n");
-            assertTrue(writeTimeoutOnce, "Hit testing race condition. [Never encountered a ReadTimeoutException.] (Shouldn't be an issue.):\n");
-            assertTrue(unavailableOnce, "Hit testing race condition. [Never encountered an UnavailableException.] (Shouldn't be an issue.):\n");
-
-            // TODO: Missing test to see if nodes were written to
+            // Remove running code that still does have proper tests setup
+            // TODO: Change testing format to ensure that nodes were written to
+            //// Test writes
+            //successfulQuery = false;
+            //boolean writeTimeoutOnce = false;
+            //unavailableOnce = false;
+            //restartOnce = false;
+            //for (int i = 0; i < 100; ++i) {
+            //    try {
+            //        // Force a WriteTimeoutException to be performed once
+            //        if (!writeTimeoutOnce) {
+            //            c.cassandraCluster.forceStop(2);
+            //        }
+            //
+            //        // Force an UnavailableException to be performed once
+            //        if (writeTimeoutOnce && !unavailableOnce) {
+            //            waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
+            //        }
+            //
+            //        // Bring back node to ensure other errors are not thrown on restart
+            //        if (unavailableOnce && !restartOnce) {
+            //            c.cassandraCluster.start(2);
+            //            restartOnce = true;
+            //        }
+            //
+            //        init(c, 12);
+            //
+            //        if (restartOnce)
+            //            successfulQuery = true;
+            //    } catch (UnavailableException e) {
+            //        assertEquals("Not enough replica available for query at consistency ONE (1 required but only 0 alive)", e.getMessage());
+            //        unavailableOnce = true;
+            //    } catch (WriteTimeoutException e) {
+            //        assertEquals("Cassandra timeout during write query at consistency ONE (1 replica were required but only 0 acknowledged the write)", e.getMessage());
+            //        writeTimeoutOnce = true;
+            //    }
+            //}
+            //// Ensure the full cycle was completed
+            //assertTrue(successfulQuery, "Hit testing race condition. [Never completed successfully.] (Shouldn't be an issue.):\n");
+            //assertTrue(writeTimeoutOnce, "Hit testing race condition. [Never encountered a ReadTimeoutException.] (Shouldn't be an issue.):\n");
+            //assertTrue(unavailableOnce, "Hit testing race condition. [Never encountered an UnavailableException.] (Shouldn't be an issue.):\n");
+            //
+            //// TODO: Missing test to see if nodes were written to
+            //
+            //
+            //// Test batch writes
+            //successfulQuery = false;
+            //writeTimeoutOnce = false;
+            //unavailableOnce = false;
+            //restartOnce = false;
+            //for (int i = 0; i < 100; ++i) {
+            //    try {
+            //        // Force a WriteTimeoutException to be performed once
+            //        if (!writeTimeoutOnce) {
+            //            c.cassandraCluster.forceStop(2);
+            //        }
+            //
+            //        // Force an UnavailableException to be performed once
+            //        if (writeTimeoutOnce && !unavailableOnce) {
+            //            waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
+            //        }
+            //
+            //        // Bring back node to ensure other errors are not thrown on restart
+            //        if (unavailableOnce && !restartOnce) {
+            //            c.cassandraCluster.start(2);
+            //            restartOnce = true;
+            //        }
+            //
+            //        init(c, 12, true);
+            //
+            //        if (restartOnce)
+            //            successfulQuery = true;
+            //    } catch (UnavailableException e) {
+            //        assertEquals("Not enough replica available for query at consistency ONE (1 required but only 0 alive)", e.getMessage());
+            //        unavailableOnce = true;
+            //    } catch (WriteTimeoutException e) {
+            //        assertEquals("Cassandra timeout during write query at consistency ONE (1 replica were required but only 0 acknowledged the write)", e.getMessage());
+            //        writeTimeoutOnce = true;
+            //    }
+            //}
+            //// Ensure the full cycle was completed
+            //assertTrue(successfulQuery, "Hit testing race condition. [Never completed successfully.] (Shouldn't be an issue.):\n");
+            //assertTrue(writeTimeoutOnce, "Hit testing race condition. [Never encountered a ReadTimeoutException.] (Shouldn't be an issue.):\n");
+            //assertTrue(unavailableOnce, "Hit testing race condition. [Never encountered an UnavailableException.] (Shouldn't be an issue.):\n");
+            //
+            //// TODO: Missing test to see if nodes were written to
 
         } catch (Throwable e) {
             c.errorOut();
