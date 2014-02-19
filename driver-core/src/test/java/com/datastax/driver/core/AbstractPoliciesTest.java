@@ -79,8 +79,17 @@ public abstract class AbstractPoliciesTest {
             Integer queried = coordinators.get(InetAddress.getByName(host));
             if (DEBUG)
                 System.out.println(String.format("Expected: %s\tReceived: %s", n, queried));
-            else
-                assertEquals(queried == null ? 0 : queried, n, "For " + host);
+            else {
+                queried = queried == null ? 0 : queried;
+
+                String map = new String();
+                if (n != queried) {
+                    for (Map.Entry<InetAddress, Integer> entry : coordinators.entrySet()) {
+                        map += entry.getKey() + " : " + entry.getValue() + ", ";
+                    }
+                }
+                assertEquals(queried == null ? 0 : queried, n, "For " + host + " in {" + map + "}");
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
