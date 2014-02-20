@@ -268,11 +268,11 @@ public abstract class TestUtils {
     }
 
     public static void waitForDown(String node, Cluster cluster) {
-        waitFor(node, cluster, 60, true, false);
+        waitFor(node, cluster, 180, true, false);
     }
 
     public static void waitForDownWithWait(String node, Cluster cluster, int waitTime) {
-        waitFor(node, cluster, 60, true, false);
+        waitFor(node, cluster, 180, true, false);
 
         // FIXME: Once stop() works, remove this line
         try {
