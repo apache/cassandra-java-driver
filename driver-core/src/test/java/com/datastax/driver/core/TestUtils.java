@@ -326,8 +326,10 @@ public abstract class TestUtils {
         Metadata metadata = cluster.getMetadata();
         for (int i = 0; i < maxTry; ++i) {
             for (Host host : metadata.getAllHosts()) {
-                if (host.getAddress().equals(address) && testHost(host, waitForDead))
+                if (host.getAddress().equals(address) && testHost(host, waitForDead)) {
+                    try { Thread.sleep(10000); } catch (Exception e) {}
                     return;
+                }
             }
             try { Thread.sleep(1000); } catch (Exception e) {}
         }
