@@ -303,12 +303,30 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             resetCoordinators();
             c.cassandraCluster.forceStop(1);
             waitForDownWithWait(CCMBridge.IP_PREFIX + "1", c.cluster, 5);
-            Thread.sleep(5000);
 
             try {
                 query(c, 12, ConsistencyLevel.ALL);
+                fail();
             } catch (ReadTimeoutException e) {
                 assertEquals("Cassandra timeout during read query at consistency TWO (2 responses were required but only 1 replica responded)", e.getMessage());
+            }
+
+            Thread.sleep(15000);
+
+            try {
+                query(c, 12, ConsistencyLevel.TWO);
+                fail("Only 1 node should be up and CL.TWO should fail.");
+            } catch (Exception e) {
+                // TODO: Figure out exact exception that should be thrown
+                assertTrue(true);
+            }
+
+            try {
+                query(c, 12, ConsistencyLevel.ALL);
+                fail("Only 1 node should be up and CL.ALL should fail.");
+            } catch (Exception e) {
+                // TODO: Figure out exact exception that should be thrown
+                assertTrue(true);
             }
 
             query(c, 12, ConsistencyLevel.QUORUM);
