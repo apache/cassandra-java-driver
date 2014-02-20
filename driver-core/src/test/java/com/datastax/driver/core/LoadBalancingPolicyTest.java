@@ -44,7 +44,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             resetCoordinators();
             c.cassandraCluster.bootstrapNode(3);
             waitFor(CCMBridge.IP_PREFIX + "3", c.cluster);
-            Thread.sleep(10000);
+            Thread.sleep(30000);
 
             query(c, 12);
 
@@ -91,7 +91,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             c.cassandraCluster.decommissionNode(1);
             waitFor(CCMBridge.IP_PREFIX + "5", c.cluster);
             waitForDecommission(CCMBridge.IP_PREFIX + "1", c.cluster);
-            Thread.sleep(10000);
+            Thread.sleep(30000);
 
             query(c, 12);
 
