@@ -303,7 +303,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         waitForDown(CCMBridge.IP_PREFIX + "1", cluster);
 
         cassandraCluster.start();
-        waitFor(CCMBridge.IP_PREFIX + "1", cluster);
+        waitFor(CCMBridge.IP_PREFIX + "1", cluster, 120);
 
         try
         {

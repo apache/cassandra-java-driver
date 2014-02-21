@@ -116,7 +116,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             boolean readTimeoutOnce = false;
             boolean unavailableOnce = false;
             boolean restartOnce = false;
-            for (int i = 0; i < 100; ++i) {
+            for (int i = 0; i < 4000; ++i) {
                 try {
                     // Force a ReadTimeoutException to be performed once
                     if (!readTimeoutOnce) {
@@ -179,10 +179,11 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
                     // Bring back node to ensure other errors are not thrown on restart
                     if (unavailableOnce && !restartOnce) {
                         c.cassandraCluster.start(2);
+                        waitFor(CCMBridge.IP_PREFIX + "2", c.cluster);
                         restartOnce = true;
                     }
 
-                    init(c, 12);
+                    write(c, 12);
 
                     if (restartOnce)
                         successfulQuery = true;
@@ -222,10 +223,11 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
                     // Bring back node to ensure other errors are not thrown on restart
                     if (unavailableOnce && !restartOnce) {
                         c.cassandraCluster.start(2);
+                        waitFor(CCMBridge.IP_PREFIX + "2", c.cluster);
                         restartOnce = true;
                     }
 
-                    init(c, 12, true);
+                    write(c, 12, true);
 
                     if (restartOnce)
                         successfulQuery = true;
@@ -301,12 +303,30 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             resetCoordinators();
             c.cassandraCluster.forceStop(1);
             waitForDownWithWait(CCMBridge.IP_PREFIX + "1", c.cluster, 5);
-            Thread.sleep(5000);
 
             try {
                 query(c, 12, ConsistencyLevel.ALL);
+                fail();
             } catch (ReadTimeoutException e) {
                 assertEquals("Cassandra timeout during read query at consistency TWO (2 responses were required but only 1 replica responded)", e.getMessage());
+            }
+
+            Thread.sleep(15000);
+
+            try {
+                query(c, 12, ConsistencyLevel.TWO);
+                fail("Only 1 node should be up and CL.TWO should fail.");
+            } catch (Exception e) {
+                // TODO: Figure out exact exception that should be thrown
+                assertTrue(true);
+            }
+
+            try {
+                query(c, 12, ConsistencyLevel.ALL);
+                fail("Only 1 node should be up and CL.ALL should fail.");
+            } catch (Exception e) {
+                // TODO: Figure out exact exception that should be thrown
+                assertTrue(true);
             }
 
             query(c, 12, ConsistencyLevel.QUORUM);
