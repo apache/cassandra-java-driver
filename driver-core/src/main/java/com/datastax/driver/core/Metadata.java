@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Pattern;
 
 import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
@@ -37,6 +38,9 @@ public class Metadata {
     private final ConcurrentMap<InetAddress, Host> hosts = new ConcurrentHashMap<InetAddress, Host>();
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
     private volatile TokenMap tokenMap;
+
+    private static final Pattern cqlId = Pattern.compile("\\w+");
+    private static final Pattern lowercaseId = Pattern.compile("[a-z][a-z0-9_]*");
 
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
@@ -159,6 +163,51 @@ public class Metadata {
         return hosts.values();
     }
 
+    // Deal with case sensitivity for a given keyspace or table id
+    static String handleId(String id) {
+        // Shouldn't really happen for this method, but no reason to fail here
+        if (id == null)
+            return null;
+
+        if (cqlId.matcher(id).matches())
+            return id.toLowerCase();
+
+        // Check if it's enclosed in quotes. If it is, remove them
+        if (id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
+            return id.substring(1, id.length() - 1);
+
+        // otherwise, just return the id.
+        return id;
+    }
+
+    // Escape a CQL3 identifier based on its value as read from the schema
+    // tables. Because it cames from Cassandra, we could just always quote it,
+    // but to get a nicer output we don't do it if it's not necessary.
+    static String escapeId(String ident) {
+        // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
+        return lowercaseId.matcher(ident).matches() ? ident : quote(ident);
+    }
+
+    /**
+     * Quote a keyspace, table or column identifier to make it case sensitive.
+     * <p>
+     * CQL identifiers, including keyspace, table and column ones, are case insensitive
+     * by default. Case sensitive identifiers can howeber be provided by enclosing
+     * the identifier in double quotes (see the
+     * <a href="http://cassandra.apache.org/doc/cql3/CQL.html#identifiers">CQL documentation</a>
+     * for details). If you are using case sentitive identifiers, this method
+     * can be used to enclose such identifier in double quotes, making it case
+     * sensitive.
+     *
+     * @param id the keyspace or table identifier.
+     * @return {@code id} enclosed in double-quotes, for use in methods like
+     * {@link #getReplicas}, {@link #getKeyspace}, {@link KeyspaceMetadata#getTable}
+     * or even {@link Session#connect(String)}.
+     */
+    public static String quote(String id) {
+        return '"' + id + '"';
+    }
+
     /**
      * Returns the set of hosts that are replica for a given partition key.
      * <p>
@@ -174,6 +223,7 @@ public class Metadata {
      * be empty (which is then some form of staleness).
      */
     public Set<Host> getReplicas(String keyspace, ByteBuffer partitionKey) {
+        keyspace = handleId(keyspace);
         TokenMap current = tokenMap;
         if (current == null) {
             return Collections.emptySet();
@@ -210,7 +260,7 @@ public class Metadata {
      * keyspace} is not a known keyspace.
      */
     public KeyspaceMetadata getKeyspace(String keyspace) {
-        return keyspaces.get(keyspace);
+        return keyspaces.get(handleId(keyspace));
     }
 
     /**

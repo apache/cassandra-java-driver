@@ -18,6 +18,7 @@ package com.datastax.driver.core.querybuilder;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.policies.RetryPolicy;
@@ -26,6 +27,8 @@ import com.datastax.driver.core.policies.RetryPolicy;
  * Common ancestor to the query builder built statements.
  */
 public abstract class BuiltStatement extends RegularStatement {
+
+    private static final Pattern cqlId = Pattern.compile("\\w+");
 
     private final List<ColumnMetadata> partitionKey;
     private final ByteBuffer[] routingKey;
@@ -45,7 +48,23 @@ public abstract class BuiltStatement extends RegularStatement {
     BuiltStatement(String keyspace) {
         this.partitionKey = null;
         this.routingKey = null;
-        this.keyspace = keyspace;
+        this.keyspace = handleId(keyspace);
+    }
+
+    // Same as in Metadata, but we don't want to expose it publicly there.
+    private static String handleId(String id) {
+        if (id == null)
+            return null;
+
+        if (cqlId.matcher(id).matches())
+            return id.toLowerCase();
+
+        // Check if it's enclosed in quotes. If it is, remove them
+        if (id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
+            return id.substring(1, id.length() - 1);
+
+        // otherwise, just return the id.
+        return id;
     }
 
     BuiltStatement(TableMetadata tableMetadata) {

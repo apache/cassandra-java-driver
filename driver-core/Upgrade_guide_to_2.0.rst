@@ -128,6 +128,12 @@ Other API Changes:
 9. The TableMetadata#getClusteringKey method has been renamed
    TableMetadata#getClusteringColumns to match the "official" vocabulary.
 
+10. Methods from Metadata, KeyspaceMetadata and TableMetadata now use case
+    insensitive by default identifier (for keyspace, table and column names in
+    parameter). You can double-quote an identifier if you want it to be a
+    case sensitive one (as you would do in CQL) and there is a Metadata.quote
+    helper method for that.
+
 
 Non-breaking API Changes
 ------------------------

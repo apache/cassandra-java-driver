@@ -94,7 +94,7 @@ public class KeyspaceMetadata {
      * exists, {@code false} otherwise.
      */
     public TableMetadata getTable(String name) {
-        return tables.get(name);
+        return tables.get(Metadata.handleId(name));
     }
 
     /**
@@ -143,7 +143,7 @@ public class KeyspaceMetadata {
     public String asCQLQuery() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("CREATE KEYSPACE ").append(name).append(" WITH ");
+        sb.append("CREATE KEYSPACE ").append(Metadata.escapeId(name)).append(" WITH ");
         sb.append("REPLICATION = { 'class' : '").append(replication.get("class")).append("'");
         for (Map.Entry<String, String> entry : replication.entrySet()) {
             if (entry.getKey().equals("class"))

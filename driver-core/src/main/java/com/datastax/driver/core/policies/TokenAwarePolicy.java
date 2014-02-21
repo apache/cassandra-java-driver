@@ -101,7 +101,7 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
         if (partitionKey == null || keyspace == null)
             return childPolicy.newQueryPlan(keyspace, statement);
 
-        final Set<Host> replicas = clusterMetadata.getReplicas(keyspace, partitionKey);
+        final Set<Host> replicas = clusterMetadata.getReplicas(Metadata.quote(keyspace), partitionKey);
         if (replicas.isEmpty())
             return childPolicy.newQueryPlan(loggedKeyspace, statement);
 

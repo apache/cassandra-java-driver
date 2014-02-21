@@ -16,7 +16,6 @@
 package com.datastax.driver.core;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -39,8 +38,6 @@ public class TableMetadata {
     private static final String DEFAULT_KEY_ALIAS    = "key";
     private static final String DEFAULT_COLUMN_ALIAS = "column";
     private static final String DEFAULT_VALUE_ALIAS  = "value";
-
-    private static final Pattern lowercaseId = Pattern.compile("[a-z][a-z0-9_]*");
 
     private static final Comparator<ColumnMetadata> columnMetadataComparator = new Comparator<ColumnMetadata>() {
         public int compare(ColumnMetadata c1, ColumnMetadata c2) {
@@ -221,12 +218,14 @@ public class TableMetadata {
     /**
      * Returns metadata on a column of this table.
      *
-     * @param name the name of the column to retrieve.
+     * @param name the name of the column to retrieve ({@code name} will be
+     * interpreted as a case-insensitive identifer unless enclosed in double-quotes,
+     * see {@link Metadata#quote}).
      * @return the metadata for the {@code name} column if it exists, or
      * {@code null} otherwise.
      */
     public ColumnMetadata getColumn(String name) {
-        return columns.get(name);
+        return columns.get(Metadata.handleId(name));
     }
 
     /**
@@ -356,18 +355,11 @@ public class TableMetadata {
         return asCQLQuery(false);
     }
 
-    // Escape a CQL3 identifier based on its value as read from the schema
-    // tables. Because it cames from Cassandra, we could just always quote it,
-    // but to get a nicer output we don't do it if it's not necessary.
-    static String escapeId(String ident) {
-        // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
-        return lowercaseId.matcher(ident).matches() ? ident : '"' + ident + '"';
-    }
 
     private String asCQLQuery(boolean formatted) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("CREATE TABLE ").append(escapeId(keyspace.getName())).append(".").append(escapeId(name)).append(" (");
+        sb.append("CREATE TABLE ").append(Metadata.escapeId(keyspace.getName())).append(".").append(Metadata.escapeId(name)).append(" (");
         newLine(sb, formatted);
         for (ColumnMetadata cm : columns.values())
             newLine(sb.append(spaces(4, formatted)).append(cm).append(","), formatted);
@@ -381,12 +373,12 @@ public class TableMetadata {
             boolean first = true;
             for (ColumnMetadata cm : partitionKey) {
                 if (first) first = false; else sb.append(", ");
-                sb.append(escapeId(cm.getName()));
+                sb.append(Metadata.escapeId(cm.getName()));
             }
             sb.append(")");
         }
         for (ColumnMetadata cm : clusteringColumns)
-            sb.append(", ").append(escapeId(cm.getName()));
+            sb.append(", ").append(Metadata.escapeId(cm.getName()));
         sb.append(")");
         newLine(sb, formatted);
         // end PK

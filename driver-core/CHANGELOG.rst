@@ -1,8 +1,14 @@
 CHANGELOG
 =========
 
+2.0.0:
+------
+
+- [api] Case sensitive identifier by default in Metadata (JAVA-269)
+
+
 2.0.0-rc3:
----------
+----------
 
 - [improvement] The protocol version 1 is now supported (features only supported by the
   version 2 of the protocol throw UnsupportedFeatureException).
