@@ -196,7 +196,7 @@ class SessionManager implements Session {
                         throw new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type));
                 }
             }
-        });
+        }, executor()); // Since the transformation involves querying other nodes, we should not do that in an I/O thread
     }
 
     Connection.Factory connectionFactory() {
