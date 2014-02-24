@@ -190,7 +190,7 @@ public class Cluster implements Closeable {
         try {
             session.setKeyspace(keyspace);
         } catch (RuntimeException e) {
-            session.shutdown();
+            session.close();
             throw e;
         }
         return session;
