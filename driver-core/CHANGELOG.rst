@@ -28,6 +28,7 @@ Merged from 1.0 branch:
 - [improvement] Avoid preparing a statement multiple time per host with multiple sessions
 - [bug] Make sure connections are returned to the right pools (JAVA-255)
 - [bug] Use date string in query build to work-around CASSANDRA-6718 (JAVA-264)
+- [bug] Always return the PreparedStatement object that is cache internally (JAVA-263)
 
 
 2.0.0-rc2:

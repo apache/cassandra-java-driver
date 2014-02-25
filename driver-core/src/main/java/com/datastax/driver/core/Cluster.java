@@ -1314,10 +1314,17 @@ public class Cluster implements Closeable {
             }
         }
 
-        public void addPrepared(PreparedStatement stmt) {
-            if (preparedQueries.putIfAbsent(stmt.getPreparedId().id, stmt) != null)
+        public PreparedStatement addPrepared(PreparedStatement stmt) {
+            PreparedStatement previous = preparedQueries.putIfAbsent(stmt.getPreparedId().id, stmt);
+            if (previous != null) {
                 logger.warn("Re-preparing already prepared query {}. Please note that preparing the same query more than once is "
                           + "generally an anti-pattern and will likely affect performance. Consider preparing the statement only once.", stmt.getQueryString());
+
+                // The one object in the cache will get GCed once it's not referenced by the client anymore since we use a weak reference.
+                // So we need to make sure that the instance we do return to the user is the one that is in the cache.
+                return previous;
+            }
+            return stmt;
         }
 
         private void prepareAllQueries(Host host) throws InterruptedException, UnsupportedProtocolVersionException {
