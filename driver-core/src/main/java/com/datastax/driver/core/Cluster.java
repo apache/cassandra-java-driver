@@ -889,7 +889,7 @@ public class Cluster implements Closeable {
     class Manager implements Host.StateListener, Connection.DefaultResponseHandler {
 
         final String clusterName;
-        private final AtomicBoolean isInit = new AtomicBoolean(false);
+        private boolean isInit;
 
         // Initial contacts point
         final List<InetAddress> contactPoints;
@@ -945,8 +945,10 @@ public class Cluster implements Closeable {
             this.listeners = new CopyOnWriteArraySet<Host.StateListener>(listeners);
         }
 
-        private void init() {
-            if (!isInit.compareAndSet(false, true))
+        // Initialization is not too performance intensive and in practice there shouldn't be contention
+        // on it so synchronized is good enough.
+        private synchronized void init() {
+            if (isInit)
                 return;
 
             for (InetAddress address : contactPoints) {
@@ -974,6 +976,8 @@ public class Cluster implements Closeable {
                         controlConnection.connect();
                         if (connectionFactory.protocolVersion < 0)
                             connectionFactory.protocolVersion = 2;
+
+                        isInit = true;
                         return;
                     } catch (UnsupportedProtocolVersionException e) {
                         assert connectionFactory.protocolVersion < 1;
