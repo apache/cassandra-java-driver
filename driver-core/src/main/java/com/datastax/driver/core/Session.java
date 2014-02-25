@@ -45,6 +45,39 @@ public interface Session extends Closeable {
     public String getLoggedKeyspace();
 
     /**
+     * Force the initialization of this Session instance if it hasn't been
+     * initialized yet.
+     * <p>
+     * Please note first that most use won't need to call this method
+     * explicitly. If you use the {@link Cluster#connect} method {@code Cluster}
+     * to create your Session, the returned session will be already
+     * initialized. Even if you create a non-initialized session through
+     * {@link Cluster#newSession}, that session will get automatically
+     * initialized the first time that session is used for querying. This method
+     * is thus only useful if you use {@link Cluster#newSession} and want to
+     * explicitly force initialization without querying.
+     * <p>
+     * Session initialization consists in connecting the Session to the known
+     * Cassandra hosts (at least those that should not be ignored due to
+     * the {@code LoadBalancingPolicy} in place).
+     * <p>
+     * If the Cluster instance this Session depends on is not itself
+     * initialized, it will be initialized by this method.
+     * <p>
+     * If the session is already initialized, this method is a no-op.
+     *
+     * @return this {@code Session} object.
+     *
+     * @throws NoHostAvailableException if this initialization triggers the
+     * Cluster initialization and no host amongst the contact points can be
+     * reached.
+     * @throws AuthenticationException if this initialization triggers the
+     * Cluster initialization and an authentication error occurs while contacting
+     * the initial contact points.
+     */
+    public Session init();
+
+    /**
      * Executes the provided query.
      *
      * This is a convenience method for {@code execute(new SimpleStatement(query))}.

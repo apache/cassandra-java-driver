@@ -44,15 +44,24 @@ class SessionManager implements Session {
     final HostConnectionPool.PoolState poolsState;
     final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
-    // Package protected, only Cluster should construct that.
-    SessionManager(Cluster cluster, Collection<Host> hosts) {
-        this.cluster = cluster;
+    private volatile boolean isInit;
 
-        this.pools = new ConcurrentHashMap<Host, HostConnectionPool>(hosts.size());
+    // Package protected, only Cluster should construct that.
+    SessionManager(Cluster cluster) {
+        this.cluster = cluster;
+        this.pools = new ConcurrentHashMap<Host, HostConnectionPool>();
         this.poolsState = new HostConnectionPool.PoolState();
+    }
+
+    public synchronized Session init() {
+        if (isInit)
+            return this;
+
+        // If we haven't initialized the cluster, do it now
+        cluster.init();
 
         // Create pool to initial nodes (and wait for them to be created)
-        for (Host host : hosts) {
+        for (Host host : cluster.getMetadata().allHosts()) {
             try {
                 addOrRenewPool(host, false).get();
             } catch (ExecutionException e) {
@@ -62,6 +71,8 @@ class SessionManager implements Session {
                 Thread.currentThread().interrupt();
             }
         }
+        isInit = true;
+        return this;
     }
 
     public String getLoggedKeyspace() {
@@ -400,6 +411,9 @@ class SessionManager implements Session {
      * {@link LoadBalancingPolicy} and handle host failover.
      */
     void execute(RequestHandler.Callback callback, Statement statement) {
+        // init() locks, so avoid if we know we don't need it.
+        if (!isInit)
+            init();
         new RequestHandler(this, callback, statement).sendRequest();
     }
 

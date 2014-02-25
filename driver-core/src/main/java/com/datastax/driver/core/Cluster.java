@@ -156,7 +156,34 @@ public class Cluster implements Closeable {
     }
 
     /**
-     * Creates a new session on this cluster.
+     * Creates a new session on this cluster but does not initialize it.
+     * <p>
+     * Because this method does not perform any initialization, it cannot fail.
+     * The initialization of the session (the connection of the Session to the
+     * Cassandra nodes) will occur if either the {@link Session#init} method is
+     * called explicitly, or the time the
+     * returned session object is called.
+     * <p>
+     * Once a session returned by this method gets initialized (see above), it
+     * will be set to no keyspace. If you want to set such session to a
+     * keyspace, you will have to explicitly execute a 'USE <mykeyspace>' query.
+     * <p>
+     * Note that if you do not particularly need to defer initialization, it is
+     * simpler to use one of the {@code connect()} method of this class.
+     *
+     * @return a new, non-initialized session on this cluster.
+     */
+    public Session newSession() {
+        return manager.newSession();
+    }
+
+    /**
+     * Creates a new session on this cluster and initialize it.
+     * <p>
+     * Note that this method will initialize the newly created session, trying
+     * to connect to the Cassandra nodes before returning. If you only want
+     * to create a Session object without initializing it right away, see
+     * {@link #newSession}.
      *
      * @return a new session on this cluster sets to no keyspace.
      *
@@ -167,11 +194,20 @@ public class Cluster implements Closeable {
      * while contacting the initial contact points.
      */
     public Session connect() {
-        return manager.newSession();
+        init();
+        Session session = manager.newSession();
+        session.init();
+        return session;
     }
 
     /**
-     * Creates a new session on this cluster and sets the keyspace to the provided one.
+     * Creates a new session on this cluster, initialize it and sets the keyspace
+     * to the provided one.
+     * <p>
+     * Note that this method will initialize the newly created session, trying
+     * to connect to the Cassandra nodes before returning. If you only want
+     * to create a Session object without initializing it right away, see
+     * {@link #newSession}.
      *
      * @param keyspace The name of the keyspace to use for the created
      * {@code Session}.
@@ -947,7 +983,7 @@ public class Cluster implements Closeable {
 
         // Initialization is not too performance intensive and in practice there shouldn't be contention
         // on it so synchronized is good enough.
-        private synchronized void init() {
+        synchronized void init() {
             if (isInit)
                 return;
             isInit = true;
@@ -1011,9 +1047,7 @@ public class Cluster implements Closeable {
         }
 
         private Session newSession() {
-            init();
-
-            SessionManager session = new SessionManager(Cluster.this, metadata.allHosts());
+            SessionManager session = new SessionManager(Cluster.this);
             sessions.add(session);
             return session;
         }

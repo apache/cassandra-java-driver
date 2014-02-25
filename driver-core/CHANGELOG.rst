@@ -5,6 +5,8 @@ CHANGELOG
 ------
 
 - [improvement] Handle the static columns introduced in Cassandra 2.0.6 (JAVA-278)
+- [improvement] Add Cluster#newSession method to create Session without connecting
+  right away (JAVA-208)
 - [bug] Add missing iso8601 patterns for parsing dates (JAVA-279)
 - [bug] Properly parse BytesType as the blob type
 - [bug] Potential NPE when parsing schema of pre-CQL tables of C* 1.2 nodes (JAVA-280)
