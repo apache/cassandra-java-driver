@@ -169,7 +169,7 @@ class SessionManager implements Session {
                             case PREPARED:
                                 ResultMessage.Prepared pmsg = (ResultMessage.Prepared)rm;
                                 PreparedStatement stmt = PreparedStatement.fromMessage(pmsg, cluster.getMetadata(), query, poolsState.keyspace);
-                                cluster.manager.addPrepared(stmt);
+                                stmt = cluster.manager.addPrepared(stmt);
                                 try {
                                     // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
                                     // If that changes, we'll have to make sure this propagate to other sessions too.

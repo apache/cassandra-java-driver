@@ -152,6 +152,12 @@ public interface Session {
      *   session.execute(prepared.bind("someValue"));
      * </pre>
      * the final execution will be performed with Quorum consistency.
+     * <p>
+     * Please note however that if the same CQL statement is prepared more than
+     * once, all calls to this method will return the same {@code PreparedStatement}
+     * object (which imply that this unique {@code PreparedStatement} object will
+     * inherit the query properties of the last statement for which this method
+     * has been called).
      *
      * @param statement the statement to prepare
      * @return the prepared statement corresponding to {@code statement}.
@@ -179,6 +185,12 @@ public interface Session {
      * This method is essentially a shortcut for {@code prepareAsync(statement.getQueryString())},
      * but with the additional effect that the resulting {@code
      * PreparedStamenent} will inherit the query properties set on {@code statement}.
+     * <p>
+     * Please note however that if the same CQL statement is prepared more than
+     * once, all calls to this method will return the same {@code PreparedStatement}
+     * object (which imply that this unique {@code PreparedStatement} object will
+     * inherit the query properties of the last statement for which this method
+     * has been called).
      *
      * @param statement the statement to prepare
      * @return a future on the prepared statement corresponding to {@code statement}.
