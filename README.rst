@@ -38,8 +38,30 @@ it in your application using the following Maven dependency::
       <version>2.0.0-rc3</version>
     </dependency>
 
+Compatibility
+-------------
+
+The Java client driver 2.0 (`branch 2.0 <https://github.com/datastax/java-driver/tree/2.0>`_) 
+is using exclusively the CQL protocol version 3 and is compatible with Apache Cassandra 1.2 and 2.0. 
+
+Some features are available only when using Apache Cassandra 2.0 (e.g. result set paging , 
+`BatchStatement <https://github.com/datastax/java-driver/blob/2.0/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java>`_, 
+`lightweigt transactions <http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_ltweight_transaction_t.html>`_ 
+-- see `What's new in Cassandra 2.0 <http://www.datastax.com/documentation/cassandra/2.0/cassandra/features/features_key_c.html>`_). 
+Trying to use these with a cluster running Cassandra 1.2 will result in 
+an `UnsupportedFeatureException <https://github.com/datastax/java-driver/blob/2.0/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java>`_ being thrown.
+
+
+Upgrading from 1.x branch
+-------------------------
+
+
 If you are upgrading from the 1.x branch of the driver, be sure to have a look at
 the `upgrade guide <https://github.com/datastax/java-driver/blob/2.0/driver-core/Upgrade_guide_to_2.0.rst>`_.
+
+We used the opportunity of a major version bump to incorporate your feedback and improve the API, 
+to fix a number of inconsistencies and remove cruft. 
+Unfortunately this means there are some breaking changes, but the new API should be both simpler and more complete.
 
 
 
@@ -48,6 +70,9 @@ Troubleshooting
 
 If you are having issues connecting to the cluster (seeing ``NoHostAvailableConnection`` exceptions) please check the 
 `connection requirements <https://github.com/datastax/java-driver/wiki/Connection-requirements>`_.
+
+
+
 
 License
 -------
