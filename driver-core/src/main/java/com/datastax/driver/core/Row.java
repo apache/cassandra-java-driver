@@ -246,7 +246,7 @@ public interface Row {
     /**
      * Returns the {@code i}th value of this row as a byte array.
      * <p>
-     * Note that this method validate that the colum is of type BLOB. If you want to retrieve
+     * Note that this method validate that the column is of type BLOB. If you want to retrieve
      * the bytes for any type of columns, use {@link #getBytesUnsafe(int)} instead.
      *
      * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.

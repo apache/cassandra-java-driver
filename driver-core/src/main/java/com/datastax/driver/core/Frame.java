@@ -134,7 +134,7 @@ class Frame {
         protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
             try {
                 // We must at least validate that the frame version is something we support/know and it doesn't hurt to
-                // check the opcode is not garbage. And we should do that indenpently of what is the the bytes corresponding
+                // check the opcode is not garbage. And we should do that independently of what is the the bytes corresponding
                 // to the frame length are, i.e. we shouldn't wait for super.decode() to return non-null.
                 if (buffer.readableBytes() == 0)
                     return null;

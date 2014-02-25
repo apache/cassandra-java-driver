@@ -45,7 +45,7 @@ public abstract class Statement {
 
     private volatile RetryPolicy retryPolicy;
 
-    // We don't want to expose the constructor, because the code rely on this being only subclassed RegularStatement, BoundStatement and BatchStatement
+    // We don't want to expose the constructor, because the code relies on this being only sub-classed by RegularStatement, BoundStatement and BatchStatement
     Statement() {}
 
     /**
@@ -86,7 +86,7 @@ public abstract class Statement {
      * The serial consistency can only be one of {@code ConsistencyLevel.SERIAL} or
      * {@code ConsistencyLevel.LOCAL_SERIAL}. While {@code ConsistencyLevel.SERIAL} guarantees full
      * linearizability (with other SERIAL updates), {@code ConsistencyLevel.LOCAL_SERIAL} only
-     * guarantees it in the local datacenter.
+     * guarantees it in the local data center.
      * <p>
      * The serial consistency level is ignored for any query that is not a conditional
      * update (serial reads should use the regular consistency level for instance).
@@ -169,7 +169,7 @@ public abstract class Statement {
      * Returns the keyspace this query operates on.
      * <p>
      * Note that not all query specify on which keyspace they operate on, and
-     * so this method can always reutrn {@code null}. Firstly, some queries do
+     * so this method can always return {@code null}. Firstly, some queries do
      * not operate inside a keyspace: keyspace creation, {@code USE} queries,
      * user creation, etc. Secondly, even query that operate within a keyspace
      * do not have to specify said keyspace directly, in which case the

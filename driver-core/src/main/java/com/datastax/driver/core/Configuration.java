@@ -25,7 +25,7 @@ import com.datastax.driver.core.policies.Policies;
  *   <li>Connection pooling configurations.</li>
  *   <li>low-level TCP configuration options (tcpNoDelay, keepAlive, ...).</li>
  *   <li>Metrics related options.</li>
- *   <li>Query related options (default consistency level, fechSize, ...).</li>
+ *   <li>Query related options (default consistency level, fetchSize, ...).</li>
  * </ul>
  * This is also where you get the configured policies, though those cannot be changed
  * (they are set during the built of the Cluster object).

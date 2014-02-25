@@ -631,7 +631,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         }
 
         /**
-         * Sets the minimimum number of measurements per-host to consider for
+         * Sets the minimum number of measurements per-host to consider for
          * the resulting latency aware policy.
          * <p>
          * Penalizing nodes is based on an average of their recently measured
@@ -648,7 +648,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
          * {@code minMeasure} measurements).
          * <p>
          * Note that the number of collected measurements for a given host is
-         * reseted if the node is restarted.
+         * reset if the node is restarted.
          * <p>
          * The default for this option (if this method is not called) is <b>50</b>.
          * Note that it is probably not a good idea to put this option too low

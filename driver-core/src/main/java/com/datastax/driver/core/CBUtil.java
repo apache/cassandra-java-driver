@@ -330,7 +330,7 @@ abstract class CBUtil {
      */
     public static byte[] readRawBytes(ChannelBuffer cb) {
         if (cb.hasArray() && cb.readableBytes() == cb.array().length) {
-            // Move the readerIndex just so we consistenly consume the input
+            // Move the readerIndex just so we consistently consume the input
             cb.readerIndex(cb.writerIndex());
             return cb.array();
         }

@@ -128,7 +128,7 @@ public class ColumnMetadata {
         /**
          * Returns whether this index is a custom one.
          * <p>
-         * If it is indeed a custome index, {@link #getIndexClassName} will
+         * If it is indeed a custom index, {@link #getIndexClassName} will
          * return the name of the class used in Cassandra to implement that
          * index.
          *

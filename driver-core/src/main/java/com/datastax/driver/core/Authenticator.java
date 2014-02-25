@@ -29,12 +29,12 @@ package com.datastax.driver.core;
  *   challenge or indicating that the authentication is complete (successfully or not).
  *   If a new challenge is issued, the authenticator {@code evaluateChallenge}
  *   method will be called to produce a response that will be sent to the
- *   server. This challenge/reponse negotiation will continue until the server
- *   respond that authentication is succesfull (or an {@code AuthenticationException}
+ *   server. This challenge/response negotiation will continue until the server
+ *   respond that authentication is successful (or an {@code AuthenticationException}
  *   is raised).
  *   </li>
- *   <li>When the server indicates that authentication is successfull, the
- *   {@code onAuthenticationSucces} method will be call with last informations
+ *   <li>When the server indicates that authentication is successful, the
+ *   {@code onAuthenticationSuccess} method will be call with last informations
  *   that the server may optionally have sent.
  *   </li>
  * </ol>

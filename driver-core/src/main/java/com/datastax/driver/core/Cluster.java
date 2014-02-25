@@ -72,8 +72,8 @@ public class Cluster implements Closeable {
     /**
      * Constructs a new Cluster instance.
      * <p>
-     * This constructor is mainly exposed so Cluster can be sub-classed as a mean to make testing/mocking
-     * easier or to "intecept" it's method call. Most users shouldn't extend this class however and
+     * This constructor is mainly exposed so Cluster can be sub-classed as a means to make testing/mocking
+     * easier or to "intercept" its method call. Most users shouldn't extend this class however and
      * should prefer either using the {@link #builder} or calling {@link #buildFrom} with a custom
      * Initializer.
      *
@@ -294,7 +294,7 @@ public class Cluster implements Closeable {
      * <p>
      * Registering the same listener multiple times is a no-op.
      * <p>
-     * Be warry that the registered tracker {@code update} method will be call
+     * Be wary that the registered tracker {@code update} method will be call
      * very frequently (at the end of every query to a Cassandra host) and
      * should thus not be costly.
      * <p>
@@ -334,7 +334,7 @@ public class Cluster implements Closeable {
      * of the shutdown process. As soon a the cluster is shutdown, no
      * new request will be accepted, but already submitted queries are
      * allowed to complete. This method closes all connections from all
-     * sessions and reclaims all ressources used by this Cluster
+     * sessions and reclaims all resources used by this Cluster
      * instance.
      * <p>
      * If for some reason you wish to expedite this process, the
@@ -417,7 +417,7 @@ public class Cluster implements Closeable {
         /**
          * Optional listeners to register against the newly created cluster.
          * <p>
-         * Note that contrarly to listeners registered post Cluster creation,
+         * Note that contrary to listeners registered post Cluster creation,
          * the listeners returned by this method will see {@link Host.StateListener#onAdd}
          * events for the initial contact points.
          *
@@ -502,7 +502,7 @@ public class Cluster implements Closeable {
          * The native protocol version to use.
          * <p>
          * The driver supports both version 1 and 2 of the native protocol. Version 2
-         * of the protocol has more features and should be prefered, but it is only
+         * of the protocol has more features and should be preferred, but it is only
          * supported by Cassandra 2.0 and above, so you will have to use version 1 with
          * Cassandra 1.2 nodes.
          * <p>
@@ -678,7 +678,7 @@ public class Cluster implements Closeable {
          * <p>
          * Use this method when a custom authentication scheme is in place.
          * You shouldn't call both this method and {@code withCredentials}
-         * on the same {@code Builder} instance as one will supercede the
+         * on the same {@code Builder} instance as one will supersede the
          * other
          *
          * @param authProvider the {@link AuthProvider} to use to login to
@@ -912,7 +912,7 @@ public class Cluster implements Closeable {
         // Executor used for tasks that shouldn't be executed on an IO thread. Used for short-lived, generally non-blocking tasks
         final ListeningExecutorService executor;
 
-        // An executor for tasks that migth block some time, like creating new connection, but are generally not too critical.
+        // An executor for tasks that might block some time, like creating new connection, but are generally not too critical.
         final ListeningExecutorService blockingTasksExecutor;
 
         final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
@@ -1052,7 +1052,7 @@ public class Cluster implements Closeable {
 
             future = new ClusterCloseFuture(futures);
 
-            // The rest will happen asynchonrously, when all connections are successfully closed
+            // The rest will happen asynchronously, when all connections are successfully closed
             return closeFuture.compareAndSet(null, future)
                  ? future
                  : closeFuture.get(); // We raced, it's ok, return the future that was actually set
@@ -1110,7 +1110,7 @@ public class Cluster implements Closeable {
             for (SessionManager s : sessions)
                 futures.add(s.addOrRenewPool(host, false));
 
-            // Only mark the node up once all session have re-added their pool (if the loadbalancing
+            // Only mark the node up once all session have re-added their pool (if the load-balancing
             // policy says it should), so that Host.isUp() don't return true before we're reconnected
             // to the node.
             Futures.addCallback(Futures.allAsList(futures), new FutureCallback<List<Boolean>>() {
@@ -1197,7 +1197,7 @@ public class Cluster implements Closeable {
 
                 protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
                     if (logger.isDebugEnabled())
-                        logger.debug("Failed reconnection to {} ({}), scheduling retry in {} milliseconds", new Object[]{ host, e.getMessage(), nextDelayMs});
+                        logger.debug("Failed reconnection to {} ({}), scheduling retry in {} milliseconds", host, e.getMessage(), nextDelayMs);
                     return true;
                 }
 
@@ -1238,7 +1238,7 @@ public class Cluster implements Closeable {
             for (SessionManager s : sessions)
                 futures.add(s.addOrRenewPool(host, true));
 
-            // Only mark the node up once all session have added their pool (if the loadbalancing
+            // Only mark the node up once all session have added their pool (if the load-balancing
             // policy says it should), so that Host.isUp() don't return true before we're reconnected
             // to the node.
             Futures.addCallback(Futures.allAsList(futures), new FutureCallback<List<Boolean>>() {

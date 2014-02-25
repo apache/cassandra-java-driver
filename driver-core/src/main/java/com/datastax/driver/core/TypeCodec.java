@@ -217,7 +217,7 @@ abstract class TypeCodec<T> {
         private static final Charset utf8Charset = Charset.forName("UTF-8");
         private static final Charset asciiCharset = Charset.forName("US-ASCII");
 
-        // We don't want to recreate the decoders/encoders everytime and they're not threadSafe.
+        // We don't want to recreate the decoders/encoders every time and they're not threadSafe.
         private static final ThreadLocal<CharsetDecoder> utf8Decoders = new ThreadLocal<CharsetDecoder>() {
             @Override
             protected CharsetDecoder initialValue() {

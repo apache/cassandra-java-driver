@@ -27,7 +27,7 @@ public abstract class Assignment extends Utils.Appendeable {
 
     private Assignment(String name) {
         this.name = name;
-    };
+    }
 
     static class SetAssignment extends Assignment {
 

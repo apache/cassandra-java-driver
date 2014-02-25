@@ -124,7 +124,7 @@ public interface PreparedStatement {
      * Returns the routing key set for this query.
      *
      * @return the routing key for this query or {@code null} if none has been
-     * explicitely set on this PreparedStatement.
+     * explicitly set on this PreparedStatement.
      */
     public ByteBuffer getRoutingKey();
 
@@ -209,7 +209,7 @@ public interface PreparedStatement {
      * Convenience method to set a default retry policy for the {@code BoundStatement}
      * created from this prepared statement.
      * <p>
-     * Note that this method is competely optional. By default, the retry policy
+     * Note that this method is completely optional. By default, the retry policy
      * used is the one returned {@link com.datastax.driver.core.policies.Policies#getRetryPolicy}
      * in the cluster configuration. This method is only useful if you want
      * to override this default policy for the {@code BoundStatement} created from

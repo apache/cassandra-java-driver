@@ -32,16 +32,16 @@ import com.datastax.driver.core.Statement;
  * A data-center aware Round-robin load balancing policy.
  * <p>
  * This policy provides round-robin queries over the node of the local
- * datacenter. It also includes in the query plans returned a configurable
- * number of hosts in the remote datacenters, but those are always tried
+ * data center. It also includes in the query plans returned a configurable
+ * number of hosts in the remote data centers, but those are always tried
  * after the local nodes. In other words, this policy guarantees that no
- * host in a remote datacenter will be queried unless no host in the local
- * datacenter can be reached.
+ * host in a remote data center will be queried unless no host in the local
+ * data center can be reached.
  * <p>
- * If used with a single datacenter, this policy is equivalent to the
+ * If used with a single data center, this policy is equivalent to the
  * {@code LoadBalancingPolicy.RoundRobin} policy, but its DC awareness
  * incurs a slight overhead so the {@code LoadBalancingPolicy.RoundRobin}
- * policy could be prefered to this policy in that case.
+ * policy could be preferred to this policy in that case.
  */
 public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
 

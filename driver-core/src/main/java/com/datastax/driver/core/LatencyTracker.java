@@ -19,7 +19,7 @@ package com.datastax.driver.core;
  * Interface for object that are interested in tracking the latencies
  * of the driver queries to each Cassandra nodes.
  * <p>
- * An implementaion of this interface can be registered against a Cluster
+ * An implementation of this interface can be registered against a Cluster
  * object trough the {@link Cluster#register} method, after which the
  * {@code update} will be called after each query of the driver to a Cassandra
  * host with the latency/duration (in nanoseconds) of this operation.
@@ -38,7 +38,7 @@ public interface LatencyTracker {
      * @param newLatencyNanos the latency in nanoseconds of the operation. This
      * latency corresponds to the time elapsed between when the query was send
      * to {@code host} and when the response was received by the driver (or the
-     * operation timeoued, in which {@code newLatencyNanos} will approximately
+     * operation timed out, in which {@code newLatencyNanos} will approximately
      * be the timeout value).
      */
     public void update(Host host, long newLatencyNanos);
