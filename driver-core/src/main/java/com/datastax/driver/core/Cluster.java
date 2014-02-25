@@ -1225,6 +1225,23 @@ public class Cluster implements Closeable {
                 return;
             }
 
+            // Adds to the load balancing first and foremost, as doing so might change the decision
+            // it will make for distance() on that node (not likely but we leave that possibility).
+            // This does mean the policy may start returning that node for query plan, but as long
+            // as no pools have been created (below) this will be ignored by RequestHandler so it's fine.
+            loadBalancingPolicy().onAdd(host);
+
+            // Next, if the host should be ignored, well, ignore it.
+            if (loadBalancingPolicy().distance(host) == HostDistance.IGNORED) {
+                // We still mark the node UP though as it should be (and notifiy the listeners).
+                // We'll mark it down if we have  a notification anyway and we've documented that especially
+                // for IGNORED hosts, the isUp() method was a best effort guess
+                host.setUp();
+                for (Host.StateListener listener : listeners)
+                    listener.onAdd(host);
+                return;
+            }
+
             try {
                 prepareAllQueries(host);
             } catch (InterruptedException e) {
@@ -1235,7 +1252,6 @@ public class Cluster implements Closeable {
                 return;
             }
 
-            loadBalancingPolicy().onAdd(host);
             controlConnection.onAdd(host);
 
             List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
