@@ -13,6 +13,7 @@ CHANGELOG
 - [bug] Make sure connections are returned to the right pools (JAVA-255)
 - [bug] Use date string in query build to work-around CASSANDRA-6718 (JAVA-264)
 - [bug] Always return the PreparedStatement object that is cache internally (JAVA-263)
+- [bug] Fix race when multiple connect are done in parallel (JAVA-261)
 
 
 1.0.5:

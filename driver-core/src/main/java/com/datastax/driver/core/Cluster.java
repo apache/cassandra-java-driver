@@ -735,7 +735,7 @@ public class Cluster {
      */
     class Manager implements Host.StateListener, Connection.DefaultResponseHandler {
 
-        private final AtomicBoolean isInit = new AtomicBoolean(false);
+        private boolean isInit;
 
         // Initial contacts point
         final List<InetAddress> contactPoints;
@@ -789,8 +789,10 @@ public class Cluster {
             this.configuration.register(this);
         }
 
-        private void init() {
-            if (!isInit.compareAndSet(false, true))
+        // Initialization is not too performance intensive and in practice there shouldn't be contention
+        // on it so synchronized is good enough.
+        private synchronized void init() {
+            if (isInit)
                 return;
 
             // Note: we mark the initial contact point as UP, because we have no prior
@@ -815,6 +817,8 @@ public class Cluster {
                 }
                 throw e;
             }
+
+            isInit = true;
         }
 
         Cluster getCluster() {
