@@ -71,8 +71,9 @@ Upgrading from 1.x branch
 If you are upgrading from the 1.x branch of the driver, be sure to have a look at
 the `upgrade guide <https://github.com/datastax/java-driver/blob/2.0/driver-core/Upgrade_guide_to_2.0.rst>`_.
 
-We used the opportunity of a major version bump to improve the API, to fix a number of inconsistencies and remove cruft. 
-Unfortunately this means there are some breaking API changes, but the new API should be both simpler and more complete.
+We used the opportunity of a major version bump to incorporate your feedback and improve the API, 
+to fix a number of inconsistencies and remove cruft. 
+Unfortunately this means there are some breaking changes, but the new API should be both simpler and more complete.
 
 
 Getting Started
