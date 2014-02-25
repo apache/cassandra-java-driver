@@ -84,7 +84,7 @@ public interface ResultSetFuture extends ListenableFuture<ResultSet> {
      * Attempts to cancel the execution of the request corresponding to this
      * future. This attempt will fail if the request has already returned.
      * <p>
-     * Please note that this only cancle the request driver side, but nothing
+     * Please note that this only cancel the request driver side, but nothing
      * is done to interrupt the execution of the request Cassandra side (and that even
      * if {@code mayInterruptIfRunning} is true) since  Cassandra does not
      * support such interruption.
@@ -101,7 +101,7 @@ public interface ResultSetFuture extends ListenableFuture<ResultSet> {
      *       ResultSet result = future.get(1, TimeUnit.SECONDS);
      *       ... process result ...
      *   } catch (TimeoutException e) {
-     *       future.cancel(true); // Ensure any ressource used by this query driver
+     *       future.cancel(true); // Ensure any resource used by this query driver
      *                            // side is released immediately
      *       ... handle timeout ...
      *   }

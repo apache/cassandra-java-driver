@@ -45,7 +45,7 @@ public class SimpleStatement extends RegularStatement {
      * This version of SimpleStatement is useful when you do not want to execute a
      * query only once (and thus do not want to resort to prepared statement), but
      * do not want to convert all column values to string (typically, if you have blob
-     * values, encoding them to a hexidecimal string is not very efficient). In
+     * values, encoding them to a hexadecimal string is not very efficient). In
      * that case, you can provide a query string with bind marker to this constructor
      * along with the values for those bind variables. When executed, the server will
      * prepare the provided, bind the provided values to that prepare statement and

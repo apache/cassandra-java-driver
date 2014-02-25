@@ -15,19 +15,31 @@
  */
 package com.datastax.driver.core;
 
+
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.codahale.metrics.*;
 import com.codahale.metrics.Timer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.ReadTimeoutException;
+import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.WriteTimeoutException;
 import com.datastax.driver.core.policies.RetryPolicy;
+
 
 /**
  * Handles a request to cassandra, dealing with host failover and retries on
@@ -122,7 +134,7 @@ class RequestHandler implements Connection.ResponseCallback {
             logError(host.getAddress(), e);
             return false;
         } catch (BusyConnectionException e) {
-            // The pool shoudln't have give us a busy connection unless we've maxed up the pool, so move on to the next host.
+            // The pool shouldn't have give us a busy connection unless we've maxed up the pool, so move on to the next host.
             if (connection != null)
                 connection.release();
             logError(host.getAddress(), e);
@@ -292,7 +304,7 @@ class RequestHandler implements Connection.ResponseCallback {
                         case IS_BOOTSTRAPPING:
                             // Try another node
                             logger.error("Query sent to {} but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
-                            logError(connection.address, new DriverException("Host is boostrapping"));
+                            logError(connection.address, new DriverException("Host is bootstrapping"));
                             if (metricsEnabled())
                                 metrics().getErrorMetrics().getOthers().inc();
                             retry(false, null);
@@ -348,7 +360,7 @@ class RequestHandler implements Connection.ResponseCallback {
                             case RETRY:
                                 ++queryRetries;
                                 if (logger.isTraceEnabled())
-                                    logger.trace("Doing retry {} for query {} at consistency {}", new Object[]{ queryRetries, statement, retry.getRetryConsistencyLevel()});
+                                    logger.trace("Doing retry {} for query {} at consistency {}", queryRetries, statement, retry.getRetryConsistencyLevel());
                                 if (metricsEnabled())
                                     metrics().getErrorMetrics().getRetries().inc();
                                 retry(true, retry.getRetryConsistencyLevel());

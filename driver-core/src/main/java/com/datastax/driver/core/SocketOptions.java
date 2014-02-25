@@ -58,7 +58,7 @@ public class SocketOptions {
      * The connection timeout in milliseconds.
      * <p>
      * As the name implies, the connection timeout defines how long the driver
-     * waits to etablish a new connection to a Cassandra node before giving up.
+     * waits to establish a new connection to a Cassandra node before giving up.
      *
      * @return the connection timeout in milliseconds
      */

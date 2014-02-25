@@ -127,7 +127,7 @@ public class Metadata {
             Map<String, ColumnMetadata.Raw> cols = colsDefs.get(cfName);
             if (cols == null)
                 cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
-            TableMetadata tm = TableMetadata.build(ksm, cfRow, cols, cassandraVersion);
+            TableMetadata.build(ksm, cfRow, cols, cassandraVersion);
         }
     }
 
@@ -181,7 +181,7 @@ public class Metadata {
     }
 
     // Escape a CQL3 identifier based on its value as read from the schema
-    // tables. Because it cames from Cassandra, we could just always quote it,
+    // tables. Because it comes from Cassandra, we could just always quote it,
     // but to get a nicer output we don't do it if it's not necessary.
     static String escapeId(String ident) {
         // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
@@ -192,10 +192,10 @@ public class Metadata {
      * Quote a keyspace, table or column identifier to make it case sensitive.
      * <p>
      * CQL identifiers, including keyspace, table and column ones, are case insensitive
-     * by default. Case sensitive identifiers can howeber be provided by enclosing
+     * by default. Case sensitive identifiers can however be provided by enclosing
      * the identifier in double quotes (see the
      * <a href="http://cassandra.apache.org/doc/cql3/CQL.html#identifiers">CQL documentation</a>
-     * for details). If you are using case sentitive identifiers, this method
+     * for details). If you are using case sensitive identifiers, this method
      * can be used to enclose such identifier in double quotes, making it case
      * sensitive.
      *

@@ -135,7 +135,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
     public void onTimeout(Connection connection, long latency) {
         // This is only called for internal calls (i.e, when the callback is not wrapped in ResponseHandler).
         // So just set an exception for the final result, which should be handled correctly by said internal call.
-        setException(new ConnectionException(connection.address, "Operation Timeouted"));
+        setException(new ConnectionException(connection.address, "Operation timed out"));
     }
 
     // We sometimes need (in the driver) to set the future from outside this class,
@@ -209,7 +209,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
      * Attempts to cancel the execution of the request corresponding to this
      * future. This attempt will fail if the request has already returned.
      * <p>
-     * Please note that this only cancle the request driver side, but nothing
+     * Please note that this only cancels the request driver side, but nothing
      * is done to interrupt the execution of the request Cassandra side (and that even
      * if {@code mayInterruptIfRunning} is true) since  Cassandra does not
      * support such interruption.
@@ -226,7 +226,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
      *       ResultSet result = future.get(1, TimeUnit.SECONDS);
      *       ... process result ...
      *   } catch (TimeoutException e) {
-     *       future.cancel(true); // Ensure any ressource used by this query driver
+     *       future.cancel(true); // Ensure any resource used by this query driver
      *                            // side is released immediately
      *       ... handle timeout ...
      *   }

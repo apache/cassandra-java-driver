@@ -179,7 +179,7 @@ public interface Session extends Closeable {
      * Prepares the provided query.
      * <p>
      * This method is essentially a shortcut for {@code prepare(statement.getQueryString())},
-     * but note that the resulting {@code PreparedStamenent} will inherit the query properties
+     * but note that the resulting {@code PreparedStatement} will inherit the query properties
      * set on {@code statement}. Concretely, this means that in the following code:
      * <pre>
      *   RegularStatement toPrepare = new SimpleStatement("SELECT * FROM test WHERE k=?").setConsistencyLevel(ConsistencyLevel.QUORUM);
@@ -203,7 +203,7 @@ public interface Session extends Closeable {
     /**
      * Prepares the provided query string asynchronously.
      * <p>
-     * This method is equilavent to {@link #prepare(String)} except that it
+     * This method is equivalent to {@link #prepare(String)} except that it
      * does not block but return a future instead. Any error during preparation will
      * be thrown when accessing the future, not by this method itself.
      *
@@ -217,7 +217,7 @@ public interface Session extends Closeable {
      * <p>
      * This method is essentially a shortcut for {@code prepareAsync(statement.getQueryString())},
      * but with the additional effect that the resulting {@code
-     * PreparedStamenent} will inherit the query properties set on {@code statement}.
+     * PreparedStatement} will inherit the query properties set on {@code statement}.
      *
      * @param statement the statement to prepare
      * @return a future on the prepared statement corresponding to {@code statement}.

@@ -19,7 +19,7 @@ package com.datastax.driver.core;
  * The type of a Cassandra write query.
  * <p>
  * This information is returned by Cassandra when a write timeout is raised to
- * indicate what type of write timeouted. This information is useful to decide
+ * indicate what type of write timed out. This information is useful to decide
  * which retry policy to adopt.
  */
 public enum WriteType
@@ -30,7 +30,7 @@ public enum WriteType
     BATCH,
     /** A write to a multiple partition key that doesn't use the distributed batch log. Atomicity for such writes is not guaranteed */
     UNLOGGED_BATCH,
-    /** A counter write (that can be for one or multiple partition key). Such write should not be replayed to avoid overcount. */
+    /** A counter write (that can be for one or multiple partition key). Such write should not be replayed to avoid over-counting. */
     COUNTER,
     /** The initial write to the distributed batch log that Cassandra performs internally before a BATCH write. */
     BATCH_LOG,

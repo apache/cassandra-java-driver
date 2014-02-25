@@ -53,7 +53,7 @@ class ArrayBackedResultSet implements ResultSet {
      *      In that case, nextStart is *guaranteed* to be null.
      *
      * Also note that while ResultSet doesn't pretend to be thread-safe, the actual
-     * fetch is done asynchonously and so we do need to be volatile below.
+     * fetch is done asynchronously and so we do need to be volatile below.
      */
     private volatile FetchingState fetchState;
     // The two following info can be null, but only if fetchState == null
@@ -110,7 +110,7 @@ class ArrayBackedResultSet implements ResultSet {
             case PREPARED:
                 throw new RuntimeException("Prepared statement received when a ResultSet was expected");
             default:
-                logger.error("Received unknow result type '{}'; returning empty result set", msg.kind);
+                logger.error("Received unknown result type '{}'; returning empty result set", msg.kind);
                 return empty(info);
         }
     }

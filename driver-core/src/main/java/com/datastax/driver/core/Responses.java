@@ -82,12 +82,12 @@ class Responses {
 
         public DriverException asException(InetAddress host) {
             switch (code) {
-                case SERVER_ERROR:     return new DriverInternalError(String.format("An unexpected error occured server side on %s: %s", host, message));
-                case PROTOCOL_ERROR:   return new DriverInternalError("An unexpected protocol error occured. This is a bug in this library, please report: " + message);
+                case SERVER_ERROR:     return new DriverInternalError(String.format("An unexpected error occurred server side on %s: %s", host, message));
+                case PROTOCOL_ERROR:   return new DriverInternalError("An unexpected protocol error occurred. This is a bug in this library, please report: " + message);
                 case BAD_CREDENTIALS:  return new AuthenticationException(host, message);
                 case UNAVAILABLE:      return ((UnavailableException)infos).copy(); // We copy to have a nice stack trace
                 case OVERLOADED:       return new DriverInternalError(String.format("Queried host (%s) was overloaded; this shouldn't happen, another node should have been tried", host));
-                case IS_BOOTSTRAPPING: return new DriverInternalError(String.format("Queried host (%s) was boostrapping; this shouldn't happen, another node should have been tried", host));
+                case IS_BOOTSTRAPPING: return new DriverInternalError(String.format("Queried host (%s) was bootstrapping; this shouldn't happen, another node should have been tried", host));
                 case TRUNCATE_ERROR:   return new TruncateException(message);
                 case WRITE_TIMEOUT:    return ((WriteTimeoutException)infos).copy();
                 case READ_TIMEOUT:     return ((ReadTimeoutException)infos).copy();
@@ -526,7 +526,7 @@ class Responses {
         public static final Message.Decoder<AuthChallenge> decoderV1 = new Message.Decoder<AuthChallenge>() {
             public AuthChallenge decode(ChannelBuffer body) {
                 // AUTH_CHALLENGE is protocol v2 only.
-                throw new DriverInternalError("Got AUTH_CHALLENGE in protocol V1, this shouldn't happend since AUTH_CHALLENGE is a protocol V2 only message");
+                throw new DriverInternalError("Got AUTH_CHALLENGE in protocol V1, this shouldn't happen since AUTH_CHALLENGE is a protocol V2 only message");
             }
         };
 
@@ -555,7 +555,7 @@ class Responses {
         public static final Message.Decoder<AuthSuccess> decoderV1 = new Message.Decoder<AuthSuccess>() {
             public AuthSuccess decode(ChannelBuffer body) {
                 // AUTH_SUCCESS is protocol v2 only.
-                throw new DriverInternalError("Got AUTH_SUCCESS in protocol V1, this shouldn't happend since AUTH_SUCCESS is a protocol V2 only message");
+                throw new DriverInternalError("Got AUTH_SUCCESS in protocol V1, this shouldn't happen since AUTH_SUCCESS is a protocol V2 only message");
             }
         };
 

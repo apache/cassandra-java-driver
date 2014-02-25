@@ -61,7 +61,7 @@ class Connection {
 
     private final Dispatcher dispatcher = new Dispatcher();
 
-    // Used by connnection pooling to count how many requests are "in flight" on that connection.
+    // Used by connection pooling to count how many requests are "in flight" on that connection.
     public final AtomicInteger inFlight = new AtomicInteger(0);
 
     private final AtomicInteger writer = new AtomicInteger(0);
@@ -548,13 +548,13 @@ class Connection {
                      *   1) The connection has been defuncted due to some internal error and we've raced between removing the
                      *      handler and actually closing the connection; since the original error has been logged, we're fine
                      *      ignoring this completely.
-                     *   2) This request has timeouted. In that case, we've already switched to another host (or errored out
+                     *   2) This request has timed out. In that case, we've already switched to another host (or errored out
                      *      to the user). So log it for debugging purpose, but it's fine ignoring otherwise.
                      */
                     streamIdHandler.unmark(streamId);
                     if (logger.isDebugEnabled())
                         logger.debug("[{}] Response received on stream {} but no handler set anymore (either the request has "
-                                   + "timeouted or it was closed due to another error). Received message is {}", name, streamId, asDebugString(response));
+                                   + "timed out or it was closed due to another error). Received message is {}", name, streamId, asDebugString(response));
                     return;
                 }
                 handler.cancelTimeout();
@@ -686,7 +686,7 @@ class Connection {
         public void onTimeout(Connection connection, long latency) {
             assert connection != null; // We always timeout on a specific connection, so this shouldn't be null
             this.address = connection.address;
-            super.setException(new ConnectionException(connection.address, "Operation Timeouted"));
+            super.setException(new ConnectionException(connection.address, "Operation timed out"));
         }
 
         public InetAddress getAddress() {

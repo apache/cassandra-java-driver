@@ -32,7 +32,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  * transparently) fetched when needed, it is possible to force the retrieval
  * of the next page early through {@link #fetchMoreResults}. Please note however
  * that this ResultSet paging is not available with the version 1 of the native
- * protocol (i.e. with Cassandra 1.2 or if version 1 has been explicitely requested
+ * protocol (i.e. with Cassandra 1.2 or if version 1 has been explicitly requested
  * through {@link Cluster.Builder#withProtocolVersion}). If the protocol version 1
  * is in use, a ResultSet is always fetched in it's entirely and it's up to the
  * client to make sure that no query can yield ResultSet that won't hold in memory.
@@ -66,7 +66,7 @@ public interface ResultSet extends Iterable<Row> {
     /**
      * Returns all the remaining rows in this ResultSet as a list.
      * <p>
-     * Note that, contrarly to {@code iterator()} or successive calls to
+     * Note that, contrary to {@code iterator()} or successive calls to
      * {@code one()}, this method forces fetching the full content of the ResultSet
      * at once, holding it all in memory in particular. It is thus recommended
      * to prefer iterations through {@code iterator()} when possible, especially
@@ -126,7 +126,7 @@ public interface ResultSet extends Iterable<Row> {
      * <p>
      * You can however call this method manually to force the fetching of the
      * next page of results. This can allow to prefetch results before they are
-     * stricly needed. For instance, if you want to prefetch the next page of
+     * strictly needed. For instance, if you want to prefetch the next page of
      * results as soon as there is less than 100 rows readily available in this
      * result set, you can do:
      * <pre>
@@ -164,7 +164,7 @@ public interface ResultSet extends Iterable<Row> {
      * Note that in most cases, a ResultSet is fetched with only one query, but large
      * result sets can be paged and thus be retrieved by multiple queries. If that is
      * the case, that method return that {@code ExecutionInfo} for the last query
-     * performed. To retrieve the informations for all queries, use {@link #getAllExecutionInfo}.
+     * performed. To retrieve the information for all queries, use {@link #getAllExecutionInfo}.
      * <p>
      * The returned object includes basic information such as the queried hosts,
      * but also the Cassandra query trace if tracing was enabled for the query.
@@ -174,7 +174,7 @@ public interface ResultSet extends Iterable<Row> {
     public ExecutionInfo getExecutionInfo();
 
     /**
-     * Return the execution informations for all queries made to retrieve this
+     * Return the execution information for all queries made to retrieve this
      * ResultSet.
      * <p>
      * Unless the ResultSet is large enough to get paged underneath, the returned

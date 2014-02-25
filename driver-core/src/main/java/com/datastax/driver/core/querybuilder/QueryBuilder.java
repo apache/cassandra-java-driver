@@ -802,7 +802,7 @@ public final class QueryBuilder {
      * <i>Note: the 2nd and 3rd examples in this table are not a valid CQL3 queries.</i>
      * <p>
      * The use of that method is generally discouraged since it lead to security risks. However,
-     * if you know what you are doing, it allows to escape the interprations done by the
+     * if you know what you are doing, it allows to escape the interpretations done by the
      * QueryBuilder.
      *
      * @param str the raw value to use as a string
@@ -816,7 +816,7 @@ public final class QueryBuilder {
      * Creates a function call.
      *
      * @param name the name of the function to call.
-     * @param parameters the paramters for the function.
+     * @param parameters the parameters for the function.
      * @return the function call.
      */
     public static Object fcall(String name, Object... parameters) {

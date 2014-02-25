@@ -17,7 +17,7 @@ package com.datastax.driver.core;
 
 import java.util.Map;
 
-// Not an interface because we don't want to expose. We only support password autentication
+// Not an interface because we don't want to expose it. We only support password authentication
 // for the protocol V1 similarly to what the driver 1.x branch do.
 abstract class ProtocolV1Authenticator {
     abstract Map<String, String> getCredentials();

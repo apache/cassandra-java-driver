@@ -40,7 +40,7 @@ public abstract class BuiltStatement extends RegularStatement {
 
     Boolean isCounterOp;
 
-    // Whether the user has inputed bind markers. If that's the case, we never generate values as
+    // Whether the user has inputted bind markers. If that's the case, we never generate values as
     // it means the user meant for the statement to be prepared and we shouldn't add our own markers.
     boolean hasBindMarkers;
     private boolean forceNoValues;
@@ -194,10 +194,10 @@ public abstract class BuiltStatement extends RegularStatement {
      * values for those markers. This method allows to force the builder to not
      * generate binary values but rather to serialize them all in the query
      * string. In practice, this means that if you call {@code
-     * setForceNoValues(true)}, you are guarateed that {@code getValues()} will
+     * setForceNoValues(true)}, you are guaranteed that {@code getValues()} will
      * return {@code null} and that the string returned by {@code
      * getQueryString()} will contain no other bind markers than the one
-     * inputed by the user.
+     * inputted by the user.
      * <p>
      * If the native protocol version 1 is in use, the driver will default
      * to not generating values since those are not supported by that version of

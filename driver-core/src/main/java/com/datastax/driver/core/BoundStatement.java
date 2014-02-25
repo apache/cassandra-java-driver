@@ -354,7 +354,7 @@ public class BoundStatement extends Statement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type BIGINT or COUNTER.
      */
     public BoundStatement setLong(String name, long v) {
@@ -393,7 +393,7 @@ public class BoundStatement extends Statement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type TIMESTAMP.
      */
     public BoundStatement setDate(String name, Date v) {
@@ -432,7 +432,7 @@ public class BoundStatement extends Statement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type FLOAT.
      */
     public BoundStatement setFloat(String name, float v) {
@@ -471,7 +471,7 @@ public class BoundStatement extends Statement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type DOUBLE.
      */
     public BoundStatement setDouble(String name, double v) {
@@ -521,7 +521,7 @@ public class BoundStatement extends Statement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * of neither of the following types: VARCHAR, TEXT or ASCII.
      */
     public BoundStatement setString(String name, String v) {
@@ -565,7 +565,7 @@ public class BoundStatement extends Statement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is not of type BLOB.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is not of type BLOB.
      */
     public BoundStatement setBytes(String name, ByteBuffer v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -646,7 +646,7 @@ public class BoundStatement extends Statement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type VARINT.
      */
     public BoundStatement setVarint(String name, BigInteger v) {
@@ -685,7 +685,7 @@ public class BoundStatement extends Statement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type DECIMAL.
      */
     public BoundStatement setDecimal(String name, BigDecimal v) {
@@ -736,7 +736,7 @@ public class BoundStatement extends Statement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type UUID or TIMEUUID, or if column {@code name} is of type
      * TIMEUUID but {@code v} is not a type 1 UUID.
      */
@@ -778,7 +778,7 @@ public class BoundStatement extends Statement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type INET.
      */
     public BoundStatement setInet(String name, InetAddress v) {
@@ -841,7 +841,7 @@ public class BoundStatement extends Statement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not a list type or if the elements of {@code v} are not of the type of
      * the elements of column {@code name}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
@@ -906,7 +906,7 @@ public class BoundStatement extends Statement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not a map type or if the elements (keys or values) of {@code v} are not of
      * the type of the elements of column {@code name}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
@@ -968,7 +968,7 @@ public class BoundStatement extends Statement {
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (nany one occurrence of) {@code name} is
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not a map type or if the elements of {@code v} are not of the type of
      * the elements of column {@code name}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections

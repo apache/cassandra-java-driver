@@ -219,7 +219,7 @@ public class TableMetadata {
      * Returns metadata on a column of this table.
      *
      * @param name the name of the column to retrieve ({@code name} will be
-     * interpreted as a case-insensitive identifer unless enclosed in double-quotes,
+     * interpreted as a case-insensitive identifier unless enclosed in double-quotes,
      * see {@link Metadata#quote}).
      * @return the metadata for the {@code name} column if it exists, or
      * {@code null} otherwise.
