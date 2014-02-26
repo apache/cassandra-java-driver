@@ -16,6 +16,7 @@ CHANGELOG
 - [bug] Fix race when multiple connect are done in parallel (JAVA-261)
 - [bug] Don't connect at all to nodes that are ignored by the load balancing
   policy (JAVA-270)
+- [bug] LatencyAwarePolicy.Builder#withScale doesn't set the scale (JAVA-275)
 
 
 1.0.5:
