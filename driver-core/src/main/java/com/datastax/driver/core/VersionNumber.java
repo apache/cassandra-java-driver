@@ -55,6 +55,9 @@ public class VersionNumber implements Comparable<VersionNumber> {
      * represent a valid version
      */
     public static VersionNumber parse(String version) {
+        if (version == null)
+            return null;
+
         Matcher matcher = pattern.matcher(version);
         if (!matcher.matches())
             throw new IllegalArgumentException("Invalid version number: " + version);

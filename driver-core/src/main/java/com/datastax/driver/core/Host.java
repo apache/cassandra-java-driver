@@ -109,6 +109,9 @@ public class Host {
 
     /**
      * The Cassandra version the host is running.
+     * <p>
+     * As for other host information fetch from Cassandra above, the returned
+     * version can theoretically be null if the information is unavaiable.
      *
      * @return the Cassandra version the host is running.
      */

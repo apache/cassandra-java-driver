@@ -5,6 +5,14 @@ CHANGELOG
 ------
 
 - [api] Case sensitive identifier by default in Metadata (JAVA-269)
+- [bug] Fix potential NPE in Cluster#connect (JAVA-274)
+
+Merged from 1.0 branch:
+
+- [bug] Always return the PreparedStatement object that is cache internally (JAVA-263)
+- [bug] Fix race when multiple connect are done in parallel (JAVA-261)
+- [bug] Don't connect at all to nodes that are ignored by the load balancing
+  policy (JAVA-270)
 
 
 2.0.0-rc3:
@@ -28,10 +36,6 @@ Merged from 1.0 branch:
 - [improvement] Avoid preparing a statement multiple time per host with multiple sessions
 - [bug] Make sure connections are returned to the right pools (JAVA-255)
 - [bug] Use date string in query build to work-around CASSANDRA-6718 (JAVA-264)
-- [bug] Always return the PreparedStatement object that is cache internally (JAVA-263)
-- [bug] Fix race when multiple connect are done in parallel (JAVA-261)
-- [bug] Don't connect at all to nodes that are ignored by the load balancing
-  policy (JAVA-270)
 
 
 2.0.0-rc2:

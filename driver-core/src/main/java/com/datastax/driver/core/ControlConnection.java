@@ -342,8 +342,10 @@ class ControlConnection implements Host.StateListener {
             }
 
             Row row = rs.one();
-            updateLocationInfo(host, row.getString("data_center"), row.getString("rack"), cluster);
-            host.setVersion(row.getString("release_version"));
+            if (!row.isNull("data_center") || !row.isNull("rack"))
+                updateLocationInfo(host, row.getString("data_center"), row.getString("rack"), cluster);
+            if (!row.isNull("release_version"))
+                host.setVersion(row.getString("release_version"));
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing node info ({})", e.getMessage());
             signalError();
@@ -399,8 +401,10 @@ class ControlConnection implements Host.StateListener {
             if (host == null) {
                 logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
-                updateLocationInfo(host, localRow.getString("data_center"), localRow.getString("rack"), cluster);
-                host.setVersion(localRow.getString("release_version"));
+                if (!localRow.isNull("data_center") || !localRow.isNull("rack"))
+                    updateLocationInfo(host, localRow.getString("data_center"), localRow.getString("rack"), cluster);
+                if (!localRow.isNull("release_version"))
+                    host.setVersion(localRow.getString("release_version"));
 
                 Set<String> tokens = localRow.getSet("tokens", String.class);
                 if (partitioner != null && !tokens.isEmpty())
@@ -448,8 +452,10 @@ class ControlConnection implements Host.StateListener {
                 host = cluster.metadata.add(foundHosts.get(i));
                 isNew = true;
             }
-            updateLocationInfo(host, dcs.get(i), racks.get(i), cluster);
-            host.setVersion(cassandraVersions.get(i));
+            if (dcs.get(i) != null || racks.get(i) != null)
+                updateLocationInfo(host, dcs.get(i), racks.get(i), cluster);
+            if (cassandraVersions.get(i) != null)
+                host.setVersion(cassandraVersions.get(i));
 
             if (partitioner != null && !allTokens.get(i).isEmpty())
                 tokenMap.put(host, allTokens.get(i));
