@@ -794,6 +794,7 @@ public class Cluster {
         private synchronized void init() {
             if (isInit)
                 return;
+            isInit = true;
 
             // Note: we mark the initial contact point as UP, because we have no prior
             // notion of their state and no real way to know until we connect to them
@@ -818,7 +819,6 @@ public class Cluster {
                 throw e;
             }
 
-            isInit = true;
         }
 
         Cluster getCluster() {
