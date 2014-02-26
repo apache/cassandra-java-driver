@@ -9,8 +9,8 @@ and improve the API, to fix a number of inconsistencies and remove cruft.
 Unfortunately this means there are some breaking changes, but the new API should 
 be both simpler and more complete.
 
-The first part goes into the breaking changes made to the API (upgrader from 1.0 should
-be especially attentive to that section) while the second one lists notewhorthy
+The first part goes into the breaking changes made to the API (upgraders from 1.0
+should review this section carefully), while the second part lists noteworthy
 but backward incompatible changes.
 
 
@@ -49,7 +49,7 @@ Main API changes
    Also, ``close`` now waits for ongoing queries to complete by default (but you
    can force the closing of all connections if you want to).
 
-3. ``NoHostAvaiableException#getErrors`` now returns the full exception objects for
+3. ``NoHostAvailableException#getErrors`` now returns the full exception objects for
    each node instead of just a message. In other words, it returns a 
    ``Map<InetAddress, Throwable>`` instead of a ``Map<InetAddress, String>``.
 
@@ -66,7 +66,7 @@ Main API changes
    which can thus impact consumers of the Metrics class.
    Furthermore, the default JmxReporter now includes a name specific to the
    cluster instance (to avoid conflicts when multiple Cluster instances are created
-   in the same JVM). As a result, tools that were polling JMX informations will
+   in the same JVM). As a result, tools that were polling JMX info will
    have to be updated accordingly.
 
 6. The ``QueryBuilder#in`` method now has the following special case: using
@@ -85,7 +85,7 @@ Main API changes
    name are set instead of just the first occurrence.
 
 8. The ``QueryBuilder#raw`` method does not automatically add quotes anymore, but
-   rather ouptut its result without any change (as the raw name implies). 
+   rather output its result without any change (as the raw name implies).
 
    This means for instance that ``eq("x", raw(foo))`` will output ``x = foo``, 
    not ``x = 'foo'`` (you don't need the raw method to output the latter string).
@@ -151,7 +151,7 @@ Other API Changes
    publicly: a resultSetFuture is always set by the driver itself and should
    not be set manually.
 
-10. The deprecated since 1.0.2 Host.HealtMonitor class has been removed. You
+10. The deprecated since 1.0.2 Host.HealthMonitor class has been removed. You
     will now need to use Host#isUp and Cluster#register if you were using that
     class.
 
@@ -175,7 +175,7 @@ exhaustive list of new features in 2.0.
            bs.add(ps.bind(value));
        session.execute(bs);
 
-2. ``SimpleStatement`` can now take a list of values in addtion to the query. This
+2. ``SimpleStatement`` can now take a list of values in addition to the query. This
    allows to do the equivalent of a prepare+execute but with only one round-trip
    to the server and without keeping the prepared statement after the
    execution. 
@@ -191,7 +191,7 @@ exhaustive list of new features in 2.0.
 
 3. SELECT queries are now "paged" under the hood. In other words, if a query
    yields a very large result, only the beginning of the ResultSet will be fetch
-   initially, the rest being fetch "on-demand". In parctice, this means that::
+   initially, the rest being fetch "on-demand". In practice, this means that::
 
        for (Row r : session.execute("SELECT * FROM mytable"))
            ... process r ...
