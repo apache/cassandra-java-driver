@@ -950,6 +950,7 @@ public class Cluster implements Closeable {
         private synchronized void init() {
             if (isInit)
                 return;
+            isInit = true;
 
             for (InetAddress address : contactPoints) {
                 // We don't want to signal -- call onAdd() -- because nothing is ready
@@ -977,7 +978,6 @@ public class Cluster implements Closeable {
                         if (connectionFactory.protocolVersion < 0)
                             connectionFactory.protocolVersion = 2;
 
-                        isInit = true;
                         return;
                     } catch (UnsupportedProtocolVersionException e) {
                         assert connectionFactory.protocolVersion < 1;
