@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+2.0.1:
+------
+
+Merged from 1.0 branch:
+- [bug] LatencyAwarePolicy.Builder#withScale doesn't set the scale (JAVA-275)
+
+
 2.0.0:
 ------
 

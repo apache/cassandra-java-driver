@@ -573,6 +573,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         public Builder withScale(long scale, TimeUnit unit) {
             if (scale <= 0)
                 throw new IllegalArgumentException("Invalid scale, must be strictly positive");
+            this.scale = unit.toNanos(scale);
             return this;
         }
 
