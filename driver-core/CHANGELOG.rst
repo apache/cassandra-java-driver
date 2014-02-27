@@ -4,7 +4,10 @@ CHANGELOG
 2.0.1:
 ------
 
+- [improvement] Handle the static columns introduced in Cassandra 2.0.6 (JAVA-278)
+
 Merged from 1.0 branch:
+
 - [bug] LatencyAwarePolicy.Builder#withScale doesn't set the scale (JAVA-275)
 
 

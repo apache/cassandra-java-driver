@@ -355,7 +355,6 @@ public class TableMetadata {
         return asCQLQuery(false);
     }
 
-
     private String asCQLQuery(boolean formatted) {
         StringBuilder sb = new StringBuilder();
 

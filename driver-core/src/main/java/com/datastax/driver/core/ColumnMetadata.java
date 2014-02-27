@@ -39,20 +39,22 @@ public class ColumnMetadata {
     private final String name;
     private final DataType type;
     private final IndexMetadata index;
+    private final boolean isStatic;
 
-    private ColumnMetadata(TableMetadata table, String name, DataType type, Map<String, String> indexColumns) {
+    private ColumnMetadata(TableMetadata table, String name, DataType type, boolean isStatic, Map<String, String> indexColumns) {
         this.table = table;
         this.name = name;
         this.type = type;
+        this.isStatic = isStatic;
         this.index = IndexMetadata.build(this, indexColumns);
     }
 
     static ColumnMetadata fromRaw(TableMetadata tm, Raw raw) {
-        return new ColumnMetadata(tm, raw.name, raw.dataType, raw.indexColumns);
+        return new ColumnMetadata(tm, raw.name, raw.dataType, raw.kind == Raw.Kind.STATIC, raw.indexColumns);
     }
 
     static ColumnMetadata forAlias(TableMetadata tm, String name, DataType type) {
-        return new ColumnMetadata(tm, name, type, Collections.<String, String>emptyMap());
+        return new ColumnMetadata(tm, name, type, false, Collections.<String, String>emptyMap());
     }
 
     /**
@@ -90,6 +92,15 @@ public class ColumnMetadata {
      */
     public IndexMetadata getIndex() {
         return index;
+    }
+
+    /**
+     * Whether this column is a static column.
+     *
+     * @return Whether this column is a static column or not.
+     */
+    public boolean isStatic() {
+        return isStatic;
     }
 
     /**
@@ -184,13 +195,14 @@ public class ColumnMetadata {
 
     @Override
     public String toString() {
-        return Metadata.escapeId(name) + ' ' + type;
+        String str = Metadata.escapeId(name) + ' ' + type;
+        return isStatic ? str + " static" : str;
     }
 
     // Temporary class that is used to make building the schema easier. Not meant to be
     // exposed publicly at all.
     static class Raw {
-        public enum Kind { PARTITION_KEY, CLUSTERING_KEY, REGULAR, COMPACT_VALUE }
+        public enum Kind { PARTITION_KEY, CLUSTERING_KEY, REGULAR, COMPACT_VALUE, STATIC }
 
         public final String name;
         public final Kind kind;
