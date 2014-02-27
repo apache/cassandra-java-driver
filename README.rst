@@ -35,7 +35,7 @@ it in your application using the following Maven dependency::
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>2.0.0-rc3</version>
+      <version>2.0.0</version>
     </dependency>
 
 Compatibility
@@ -44,7 +44,7 @@ Compatibility
 The Java client driver 2.0 (`branch 2.0 <https://github.com/datastax/java-driver/tree/2.0>`_) is compatible with Apache
 Cassandra 1.2 and 2.0, but some features are available only when using Apache Cassandra 2.0 (e.g. result set paging,
 `BatchStatement <https://github.com/datastax/java-driver/blob/2.0/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java>`_, 
-`lightweigt transactions <http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_ltweight_transaction_t.html>`_ 
+`lightweight transactions <http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_ltweight_transaction_t.html>`_ 
 -- see `What's new in Cassandra 2.0 <http://www.datastax.com/documentation/cassandra/2.0/cassandra/features/features_key_c.html>`_). 
 Trying to use these with a cluster running Cassandra 1.2 will result in 
 an `UnsupportedFeatureException <https://github.com/datastax/java-driver/blob/2.0/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java>`_ being thrown.
