@@ -62,7 +62,6 @@ to fix a number of inconsistencies and remove cruft.
 Unfortunately this means there are some breaking changes, but the new API should be both simpler and more complete.
 
 
-
 Troubleshooting
 ~~~~~~~~~~~~~~~
 
