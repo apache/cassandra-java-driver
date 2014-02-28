@@ -577,10 +577,14 @@ abstract class TypeCodec<T> {
             "yyyy-MM-dd HH:mm:ss",
             "yyyy-MM-dd HH:mmZ",
             "yyyy-MM-dd HH:mm:ssZ",
+            "yyyy-MM-dd HH:mm:ss.SSS",
+            "yyyy-MM-dd HH:mm:ss.SSSZ",
             "yyyy-MM-dd'T'HH:mm",
             "yyyy-MM-dd'T'HH:mmZ",
             "yyyy-MM-dd'T'HH:mm:ss",
             "yyyy-MM-dd'T'HH:mm:ssZ",
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
             "yyyy-MM-dd",
             "yyyy-MM-ddZ"
         };

@@ -5,6 +5,7 @@ CHANGELOG
 ------
 
 - [improvement] Handle the static columns introduced in Cassandra 2.0.6 (JAVA-278)
+- [bug] Add missing iso8601 patterns for parsing dates (JAVA-279)
 
 Merged from 1.0 branch:
 
