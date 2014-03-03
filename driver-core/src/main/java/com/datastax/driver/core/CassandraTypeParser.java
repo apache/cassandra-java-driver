@@ -47,7 +47,7 @@ class CassandraTypeParser {
         new ImmutableMap.Builder<String, DataType>()
             .put("org.apache.cassandra.db.marshal.AsciiType",         DataType.ascii())
             .put("org.apache.cassandra.db.marshal.LongType",          DataType.bigint())
-            .put("org.apache.cassandra.db.marshal.BlobType",          DataType.blob())
+            .put("org.apache.cassandra.db.marshal.BytesType",         DataType.blob())
             .put("org.apache.cassandra.db.marshal.BooleanType",       DataType.cboolean())
             .put("org.apache.cassandra.db.marshal.CounterColumnType", DataType.counter())
             .put("org.apache.cassandra.db.marshal.DecimalType",       DataType.decimal())
