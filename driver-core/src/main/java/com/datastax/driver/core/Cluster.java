@@ -306,6 +306,16 @@ public class Cluster {
     }
 
     /**
+     * Whether shutdown has been called on this Cluster instance.
+     *
+     * @return {@code true} if {@code shutdown} has been called on this instance,
+     * {@code false} otherwise.
+     */
+    public boolean isShutdown() {
+        return manager.isShutdown.get();
+    }
+
+    /**
      * Initializer for {@link Cluster} instances.
      * <p>
      * If you want to create a new {@code Cluster} instance programmatically,

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0.7:
+------
+
+- [new] Add method to check if a Cluster/Session instance has been closed already (JAVA-114)
+
 1.0.6:
 ------
 
