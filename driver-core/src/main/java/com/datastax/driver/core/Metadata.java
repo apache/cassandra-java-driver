@@ -125,7 +125,7 @@ public class Metadata {
         for (Row cfRow : cfRows) {
             String cfName = cfRow.getString(TableMetadata.CF_NAME);
             try {
-                Map<String, ColumnMetadata.Raw> cols = colsDefs.get(cfName);
+                Map<String, ColumnMetadata.Raw> cols = colsDefs == null ? null : colsDefs.get(cfName);
                 if (cols == null)
                     cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
                 TableMetadata.build(ksm, cfRow, cols, cassandraVersion);
