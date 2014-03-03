@@ -307,6 +307,20 @@ public interface Session extends Closeable {
     public void close();
 
     /**
+     * Whether this Session instance has been closed.
+     * <p>
+     * Note that this method returns true as soon as one closing this Session
+     * has started but it does not guarantee that the closing is done. If you
+     * want to guarantee that the closing is done, you can call {@code close()}
+     * and wait until it returns (or call the get method on {@code closeAsync()}
+     * with a very short timeout and check this doesn't timeout).
+     *
+     * @return {@code true} if this Session instance has been closed, {@code false}
+     * otherwise.
+     */
+    public boolean isClosed();
+
+    /**
      * Returns the {@code Cluster} object this session is part of.
      *
      * @return the {@code Cluster} object this session is part of.

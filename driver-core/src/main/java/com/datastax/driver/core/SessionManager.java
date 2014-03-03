@@ -162,6 +162,10 @@ class SessionManager implements Session {
             : closeFuture.get(); // We raced, it's ok, return the future that was actually set
     }
 
+    public boolean isClosed() {
+        return closeFuture.get() != null;
+    }
+
     public void close() {
         try {
             closeAsync().get();
@@ -232,10 +236,6 @@ class SessionManager implements Session {
 
     ListeningExecutorService blockingExecutor() {
         return cluster.manager.blockingTasksExecutor;
-    }
-
-    boolean isClosed() {
-        return closeFuture.get() != null;
     }
 
     ListenableFuture<Boolean> addOrRenewPool(final Host host, final boolean isHostAddition) {

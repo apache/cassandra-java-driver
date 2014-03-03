@@ -14,6 +14,7 @@ CHANGELOG
 Merged from 1.0 branch:
 
 - [bug] LatencyAwarePolicy.Builder#withScale doesn't set the scale (JAVA-275)
+- [new] Add methods to check if a Cluster/Session instance has been closed already (JAVA-114)
 
 
 2.0.0:
