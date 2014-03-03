@@ -124,10 +124,17 @@ public class Metadata {
     private void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, VersionNumber cassandraVersion) {
         for (Row cfRow : cfRows) {
             String cfName = cfRow.getString(TableMetadata.CF_NAME);
-            Map<String, ColumnMetadata.Raw> cols = colsDefs.get(cfName);
-            if (cols == null)
-                cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
-            TableMetadata.build(ksm, cfRow, cols, cassandraVersion);
+            try {
+                Map<String, ColumnMetadata.Raw> cols = colsDefs.get(cfName);
+                if (cols == null)
+                    cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
+                TableMetadata.build(ksm, cfRow, cols, cassandraVersion);
+            } catch (RuntimeException e) {
+                // See ControlConnection#refreshSchema for why we'd rather not probably this further
+                logger.error(String.format("Error parsing schema for table %s.%s: "
+                                           + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\") will be missing or incomplete",
+                                           ksm.getName(), cfName, ksm.getName(), cfName), e);
+            }
         }
     }
 

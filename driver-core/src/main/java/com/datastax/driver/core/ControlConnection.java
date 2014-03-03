@@ -288,7 +288,16 @@ class ControlConnection implements Host.StateListener {
         } else {
             cassandraVersion = host.getCassandraVersion();
         }
-        cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get(), cassandraVersion);
+
+        try {
+            cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get(), cassandraVersion);
+        } catch (RuntimeException e) {
+            // Failure to parse the schema is definitively wrong so log a full-on error, but this won't generally prevent queries to
+            // work and this can happen when new Cassandra versions modify stuff in the schema and the driver hasn't yet be modified.
+            // So log, but let things go otherwise.
+            logger.error("Error parsing schema from Cassandra system tables: the schema in Cluster#getMetadata() will appear incomplete or stale", e);
+        }
+
         // If the table is null, we either rebuild all from scratch or have an updated keyspace. In both case, rebuild the token map
         // since some replication on some keyspace may have changed
         if (table == null)

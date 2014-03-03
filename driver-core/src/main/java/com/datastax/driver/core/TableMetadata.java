@@ -19,11 +19,15 @@ import java.util.*;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Describes a Table.
  */
 public class TableMetadata {
+
+    private static final Logger logger = LoggerFactory.getLogger(TableMetadata.class);
 
     static final String CF_NAME                      = "columnfamily_name";
 
@@ -109,7 +113,19 @@ public class TableMetadata {
         // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
 
-        TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringColumns, columns, new Options(row, isCompact, cassandraVersion), clusteringOrder, cassandraVersion);
+
+        Options options = null;
+        try {
+            options = new Options(row, isCompact, cassandraVersion);
+        } catch (RuntimeException e) {
+            // See ControlConnection#refreshSchema for why we'd rather not probably this further. Since table options is one thing
+            // that tends to change often in Cassandra, it's worth special casing this.
+            logger.error(String.format("Error parsing schema options for table %s.%s: "
+                                       + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\").getOptions() will return null",
+                                       ksm.getName(), name, ksm.getName(), name), e);
+        }
+
+        TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
 
         // We use this temporary set just so non PK columns are added in lexicographical order, which is the one of a
         // 'SELECT * FROM ...'
