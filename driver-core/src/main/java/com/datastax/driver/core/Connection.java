@@ -137,7 +137,13 @@ class Connection {
                 case AUTHENTICATE:
                     Authenticator authenticator = factory.authProvider.newAuthenticator(address);
                     if (version == 1)
-                        authenticateV1(authenticator);
+                    {
+                        if (authenticator instanceof ProtocolV1Authenticator)
+                            authenticateV1(authenticator);
+                        else
+                            // DSE 3.x always uses SASL authentication backported from protocol v2
+                            authenticateV2(authenticator);
+                    }
                     else
                         authenticateV2(authenticator);
                     break;
@@ -161,10 +167,6 @@ class Connection {
     }
 
     private void authenticateV1(Authenticator authenticator) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
-        if (!(authenticator instanceof ProtocolV1Authenticator))
-            throw new AuthenticationException(address, String.format("Cannot use authenticator %s with protocol version 1, "
-                                                                   + "only plain text authentication is supported with this protocol version", authenticator));
-
         Requests.Credentials creds = new Requests.Credentials(((ProtocolV1Authenticator)authenticator).getCredentials());
         Message.Response authResponse = write(creds).get();
         switch (authResponse.type) {
@@ -207,7 +209,15 @@ class Connection {
                 }
                 break;
             case ERROR:
-                throw new AuthenticationException(address, ((Responses.Error)authResponse).message);
+                // This is not very nice, but we're trying to identify if we
+                // attempted v2 auth against a server which only supports v1
+                // The AIOOBE indicates that the server didn't recognise the
+                // initial AuthResponse message
+                String message = ((Responses.Error)authResponse).message;
+                if (message.startsWith("java.lang.ArrayIndexOutOfBoundsException: 15"))
+                    message = String.format("Cannot use authenticator %s with protocol version 1, "
+                                  + "only plain text authentication is supported with this protocol version", authenticator);
+                throw new AuthenticationException(address, message);
             default:
                 throw new TransportException(address, String.format("Unexpected %s response message from server to authentication message", authResponse.type));
         }

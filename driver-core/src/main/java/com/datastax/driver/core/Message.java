@@ -69,7 +69,7 @@ abstract class Message {
             EXECUTE        (10, Requests.Execute.coderV1, Requests.Execute.coderV2),
             REGISTER       (11, Requests.Register.coder, Requests.Register.coder),
             BATCH          (13, null, Requests.Batch.coder),
-            AUTH_RESPONSE  (15, null, Requests.AuthResponse.coder);
+            AUTH_RESPONSE  (15, Requests.AuthResponse.coder, Requests.AuthResponse.coder);
 
             public final int opcode;
             private final Coder<?> coderV1;
@@ -113,8 +113,8 @@ abstract class Message {
             SUPPORTED      (6, Responses.Supported.decoder, Responses.Supported.decoder),
             RESULT         (8, Responses.Result.decoderV1, Responses.Result.decoderV2),
             EVENT          (12, Responses.Event.decoder, Responses.Event.decoder),
-            AUTH_CHALLENGE (14, Responses.AuthChallenge.decoderV1, Responses.AuthChallenge.decoderV2),
-            AUTH_SUCCESS   (16, Responses.AuthSuccess.decoderV1, Responses.AuthSuccess.decoderV2);
+            AUTH_CHALLENGE (14, Responses.AuthChallenge.decoder, Responses.AuthChallenge.decoder),
+            AUTH_SUCCESS   (16, Responses.AuthSuccess.decoder, Responses.AuthSuccess.decoder);
 
             public final int opcode;
             private final Decoder<?> decoderV1;
