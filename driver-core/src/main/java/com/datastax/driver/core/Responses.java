@@ -523,14 +523,7 @@ class Responses {
 
     public static class AuthChallenge extends Message.Response {
 
-        public static final Message.Decoder<AuthChallenge> decoderV1 = new Message.Decoder<AuthChallenge>() {
-            public AuthChallenge decode(ChannelBuffer body) {
-                // AUTH_CHALLENGE is protocol v2 only.
-                throw new DriverInternalError("Got AUTH_CHALLENGE in protocol V1, this shouldn't happen since AUTH_CHALLENGE is a protocol V2 only message");
-            }
-        };
-
-        public static final Message.Decoder<AuthChallenge> decoderV2 = new Message.Decoder<AuthChallenge>() {
+        public static final Message.Decoder<AuthChallenge> decoder = new Message.Decoder<AuthChallenge>() {
             public AuthChallenge decode(ChannelBuffer body) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
@@ -552,14 +545,7 @@ class Responses {
 
     public static class AuthSuccess extends Message.Response {
 
-        public static final Message.Decoder<AuthSuccess> decoderV1 = new Message.Decoder<AuthSuccess>() {
-            public AuthSuccess decode(ChannelBuffer body) {
-                // AUTH_SUCCESS is protocol v2 only.
-                throw new DriverInternalError("Got AUTH_SUCCESS in protocol V1, this shouldn't happen since AUTH_SUCCESS is a protocol V2 only message");
-            }
-        };
-
-        public static final Message.Decoder<AuthSuccess> decoderV2 = new Message.Decoder<AuthSuccess>() {
+        public static final Message.Decoder<AuthSuccess> decoder = new Message.Decoder<AuthSuccess>() {
             public AuthSuccess decode(ChannelBuffer body) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
