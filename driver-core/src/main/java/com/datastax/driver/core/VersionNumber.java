@@ -34,20 +34,22 @@ import com.google.common.base.Objects;
  */
 public class VersionNumber implements Comparable<VersionNumber> {
 
-    private static final String VERSION_REGEXP = "(\\d+)\\.(\\d+)(\\.\\d+)?([~\\-]\\w[.\\w]*(?:\\-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
+    private static final String VERSION_REGEXP = "(\\d+)\\.(\\d+)(\\.\\d+)?(\\.\\d+)?([~\\-]\\w[.\\w]*(?:\\-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
     private static final Pattern pattern = Pattern.compile(VERSION_REGEXP);
 
     private final int major;
     private final int minor;
     private final int patch;
+    private final int dsePatch;
 
     private final String[] preReleases;
     private final String build;
 
-    private VersionNumber(int major, int minor, int patch, String[] preReleases, String build) {
+    private VersionNumber(int major, int minor, int patch, int dsePatch, String[] preReleases, String build) {
         this.major = major;
         this.minor = minor;
         this.patch = patch;
+        this.dsePatch = dsePatch;
         this.preReleases = preReleases;
         this.build = build;
     }
@@ -79,13 +81,16 @@ public class VersionNumber implements Comparable<VersionNumber> {
             String pa = matcher.group(3);
             int patch = pa == null || pa.isEmpty() ? 0 : Integer.parseInt(pa.substring(1)); // dropping the initial '.' since it's included this time
 
-            String pr = matcher.group(4);
+            String dse = matcher.group(4);
+            int dsePatch = dse == null || dse.isEmpty() ? -1 : Integer.parseInt(dse.substring(1)); // dropping the initial '.' since it's included this time
+
+            String pr = matcher.group(5);
             String[] preReleases = pr == null || pr.isEmpty() ? null : pr.substring(1).split("\\-"); // drop initial '-' or '~' then split on the remaining ones
 
-            String bl = matcher.group(5);
+            String bl = matcher.group(6);
             String build = bl == null || bl.isEmpty() ? null : bl.substring(1); // drop the initial '+'
 
-            return new VersionNumber(major, minor, patch, preReleases, build);
+            return new VersionNumber(major, minor, patch, dsePatch, preReleases, build);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid version number: " + version);
         }
@@ -116,6 +121,20 @@ public class VersionNumber implements Comparable<VersionNumber> {
      */
     public int getPatch() {
         return patch;
+    }
+
+    /**
+     * The DSE patch version number (will only be present for version of Cassandra in DSE).
+     * <p>
+     * DataStax Entreprise (DSE) adds a fourth number to the version number to track potential
+     * hot fixes and/or DSE specific patches that may have been applied to the Cassandra version.
+     * In that case, this method return that fourth number.
+     *
+     * @return the DSE patch version number, i.e. D in X.Y.Z.D, or -1 if the version number is
+     * not from DSE.
+     */
+    public int getDSEPatch() {
+        return dsePatch;
     }
 
     /**
@@ -154,6 +173,20 @@ public class VersionNumber implements Comparable<VersionNumber> {
         if (patch > other.patch)
             return 1;
 
+        if (dsePatch < 0) {
+            if (other.dsePatch >= 0)
+                return -1;
+        } else {
+            if (other.dsePatch < 0)
+                return 1;
+
+            // Both are >= 0
+            if (dsePatch < other.dsePatch)
+                return -1;
+            if (dsePatch > other.dsePatch)
+                return 1;
+        }
+
         if (preReleases == null)
             return other.preReleases == null ? 0 : 1;
         if (other.preReleases == null)
@@ -179,19 +212,22 @@ public class VersionNumber implements Comparable<VersionNumber> {
         return major == that.major
             && minor == that.minor
             && patch == that.patch
+            && dsePatch == that.dsePatch
             && (preReleases == null ? that.preReleases == null : Arrays.equals(preReleases, that.preReleases))
             && Objects.equal(build, that.build);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(major, minor, patch, preReleases, build);
+        return Objects.hashCode(major, minor, patch, dsePatch, preReleases, build);
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(major).append('.').append(minor).append('.').append(patch);
+        if (dsePatch >= 0)
+            sb.append('.').append(dsePatch);
         if (preReleases != null) {
             for (String preRelease : preReleases)
                 sb.append('-').append(preRelease);

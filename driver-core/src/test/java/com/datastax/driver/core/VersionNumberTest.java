@@ -28,7 +28,8 @@ public class VersionNumberTest {
             "2.0.0",
             "2.0.0-beta1",
             "2.0.0-beta1-SNAPSHOT",
-            "2.0.0-beta1-SNAPSHOT+abc01"
+            "2.0.0-beta1-SNAPSHOT+abc01",
+            "2.0.0.22" // DSE
         };
 
         VersionNumber[] numbers = new VersionNumber[versions.length];
@@ -42,6 +43,7 @@ public class VersionNumberTest {
         assertEquals(numbers[1].compareTo(numbers[2]), 1);
         assertEquals(numbers[2].compareTo(numbers[3]), -1);
         assertEquals(numbers[3].compareTo(numbers[4]), 0);
+        assertEquals(numbers[1].compareTo(numbers[5]), -1);
 
         VersionNumber deb = VersionNumber.parse("2.0.0~beta1");
         assertEquals(deb, numbers[2]);
