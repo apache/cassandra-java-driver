@@ -152,8 +152,6 @@ public class Metadata {
     }
 
     Host add(InetAddress address) {
-//        if (!includeHost())
-//          return null;
         Host newHost = new Host(address, cluster.convictionPolicyFactory);
         Host previous = hosts.putIfAbsent(address, newHost);
         return previous == null ? newHost : null;
