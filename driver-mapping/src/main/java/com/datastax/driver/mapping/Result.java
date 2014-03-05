@@ -22,15 +22,6 @@ public class Result<T> implements Iterable<T> {
         this.mapper = mapper;
     }
 
-    /**
-     * Test whether this mapped result set has more results.
-     *
-     * @return whether this mapped result set has more results.
-     */
-    public boolean isExhausted() {
-        return rs.isExhausted();
-    }
-
     private T map(Row row) {
         T entity = mapper.newEntity();
         for (ColumnMapper<T> cm : mapper.allColumns()) {
@@ -39,6 +30,15 @@ public class Result<T> implements Iterable<T> {
                 cm.setValue(entity, cm.getDataType().deserialize(bytes));
         }
         return entity;
+    }
+
+    /**
+     * Test whether this mapped result set has more results.
+     *
+     * @return whether this mapped result set has more results.
+     */
+    public boolean isExhausted() {
+        return rs.isExhausted();
     }
 
     /**

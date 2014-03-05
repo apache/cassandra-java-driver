@@ -41,4 +41,3 @@ abstract class ColumnMapper<T> {
     }
 
 }
-

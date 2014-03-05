@@ -9,6 +9,8 @@ import static org.testng.Assert.*;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.CCMBridge;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+
 
 public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -19,13 +21,13 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void testStaticEntity() throws Exception {
-        Mapper m = new Mapper();
+        Mapper m = new Mapper(session);
 
         User u1 = new User("Paul", "paul@gmail.com", User.Gender.MALE);
         u1.setYear(2014);
         session.execute(m.save(u1));
 
-        User read = m.map(session.execute(m.find(u1)), User.class).one();
+        User read = m.map(session.execute(m.get(User.class, u1.getUserId())), User.class).one();
         assertEquals(u1.getUserId(), read.getUserId());
         assertEquals(u1.getName(), read.getName());
         assertEquals(u1.getEmail(), read.getEmail());
@@ -35,20 +37,35 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void testDynamicEntity() throws Exception {
-        Mapper m = new Mapper();
+        Mapper m = new Mapper(session);
 
         User u1 = new User("Paul", "paul@gmail.com", User.Gender.MALE);
         Post p1 = new Post(u1, "Something about mapping");
+        Post p2 = new Post(u1, "Something else");
 
         p1.setDevice(InetAddress.getLocalHost());
 
         session.execute(m.save(p1));
+        session.execute(m.save(p2));
 
-        Post read = m.map(session.execute(m.find(p1)), Post.class).one();
-        assertEquals(p1.getUserId(), read.getUserId());
-        assertEquals(p1.getPostId(), read.getPostId());
-        assertEquals(p1.getTitle(), read.getTitle());
-        assertEquals(p1.getContent(), read.getContent());
-        assertEquals(p1.getDevice(), read.getDevice());
+        Result<Post> r = m.map(session.execute(m.select(Post.class).where(eq("user_id", u1.getUserId()))), Post.class);
+        Post read1 = r.one();
+        assertEquals(p1.getUserId(), read1.getUserId());
+        assertEquals(p1.getPostId(), read1.getPostId());
+        assertEquals(p1.getTitle(), read1.getTitle());
+        assertEquals(p1.getContent(), read1.getContent());
+        assertEquals(p1.getDevice(), read1.getDevice());
+
+        Post read2 = r.one();
+        assertEquals(p2.getUserId(), read2.getUserId());
+        assertEquals(p2.getPostId(), read2.getPostId());
+        assertEquals(p2.getTitle(), read2.getTitle());
+        assertEquals(p2.getContent(), read2.getContent());
+        assertEquals(p2.getDevice(), read2.getDevice());
+
+        session.execute(m.delete(Post.class, p1.getUserId(), p1.getPostId()));
+        session.execute(m.delete(Post.class, p2.getUserId(), p2.getPostId()));
+
+        assertTrue(m.map(session.execute(m.select(Post.class).where(eq("user_id", u1.getUserId()))), Post.class).isExhausted());
     }
 }
