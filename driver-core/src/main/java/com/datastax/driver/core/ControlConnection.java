@@ -452,6 +452,8 @@ class ControlConnection implements Host.StateListener {
             allTokens.add(row.getSet("tokens", String.class));
         }
 
+
+      if (!cluster.isUseContactPointsOnly()) {
         for (int i = 0; i < foundHosts.size(); i++) {
             Host host = cluster.metadata.getHost(foundHosts.get(i));
             boolean isNew = false;
@@ -472,8 +474,9 @@ class ControlConnection implements Host.StateListener {
             if (isNew)
                 cluster.onAdd(host);
         }
+      }
 
-        // Removes all those that seems to have been removed (since we lost the control connection)
+      // Removes all those that seems to have been removed (since we lost the control connection)
         Set<InetAddress> foundHostsSet = new HashSet<InetAddress>(foundHosts);
         for (Host host : cluster.metadata.allHosts())
             if (!host.getAddress().equals(connection.address) && !foundHostsSet.contains(host.getAddress()))
