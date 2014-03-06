@@ -24,4 +24,7 @@ public @interface Column {
      * field will be used.
      */
     String name() default "";
+
+    /** Whether the column name is a case sensitive one */
+    boolean caseSensitive() default false;
 }

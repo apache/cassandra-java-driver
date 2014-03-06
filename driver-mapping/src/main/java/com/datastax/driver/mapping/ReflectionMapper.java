@@ -10,6 +10,7 @@ import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.*;
 
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.DataType;
 
 /**
@@ -26,8 +27,8 @@ class ReflectionMapper<T> extends EntityMapper<T> {
      * as PS.
      */
 
-    private ReflectionMapper(Class<T> entityClass, String keyspace, String table) {
-        super(entityClass, keyspace, table);
+    private ReflectionMapper(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency) {
+        super(entityClass, keyspace, table, writeConsistency, readConsistency);
     }
 
     public static Factory factory() {
@@ -172,8 +173,8 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             }
         }
 
-        public <T> EntityMapper<T> create(Class<T> entityClass, String keyspace, String table) {
-            return new ReflectionMapper<T>(entityClass, keyspace, table);
+        public <T> EntityMapper<T> create(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency) {
+            return new ReflectionMapper<T>(entityClass, keyspace, table, writeConsistency, readConsistency);
         }
     }
 }

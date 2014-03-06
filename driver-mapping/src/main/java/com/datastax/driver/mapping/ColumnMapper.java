@@ -4,12 +4,13 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 import com.datastax.driver.core.DataType;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.quote;
 
 abstract class ColumnMapper<T> {
 
     public enum Kind { PARTITION_KEY, CLUSTERING_COLUMN, REGULAR };
 
-    protected final String columnName;
+    private final String columnName;
     protected final String fieldName;
     protected final Class<?> javaType;
     protected final DataType dataType;
@@ -33,7 +34,7 @@ abstract class ColumnMapper<T> {
     public abstract void setValue(T entity, Object value);
 
     public String getColumnName() {
-        return columnName;
+        return quote(columnName);
     }
 
     public DataType getDataType() {

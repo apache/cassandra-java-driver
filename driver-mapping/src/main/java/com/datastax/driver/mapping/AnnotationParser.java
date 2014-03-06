@@ -3,6 +3,7 @@ package com.datastax.driver.mapping;
 import java.lang.reflect.Field;
 import java.util.*;
 
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.mapping.annotations.*;
 
 /**
@@ -23,7 +24,13 @@ class AnnotationParser {
         if (table == null)
             throw new IllegalArgumentException("@Table annotation was not found on class " + entityClass.getName());
 
-        EntityMapper<T> mapper = factory.create(entityClass, table.keyspace().isEmpty() ? null : table.keyspace(), table.name());
+        String ksName = table.caseSensitiveKeyspace() ? table.keyspace() : table.keyspace().toLowerCase();
+        String tableName = table.caseSensitiveTable() ? table.name() : table.name().toLowerCase();
+
+        ConsistencyLevel writeConsistency = table.writeConsistency().isEmpty() ? null : ConsistencyLevel.valueOf(table.writeConsistency().toUpperCase());
+        ConsistencyLevel readConsistency = table.readConsistency().isEmpty() ? null : ConsistencyLevel.valueOf(table.readConsistency().toUpperCase());
+
+        EntityMapper<T> mapper = factory.create(entityClass, ksName, tableName, writeConsistency, readConsistency);
 
         List<Field> pks = new ArrayList<Field>();
         List<Field> ccs = new ArrayList<Field>();
@@ -108,6 +115,9 @@ class AnnotationParser {
 
     public static String columnName(Field field) {
         Column column = field.getAnnotation(Column.class);
-        return (column == null) ? field.getName() : column.name();
+        if (column == null)
+            return field.getName();
+
+        return column.caseSensitive() ? column.name() : column.name().toLowerCase();
     }
 }

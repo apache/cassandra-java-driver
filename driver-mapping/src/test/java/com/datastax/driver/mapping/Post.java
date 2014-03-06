@@ -3,11 +3,12 @@ package com.datastax.driver.mapping;
 import java.net.InetAddress;
 import java.util.UUID;
 
-import com.datastax.driver.mapping.annotations.*;
+import com.google.common.base.Objects;
 
+import com.datastax.driver.mapping.annotations.*;
 import com.datastax.driver.core.utils.UUIDs;
 
-@Table(name = "posts")
+@Table(keyspace = "ks", name = "posts")
 public class Post {
 
     @PartitionKey
@@ -68,5 +69,23 @@ public class Post {
 
     public void setDevice(InetAddress device) {
         this.device = device;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == null || other.getClass() != this.getClass())
+            return false;
+
+        Post that = (Post)other;
+        return Objects.equal(userId, that.userId)
+            && Objects.equal(postId, that.postId)
+            && Objects.equal(title, that.title)
+            && Objects.equal(content, that.content)
+            && Objects.equal(device, that.device);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(userId, postId, title, content, device);
     }
 }

@@ -2,11 +2,15 @@ package com.datastax.driver.mapping;
 
 import java.util.UUID;
 
+import com.google.common.base.Objects;
+
 import com.datastax.driver.mapping.annotations.*;
 
 import com.datastax.driver.core.utils.UUIDs;
 
-@Table(name = "users")
+@Table(keyspace="ks", name = "users",
+       readConsistency="QUORUM",
+       writeConsistency="QUORUM")
 public class User {
 
     public enum Gender { FEMALE, MALE }
@@ -68,5 +72,23 @@ public class User {
 
     public void setYear(int year) {
         this.year = year;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == null || other.getClass() != this.getClass())
+            return false;
+
+        User that = (User)other;
+        return Objects.equal(userId, that.userId)
+            && Objects.equal(name, that.name)
+            && Objects.equal(email, that.email)
+            && Objects.equal(year, that.year)
+            && Objects.equal(gender, that.gender);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(userId, name, email, year, gender);
     }
 }
