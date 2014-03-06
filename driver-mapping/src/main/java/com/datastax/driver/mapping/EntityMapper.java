@@ -12,7 +12,70 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 abstract class EntityMapper<T> {
 
-    public enum QueryType { SAVE, GET, DEL }
+    public static class QueryType {
+        private enum Kind { SAVE, GET, DEL, SLICE, REVERSED_SLICE };
+        private final Kind kind;
+
+        // For slices
+        private final int startBoundSize;
+        private final boolean startInclusive;
+        private final int endBoundSize;
+        private final boolean endInclusive;
+
+        public static final QueryType save = new QueryType(Kind.SAVE);
+        public static final QueryType del = new QueryType(Kind.DEL);
+        public static final QueryType get = new QueryType(Kind.GET);
+
+        private QueryType(Kind kind) {
+            this(kind, 0, false, 0, false);
+        }
+
+        private QueryType(Kind kind, int startBoundSize, boolean startInclusive, int endBoundSize, boolean endInclusive) {
+            this.kind = kind;
+            this.startBoundSize = startBoundSize;
+            this.startInclusive = startInclusive;
+            this.endBoundSize = endBoundSize;
+            this.endInclusive = endInclusive;
+        }
+
+        public static QueryType slice(int startBoundSize, boolean startInclusive, int endBoundSize, boolean endInclusive, boolean reversed) {
+            return new QueryType(reversed ? Kind.REVERSED_SLICE : Kind.SLICE, startBoundSize, startInclusive, endBoundSize, endInclusive);
+        }
+
+        private String makePreparedQueryString(EntityMapper<T> mapper) {
+            switch (kind) {
+                case SAVE:
+                    Insert insert = insertInto(mapper.keyspace, mapper.table);
+                    for (ColumnMapper<T> cm : mapper.allColumns())
+                        insert.value(cm.getColumnName(), bindMarker());
+                    return insert.toString();
+                case GET:
+                    Select select = select().all().from(mapper.keyspace, mapper.table);
+                    Select.Where gWhere = select.where();
+                    for (int i = 0; i < mapper.primaryKeySize(); i++)
+                        gWhere.and(eq(mapper.getPrimaryKeyColumn(i).columnName, bindMarker()));
+                    return select.toString();
+                case DEL:
+                    Delete delete = delete().all().from(mapper.keyspace, mapper.table);
+                    Delete.Where dWhere = delete.where();
+                    for (int i = 0; i < mapper.primaryKeySize(); i++)
+                        dWhere.and(eq(mapper.getPrimaryKeyColumn(i).columnName, bindMarker()));
+                    return delete.toString();
+                case SLICE:
+                case REVERSED_SLICE:
+                    Select select = select().all().from(mapper.keyspace, mapper.table);
+                    Select.Where sWhere = select.where();
+                    for (int i = 0; i < mapper.partitionKeys.size(); i++)
+                        sWhere.and(eq(mapper.partitionKeys.get(i).columnName, bindMarker()));
+
+                    for (int i = 0; i < slicePrefix; i++)
+                        sWhere.and(eq);
+
+                    return select.toString();
+            }
+            throw new AssertionError();
+        }
+    }
 
     public final Class<T> entityClass;
     public final String keyspace;
@@ -55,29 +118,6 @@ abstract class EntityMapper<T> {
 
     public List<ColumnMapper<T>> allColumns() {
         return allColumns;
-    }
-
-    private String makePreparedQueryString(QueryType type) {
-        switch (type) {
-            case SAVE:
-                Insert insert = insertInto(keyspace, table);
-                for (ColumnMapper<T> cm : allColumns())
-                    insert.value(cm.getColumnName(), bindMarker());
-                return insert.toString();
-            case GET:
-                Select select = select().all().from(keyspace, table);
-                Select.Where sWhere = select.where();
-                for (int i = 0; i < primaryKeySize(); i++)
-                    sWhere.and(eq(getPrimaryKeyColumn(i).columnName, bindMarker()));
-                return select.toString();
-            case DEL:
-                Delete delete = delete().all().from(keyspace, table);
-                Delete.Where dWhere = delete.where();
-                for (int i = 0; i < primaryKeySize(); i++)
-                    dWhere.and(eq(getPrimaryKeyColumn(i).columnName, bindMarker()));
-                return delete.toString();
-        }
-        throw new AssertionError();
     }
 
     public PreparedStatement getPreparedQuery(Session session, QueryType type) {

@@ -14,17 +14,21 @@ import com.datastax.driver.core.querybuilder.Select;
  * This object is thread safe and you are in fact encouraged to create a single
  * Mapper for your application and to share that object as this minimize ressources.
  */
-public class Mapper {
+public class SessionMapper {
 
     private volatile Map<Class<?>, EntityMapper<?>> mappers = Collections.<Class<?>, EntityMapper<?>>emptyMap();
 
-    private final Session session;
+    final Session session;
 
     /**
      * Creates a new {@code Mapper}.
      */
-    public Mapper(Session session) {
+    public SessionMapper(Session session) {
         this.session = session;
+    }
+
+    public <T> Mapper<T> mapperFor(Class<T> klass) {
+        return new Mapper<T>(klass);
     }
 
     /**
@@ -48,7 +52,7 @@ public class Mapper {
      * @return a query that saves {@code entity} (based on it's defined mapping).
      */
     @SuppressWarnings("unchecked")
-    public <T> Statement save(T entity) {
+    public <T> Statement saveQuery(T entity) {
         EntityMapper<T> mapper = getEntityMapper((Class<T>)entity.getClass());
         PreparedStatement ps = mapper.getPreparedQuery(session, EntityMapper.QueryType.SAVE);
 
@@ -60,7 +64,7 @@ public class Mapper {
         return bs;
     }
 
-    public <T> Statement get(Class<T> klass, Object... primaryKey) {
+    public <T> Statement getQuery(Class<T> klass, Object... primaryKey) {
         EntityMapper<T> mapper = getEntityMapper(klass);
         if (primaryKey.length != mapper.primaryKeySize())
             throw new IllegalArgumentException(String.format("Invalid number of PRIMARY KEY columns provided, %d expected but got %d", mapper.primaryKeySize(), primaryKey.length));
@@ -78,7 +82,7 @@ public class Mapper {
         return bs;
     }
 
-    public <T> Statement delete(Class<T> klass, Object...primaryKey) {
+    public <T> Statement deleteQuery(Class<T> klass, Object...primaryKey) {
         EntityMapper<T> mapper = getEntityMapper(klass);
         if (primaryKey.length != mapper.primaryKeySize())
             throw new IllegalArgumentException(String.format("Invalid number of PRIMARY KEY columns provided, %d expected but got %d", mapper.primaryKeySize(), primaryKey.length));
@@ -96,13 +100,13 @@ public class Mapper {
         return bs;
     }
 
-    public <T> Select select(Class<T> klass) {
+    public <T> Select selectQuery(Class<T> klass) {
         EntityMapper<T> mapper = getEntityMapper(klass);
         return QueryBuilder.select().all().from(mapper.keyspace, mapper.table);
     }
 
     @SuppressWarnings("unchecked")
-    private <T> EntityMapper<T> getEntityMapper(Class<T> klass) {
+    <T> EntityMapper<T> getEntityMapper(Class<T> klass) {
         EntityMapper<T> mapper = (EntityMapper<T>)mappers.get(klass);
         if (mapper == null) {
             synchronized (mappers) {
