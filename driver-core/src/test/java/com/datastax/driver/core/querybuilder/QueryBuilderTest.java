@@ -641,4 +641,23 @@ public class QueryBuilderTest {
         assertEquals(QueryBuilder.insertInto(quote("Metrics"), quote("epochs")).getQueryString(),
             "INSERT INTO \"Metrics\".\"epochs\"() VALUES ();");
     }
+
+    @Test(groups = "unit")
+    public void compoundWhereClauseTest() throws Exception {
+        String query;
+        Statement select;
+
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)>('a',2);";
+        select = select().all().from("foo").where(eq("k", 4)).and(gt(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)>=('a',2) AND (c1,c2)<('b',0);";
+        select = select().all().from("foo").where(eq("k", 4)).and(gte(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)))
+                                                             .and(lt(Arrays.asList("c1", "c2"), Arrays.<Object>asList("b", 0)));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)<=('a',2);";
+        select = select().all().from("foo").where(eq("k", 4)).and(lte(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
+        assertEquals(select.toString(), query);
+    }
 }
