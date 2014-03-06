@@ -20,19 +20,23 @@ import java.util.List;
 
 public abstract class Clause extends Utils.Appendeable {
 
-    final String name;
-
-    private Clause(String name) {
-        this.name = name;
-    }
-
-    String name() {
-        return name;
-    }
-
+    abstract String name();
     abstract Object firstValue();
 
-    static class SimpleClause extends Clause {
+    private static abstract class AbstractClause extends Clause {
+        final String name;
+
+        private AbstractClause(String name) {
+            this.name = name;
+        }
+
+        @Override
+        String name() {
+            return name;
+        }
+    }
+
+    static class SimpleClause extends AbstractClause {
 
         private final String op;
         private final Object value;
@@ -60,7 +64,7 @@ public abstract class Clause extends Utils.Appendeable {
         }
     }
 
-    static class InClause extends Clause {
+    static class InClause extends AbstractClause {
 
         private final List<Object> values;
 
@@ -102,6 +106,58 @@ public abstract class Clause extends Utils.Appendeable {
                 if (Utils.containsBindMarker(value))
                     return true;
             return false;
+        }
+    }
+
+    static class CompoundClause extends Clause {
+        private String op;
+        private final List<String> names;
+        private final List<Object> values;
+
+        CompoundClause(List<String> names, String op, List<Object> values) {
+            assert names.size() == values.size();
+            this.op = op;
+            this.names = names;
+            this.values = values;
+        }
+
+        @Override
+        String name() {
+            // This is only used for routing key purpose, and so far CompoundClause
+            // are not allowed for the partitionKey anyway
+            return null;
+        }
+
+        @Override
+        Object firstValue() {
+            // This is only used for routing key purpose, and so far CompoundClause
+            // are not allowed for the partitionKey anyway
+            return null;
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            for (int i = 0; i < values.size(); i++)
+                if (Utils.containsBindMarker(values.get(i)))
+                    return true;
+            return false;
+        }
+
+        @Override
+        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+            sb.append("(");
+            for (int i = 0; i < names.size(); i++) {
+                if (i > 0)
+                    sb.append(",");
+                Utils.appendName(names.get(i), sb);
+            }
+            sb.append(")").append(op).append("(");
+            for (int i = 0; i < values.size(); i++) {
+                if (i > 0)
+                    sb.append(",");
+                Utils.appendValue(values.get(i), sb, variables);
+            }
+            sb.append(")");
         }
     }
 }

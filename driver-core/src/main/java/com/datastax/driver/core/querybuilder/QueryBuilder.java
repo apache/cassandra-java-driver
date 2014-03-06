@@ -300,6 +300,27 @@ public final class QueryBuilder {
     }
 
     /**
+     * Creates a "lesser than" where clause for a group of clustering columns.
+     * <p>
+     * For instance, {@code lt(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
+     * will generate the CQL WHERE clause {@code (a, b) &lt; (2, 'test') }.
+     * <p>
+     * Please note that this variant is only supported starting with Cassandra 2.0.6.
+     *
+     * @param names the column names
+     * @param values the values
+     * @return the corresponding where clause.
+     *
+     * @throws IllegalArgumentException if {@code names.size() != values.size()}.
+     */
+    public static Clause lt(List<String> names, List<Object> values) {
+        if (names.size() != values.size())
+            throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
+
+        return new Clause.CompoundClause(names, "<", values);
+    }
+
+    /**
      * Creates a "lesser than or equal" where clause stating the provided column must
      * be lesser than or equal to the provided value.
      *
@@ -309,6 +330,27 @@ public final class QueryBuilder {
      */
     public static Clause lte(String name, Object value) {
         return new Clause.SimpleClause(name, "<=", value);
+    }
+
+    /**
+     * Creates a "lesser than or equal" where clause for a group of clustering columns.
+     * <p>
+     * For instance, {@code lte(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
+     * will generate the CQL WHERE clause {@code (a, b) &lte; (2, 'test') }.
+     * <p>
+     * Please note that this variant is only supported starting with Cassandra 2.0.6.
+     *
+     * @param names the column names
+     * @param values the values
+     * @return the corresponding where clause.
+     *
+     * @throws IllegalArgumentException if {@code names.size() != values.size()}.
+     */
+    public static Clause lte(List<String> names, List<Object> values) {
+        if (names.size() != values.size())
+            throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
+
+        return new Clause.CompoundClause(names, "<=", values);
     }
 
     /**
@@ -324,6 +366,27 @@ public final class QueryBuilder {
     }
 
     /**
+     * Creates a "greater than" where clause for a group of clustering columns.
+     * <p>
+     * For instance, {@code gt(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
+     * will generate the CQL WHERE clause {@code (a, b) &gt; (2, 'test') }.
+     * <p>
+     * Please note that this variant is only supported starting with Cassandra 2.0.6.
+     *
+     * @param names the column names
+     * @param values the values
+     * @return the corresponding where clause.
+     *
+     * @throws IllegalArgumentException if {@code names.size() != values.size()}.
+     */
+    public static Clause gt(List<String> names, List<Object> values) {
+        if (names.size() != values.size())
+            throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
+
+        return new Clause.CompoundClause(names, ">", values);
+    }
+
+    /**
      * Creates a "greater than or equal" where clause stating the provided
      * column must be greater than or equal to the provided value.
      *
@@ -333,6 +396,27 @@ public final class QueryBuilder {
      */
     public static Clause gte(String name, Object value) {
         return new Clause.SimpleClause(name, ">=", value);
+    }
+
+    /**
+     * Creates a "greater than or equal" where clause for a group of clustering columns.
+     * <p>
+     * For instance, {@code gte(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
+     * will generate the CQL WHERE clause {@code (a, b) &gte; (2, 'test') }.
+     * <p>
+     * Please note that this variant is only supported starting with Cassandra 2.0.6.
+     *
+     * @param names the column names
+     * @param values the values
+     * @return the corresponding where clause.
+     *
+     * @throws IllegalArgumentException if {@code names.size() != values.size()}.
+     */
+    public static Clause gte(List<String> names, List<Object> values) {
+        if (names.size() != values.size())
+            throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
+
+        return new Clause.CompoundClause(names, ">=", values);
     }
 
     /**
