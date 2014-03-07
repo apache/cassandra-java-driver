@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
-import com.datastax.driver.core.querybuilder.Select;
+import com.datastax.driver.core.querybuilder.Update;
 
 /**
  * An object handling the mapping of a particular class.
@@ -29,6 +29,7 @@ public class Mapper<T> {
     final MappingManager manager;
     final Class<T> klass;
     final EntityMapper<T> mapper;
+    final TableMetadata tableMetadata;
 
     // Cache prepared statements for each type of query we use.
     private volatile Map<QueryType, PreparedStatement> preparedQueries = Collections.<QueryType, PreparedStatement>emptyMap();
@@ -42,6 +43,9 @@ public class Mapper<T> {
         this.manager = manager;
         this.klass = klass;
         this.mapper = mapper;
+
+        KeyspaceMetadata keyspace = session().getCluster().getMetadata().getKeyspace(mapper.getKeyspace());
+        this.tableMetadata = keyspace == null ? null : keyspace.getTable(Metadata.quote(mapper.getTable()));
 
         this.mapOneFunction = new Function<ResultSet, T>() {
             public T apply(ResultSet rs) {
@@ -65,9 +69,7 @@ public class Mapper<T> {
             synchronized (preparedQueries) {
                 stmt = preparedQueries.get(type);
                 if (stmt == null) {
-                    KeyspaceMetadata keyspace = session().getCluster().getMetadata().getKeyspace(mapper.getKeyspace());
-                    TableMetadata table = keyspace == null ? null : keyspace.getTable(Metadata.quote(mapper.getTable()));
-                    String query = type.makePreparedQueryString(table, mapper);
+                    String query = type.makePreparedQueryString(tableMetadata, mapper);
                     logger.debug("Preparing query {}", query);
                     stmt = session().prepare(query);
                     Map<QueryType, PreparedStatement> newQueries = new HashMap<QueryType, PreparedStatement>(preparedQueries);
@@ -199,6 +201,27 @@ public class Mapper<T> {
         if (mapper.writeConsistency != null)
             bs.setConsistencyLevel(mapper.writeConsistency);
         return bs;
+    }
+
+    public Update updateBuilder(Object... primaryKey) {
+        Update upd = tableMetadata == null
+                   ? QueryBuilder.update(mapper.getKeyspace(), mapper.getTable())
+                   : QueryBuilder.update(tableMetadata);
+
+        Update.Where where = upd.where();
+
+        for (int i = 0; i < primaryKey.length; i++) {
+            ColumnMapper<T> column = mapper.getPrimaryKeyColumn(i);
+            Object value = primaryKey[i];
+            if (value == null)
+                throw new IllegalArgumentException(String.format("Invalid null value for PRIMARY KEY column %s (argument %d)", column.getColumnName(), i));
+            where.and(QueryBuilder.eq(column.getColumnName(), value));
+        }
+
+        if (mapper.writeConsistency != null)
+            upd.setConsistencyLevel(mapper.writeConsistency);
+
+        return upd;
     }
 
     /**

@@ -29,6 +29,15 @@ public abstract class Assignment extends Utils.Appendeable {
         this.name = name;
     }
 
+    /**
+     * The name of the column this assignment applies to.
+     *
+     * @return the name of the column this assignment applies to.
+     */
+    public String getColumnName() {
+        return name;
+    }
+
     static class SetAssignment extends Assignment {
 
         private final Object value;

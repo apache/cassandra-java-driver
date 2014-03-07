@@ -9,7 +9,7 @@ import static org.testng.Assert.*;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.CCMBridge;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -22,11 +22,16 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
     public void testStaticEntity() throws Exception {
         Mapper<User> m = new MappingManager(session).mapper(User.class);
 
-        User u1 = new User("Paul", "paul@gmail.com", User.Gender.MALE);
+        User u1 = new User("Paul", "paul@yahoo.com", User.Gender.MALE);
         u1.setYear(2014);
         m.save(u1);
 
         assertEquals(m.get(u1.getUserId()), u1);
+
+        // Update the email if it's still the original value
+        //session.execute(m.updateBuilder(u1.getUserId()).with(set("email", "paul@gmail.com")).onlyIf(eq("email", "paul@yahoo.com")));
+
+        assertTrue(m.updater(u1.getUserId()).with(set("email", "paul@gmail.com")).onlyIf(eq("email", "paul@yahoo.com")).execute().applied());
     }
 
     @Test(groups = "short")
