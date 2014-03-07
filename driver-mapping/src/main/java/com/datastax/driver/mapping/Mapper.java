@@ -203,27 +203,6 @@ public class Mapper<T> {
         return bs;
     }
 
-    public Update updateBuilder(Object... primaryKey) {
-        Update upd = tableMetadata == null
-                   ? QueryBuilder.update(mapper.getKeyspace(), mapper.getTable())
-                   : QueryBuilder.update(tableMetadata);
-
-        Update.Where where = upd.where();
-
-        for (int i = 0; i < primaryKey.length; i++) {
-            ColumnMapper<T> column = mapper.getPrimaryKeyColumn(i);
-            Object value = primaryKey[i];
-            if (value == null)
-                throw new IllegalArgumentException(String.format("Invalid null value for PRIMARY KEY column %s (argument %d)", column.getColumnName(), i));
-            where.and(QueryBuilder.eq(column.getColumnName(), value));
-        }
-
-        if (mapper.writeConsistency != null)
-            upd.setConsistencyLevel(mapper.writeConsistency);
-
-        return upd;
-    }
-
     /**
      * Deletes an entity mapped by this mapper.
      * <p>
@@ -362,27 +341,5 @@ public class Mapper<T> {
      */
     public ListenableFuture<T> getAsync(Object... primaryKey) {
         return Futures.transform(session().executeAsync(getQuery(primaryKey)), mapOneFunction);
-    }
-
-    /**
-     * Creates a Slicer to fetch a slice of entities over a given partition.
-     *
-     * @param partitionKey the partition key of the partition to slice, or more precisely
-     * the values for the columns of said partition key in the order of the partition key.
-     * @return the newly created {@code Slicer}.
-     *
-     * @throws IllegalArgumentException if the number of value provided differ from
-     * the number of columns composing the partition key of the mapped class, or if
-     * at least one of those values is {@code null}.
-     */
-    public Slicer<T> slice(Object... partitionKey) {
-        if (partitionKey.length != mapper.partitionKeys.size())
-            throw new IllegalArgumentException(String.format("Invalid number of partition key columns provided, %d expected but got %d", mapper.partitionKeys.size(), partitionKey.length));
-
-        for (int i = 0; i < partitionKey.length; i++)
-            if (partitionKey[i] == null)
-                throw new IllegalArgumentException(String.format("Invalid null value for partition key column %s (argument %d)", mapper.partitionKeys.get(i).getColumnName(), i));
-
-        return new Slicer<T>(this, partitionKey);
     }
 }

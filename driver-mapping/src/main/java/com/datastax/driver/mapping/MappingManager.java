@@ -56,6 +56,12 @@ public class MappingManager {
         return getMapper(klass);
     }
 
+    public <T> T createDAO(Class<T> klass) {
+        DAOMapper<T> mapper = AnnotationParser.parseDAO(klass, DAOReflectionMapper.factory());
+        mapper.prepare(this);
+        return mapper.createProxy();
+    }
+
     @SuppressWarnings("unchecked")
     private <T> Mapper<T> getMapper(Class<T> klass) {
         Mapper<T> mapper = (Mapper<T>)mappers.get(klass);

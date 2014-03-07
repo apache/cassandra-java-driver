@@ -6,9 +6,7 @@ import java.util.*;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.*;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -27,16 +25,13 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         m.save(u1);
 
         assertEquals(m.get(u1.getUserId()), u1);
-
-        // Update the email if it's still the original value
-        //session.execute(m.updateBuilder(u1.getUserId()).with(set("email", "paul@gmail.com")).onlyIf(eq("email", "paul@yahoo.com")));
-
-        assertTrue(m.updater(u1.getUserId()).with(set("email", "paul@gmail.com")).onlyIf(eq("email", "paul@yahoo.com")).execute().applied());
     }
 
     @Test(groups = "short")
     public void testDynamicEntity() throws Exception {
-        Mapper<Post> m = new MappingManager(session).mapper(Post.class);
+        MappingManager manager = new MappingManager(session);
+
+        Mapper<Post> m = manager.mapper(Post.class);
 
         User u1 = new User("Paul", "paul@gmail.com", User.Gender.MALE);
         Post p1 = new Post(u1, "Something about mapping");
@@ -49,16 +44,16 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         m.save(p2);
         m.save(p3);
 
-        Result<Post> r = m.slice(u1.getUserId()).execute();
+        PostDAO dao = manager.createDAO(PostDAO.class);
 
+        Post p = dao.getOne(p1.getUserId(), p1.getPostId());
+        assertEquals(p, p1);
+
+        Result<Post> r = dao.getAllAsync(p1.getUserId()).get();
         assertEquals(r.one(), p1);
         assertEquals(r.one(), p2);
         assertEquals(r.one(), p3);
-
-        r = m.slice(u1.getUserId()).from(p2.getPostId()).execute();
-
-        assertEquals(r.one(), p2);
-        assertEquals(r.one(), p3);
+        assertTrue(r.isExhausted());
 
         m.delete(p1);
         m.delete(p2);
@@ -66,6 +61,6 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // Check delete by primary key too
         m.delete(p3.getUserId(), p3.getPostId());
 
-        assertTrue(m.slice(u1.getUserId()).execute().isExhausted());
+        assertTrue(dao.getAllAsync(u1.getUserId()).get().isExhausted());
     }
 }

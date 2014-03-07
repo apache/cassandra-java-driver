@@ -21,12 +21,6 @@ class ReflectionMapper<T> extends EntityMapper<T> {
 
     private static ReflectionFactory factory = new ReflectionFactory();
 
-    /*
-     * TODO: a more efficient implementation should be added but would be overkill
-     * for now as queries are currently moved around as Statements rather than 
-     * as PS.
-     */
-
     private ReflectionMapper(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency) {
         super(entityClass, keyspace, table, writeConsistency, readConsistency);
     }

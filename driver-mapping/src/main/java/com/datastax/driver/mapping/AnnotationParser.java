@@ -1,6 +1,8 @@
 package com.datastax.driver.mapping;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 
 import com.datastax.driver.core.ConsistencyLevel;
@@ -119,5 +121,39 @@ class AnnotationParser {
             return field.getName();
 
         return column.caseSensitive() ? column.name() : column.name().toLowerCase();
+    }
+
+    public static <T> DAOMapper<T> parseDAO(Class<T> daoClass, DAOMapper.Factory factory) {
+        DAO dao = daoClass.getAnnotation(DAO.class);
+        if (dao == null)
+            throw new IllegalArgumentException("@DAO annotation was not found on interface " + daoClass.getName());
+
+        String ksName = dao.caseSensitiveKeyspace() ? dao.keyspace() : dao.keyspace().toLowerCase();
+        String tableName = dao.caseSensitiveTable() ? dao.name() : dao.name().toLowerCase();
+
+        List<MethodMapper> methods = new ArrayList<MethodMapper>();
+        for (Method m : daoClass.getDeclaredMethods()) {
+            Query query = m.getAnnotation(Query.class);
+            if (query == null)
+                continue;
+
+            String queryString = query.value();
+
+            Annotation[][] paramAnnotations = m.getParameterAnnotations();
+            String[] paramNames = new String[paramAnnotations.length];
+            outer:
+            for (int i = 0; i < paramNames.length; i++) {
+                for (Annotation a : paramAnnotations[i]) {
+                    if (a.annotationType().equals(Param.class)) {
+                       paramNames[i] = ((Param)a).value();
+                       continue outer;
+                    }
+                }
+                paramNames[i] = "arg" + i;
+            }
+            methods.add(new MethodMapper(m, queryString, paramNames));
+        }
+
+        return factory.create(daoClass, ksName, tableName, methods);
     }
 }
