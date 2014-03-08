@@ -476,7 +476,7 @@ class ControlConnection implements Host.StateListener {
         }
       }
 
-      // Removes all those that seems to have been removed (since we lost the control connection)
+        // Removes all those that seems to have been removed (since we lost the control connection)
         Set<InetAddress> foundHostsSet = new HashSet<InetAddress>(foundHosts);
         for (Host host : cluster.metadata.allHosts())
             if (!host.getAddress().equals(connection.address) && !foundHostsSet.contains(host.getAddress()))

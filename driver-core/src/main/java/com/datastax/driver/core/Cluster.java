@@ -20,6 +20,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -86,7 +87,6 @@ public class Cluster implements Closeable {
     private Cluster(String name, List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners, boolean useContactPointsOnly) {
         this.manager = new Manager(name, contactPoints, configuration, listeners, useContactPointsOnly);
     }
-
 
     /**
      * Initialize this Cluster instance.
