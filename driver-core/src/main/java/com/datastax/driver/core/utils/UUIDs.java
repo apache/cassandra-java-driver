@@ -15,23 +15,16 @@
  */
 package com.datastax.driver.core.utils;
 
-import com.google.common.base.Charsets;
-
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.UnknownHostException;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Calendar;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Random;
-import java.util.Set;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+
+import com.google.common.base.Charsets;
 
 /**
  * Utility methods to work with UUID and most specifically with time-based ones

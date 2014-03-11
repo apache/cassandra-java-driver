@@ -17,33 +17,33 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.base.Predicates;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.MapMaker;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
-import org.apache.cassandra.utils.MD5Digest;
+import com.google.common.collect.SetMultimap;
+import com.google.common.util.concurrent.*;
 import org.apache.cassandra.transport.Event;
+
 import com.datastax.cassandra.transport.Message;
 import com.datastax.cassandra.transport.messages.EventMessage;
 import com.datastax.cassandra.transport.messages.PrepareMessage;
 
-import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
+
+import org.apache.cassandra.utils.MD5Digest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 /**
  * information and known state of a Cassandra cluster.
@@ -72,11 +72,25 @@ public class Cluster {
 
     final Manager manager;
 
-    // Note: we don't want to make init part of Configuration. In 2.0, the default is not init
-    // so there is not point in breaking Configuration API for that. However, as a workaround
-    // until upgrade, we still want to allow optional lazy initialization of the control
-    // connection (see #JAVA-161)
-    private Cluster(List<InetAddress> contactPoints, Configuration configuration, boolean init) {
+    /**
+     * Constructs a new Cluster instance.
+     * <p>
+     * This constructor is mainly exposed so Cluster can be sub-classed as a mean to make testing/mocking
+     * easier or to "intecept" it's method call. Most users shouldn't extend this class however and
+     * should prefer either using the {@link #builder} or calling {@link #buildFrom} with a custom
+     * Initializer.
+     *
+     * @param contactPoints the list of contact points to use for the new cluster.
+     * @param configuration the configuration for the new cluster.
+     * @param init whether or not initialization should be perform by this constructor. Passing
+     * {@code false} is equivalent to using {@link Builder#withDeferredInitialization} on a
+     * {@code Cluster.Builder}.
+     */
+    protected Cluster(List<InetAddress> contactPoints, Configuration configuration, boolean init) {
+        // Note: we don't want to make init part of Configuration. In 2.0, the default is not init
+        // so there is not point in breaking Configuration API for that. However, as a workaround
+        // until upgrade, we still want to allow optional lazy initialization of the control
+        // connection (see #JAVA-161)
         this.manager = new Manager(contactPoints, configuration);
         if (init)
             this.manager.init();
@@ -142,8 +156,13 @@ public class Cluster {
      * {@code keyspace}.
      */
     public Session connect(String keyspace) {
-        Session session = connect();
-        session.manager.setKeyspace(keyspace);
+        SessionManager session = (SessionManager)connect();
+        try {
+            session.setKeyspace(keyspace);
+        } catch (RuntimeException e) {
+            session.shutdown();
+            throw e;
+        }
         return session;
     }
 
@@ -738,11 +757,11 @@ public class Cluster {
      */
     class Manager implements Host.StateListener, Connection.DefaultResponseHandler {
 
-        private final AtomicBoolean isInit = new AtomicBoolean(false);
+        private boolean isInit;
 
         // Initial contacts point
         final List<InetAddress> contactPoints;
-        final Set<Session> sessions = new CopyOnWriteArraySet<Session>();
+        final Set<SessionManager> sessions = new CopyOnWriteArraySet<SessionManager>();
 
         final Metadata metadata;
         final Configuration configuration;
@@ -792,9 +811,12 @@ public class Cluster {
             this.configuration.register(this);
         }
 
-        private void init() {
-            if (!isInit.compareAndSet(false, true))
+        // Initialization is not too performance intensive and in practice there shouldn't be contention
+        // on it so synchronized is good enough.
+        private synchronized void init() {
+            if (isInit)
                 return;
+            isInit = true;
 
             // Note: we mark the initial contact point as UP, because we have no prior
             // notion of their state and no real way to know until we connect to them
@@ -818,6 +840,7 @@ public class Cluster {
                 }
                 throw e;
             }
+
         }
 
         Cluster getCluster() {
@@ -835,7 +858,7 @@ public class Cluster {
         private Session newSession() {
             init();
 
-            Session session = new Session(Cluster.this, metadata.allHosts());
+            SessionManager session = new SessionManager(Cluster.this, metadata.allHosts());
             sessions.add(session);
             return session;
         }
@@ -907,14 +930,14 @@ public class Cluster {
             // new pool have been created. This is harmless if there is no prior pool since RequestHandler
             // will ignore the node, but we do want to make sure there is no prior pool so we don't
             // query from a pool we will shutdown right away.
-            for (Session s : sessions)
-                s.manager.removePool(host);
+            for (SessionManager s : sessions)
+                s.removePool(host);
             loadBalancingPolicy().onUp(host);
             controlConnection.onUp(host);
 
             List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
-            for (Session s : sessions)
-                futures.add(s.manager.addOrRenewPool(host, false));
+            for (SessionManager s : sessions)
+                futures.add(s.addOrRenewPool(host, false));
 
             // Only mark the node up once all session have re-added their pool (if the loadbalancing
             // policy says it should), so that Host.isUp() don't return true before we're reconnected
@@ -935,8 +958,8 @@ public class Cluster {
 
                     // Now, check if there isn't pools to create/remove following the addition.
                     // We do that now only so that it's not called before we've set the node up.
-                    for (Session s : sessions)
-                        s.manager.updateCreatedPools();
+                    for (SessionManager s : sessions)
+                        s.updateCreatedPools();
                 }
 
                 public void onFailure(Throwable t) {
@@ -971,8 +994,8 @@ public class Cluster {
 
             loadBalancingPolicy().onDown(host);
             controlConnection.onDown(host);
-            for (Session s : sessions)
-                s.manager.onDown(host);
+            for (SessionManager s : sessions)
+                s.onDown(host);
 
             // Contrarily to other actions of that method, there is no reason to notify listeners
             // unless the host was UP at the beginning of this function since even if a onUp fail
@@ -1019,6 +1042,23 @@ public class Cluster {
             if (isShutdown.get())
                 return;
 
+            // Adds to the load balancing first and foremost, as doing so might change the decision
+            // it will make for distance() on that node (not likely but we leave that possibility).
+            // This does mean the policy may start returning that node for query plan, but as long
+            // as no pools have been created (below) this will be ignored by RequestHandler so it's fine.
+            loadBalancingPolicy().onAdd(host);
+
+            // Next, if the host should be ignored, well, ignore it.
+            if (loadBalancingPolicy().distance(host) == HostDistance.IGNORED) {
+                // We still mark the node UP though as it should be (and notifiy the listeners).
+                // We'll mark it down if we have  a notification anyway and we've documented that especially
+                // for IGNORED hosts, the isUp() method was a best effort guess
+                host.setUp();
+                for (Host.StateListener listener : listeners)
+                    listener.onAdd(host);
+                return;
+            }
+
             try {
                 prepareAllQueries(host);
             } catch (InterruptedException e) {
@@ -1026,12 +1066,11 @@ public class Cluster {
                 // Don't propagate because we don't want to prevent other listener to run
             }
 
-            loadBalancingPolicy().onAdd(host);
             controlConnection.onAdd(host);
 
             List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
-            for (Session s : sessions)
-                futures.add(s.manager.addOrRenewPool(host, true));
+            for (SessionManager s : sessions)
+                futures.add(s.addOrRenewPool(host, true));
 
             // Only mark the node up once all session have added their pool (if the loadbalancing
             // policy says it should), so that Host.isUp() don't return true before we're reconnected
@@ -1052,8 +1091,8 @@ public class Cluster {
 
                     // Now, check if there isn't pools to create/remove following the addition.
                     // We do that now only so that it's not called before we've set the node up.
-                    for (Session s : sessions)
-                        s.manager.updateCreatedPools();
+                    for (SessionManager s : sessions)
+                        s.updateCreatedPools();
                 }
 
                 public void onFailure(Throwable t) {
@@ -1074,8 +1113,8 @@ public class Cluster {
             logger.trace("Removing host {}", host);
             loadBalancingPolicy().onRemove(host);
             controlConnection.onRemove(host);
-            for (Session s : sessions)
-                s.manager.onRemove(host);
+            for (SessionManager s : sessions)
+                s.onRemove(host);
 
             for (Host.StateListener listener : listeners)
                 listener.onRemove(host);
@@ -1108,20 +1147,23 @@ public class Cluster {
         }
 
         public void ensurePoolsSizing() {
-            for (Session session : sessions) {
-                for (HostConnectionPool pool : session.manager.pools.values())
+            for (SessionManager session : sessions) {
+                for (HostConnectionPool pool : session.pools.values())
                     pool.ensureCoreConnections();
             }
         }
 
-        // Prepare a query on all nodes
-        // Note that this *assumes* the query is valid.
-        public void prepare(PreparedStatement stmt, InetAddress toExclude) throws InterruptedException {
-            if (preparedQueries.putIfAbsent(stmt.id, stmt) != null)
+        public PreparedStatement addPrepared(PreparedStatement stmt) {
+            PreparedStatement previous = preparedQueries.putIfAbsent(stmt.id, stmt);
+            if (previous != null) {
                 logger.warn("Re-preparing already prepared query {}. Please note that preparing the same query more than once is "
                           + "generally an anti-pattern and will likely affect performance. Consider preparing the statement only once.", stmt.getQueryString());
-            for (Session s : sessions)
-                s.manager.prepare(stmt.getQueryString(), toExclude);
+
+                // The one object in the cache will get GCed once it's not referenced by the client anymore since we use a weak reference.
+                // So we need to make sure that the instance we do return to the user is the one that is in the cache.
+                return previous;
+            }
+            return stmt;
         }
 
         private void prepareAllQueries(Host host) throws InterruptedException {

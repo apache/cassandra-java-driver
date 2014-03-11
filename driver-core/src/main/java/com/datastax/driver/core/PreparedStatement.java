@@ -18,8 +18,8 @@ package com.datastax.driver.core;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.apache.cassandra.utils.MD5Digest;
 import com.datastax.cassandra.transport.messages.ResultMessage;
+import org.apache.cassandra.utils.MD5Digest;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.policies.RetryPolicy;
@@ -133,13 +133,13 @@ public class PreparedStatement {
      * Creates a new BoundStatement object and bind its variables to the
      * provided values.
      * <p>
-     * This method is a convenience method for {@code new BoundStatement(this).bind(...)}.
-     * <p>
      * While the number of {@code values} cannot be greater than the number of bound
      * variables, the number of {@code values} may be fewer than the number of bound
      * variables. In that case, the remaining variables will have to be bound
      * to values by another mean because the resulting {@code BoundStatement}
      * being executable.
+     * <p>
+     * This method is a convenience for {@code new BoundStatement(this).bind(...)}.
      *
      * @param values the values to bind to the variables of the newly created
      * BoundStatement.
@@ -150,12 +150,28 @@ public class PreparedStatement {
      * than there is of bound variables in this statement.
      * @throws InvalidTypeException if any of the provided value is not of
      * correct type to be bound to the corresponding bind variable.
+     * @throws NullPointerException if one of {@code values} is a collection
+     * (List, Set or Map) containing a null value. Nulls are not supported in
+     * collections by CQL.
      *
      * @see BoundStatement#bind
      */
     public BoundStatement bind(Object... values) {
         BoundStatement bs = new BoundStatement(this);
         return bs.bind(values);
+    }
+
+    /**
+     * Creates a new BoundStatement object for this prepared statement.
+     * <p>
+     * This method do not bind any values to any of the prepared variables. Said
+     * values need to be bound on the resulting statement using BoundStatement's
+     * setters methods ({@link BoundStatement#setInt}, {@link BoundStatement#setLong}, ...).
+     *
+     * @return the newly created {@code BoundStatement}.
+     */
+    public BoundStatement bind() {
+        return new BoundStatement(this);
     }
 
     /**

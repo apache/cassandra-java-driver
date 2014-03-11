@@ -15,29 +15,26 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetAddress;
+
 /**
- * A non-prepared CQL statement.
- * <p>
- * This class represents a query string along with query options. It
- * can be extended but {@link SimpleStatement} is provided to build a {@code
- * Statement} directly from its query string.
+ * A connection that is associated to a pool.
  */
-public abstract class Statement extends Query {
+class PooledConnection extends Connection {
+
+    private final HostConnectionPool pool;
+
+    PooledConnection(String name, InetAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException {
+        super(name, address, factory);
+        this.pool = pool;
+    }
 
     /**
-     * Creates a new Statement.
+     * Return the pooled connection to it's pool.
+     * The connection should generally not be reuse after that.
      */
-    protected Statement() {}
-
-    /**
-     * Returns the query string for this statement.
-     *
-     * @return a valid CQL query string.
-     */
-    public abstract String getQueryString();
-
-    @Override
-    public String toString() {
-        return getQueryString();
+    public void release()
+    {
+        pool.returnConnection(this);
     }
 }

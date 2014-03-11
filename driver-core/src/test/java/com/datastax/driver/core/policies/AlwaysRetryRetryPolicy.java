@@ -15,16 +15,9 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.util.*;
-
-import org.testng.annotations.Test;
-
-import static org.testng.Assert.*;
-
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Query;
 import com.datastax.driver.core.WriteType;
-import static com.datastax.driver.core.TestUtils.*;
 
 public class AlwaysRetryRetryPolicy implements RetryPolicy {
 

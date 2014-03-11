@@ -20,18 +20,10 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
+import static com.datastax.driver.core.TestUtils.*;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-
-import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_GENERIC_FORMAT;
-import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
-import static com.datastax.driver.core.TestUtils.SIMPLE_TABLE;
-import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
-
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 public abstract class AbstractPoliciesTest {
     private static final boolean DEBUG = false;

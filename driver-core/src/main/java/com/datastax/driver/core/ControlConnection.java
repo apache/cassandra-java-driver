@@ -18,19 +18,19 @@ package com.datastax.driver.core;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.*;
 
 import com.google.common.base.Objects;
-
 import org.apache.cassandra.transport.Event;
-import com.datastax.cassandra.transport.messages.RegisterMessage;
 import com.datastax.cassandra.transport.messages.QueryMessage;
+import com.datastax.cassandra.transport.messages.RegisterMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
@@ -220,7 +220,11 @@ class ControlConnection implements Host.StateListener {
             refreshSchema(connection, null, null, cluster);
             return connection;
         } catch (BusyConnectionException e) {
+            connection.close(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
             throw new DriverInternalError("Newly created connection should not be busy");
+        } catch (RuntimeException e) {
+            connection.close(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            throw e;
         }
     }
 
@@ -251,16 +255,16 @@ class ControlConnection implements Host.StateListener {
                 whereClause += " AND columnfamily_name = '" + table + "'";
         }
 
-        ResultSetFuture ksFuture = table == null
-                                 ? new ResultSetFuture(null, new QueryMessage(SELECT_KEYSPACES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL))
-                                 : null;
-        ResultSetFuture cfFuture = new ResultSetFuture(null, new QueryMessage(SELECT_COLUMN_FAMILIES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-        ResultSetFuture colsFuture = new ResultSetFuture(null, new QueryMessage(SELECT_COLUMNS + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+        DefaultResultSetFuture ksFuture = table == null
+                                        ? new DefaultResultSetFuture(null, new QueryMessage(SELECT_KEYSPACES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL))
+                                        : null;
+        DefaultResultSetFuture cfFuture = new DefaultResultSetFuture(null, new QueryMessage(SELECT_COLUMN_FAMILIES + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+        DefaultResultSetFuture colsFuture = new DefaultResultSetFuture(null, new QueryMessage(SELECT_COLUMNS + whereClause, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
 
         if (ksFuture != null)
-            connection.write(ksFuture.callback);
-        connection.write(cfFuture.callback);
-        connection.write(colsFuture.callback);
+            connection.write(ksFuture);
+        connection.write(cfFuture);
+        connection.write(colsFuture);
 
         cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get());
     }
@@ -306,10 +310,10 @@ class ControlConnection implements Host.StateListener {
     private void refreshNodeListAndTokenMap(Connection connection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         // Make sure we're up to date on nodes and tokens
 
-        ResultSetFuture peersFuture = new ResultSetFuture(null, new QueryMessage(SELECT_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-        ResultSetFuture localFuture = new ResultSetFuture(null, new QueryMessage(SELECT_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-        connection.write(peersFuture.callback);
-        connection.write(localFuture.callback);
+        DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, new QueryMessage(SELECT_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+        DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, new QueryMessage(SELECT_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+        connection.write(peersFuture);
+        connection.write(localFuture);
 
         String partitioner = null;
         Map<Host, Collection<String>> tokenMap = new HashMap<Host, Collection<String>>();
@@ -353,10 +357,10 @@ class ControlConnection implements Host.StateListener {
                 logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connection.address);
                 continue;
             } else if (addr == null) {
-                logger.error("No rpc_address found for host {} in {}'s peers system table. That should not happen but using address {} instead", addr, connection.address, addr);
+                logger.error("No rpc_address found for host {} in {}'s peers system table. That should not happen but using address {} instead", peer, connection.address, peer);
                 addr = peer;
             } else if (addr.equals(bindAllAddress)) {
-                logger.warn("Host {} has 0.0.0.0 as rpc_address, using listen_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.");
+                logger.warn("Found host with 0.0.0.0 as rpc_address, using listen_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.", peer);
                 addr = peer;
             }
 
@@ -394,10 +398,10 @@ class ControlConnection implements Host.StateListener {
         long elapsed = 0;
         while (elapsed < MAX_SCHEMA_AGREEMENT_WAIT_MS) {
 
-            ResultSetFuture peersFuture = new ResultSetFuture(null, new QueryMessage(SELECT_SCHEMA_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-            ResultSetFuture localFuture = new ResultSetFuture(null, new QueryMessage(SELECT_SCHEMA_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
-            connection.write(peersFuture.callback);
-            connection.write(localFuture.callback);
+            DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, new QueryMessage(SELECT_SCHEMA_PEERS, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+            DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, new QueryMessage(SELECT_SCHEMA_LOCAL, ConsistencyLevel.DEFAULT_CASSANDRA_CL));
+            connection.write(peersFuture);
+            connection.write(localFuture);
 
             Set<UUID> versions = new HashSet<UUID>();
 

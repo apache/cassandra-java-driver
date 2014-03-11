@@ -15,7 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import java.math.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;

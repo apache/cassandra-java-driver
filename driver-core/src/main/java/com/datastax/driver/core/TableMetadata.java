@@ -20,10 +20,8 @@ import java.util.regex.Pattern;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-
-import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.db.marshal.*;
-
+import org.apache.cassandra.exceptions.RequestValidationException;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -418,8 +416,7 @@ public class TableMetadata {
         return sb.toString();
     }
 
-    private StringBuilder appendClusteringOrder(StringBuilder sb)
-    {
+    private StringBuilder appendClusteringOrder(StringBuilder sb) {
         sb.append("CLUSTERING ORDER BY (");
         for (int i = 0; i < clusteringKey.size(); i++) {
             if (i > 0) sb.append(", ");
@@ -467,7 +464,6 @@ public class TableMetadata {
         return sb;
     }
 
-
     public static class Options {
 
         private static final String COMMENT                  = "comment";
@@ -505,7 +501,7 @@ public class TableMetadata {
             this.comment = row.isNull(COMMENT) ? "" : row.getString(COMMENT);
             this.readRepair = row.getDouble(READ_REPAIR);
             this.localReadRepair = row.getDouble(LOCAL_READ_REPAIR);
-            this.replicateOnWrite = row.getBool(REPLICATE_ON_WRITE);
+            this.replicateOnWrite = row.isNull(REPLICATE_ON_WRITE) ? true : row.getBool(REPLICATE_ON_WRITE);
             this.gcGrace = row.getInt(GC_GRACE);
             this.bfFpChance = row.isNull(BF_FP_CHANCE) ? DEFAULT_BF_FP_CHANCE : row.getDouble(BF_FP_CHANCE);
             this.caching = row.getString(CACHING);

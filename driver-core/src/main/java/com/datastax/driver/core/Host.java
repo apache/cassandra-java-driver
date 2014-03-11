@@ -17,9 +17,9 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.collect.ImmutableList;
 

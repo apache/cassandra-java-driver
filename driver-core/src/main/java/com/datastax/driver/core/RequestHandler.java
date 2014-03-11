@@ -16,29 +16,24 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
-
-import com.datastax.driver.core.policies.RetryPolicy;
-import com.datastax.driver.core.exceptions.*;
-
-import com.datastax.cassandra.transport.Message;
-import com.datastax.cassandra.transport.messages.*;
-import org.apache.cassandra.exceptions.UnavailableException;
-import org.apache.cassandra.exceptions.PreparedQueryNotFoundException;
-import org.apache.cassandra.exceptions.ReadTimeoutException;
-import org.apache.cassandra.exceptions.WriteTimeoutException;
+import java.util.concurrent.TimeoutException;
 
 import com.yammer.metrics.core.TimerContext;
 
+import org.apache.cassandra.exceptions.PreparedQueryNotFoundException;
+import org.apache.cassandra.exceptions.ReadTimeoutException;
+import org.apache.cassandra.exceptions.UnavailableException;
+import org.apache.cassandra.exceptions.WriteTimeoutException;
+import com.datastax.cassandra.transport.Message;
+import com.datastax.cassandra.transport.messages.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.policies.RetryPolicy;
 
 /**
  * Handles a request to cassandra, dealing with host failover and retries on
@@ -48,7 +43,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
     private static final Logger logger = LoggerFactory.getLogger(RequestHandler.class);
 
-    private final Session.Manager manager;
+    private final SessionManager manager;
     private final Callback callback;
 
     private final Iterator<Host> queryPlan;
@@ -68,7 +63,7 @@ class RequestHandler implements Connection.ResponseCallback {
     private final TimerContext timerContext;
     private final long startTime;
 
-    public RequestHandler(Session.Manager manager, Callback callback, Query query) {
+    public RequestHandler(SessionManager manager, Callback callback, Query query) {
         this.manager = manager;
         this.callback = callback;
 
@@ -111,7 +106,7 @@ class RequestHandler implements Connection.ResponseCallback {
         if (currentPool == null || currentPool.isShutdown())
             return false;
 
-        Connection connection = null;
+        PooledConnection connection = null;
         try {
             // Note: this is not perfectly correct to use getConnectTimeoutMillis(), but
             // until we provide a more fancy to control query timeouts, it's not a bad solution either
@@ -129,13 +124,13 @@ class RequestHandler implements Connection.ResponseCallback {
             if (metricsEnabled())
                 metrics().getErrorMetrics().getConnectionErrors().inc();
             if (connection != null)
-                currentPool.returnConnection(connection);
+                connection.release();
             logError(host.getAddress(), e.getMessage());
             return false;
         } catch (BusyConnectionException e) {
             // The pool shoudln't have give us a busy connection unless we've maxed up the pool, so move on to the next host.
             if (connection != null)
-                currentPool.returnConnection(connection);
+                connection.release();
             logError(host.getAddress(), e.getMessage());
             return false;
         } catch (TimeoutException e) {
@@ -144,7 +139,7 @@ class RequestHandler implements Connection.ResponseCallback {
             return false;
         } catch (RuntimeException e) {
             if (connection != null)
-                currentPool.returnConnection(connection);
+                connection.release();
             logger.error("Unexpected error while querying " + host.getAddress(), e);
             logError(host.getAddress(), e.getMessage());
             return false;
@@ -222,21 +217,10 @@ class RequestHandler implements Connection.ResponseCallback {
         callback.onException(connection, exception, System.nanoTime() - startTime);
     }
 
-    private void returnConnection(Connection connection) {
-        // In most case currentPool won't be null since we set it before sending the
-        // query. However, it's possible that for the same write we call both onSet
-        // and onException (especially if a node dies, we'll error out the handler and
-        // that may race with a result that just came in before the death). That fine
-        // though, but it means currentPool might be null (in which case the connection
-        // has been returned already to its pool anyway).
-        if (currentPool != null)
-            currentPool.returnConnection(connection);
-    }
-
     @Override
     public void onSet(Connection connection, Message.Response response, long latency) {
-
-        returnConnection(connection);
+        if (connection instanceof PooledConnection)
+            ((PooledConnection)connection).release();
 
         Host queriedHost = current;
         try {
@@ -422,8 +406,8 @@ class RequestHandler implements Connection.ResponseCallback {
 
     @Override
     public void onException(Connection connection, Exception exception, long latency) {
-
-        returnConnection(connection);
+        if (connection instanceof PooledConnection)
+            ((PooledConnection)connection).release();
 
         Host queriedHost = current;
         try {
@@ -445,7 +429,9 @@ class RequestHandler implements Connection.ResponseCallback {
 
     @Override
     public void onTimeout(Connection connection, long latency) {
-        returnConnection(connection);
+        if (connection instanceof PooledConnection)
+            ((PooledConnection)connection).release();
+
         Host queriedHost = current;
         logError(connection.address, "Timeout during read");
         retry(false, null);

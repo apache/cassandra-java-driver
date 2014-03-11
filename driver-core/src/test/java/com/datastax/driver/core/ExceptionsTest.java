@@ -14,16 +14,17 @@
  *   limitations under the License.
  */
 package com.datastax.driver.core;
-import com.datastax.driver.core.exceptions.*;
 
 import java.net.InetAddress;
 import java.util.HashMap;
 
+import static com.datastax.driver.core.TestUtils.waitForDown;
 import org.apache.commons.lang.StringUtils;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.core.TestUtils.waitForDown;
-import static org.testng.Assert.*;
+import com.datastax.driver.core.exceptions.*;
 
 /**
  * Tests Exception classes with seperate clusters per test, when applicable

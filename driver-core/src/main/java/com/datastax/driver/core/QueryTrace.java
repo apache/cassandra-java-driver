@@ -59,10 +59,10 @@ public class QueryTrace {
     private volatile long startedAt;
     private volatile List<Event> events;
 
-    private final Session.Manager session;
+    private final SessionManager session;
     private final Lock fetchLock = new ReentrantLock();
 
-    QueryTrace(UUID traceId, Session.Manager session) {
+    QueryTrace(UUID traceId, SessionManager session) {
         this.traceId = traceId;
         this.session = session;
     }

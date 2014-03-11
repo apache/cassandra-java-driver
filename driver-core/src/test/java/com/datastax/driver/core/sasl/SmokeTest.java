@@ -18,16 +18,12 @@
 package com.datastax.driver.core.sasl;
 
 import com.datastax.driver.core.*;
-import org.junit.Ignore;
-
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Simple smoke test to verify the various auth provider implementions work as expected
  */
-@Ignore
+
 public class SmokeTest
 {
     public static void main(String[] args)

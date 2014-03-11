@@ -15,25 +15,28 @@
  */
 package com.datastax.driver.core;
 
+import javax.net.ssl.SSLEngine;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.net.ssl.SSLEngine;
 
-import com.datastax.cassandra.transport.messages.AuthChallenge;
-import com.datastax.cassandra.transport.messages.AuthResponse;
 import com.google.common.collect.ImmutableMap;
-import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
-
 import org.apache.cassandra.service.ClientState;
-import com.datastax.cassandra.transport.*;
-import com.datastax.cassandra.transport.messages.*;
+
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.cassandra.transport.Frame;
+import com.datastax.cassandra.transport.Message;
+import com.datastax.cassandra.transport.messages.AuthChallenge;
+import com.datastax.cassandra.transport.messages.AuthResponse;
+import com.datastax.cassandra.transport.messages.ErrorMessage;
+import com.datastax.cassandra.transport.messages.QueryMessage;
+import com.datastax.cassandra.transport.messages.StartupMessage;
 
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
@@ -45,7 +48,6 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timeout;
 import org.jboss.netty.util.TimerTask;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +99,7 @@ class Connection extends com.datastax.cassandra.transport.Connection
      * @throws ConnectionException if the connection attempts fails or is
      * refused by the server.
      */
-    private Connection(String name, InetAddress address, Factory factory) throws ConnectionException, InterruptedException {
+    protected Connection(String name, InetAddress address, Factory factory) throws ConnectionException, InterruptedException {
         super(EMPTY_TRACKER);
 
         this.address = address;
@@ -444,6 +446,19 @@ class Connection extends com.datastax.cassandra.transport.Connection
             return new Connection(name, address, this);
         }
 
+        /**
+         * Same as open, but associate the created connection to the provided connection pool.
+         */
+        public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException {
+            InetAddress address = pool.host.getAddress();
+
+            if (isShutdown)
+                throw new ConnectionException(address, "Connection factory is shut down");
+
+            String name = address.toString() + "-" + getIdGenerator(pool.host).getAndIncrement();
+            return new PooledConnection(name, address, this, pool);
+        }
+
         private AtomicInteger getIdGenerator(Host host) {
             AtomicInteger g = idGenerators.get(host);
             if (g == null) {
@@ -535,8 +550,9 @@ class Connection extends com.datastax.cassandra.transport.Connection
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
             if (!(e.getMessage() instanceof com.datastax.cassandra.transport.Message.Response)) {
-                logger.error("[{}] Received unexpected message: {}", name, e.getMessage());
-                defunct(new TransportException(address, "Unexpected message received: " + e.getMessage()));
+                String msg = asDebugString(e.getMessage());
+                logger.error("[{}] Received unexpected message: {}", name, msg);
+                defunct(new TransportException(address, "Unexpected message received: " + msg));
             } else {
                 com.datastax.cassandra.transport.Message.Response response = (com.datastax.cassandra.transport.Message.Response)e.getMessage();
                 int streamId = response.getStreamId();
@@ -561,12 +577,27 @@ class Connection extends com.datastax.cassandra.transport.Connection
                      *      to the user). So log it for debugging purpose, but it's fine ignoring otherwise.
                      */
                     streamIdHandler.unmark(streamId);
-                    logger.debug("[{}] Response received on stream {} but no handler set anymore (either the request has timeouted or it was closed due to another error). Received message is {}", name, streamId, response);
+                    if (logger.isDebugEnabled())
+                        logger.debug("[{}] Response received on stream {} but no handler set anymore (either the request has "
+                                   + "timeouted or it was closed due to another error). Received message is {}", name, streamId, asDebugString(response));
                     return;
                 }
                 handler.cancelTimeout();
                 handler.callback.onSet(Connection.this, response, System.nanoTime() - handler.startTime);
             }
+        }
+
+        // Make sure we don't print huge responses in debug/error logs.
+        private String asDebugString(Object obj)
+        {
+            if (obj == null)
+                return "null";
+
+            String msg = obj.toString();
+            if (msg.length() < 500)
+                return msg;
+
+            return msg.substring(0, 500) + "... [message of size " + msg.length() + " truncated]";
         }
 
         @Override

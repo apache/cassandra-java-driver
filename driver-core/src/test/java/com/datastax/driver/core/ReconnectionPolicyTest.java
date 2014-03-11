@@ -15,14 +15,14 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+import org.testng.annotations.Test;
 
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.policies.ExponentialReconnectionPolicy;
-
 import com.datastax.driver.core.policies.ReconnectionPolicy;
-import org.testng.annotations.Test;
-import static org.testng.Assert.*;
 
 public class ReconnectionPolicyTest extends AbstractPoliciesTest {
 

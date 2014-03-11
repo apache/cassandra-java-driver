@@ -1,6 +1,24 @@
 CHANGELOG
 =========
 
+1.0.6:
+------
+
+- [new] Added Session#prepareAsync calls (JAVA-224)
+- [new] Added Cluster#getLoggedKeyspace (JAVA-249)
+- [improvement] Make most main objects interface to facilitate testing/mocking (JAVA-195)
+- [improvement] Avoid preparing a statement multiple time per host with multiple sessions
+- [bug] Fix potential thread leaks when shutting down Metrics (JAVA-232)
+- [bug] Fix potential NPE in HostConnectionPool (JAVA-231)
+- [bug] Make sure connections are returned to the right pools (JAVA-255)
+- [bug] Use date string in query build to work-around CASSANDRA-6718 (JAVA-264)
+- [bug] Always return the PreparedStatement object that is cache internally (JAVA-263)
+- [bug] Fix race when multiple connect are done in parallel (JAVA-261)
+- [bug] Don't connect at all to nodes that are ignored by the load balancing
+  policy (JAVA-270)
+- [bug] LatencyAwarePolicy.Builder#withScale doesn't set the scale (JAVA-275)
+
+
 1.0.5:
 ------
 

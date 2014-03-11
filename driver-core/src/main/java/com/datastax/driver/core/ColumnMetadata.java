@@ -15,11 +15,12 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.TypeParser;
+import org.apache.cassandra.exceptions.RequestValidationException;
 
 /**
  * Describes a Column.

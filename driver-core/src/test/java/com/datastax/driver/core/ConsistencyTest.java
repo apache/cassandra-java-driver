@@ -15,16 +15,22 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
+import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
-
-import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.policies.*;
-import static com.datastax.driver.core.TestUtils.*;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.exceptions.ReadTimeoutException;
+import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.WriteTimeoutException;
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.TokenAwarePolicy;
 
 public class ConsistencyTest extends AbstractPoliciesTest {
 
