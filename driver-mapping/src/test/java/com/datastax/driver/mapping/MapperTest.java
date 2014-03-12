@@ -13,7 +13,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList("CREATE TABLE users (user_id uuid PRIMARY KEY, name text, email text, year int, gender text)",
-                             "CREATE TABLE posts (user_id uuid, post_id timeuuid, title text, content text, device inet, PRIMARY KEY(user_id, post_id))");
+                             "CREATE TABLE posts (user_id uuid, post_id timeuuid, title text, content text, device inet, tags set<text>, PRIMARY KEY(user_id, post_id))");
     }
 
     @Test(groups = "short")

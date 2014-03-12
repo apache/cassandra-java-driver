@@ -3,6 +3,8 @@ package com.datastax.driver.mapping;
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
@@ -44,7 +46,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         private final Method writeMethod;
 
         private LiteralMapper(Field field, int position, PropertyDescriptor pd) {
-            this(field, fromJavaType(field.getType()), position, pd);
+            this(field, extractType(field), position, pd);
         }
 
         private LiteralMapper(Field field, DataType type, int position, PropertyDescriptor pd) {
@@ -75,35 +77,76 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             }
         }
 
+        private static Class<?> getParam(ParameterizedType pt, int arg, Field f) {
+            Type ft = pt.getActualTypeArguments()[arg];
+            if (!(ft instanceof Class))
+                throw new IllegalArgumentException(String.format("Cannot map parameter of class %s for field %s", pt, f.getName()));
+            return (Class<?>)ft;
+        }
+
         // TODO: move that in the core (in DataType)
         // (though we still need to handle enums here)
-        private static DataType fromJavaType(Class<?> type) {
-            if (type == String.class)
-                return DataType.text();
-            if (type == ByteBuffer.class)
-                return DataType.blob();
-            if (type == Boolean.class || type == boolean.class)
-                return DataType.cboolean();
-            if (type == Long.class || type == long.class)
-                return DataType.bigint();
-            if (type == BigDecimal.class)
-                return DataType.decimal();
-            if (type == Double.class || type == double.class)
-                return DataType.cdouble();
-            if (type == Float.class || type == float.class)
-                return DataType.cfloat();
-            if (type == InetAddress.class)
-                return DataType.inet();
-            if (type == Integer.class || type == int.class)
-                return DataType.cint();
-            if (type == Date.class)
-                return DataType.timestamp();
-            if (type == UUID.class)
-                return DataType.uuid();
-            if (type == BigInteger.class)
-                return DataType.varint();
+        private static DataType extractType(Field f) {
+            Type type = f.getGenericType();
 
-            throw new UnsupportedOperationException("Unsupported type '" + type.getName() + "'");
+            if (type instanceof ParameterizedType) {
+                ParameterizedType pt = (ParameterizedType)type;
+                Type raw = pt.getRawType();
+                if (!(raw instanceof Class))
+                    throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
+
+                Class<?> klass = (Class<?>)raw;
+                if (List.class.isAssignableFrom(klass)) {
+                    return DataType.list(getSimpleType(getParam(pt, 0, f), f));
+                }
+                if (Set.class.isAssignableFrom(klass)) {
+                    return DataType.set(getSimpleType(getParam(pt, 0, f), f));
+                }
+                if (Map.class.isAssignableFrom(klass)) {
+                    return DataType.map(getSimpleType(getParam(pt, 0, f), f), getSimpleType(getParam(pt, 1, f), f));
+                }
+                throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
+            }
+
+            if (!(type instanceof Class))
+                throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
+
+            return getSimpleType((Class<?>)type, f);
+        }
+
+        private static DataType getSimpleType(Class<?> klass, Field f) {
+            if (ByteBuffer.class.isAssignableFrom(klass))
+                return DataType.blob();
+
+            if (klass == int.class || Integer.class.isAssignableFrom(klass))
+                    return DataType.cint();
+            if (klass == long.class || Long.class.isAssignableFrom(klass))
+                return DataType.bigint();
+            if (klass == float.class || Float.class.isAssignableFrom(klass))
+                return DataType.cfloat();
+            if (klass == double.class || Double.class.isAssignableFrom(klass))
+                return DataType.cdouble();
+            if (klass == boolean.class || Boolean.class.isAssignableFrom(klass))
+                return DataType.cboolean();
+
+            if (BigDecimal.class.isAssignableFrom(klass))
+                return DataType.decimal();
+            if (BigInteger.class.isAssignableFrom(klass))
+                return DataType.decimal();
+
+            if (String.class.isAssignableFrom(klass))
+                return DataType.text();
+            if (InetAddress.class.isAssignableFrom(klass))
+                return DataType.inet();
+            if (Date.class.isAssignableFrom(klass))
+                return DataType.timestamp();
+            if (UUID.class.isAssignableFrom(klass))
+                return DataType.uuid();
+
+            if (Collection.class.isAssignableFrom(klass))
+                throw new IllegalArgumentException(String.format("Cannot map non-parametrized collection type %s for field %s; Please use a concrete type parameter", klass.getName(), f.getName()));
+
+            throw new IllegalArgumentException(String.format("Cannot map unknow class %s for field %s", klass.getName(), f));
         }
     }
 

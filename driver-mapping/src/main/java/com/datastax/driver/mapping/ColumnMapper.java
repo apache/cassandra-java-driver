@@ -13,6 +13,9 @@ abstract class ColumnMapper<T> {
     private final String columnName;
     protected final String fieldName;
     protected final Class<?> javaType;
+    // Note: dataType is not guaranteed to be exact. Typically, it will be uuid even if the underlying
+    // type is timeuuid. Currently, this is not a problem, but we might allow some @Timeuuid annotation
+    // for the sake of validation (similarly, we'll always have text, never ascii).
     protected final DataType dataType;
     protected final Kind kind;
     protected final int position;
