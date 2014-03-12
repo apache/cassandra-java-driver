@@ -127,12 +127,12 @@ class AnnotationParser {
     }
 
     public static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, AccessorMapper.Factory factory) {
+        if (!accClass.isInterface())
+            throw new IllegalArgumentException("@Accessor annotation is only allowed on interfaces");
+
         Accessor acc = accClass.getAnnotation(Accessor.class);
         if (acc == null)
             throw new IllegalArgumentException("@Accessor annotation was not found on interface " + accClass.getName());
-
-        String ksName = acc.caseSensitiveKeyspace() ? acc.keyspace() : acc.keyspace().toLowerCase();
-        String tableName = acc.caseSensitiveTable() ? acc.name() : acc.name().toLowerCase();
 
         List<MethodMapper> methods = new ArrayList<MethodMapper>();
         for (Method m : accClass.getDeclaredMethods()) {
@@ -169,6 +169,6 @@ class AnnotationParser {
             methods.add(new MethodMapper(m, queryString, paramNames, cl, fetchSize, tracing));
         }
 
-        return factory.create(accClass, ksName, tableName, methods);
+        return factory.create(accClass, methods);
     }
 }

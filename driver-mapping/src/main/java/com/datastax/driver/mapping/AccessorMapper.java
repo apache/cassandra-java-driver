@@ -11,14 +11,10 @@ import com.datastax.driver.core.*;
 abstract class AccessorMapper<T> {
 
     public final Class<T> daoClass;
-    private final String keyspace;
-    private final String table;
     protected final List<MethodMapper> methods;
 
-    protected AccessorMapper(Class<T> daoClass, String keyspace, String table, List<MethodMapper> methods) {
+    protected AccessorMapper(Class<T> daoClass, List<MethodMapper> methods) {
         this.daoClass = daoClass;
-        this.keyspace = keyspace;
-        this.table = table;
         this.methods = methods;
     }
 
@@ -40,6 +36,6 @@ abstract class AccessorMapper<T> {
     }
 
     interface Factory {
-        public <T> AccessorMapper<T> create(Class<T> daoClass, String keyspace, String table, List<MethodMapper> methods);
+        public <T> AccessorMapper<T> create(Class<T> daoClass, List<MethodMapper> methods);
     }
 }

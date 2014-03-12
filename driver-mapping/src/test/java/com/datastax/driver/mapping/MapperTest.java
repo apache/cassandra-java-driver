@@ -57,6 +57,16 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(r.one(), p3);
         assertTrue(r.isExhausted());
 
+        BatchStatement batch = new BatchStatement();
+        batch.add(accessor.updateContentQuery(p1.getUserId(), p1.getPostId(), "Something different"));
+        batch.add(accessor.updateContentQuery(p2.getUserId(), p2.getPostId(), "A different something"));
+        manager.getSession().execute(batch);
+
+        Post p1New = m.get(p1.getUserId(), p1.getPostId());
+        assertEquals(p1New.getContent(), "Something different");
+        Post p2New = m.get(p2.getUserId(), p2.getPostId());
+        assertEquals(p2New.getContent(), "A different something");
+
         m.delete(p1);
         m.delete(p2);
 

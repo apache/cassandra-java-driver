@@ -24,9 +24,7 @@ public class MappingManager {
     /**
      * Creates a new {@code MappingManager} using the provided {@code Session}.
      *
-     * @param session the {@code Session} to use. Note that the Mapping always use
-     * fully qualified table names for its queries and thus whether or not the provided
-     * session is connected to a keyspace has no effect on it whatsoever.
+     * @param session the {@code Session} to use.
      */
     public MappingManager(Session session) {
         this.session = session;
