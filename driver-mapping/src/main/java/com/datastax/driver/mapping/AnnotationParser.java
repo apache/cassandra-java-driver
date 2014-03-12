@@ -39,6 +39,9 @@ class AnnotationParser {
         List<Field> rgs = new ArrayList<Field>();
 
         for (Field field : entityClass.getDeclaredFields()) {
+            if (field.getAnnotation(Transcient.class) != null)
+                continue;
+
             switch (kind(field)) {
                 case PARTITION_KEY:
                     pks.add(field);
@@ -151,7 +154,19 @@ class AnnotationParser {
                 }
                 paramNames[i] = "arg" + i;
             }
-            methods.add(new MethodMapper(m, queryString, paramNames));
+
+            ConsistencyLevel cl = null;
+            int fetchSize = -1;
+            boolean tracing = false;
+
+            QueryOptions options = m.getAnnotation(QueryOptions.class);
+            if (options != null) {
+                cl = options.consistency().isEmpty() ? null : ConsistencyLevel.valueOf(options.consistency().toUpperCase());
+                fetchSize = options.fetchSize();
+                tracing = options.tracing();
+            }
+
+            methods.add(new MethodMapper(m, queryString, paramNames, cl, fetchSize, tracing));
         }
 
         return factory.create(accClass, ksName, tableName, methods);

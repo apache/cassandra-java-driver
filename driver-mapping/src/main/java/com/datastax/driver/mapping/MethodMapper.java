@@ -20,6 +20,10 @@ class MethodMapper {
     public final String queryString;
     public final String[] paramNames;
 
+    private final ConsistencyLevel consistency;
+    private final int fetchSize;
+    private final boolean tracing;
+
     private Session session;
     private PreparedStatement statement;
 
@@ -27,10 +31,13 @@ class MethodMapper {
     private boolean mapOne;
     private boolean async;
 
-    MethodMapper(Method method, String queryString, String[] paramNames) {
+    MethodMapper(Method method, String queryString, String[] paramNames, ConsistencyLevel consistency, int fetchSize, boolean enableTracing) {
         this.method = method;
         this.queryString = queryString;
         this.paramNames = paramNames;
+        this.consistency = consistency;
+        this.fetchSize = fetchSize;
+        this.tracing = enableTracing;
     }
 
     public void prepare(MappingManager manager, PreparedStatement ps) {
@@ -93,6 +100,13 @@ class MethodMapper {
 
             bs.setBytesUnsafe(paramNames[i], DataType.serializeValue(args[i]));
         }
+
+        if (consistency != null)
+            bs.setConsistencyLevel(consistency);
+        if (fetchSize > 0)
+            bs.setFetchSize(fetchSize);
+        if (tracing)
+            bs.enableTracing();
 
         if (async) {
             ListenableFuture<ResultSet> future = session.executeAsync(bs);
