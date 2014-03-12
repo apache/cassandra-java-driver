@@ -33,6 +33,8 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
      *
      * Do note that we support enums (which are mapped to strings by default
      * but you can map them to their ordinal too with some @Enumerated annotation)
+     *
+     * And the next step will be to support UDT (which should be relatively simple).
      */
     @Table(keyspace="ks", name = "users",
            readConsistency="QUORUM",
