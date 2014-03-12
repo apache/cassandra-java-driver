@@ -9,7 +9,7 @@ import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Configuration;
 
 /**
- * Query options to use in the (generated) implementation of a method of an {@link Accessor}
+ * Query parameters to use in the (generated) implementation of a method of an {@link Accessor}
  * interface.
  * <p>
  * All the parameters of this annotation are optional, and when not provided default to whatever
@@ -18,7 +18,7 @@ import com.datastax.driver.core.Configuration;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface QueryOptions {
+public @interface QueryParameters {
     /** The consistency level to use for the operation. */
     String consistency() default "";
 

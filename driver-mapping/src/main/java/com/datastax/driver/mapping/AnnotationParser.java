@@ -159,7 +159,7 @@ class AnnotationParser {
             int fetchSize = -1;
             boolean tracing = false;
 
-            QueryOptions options = m.getAnnotation(QueryOptions.class);
+            QueryParameters options = m.getAnnotation(QueryParameters.class);
             if (options != null) {
                 cl = options.consistency().isEmpty() ? null : ConsistencyLevel.valueOf(options.consistency().toUpperCase());
                 fetchSize = options.fetchSize();
