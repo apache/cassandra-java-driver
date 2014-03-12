@@ -8,6 +8,9 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 
+import com.datastax.driver.mapping.annotations.Accessor;
+import com.datastax.driver.mapping.annotations.Table;
+
 /**
  * Mapping manager from which to obtain entity mappers.
  */
@@ -16,11 +19,12 @@ public class MappingManager {
     private final Session session;
 
     private volatile Map<Class<?>, Mapper<?>> mappers = Collections.<Class<?>, Mapper<?>>emptyMap();
+    private volatile Map<Class<?>, Object> accessors = Collections.<Class<?>, Object>emptyMap();
 
     /**
      * Creates a new {@code MappingManager} using the provided {@code Session}.
      *
-     * @param Session the {@code Session} to use. Note that the Mapping always use
+     * @param session the {@code Session} to use. Note that the Mapping always use
      * fully qualified table names for its queries and thus whether or not the provided
      * session is connected to a keyspace has no effect on it whatsoever.
      */
@@ -44,9 +48,10 @@ public class MappingManager {
     }
 
     /**
-     * Creates a {@code Mapper} for the provided class (that must be annotated properly).
+     * Creates a {@code Mapper} for the provided class (that must be annotated by a
+     * {@link Table} annotation).
      * <p>
-     * The {@code MappingManager} only ever one Mapper for each class, and so calling this
+     * The {@code MappingManager} only ever keep one Mapper for each class, and so calling this
      * method multiple time on the same class will always return the same object.
      *
      * @param klass the (annotated) class for which to return the mapper.
@@ -56,10 +61,18 @@ public class MappingManager {
         return getMapper(klass);
     }
 
+    /**
+     * Creates an accessor object based on teh provided interface (that must be annotated by
+     * a {@link Accessor} annotation).
+     * <p>
+     * The {@code MappingManager} only ever keep one Accessor for each class, and so calling this
+     * method multiple time on the same class will always return the same object.
+     *
+     * @param klass the (annotated) class for which to create an accessor object.
+     * @return the accessor object for class {@code klass}.
+     */
     public <T> T createAccessor(Class<T> klass) {
-        AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, AccessorReflectionMapper.factory());
-        mapper.prepare(this);
-        return mapper.createProxy();
+        return getAccessor(klass);
     }
 
     @SuppressWarnings("unchecked")
@@ -78,5 +91,24 @@ public class MappingManager {
             }
         }
         return mapper;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T getAccessor(Class<T> klass) {
+        T accessor = (T)accessors.get(klass);
+        if (accessor == null) {
+            synchronized (accessors) {
+                accessor = (T)accessors.get(klass);
+                if (accessor == null) {
+                    AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, AccessorReflectionMapper.factory());
+                    mapper.prepare(this);
+                    accessor = mapper.createProxy();
+                    Map<Class<?>, Object> newAccessors = new HashMap<Class<?>, Object>(accessors);
+                    newAccessors.put(klass, accessor);
+                    accessors = newAccessors;
+                }
+            }
+        }
+        return accessor;
     }
 }

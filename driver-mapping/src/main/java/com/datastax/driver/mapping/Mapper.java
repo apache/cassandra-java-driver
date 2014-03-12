@@ -96,8 +96,8 @@ public class Mapper<T> {
      * This method is useful if you want to setup a number of options (tracing,
      * conistency level, ...) of the returned statement before executing it manually
      * or need access to the {@code ResultSet} object after execution (to get the
-     * trace, the execution info, ...), but in other cases, calling {@link save}
-     * or {@link saveAsync} is shorter.
+     * trace, the execution info, ...), but in other cases, calling {@link #save}
+     * or {@link #saveAsync} is shorter.
      *
      * @param entity the entity to save.
      * @return a query that saves {@code entity} (based on it's defined mapping).
@@ -144,13 +144,13 @@ public class Mapper<T> {
      * Creates a query that can be used to delete the provided entity.
      * <p>
      * This method is a shortcut that extract the PRIMARY KEY from the
-     * provided entity and call {@link deleteQuery(Object...)} with it.
+     * provided entity and call {@link #deleteQuery(Object...)} with it.
      * <p>
      * This method is useful if you want to setup a number of options (tracing,
      * conistency level, ...) of the returned statement before executing it manually
      * or need access to the {@code ResultSet} object after execution (to get the
-     * trace, the execution info, ...), but in other cases, calling {@link delete}
-     * or {@link deleteAsync} is shorter.
+     * trace, the execution info, ...), but in other cases, calling {@link #delete}
+     * or {@link #deleteAsync} is shorter.
      *
      * @param entity the entity to delete.
      * @return a query that delete {@code entity} (based on it's defined mapping).
@@ -172,8 +172,8 @@ public class Mapper<T> {
      * This method is useful if you want to setup a number of options (tracing,
      * conistency level, ...) of the returned statement before executing it manually
      * or need access to the {@code ResultSet} object after execution (to get the
-     * trace, the execution info, ...), but in other cases, calling {@link delete}
-     * or {@link deleteAsync} is shorter.
+     * trace, the execution info, ...), but in other cases, calling {@link #delete}
+     * or {@link #deleteAsync} is shorter.
      *
      * @param primaryKey the primary key of the entity to delete, or more precisely
      * the values for the columns of said primary key in the order of the primary key.
@@ -278,7 +278,7 @@ public class Mapper<T> {
      * <p>
      * This method is useful if you want to setup a number of options (tracing,
      * conistency level, ...) of the returned statement before executing it manually,
-     * but in other cases, calling {@link get} or {@link getAsync} is shorter.
+     * but in other cases, calling {@link #get} or {@link #getAsync} is shorter.
      *
      * @param primaryKey the primary key of the entity to fetch, or more precisely
      * the values for the columns of said primary key in the order of the primary key.

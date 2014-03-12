@@ -6,11 +6,25 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Configuration;
 
+/**
+ * Query options to use in the (generated) implementation of a method of an {@link Accessor}
+ * interface.
+ * <p>
+ * All the parameters of this annotation are optional, and when not provided default to whatever
+ * default the {@code Cluster} instance used underneath are (those set in
+ * {@link Configuration#getQueryOptions}).
+ */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface QueryOptions {
+    /** The consistency level to use for the operation. */
     String consistency() default "";
+
+    /** The fetch size to use for paging the result of this operation. */
     int fetchSize() default -1;
+
+    /** Whether tracing should be enabled for this operation. */
     boolean tracing() default false;
 }

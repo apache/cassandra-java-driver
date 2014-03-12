@@ -71,7 +71,7 @@ public class Result<T> implements Iterable<T> {
     /**
      * An iterator over the entities of this mapped result set.
      *
-     * The {@link Iterator#next} method is equivalent to calling {@link #fetchOne}.
+     * The {@link Iterator#next} method is equivalent to calling {@link #one}.
      * So this iterator will consume results and after a full iteration, the
      * mapped result set (and underlying {@code ResultSet}) will be empty.
      *
