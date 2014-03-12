@@ -13,13 +13,27 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.UUIDs;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
+/**
+ * Basic tests for the mapping module.
+ */
 public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
     protected Collection<String> getTableDefinitions() {
+        // We'll allow to generate those create statement from the annotated entities later, but it's currently
+        // a TODO
         return Arrays.asList("CREATE TABLE users (user_id uuid PRIMARY KEY, name text, email text, year int, gender text)",
                              "CREATE TABLE posts (user_id uuid, post_id timeuuid, title text, content text, device inet, tags set<text>, PRIMARY KEY(user_id, post_id))");
     }
 
+    /*
+     * Annotates a simple entity. Not a whole lot to see here, all fields are
+     * mapped by default (but there is a @Transcient to have a field non mapped)
+     * to a C* column that have the same name than the field (but you can use @Column
+     * to specify the actual column name in C* if it's different).
+     *
+     * Do note that we support enums (which are mapped to strings by default
+     * but you can map them to their ordinal too with some @Enumerated annotation)
+     */
     @Table(keyspace="ks", name = "users",
            readConsistency="QUORUM",
            writeConsistency="QUORUM")
@@ -105,6 +119,12 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
+    /*
+     * Another annotated entity, but that correspond to a table that has a
+     * clustering column. Note that if there is more than one clustering column,
+     * the order must be specified (@ClusteringColumn(0), @ClusteringColumn(1), ...).
+     * The same stands for the @PartitionKey. 
+     */
     @Table(keyspace = "ks", name = "posts")
     public static class Post {
 
@@ -198,29 +218,62 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
+    /*
+     * We actually have 2 concepts in the mapping module. The first is the
+     * mapping of entities like User and Post above. From such annotated entity
+     * you can get a Mapper object (see below), which allow to map the Row of
+     * ResultSet to proper object, and that provide a few simple method like
+     * save, delete and a simple get.
+     *
+     * But to remove a bit of boilerplate when you need more complex queries, we
+     * also have the concept of Accesor, which is just a way to associate some
+     * java method calls to queries. Note that you don't have to use those Accessor
+     * if you don't want (and in fact, you can use the Accessor concept even if
+     * you don't map any entity).
+     */
     @Accessor
     public interface PostAccessor {
+        // Note that for implementation reasons, this *needs* to be an interface.
 
+        // The @Param below is because you can't get the name of parameters of methods
+        // by reflection (you can only have their types), so you have to annotate them
+        // if you want to give them proper names in the query. That being said, if you
+        // don't have @Param annotation like in the 2 other method, we default to some
+        // harcoded arg0, arg1, .... A big annoying, and apparently Java 8 will fix that
+        // somehow, but well, not a huge deal.
         @Query("SELECT * FROM ks.posts WHERE user_id=:userId AND post_id=:postId")
         public Post getOne(@Param("userId") UUID userId,
                            @Param("postId") UUID postId);
 
+        // Note that the following method will be asynchronous (it will use executeAsync
+        // underneath) because it's return type is a ListenableFuture. Similarly, we know
+        // that we need to map the result to the Post entity thanks to the return type.
         @Query("SELECT * FROM ks.posts WHERE user_id=:arg0")
         @QueryParameters(consistency="QUORUM")
         public ListenableFuture<Result<Post>> getAllAsync(UUID userId);
 
+        // The method above actually query stuff, but if a method is declared to return
+        // a Statement, it will not execute anything, but just return you the BoundStatement
+        // ready for execution. That way, you can batch stuff for instance (see usage below).
         @Query("UPDATE ks.posts SET content=:arg2 WHERE user_id=:arg0 AND post_id=:arg1")
         public Statement updateContentQuery(UUID userId, UUID postId, String newContent);
     }
 
     @Test(groups = "short")
     public void testStaticEntity() throws Exception {
+        // Very simple mapping a User, saving and getting it. Note that here we
+        // don't use the Accessor stuff since the queries we use are directly
+        // supported by the Mapper object.
         Mapper<User> m = new MappingManager(session).mapper(User.class);
 
         User u1 = new User("Paul", "paul@yahoo.com", User.Gender.MALE);
         u1.setYear(2014);
         m.save(u1);
 
+        // Do note that m.get() takes the primary key of what we want to fetch
+        // in argument, it doesn't not take a User object because we don't proxy
+        // objects `a la' SpringData/Hibernate. The reason for not doing that
+        // is that we don't want to encourage read-before-write.
         assertEquals(m.get(u1.getUserId()), u1);
     }
 
@@ -243,8 +296,11 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         m.save(p2);
         m.save(p3);
 
+        // Creates the accessor proxy defined above
         PostAccessor accessor = manager.createAccessor(PostAccessor.class);
 
+        // Note that getOne is really the same than m.get(), it's just there
+        // for demonstration sake.
         Post p = accessor.getOne(p1.getUserId(), p1.getPostId());
         assertEquals(p, p1);
 
