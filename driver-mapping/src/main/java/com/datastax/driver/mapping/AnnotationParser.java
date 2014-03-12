@@ -123,16 +123,16 @@ class AnnotationParser {
         return column.caseSensitive() ? column.name() : column.name().toLowerCase();
     }
 
-    public static <T> DAOMapper<T> parseDAO(Class<T> daoClass, DAOMapper.Factory factory) {
-        DAO dao = daoClass.getAnnotation(DAO.class);
-        if (dao == null)
-            throw new IllegalArgumentException("@DAO annotation was not found on interface " + daoClass.getName());
+    public static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, AccessorMapper.Factory factory) {
+        Accessor acc = accClass.getAnnotation(Accessor.class);
+        if (acc == null)
+            throw new IllegalArgumentException("@Accessor annotation was not found on interface " + accClass.getName());
 
-        String ksName = dao.caseSensitiveKeyspace() ? dao.keyspace() : dao.keyspace().toLowerCase();
-        String tableName = dao.caseSensitiveTable() ? dao.name() : dao.name().toLowerCase();
+        String ksName = acc.caseSensitiveKeyspace() ? acc.keyspace() : acc.keyspace().toLowerCase();
+        String tableName = acc.caseSensitiveTable() ? acc.name() : acc.name().toLowerCase();
 
         List<MethodMapper> methods = new ArrayList<MethodMapper>();
-        for (Method m : daoClass.getDeclaredMethods()) {
+        for (Method m : accClass.getDeclaredMethods()) {
             Query query = m.getAnnotation(Query.class);
             if (query == null)
                 continue;
@@ -154,6 +154,6 @@ class AnnotationParser {
             methods.add(new MethodMapper(m, queryString, paramNames));
         }
 
-        return factory.create(daoClass, ksName, tableName, methods);
+        return factory.create(accClass, ksName, tableName, methods);
     }
 }

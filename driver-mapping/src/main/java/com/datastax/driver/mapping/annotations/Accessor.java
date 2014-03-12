@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface DAO {
+public @interface Accessor {
     /** The name of the keyspace the table is part of. */
     String keyspace();
     /** The name of the table. */
@@ -18,4 +18,3 @@ public @interface DAO {
     /** Whether the table name is a case sensitive one. */
     boolean caseSensitiveTable() default false;
 }
-

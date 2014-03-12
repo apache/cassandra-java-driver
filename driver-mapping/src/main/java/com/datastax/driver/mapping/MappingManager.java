@@ -56,8 +56,8 @@ public class MappingManager {
         return getMapper(klass);
     }
 
-    public <T> T createDAO(Class<T> klass) {
-        DAOMapper<T> mapper = AnnotationParser.parseDAO(klass, DAOReflectionMapper.factory());
+    public <T> T createAccessor(Class<T> klass) {
+        AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, AccessorReflectionMapper.factory());
         mapper.prepare(this);
         return mapper.createProxy();
     }

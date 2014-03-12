@@ -1,7 +1,7 @@
 package com.datastax.driver.mapping;
 
 import java.net.InetAddress;
-import java.util.UUID;
+import java.util.*;
 
 import com.google.common.base.Objects;
 
@@ -22,6 +22,8 @@ public class Post {
     private String title;
     private String content;
     private InetAddress device;
+
+    private Set<String> tags;
 
     public Post() {}
 
@@ -71,6 +73,14 @@ public class Post {
         this.device = device;
     }
 
+    public Set<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<String> tags) {
+        this.tags = tags;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (other == null || other.getClass() != this.getClass())
@@ -81,11 +91,12 @@ public class Post {
             && Objects.equal(postId, that.postId)
             && Objects.equal(title, that.title)
             && Objects.equal(content, that.content)
-            && Objects.equal(device, that.device);
+            && Objects.equal(device, that.device)
+            && Objects.equal(tags, that.tags);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(userId, postId, title, content, device);
+        return Objects.hashCode(userId, postId, title, content, device, tags);
     }
 }

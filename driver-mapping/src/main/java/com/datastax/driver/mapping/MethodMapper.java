@@ -12,7 +12,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import com.datastax.driver.core.*;
 
-class MethodMapper<T> {
+// TODO: we probably should make that an abstract class and move some bit in a "ReflexionMethodMapper"
+// subclass for consistency with the rest, but we can see to that later
+class MethodMapper {
 
     public final Method method;
     public final String queryString;
@@ -74,7 +76,7 @@ class MethodMapper<T> {
             throw new RuntimeException(String.format("Cannot map return of method %s to unsupported type %s", method, type));
 
         try {
-            this.returnMapper = manager.mapper((Class)type);
+            this.returnMapper = (Mapper<?>)manager.mapper((Class<?>)type);
         } catch (Exception e) {
             throw new RuntimeException("Cannot map return to class " + fullReturnType, e);
         }

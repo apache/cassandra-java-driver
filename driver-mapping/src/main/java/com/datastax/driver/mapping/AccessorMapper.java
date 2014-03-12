@@ -8,14 +8,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import com.datastax.driver.core.*;
 
-abstract class DAOMapper<T> {
+abstract class AccessorMapper<T> {
 
     public final Class<T> daoClass;
     private final String keyspace;
     private final String table;
     protected final List<MethodMapper> methods;
 
-    protected DAOMapper(Class<T> daoClass, String keyspace, String table, List<MethodMapper> methods) {
+    protected AccessorMapper(Class<T> daoClass, String keyspace, String table, List<MethodMapper> methods) {
         this.daoClass = daoClass;
         this.keyspace = keyspace;
         this.table = table;
@@ -40,6 +40,6 @@ abstract class DAOMapper<T> {
     }
 
     interface Factory {
-        public <T> DAOMapper<T> create(Class<T> daoClass, String keyspace, String table, List<MethodMapper> methods);
+        public <T> AccessorMapper<T> create(Class<T> daoClass, String keyspace, String table, List<MethodMapper> methods);
     }
 }

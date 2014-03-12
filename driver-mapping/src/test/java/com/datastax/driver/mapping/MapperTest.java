@@ -40,16 +40,18 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
         p1.setDevice(InetAddress.getLocalHost());
 
+        p2.setTags(new HashSet<String>(Arrays.asList("important", "keeper")));
+
         m.save(p1);
         m.save(p2);
         m.save(p3);
 
-        PostDAO dao = manager.createDAO(PostDAO.class);
+        PostAccessor accessor = manager.createAccessor(PostAccessor.class);
 
-        Post p = dao.getOne(p1.getUserId(), p1.getPostId());
+        Post p = accessor.getOne(p1.getUserId(), p1.getPostId());
         assertEquals(p, p1);
 
-        Result<Post> r = dao.getAllAsync(p1.getUserId()).get();
+        Result<Post> r = accessor.getAllAsync(p1.getUserId()).get();
         assertEquals(r.one(), p1);
         assertEquals(r.one(), p2);
         assertEquals(r.one(), p3);
@@ -61,6 +63,6 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // Check delete by primary key too
         m.delete(p3.getUserId(), p3.getPostId());
 
-        assertTrue(dao.getAllAsync(u1.getUserId()).get().isExhausted());
+        assertTrue(accessor.getAllAsync(u1.getUserId()).get().isExhausted());
     }
 }
