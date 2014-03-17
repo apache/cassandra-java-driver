@@ -17,6 +17,7 @@ package com.datastax.driver.core.querybuilder;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import org.testng.annotations.Test;
@@ -34,7 +35,8 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
 
     @Override
     protected Collection<String> getTableDefinitions() {
-        return Arrays.asList(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1));
+        return Arrays.asList(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
+                             "CREATE TABLE dateTest (t timestamp PRIMARY KEY)");
     }
 
     @Test(groups = "short")
@@ -58,6 +60,20 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         assertEquals("Another test", r2.getString("t"));
         assertTrue(r2.isNull("i"));
         assertTrue(r2.isNull("f"));
+    }
+
+    @Test(groups = "short")
+    public void dateHandlingTest() throws Exception {
+
+        Date d = new Date();
+        session.execute(insertInto("dateTest").value("t", d));
+        String query = select().from("dateTest").where(eq(token("t"), fcall("token", d))).toString();
+        List<Row> rows = session.execute(query).all();
+
+        assertEquals(1, rows.size());
+
+        Row r1 = rows.get(0);
+        assertEquals(d, r1.getDate("t"));
     }
 
     @Test(groups = "unit")

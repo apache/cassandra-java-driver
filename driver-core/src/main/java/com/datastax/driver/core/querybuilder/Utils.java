@@ -141,7 +141,6 @@ abstract class Utils {
         }
     }
 
-
     private static boolean appendValueIfLiteral(Object value, StringBuilder sb) {
         if (value instanceof Number || value instanceof UUID || value instanceof Boolean) {
             sb.append(value);
