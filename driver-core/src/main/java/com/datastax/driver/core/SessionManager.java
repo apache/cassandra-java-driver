@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
@@ -254,7 +255,7 @@ class SessionManager implements Session {
                     return true;
                 } catch (AuthenticationException e) {
                     logger.error("Error creating pool to {} ({})", host, e.getMessage());
-                    cluster.manager.signalConnectionFailure(host, new ConnectionException(e.getHost(), e.getMessage()), isHostAddition);
+                    cluster.manager.signalConnectionFailure(host, new ConnectionException(e.getAddress(), e.getMessage()), isHostAddition);
                     return false;
                 } catch (UnsupportedProtocolVersionException e) {
                     logger.error("Error creating pool to {} ({})", host, e.getMessage());
@@ -417,9 +418,9 @@ class SessionManager implements Session {
         new RequestHandler(this, callback, statement).sendRequest();
     }
 
-    private void prepare(String query, InetAddress toExclude) throws InterruptedException {
+    private void prepare(String query, InetSocketAddress toExclude) throws InterruptedException {
         for (Map.Entry<Host, HostConnectionPool> entry : pools.entrySet()) {
-            if (entry.getKey().getAddress().equals(toExclude))
+            if (entry.getKey().getSocketAddress().equals(toExclude))
                 continue;
 
             // Let's not wait too long if we can't get a connection. Things

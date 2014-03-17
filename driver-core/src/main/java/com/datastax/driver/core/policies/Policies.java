@@ -22,17 +22,21 @@ public class Policies {
 
     private static final ReconnectionPolicy DEFAULT_RECONNECTION_POLICY = new ExponentialReconnectionPolicy(1000, 10 * 60 * 1000);
     private static final RetryPolicy DEFAULT_RETRY_POLICY = DefaultRetryPolicy.INSTANCE;
+    private static final AddressTranslater DEFAULT_ADDRESS_TRANSLATER = new IdentityTranslater();
 
     private final LoadBalancingPolicy loadBalancingPolicy;
     private final ReconnectionPolicy reconnectionPolicy;
     private final RetryPolicy retryPolicy;
+    private final AddressTranslater addressTranslater;
 
     public Policies() {
-        this(defaultLoadBalancingPolicy(), defaultReconnectionPolicy(), defaultRetryPolicy());
+        this(defaultLoadBalancingPolicy(), defaultReconnectionPolicy(), defaultRetryPolicy(), defaultAddressTranslater());
     }
 
     /**
      * Creates a new {@code Policies} object using the provided policies.
+     * <p>
+     * This constructor use the default {@link IdentityTranslater}.
      *
      * @param loadBalancingPolicy the load balancing policy to use.
      * @param reconnectionPolicy the reconnection policy to use.
@@ -41,10 +45,25 @@ public class Policies {
     public Policies(LoadBalancingPolicy loadBalancingPolicy,
                     ReconnectionPolicy reconnectionPolicy,
                     RetryPolicy retryPolicy) {
+        this(loadBalancingPolicy, reconnectionPolicy, retryPolicy, DEFAULT_ADDRESS_TRANSLATER);
+    }
 
+    /**
+     * Creates a new {@code Policies} object using the provided policies.
+     *
+     * @param loadBalancingPolicy the load balancing policy to use.
+     * @param reconnectionPolicy the reconnection policy to use.
+     * @param retryPolicy the retry policy to use.
+     * @param addressTranslater the address translater to use.
+     */
+    public Policies(LoadBalancingPolicy loadBalancingPolicy,
+                    ReconnectionPolicy reconnectionPolicy,
+                    RetryPolicy retryPolicy,
+                    AddressTranslater addressTranslater) {
         this.loadBalancingPolicy = loadBalancingPolicy;
         this.reconnectionPolicy = reconnectionPolicy;
         this.retryPolicy = retryPolicy;
+        this.addressTranslater = addressTranslater;
     }
 
     /**
@@ -77,6 +96,14 @@ public class Policies {
         return DEFAULT_RETRY_POLICY;
     }
 
+    /**
+     * The default address translater.
+     * <p>
+     * The default address tanslater is {@link IdentityTranslater}.
+     */
+    public static AddressTranslater defaultAddressTranslater() {
+        return DEFAULT_ADDRESS_TRANSLATER;
+    }
 
     /**
      * The load balancing policy in use.
@@ -110,5 +137,14 @@ public class Policies {
      */
     public RetryPolicy getRetryPolicy() {
         return retryPolicy;
+    }
+
+    /**
+     * The address translater in use.
+     *
+     * @return the address translater in use.
+     */
+    public AddressTranslater getAddressTranslater() {
+        return addressTranslater;
     }
 }

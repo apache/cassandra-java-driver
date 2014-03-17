@@ -4,6 +4,11 @@ CHANGELOG
 2.0.2:
 ------
 
+- [api] The type of the map key returned by NoHostAvailable#getErrors has changed from
+        InetAddress to InetSocketAddress. Same for Initializer#getContactPoints return
+        and for AuthProvider#newAuthenticator.
+- [new] New optional AddressTranslater (JAVA-145)
+
 Merged from 1.0 branch:
 
 - [new] Expose the name of the partitioner in use in the cluster metadata (JAVA-179)

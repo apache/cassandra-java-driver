@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -58,7 +59,7 @@ class RequestHandler implements Connection.ResponseCallback {
     private volatile int queryRetries;
     private volatile ConsistencyLevel retryConsistencyLevel;
 
-    private volatile Map<InetAddress, Throwable> errors;
+    private volatile Map<InetSocketAddress, Throwable> errors;
 
     private volatile boolean isCanceled;
     private volatile Connection.ResponseHandler connectionHandler;
@@ -97,7 +98,7 @@ class RequestHandler implements Connection.ResponseCallback {
                 if (query(host))
                     return;
             }
-            setFinalException(null, new NoHostAvailableException(errors == null ? Collections.<InetAddress, Throwable>emptyMap() : errors));
+            setFinalException(null, new NoHostAvailableException(errors == null ? Collections.<InetSocketAddress, Throwable>emptyMap() : errors));
         } catch (Exception e) {
             // Shouldn't happen really, but if ever the loadbalancing policy returned iterator throws, we don't want to block.
             setFinalException(null, new DriverInternalError("An unexpected error happened while sending requests", e));
@@ -128,31 +129,31 @@ class RequestHandler implements Connection.ResponseCallback {
                 metrics().getErrorMetrics().getConnectionErrors().inc();
             if (connection != null)
                 connection.release();
-            logError(host.getAddress(), e);
+            logError(host.getSocketAddress(), e);
             return false;
         } catch (BusyConnectionException e) {
             // The pool shouldn't have give us a busy connection unless we've maxed up the pool, so move on to the next host.
             if (connection != null)
                 connection.release();
-            logError(host.getAddress(), e);
+            logError(host.getSocketAddress(), e);
             return false;
         } catch (TimeoutException e) {
             // We timeout, log it but move to the next node.
-            logError(host.getAddress(), new DriverException("Timeout while trying to acquire available connection (you may want to increase the driver number of per-host connections)"));
+            logError(host.getSocketAddress(), new DriverException("Timeout while trying to acquire available connection (you may want to increase the driver number of per-host connections)"));
             return false;
         } catch (RuntimeException e) {
             if (connection != null)
                 connection.release();
             logger.error("Unexpected error while querying " + host.getAddress(), e);
-            logError(host.getAddress(), e);
+            logError(host.getSocketAddress(), e);
             return false;
         }
     }
 
-    private void logError(InetAddress address, Throwable exception) {
+    private void logError(InetSocketAddress address, Throwable exception) {
         logger.debug("Error querying {}, trying next host (error is: {})", address, exception.toString());
         if (errors == null)
-            errors = new HashMap<InetAddress, Throwable>();
+            errors = new HashMap<InetSocketAddress, Throwable>();
         errors.put(address, exception);
     }
 

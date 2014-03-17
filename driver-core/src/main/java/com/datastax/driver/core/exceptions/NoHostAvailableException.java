@@ -16,6 +16,7 @@
 package com.datastax.driver.core.exceptions;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,14 +37,14 @@ public class NoHostAvailableException extends DriverException {
 
     private static final long serialVersionUID = 0;
 
-    private final Map<InetAddress, Throwable> errors;
+    private final Map<InetSocketAddress, Throwable> errors;
 
-    public NoHostAvailableException(Map<InetAddress, Throwable> errors) {
+    public NoHostAvailableException(Map<InetSocketAddress, Throwable> errors) {
         super(makeMessage(errors));
         this.errors = errors;
     }
 
-    private NoHostAvailableException(String message, Throwable cause, Map<InetAddress, Throwable> errors) {
+    private NoHostAvailableException(String message, Throwable cause, Map<InetSocketAddress, Throwable> errors) {
         super(message, cause);
         this.errors = errors;
     }
@@ -55,8 +56,8 @@ public class NoHostAvailableException extends DriverException {
      * @return a map containing for each tried host the error triggered when
      * trying it.
      */
-    public Map<InetAddress, Throwable> getErrors() {
-        return new HashMap<InetAddress, Throwable>(errors);
+    public Map<InetSocketAddress, Throwable> getErrors() {
+        return new HashMap<InetSocketAddress, Throwable>(errors);
     }
 
     @Override
@@ -64,7 +65,7 @@ public class NoHostAvailableException extends DriverException {
         return new NoHostAvailableException(getMessage(), this, errors);
     }
 
-    private static String makeMessage(Map<InetAddress, Throwable> errors) {
+    private static String makeMessage(Map<InetSocketAddress, Throwable> errors) {
         // For small cluster, ship the whole error detail in the error message.
         // This is helpful when debugging on a localhost/test cluster in particular.
         if (errors.size() == 0)
@@ -74,7 +75,7 @@ public class NoHostAvailableException extends DriverException {
             StringBuilder sb = new StringBuilder();
             sb.append("All host(s) tried for query failed (tried: ");
             int n = 0;
-            for (Map.Entry<InetAddress, Throwable> entry : errors.entrySet())
+            for (Map.Entry<InetSocketAddress, Throwable> entry : errors.entrySet())
             {
                 if (n++ > 0) sb.append(", ");
                 sb.append(entry.getKey()).append(" (").append(entry.getValue()).append(')');

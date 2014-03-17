@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * Indicates that we've attempted to connect to a 1.2 C* node with version 2 of
@@ -25,10 +25,10 @@ class UnsupportedProtocolVersionException extends Exception {
 
     private static final long serialVersionUID = 0;
 
-    public final InetAddress address;
+    public final InetSocketAddress address;
     public final int versionUnsupported;
 
-    public UnsupportedProtocolVersionException(InetAddress address, int versionUnsupported)
+    public UnsupportedProtocolVersionException(InetSocketAddress address, int versionUnsupported)
     {
         super(String.format("[%s] Host %s does not support protocol version %d", address, address, versionUnsupported));
         this.address = address;

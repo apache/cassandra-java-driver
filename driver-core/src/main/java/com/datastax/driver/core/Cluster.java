@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import java.io.Closeable;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -80,11 +81,11 @@ public class Cluster implements Closeable {
      * @param contactPoints the list of contact points to use for the new cluster.
      * @param configuration the configuration for the new cluster.
      */
-    protected Cluster(String name, List<InetAddress> contactPoints, Configuration configuration) {
+    protected Cluster(String name, List<InetSocketAddress> contactPoints, Configuration configuration) {
         this(name, contactPoints, configuration, Collections.<Host.StateListener>emptySet());
     }
 
-    private Cluster(String name, List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
+    private Cluster(String name, List<InetSocketAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
         this.manager = new Manager(name, contactPoints, configuration, listeners);
     }
 
@@ -137,7 +138,7 @@ public class Cluster implements Closeable {
      * by {@code initializer} is empty or if not all those contact points have the same port.
      */
     public static Cluster buildFrom(Initializer initializer) {
-        List<InetAddress> contactPoints = initializer.getContactPoints();
+        List<InetSocketAddress> contactPoints = initializer.getContactPoints();
         if (contactPoints.isEmpty())
             throw new IllegalArgumentException("Cannot build a cluster without contact points");
 
@@ -447,7 +448,7 @@ public class Cluster implements Closeable {
          * @return the initial Cassandra contact points. See {@link Builder#addContactPoint}
          * for more details on contact points.
          */
-        public List<InetAddress> getContactPoints();
+        public List<InetSocketAddress> getContactPoints();
 
         /**
          * The configuration to use for the new cluster.
@@ -485,7 +486,8 @@ public class Cluster implements Closeable {
     public static class Builder implements Initializer {
 
         private String clusterName;
-        private final List<InetAddress> addresses = new ArrayList<InetAddress>();
+        private final List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+        private final List<InetAddress> rawAddresses = new ArrayList<InetAddress>();
         private int port = ProtocolOptions.DEFAULT_PORT;
         private int protocolVersion = -1;
         private AuthProvider authProvider = AuthProvider.NONE;
@@ -493,6 +495,7 @@ public class Cluster implements Closeable {
         private LoadBalancingPolicy loadBalancingPolicy;
         private ReconnectionPolicy reconnectionPolicy;
         private RetryPolicy retryPolicy;
+        private AddressTranslater addressTranslater;
 
         private ProtocolOptions.Compression compression = ProtocolOptions.Compression.NONE;
         private SSLOptions sslOptions = null;
@@ -512,8 +515,14 @@ public class Cluster implements Closeable {
         }
 
         @Override
-        public List<InetAddress> getContactPoints() {
-            return addresses;
+        public List<InetSocketAddress> getContactPoints() {
+            if (rawAddresses.isEmpty())
+                return addresses;
+
+            List<InetSocketAddress> allAddresses = new ArrayList<InetSocketAddress>(addresses);
+            for (InetAddress address : rawAddresses)
+                allAddresses.add(new InetSocketAddress(address, port));
+            return allAddresses;
         }
 
         /**
@@ -620,7 +629,7 @@ public class Cluster implements Closeable {
          */
         public Builder addContactPoint(String address) {
             try {
-                this.addresses.add(InetAddress.getByName(address));
+                this.rawAddresses.add(InetAddress.getByName(address));
                 return this;
             } catch (UnknownHostException e) {
                 throw new IllegalArgumentException(e.getMessage());
@@ -661,7 +670,7 @@ public class Cluster implements Closeable {
          * @see Builder#addContactPoint
          */
         public Builder addContactPoints(InetAddress... addresses) {
-            Collections.addAll(this.addresses, addresses);
+            Collections.addAll(this.rawAddresses, addresses);
             return this;
         }
 
@@ -677,6 +686,33 @@ public class Cluster implements Closeable {
          * @see Builder#addContactPoint
          */
         public Builder addContactPoints(Collection<InetAddress> addresses) {
+            this.rawAddresses.addAll(addresses);
+            return this;
+        }
+
+        /**
+         * Adds contact points.
+         * <p>
+         * See {@link Builder#addContactPoint} for more details on contact
+         * points. Contrarily to other {@code addContactPoints} methods, this method
+         * allow to provide a different port for each contact points. Since Cassandra
+         * nodes must always all listen on the same port, this is rarelly what you
+         * want and most use should prefer other {@code addContactPoints} methods to
+         * this one. However, this can be useful if the Cassandra nodes are behind
+         * a router and are not accessed directly. Note that if you are in this
+         * situtation (Cassandra nodes are behind a router, not directly accessible),
+         * you almost surely want to provide a specific {@code AddressTranslater}
+         * (through {@link #withAddressTranslater}) to translate actual Cassandra node
+         * addresses to the addresses the driver should use, otherwise the driver
+         * will not be able to auto-detect new nodes (and will generally not function
+         * optimally).
+         *
+         * @param addresses addresses of the nodes to add as contact point
+         * @return this Builder
+         *
+         * @see Builder#addContactPoint
+         */
+        public Builder addContactPointsWithPorts(Collection<InetSocketAddress> addresses) {
             this.addresses.addAll(addresses);
             return this;
         }
@@ -720,6 +756,21 @@ public class Cluster implements Closeable {
          */
         public Builder withRetryPolicy(RetryPolicy policy) {
             this.retryPolicy = policy;
+            return this;
+        }
+
+        /**
+         * Configures the address translater to use for the new cluster.
+         * <p>
+         * See {@link AddressTranslater} for more detail on address translation,
+         * but the default tanslater, {@link IdentityTranslater}, should be
+         * correct in most cases. If unsure, stick to the default.
+         *
+         * @param translater the translater to use.
+         * @return this Builder.
+         */
+        public Builder withAddressTranslater(AddressTranslater translater) {
+            this.addressTranslater = translater;
             return this;
         }
 
@@ -895,7 +946,8 @@ public class Cluster implements Closeable {
             Policies policies = new Policies(
                 loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
                 reconnectionPolicy == null ? Policies.defaultReconnectionPolicy() : reconnectionPolicy,
-                retryPolicy == null ? Policies.defaultRetryPolicy() : retryPolicy
+                retryPolicy == null ? Policies.defaultRetryPolicy() : retryPolicy,
+                addressTranslater == null ? Policies.defaultAddressTranslater() : addressTranslater
             );
             return new Configuration(policies,
                                      new ProtocolOptions(port, protocolVersion, sslOptions, authProvider).setCompression(compression),
@@ -960,7 +1012,7 @@ public class Cluster implements Closeable {
         private boolean isInit;
 
         // Initial contacts point
-        final List<InetAddress> contactPoints;
+        final List<InetSocketAddress> contactPoints;
         final Set<SessionManager> sessions = new CopyOnWriteArraySet<SessionManager>();
 
         final Metadata metadata;
@@ -994,7 +1046,7 @@ public class Cluster implements Closeable {
         final Set<Host.StateListener> listeners;
         final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
 
-        private Manager(String clusterName, List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
+        private Manager(String clusterName, List<InetSocketAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
             logger.debug("Starting new cluster with contact points " + contactPoints);
 
             this.clusterName = clusterName == null ? generateClusterName() : clusterName;
@@ -1020,7 +1072,7 @@ public class Cluster implements Closeable {
                 return;
             isInit = true;
 
-            for (InetAddress address : contactPoints) {
+            for (InetSocketAddress address : contactPoints) {
                 // We don't want to signal -- call onAdd() -- because nothing is ready
                 // yet (loadbalancing policy, control connection, ...). All we want is
                 // create the Host object so we can initialize the loadBalancing policy.
@@ -1076,6 +1128,11 @@ public class Cluster implements Closeable {
 
         ReconnectionPolicy reconnectionPolicy() {
             return configuration.getPolicies().getReconnectionPolicy();
+        }
+
+        InetSocketAddress translateAddress(InetAddress address) {
+            InetSocketAddress sa = new InetSocketAddress(address, connectionFactory.getPort());
+            return configuration.getPolicies().getAddressTranslater().translate(sa);
         }
 
         private Session newSession() {
@@ -1424,7 +1481,7 @@ public class Cluster implements Closeable {
                 try
                 {
                     try {
-                        ControlConnection.waitForSchemaAgreement(connection, metadata);
+                        ControlConnection.waitForSchemaAgreement(connection, this);
                     } catch (ExecutionException e) {
                         // As below, just move on
                     }
@@ -1504,7 +1561,7 @@ public class Cluster implements Closeable {
                     try {
                         // Before refreshing the schema, wait for schema agreement so
                         // that querying a table just after having created it don't fail.
-                        if (!ControlConnection.waitForSchemaAgreement(connection, metadata))
+                        if (!ControlConnection.waitForSchemaAgreement(connection, Cluster.Manager.this))
                             logger.warn("No schema agreement from live replicas after {} ms. The schema may not be up to date on some nodes.", ControlConnection.MAX_SCHEMA_AGREEMENT_WAIT_MS);
                         ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this);
                     } catch (Exception e) {
@@ -1542,9 +1599,10 @@ public class Cluster implements Closeable {
                     switch (event.type) {
                         case TOPOLOGY_CHANGE:
                             ProtocolEvent.TopologyChange tpc = (ProtocolEvent.TopologyChange)event;
+                            InetSocketAddress tpAddr = translateAddress(tpc.node.getAddress());
                             switch (tpc.change) {
                                 case NEW_NODE:
-                                    Host newHost = metadata.add(tpc.node.getAddress());
+                                    Host newHost = metadata.add(tpAddr);
                                     if (newHost != null) {
                                         // Make sure we have up-to-date infos on that host before adding it (so we typically
                                         // catch that an upgraded node uses a new cassandra version).
@@ -1553,7 +1611,7 @@ public class Cluster implements Closeable {
                                     }
                                     break;
                                 case REMOVED_NODE:
-                                    removeHost(metadata.getHost(tpc.node.getAddress()));
+                                    removeHost(metadata.getHost(tpAddr));
                                     break;
                                 case MOVED_NODE:
                                     controlConnection.refreshNodeListAndTokenMap();
@@ -1562,11 +1620,12 @@ public class Cluster implements Closeable {
                             break;
                         case STATUS_CHANGE:
                             ProtocolEvent.StatusChange stc = (ProtocolEvent.StatusChange)event;
+                            InetSocketAddress stAddr = translateAddress(stc.node.getAddress());
                             switch (stc.status) {
                                 case UP:
-                                    Host hostUp = metadata.getHost(stc.node.getAddress());
+                                    Host hostUp = metadata.getHost(stAddr);
                                     if (hostUp == null) {
-                                        hostUp = metadata.add(stc.node.getAddress());
+                                        hostUp = metadata.add(stAddr);
                                         // If hostUp is still null, it means we didn't knew about it the line before but
                                         // got beaten at adding it to the metadata by another thread. In that case, it's
                                         // fine to let the other thread win and ignore the notification here
@@ -1589,7 +1648,7 @@ public class Cluster implements Closeable {
                                     // mark the host down even though we already had reconnected successfully.
                                     // But it is unlikely, and don't have too much consequence since we'll try reconnecting
                                     // right away, so we favor the detection to make the Host.isUp method more reliable.
-                                    Host hostDown = metadata.getHost(stc.node.getAddress());
+                                    Host hostDown = metadata.getHost(stAddr);
                                     if (hostDown != null)
                                         onDown(hostDown);
                                     break;

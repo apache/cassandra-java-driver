@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * A connection that is associated to a pool.
@@ -24,7 +24,7 @@ class PooledConnection extends Connection {
 
     private final HostConnectionPool pool;
 
-    PooledConnection(String name, InetAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+    PooledConnection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
         super(name, address, factory);
         this.pool = pool;
     }

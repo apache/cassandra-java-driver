@@ -102,7 +102,7 @@ class HostConnectionPool {
         if (isClosed())
             // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
             // That being said, maybe having a specific exception could be cleaner.
-            throw new ConnectionException(host.getAddress(), "Pool is shutdown");
+            throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
 
         if (connections.isEmpty()) {
             for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++) {
@@ -132,7 +132,7 @@ class HostConnectionPool {
         if (leastBusy == null) {
             // We could have raced with a shutdown since the last check
             if (isClosed())
-                throw new ConnectionException(host.getAddress(), "Pool is shutdown");
+                throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
             // This might maybe happen if the number of core connections per host is 0 and a connection was trashed between
             // the previous check to connections and now. But in that case, the line above will have trigger the creation of
             // a new connection, so just wait that connection and move on
@@ -204,7 +204,7 @@ class HostConnectionPool {
             }
 
             if (isClosed())
-                throw new ConnectionException(host.getAddress(), "Pool is shutdown");
+                throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
 
             int minInFlight = Integer.MAX_VALUE;
             PooledConnection leastBusy = null;

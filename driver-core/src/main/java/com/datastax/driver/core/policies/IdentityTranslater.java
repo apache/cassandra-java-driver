@@ -13,25 +13,26 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.core;
+package com.datastax.driver.core.policies;
 
 import java.net.InetSocketAddress;
 
 /**
- * A connection exception that has to do with the transport itself, i.e. that
- * suggests the node is down.
+ * The default {@link AddressTranslater} used by the driver that do no
+ * translation.
  */
-class TransportException extends ConnectionException
-{
-    private static final long serialVersionUID = 0;
+public class IdentityTranslater implements AddressTranslater {
 
-    public TransportException(InetSocketAddress address, String msg, Throwable cause)
-    {
-        super(address, msg, cause);
-    }
-
-    public TransportException(InetSocketAddress address, String msg)
-    {
-        super(address, msg);
+    /**
+     * Translates a Cassandra {@code rpc_address} to another address if necessary.
+     * <p>
+     * This method is the identity function, it always return the address passed
+     * in argument, doing no translation.
+     *
+     * @param address the address of a node as returned by Cassandra.
+     * @return {@code address} unmodified.
+     */
+    public InetSocketAddress translate(InetSocketAddress address) {
+        return address;
     }
 }

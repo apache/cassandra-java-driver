@@ -53,7 +53,7 @@ class Connection {
     private static final Logger logger = LoggerFactory.getLogger(Connection.class);
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
-    public final InetAddress address;
+    public final InetSocketAddress address;
     private final String name;
 
     private final Channel channel;
@@ -80,7 +80,7 @@ class Connection {
      * @throws ConnectionException if the connection attempts fails or is
      * refused by the server.
      */
-    protected Connection(String name, InetAddress address, Factory factory) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+    protected Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
         this.address = address;
         this.factory = factory;
         this.name = name;
@@ -90,7 +90,7 @@ class Connection {
         int protocolVersion = factory.protocolVersion == 1 ? 1 : 2;
         bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
 
-        ChannelFuture future = bootstrap.connect(new InetSocketAddress(address, factory.getPort()));
+        ChannelFuture future = bootstrap.connect(address);
 
         writer.incrementAndGet();
         try {
@@ -423,7 +423,7 @@ class Connection {
          * @throws ConnectionException if connection attempt fails.
          */
         public Connection open(Host host) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
-            InetAddress address = host.getAddress();
+            InetSocketAddress address = host.getSocketAddress();
 
             if (isShutdown)
                 throw new ConnectionException(address, "Connection factory is shut down");
@@ -436,7 +436,7 @@ class Connection {
          * Same as open, but associate the created connection to the provided connection pool.
          */
         public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
-            InetAddress address = pool.host.getAddress();
+            InetSocketAddress address = pool.host.getSocketAddress();
 
             if (isShutdown)
                 throw new ConnectionException(address, "Connection factory is shut down");
@@ -656,7 +656,7 @@ class Connection {
     static class Future extends AbstractFuture<Message.Response> implements RequestHandler.Callback {
 
         private final Message.Request request;
-        private volatile InetAddress address;
+        private volatile InetSocketAddress address;
 
         public Future(Message.Request request) {
             this.request = request;
@@ -699,7 +699,7 @@ class Connection {
             super.setException(new ConnectionException(connection.address, "Operation timed out"));
         }
 
-        public InetAddress getAddress() {
+        public InetSocketAddress getAddress() {
             return address;
         }
     }

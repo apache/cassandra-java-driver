@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -160,7 +161,7 @@ class ControlConnection implements Host.StateListener {
     private Connection reconnectInternal() throws UnsupportedProtocolVersionException {
 
         Iterator<Host> iter = cluster.loadBalancingPolicy().newQueryPlan(null, Statement.DEFAULT);
-        Map<InetAddress, Throwable> errors = null;
+        Map<InetSocketAddress, Throwable> errors = null;
 
         Host host = null;
         try {
@@ -192,14 +193,14 @@ class ControlConnection implements Host.StateListener {
             while (iter.hasNext())
                 errors = logError(iter.next(), new DriverException("Connection thread interrupted"), errors, iter);
         }
-        throw new NoHostAvailableException(errors == null ? Collections.<InetAddress, Throwable>emptyMap() : errors);
+        throw new NoHostAvailableException(errors == null ? Collections.<InetSocketAddress, Throwable>emptyMap() : errors);
     }
 
-    private static Map<InetAddress, Throwable> logError(Host host, Throwable exception, Map<InetAddress, Throwable> errors, Iterator<Host> iter) {
+    private static Map<InetSocketAddress, Throwable> logError(Host host, Throwable exception, Map<InetSocketAddress, Throwable> errors, Iterator<Host> iter) {
         if (errors == null)
-            errors = new HashMap<InetAddress, Throwable>();
+            errors = new HashMap<InetSocketAddress, Throwable>();
 
-        errors.put(host.getAddress(), exception);
+        errors.put(host.getSocketAddress(), exception);
 
         if (logger.isDebugEnabled()) {
             if (iter.hasNext()) {
@@ -423,7 +424,7 @@ class ControlConnection implements Host.StateListener {
             }
         }
 
-        List<InetAddress> foundHosts = new ArrayList<InetAddress>();
+        List<InetSocketAddress> foundHosts = new ArrayList<InetSocketAddress>();
         List<String> dcs = new ArrayList<String>();
         List<String> racks = new ArrayList<String>();
         List<String> cassandraVersions = new ArrayList<String>();
@@ -447,7 +448,7 @@ class ControlConnection implements Host.StateListener {
                 addr = peer;
             }
 
-            foundHosts.add(addr);
+            foundHosts.add(cluster.translateAddress(addr));
             dcs.add(row.getString("data_center"));
             racks.add(row.getString("rack"));
             cassandraVersions.add(row.getString("release_version"));
@@ -476,15 +477,15 @@ class ControlConnection implements Host.StateListener {
         }
 
         // Removes all those that seems to have been removed (since we lost the control connection)
-        Set<InetAddress> foundHostsSet = new HashSet<InetAddress>(foundHosts);
+        Set<InetSocketAddress> foundHostsSet = new HashSet<InetSocketAddress>(foundHosts);
         for (Host host : cluster.metadata.allHosts())
-            if (!host.getAddress().equals(connection.address) && !foundHostsSet.contains(host.getAddress()))
+            if (!host.getSocketAddress().equals(connection.address) && !foundHostsSet.contains(host.getSocketAddress()))
                 cluster.removeHost(host);
 
         cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
     }
 
-    static boolean waitForSchemaAgreement(Connection connection, Metadata metadata) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    static boolean waitForSchemaAgreement(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
 
         long start = System.nanoTime();
         long elapsed = 0;
@@ -510,7 +511,7 @@ class ControlConnection implements Host.StateListener {
                 if (rpc.equals(bindAllAddress))
                     rpc = row.getInet("peer");
 
-                Host peer = metadata.getHost(rpc);
+                Host peer = cluster.metadata.getHost(cluster.translateAddress(rpc));
                 if (peer != null && peer.isUp())
                     versions.add(row.getUUID("schema_version"));
             }

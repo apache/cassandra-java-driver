@@ -16,7 +16,7 @@
 package com.datastax.driver.core;
 
 import javax.security.sasl.SaslException;
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Map;
 
 import com.google.common.base.Charsets;
@@ -57,7 +57,7 @@ public class PlainTextAuthProvider implements AuthProvider {
      * @throws SaslException if an unsupported SASL mechanism is supplied
      * or an error is encountered when initialising the authenticator
      */
-    public Authenticator newAuthenticator(InetAddress host) {
+    public Authenticator newAuthenticator(InetSocketAddress host) {
         return new PlainTextAuthenticator(username, password);
     }
 

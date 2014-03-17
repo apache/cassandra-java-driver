@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,7 +37,7 @@ public class Metadata {
     private final Cluster.Manager cluster;
     volatile String clusterName;
     volatile String partitioner;
-    private final ConcurrentMap<InetAddress, Host> hosts = new ConcurrentHashMap<InetAddress, Host>();
+    private final ConcurrentMap<InetSocketAddress, Host> hosts = new ConcurrentHashMap<InetSocketAddress, Host>();
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
     private volatile TokenMap tokenMap;
 
@@ -152,17 +153,17 @@ public class Metadata {
         this.tokenMap = TokenMap.build(factory, allTokens, keyspaces.values());
     }
 
-    Host add(InetAddress address) {
+    Host add(InetSocketAddress address) {
         Host newHost = new Host(address, cluster.convictionPolicyFactory);
         Host previous = hosts.putIfAbsent(address, newHost);
         return previous == null ? newHost : null;
     }
 
     boolean remove(Host host) {
-        return hosts.remove(host.getAddress()) != null;
+        return hosts.remove(host.getSocketAddress()) != null;
     }
 
-    Host getHost(InetAddress address) {
+    Host getHost(InetSocketAddress address) {
         return hosts.get(address);
     }
 

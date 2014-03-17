@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +39,7 @@ public class AbstractReplicationStrategyTest {
         private final String address;
 
         private HostMock(String address) throws UnknownHostException {
-            super(InetAddress.getByName(address), new ConvictionPolicy.Simple.Factory());
+            super(new InetSocketAddress(InetAddress.getByName(address), 9042), new ConvictionPolicy.Simple.Factory());
             this.address = address;
         }
 

@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -80,7 +80,7 @@ class Responses {
             this.infos = infos;
         }
 
-        public DriverException asException(InetAddress host) {
+        public DriverException asException(InetSocketAddress host) {
             switch (code) {
                 case SERVER_ERROR:     return new DriverInternalError(String.format("An unexpected error occurred server side on %s: %s", host, message));
                 case PROTOCOL_ERROR:   return new DriverInternalError("An unexpected protocol error occurred. This is a bug in this library, please report: " + message);
