@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+2.0.2:
+------
+
+Merged from 1.0 branch:
+
+- [new] Expose the name of the partitioner in use in the cluster metadata (JAVA-179)
+
+
 2.0.1:
 ------
 

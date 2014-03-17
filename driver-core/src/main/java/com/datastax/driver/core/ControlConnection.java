@@ -403,6 +403,8 @@ class ControlConnection implements Host.StateListener {
                 cluster.metadata.clusterName = clusterName;
 
             partitioner = localRow.getString("partitioner");
+            if (partitioner != null)
+                cluster.metadata.partitioner = partitioner;
 
             Host host = cluster.metadata.getHost(connection.address);
             // In theory host can't be null. However there is no point in risking a NPE in case we
