@@ -49,6 +49,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
     private final AtomicInteger index = new AtomicInteger();
     private final String localDc;
     private final int usedHostsPerRemoteDc;
+    private final boolean dontHopForLocalCL;
 
     /**
      * Creates a new datacenter aware round robin policy given the name of
@@ -74,6 +75,15 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * <p>
      * The name of the local datacenter provided must be the local
      * datacenter name as known by Cassandra.
+     * <p>
+     * If {@code usedHostsPerRemoteDc > 0}, then if for a query no host
+     * in the local datacenter can be reached and if the consistency
+     * level of the query is not {@code LOCAL_ONE} or {@code LOCAL_QUORUM},
+     * then up to {@code usedHostsPerRemoteDc} host per remote data-center
+     * will be tried by the policy as a fallback. Please note that no
+     * remote host will be used for {@code LOCAL_ONE} and {@code LOCAL_QUORUM}
+     * since this would change the meaning of the consistency level (and
+     * thus somewhat break the consistency contract).
      *
      * @param localDc the name of the local datacenter (as known by
      * Cassandra).
@@ -86,8 +96,41 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * connections to them will be maintained).
      */
     public DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc) {
+        this(localDc, usedHostsPerRemoteDc, false);
+    }
+
+    /**
+     * Creates a new DCAwareRoundRobin policy given the name of the local
+     * datacenter and that uses the provided number of host per remote
+     * datacenter as failover for the local hosts.
+     * <p>
+     * This constructor is equivalent to {@link DCAwareRoundRobinPolicy(String, int)}
+     * but allows to override the policy of never using remote data-center
+     * nodes for {@code LOCAL_ONE} and {@code LOCAL_QUORUM} queries. It is
+     * however inadvisable to do so in almost all cases, as this would
+     * potentially break consistency guarantees and if you are fine with that,
+     * it's probably better to use a weaker consitency like {@code ONE}, {@code
+     * TWO} or {@code THREE}. As such, this constructor should generally
+     * be avoided in favor of {@link DCAwareRoundRobinPolicy(String, int)}.
+     * Use it only if you know and understand what you do.
+     *
+     * @param localDc the name of the local datacenter (as known by
+     * Cassandra).
+     * @param usedHostsPerRemoteDc the number of host per remote
+     * datacenter that policies created by the returned factory should
+     * consider. Created policies {@code distance} method will return a
+     * {@code HostDistance.REMOTE} distance for only {@code
+     * usedHostsPerRemoteDc} hosts per remote datacenter. Other hosts
+     * of the remote datacenters will be ignored (and thus no
+     * connections to them will be maintained).
+     * @param allowRemoteDCsForLocalConsistencyLevel whether or not the
+     * policy may return remote host when building query plan for query
+     * having consitency {@code LOCAL_ONE} and {@code LOCAL_QUORUM}.
+     */
+    public DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc, boolean allowRemoteDCsForLocalConsistencyLevel) {
         this.localDc = localDc;
         this.usedHostsPerRemoteDc = usedHostsPerRemoteDc;
+        this.dontHopForLocalCL = !allowRemoteDCsForLocalConsistencyLevel;
     }
 
     @Override
@@ -158,7 +201,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * try first for querying, which one to use as failover, etc...
      */
     @Override
-    public Iterator<Host> newQueryPlan(Query query) {
+    public Iterator<Host> newQueryPlan(final Query query) {
 
         CopyOnWriteArrayList<Host> localLiveHosts = perDcLiveHosts.get(localDc);
         final List<Host> hosts = localLiveHosts == null ? Collections.<Host>emptyList() : cloneList(localLiveHosts);
@@ -191,6 +234,9 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
                         c += currentDcHosts.size();
                     return currentDcHosts.get(c);
                 }
+
+                if (dontHopForLocalCL && query.getConsistencyLevel().isDCLocal())
+                    return endOfData();
 
                 if (remoteDcs == null) {
                     Set<String> copy = new HashSet<String>(perDcLiveHosts.keySet());
