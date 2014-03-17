@@ -666,6 +666,22 @@ public class Cluster implements Closeable {
         }
 
         /**
+         * Adds contact points.
+         *
+         * See {@link Builder#addContactPoint} for more details on contact
+         * points.
+         *
+         * @param addresses addresses of the nodes to add as contact point
+         * @return this Builder
+         *
+         * @see Builder#addContactPoint
+         */
+        public Builder addContactPoints(Collection<InetAddress> addresses) {
+            this.addresses.addAll(addresses);
+            return this;
+        }
+
+        /**
          * Configures the load balancing policy to use for the new cluster.
          * <p>
          * If no load balancing policy is set through this method,
