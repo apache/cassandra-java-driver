@@ -311,7 +311,10 @@ public class CCMBridge {
         private CCMCluster(CCMBridge cassandraCluster, Cluster.Builder builder, int totalNodes) {
             this.cassandraCluster = cassandraCluster;
             try {
-                this.cluster = builder.addContactPoints(IP_PREFIX + "1").build();
+                String[] contactPoints = new String[totalNodes];
+                for (int i = 0; i < totalNodes; i++)
+                    contactPoints[i] = IP_PREFIX + (i+1);
+                this.cluster = builder.addContactPoints(contactPoints).build();
                 this.session = cluster.connect();
             } catch (NoHostAvailableException e) {
                 for (Map.Entry<InetAddress, String> entry : e.getErrors().entrySet())

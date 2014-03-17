@@ -6,6 +6,7 @@ CHANGELOG
 
 - [new] Add method to check if a Cluster/Session instance has been closed already (JAVA-114)
 - [new] Expose the name of the partitioner in use in the cluster metadata (JAVA-179)
+- [new] Add new WhiteListPolicy to limit the nodes connected to a particular list
 
 
 1.0.6:

@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -457,6 +458,22 @@ public class Cluster {
         public Builder addContactPoints(InetAddress... addresses) {
             for (InetAddress address : addresses)
                 this.addresses.add(address);
+            return this;
+        }
+
+        /**
+         * Adds contact points.
+         *
+         * See {@link Builder#addContactPoint} for more details on contact
+         * points.
+         *
+         * @param addresses addresses of the nodes to add as contact point
+         * @return this Builder
+         *
+         * @see Builder#addContactPoint
+         */
+        public Builder addContactPoints(Collection<InetAddress> addresses) {
+            this.addresses.addAll(addresses);
             return this;
         }
 
@@ -1360,6 +1377,5 @@ public class Cluster {
             }
             return 0;
         }
-
     }
 }
