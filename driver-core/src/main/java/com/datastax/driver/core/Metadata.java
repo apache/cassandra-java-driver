@@ -33,6 +33,7 @@ public class Metadata {
 
     private final Cluster.Manager cluster;
     volatile String clusterName;
+    volatile String partitioner;
     private final ConcurrentMap<InetAddress, Host> hosts = new ConcurrentHashMap<InetAddress, Host>();
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
 
@@ -181,12 +182,21 @@ public class Metadata {
     }
 
     /**
-     * Returns the Cassandra name for the cluster connect to.
+     * The Cassandra name for the cluster connect to.
      *
      * @return the Cassandra name for the cluster connect to.
      */
     public String getClusterName() {
         return clusterName;
+    }
+
+    /**
+     * The partitioner in use as reported by the Cassandra nodes.
+     *
+     * @return the partitioner in use as reported by the Cassandra nodes.
+     */
+    public String getPartitioner() {
+        return partitioner;
     }
 
     /**

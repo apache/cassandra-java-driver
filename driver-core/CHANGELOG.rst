@@ -5,6 +5,8 @@ CHANGELOG
 ------
 
 - [new] Add method to check if a Cluster/Session instance has been closed already (JAVA-114)
+- [new] Expose the name of the partitioner in use in the cluster metadata (JAVA-179)
+
 
 1.0.6:
 ------
