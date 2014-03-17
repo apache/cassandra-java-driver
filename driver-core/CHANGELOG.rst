@@ -8,6 +8,7 @@ Merged from 1.0 branch:
 
 - [new] Expose the name of the partitioner in use in the cluster metadata (JAVA-179)
 - [new] Add new WhiteListPolicy to limit the nodes connected to a particular list
+- [improvement] Do not hop DC for LOCAL_* CL in DCAwareRoundRobinPolicy (JAVA-289)
 
 
 2.0.1:
