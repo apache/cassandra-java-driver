@@ -80,12 +80,12 @@ public class Cluster implements Closeable {
      * @param contactPoints the list of contact points to use for the new cluster.
      * @param configuration the configuration for the new cluster.
      */
-    protected Cluster(String name, List<InetAddress> contactPoints, Configuration configuration) {
-        this(name, contactPoints, configuration, Collections.<Host.StateListener>emptySet());
+    protected Cluster(String name, List<InetAddress> contactPoints, Configuration configuration, boolean useContactPointsOnly) {
+        this(name, contactPoints, configuration, Collections.<Host.StateListener>emptySet(), useContactPointsOnly);
     }
 
-    private Cluster(String name, List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
-        this.manager = new Manager(name, contactPoints, configuration, listeners);
+    private Cluster(String name, List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners, boolean useContactPointsOnly) {
+        this.manager = new Manager(name, contactPoints, configuration, listeners, useContactPointsOnly);
     }
 
     /**
@@ -141,7 +141,7 @@ public class Cluster implements Closeable {
         if (contactPoints.isEmpty())
             throw new IllegalArgumentException("Cannot build a cluster without contact points");
 
-        return new Cluster(initializer.getClusterName(), contactPoints, initializer.getConfiguration(), initializer.getInitialListeners());
+        return new Cluster(initializer.getClusterName(), contactPoints, initializer.getConfiguration(), initializer.getInitialListeners(), initializer.isUseContactPointsOnly());
     }
 
     /**
@@ -429,6 +429,8 @@ public class Cluster implements Closeable {
      */
     public interface Initializer {
 
+       public boolean isUseContactPointsOnly();
+
         /**
          * An optional name for the created cluster.
          * <p>
@@ -485,6 +487,7 @@ public class Cluster implements Closeable {
     public static class Builder implements Initializer {
 
         private String clusterName;
+        private boolean useContactPointsOnly;
         private final List<InetAddress> addresses = new ArrayList<InetAddress>();
         private int port = ProtocolOptions.DEFAULT_PORT;
         private int protocolVersion = -1;
@@ -505,6 +508,15 @@ public class Cluster implements Closeable {
 
         private Collection<Host.StateListener> listeners;
 
+        @Override
+        public boolean isUseContactPointsOnly() {
+           return useContactPointsOnly;
+        }
+
+        public Builder useContactPointsOnly() {
+          this.useContactPointsOnly = true;
+          return this;
+        }
 
         @Override
         public String getClusterName() {
@@ -994,9 +1006,12 @@ public class Cluster implements Closeable {
         final Set<Host.StateListener> listeners;
         final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
 
-        private Manager(String clusterName, List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
+        final boolean useContactPointsOnly;
+
+        private Manager(String clusterName, List<InetAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners, boolean useContactPointsOnly) {
             logger.debug("Starting new cluster with contact points " + contactPoints);
 
+            this.useContactPointsOnly = useContactPointsOnly;
             this.clusterName = clusterName == null ? generateClusterName() : clusterName;
             this.configuration = configuration;
             this.configuration.register(this);
@@ -1070,7 +1085,11 @@ public class Cluster implements Closeable {
             return Cluster.this;
         }
 
-        LoadBalancingPolicy loadBalancingPolicy() {
+      boolean isUseContactPointsOnly() {
+        return useContactPointsOnly;
+      }
+
+      LoadBalancingPolicy loadBalancingPolicy() {
             return configuration.getPolicies().getLoadBalancingPolicy();
         }
 
