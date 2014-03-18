@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.collect.AbstractIterator;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.Query;
@@ -235,7 +236,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
                     return currentDcHosts.get(c);
                 }
 
-                if (dontHopForLocalCL && query.getConsistencyLevel().isDCLocal())
+                if (dontHopForLocalCL && query.getConsistencyLevel() != null && query.getConsistencyLevel().isDCLocal())
                     return endOfData();
 
                 if (remoteDcs == null) {

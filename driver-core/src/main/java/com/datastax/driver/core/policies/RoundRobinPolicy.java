@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.Query;
@@ -93,7 +94,7 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
     @Override
     public Iterator<Host> newQueryPlan(Query query) {
 
-        if (!hasLoggedLocalCLUse && query.getConsistencyLevel().isDCLocal()) {
+        if (!hasLoggedLocalCLUse && query.getConsistencyLevel() != null && query.getConsistencyLevel().isDCLocal()) {
             hasLoggedLocalCLUse = true;
             logger.warn("Detected request at Consistency Level {} but the non-DC aware RoundRobinPolicy is in use. "
                       + "It is strongly advised to use DCAwareRoundRobinPolicy if you have multiple DCs/use DC-aware consistency levels "
