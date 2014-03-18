@@ -24,9 +24,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.collect.AbstractIterator;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.QueryOptions;
 
 /**
  * A data-center aware Round-robin load balancing policy.
@@ -50,6 +52,8 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
     private final String localDc;
     private final int usedHostsPerRemoteDc;
     private final boolean dontHopForLocalCL;
+
+    private QueryOptions queryOptions;
 
     /**
      * Creates a new datacenter aware round robin policy given the name of
@@ -136,6 +140,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
     @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
         this.index.set(new Random().nextInt(Math.max(hosts.size(), 1)));
+        this.queryOptions = cluster.getConfiguration().getQueryOptions();
 
         for (Host host : hosts) {
             String dc = dc(host);
@@ -239,6 +244,10 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
                         }
                         return currentDcHosts.get(c);
                     }
+
+                    ConsistencyLevel cl = statement.getConsistencyLevel() == null
+                                        ? queryOptions.getConsistencyLevel()
+                                        : statement.getConsistencyLevel();
 
                     if (dontHopForLocalCL && statement.getConsistencyLevel().isDCLocal())
                         return endOfData();
