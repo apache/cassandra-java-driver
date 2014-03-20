@@ -559,8 +559,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         }
 
         // Make sure we don't print huge responses in debug/error logs.
-        private String asDebugString(Object obj)
-        {
+        private String asDebugString(Object obj) {
             if (obj == null)
                 return "null";
 
