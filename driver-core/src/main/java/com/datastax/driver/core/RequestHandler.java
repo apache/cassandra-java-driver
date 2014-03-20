@@ -160,11 +160,15 @@ class RequestHandler implements Connection.ResponseCallback {
         manager.executor().execute(new Runnable() {
             @Override
             public void run() {
-                if (retryCurrent) {
-                    if (query(h))
-                        return;
+                try {
+                    if (retryCurrent) {
+                        if (query(h))
+                            return;
+                    }
+                    sendRequest();
+                } catch (Exception e) {
+                    setFinalException(null, new DriverInternalError("Unexpected exception while retrying query", e));
                 }
-                sendRequest();
             }
         });
     }
@@ -196,33 +200,40 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     private void setFinalResult(Connection connection, Message.Response response) {
-        if (timerContext != null)
-            timerContext.stop();
+        try {
+            if (timerContext != null)
+                timerContext.stop();
 
-        ExecutionInfo info = current.defaultExecutionInfo;
-        if (triedHosts != null)
-        {
-            triedHosts.add(current);
-            info = new ExecutionInfo(triedHosts);
+            ExecutionInfo info = current.defaultExecutionInfo;
+            if (triedHosts != null)
+            {
+                triedHosts.add(current);
+                info = new ExecutionInfo(triedHosts);
+            }
+            if (retryConsistencyLevel != null)
+                info = info.withAchievedConsistency(retryConsistencyLevel);
+            callback.onSet(connection, response, info, System.nanoTime() - startTime);
+        } catch (Exception e) {
+            callback.onException(connection, new DriverInternalError("Unexpected exception while setting final result from " + response, e), System.nanoTime() - startTime);
         }
-        if (retryConsistencyLevel != null)
-            info = info.withAchievedConsistency(retryConsistencyLevel);
-        callback.onSet(connection, response, info, System.nanoTime() - startTime);
     }
 
     private void setFinalException(Connection connection, Exception exception) {
-        if (timerContext != null)
-            timerContext.stop();
-        callback.onException(connection, exception, System.nanoTime() - startTime);
+        try {
+            if (timerContext != null)
+                timerContext.stop();
+        } finally {
+            callback.onException(connection, exception, System.nanoTime() - startTime);
+        }
     }
 
     @Override
     public void onSet(Connection connection, Message.Response response, long latency) {
-        if (connection instanceof PooledConnection)
-            ((PooledConnection)connection).release();
-
         Host queriedHost = current;
         try {
+            if (connection instanceof PooledConnection)
+                ((PooledConnection)connection).release();
+
             switch (response.type) {
                 case RESULT:
                     setFinalResult(connection, response);
@@ -405,11 +416,12 @@ class RequestHandler implements Connection.ResponseCallback {
 
     @Override
     public void onException(Connection connection, Exception exception, long latency) {
-        if (connection instanceof PooledConnection)
-            ((PooledConnection)connection).release();
 
         Host queriedHost = current;
         try {
+            if (connection instanceof PooledConnection)
+                ((PooledConnection)connection).release();
+
             if (exception instanceof ConnectionException) {
                 if (metricsEnabled())
                     metrics().getErrorMetrics().getConnectionErrors().inc();
@@ -420,6 +432,9 @@ class RequestHandler implements Connection.ResponseCallback {
             }
 
             setFinalException(connection, exception);
+        } catch (Exception e) {
+            // This shouldn't happen, but if it does, we want to signal the callback, not let him hang indefinitively
+            setFinalException(null, new DriverInternalError("An unexpected error happened while handling exception " + exception, e));
         } finally {
             if (queriedHost != null)
                 manager.cluster.manager.reportLatency(queriedHost, latency);
@@ -428,15 +443,20 @@ class RequestHandler implements Connection.ResponseCallback {
 
     @Override
     public void onTimeout(Connection connection, long latency) {
-        if (connection instanceof PooledConnection)
-            ((PooledConnection)connection).release();
-
         Host queriedHost = current;
-        logError(connection.address, "Timeout during read");
-        retry(false, null);
+        try {
+            if (connection instanceof PooledConnection)
+                ((PooledConnection)connection).release();
 
-        if (queriedHost != null)
-            manager.cluster.manager.reportLatency(queriedHost, latency);
+            logError(connection.address, "Timeout during read");
+            retry(false, null);
+        } catch (Exception e) {
+            // This shouldn't happen, but if it does, we want to signal the callback, not let him hang indefinitively
+            setFinalException(null, new DriverInternalError("An unexpected error happened while handling timeout", e));
+        } finally {
+            if (queriedHost != null)
+                manager.cluster.manager.reportLatency(queriedHost, latency);
+        }
     }
 
     interface Callback extends Connection.ResponseCallback {
