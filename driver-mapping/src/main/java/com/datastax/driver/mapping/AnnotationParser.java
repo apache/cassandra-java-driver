@@ -39,7 +39,7 @@ class AnnotationParser {
         List<Field> rgs = new ArrayList<Field>();
 
         for (Field field : entityClass.getDeclaredFields()) {
-            if (field.getAnnotation(Transcient.class) != null)
+            if (field.getAnnotation(Transient.class) != null)
                 continue;
 
             switch (kind(field)) {
