@@ -21,7 +21,7 @@ import com.datastax.driver.core.AuthProvider;
 import com.datastax.driver.core.Authenticator;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * AuthProvider which supplies authenticator instances for clients to connect t 
@@ -85,7 +85,7 @@ import java.net.InetAddress;
 public class DseAuthProvider implements AuthProvider
 {
     @Override
-    public Authenticator newAuthenticator(InetAddress host) throws AuthenticationException
+    public Authenticator newAuthenticator(InetSocketAddress host) throws AuthenticationException
     {
         return new KerberosAuthenticator(host);
     }

@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * Responsible for authenticating with secured DSE services using Kerberos
@@ -45,13 +45,13 @@ public class KerberosAuthenticator implements Authenticator
 
     private final PrivilegedSaslClient saslClient;
 
-    public KerberosAuthenticator(InetAddress host)
+    public KerberosAuthenticator(InetSocketAddress host)
     {
         saslClient = new PrivilegedSaslClient(loginSubject(),
                 SUPPORTED_MECHANISMS,
                 null,
                 System.getProperty(SASL_PROTOCOL_NAME_PROPERTY, SASL_PROTOCOL_NAME),
-                host.getCanonicalHostName(),
+                host.getAddress().getCanonicalHostName(),
                 PrivilegedSaslClient.DEFAULT_PROPERTIES,
                 null);
     }
