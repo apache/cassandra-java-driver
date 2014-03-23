@@ -45,7 +45,7 @@ public abstract class Statement {
 
     private volatile RetryPolicy retryPolicy;
 
-    // We don't want to expose the constructor, because the code rely on this being only subclassed RegularStatement, BoundStatement and BatchStatement
+    // We don't want to expose the constructor, because the code relies on this being only sub-classed by RegularStatement, BoundStatement and BatchStatement
     Statement() {}
 
     /**
@@ -86,7 +86,7 @@ public abstract class Statement {
      * The serial consistency can only be one of {@code ConsistencyLevel.SERIAL} or
      * {@code ConsistencyLevel.LOCAL_SERIAL}. While {@code ConsistencyLevel.SERIAL} guarantees full
      * linearizability (with other SERIAL updates), {@code ConsistencyLevel.LOCAL_SERIAL} only
-     * guarantees it in the local datacenter.
+     * guarantees it in the local data center.
      * <p>
      * The serial consistency level is ignored for any query that is not a conditional
      * update (serial reads should use the regular consistency level for instance).
@@ -169,7 +169,7 @@ public abstract class Statement {
      * Returns the keyspace this query operates on.
      * <p>
      * Note that not all query specify on which keyspace they operate on, and
-     * so this method can always reutrn {@code null}. Firstly, some queries do
+     * so this method can always return {@code null}. Firstly, some queries do
      * not operate inside a keyspace: keyspace creation, {@code USE} queries,
      * user creation, etc. Secondly, even query that operate within a keyspace
      * do not have to specify said keyspace directly, in which case the
@@ -223,8 +223,14 @@ public abstract class Statement {
      * performance. If in doubt, leaving the default is probably a good
      * idea.
      * <p>
-     * Also note that only {@code SELECT} queries only ever make use of that
-     * setting.
+     * Only {@code SELECT} queries only ever make use of that setting.
+     * <p>
+     * Note: Paging is not supported with the native protocol version 1. If
+     * you call this method with {@code fetchSize &gt; 0} and
+     * {@code fetchSize != Integer.MAX_VALUE} and the protocol version is in
+     * use (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion}
+     * or you use Cassandra 1.2), you will get {@link UnsupportedProtocolVersionException}
+     * when submitting this statement for execution.
      *
      * @param fetchSize the fetch size to use. If {@code fetchSize &lte; 0},
      * the default fetch size will be used. To disable paging of the

@@ -15,13 +15,23 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.AbstractIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.QueryOptions;
 
 /**
  * A Round-robin load balancing policy.
@@ -37,8 +47,13 @@ import com.datastax.driver.core.*;
  */
 public class RoundRobinPolicy implements LoadBalancingPolicy {
 
+    private static final Logger logger = LoggerFactory.getLogger(RoundRobinPolicy.class);
+
     private final CopyOnWriteArrayList<Host> liveHosts = new CopyOnWriteArrayList<Host>();
     private final AtomicInteger index = new AtomicInteger();
+
+    private QueryOptions queryOptions;
+    private volatile boolean hasLoggedLocalCLUse;
 
     /**
      * Creates a load balancing policy that picks host to query in a round robin
@@ -49,6 +64,7 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
     @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
         this.liveHosts.addAll(hosts);
+        this.queryOptions = cluster.getConfiguration().getQueryOptions();
         this.index.set(new Random().nextInt(Math.max(hosts.size(), 1)));
     }
 
@@ -82,6 +98,19 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
      */
     @Override
     public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement) {
+
+        if (!hasLoggedLocalCLUse)
+        {
+            ConsistencyLevel cl = statement.getConsistencyLevel() == null
+                                ? queryOptions.getConsistencyLevel()
+                                : statement.getConsistencyLevel();
+            if (cl.isDCLocal()) {
+                hasLoggedLocalCLUse = true;
+                logger.warn("Detected request at Consistency Level {} but the non-DC aware RoundRobinPolicy is in use. "
+                          + "It is strongly advised to use DCAwareRoundRobinPolicy if you have multiple DCs/use DC-aware consistency levels "
+                          + "(note: this message will only be logged once)", statement.getConsistencyLevel());
+            }
+        }
 
         // We clone liveHosts because we want a version of the list that
         // cannot change concurrently of the query plan iterator (this

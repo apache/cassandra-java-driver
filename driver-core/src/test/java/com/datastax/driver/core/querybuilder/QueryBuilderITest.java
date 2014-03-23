@@ -15,10 +15,12 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.util.*;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.TreeSet;
 
 import org.testng.annotations.Test;
-
 import static org.testng.Assert.*;
 
 import com.datastax.driver.core.*;

@@ -16,7 +16,6 @@
 package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 import com.datastax.driver.core.policies.RetryPolicy;
 
@@ -38,103 +37,26 @@ import com.datastax.driver.core.policies.RetryPolicy;
  * of the properties of the {@link RegularStatement} used for the preparation if
  * {@link Session#prepare(RegularStatement)} is used.
  */
-public class PreparedStatement {
-
-    final ColumnDefinitions metadata;
-    final ColumnDefinitions resultSetMetadata;
-
-    final MD5Digest id;
-    final String query;
-    final String queryKeyspace;
-
-    volatile ByteBuffer routingKey;
-    final int[] routingKeyIndexes;
-
-    volatile ConsistencyLevel consistency;
-    volatile boolean traceQuery;
-    volatile RetryPolicy retryPolicy;
-
-    private PreparedStatement(ColumnDefinitions metadata, ColumnDefinitions resultSetMetadata, MD5Digest id, int[] routingKeyIndexes, String query, String queryKeyspace) {
-        this.metadata = metadata;
-        this.resultSetMetadata = resultSetMetadata;
-        this.id = id;
-        this.routingKeyIndexes = routingKeyIndexes;
-        this.query = query;
-        this.queryKeyspace = queryKeyspace;
-    }
-
-    static PreparedStatement fromMessage(Responses.Result.Prepared msg, Metadata clusterMetadata, String query, String queryKeyspace) {
-        assert msg.metadata.columns != null;
-
-        ColumnDefinitions defs = msg.metadata.columns;
-
-        if (defs.size() == 0)
-            return new PreparedStatement(defs, msg.resultMetadata.columns, msg.statementId, null, query, queryKeyspace);
-
-        List<ColumnMetadata> partitionKeyColumns = null;
-        int[] pkIndexes = null;
-        KeyspaceMetadata km = clusterMetadata.getKeyspace(defs.getKeyspace(0));
-        if (km != null) {
-            TableMetadata tm = km.getTable(defs.getTable(0));
-            if (tm != null) {
-                partitionKeyColumns = tm.getPartitionKey();
-                pkIndexes = new int[partitionKeyColumns.size()];
-                for (int i = 0; i < pkIndexes.length; ++i)
-                    pkIndexes[i] = -1;
-            }
-        }
-
-        // Note: we rely on the fact CQL queries cannot span multiple tables. If that change, we'll have to get smarter.
-        for (int i = 0; i < defs.size(); i++)
-            maybeGetIndex(defs.getName(i), i, partitionKeyColumns, pkIndexes);
-
-        return new PreparedStatement(defs, msg.resultMetadata.columns, msg.statementId, allSet(pkIndexes) ? pkIndexes : null, query, queryKeyspace);
-    }
-
-    private static void maybeGetIndex(String name, int j, List<ColumnMetadata> pkColumns, int[] pkIndexes) {
-        if (pkColumns == null)
-            return;
-
-        for (int i = 0; i < pkColumns.size(); ++i) {
-            if (name.equals(pkColumns.get(i).getName())) {
-                // We may have the same column prepared multiple times, but only pick the first value
-                pkIndexes[i] = j;
-                return;
-            }
-        }
-    }
-
-    private static boolean allSet(int[] pkColumns) {
-        if (pkColumns == null)
-            return false;
-
-        for (int i = 0; i < pkColumns.length; ++i)
-            if (pkColumns[i] < 0)
-                return false;
-
-        return true;
-    }
+public interface PreparedStatement {
 
     /**
      * Returns metadata on the bounded variables of this prepared statement.
      *
      * @return the variables bounded in this prepared statement.
      */
-    public ColumnDefinitions getVariables() {
-        return metadata;
-    }
+    public ColumnDefinitions getVariables();
 
     /**
      * Creates a new BoundStatement object and bind its variables to the
      * provided values.
-     * <p>
-     * This method is a convenience method for {@code new BoundStatement(this).bind(...)}.
      * <p>
      * While the number of {@code values} cannot be greater than the number of bound
      * variables, the number of {@code values} may be fewer than the number of bound
      * variables. In that case, the remaining variables will have to be bound
      * to values by another mean because the resulting {@code BoundStatement}
      * being executable.
+     * <p>
+     * This method is a convenience for {@code new BoundStatement(this).bind(...)}.
      *
      * @param values the values to bind to the variables of the newly created
      * BoundStatement.
@@ -145,13 +67,24 @@ public class PreparedStatement {
      * than there is of bound variables in this statement.
      * @throws InvalidTypeException if any of the provided value is not of
      * correct type to be bound to the corresponding bind variable.
+     * @throws NullPointerException if one of {@code values} is a collection
+     * (List, Set or Map) containing a null value. Nulls are not supported in
+     * collections by CQL.
      *
      * @see BoundStatement#bind
      */
-    public BoundStatement bind(Object... values) {
-        BoundStatement bs = new BoundStatement(this);
-        return bs.bind(values);
-    }
+    public BoundStatement bind(Object... values);
+
+    /**
+     * Creates a new BoundStatement object for this prepared statement.
+     * <p>
+     * This method do not bind any values to any of the prepared variables. Said
+     * values need to be bound on the resulting statement using BoundStatement's
+     * setters methods ({@link BoundStatement#setInt}, {@link BoundStatement#setLong}, ...).
+     *
+     * @return the newly created {@code BoundStatement}.
+     */
+    public BoundStatement bind();
 
     /**
      * Sets the routing key for this prepared statement.
@@ -170,10 +103,7 @@ public class PreparedStatement {
      *
      * @see Statement#getRoutingKey
      */
-    public PreparedStatement setRoutingKey(ByteBuffer routingKey) {
-        this.routingKey = routingKey;
-        return this;
-    }
+    public PreparedStatement setRoutingKey(ByteBuffer routingKey);
 
     /**
      * Sets the routing key for this query.
@@ -188,10 +118,15 @@ public class PreparedStatement {
      *
      * @see Statement#getRoutingKey
      */
-    public PreparedStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
-        this.routingKey = SimpleStatement.compose(routingKeyComponents);
-        return this;
-    }
+    public PreparedStatement setRoutingKey(ByteBuffer... routingKeyComponents);
+
+    /**
+     * Returns the routing key set for this query.
+     *
+     * @return the routing key for this query or {@code null} if none has been
+     * explicitly set on this PreparedStatement.
+     */
+    public ByteBuffer getRoutingKey();
 
     /**
      * Sets a default consistency level for all bound statements 
@@ -206,10 +141,7 @@ public class PreparedStatement {
      * @param consistency the default consistency level to set.
      * @return this {@code PreparedStatement} object.
      */
-    public PreparedStatement setConsistencyLevel(ConsistencyLevel consistency) {
-        this.consistency = consistency;
-        return this;
-    }
+    public PreparedStatement setConsistencyLevel(ConsistencyLevel consistency);
 
     /**
      * Returns the default consistency level set through {@link #setConsistencyLevel}.
@@ -218,9 +150,7 @@ public class PreparedStatement {
      * consistency level has been set through this object {@code setConsistencyLevel}
      * method.
      */
-    public ConsistencyLevel getConsistencyLevel() {
-        return consistency;
-    }
+    public ConsistencyLevel getConsistencyLevel();
 
     /**
      * Returns the string of the query that was prepared to yield this {@code
@@ -236,9 +166,7 @@ public class PreparedStatement {
      * @return the query that was prepared to yield this
      * {@code PreparedStatement}.
      */
-    public String getQueryString() {
-        return query;
-    }
+    public String getQueryString();
 
     /**
      * Returns the keyspace at the time that this prepared statement was prepared,
@@ -250,9 +178,7 @@ public class PreparedStatement {
      * is possible since keyspaces can be explicitly qualified in queries and
      * so may not require a current keyspace to be set).
      */
-    public String getQueryKeyspace() {
-        return queryKeyspace;
-    }
+    public String getQueryKeyspace();
 
     /**
      * Convenience method to enables tracing for all bound statements created
@@ -260,10 +186,7 @@ public class PreparedStatement {
      *
      * @return this {@code Query} object.
      */
-    public PreparedStatement enableTracing() {
-        this.traceQuery = true;
-        return this;
-    }
+    public PreparedStatement enableTracing();
 
     /**
      * Convenience method to disable tracing for all bound statements created
@@ -271,10 +194,7 @@ public class PreparedStatement {
      *
      * @return this {@code PreparedStatement} object.
      */
-    public PreparedStatement disableTracing() {
-        this.traceQuery = false;
-        return this;
-    }
+    public PreparedStatement disableTracing();
 
     /**
      * Returns whether tracing is enabled for this prepared statement, i.e. if
@@ -283,15 +203,13 @@ public class PreparedStatement {
      * @return {@code true} if this prepared statement has tracing enabled,
      * {@code false} otherwise.
      */
-    public boolean isTracing() {
-        return traceQuery;
-    }
+    public boolean isTracing();
 
     /**
      * Convenience method to set a default retry policy for the {@code BoundStatement}
      * created from this prepared statement.
      * <p>
-     * Note that this method is competely optional. By default, the retry policy
+     * Note that this method is completely optional. By default, the retry policy
      * used is the one returned {@link com.datastax.driver.core.policies.Policies#getRetryPolicy}
      * in the cluster configuration. This method is only useful if you want
      * to override this default policy for the {@code BoundStatement} created from
@@ -301,10 +219,7 @@ public class PreparedStatement {
      * @param policy the retry policy to use for this prepared statement.
      * @return this {@code PreparedStatement} object.
      */
-    public PreparedStatement setRetryPolicy(RetryPolicy policy) {
-        this.retryPolicy = policy;
-        return this;
-    }
+    public PreparedStatement setRetryPolicy(RetryPolicy policy);
 
     /**
      * Returns the retry policy sets for this prepared statement, if any.
@@ -312,7 +227,12 @@ public class PreparedStatement {
      * @return the retry policy sets specifically for this prepared statement or
      * {@code null} if none have been set.
      */
-    public RetryPolicy getRetryPolicy() {
-        return retryPolicy;
-    }
+    public RetryPolicy getRetryPolicy();
+
+    /**
+     * Returns the prepared Id for this statement.
+     *
+     * @return the PreparedId corresponding to this statement.
+     */
+    public PreparedId getPreparedId();
 }

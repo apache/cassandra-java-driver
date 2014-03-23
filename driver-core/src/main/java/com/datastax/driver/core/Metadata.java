@@ -16,13 +16,14 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Pattern;
 
 import com.google.common.collect.ImmutableSet;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,16 +36,20 @@ public class Metadata {
 
     private final Cluster.Manager cluster;
     volatile String clusterName;
-    private final ConcurrentMap<InetAddress, Host> hosts = new ConcurrentHashMap<InetAddress, Host>();
+    volatile String partitioner;
+    private final ConcurrentMap<InetSocketAddress, Host> hosts = new ConcurrentHashMap<InetSocketAddress, Host>();
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
     private volatile TokenMap tokenMap;
+
+    private static final Pattern cqlId = Pattern.compile("\\w+");
+    private static final Pattern lowercaseId = Pattern.compile("[a-z][a-z0-9_]*");
 
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
     }
 
     // Synchronized to make it easy to detect dropped keyspaces
-    synchronized void rebuildSchema(String keyspace, String table, ResultSet ks, ResultSet cfs, ResultSet cols) {
+    synchronized void rebuildSchema(String keyspace, String table, ResultSet ks, ResultSet cfs, ResultSet cols, VersionNumber cassandraVersion) {
 
         Map<String, List<Row>> cfDefs = new HashMap<String, List<Row>>();
         Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = new HashMap<String, Map<String, Map<String, ColumnMetadata.Raw>>>();
@@ -74,7 +79,7 @@ public class Metadata {
                 l = new HashMap<String, ColumnMetadata.Raw>();
                 colsByCf.put(cfName, l);
             }
-            ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row);
+            ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row, cassandraVersion);
             l.put(c.name, c);
         }
 
@@ -86,7 +91,7 @@ public class Metadata {
                 KeyspaceMetadata ksm = KeyspaceMetadata.build(ksRow);
 
                 if (cfDefs.containsKey(ksName)) {
-                    buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName));
+                    buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), cassandraVersion);
                 }
                 addedKs.add(ksName);
                 keyspaces.put(ksName, ksm);
@@ -114,18 +119,24 @@ public class Metadata {
             }
 
             if (cfDefs.containsKey(keyspace))
-                buildTableMetadata(ksm, cfDefs.get(keyspace), colsDefs.get(keyspace));
+                buildTableMetadata(ksm, cfDefs.get(keyspace), colsDefs.get(keyspace), cassandraVersion);
         }
     }
 
-    private static void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs) {
-        boolean hasColumns = (colsDefs != null) && !colsDefs.isEmpty();
+    private void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, VersionNumber cassandraVersion) {
         for (Row cfRow : cfRows) {
             String cfName = cfRow.getString(TableMetadata.CF_NAME);
-            Map<String, ColumnMetadata.Raw> cols = colsDefs.get(cfName);
-            if (cols == null)
-                cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
-            TableMetadata tm = TableMetadata.build(ksm, cfRow, cols);
+            try {
+                Map<String, ColumnMetadata.Raw> cols = colsDefs == null ? null : colsDefs.get(cfName);
+                if (cols == null)
+                    cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
+                TableMetadata.build(ksm, cfRow, cols, cassandraVersion);
+            } catch (RuntimeException e) {
+                // See ControlConnection#refreshSchema for why we'd rather not probably this further
+                logger.error(String.format("Error parsing schema for table %s.%s: "
+                                           + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\") will be missing or incomplete",
+                                           ksm.getName(), cfName, ksm.getName(), cfName), e);
+            }
         }
     }
 
@@ -142,23 +153,68 @@ public class Metadata {
         this.tokenMap = TokenMap.build(factory, allTokens, keyspaces.values());
     }
 
-    Host add(InetAddress address) {
+    Host add(InetSocketAddress address) {
         Host newHost = new Host(address, cluster.convictionPolicyFactory);
         Host previous = hosts.putIfAbsent(address, newHost);
         return previous == null ? newHost : null;
     }
 
     boolean remove(Host host) {
-        return hosts.remove(host.getAddress()) != null;
+        return hosts.remove(host.getSocketAddress()) != null;
     }
 
-    Host getHost(InetAddress address) {
+    Host getHost(InetSocketAddress address) {
         return hosts.get(address);
     }
 
     // For internal use only
     Collection<Host> allHosts() {
         return hosts.values();
+    }
+
+    // Deal with case sensitivity for a given keyspace or table id
+    static String handleId(String id) {
+        // Shouldn't really happen for this method, but no reason to fail here
+        if (id == null)
+            return null;
+
+        if (cqlId.matcher(id).matches())
+            return id.toLowerCase();
+
+        // Check if it's enclosed in quotes. If it is, remove them
+        if (id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
+            return id.substring(1, id.length() - 1);
+
+        // otherwise, just return the id.
+        return id;
+    }
+
+    // Escape a CQL3 identifier based on its value as read from the schema
+    // tables. Because it comes from Cassandra, we could just always quote it,
+    // but to get a nicer output we don't do it if it's not necessary.
+    static String escapeId(String ident) {
+        // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
+        return lowercaseId.matcher(ident).matches() ? ident : quote(ident);
+    }
+
+    /**
+     * Quote a keyspace, table or column identifier to make it case sensitive.
+     * <p>
+     * CQL identifiers, including keyspace, table and column ones, are case insensitive
+     * by default. Case sensitive identifiers can however be provided by enclosing
+     * the identifier in double quotes (see the
+     * <a href="http://cassandra.apache.org/doc/cql3/CQL.html#identifiers">CQL documentation</a>
+     * for details). If you are using case sensitive identifiers, this method
+     * can be used to enclose such identifier in double quotes, making it case
+     * sensitive.
+     *
+     * @param id the keyspace or table identifier.
+     * @return {@code id} enclosed in double-quotes, for use in methods like
+     * {@link #getReplicas}, {@link #getKeyspace}, {@link KeyspaceMetadata#getTable}
+     * or even {@link Session#connect(String)}.
+     */
+    public static String quote(String id) {
+        return '"' + id + '"';
     }
 
     /**
@@ -176,6 +232,7 @@ public class Metadata {
      * be empty (which is then some form of staleness).
      */
     public Set<Host> getReplicas(String keyspace, ByteBuffer partitionKey) {
+        keyspace = handleId(keyspace);
         TokenMap current = tokenMap;
         if (current == null) {
             return Collections.emptySet();
@@ -186,12 +243,21 @@ public class Metadata {
     }
 
     /**
-     * Returns the Cassandra name for the cluster connect to.
+     * The Cassandra name for the cluster connect to.
      *
      * @return the Cassandra name for the cluster connect to.
      */
     public String getClusterName() {
         return clusterName;
+    }
+
+    /**
+     * The partitioner in use as reported by the Cassandra nodes.
+     *
+     * @return the partitioner in use as reported by the Cassandra nodes.
+     */
+    public String getPartitioner() {
+        return partitioner;
     }
 
     /**
@@ -212,7 +278,7 @@ public class Metadata {
      * keyspace} is not a known keyspace.
      */
     public KeyspaceMetadata getKeyspace(String keyspace) {
-        return keyspaces.get(keyspace);
+        return keyspaces.get(handleId(keyspace));
     }
 
     /**
@@ -241,7 +307,7 @@ public class Metadata {
         StringBuilder sb = new StringBuilder();
 
         for (KeyspaceMetadata ksm : keyspaces.values())
-            sb.append(ksm.exportAsString()).append("\n");
+            sb.append(ksm.exportAsString()).append('\n');
 
         return sb.toString();
     }

@@ -15,7 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import java.math.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -267,11 +268,11 @@ public abstract class TestUtils {
     }
 
     public static void waitForDown(String node, Cluster cluster) {
-        waitFor(node, cluster, 60, true, false);
+        waitFor(node, cluster, 180, true, false);
     }
 
     public static void waitForDownWithWait(String node, Cluster cluster, int waitTime) {
-        waitFor(node, cluster, 60, true, false);
+        waitFor(node, cluster, 180, true, false);
 
         // FIXME: Once stop() works, remove this line
         try {
@@ -283,6 +284,11 @@ public abstract class TestUtils {
 
     public static void waitForDown(String node, Cluster cluster, int maxTry) {
         waitFor(node, cluster, maxTry, true, false);
+    }
+
+    public static void stopAndWait(CCMBridge.CCMCluster c, int node) {
+        c.cassandraCluster.stop(node);
+        waitForDownWithWait(CCMBridge.IP_PREFIX + node, c.cluster, 5);
     }
 
     public static void waitForDecommission(String node, Cluster cluster) {
@@ -320,8 +326,10 @@ public abstract class TestUtils {
         Metadata metadata = cluster.getMetadata();
         for (int i = 0; i < maxTry; ++i) {
             for (Host host : metadata.getAllHosts()) {
-                if (host.getAddress().equals(address) && testHost(host, waitForDead))
+                if (host.getAddress().equals(address) && testHost(host, waitForDead)) {
+                    try { Thread.sleep(10000); } catch (Exception e) {}
                     return;
+                }
             }
             try { Thread.sleep(1000); } catch (Exception e) {}
         }
@@ -332,8 +340,8 @@ public abstract class TestUtils {
                     return;
                 } else {
                     // logging it because this give use the timestamp of when this happens
-                    logger.info(node + " is not " + (waitForDead ? "DOWN" : "UP") + " after " + maxTry + "s");
-                    throw new IllegalStateException(node + " is not " + (waitForDead ? "DOWN" : "UP") + " after " + maxTry + "s");
+                    logger.info(node + " is not " + (waitForDead ? "DOWN" : "UP") + " after " + maxTry + 's');
+                    throw new IllegalStateException(node + " is not " + (waitForDead ? "DOWN" : "UP") + " after " + maxTry + 's');
                 }
             }
         }
@@ -341,8 +349,8 @@ public abstract class TestUtils {
         if (waitForOut){
             return;
         } else {
-            logger.info(node + " is not part of the cluster after " + maxTry + "s");
-            throw new IllegalStateException(node + " is not part of the cluster after " + maxTry + "s");
+            logger.info(node + " is not part of the cluster after " + maxTry + 's');
+            throw new IllegalStateException(node + " is not part of the cluster after " + maxTry + 's');
         }
     }
 

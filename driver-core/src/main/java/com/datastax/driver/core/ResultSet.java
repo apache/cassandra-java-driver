@@ -15,142 +15,45 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
 
-import com.google.common.util.concurrent.Futures;
+import java.util.Iterator;
+import java.util.List;
+
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
-
-import com.datastax.driver.core.exceptions.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The result of a query.
- *
+ * <p>
+ * The retrieval of the rows of a ResultSet is generally paged (a first page
+ * of result is fetched and the next one is only fetched once all the results
+ * of the first one has been consumed). The size of the pages can be configured
+ * either globally through {@link QueryOptions#setFetchSize} or per-statement
+ * with {@link Statement#setFetchSize}. Though new pages are automatically (and
+ * transparently) fetched when needed, it is possible to force the retrieval
+ * of the next page early through {@link #fetchMoreResults}. Please note however
+ * that this ResultSet paging is not available with the version 1 of the native
+ * protocol (i.e. with Cassandra 1.2 or if version 1 has been explicitly requested
+ * through {@link Cluster.Builder#withProtocolVersion}). If the protocol version 1
+ * is in use, a ResultSet is always fetched in it's entirely and it's up to the
+ * client to make sure that no query can yield ResultSet that won't hold in memory.
+ * <p>
  * Note that this class is not thread-safe.
  */
-public class ResultSet implements Iterable<Row> {
-
-    private static final Logger logger = LoggerFactory.getLogger(ResultSet.class);
-
-    private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque<List<ByteBuffer>>(0);
-
-    private final ColumnDefinitions metadata;
-    private final Queue<List<ByteBuffer>> rows;
-
-    private final List<ExecutionInfo> infos;
-
-    /*
-     * The fetching state of this result set. The fetchState will always be in one of
-     * the 3 following state:
-     *   1) fetchState is null or reference a null: fetching is done, there
-     *      is nothing more to fetch and no query in progress.
-     *   2) fetchState.get().nextStart is not null: there is more pages to fetch. In
-     *      that case, inProgress is *guaranteed* to be null.
-     *   3) fetchState.get().inProgress is not null: a page is being fetched.
-     *      In that case, nextStart is *guaranteed* to be null.
-     *
-     * Also note that while ResultSet doesn't pretend to be thread-safe, the actual
-     * fetch is done asynchonously and so we do need to be volatile below.
-     */
-    private volatile FetchingState fetchState;
-    // The two following info can be null, but only if fetchState == null
-    private final Session.Manager session;
-    private final Statement statement;
-
-    private ResultSet(ColumnDefinitions metadata,
-                      Queue<List<ByteBuffer>> rows,
-                      ExecutionInfo info,
-                      ByteBuffer initialPagingState,
-                      Session.Manager session,
-                      Statement statement) {
-        this.metadata = metadata;
-        this.rows = rows;
-        this.session = session;
-
-        if (initialPagingState == null) {
-            this.fetchState = null;
-            this.infos = Collections.<ExecutionInfo>singletonList(info);
-        } else {
-            this.fetchState = new FetchingState(initialPagingState, null);
-            this.infos = new ArrayList<ExecutionInfo>();
-            this.infos.add(info);
-        }
-
-        this.statement = statement;
-        assert fetchState == null || (session != null && statement != null);
-    }
-
-    static ResultSet fromMessage(Responses.Result msg, Session.Manager session, ExecutionInfo info, Statement statement) {
-
-        UUID tracingId = msg.getTracingId();
-        info = tracingId == null || info == null ? info : info.withTrace(new QueryTrace(tracingId, session));
-
-        switch (msg.kind) {
-            case VOID:
-                return empty(info);
-            case ROWS:
-                Responses.Result.Rows r = (Responses.Result.Rows)msg;
-
-                ColumnDefinitions columnDefs;
-                if (r.metadata.columns == null) {
-                    assert statement instanceof BoundStatement;
-                    columnDefs = ((BoundStatement)statement).statement.resultSetMetadata;
-                    assert columnDefs != null;
-                } else {
-                    columnDefs = r.metadata.columns;
-                }
-
-                return new ResultSet(columnDefs, r.data, info, r.metadata.pagingState, session, statement);
-            case SET_KEYSPACE:
-            case SCHEMA_CHANGE:
-                return empty(info);
-            case PREPARED:
-                throw new RuntimeException("Prepared statement received when a ResultSet was expected");
-            default:
-                logger.error("Received unknow result type '{}'; returning empty result set", msg.kind);
-                return empty(info);
-        }
-    }
-
-    private static ResultSet empty(ExecutionInfo info) {
-        return new ResultSet(ColumnDefinitions.EMPTY, EMPTY_QUEUE, info, null, null, null);
-    }
+public interface ResultSet extends Iterable<Row> {
 
     /**
      * Returns the columns returned in this ResultSet.
      *
      * @return the columns returned in this ResultSet.
      */
-    public ColumnDefinitions getColumnDefinitions() {
-        return metadata;
-    }
+    public ColumnDefinitions getColumnDefinitions();
 
     /**
      * Returns whether this ResultSet has more results.
      *
      * @return whether this ResultSet has more results.
      */
-    public boolean isExhausted() {
-        if (!rows.isEmpty())
-            return false;
-
-        // This is slightly tricky: the fact that we do paged fetches underneath
-        // should be completely transparent, so we can't answer false until
-        // we've actually fetch the next results, since there is not absolute
-        // guarantee that this won't come back empty.
-        fetchMoreResultsBlocking();
-
-        // ResultSet is *not* thread-safe, so either the last fetch has
-        // returned result, or we should be done with fetching
-        assert !rows.isEmpty() || isFullyFetched();
-        return rows.isEmpty();
-    }
+    public boolean isExhausted();
 
     /**
      * Returns the the next result from this ResultSet.
@@ -158,32 +61,22 @@ public class ResultSet implements Iterable<Row> {
      * @return the next row in this resultSet or null if this ResultSet is
      * exhausted.
      */
-    public Row one() {
-        List<ByteBuffer> nextRow = rows.poll();
-        if (nextRow != null)
-            return Row.fromData(metadata, nextRow);
-
-        fetchMoreResultsBlocking();
-        return Row.fromData(metadata, rows.poll());
-    }
+    public Row one();
 
     /**
      * Returns all the remaining rows in this ResultSet as a list.
+     * <p>
+     * Note that, contrary to {@code iterator()} or successive calls to
+     * {@code one()}, this method forces fetching the full content of the ResultSet
+     * at once, holding it all in memory in particular. It is thus recommended
+     * to prefer iterations through {@code iterator()} when possible, especially
+     * if the ResultSet can be big.
      *
      * @return a list containing the remaining results of this ResultSet. The
-     * returned list is empty if and only the ResultSet is exhausted.
+     * returned list is empty if and only the ResultSet is exhausted. The ResultSet
+     * will be exhausted after a call to this method.
      */
-    public List<Row> all() {
-        if (isExhausted())
-            return Collections.emptyList();
-
-        // The result may have more that rows.size() if there is some page fetching
-        // going on, but it won't be less and it the most common case where we don't page.
-        List<Row> result = new ArrayList<Row>(rows.size());
-        for (Row row : this)
-            result.add(row);
-        return result;
-    }
+    public List<Row> all();
 
     /**
      * Returns an iterator over the rows contained in this ResultSet.
@@ -198,25 +91,7 @@ public class ResultSet implements Iterable<Row> {
      * this ResultSet.
      */
     @Override
-    public Iterator<Row> iterator() {
-        return new Iterator<Row>() {
-
-            @Override
-            public boolean hasNext() {
-                return !isExhausted();
-            }
-
-            @Override
-            public Row next() {
-                return ResultSet.this.one();
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
-    }
+    public Iterator<Row> iterator();
 
     /**
      * The number of rows that can be retrieved from this result set without
@@ -226,9 +101,7 @@ public class ResultSet implements Iterable<Row> {
      * {@link #isFullyFetched()}, this is the total number of rows remaining
      * in this result set (after which the result set will be exhausted).
      */
-    public int getAvailableWithoutFetching() {
-        return rows.size();
-    }
+    public int getAvailableWithoutFetching();
 
     /**
      * Whether all results from this result set has been fetched from the
@@ -241,17 +114,7 @@ public class ResultSet implements Iterable<Row> {
      *
      * @return whether all results have been fetched.
      */
-    public boolean isFullyFetched() {
-        return fetchState == null;
-    }
-
-    private void fetchMoreResultsBlocking() {
-        try {
-            Uninterruptibles.getUninterruptibly(fetchMoreResults());
-        } catch (ExecutionException e) {
-            throw ResultSetFuture.extractCauseFromExecutionException(e);
-        }
-    }
+    public boolean isFullyFetched();
 
     /**
      * Force the fetching the next page of results for this result set, if any.
@@ -263,7 +126,7 @@ public class ResultSet implements Iterable<Row> {
      * <p>
      * You can however call this method manually to force the fetching of the
      * next page of results. This can allow to prefetch results before they are
-     * stricly needed. For instance, if you want to prefetch the next page of
+     * strictly needed. For instance, if you want to prefetch the next page of
      * results as soon as there is less than 100 rows readily available in this
      * result set, you can do:
      * <pre>
@@ -293,86 +156,7 @@ public class ResultSet implements Iterable<Row> {
      * thrown (you should thus call {@code isFullyFetched() to know if calling this
      * method can be of any use}).
      */
-    public ListenableFuture<Void> fetchMoreResults() {
-        if (isFullyFetched())
-            return Futures.immediateFuture(null);
-
-        if (fetchState.inProgress != null)
-            return fetchState.inProgress;
-
-        assert fetchState.nextStart != null;
-        ByteBuffer state = fetchState.nextStart;
-        SettableFuture<Void> future = SettableFuture.create();
-        fetchState = new FetchingState(null, future);
-        return queryNextPage(state, future);
-    }
-
-    private ListenableFuture<Void> queryNextPage(ByteBuffer nextStart, final SettableFuture<Void> future) {
-
-        assert !(statement instanceof BatchStatement);
-
-        final Message.Request request = session.makeRequestMessage(statement, nextStart);
-        session.execute(new RequestHandler.Callback() {
-
-            @Override
-            public Message.Request request() {
-                return request;
-            }
-
-            @Override
-            public void register(RequestHandler handler) {
-            }
-
-            @Override
-            public void onSet(Connection connection, Message.Response response, ExecutionInfo info, Statement statement, long latency) {
-                try {
-                    switch (response.type) {
-                        case RESULT:
-                            Responses.Result rm = (Responses.Result)response;
-                            // If we're paging, the query was a SELECT, so we don't have to handle SET_KEYSPACE and SCHEMA_CHANGE really
-                            ResultSet tmp = ResultSet.fromMessage(rm, ResultSet.this.session, info, statement);
-
-                            ResultSet.this.rows.addAll(tmp.rows);
-                            ResultSet.this.fetchState = tmp.fetchState;
-                            ResultSet.this.infos.addAll(tmp.infos);
-                            future.set(null);
-                            break;
-                        case ERROR:
-                            future.setException(((Responses.Error)response).asException(connection.address));
-                            break;
-                        default:
-                            // This mean we have probably have a bad node, so defunct the connection
-                            connection.defunct(new ConnectionException(connection.address, String.format("Got unexpected %s response", response.type)));
-                            future.setException(new DriverInternalError(String.format("Got unexpected %s response from %s", response.type, connection.address)));
-                            break;
-                    }
-                } catch (RuntimeException e) {
-                    // If we get a bug here, the client will not get it, so better forwarding the error
-                    future.setException(new DriverInternalError("Unexpected error while processing response from " + connection.address, e));
-                }
-            }
-
-            // This is only called for internal calls, so don't bother with ExecutionInfo
-            @Override
-            public void onSet(Connection connection, Message.Response response, long latency) {
-                onSet(connection, response, null, null, latency);
-            }
-
-            @Override
-            public void onException(Connection connection, Exception exception, long latency) {
-                future.setException(exception);
-            }
-
-            @Override
-            public void onTimeout(Connection connection, long latency) {
-                // This won't be called directly since this will be wrapped by RequestHandler.
-                throw new UnsupportedOperationException();
-            }
-
-        }, statement);
-
-        return future;
-    }
+    public ListenableFuture<Void> fetchMoreResults();
 
     /**
      * Returns information on the execution of the last query made for this ResultSet.
@@ -380,19 +164,17 @@ public class ResultSet implements Iterable<Row> {
      * Note that in most cases, a ResultSet is fetched with only one query, but large
      * result sets can be paged and thus be retrieved by multiple queries. If that is
      * the case, that method return that {@code ExecutionInfo} for the last query
-     * performed. To retrieve the informations for all queries, use {@link #getAllExecutionInfo}.
+     * performed. To retrieve the information for all queries, use {@link #getAllExecutionInfo}.
      * <p>
      * The returned object includes basic information such as the queried hosts,
      * but also the Cassandra query trace if tracing was enabled for the query.
      *
      * @return the execution info for the last query made for this ResultSet.
      */
-    public ExecutionInfo getExecutionInfo() {
-        return infos.get(infos.size() - 1);
-    }
+    public ExecutionInfo getExecutionInfo();
 
     /**
-     * Return the execution informations for all queries made to retrieve this
+     * Return the execution information for all queries made to retrieve this
      * ResultSet.
      * <p>
      * Unless the ResultSet is large enough to get paged underneath, the returned
@@ -402,26 +184,5 @@ public class ResultSet implements Iterable<Row> {
      *
      * @return a list of the execution info for all the queries made for this ResultSet.
      */
-    public List<ExecutionInfo> getAllExecutionInfo() {
-        return new ArrayList<ExecutionInfo>(infos);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("ResultSet[ exhausted: ").append(isExhausted());
-        sb.append(", ").append(metadata).append("]");
-        return sb.toString();
-    }
-
-    private static class FetchingState {
-        public final ByteBuffer nextStart;
-        public final ListenableFuture<Void> inProgress;
-
-        FetchingState(ByteBuffer nextStart, ListenableFuture<Void> inProgress) {
-            assert (nextStart == null) != (inProgress == null);
-            this.nextStart = nextStart;
-            this.inProgress = inProgress;
-        }
-    }
+    public List<ExecutionInfo> getAllExecutionInfo();
 }

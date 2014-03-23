@@ -1,15 +1,119 @@
 CHANGELOG
 =========
 
+2.0.2:
+------
+
+- [api] The type of the map key returned by NoHostAvailable#getErrors has changed from
+        InetAddress to InetSocketAddress. Same for Initializer#getContactPoints return
+        and for AuthProvider#newAuthenticator.
+- [new] New optional AddressTranslater (JAVA-145)
+
+Merged from 1.0 branch:
+
+- [new] Expose the name of the partitioner in use in the cluster metadata (JAVA-179)
+- [new] Add new WhiteListPolicy to limit the nodes connected to a particular list
+- [improvement] Do not hop DC for LOCAL_* CL in DCAwareRoundRobinPolicy (JAVA-289)
+
+
+2.0.1:
+------
+
+- [improvement] Handle the static columns introduced in Cassandra 2.0.6 (JAVA-278)
+- [improvement] Add Cluster#newSession method to create Session without connecting
+  right away (JAVA-208)
+- [bug] Add missing iso8601 patterns for parsing dates (JAVA-279)
+- [bug] Properly parse BytesType as the blob type
+- [bug] Potential NPE when parsing schema of pre-CQL tables of C* 1.2 nodes (JAVA-280)
+
+Merged from 1.0 branch:
+
+- [bug] LatencyAwarePolicy.Builder#withScale doesn't set the scale (JAVA-275)
+- [new] Add methods to check if a Cluster/Session instance has been closed already (JAVA-114)
+
+
+2.0.0:
+------
+
+- [api] Case sensitive identifier by default in Metadata (JAVA-269)
+- [bug] Fix potential NPE in Cluster#connect (JAVA-274)
+
+Merged from 1.0 branch:
+
+- [bug] Always return the PreparedStatement object that is cache internally (JAVA-263)
+- [bug] Fix race when multiple connect are done in parallel (JAVA-261)
+- [bug] Don't connect at all to nodes that are ignored by the load balancing
+  policy (JAVA-270)
+
+
+2.0.0-rc3:
+----------
+
+- [improvement] The protocol version 1 is now supported (features only supported by the
+  version 2 of the protocol throw UnsupportedFeatureException).
+- [improvement] Make most main objects interface to facilitate testing/mocking (JAVA-195)
+- [improvement] Adds new getStatements and clear methods to BatchStatement.
+- [api] Renamed shutdown to closeAsync and ShutdownFuture to CloseFuture. Clustering
+  and Session also now implement Closeable (JAVA-247).
+- [bug] Fix potential thread leaks when shutting down Metrics (JAVA-232)
+- [bug] Fix potential NPE in HostConnectionPool (JAVA-231)
+- [bug] Avoid NPE when node is in an unconfigured DC (JAVA-244)
+- [bug] Don't block for scheduled reconnections on Cluster#close (JAVA-258)
+
+Merged from 1.0 branch:
+
+- [new] Added Session#prepareAsync calls (JAVA-224)
+- [new] Added Cluster#getLoggedKeyspace (JAVA-249)
+- [improvement] Avoid preparing a statement multiple time per host with multiple sessions
+- [bug] Make sure connections are returned to the right pools (JAVA-255)
+- [bug] Use date string in query build to work-around CASSANDRA-6718 (JAVA-264)
+
+
+2.0.0-rc2:
+----------
+
+- [new] Add LOCAL_ONE consistency level support (requires using C* 2.0.2+) (JAVA-207)
+- [bug] Fix parsing of counter types (JAVA-219)
+- [bug] Fix missing whitespace for IN clause in the query builder (JAVA-218)
+- [bug] Fix replicas computation for token aware balancing (JAVA-221)
+
+Merged from 1.0 branch:
+
+- [bug] Fix regression from JAVA-201 (JAVA-213)
+- [improvement] New getter to obtain a snapshot of the scores maintained by
+  LatencyAwarePolicy.
+
+
+2.0.0-rc1:
+----------
+
+- [new] Mark compression dependencies optional in maven (JAVA-199).
+- [api] Renamed TableMetadata#getClusteringKey to TableMetadata#getClusteringColumns.
+
+Merged from 1.0 branch:
+
+- [new] OSGi bundle (JAVA-142)
+- [improvement] Make collections returned by Row immutable (JAVA-205)
+- [improvement] Limit internal thread pool size (JAVA-203)
+- [bug] Don't retain unused PreparedStatement in memory (JAVA-201)
+- [bug] Add missing clustering order info in TableMetadata
+- [bug] Allow bind markers for collections in the query builder (JAVA-196)
+
+
 2.0.0-beta2:
 ------------
 
 - [api] BoundStatement#setX(String, X) methods now set all values (if there is
   more than one) having the provided name, not just the first occurence.
+- [api] The Authenticator interface now has a onAuthenticationSuccess method that
+  allows to handle the potential last token sent by the server.
 - [new] The query builder don't serialize large values to strings anymore by
   default by making use the new ability to send values alongside the query string.
 - [new] The query builder has been updated for new CQL features (JAVA-140).
 - [bug] Fix exception when a conditional write timeout C* side.
+- [bug] Ensure connection is created when Cluster metadata are asked for
+  (JAVA-182).
+- [bug] Fix potential NPE during authentication (JAVA-187)
 
 
 2.0.0-beta1:
@@ -34,6 +138,45 @@ CHANGELOG
 - [new] Generic authentication through SASL is now exposed.
 - [bug] TokenAwarePolicy now takes all replica into account, instead of only the
   first one (JAVA-88).
+
+
+1.0.5:
+------
+
+- [new] OSGi bundle (JAVA-142)
+- [new] Add support for ConsistencyLevel.LOCAL_ONE; note that this
+  require Cassandra 1.2.12+ (JAVA-207)
+- [improvement] Make collections returned by Row immutable (JAVA-205)
+- [improvement] Limit internal thread pool size (JAVA-203)
+- [improvement] New getter to obtain a snapshot of the scores maintained by
+  LatencyAwarePolicy.
+- [improvement] Avoid synchronization when getting codec for collection
+  types (JAVA-222)
+- [bug] Don't retain unused PreparedStatement in memory (JAVA-201, JAVA-213)
+- [bug] Add missing clustering order info in TableMetadata
+- [bug] Allow bind markers for collections in the query builder (JAVA-196)
+
+
+1.0.4:
+------
+
+- [api] The Cluster.Builder#poolingOptions and Cluster.Builder#socketOptions
+  are now deprecated. They are replaced by the new withPoolingOptions and
+  withSocketOptions methods (JAVA-163).
+- [new] A new LatencyAwarePolicy wrapping policy has been added, allowing to
+  add latency awareness to a wrapped load balancing policy (JAVA-129).
+- [new] Allow defering cluster initialization (Cluster.Builder#deferInitialization)
+  (JAVA-161)
+- [new] Add truncate statement in query builder (JAVA-117).
+- [new] Support empty IN in the query builder (JAVA-106).
+- [bug] Fix spurious "No current pool set; this should not happen" error
+  message (JAVA-166)
+- [bug] Fix potential overflow in RoundRobinPolicy and correctly errors if
+  a balancing policy throws (JAVA-184)
+- [bug] Don't release Stream ID for timeouted queries (unless we do get back
+  the response)
+- [bug] Correctly escape identifiers and use fully qualified table names when
+  exporting schema as string.
 
 
 1.0.3:

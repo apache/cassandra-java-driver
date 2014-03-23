@@ -15,7 +15,9 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.WriteType;
 
 /**
  * A retry policy that never retry (nor ignore).
@@ -32,8 +34,8 @@ public class FallthroughRetryPolicy implements RetryPolicy {
     /**
      * Defines whether to retry and at which consistency level on a read timeout.
      *
-     * @param statement the original query that timeouted.
-     * @param cl the original consistency level of the read that timeouted.
+     * @param statement the original query that timed out.
+     * @param cl the original consistency level of the read that timed out.
      * @param requiredResponses the number of responses that were required to
      * achieve the requested consistency level.
      * @param receivedResponses the number of responses that had been received
@@ -51,9 +53,9 @@ public class FallthroughRetryPolicy implements RetryPolicy {
     /**
      * Defines whether to retry and at which consistency level on a write timeout.
      *
-     * @param statement the original query that timeouted.
-     * @param cl the original consistency level of the write that timeouted.
-     * @param writeType the type of the write that timeouted.
+     * @param statement the original query that timed out.
+     * @param cl the original consistency level of the write that timed out.
+     * @param writeType the type of the write that timed out.
      * @param requiredAcks the number of acknowledgments that were required to
      * achieve the requested consistency level.
      * @param receivedAcks the number of acknowledgments that had been received

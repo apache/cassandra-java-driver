@@ -43,9 +43,9 @@ public class ReadTimeoutException extends QueryTimeoutException {
         if (received < required)
             return String.format("%d responses were required but only %d replica responded", required, received);
         else if (!dataPresent)
-            return String.format("the replica queried for data didn't responded");
+            return "the replica queried for data didn't respond";
         else
-            return String.format("timeout while waiting for repair of inconsistent replica");
+            return "timeout while waiting for repair of inconsistent replica";
     }
 
     /**

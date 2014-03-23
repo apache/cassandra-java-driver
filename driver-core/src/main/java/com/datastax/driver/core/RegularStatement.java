@@ -28,6 +28,11 @@ import java.nio.ByteBuffer;
 public abstract class RegularStatement extends Statement {
 
     /**
+     * Creates a new RegularStatement.
+     */
+    protected RegularStatement() {}
+
+    /**
      * Returns the query string for this statement.
      *
      * @return a valid CQL query string.
@@ -36,6 +41,13 @@ public abstract class RegularStatement extends Statement {
 
     /**
      * The values to use for this statement.
+     * <p>
+     * Note: Values for a RegularStatement (i.e. if this method does not return
+     * {@code null}) are not supported with the native protocol version 1: you
+     * will get an {@link UnsupportedProtocolVersionException} when submitting
+     * one if version 1 of the protocol is in use (i.e. if you've force version
+     * 1 through {@link Cluster.Builder#withProtocolVersion} or you use
+     * Cassandra 1.2).
      *
      * @return the values to use for this statement or {@code null} if there is
      * no such values.

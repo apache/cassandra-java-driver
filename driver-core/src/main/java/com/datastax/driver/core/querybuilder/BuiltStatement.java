@@ -18,15 +18,17 @@ package com.datastax.driver.core.querybuilder;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
-import com.datastax.driver.core.ColumnMetadata;
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.RegularStatement;
-import com.datastax.driver.core.Statement;
-import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.policies.RetryPolicy;
 
-abstract class BuiltStatement extends RegularStatement {
+/**
+ * Common ancestor to the query builder built statements.
+ */
+public abstract class BuiltStatement extends RegularStatement {
+
+    private static final Pattern cqlId = Pattern.compile("\\w+");
 
     private final List<ColumnMetadata> partitionKey;
     private final ByteBuffer[] routingKey;
@@ -38,7 +40,7 @@ abstract class BuiltStatement extends RegularStatement {
 
     Boolean isCounterOp;
 
-    // Whether the user has inputed bind markers. If that's the case, we never generate values as
+    // Whether the user has inputted bind markers. If that's the case, we never generate values as
     // it means the user meant for the statement to be prepared and we shouldn't add our own markers.
     boolean hasBindMarkers;
     private boolean forceNoValues;
@@ -46,7 +48,23 @@ abstract class BuiltStatement extends RegularStatement {
     BuiltStatement(String keyspace) {
         this.partitionKey = null;
         this.routingKey = null;
-        this.keyspace = keyspace;
+        this.keyspace = handleId(keyspace);
+    }
+
+    // Same as in Metadata, but we don't want to expose it publicly there.
+    private static String handleId(String id) {
+        if (id == null)
+            return null;
+
+        if (cqlId.matcher(id).matches())
+            return id.toLowerCase();
+
+        // Check if it's enclosed in quotes. If it is, remove them
+        if (id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
+            return id.substring(1, id.length() - 1);
+
+        // otherwise, just return the id.
+        return id;
     }
 
     BuiltStatement(TableMetadata tableMetadata) {
@@ -121,7 +139,7 @@ abstract class BuiltStatement extends RegularStatement {
 
     // TODO: Correctly document the InvalidTypeException
     void maybeAddRoutingKey(String name, Object value) {
-        if (routingKey == null || name == null || value instanceof BindMarker)
+        if (routingKey == null || name == null || value == null || value instanceof BindMarker)
             return;
 
         for (int i = 0; i < partitionKey.size(); i++) {
@@ -168,16 +186,24 @@ abstract class BuiltStatement extends RegularStatement {
     /**
      * Allows to force this builder to not generate values (through its {@code getValues()} method).
      * <p>
-     * By default and for performance reasons, the query builder will not
-     * serialize all values provided to strings.  This means that the
-     * {@link #getQueryString} may return a query string with bind markers
-     * (where and when is at the discretion of the builder) and {@link #getValues}
-     * will return the binary values for those markers. This method allows to force
-     * the builder to not generate binary values but rather to serialize them
-     * all in the query string. In practice, this means that if you call
-     * {@code setForceNoValues(true)}, you are guarateed that {@code getValues()}
-     * will return {@code null} and that the string returned by {@code getQueryString()}
-     * will contain no other bind markers than the one inputed by the user.
+     * By default (and unless the protocol version 1 is in use, see below) and
+     * for performance reasons, the query builder will not serialize all values
+     * provided to strings. This means that the {@link #getQueryString} may
+     * return a query string with bind markers (where and when is at the
+     * discretion of the builder) and {@link #getValues} will return the binary
+     * values for those markers. This method allows to force the builder to not
+     * generate binary values but rather to serialize them all in the query
+     * string. In practice, this means that if you call {@code
+     * setForceNoValues(true)}, you are guaranteed that {@code getValues()} will
+     * return {@code null} and that the string returned by {@code
+     * getQueryString()} will contain no other bind markers than the one
+     * inputted by the user.
+     * <p>
+     * If the native protocol version 1 is in use, the driver will default
+     * to not generating values since those are not supported by that version of
+     * the protocol. In practice, the driver will automatically call this method
+     * with {@code true} as argument prior to execution. Hence, calling this
+     * method when the protocol version 1 is in use is basically a no-op.
      * <p>
      * Note that this method is mainly useful for debugging purpose. In general,
      * the default behavior should be the correct and most efficient one.
@@ -249,6 +275,12 @@ abstract class BuiltStatement extends RegularStatement {
         @Override
         boolean isCounterOp() {
             return statement.isCounterOp();
+        }
+
+        @Override
+        public RegularStatement setForceNoValues(boolean forceNoValues) {
+            statement.setForceNoValues(forceNoValues);
+            return this;
         }
 
         @Override

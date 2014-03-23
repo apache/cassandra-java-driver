@@ -20,10 +20,13 @@ import java.util.EnumSet;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.handler.codec.frame.CorruptedFrameException;
+import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
+import org.jboss.netty.handler.codec.frame.TooLongFrameException;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
-import org.jboss.netty.handler.codec.frame.*;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
@@ -48,8 +51,7 @@ class Frame {
         this.body = body;
     }
 
-    public static Frame create(ChannelBuffer fullFrame) {
-
+    private static Frame create(ChannelBuffer fullFrame) {
         assert fullFrame.readableBytes() >= Header.LENGTH : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
 
         int version = fullFrame.readByte();
@@ -66,14 +68,13 @@ class Frame {
         return new Frame(header, fullFrame);
     }
 
-    public static Frame create(int opcode, int streamId, EnumSet<Header.Flag> flags, ChannelBuffer body) {
-        Header header = new Header(Header.CURRENT_VERSION, flags, streamId, opcode);
+    public static Frame create(int version, int opcode, int streamId, EnumSet<Header.Flag> flags, ChannelBuffer body) {
+        Header header = new Header(version, flags, streamId, opcode);
         return new Frame(header, body);
     }
 
     public static class Header {
 
-        public static final int CURRENT_VERSION = 2;
         public static final int LENGTH = 8;
 
         public final int version;
@@ -133,16 +134,13 @@ class Frame {
         protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
             try {
                 // We must at least validate that the frame version is something we support/know and it doesn't hurt to
-                // check the opcode is not garbage. And we should do that indenpently of what is the the bytes corresponding
+                // check the opcode is not garbage. And we should do that independently of what is the the bytes corresponding
                 // to the frame length are, i.e. we shouldn't wait for super.decode() to return non-null.
                 if (buffer.readableBytes() == 0)
                     return null;
 
                 int firstByte = buffer.getByte(0);
                 int version = firstByte & 0x7F;
-
-                if (version != Header.CURRENT_VERSION)
-                    throw new DriverInternalError("Server response from unsupported protocol version: " + version);
 
                 // Validate the opcode (this will throw if it's not a response)
                 if (buffer.readableBytes() >= 4)
@@ -164,16 +162,14 @@ class Frame {
 
     public static class Encoder extends OneToOneEncoder {
 
-        // We'll only send requests...
-        private static int VERSION_AND_DIRECTION = 0x02;
-
         public Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws IOException {
             assert msg instanceof Frame : "Expecting frame, got " + msg;
 
             Frame frame = (Frame)msg;
 
             ChannelBuffer header = ChannelBuffers.buffer(Frame.Header.LENGTH);
-            header.writeByte(VERSION_AND_DIRECTION);
+            // We don't bother with the direction, we only send requests.
+            header.writeByte(frame.header.version);
             header.writeByte(Header.Flag.serialize(frame.header.flags));
             header.writeByte(frame.header.streamId);
             header.writeByte(frame.header.opcode);

@@ -1,0 +1,38 @@
+/*
+ *      Copyright (C) 2012 DataStax Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+package com.datastax.driver.core.policies;
+
+import java.net.InetSocketAddress;
+
+/**
+ * The default {@link AddressTranslater} used by the driver that do no
+ * translation.
+ */
+public class IdentityTranslater implements AddressTranslater {
+
+    /**
+     * Translates a Cassandra {@code rpc_address} to another address if necessary.
+     * <p>
+     * This method is the identity function, it always return the address passed
+     * in argument, doing no translation.
+     *
+     * @param address the address of a node as returned by Cassandra.
+     * @return {@code address} unmodified.
+     */
+    public InetSocketAddress translate(InetSocketAddress address) {
+        return address;
+    }
+}

@@ -18,8 +18,8 @@ package com.datastax.driver.core;
 import java.util.List;
 
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 
 /**
  * A future on the shutdown of a Cluster or Session instance.
@@ -31,14 +31,14 @@ import com.google.common.util.concurrent.FutureCallback;
  * Note that this class implements <a href="http://code.google.com/p/guava-libraries/">Guava</a>'s {@code
  * ListenableFuture} and can so be used with Guava's future utilities.
  */
-public abstract class ShutdownFuture extends AbstractFuture<Void> {
+public abstract class CloseFuture extends AbstractFuture<Void> {
 
-    ShutdownFuture() {}
+    CloseFuture() {}
 
-    static ShutdownFuture immediateFuture() {
-        ShutdownFuture future = new ShutdownFuture() {
+    static CloseFuture immediateFuture() {
+        CloseFuture future = new CloseFuture() {
             @Override
-            public ShutdownFuture force() {
+            public CloseFuture force() {
                 return this;
             }
         };
@@ -47,26 +47,27 @@ public abstract class ShutdownFuture extends AbstractFuture<Void> {
     }
 
     /**
-     * Try to force the completion of the shutdown this a future of.
+     * Try to force the completion of the shutdown this is a future of.
      * <p>
-     * This method will do its best to expedite the shutdown process. In particular, all connection
-     * will be closed right away, even if there is ongoing queries at the time of the call
-     * to this method.
+     * This method will do its best to expedite the shutdown process. In
+     * particular, all connections will be closed right away, even if there is
+     * ongoing queries at the time this method is called.
      * <p>
-     * Note that this method does not block. The completion of this method does not imply that the
-     * shutdown process and you still need to wait on this future to ensure that, though calling
-     * this method does ensure said future will return in a timely way.
+     * Note that this method does not block. The completion of this method does
+     * not imply the shutdown process is done, you still need to wait on this
+     * future to ensure that, but calling this method will ensure said
+     * future will return in a timely way.
      *
-     * @return this {@code ShutdownFuture}.
+     * @return this {@code CloseFuture}.
      */
-    public abstract ShutdownFuture force();
+    public abstract CloseFuture force();
 
     // Internal utility for cases where we want to build a future that wait on other ones
-    static class Forwarding extends ShutdownFuture {
+    static class Forwarding extends CloseFuture {
 
-        private final List<ShutdownFuture> futures;
+        private final List<CloseFuture> futures;
 
-        Forwarding(List<ShutdownFuture> futures) {
+        Forwarding(List<CloseFuture> futures) {
             this.futures = futures;
 
             Futures.addCallback(Futures.allAsList(futures), new FutureCallback<List<Void>>() {
@@ -81,8 +82,8 @@ public abstract class ShutdownFuture extends AbstractFuture<Void> {
         }
 
         @Override
-        public ShutdownFuture force() {
-            for (ShutdownFuture future : futures)
+        public CloseFuture force() {
+            for (CloseFuture future : futures)
                 future.force();
             return this;
         }

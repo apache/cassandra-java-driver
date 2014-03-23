@@ -36,10 +36,10 @@ The features provided by the core module includes:
 Prerequisite
 ------------
 
-The driver uses Casandra's native protocol, and this version 2.0 uses the second
-version of that protocol. As such, this version of the driver requires a version
-of Cassandra greater than or equal to 2.0 (for Cassandra 1.2 please use the
-version 1.0 of the driver).
+The driver uses Casandra's native protocol which is available starting from
+Cassandra 1.2. Some of the features (result set paging, BatchStatement, ...) of
+this version 2.0 of the driver require Cassandra 2.0 however and will throw
+'unsupported feature' exceptions if used against a Cassandra 1.2 cluster.
 
 If you are having issues connecting to the cluster (seeing ``NoHostAvailableConnection``
 exceptions) please check the `connection requirements <https://github.com/datastax/java-driver/wiki/Connection-requirements>`_.
@@ -50,6 +50,7 @@ note that the first time you run the tests, ccm will download/compile the
 source of C* under the hood, which may require some time (that depends on your
 Internet connection or machine).
 
+
 Installing
 ----------
 
@@ -59,8 +60,19 @@ it in your application using the following Maven dependency::
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>2.0.0-beta1</version>
+      <version>2.0.1</version>
     </dependency>
+
+
+Upgrading from 1.x branch
+-------------------------
+
+If you are upgrading from the 1.x branch of the driver, be sure to have a look at
+the `upgrade guide <https://github.com/datastax/java-driver/blob/2.0/driver-core/Upgrade_guide_to_2.0.rst>`_.
+
+We used the opportunity of a major version bump to incorporate your feedback and improve the API, 
+to fix a number of inconsistencies and remove cruft. 
+Unfortunately this means there are some breaking changes, but the new API should be both simpler and more complete.
 
 
 Getting Started

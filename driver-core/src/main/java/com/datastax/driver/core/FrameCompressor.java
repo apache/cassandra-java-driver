@@ -17,15 +17,11 @@ package com.datastax.driver.core;
 
 import java.io.IOException;
 
-import org.jboss.netty.buffer.ChannelBuffers;
-
-import org.xerial.snappy.Snappy;
-
-import net.jpountz.lz4.LZ4Exception;
 import net.jpountz.lz4.LZ4Factory;
-
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xerial.snappy.Snappy;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
@@ -120,7 +116,7 @@ abstract class FrameCompressor {
             try {
                 int written = compressor.compress(input, 0, input.length, output, INTEGER_BYTES, maxCompressedLength);
                 return frame.with(ChannelBuffers.wrappedBuffer(output, 0, INTEGER_BYTES + written));
-            } catch (LZ4Exception e) {
+            } catch (Exception e) {
                 throw new IOException(e);
             }
         }
@@ -141,7 +137,7 @@ abstract class FrameCompressor {
                     throw new IOException("Compressed lengths mismatch");
 
                 return frame.with(ChannelBuffers.wrappedBuffer(output));
-            } catch (LZ4Exception e) {
+            } catch (Exception e) {
                 throw new IOException(e);
             }
         }

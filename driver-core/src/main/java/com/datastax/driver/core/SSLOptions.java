@@ -1,8 +1,8 @@
 package com.datastax.driver.core;
 
+import javax.net.ssl.SSLContext;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import javax.net.ssl.SSLContext;
 
 /**
  * Options to provide to enable SSL connections.

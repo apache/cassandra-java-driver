@@ -16,8 +16,11 @@
 package com.datastax.driver.core;
 
 import javax.security.sasl.SaslException;
-import java.net.InetAddress;
-import java.nio.charset.Charset;
+import java.net.InetSocketAddress;
+import java.util.Map;
+
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * A simple {@code AuthProvider} implementation.
@@ -54,7 +57,7 @@ public class PlainTextAuthProvider implements AuthProvider {
      * @throws SaslException if an unsupported SASL mechanism is supplied
      * or an error is encountered when initialising the authenticator
      */
-    public Authenticator newAuthenticator(InetAddress host) {
+    public Authenticator newAuthenticator(InetSocketAddress host) {
         return new PlainTextAuthenticator(username, password);
     }
 
@@ -63,14 +66,14 @@ public class PlainTextAuthProvider implements AuthProvider {
      * perform authentication against Cassandra servers configured
      * with PasswordAuthenticator.
      */
-    private static class PlainTextAuthenticator implements Authenticator {
+    private static class PlainTextAuthenticator extends ProtocolV1Authenticator implements Authenticator {
 
         private final byte[] username;
         private final byte[] password;
 
         public PlainTextAuthenticator(String username, String password) {
-            this.username = username.getBytes(Charset.forName("UTF-8"));
-            this.password = password.getBytes(Charset.forName("UTF-8"));
+            this.username = username.getBytes(Charsets.UTF_8);
+            this.password = password.getBytes(Charsets.UTF_8);
         }
 
         @Override
@@ -86,6 +89,16 @@ public class PlainTextAuthProvider implements AuthProvider {
         @Override
         public byte[] evaluateChallenge(byte[] challenge) {
             return null;
+        }
+
+        @Override
+        public void onAuthenticationSuccess(byte[] token) {
+            // no-op, the server should send nothing anyway
+        }
+
+        Map<String, String> getCredentials() {
+            return ImmutableMap.of("username", new String(username, Charsets.UTF_8),
+                                   "password", new String(password, Charsets.UTF_8));
         }
     }
 }

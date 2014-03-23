@@ -18,10 +18,11 @@ package com.datastax.driver.core.querybuilder;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.util.*;
+import java.util.Arrays;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.testng.annotations.Test;
-
 import static org.testng.Assert.*;
 
 import com.datastax.driver.core.ConsistencyLevel;
@@ -60,6 +61,14 @@ public class QueryBuilderTest {
         select = select().distinct().column("longName").as("a").ttl("longName").as("ttla").from("foo").limit(bindMarker("limit"));
         assertEquals(select.toString(), query);
 
+        query = "SELECT a FROM foo WHERE k IN ();";
+        select = select("a").from("foo").where(in("k"));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT a FROM foo WHERE k IN ?;";
+        select = select("a").from("foo").where(in("k", bindMarker()));
+        assertEquals(select.toString(), query);
+
         query = "SELECT count(*) FROM foo;";
         select = select().countAll().from("foo");
         assertEquals(select.toString(), query);
@@ -87,13 +96,6 @@ public class QueryBuilderTest {
         query = "SELECT * FROM words WHERE w='WA(!:gS)r(UfW';";
         select = select().all().from("words").where(eq("w", "WA(!:gS)r(UfW"));
         assertEquals(select.toString(), query);
-
-        try {
-            select = select("a").from("foo").where(in("a"));
-            fail();
-        } catch (IllegalArgumentException e) {
-            assertEquals(e.getMessage(), "Missing values for IN clause");
-        }
 
         try {
             select = select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));
@@ -327,6 +329,8 @@ public class QueryBuilderTest {
         query += "APPLY BATCH;";
         batch = batch(delete().listElt("a", 3).from("foo").where(eq("k", 1)));
         assertEquals(batch.toString(), query);
+
+        assertEquals(batch().toString(), "BEGIN BATCH APPLY BATCH;");
     }
 
     @Test(groups = "unit")
@@ -609,5 +613,11 @@ public class QueryBuilderTest {
         } catch (IllegalArgumentException e) {
             // Ok, that's what we expect
         }
+    }
+
+    @Test(groups = "unit")
+    public void truncateTest() throws Exception {
+        assertEquals(truncate("foo").toString(), "TRUNCATE foo;");
+        assertEquals(truncate("foo", quote("Bar")).toString(), "TRUNCATE foo.\"Bar\";");
     }
 }

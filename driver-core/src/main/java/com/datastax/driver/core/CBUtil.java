@@ -20,12 +20,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.util.CharsetUtil;
@@ -335,7 +330,7 @@ abstract class CBUtil {
      */
     public static byte[] readRawBytes(ChannelBuffer cb) {
         if (cb.hasArray() && cb.readableBytes() == cb.array().length) {
-            // Move the readerIndex just so we consistenly consume the input
+            // Move the readerIndex just so we consistently consume the input
             cb.readerIndex(cb.writerIndex());
             return cb.array();
         }

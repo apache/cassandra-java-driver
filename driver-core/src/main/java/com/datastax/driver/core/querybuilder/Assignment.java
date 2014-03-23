@@ -16,9 +16,10 @@
 package com.datastax.driver.core.querybuilder;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.List;
 
-import static com.datastax.driver.core.querybuilder.Utils.*;
+import static com.datastax.driver.core.querybuilder.Utils.appendName;
+import static com.datastax.driver.core.querybuilder.Utils.appendValue;
 
 public abstract class Assignment extends Utils.Appendeable {
 
@@ -26,7 +27,7 @@ public abstract class Assignment extends Utils.Appendeable {
 
     private Assignment(String name) {
         this.name = name;
-    };
+    }
 
     static class SetAssignment extends Assignment {
 
@@ -40,7 +41,7 @@ public abstract class Assignment extends Utils.Appendeable {
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
             appendName(name, sb);
-            sb.append("=");
+            sb.append('=');
             appendValue(value, sb, variables);
         }
 
@@ -52,14 +53,13 @@ public abstract class Assignment extends Utils.Appendeable {
 
     static class CounterAssignment extends Assignment {
 
-        // TODO: should be object to allow for bind markers
-        private final long value;
+        private final Object value;
         private final boolean isIncr;
 
-        CounterAssignment(String name, long value, boolean isIncr) {
+        CounterAssignment(String name, Object value, boolean isIncr) {
             super(name);
-            if (!isIncr && value < 0) {
-                this.value = -value;
+            if (!isIncr && value instanceof Long && ((Long)value) < 0) {
+                this.value = -((Long)value);
                 this.isIncr = true;
             } else {
                 this.value = value;
@@ -69,8 +69,9 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
-            appendName(name, sb).append("=");
-            appendName(name, sb).append(isIncr ? "+" : "-").append(value);
+            appendName(name, sb).append('=');
+            appendName(name, sb).append(isIncr ? "+" : "-");
+            appendValue(value, sb, variables);
         }
 
         @Override
@@ -81,19 +82,18 @@ public abstract class Assignment extends Utils.Appendeable {
 
     static class ListPrependAssignment extends Assignment {
 
-        // TODO: should be object to allow for bind markers
-        private final List<?> value;
+        private final Object value;
 
-        ListPrependAssignment(String name, List<?> value) {
+        ListPrependAssignment(String name, Object value) {
             super(name);
             this.value = value;
         }
 
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
-            appendName(name, sb).append("=");
-            appendList(value, sb);
-            sb.append("+");
+            appendName(name, sb).append('=');
+            appendValue(value, sb, variables);
+            sb.append('+');
             appendName(name, sb);
         }
 
@@ -116,7 +116,7 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
-            appendName(name, sb).append("[").append(idx).append("]=");
+            appendName(name, sb).append('[').append(idx).append("]=");
             appendValue(value, sb, variables);
         }
 
@@ -139,9 +139,9 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
-            appendName(name, sb).append("=");
+            appendName(name, sb).append('=');
             appendName(name, sb).append(isAdd ? "+" : "-");
-            appendCollection(collection, sb, variables);
+            appendValue(collection, sb, variables);
         }
 
         @Override
@@ -163,7 +163,7 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
-            appendName(name, sb).append("[");
+            appendName(name, sb).append('[');
             appendValue(key, sb, variables);
             sb.append("]=");
             appendValue(value, sb, variables);

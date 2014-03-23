@@ -15,11 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 
 import org.testng.annotations.Test;
-
 import static org.testng.Assert.*;
+
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 
 /**
  * Test ResultSet paging correct behavior.
@@ -28,7 +30,7 @@ public class FetchingTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
-        return Collections.singletonList(String.format("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))"));
+        return Collections.singletonList("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
     }
 
     @Test(groups = "short")
@@ -57,6 +59,10 @@ public class FetchingTest extends CCMBridge.PerClassSingleNodeCluster {
             assertTrue(rs.isExhausted());
             assertTrue(rs.isFullyFetched());
 
+        } catch (UnsupportedFeatureException e) {
+            // This is expected when testing the protocol v1
+            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != 1)
+                throw e;
         } catch (Throwable e) {
             errorOut();
             throw e;

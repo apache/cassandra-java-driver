@@ -58,7 +58,7 @@ public class SocketOptions {
      * The connection timeout in milliseconds.
      * <p>
      * As the name implies, the connection timeout defines how long the driver
-     * waits to etablish a new connection to a Cassandra node before giving up.
+     * waits to establish a new connection to a Cassandra node before giving up.
      *
      * @return the connection timeout in milliseconds
      */
@@ -118,7 +118,7 @@ public class SocketOptions {
      *   <li>the read timeout is only approximate and only control the timeout to one Cassandra
      *   host, not the full query (see {@link #getReadTimeoutMillis} for more details). If a
      *   high level of precision on the timeout to a request is required, you should use
-     *   the {@link ResultSetFuture#get(long, TimeUnit)} method.
+     *   the {@link ResultSetFuture#get(long, java.util.concurrent.TimeUnit)} method.
      *   </li>
      * </ul>
      * <p>

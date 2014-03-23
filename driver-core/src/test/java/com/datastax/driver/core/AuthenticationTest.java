@@ -16,12 +16,12 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
-import java.util.*;
+import java.net.InetSocketAddress;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -46,11 +46,11 @@ public class AuthenticationTest {
         cassandraCluster = CCMBridge.create("test");
         cassandraCluster.populate(1);
         cassandraCluster.updateConfig("authenticator", "PasswordAuthenticator");
-        cassandraCluster.start(1);
+        cassandraCluster.start(1, "-Dcassandra.superuser_setup_delay_ms=0");
 
-        // Pre-1.2.4, we cannot override the pause before creating the default user,
-        // so we need to sleep for 10 seconds while we wait for it
-        TimeUnit.SECONDS.sleep(10);
+        // Even though we've override the default user setup delay, still wait
+        // one second to make sure we don't race
+        TimeUnit.SECONDS.sleep(1);
     }
 
     @AfterClass (groups = "short")
@@ -62,13 +62,13 @@ public class AuthenticationTest {
     @Test(groups = "short")
     public void testAuthenticatedConnection() throws InterruptedException {
         try {
-            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "1")
+            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
                                                 .withCredentials("cassandra", "cassandra")
                                                 .build()
                                                 .connect();
         } catch (NoHostAvailableException e) {
 
-            for (Map.Entry<InetAddress, Throwable> entry : e.getErrors().entrySet())
+            for (Map.Entry<InetSocketAddress, Throwable> entry : e.getErrors().entrySet())
                 logger.error("Error connecting to " + entry.getKey(),  entry.getValue());
             throw new RuntimeException(e);
         }
@@ -77,13 +77,13 @@ public class AuthenticationTest {
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
     public void testConnectionAttemptWithIncorrectCredentialsIsRefused() throws InterruptedException {
         try {
-            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "1")
+            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
                    .withCredentials("bogus", "bogus")
                    .build()
                    .connect();
         } catch (NoHostAvailableException e) {
 
-            for (Map.Entry<InetAddress, Throwable> entry : e.getErrors().entrySet())
+            for (Map.Entry<InetSocketAddress, Throwable> entry : e.getErrors().entrySet())
                 logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
             throw new RuntimeException(e);
         }
@@ -92,12 +92,12 @@ public class AuthenticationTest {
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
     public void testConnectionAttemptWithoutCredentialsIsRefused() throws InterruptedException {
         try {
-            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "1")
+            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
                               .build()
                               .connect();
         } catch (NoHostAvailableException e) {
 
-            for (Map.Entry<InetAddress, Throwable> entry : e.getErrors().entrySet())
+            for (Map.Entry<InetSocketAddress, Throwable> entry : e.getErrors().entrySet())
                 logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
             throw new RuntimeException(e);
         }

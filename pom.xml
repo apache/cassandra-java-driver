@@ -21,7 +21,7 @@
   
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-parent</artifactId>
-  <version>2.0.0-beta2-SNAPSHOT</version>
+  <version>2.0.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>DataStax Java Driver for Apache Cassandra</name>
   <description>A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's binary protocol.</description>
@@ -30,11 +30,12 @@
   <modules>
     <module>driver-core</module>
     <module>driver-examples</module>
+    <module>driver-dse</module>
   </modules>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cassandra.version>2.0.0</cassandra.version>
+    <cassandra.version>2.0.6</cassandra.version>
   </properties>
 
   <dependencies>
@@ -48,7 +49,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
-      <version>1.7.5</version>
+      <version>1.7.6</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -85,7 +86,7 @@
           <version>2.9.1</version>
           <configuration>
             <!-- I can haz math in my javadoc (see http://zverovich.net/2012/01/14/beautiful-math-in-javadoc.html) -->
-            <additionalparam>-header &apos;&lt;script type=&quot;text/javascript&quot; src=&quot;http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot;&gt;&lt;/script&gt;&apos;</additionalparam>
+            <additionalparam>-header '&lt;script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"&gt;&lt;/script&gt;'</additionalparam>
           </configuration>
           <executions>
             <execution>
@@ -103,6 +104,33 @@
         <descriptorRefs>
           <descriptorRef>jar-with-dependencies</descriptorRef>
         </descriptorRefs>
+      </configuration>
+    </plugin>
+    <plugin>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>maven-bundle-plugin</artifactId>
+      <extensions>true</extensions>
+      <version>2.4.0</version>
+      <executions>
+        <execution>
+          <id>bundle-manifest</id>
+          <phase>process-classes</phase>
+          <goals>
+            <goal>manifest</goal>
+          </goals>
+        </execution>
+      </executions>
+      <configuration>
+        <instructions>
+          <Bundle-SymbolicName>com.datastax.driver.core</Bundle-SymbolicName>
+          <Bundle-Version>${project.version}</Bundle-Version>
+          <_include>-osgi.bnd</_include>
+        </instructions>
+        <supportedProjectTypes>
+          <supportedProjectType>jar</supportedProjectType>
+          <supportedProjectType>bundle</supportedProjectType>
+          <supportedProjectType>pom</supportedProjectType>
+        </supportedProjectTypes>
       </configuration>
     </plugin>
     </plugins>

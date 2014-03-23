@@ -19,16 +19,17 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
 
 public enum ConsistencyLevel {
 
-    ANY         (0),
-    ONE         (1),
-    TWO         (2),
-    THREE       (3),
-    QUORUM      (4),
-    ALL         (5),
-    LOCAL_QUORUM(6),
-    EACH_QUORUM (7),
-    SERIAL      (8),
-    LOCAL_SERIAL(9);
+    ANY          (0),
+    ONE          (1),
+    TWO          (2),
+    THREE        (3),
+    QUORUM       (4),
+    ALL          (5),
+    LOCAL_QUORUM (6),
+    EACH_QUORUM  (7),
+    SERIAL       (8),
+    LOCAL_SERIAL (9),
+    LOCAL_ONE   (10);
 
     // Used by the native protocol
     final int code;
@@ -49,9 +50,18 @@ public enum ConsistencyLevel {
         this.code = code;
     }
 
-    public static ConsistencyLevel fromCode(int code) {
+    static ConsistencyLevel fromCode(int code) {
         if (code < 0 || code >= codeIdx.length)
             throw new DriverInternalError(String.format("Unknown code %d for a consistency level", code));
         return codeIdx[code];
+    }
+
+    /**
+     * Whether or not the the consistency level applies to the local data-center only.
+     *
+     * @return whether this consistency level is {@code LOCAL_ONE} or {@code LOCAL_QUORUM}.
+     */
+    public boolean isDCLocal() {
+        return this == LOCAL_ONE || this == LOCAL_QUORUM;
     }
 }

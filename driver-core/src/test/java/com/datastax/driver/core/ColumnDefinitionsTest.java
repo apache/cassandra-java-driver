@@ -15,9 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import static org.testng.Assert.*;
-
 import org.testng.annotations.Test;
+import static org.testng.Assert.assertTrue;
 
 public class ColumnDefinitionsTest {
 

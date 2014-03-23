@@ -15,7 +15,9 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.WriteType;
 
 /**
  * A retry policy that sometimes retry with a lower consistency level than
@@ -91,8 +93,8 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * retrieve, the operation is retried with the initial consistency
      * level. Otherwise, an exception is thrown.
      *
-     * @param statement the original query that timeouted.
-     * @param cl the original consistency level of the read that timeouted.
+     * @param statement the original query that timed out.
+     * @param cl the original consistency level of the read that timed out.
      * @param requiredResponses the number of responses that were required to
      * achieve the requested consistency level.
      * @param receivedResponses the number of responses that had been received
@@ -109,7 +111,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
 
         // CAS reads are not all that useful in terms of visibility of the writes since CAS write supports the
         // normal consistency levels on the committing phase. So the main use case for CAS reads is probably for
-        // when you've timeouted on a CAS write and want to make sure what happened. Downgrading in that case
+        // when you've timed out on a CAS write and want to make sure what happened. Downgrading in that case
         // would be always wrong so we just special case to rethrow.
         if (cl == ConsistencyLevel.SERIAL || cl == ConsistencyLevel.LOCAL_SERIAL)
             return RetryDecision.rethrow();
@@ -135,9 +137,9 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * if we know the write has been persisted on at least one replica, we
      * ignore the exception. Otherwise, an exception is thrown.
      *
-     * @param statement the original query that timeouted.
-     * @param cl the original consistency level of the write that timeouted.
-     * @param writeType the type of the write that timeouted.
+     * @param statement the original query that timed out.
+     * @param cl the original consistency level of the write that timed out.
+     * @param writeType the type of the write that timed out.
      * @param requiredAcks the number of acknowledgments that were required to
      * achieve the requested consistency level.
      * @param receivedAcks the number of acknowledgments that had been received

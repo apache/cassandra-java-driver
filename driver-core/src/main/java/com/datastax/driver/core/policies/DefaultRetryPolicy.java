@@ -15,7 +15,9 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.WriteType;
 
 /**
  * The default retry policy.
@@ -50,8 +52,8 @@ public class DefaultRetryPolicy implements RetryPolicy {
      * timeout the dead replica will likely have been detected as dead and
      * the retry has a high change of success.
      *
-     * @param statement the original query that timeouted.
-     * @param cl the original consistency level of the read that timeouted.
+     * @param statement the original query that timed out.
+     * @param cl the original consistency level of the read that timed out.
      * @param requiredResponses the number of responses that were required to
      * achieve the requested consistency level.
      * @param receivedResponses the number of responses that had been received
@@ -83,9 +85,9 @@ public class DefaultRetryPolicy implements RetryPolicy {
      * nodes will likely have been detected as dead and the retry has thus a
      * high change of success.
      *
-     * @param statement the original query that timeouted.
-     * @param cl the original consistency level of the write that timeouted.
-     * @param writeType the type of the write that timeouted.
+     * @param statement the original query that timed out.
+     * @param cl the original consistency level of the write that timed out.
+     * @param writeType the type of the write that timed out.
      * @param requiredAcks the number of acknowledgments that were required to
      * achieve the requested consistency level.
      * @param receivedAcks the number of acknowledgments that had been received

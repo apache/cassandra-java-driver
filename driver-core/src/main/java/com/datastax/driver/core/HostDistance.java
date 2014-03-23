@@ -31,7 +31,7 @@ package com.datastax.driver.core;
  * However, if a host is assigned the distance {@code IGNORED}, no connection
  * to that host will maintained active. In other words, {@code IGNORED} should
  * be assigned to hosts that should not be used by this driver (because they
- * are in a remote datacenter for instance).
+ * are in a remote data center for instance).
  */
 public enum HostDistance {
     LOCAL,

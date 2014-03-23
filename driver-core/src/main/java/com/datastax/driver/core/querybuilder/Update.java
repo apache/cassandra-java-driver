@@ -57,7 +57,7 @@ public class Update extends BuiltStatement {
 
         builder.append("UPDATE ");
         if (keyspace != null)
-            Utils.appendName(keyspace, builder).append(".");
+            Utils.appendName(keyspace, builder).append('.');
         Utils.appendName(table, builder);
 
         if (!usings.usings.isEmpty()) {
@@ -267,7 +267,7 @@ public class Update extends BuiltStatement {
     }
 
     /**
-     * The options of a UDPATE statement.
+     * The options of a UPDATE statement.
      */
     public static class Options extends BuiltStatement.ForwardingStatement<Update> {
 
@@ -321,7 +321,7 @@ public class Update extends BuiltStatement {
     }
 
     /**
-     * Conditions for an UDPATE statement.
+     * Conditions for an UPDATE statement.
      * <p>
      * When provided some conditions, an update will not apply unless the
      * provided conditions applies.

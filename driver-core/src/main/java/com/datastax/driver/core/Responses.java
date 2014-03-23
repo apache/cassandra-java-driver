@@ -15,8 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.net.InetAddress;
 import java.util.*;
 
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -80,14 +80,14 @@ class Responses {
             this.infos = infos;
         }
 
-        public DriverException asException(InetAddress host) {
+        public DriverException asException(InetSocketAddress host) {
             switch (code) {
-                case SERVER_ERROR:     return new DriverInternalError(String.format("An unexpected error occured server side on %s: %s", host, message));
-                case PROTOCOL_ERROR:   return new DriverInternalError("An unexpected protocol error occured. This is a bug in this library, please report: " + message);
+                case SERVER_ERROR:     return new DriverInternalError(String.format("An unexpected error occurred server side on %s: %s", host, message));
+                case PROTOCOL_ERROR:   return new DriverInternalError("An unexpected protocol error occurred. This is a bug in this library, please report: " + message);
                 case BAD_CREDENTIALS:  return new AuthenticationException(host, message);
                 case UNAVAILABLE:      return ((UnavailableException)infos).copy(); // We copy to have a nice stack trace
                 case OVERLOADED:       return new DriverInternalError(String.format("Queried host (%s) was overloaded; this shouldn't happen, another node should have been tried", host));
-                case IS_BOOTSTRAPPING: return new DriverInternalError(String.format("Queried host (%s) was boostrapping; this shouldn't happen, another node should have been tried", host));
+                case IS_BOOTSTRAPPING: return new DriverInternalError(String.format("Queried host (%s) was bootstrapping; this shouldn't happen, another node should have been tried", host));
                 case TRUNCATE_ERROR:   return new TruncateException(message);
                 case WRITE_TIMEOUT:    return ((WriteTimeoutException)infos).copy();
                 case READ_TIMEOUT:     return ((ReadTimeoutException)infos).copy();
@@ -158,10 +158,25 @@ class Responses {
         };
 
         public final Map<String, List<String>> supported;
+        public final Set<ProtocolOptions.Compression> supportedCompressions = EnumSet.noneOf(ProtocolOptions.Compression.class);
 
         public Supported(Map<String, List<String>> supported) {
             super(Message.Response.Type.SUPPORTED);
             this.supported = supported;
+
+            parseCompressions();
+        }
+
+        private void parseCompressions() {
+            List<String> compList = supported.get(Requests.Startup.COMPRESSION_OPTION);
+            if (compList == null)
+                return;
+
+            for (String compStr : compList) {
+                ProtocolOptions.Compression compr = ProtocolOptions.Compression.fromString(compStr);
+                if (compr != null)
+                    supportedCompressions.add(compr);
+            }
         }
 
         @Override
@@ -172,22 +187,30 @@ class Responses {
 
     public static abstract class Result extends Message.Response {
 
-        public static final Message.Decoder<Result> decoder = new Message.Decoder<Result>() {
+        public static final Message.Decoder<Result> decoderV1 = new Message.Decoder<Result>() {
             public Result decode(ChannelBuffer body) {
                 Kind kind = Kind.fromId(body.readInt());
-                return kind.subDecoder.decode(body);
+                return kind.subDecoderV1.decode(body);
+            }
+        };
+
+        public static final Message.Decoder<Result> decoderV2 = new Message.Decoder<Result>() {
+            public Result decode(ChannelBuffer body) {
+                Kind kind = Kind.fromId(body.readInt());
+                return kind.subDecoderV2.decode(body);
             }
         };
 
         public enum Kind {
-            VOID         (1, Void.subcodec),
-            ROWS         (2, Rows.subcodec),
-            SET_KEYSPACE (3, SetKeyspace.subcodec),
-            PREPARED     (4, Prepared.subcodec),
-            SCHEMA_CHANGE(5, SchemaChange.subcodec);
+            VOID         (1, Void.subcodec, Void.subcodec),
+            ROWS         (2, Rows.subcodec, Rows.subcodec),
+            SET_KEYSPACE (3, SetKeyspace.subcodec, SetKeyspace.subcodec),
+            PREPARED     (4, Prepared.subcodecV1, Prepared.subcodecV2),
+            SCHEMA_CHANGE(5, SchemaChange.subcodec, SchemaChange.subcodec);
 
             private final int id;
-            private final Message.Decoder<Result> subDecoder;
+            private final Message.Decoder<Result> subDecoderV1;
+            private final Message.Decoder<Result> subDecoderV2;
 
             private static final Kind[] ids;
             static {
@@ -202,9 +225,10 @@ class Responses {
                 }
             }
 
-            private Kind(int id, Message.Decoder<Result> subDecoder) {
+            private Kind(int id, Message.Decoder<Result> subDecoderV1, Message.Decoder<Result> subDecoderV2) {
                 this.id = id;
-                this.subDecoder = subDecoder;
+                this.subDecoderV1 = subDecoderV1;
+                this.subDecoderV2 = subDecoderV2;
             }
 
             public static Kind fromId(int id) {
@@ -290,6 +314,8 @@ class Responses {
                     }
                 }
 
+                static final Metadata EMPTY = new Metadata(0, null, null);
+
                 public final int columnCount;
                 public final ColumnDefinitions columns; // Can be null if no metadata was asked by the query
                 public final ByteBuffer pagingState;
@@ -340,10 +366,10 @@ class Responses {
                     StringBuilder sb = new StringBuilder();
 
                     if (columns == null) {
-                        sb.append("[").append(columnCount).append(" columns]");
+                        sb.append('[').append(columnCount).append(" columns]");
                     } else {
                         for (ColumnDefinitions.Definition column : columns) {
-                            sb.append("[").append(column.getName());
+                            sb.append('[').append(column.getName());
                             sb.append(" (").append(column.getType()).append(")]");
                         }
                     }
@@ -408,7 +434,15 @@ class Responses {
 
         public static class Prepared extends Result {
 
-            public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+            public static final Message.Decoder<Result> subcodecV1 = new Message.Decoder<Result>() {
+                public Result decode(ChannelBuffer body) {
+                    MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
+                    Rows.Metadata metadata = Rows.Metadata.decode(body);
+                    return new Prepared(id, metadata, Rows.Metadata.EMPTY);
+                }
+            };
+
+            public static final Message.Decoder<Result> subcodecV2 = new Message.Decoder<Result>() {
                 public Result decode(ChannelBuffer body) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
                     Rows.Metadata metadata = Rows.Metadata.decode(body);
@@ -430,7 +464,7 @@ class Responses {
 
             @Override
             public String toString() {
-                return "RESULT PREPARED " + statementId + " " + metadata + " (resultMetadata=" + resultMetadata + ")";
+                return "RESULT PREPARED " + statementId + ' ' + metadata + " (resultMetadata=" + resultMetadata + ')';
             }
         }
 
@@ -461,7 +495,7 @@ class Responses {
 
             @Override
             public String toString() {
-                return "RESULT schema change " + change + " on " + keyspace + (columnFamily.isEmpty() ? "" : "." + columnFamily);
+                return "RESULT schema change " + change + " on " + keyspace + (columnFamily.isEmpty() ? "" : '.' + columnFamily);
             }
         }
     }
@@ -492,6 +526,9 @@ class Responses {
         public static final Message.Decoder<AuthChallenge> decoder = new Message.Decoder<AuthChallenge>() {
             public AuthChallenge decode(ChannelBuffer body) {
                 ByteBuffer b = CBUtil.readValue(body);
+                if (b == null)
+                    return new AuthChallenge(null);
+
                 byte[] token = new byte[b.remaining()];
                 b.get(token);
                 return new AuthChallenge(token);
@@ -511,6 +548,9 @@ class Responses {
         public static final Message.Decoder<AuthSuccess> decoder = new Message.Decoder<AuthSuccess>() {
             public AuthSuccess decode(ChannelBuffer body) {
                 ByteBuffer b = CBUtil.readValue(body);
+                if (b == null)
+                    return new AuthSuccess(null);
+
                 byte[] token = new byte[b.remaining()];
                 b.get(token);
                 return new AuthSuccess(token);

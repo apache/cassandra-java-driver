@@ -20,18 +20,11 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
+import static com.datastax.driver.core.TestUtils.*;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-
-import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_GENERIC_FORMAT;
-import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
-import static com.datastax.driver.core.TestUtils.SIMPLE_TABLE;
-import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
-
-import static org.testng.Assert.fail;
 
 public abstract class AbstractPoliciesTest {
     private static final boolean DEBUG = false;
@@ -86,8 +79,17 @@ public abstract class AbstractPoliciesTest {
             Integer queried = coordinators.get(InetAddress.getByName(host));
             if (DEBUG)
                 System.out.println(String.format("Expected: %s\tReceived: %s", n, queried));
-            else
-                assertEquals(queried == null ? 0 : queried, n, "For " + host);
+            else {
+                queried = queried == null ? 0 : queried;
+
+                String map = new String();
+                if (n != queried) {
+                    for (Map.Entry<InetAddress, Integer> entry : coordinators.entrySet()) {
+                        map += entry.getKey() + " : " + entry.getValue() + ", ";
+                    }
+                }
+                assertEquals(queried == null ? 0 : queried, n, "For " + host + " in {" + map + "}");
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -118,18 +120,33 @@ public abstract class AbstractPoliciesTest {
      * Init methods that handle writes using batch and consistency options.
      */
     protected void init(CCMBridge.CCMCluster c, int n) {
-        init(c, n, false, ConsistencyLevel.ONE);
+        write(c, n, false, ConsistencyLevel.ONE);
+        prepared = c.session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?").setConsistencyLevel(ConsistencyLevel.ONE);
     }
 
     protected void init(CCMBridge.CCMCluster c, int n, boolean batch) {
-        init(c, n, batch, ConsistencyLevel.ONE);
+        write(c, n, batch, ConsistencyLevel.ONE);
+        prepared = c.session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?").setConsistencyLevel(ConsistencyLevel.ONE);
     }
 
     protected void init(CCMBridge.CCMCluster c, int n, ConsistencyLevel cl) {
-        init(c, n, false, cl);
+        write(c, n, false, cl);
+        prepared = c.session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?").setConsistencyLevel(cl);
     }
 
-    protected void init(CCMBridge.CCMCluster c, int n, boolean batch, ConsistencyLevel cl) {
+    protected void write(CCMBridge.CCMCluster c, int n) {
+        write(c, n, false, ConsistencyLevel.ONE);
+    }
+
+    protected void write(CCMBridge.CCMCluster c, int n, boolean batch) {
+        write(c, n, batch, ConsistencyLevel.ONE);
+    }
+
+    protected void write(CCMBridge.CCMCluster c, int n, ConsistencyLevel cl) {
+        write(c, n, false, cl);
+    }
+
+    protected void write(CCMBridge.CCMCluster c, int n, boolean batch, ConsistencyLevel cl) {
         // We don't use insert for our test because the resultSet don't ship the queriedHost
         // Also note that we don't use tracing because this would trigger requests that screw up the test
         for (int i = 0; i < n; ++i)
@@ -140,8 +157,6 @@ public abstract class AbstractPoliciesTest {
                         .setConsistencyLevel(cl));
             else
                 c.session.execute(new SimpleStatement(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", SIMPLE_TABLE)).setConsistencyLevel(cl));
-
-        prepared = c.session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?").setConsistencyLevel(cl);
     }
 
 

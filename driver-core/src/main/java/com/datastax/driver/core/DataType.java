@@ -15,24 +15,16 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
-import org.jboss.netty.buffer.ChannelBuffer;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import org.jboss.netty.buffer.ChannelBuffer;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
@@ -456,7 +448,7 @@ public class DataType {
     public ByteBuffer parse(String value) {
         if (name == Name.CUSTOM)
             throw new InvalidTypeException(String.format("Cannot parse '%s' as value of custom type of class '%s' "
-                                                       + "(values for custom type cannot be parse and must be inputed as bytes directly)", value, customClassName));
+                                                       + "(values for custom type cannot be parse and must be inputted as bytes directly)", value, customClassName));
 
         if (name.isCollection())
             throw new InvalidTypeException(String.format("Cannot parse value as %s, parsing collections is not currently supported", name));
@@ -552,7 +544,7 @@ public class DataType {
      * <p>
      * This is equivalent to {@link #serialize} but with the difference that
      * the actual {@code DataType} of the resulting value is inferred from the
-     * java class of {@code value}. The correspondance between CQL {@code DataType}
+     * java class of {@code value}. The correspondence between CQL {@code DataType}
      * and java class used is the one induced by the method {@link Name#asJavaClass}.
      * Note that if you know the {@code DataType} of {@code value}, you should use
      * the {@link #serialize} method instead as it is going to be faster.

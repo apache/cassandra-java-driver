@@ -18,11 +18,7 @@ package com.datastax.driver.core;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
-import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.*;
 
 /**
  * Metrics exposed by the driver.
@@ -55,8 +51,8 @@ public class Metrics {
         @Override
         public Integer getValue() {
             Set<Host> s = new HashSet<Host>();
-            for (Session session : manager.sessions)
-                s.addAll(session.manager.pools.keySet());
+            for (SessionManager session : manager.sessions)
+                s.addAll(session.pools.keySet());
             return s.size();
         }
     });
@@ -64,8 +60,8 @@ public class Metrics {
         @Override
         public Integer getValue() {
             int value = manager.controlConnection.isOpen() ? 1 : 0;
-            for (Session session : manager.sessions)
-                for (HostConnectionPool pool : session.manager.pools.values())
+            for (SessionManager session : manager.sessions)
+                for (HostConnectionPool pool : session.pools.values())
                     value += pool.opened();
             return value;
         }

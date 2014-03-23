@@ -18,7 +18,6 @@ package com.datastax.driver.stress;
 import java.util.Iterator;
 
 import com.google.common.util.concurrent.Uninterruptibles;
-import com.yammer.metrics.core.TimerContext;
 
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.DriverException;
@@ -28,11 +27,11 @@ public class BlockingConsumer implements Consumer {
     private final Runner runner = new Runner();
 
     private final Session session;
-    private final Iterator<QueryGenerator.Request> requests;
+    private final QueryGenerator requests;
     private final Reporter reporter;
 
     public BlockingConsumer(Session session,
-                            Iterator<QueryGenerator.Request> requests,
+                            QueryGenerator requests,
                             Reporter reporter) {
         this.session = session;
         this.requests = requests;
@@ -58,22 +57,19 @@ public class BlockingConsumer implements Consumer {
 
         public void run() {
             try {
-
                 while (requests.hasNext())
                     handle(requests.next());
-
             } catch (DriverException e) {
                 System.err.println("Error during query: " + e.getMessage());
             }
         }
 
         protected void handle(QueryGenerator.Request request) {
-            TimerContext context = reporter.latencies.time();
+            Reporter.Context ctx = reporter.newRequest();
             try {
                 request.execute(session);
             } finally {
-                context.stop();
-                reporter.requests.mark();
+                ctx.done();
             }
         }
     }

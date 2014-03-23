@@ -18,10 +18,11 @@ package com.datastax.driver.core;
 import java.util.*;
 
 import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
-import static org.testng.Assert.*;
-
-import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import static com.datastax.driver.core.TestUtils.*;
 
 /**
@@ -52,9 +53,9 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         for (DataType type : DataType.allPrimitiveTypes()) {
             if (exclude(type))
                 continue;
-            sb.append(", c_").append(type).append(" ").append(type);
+            sb.append(", c_").append(type).append(' ').append(type);
         }
-        sb.append(")");
+        sb.append(')');
         defs.add(sb.toString());
 
         sb = new StringBuilder();
@@ -62,9 +63,9 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         for (DataType type : DataType.allPrimitiveTypes()) {
             if (exclude(type))
                 continue;
-            sb.append(", c_list_").append(type).append(" list<").append(type).append(">");
+            sb.append(", c_list_").append(type).append(" list<").append(type).append('>');
         }
-        sb.append(")");
+        sb.append(')');
         defs.add(sb.toString());
 
         sb = new StringBuilder();
@@ -73,9 +74,9 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             // This must be handled separatly
             if (exclude(type))
                 continue;
-            sb.append(", c_set_").append(type).append(" set<").append(type).append(">");
+            sb.append(", c_set_").append(type).append(" set<").append(type).append('>');
         }
-        sb.append(")");
+        sb.append(')');
         defs.add(sb.toString());
 
         sb = new StringBuilder();
@@ -89,10 +90,10 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 // This must be handled separatly
                 if (exclude(valueType))
                     continue;
-                sb.append(", c_map_").append(keyType).append("_").append(valueType).append(" map<").append(keyType).append(",").append(valueType).append(">");
+                sb.append(", c_map_").append(keyType).append('_').append(valueType).append(" map<").append(keyType).append(',').append(valueType).append('>');
             }
         }
-        sb.append(")");
+        sb.append(')');
         defs.add(sb.toString());
 
         defs.add(String.format("CREATE TABLE %s (k text PRIMARY KEY, i int)", SIMPLE_TABLE));
@@ -244,7 +245,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 if (exclude(rawValueType))
                     continue;
 
-                String name = "c_map_" + rawKeyType + "_" + rawValueType;
+                String name = "c_map_" + rawKeyType + '_' + rawValueType;
                 DataType type = DataType.map(rawKeyType, rawValueType);
                 Map<Object, Object> value = (Map<Object, Object>)getFixedValue(type);;
                 PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
@@ -274,7 +275,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 if (exclude(rawValueType))
                     continue;
 
-                String name = "c_map_" + rawKeyType + "_" + rawValueType;
+                String name = "c_map_" + rawKeyType + '_' + rawValueType;
                 DataType type = DataType.map(rawKeyType, rawValueType);
                 Map<Object, Object> value = (Map<Object, Object>)getFixedValue2(type);;
                 PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
@@ -289,7 +290,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private void reprepareOnNewlyUpNodeTest(String ks, Session session) throws Exception {
 
-        ks = ks == null ? "" : ks + ".";
+        ks = ks == null ? "" : ks + '.';
 
         session.execute("INSERT INTO " + ks + "test (k, i) VALUES ('123', 17)");
         session.execute("INSERT INTO " + ks + "test (k, i) VALUES ('124', 18)");
@@ -299,10 +300,10 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(session.execute(ps.bind("123")).one().getInt("i"), 17);
 
         cassandraCluster.stop();
-        waitForDown(CCMBridge.IP_PREFIX + "1", cluster);
+        waitForDown(CCMBridge.IP_PREFIX + '1', cluster);
 
         cassandraCluster.start();
-        waitFor(CCMBridge.IP_PREFIX + "1", cluster);
+        waitFor(CCMBridge.IP_PREFIX + '1', cluster, 120);
 
         try
         {
@@ -380,25 +381,31 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void batchTest() throws Exception {
 
-        PreparedStatement ps1 = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, ?)");
-        PreparedStatement ps2 = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, 'bar')");
+        try {
+            PreparedStatement ps1 = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, ?)");
+            PreparedStatement ps2 = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, 'bar')");
 
-        BatchStatement bs = new BatchStatement();
-        bs.add(ps1.bind("one", "foo"));
-        bs.add(ps2.bind("two"));
-        bs.add(new SimpleStatement("INSERT INTO " + SIMPLE_TABLE2 + " (k, v) VALUES ('three', 'foobar')"));
+            BatchStatement bs = new BatchStatement();
+            bs.add(ps1.bind("one", "foo"));
+            bs.add(ps2.bind("two"));
+            bs.add(new SimpleStatement("INSERT INTO " + SIMPLE_TABLE2 + " (k, v) VALUES ('three', 'foobar')"));
 
-        session.execute(bs);
+            session.execute(bs);
 
-        List<Row> all = session.execute("SELECT * FROM " + SIMPLE_TABLE2).all();
+            List<Row> all = session.execute("SELECT * FROM " + SIMPLE_TABLE2).all();
 
-        assertEquals("three", all.get(0).getString("k"));
-        assertEquals("foobar", all.get(0).getString("v"));
+            assertEquals("three", all.get(0).getString("k"));
+            assertEquals("foobar", all.get(0).getString("v"));
 
-        assertEquals("one", all.get(1).getString("k"));
-        assertEquals("foo", all.get(1).getString("v"));
+            assertEquals("one", all.get(1).getString("k"));
+            assertEquals("foo", all.get(1).getString("v"));
 
-        assertEquals("two", all.get(2).getString("k"));
-        assertEquals("bar", all.get(2).getString("v"));
+            assertEquals("two", all.get(2).getString("k"));
+            assertEquals("bar", all.get(2).getString("v"));
+        } catch (UnsupportedFeatureException e) {
+            // This is expected when testing the protocol v1
+            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != 1)
+                throw e;
+        }
     }
 }

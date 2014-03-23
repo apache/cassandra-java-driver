@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import static org.testng.Assert.*;
-
 import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 public class StreamIdGeneratorTest {
 

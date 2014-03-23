@@ -101,7 +101,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     }
 
     /**
-     * The first index in this metadata of the povided name, if present.
+     * The first index in this metadata of the provided name, if present.
      *
      * @param name the name of the column.
      * @return the index of the first occurrence of {@code name} in this metadata if
@@ -157,10 +157,10 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     }
 
     /**
-     * Returns the type of the first occurence of {@code name} in this metadata.
+     * Returns the type of the first occurrence of {@code name} in this metadata.
      *
      * @param name the name of the column.
-     * @return the type of (the first occurence of) {@code name} in this metadata.
+     * @return the type of (the first occurrence of) {@code name} in this metadata.
      *
      * @throws IllegalArgumentException if {@code name} is not in this metadata.
      */
@@ -181,7 +181,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     }
 
     /**
-     * Returns the keyspace of the first occurence of {@code name} in this metadata.
+     * Returns the keyspace of the first occurrence of {@code name} in this metadata.
      *
      * @param name the name of the column.
      * @return the keyspace of (the first occurrence of) column {@code name} in this metadata.
@@ -205,10 +205,10 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     }
 
     /**
-     * Returns the table of first occurence of {@code name} in this metadata.
+     * Returns the table of first occurrence of {@code name} in this metadata.
      *
      * @param name the name of the column.
-     * @return the table of (the first occurence of) column {@code name} in this metadata.
+     * @return the table of (the first occurrence of) column {@code name} in this metadata.
      *
      * @throws IllegalArgumentException if {@code name} is not in this metadata.
      */
@@ -224,9 +224,9 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
             if (i != 0)
                 sb.append(", ");
             Definition def = byIdx[i];
-            sb.append(def.name).append("(").append(def.type).append(")");
+            sb.append(def.name).append('(').append(def.type).append(')');
         }
-        sb.append("]");
+        sb.append(']');
         return sb.toString();
     }
 

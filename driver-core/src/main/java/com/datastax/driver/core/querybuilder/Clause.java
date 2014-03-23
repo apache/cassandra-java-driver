@@ -24,7 +24,7 @@ public abstract class Clause extends Utils.Appendeable {
 
     private Clause(String name) {
         this.name = name;
-    };
+    }
 
     String name() {
         return name;
@@ -68,7 +68,7 @@ public abstract class Clause extends Utils.Appendeable {
             super(name);
             this.values = values;
 
-            if (values == null || values.size() == 0)
+            if (values == null)
                 throw new IllegalArgumentException("Missing values for IN clause");
         }
 
@@ -83,17 +83,17 @@ public abstract class Clause extends Utils.Appendeable {
             //    ... IN ? ...
             // which binds the variable to the full list the IN is on.
             if (values.size() == 1 && values.get(0) instanceof BindMarker) {
-                Utils.appendName(name, sb).append("IN ").append(values.get(0));
+                Utils.appendName(name, sb).append(" IN ").append(values.get(0));
                 return;
             }
 
             Utils.appendName(name, sb).append(" IN (");
-            Utils.joinAndAppendValues(sb, ",", values, variables).append(")");
+            Utils.joinAndAppendValues(sb, ",", values, variables).append(')');
         }
 
         @Override
         Object firstValue() {
-            return values.get(0);
+            return values.isEmpty() ? null : values.get(0);
         }
 
         @Override

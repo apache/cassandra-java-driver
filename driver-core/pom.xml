@@ -18,10 +18,10 @@
   <parent>
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>cassandra-driver-parent</artifactId>
-    <version>2.0.0-beta2-SNAPSHOT</version>
+    <version>2.0.2-SNAPSHOT</version>
   </parent>
   <artifactId>cassandra-driver-core</artifactId>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
   <name>DataStax Java Driver for Apache Cassandra - Core</name>
   <description>A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's binary protocol.</description>
   <url>https://github.com/datastax/java-driver</url>
@@ -30,31 +30,19 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty</artifactId>
-      <version>3.7.0.Final</version>
+      <version>3.9.0.Final</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>15.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-core-asl</artifactId>
-      <version>1.9.13</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-mapper-asl</artifactId>
-      <version>1.9.13</version>
+      <version>16.0.1</version>
     </dependency>
 
     <dependency>
       <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>3.0.1</version>
+      <version>3.0.2</version>
     </dependency>
 
     <!-- Compression libraries for the protocol. -->
@@ -64,12 +52,14 @@
         <groupId>org.xerial.snappy</groupId>
         <artifactId>snappy-java</artifactId>
         <version>1.0.5</version>
+        <optional>true</optional>
     </dependency>
 
     <dependency>
         <groupId>net.jpountz.lz4</groupId>
         <artifactId>lz4</artifactId>
         <version>1.2.0</version>
+        <optional>true</optional>
     </dependency>
 
     <!-- End of compression libraries -->
@@ -77,7 +67,7 @@
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
-      <version>6.8.7</version>
+      <version>6.8.8</version>
       <scope>test</scope>
     </dependency>
 

@@ -45,22 +45,22 @@ class CassandraTypeParser {
 
     private static ImmutableMap<String, DataType> cassTypeToDataType =
         new ImmutableMap.Builder<String, DataType>()
-            .put("org.apache.cassandra.db.marshal.AsciiType",       DataType.ascii())
-            .put("org.apache.cassandra.db.marshal.LongType",        DataType.bigint())
-            .put("org.apache.cassandra.db.marshal.BlobType",        DataType.blob())
-            .put("org.apache.cassandra.db.marshal.BooleanType",     DataType.cboolean())
-            .put("org.apache.cassandra.db.marshal.CounterType",     DataType.counter())
-            .put("org.apache.cassandra.db.marshal.DecimalType",     DataType.decimal())
-            .put("org.apache.cassandra.db.marshal.DoubleType",      DataType.cdouble())
-            .put("org.apache.cassandra.db.marshal.FloatType",       DataType.cfloat())
-            .put("org.apache.cassandra.db.marshal.InetAddressType", DataType.inet())
-            .put("org.apache.cassandra.db.marshal.Int32Type",       DataType.cint())
-            .put("org.apache.cassandra.db.marshal.UTF8Type",        DataType.text())
-            .put("org.apache.cassandra.db.marshal.TimestampType",   DataType.timestamp())
-            .put("org.apache.cassandra.db.marshal.DateType",        DataType.timestamp())
-            .put("org.apache.cassandra.db.marshal.UUIDType",        DataType.uuid())
-            .put("org.apache.cassandra.db.marshal.IntegerType",     DataType.varint())
-            .put("org.apache.cassandra.db.marshal.TimeUUIDType",    DataType.timeuuid())
+            .put("org.apache.cassandra.db.marshal.AsciiType",         DataType.ascii())
+            .put("org.apache.cassandra.db.marshal.LongType",          DataType.bigint())
+            .put("org.apache.cassandra.db.marshal.BytesType",         DataType.blob())
+            .put("org.apache.cassandra.db.marshal.BooleanType",       DataType.cboolean())
+            .put("org.apache.cassandra.db.marshal.CounterColumnType", DataType.counter())
+            .put("org.apache.cassandra.db.marshal.DecimalType",       DataType.decimal())
+            .put("org.apache.cassandra.db.marshal.DoubleType",        DataType.cdouble())
+            .put("org.apache.cassandra.db.marshal.FloatType",         DataType.cfloat())
+            .put("org.apache.cassandra.db.marshal.InetAddressType",   DataType.inet())
+            .put("org.apache.cassandra.db.marshal.Int32Type",         DataType.cint())
+            .put("org.apache.cassandra.db.marshal.UTF8Type",          DataType.text())
+            .put("org.apache.cassandra.db.marshal.TimestampType",     DataType.timestamp())
+            .put("org.apache.cassandra.db.marshal.DateType",          DataType.timestamp())
+            .put("org.apache.cassandra.db.marshal.UUIDType",          DataType.uuid())
+            .put("org.apache.cassandra.db.marshal.IntegerType",       DataType.varint())
+            .put("org.apache.cassandra.db.marshal.TimeUUIDType",      DataType.timeuuid())
             .build();
 
     static DataType parseOne(String className) {
@@ -92,7 +92,7 @@ class CassandraTypeParser {
         return type == null ? DataType.custom(className) : type;
     }
 
-    private static boolean isReversed(String className) {
+    public static boolean isReversed(String className) {
         return className.startsWith(REVERSED_TYPE);
     }
 
@@ -109,7 +109,7 @@ class CassandraTypeParser {
 
         String next = parser.parseNextName();
         if (!isComposite(next))
-            return new ParseResult(parseOne(className));
+            return new ParseResult(parseOne(className), isReversed(next));
 
         List<String> subClassNames = parser.getTypeParameters();
         int count = subClassNames.size();
@@ -125,24 +125,32 @@ class CassandraTypeParser {
         }
 
         List<DataType> types = new ArrayList<DataType>(count);
-        for (int i = 0; i < count; i++)
+        List<Boolean> reversed = new ArrayList<Boolean>(count);
+        for (int i = 0; i < count; i++) {
             types.add(parseOne(subClassNames.get(i)));
+            reversed.add(isReversed(subClassNames.get(i)));
+        }
 
-        return new ParseResult(true, types, collections);
+        return new ParseResult(true, types, reversed, collections);
     }
 
     static class ParseResult {
         public final boolean isComposite;
         public final List<DataType> types;
+        public final List<Boolean> reversed;
         public final Map<String, DataType> collections;
 
-        private ParseResult(DataType type) {
-            this(false, Collections.<DataType>singletonList(type), Collections.<String, DataType>emptyMap());
+        private ParseResult(DataType type, boolean reversed) {
+            this(false,
+                 Collections.<DataType>singletonList(type),
+                 Collections.<Boolean>singletonList(reversed),
+                 Collections.<String, DataType>emptyMap());
         }
 
-        private ParseResult(boolean isComposite, List<DataType> types, Map<String, DataType> collections) {
+        private ParseResult(boolean isComposite, List<DataType> types, List<Boolean> reversed, Map<String, DataType> collections) {
             this.isComposite = isComposite;
             this.types = types;
+            this.reversed = reversed;
             this.collections = collections;
         }
     }

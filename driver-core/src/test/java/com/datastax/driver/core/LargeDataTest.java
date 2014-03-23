@@ -17,14 +17,14 @@ package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
 
+import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Insert;
-
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
-
-import org.testng.annotations.Test;
-import static org.testng.Assert.*;
 
 /**
  * Test limitations when using large amounts of data with the driver
@@ -283,7 +283,7 @@ public class LargeDataTest {
         for (int i = 0; i < 330; ++i) {
             tableDeclaration.append(String.format(", %s INT", createColumnName(i)));
         }
-        tableDeclaration.append(")");
+        tableDeclaration.append(')');
         c.session.execute(tableDeclaration.toString());
 
         try {
@@ -319,7 +319,7 @@ public class LargeDataTest {
         for (int i = 0; i < 330; ++i) {
             tableDeclaration.append(String.format(", %s INT", createColumnName(i)));
         }
-        tableDeclaration.append(")");
+        tableDeclaration.append(')');
         c.session.execute(tableDeclaration.toString());
 
         try {

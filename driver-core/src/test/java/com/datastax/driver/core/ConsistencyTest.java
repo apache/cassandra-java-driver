@@ -18,12 +18,17 @@ package com.datastax.driver.core;
 import java.util.*;
 
 import org.testng.annotations.Test;
-
 import static org.testng.Assert.*;
 
-import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.policies.*;
-import static com.datastax.driver.core.TestUtils.*;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.exceptions.ReadTimeoutException;
+import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.WriteTimeoutException;
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.TokenAwarePolicy;
+import static com.datastax.driver.core.TestUtils.stopAndWait;
 
 public class ConsistencyTest extends AbstractPoliciesTest {
 
@@ -37,17 +42,14 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.ONE);
             query(c, 12, ConsistencyLevel.ONE);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
 
             resetCoordinators();
-            c.cassandraCluster.forceStop(2);
-            waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
+            stopAndWait(c, 2);
 
-            List<ConsistencyLevel> acceptedList = Arrays.asList(
-                                                    ConsistencyLevel.ANY
-                                                  );
+            List<ConsistencyLevel> acceptedList = Arrays.asList(ConsistencyLevel.ANY);
 
             List<ConsistencyLevel> failList = Arrays.asList(
                                                     ConsistencyLevel.ONE,
@@ -135,13 +137,12 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
 
             resetCoordinators();
-            c.cassandraCluster.forceStop(2);
-            waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
+            stopAndWait(c, 2);
 
             List<ConsistencyLevel> acceptedList = Arrays.asList(
                                                     ConsistencyLevel.ANY,
@@ -233,26 +234,32 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
 
             resetCoordinators();
-            c.cassandraCluster.forceStop(2);
-            waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
+            stopAndWait(c, 2);
+
+            Set<ConsistencyLevel> cls = EnumSet.allOf(ConsistencyLevel.class);
+            // Remove serial consistencies as they require conditional read/writes
+            cls.remove(ConsistencyLevel.SERIAL);
+            cls.remove(ConsistencyLevel.LOCAL_SERIAL);
 
             List<ConsistencyLevel> acceptedList = Arrays.asList(
                                                     ConsistencyLevel.ANY,
                                                     ConsistencyLevel.ONE,
                                                     ConsistencyLevel.TWO,
-                                                    ConsistencyLevel.QUORUM
+                                                    ConsistencyLevel.QUORUM,
+                                                    ConsistencyLevel.LOCAL_QUORUM,
+                                                    ConsistencyLevel.EACH_QUORUM
                                                   );
 
             List<ConsistencyLevel> failList = Arrays.asList(
                                                     ConsistencyLevel.THREE,
-                                                    ConsistencyLevel.ALL,
-                                                    ConsistencyLevel.LOCAL_QUORUM,
-                                                    ConsistencyLevel.EACH_QUORUM);
+                                                    ConsistencyLevel.ALL
+                                              );
+
 
             // Test successful writes
             for (ConsistencyLevel cl : acceptedList) {
@@ -269,8 +276,10 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                     query(c, 12, cl);
                 } catch (InvalidQueryException e) {
                     List<String> acceptableErrorMessages = Arrays.asList(
-                        "ANY ConsistencyLevel is only supported for writes");
-                    assertTrue(acceptableErrorMessages.contains(e.getMessage()));
+                        "ANY ConsistencyLevel is only supported for writes",
+                        "EACH_QUORUM ConsistencyLevel is only supported for writes"
+                    );
+                    assertTrue(acceptableErrorMessages.contains(e.getMessage()), "Got unexpected message " + e.getMessage());
                 }
             }
 
@@ -279,11 +288,6 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 try {
                     init(c, 12, cl);
                     fail(String.format("Test passed at CL.%s.", cl));
-                } catch (InvalidQueryException e) {
-                    List<String> acceptableErrorMessages = Arrays.asList(
-                        "consistency level LOCAL_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)",
-                        "consistency level EACH_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)");
-                    assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
                 } catch (UnavailableException e) {
                     // expected to fail when the client has already marked the
                     // node as DOWN
@@ -298,11 +302,6 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 try {
                     query(c, 12, cl);
                     fail(String.format("Test passed at CL.%s.", cl));
-                } catch (InvalidQueryException e) {
-                    List<String> acceptableErrorMessages = Arrays.asList(
-                        "consistency level LOCAL_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)",
-                        "EACH_QUORUM ConsistencyLevel is only supported for writes");
-                    assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
                 } catch (ReadTimeoutException e) {
                     // expected to fail when the client hasn't marked the
                     // node as DOWN yet
@@ -321,6 +320,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
         }
     }
 
+
     @Test(groups = "long")
     public void testRFOneDowngradingCL() throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy())).withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
@@ -331,13 +331,12 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.ONE);
             query(c, 12, ConsistencyLevel.ONE);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
 
             resetCoordinators();
-            c.cassandraCluster.forceStop(2);
-            waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
+            stopAndWait(c, 2);
 
             List<ConsistencyLevel> acceptedList = Arrays.asList(
                                                     ConsistencyLevel.ANY
@@ -377,11 +376,6 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                 try {
                     init(c, 12, cl);
                     fail(String.format("Test passed at CL.%s.", cl));
-                } catch (InvalidQueryException e) {
-                    List<String> acceptableErrorMessages = Arrays.asList(
-                        "consistency level LOCAL_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)",
-                        "consistency level EACH_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)");
-                    assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
                 } catch (UnavailableException e) {
                     // expected to fail when the client has already marked the
                     // node as DOWN
@@ -398,9 +392,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                     fail(String.format("Test passed at CL.%s.", cl));
                 } catch (InvalidQueryException e) {
                     List<String> acceptableErrorMessages = Arrays.asList(
-                        "consistency level LOCAL_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)",
-                        "EACH_QUORUM ConsistencyLevel is only supported for writes");
-                    assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
+                        "EACH_QUORUM ConsistencyLevel is only supported for writes"
+                    );
+                    assertTrue(acceptableErrorMessages.contains(e.getMessage()), "Got unexpected message " + e.getMessage());
                 } catch (ReadTimeoutException e) {
                     // expected to fail when the client hasn't marked the
                     // node as DOWN yet
@@ -429,28 +423,17 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
 
             resetCoordinators();
-            c.cassandraCluster.forceStop(2);
-            // FIXME: This sleep is needed to allow the waitFor() to work
-            Thread.sleep(20000);
-            waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
+            stopAndWait(c, 2);
 
-            List<ConsistencyLevel> acceptedList = Arrays.asList(
-                                                    ConsistencyLevel.ANY,
-                                                    ConsistencyLevel.ONE,
-                                                    ConsistencyLevel.TWO,
-                                                    ConsistencyLevel.QUORUM,
-                                                    ConsistencyLevel.THREE,
-                                                    ConsistencyLevel.ALL
-                                                  );
-
-            List<ConsistencyLevel> failList = Arrays.asList(
-                                                    ConsistencyLevel.LOCAL_QUORUM,
-                                                    ConsistencyLevel.EACH_QUORUM);
+            Set<ConsistencyLevel> acceptedList = EnumSet.allOf(ConsistencyLevel.class);
+            // Remove serial consistencies as they require conditional read/writes
+            acceptedList.remove(ConsistencyLevel.SERIAL);
+            acceptedList.remove(ConsistencyLevel.LOCAL_SERIAL);
 
             // Test successful writes
             for (ConsistencyLevel cl : acceptedList) {
@@ -467,46 +450,10 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                     query(c, 12, cl);
                 } catch (InvalidQueryException e) {
                     List<String> acceptableErrorMessages = Arrays.asList(
-                        "ANY ConsistencyLevel is only supported for writes");
-                    assertTrue(acceptableErrorMessages.contains(e.getMessage()));
-                }
-            }
-
-            // Test writes which should fail
-            for (ConsistencyLevel cl : failList) {
-                try {
-                    init(c, 12, cl);
-                    fail(String.format("Test passed at CL.%s.", cl));
-                } catch (InvalidQueryException e) {
-                    List<String> acceptableErrorMessages = Arrays.asList(
-                        "consistency level LOCAL_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)",
-                        "consistency level EACH_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)");
-                    assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
-                } catch (UnavailableException e) {
-                    // expected to fail when the client has already marked the
-                    // node as DOWN
-                } catch (WriteTimeoutException e) {
-                    // expected to fail when the client hasn't marked the
-                    // node as DOWN yet
-                }
-            }
-
-            // Test reads which should fail
-            for (ConsistencyLevel cl : failList) {
-                try {
-                    query(c, 12, cl);
-                    fail(String.format("Test passed at CL.%s.", cl));
-                } catch (InvalidQueryException e) {
-                    List<String> acceptableErrorMessages = Arrays.asList(
-                        "consistency level LOCAL_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)",
-                        "EACH_QUORUM ConsistencyLevel is only supported for writes");
-                    assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
-                } catch (ReadTimeoutException e) {
-                    // expected to fail when the client hasn't marked the
-                    // node as DOWN yet
-                } catch (UnavailableException e) {
-                    // expected to fail when the client has already marked the
-                    // node as DOWN
+                        "ANY ConsistencyLevel is only supported for writes",
+                        "EACH_QUORUM ConsistencyLevel is only supported for writes"
+                    );
+                    assertTrue(acceptableErrorMessages.contains(e.getMessage()), "Got unexpected message " + e.getMessage());
                 }
             }
 
@@ -542,32 +489,23 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             try {
                 // This test catches TokenAwarePolicy
                 // However, full tests in LoadBalancingPolicyTest.java
-                assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-                assertQueried(CCMBridge.IP_PREFIX + "2", 12);
-                assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+                assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+                assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+                assertQueried(CCMBridge.IP_PREFIX + '3', 0);
             } catch (AssertionError e) {
                 // This test catches RoundRobinPolicy
-                assertQueried(CCMBridge.IP_PREFIX + "1", 4);
-                assertQueried(CCMBridge.IP_PREFIX + "2", 4);
-                assertQueried(CCMBridge.IP_PREFIX + "3", 4);
+                assertQueried(CCMBridge.IP_PREFIX + '1', 4);
+                assertQueried(CCMBridge.IP_PREFIX + '2', 4);
+                assertQueried(CCMBridge.IP_PREFIX + '3', 4);
             }
 
             resetCoordinators();
-            c.cassandraCluster.forceStop(2);
-            waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
+            stopAndWait(c, 2);
 
-            List<ConsistencyLevel> acceptedList = Arrays.asList(
-                                                    ConsistencyLevel.ANY,
-                                                    ConsistencyLevel.ONE,
-                                                    ConsistencyLevel.TWO,
-                                                    ConsistencyLevel.QUORUM,
-                                                    ConsistencyLevel.THREE,
-                                                    ConsistencyLevel.ALL
-                                                  );
-
-            List<ConsistencyLevel> failList = Arrays.asList(
-                                                    ConsistencyLevel.LOCAL_QUORUM,
-                                                    ConsistencyLevel.EACH_QUORUM);
+            Set<ConsistencyLevel> acceptedList = EnumSet.allOf(ConsistencyLevel.class);
+            // Remove serial consistencies as they require conditional read/writes
+            acceptedList.remove(ConsistencyLevel.SERIAL);
+            acceptedList.remove(ConsistencyLevel.LOCAL_SERIAL);
 
             // Test successful writes
             for (ConsistencyLevel cl : acceptedList) {
@@ -584,46 +522,10 @@ public class ConsistencyTest extends AbstractPoliciesTest {
                     query(c, 12, cl);
                 } catch (InvalidQueryException e) {
                     List<String> acceptableErrorMessages = Arrays.asList(
-                        "ANY ConsistencyLevel is only supported for writes");
-                    assertTrue(acceptableErrorMessages.contains(e.getMessage()));
-                }
-            }
-
-            // Test writes which should fail
-            for (ConsistencyLevel cl : failList) {
-                try {
-                    init(c, 12, cl);
-                    fail(String.format("Test passed at CL.%s.", cl));
-                } catch (InvalidQueryException e) {
-                    List<String> acceptableErrorMessages = Arrays.asList(
-                        "consistency level LOCAL_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)",
-                        "consistency level EACH_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)");
-                    assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
-                } catch (UnavailableException e) {
-                    // expected to fail when the client has already marked the
-                    // node as DOWN
-                } catch (WriteTimeoutException e) {
-                    // expected to fail when the client hasn't marked the
-                    // node as DOWN yet
-                }
-            }
-
-            // Test reads which should fail
-            for (ConsistencyLevel cl : failList) {
-                try {
-                    query(c, 12, cl);
-                    fail(String.format("Test passed at CL.%s.", cl));
-                } catch (InvalidQueryException e) {
-                    List<String> acceptableErrorMessages = Arrays.asList(
-                        "consistency level LOCAL_QUORUM not compatible with replication strategy (org.apache.cassandra.locator.SimpleStrategy)",
-                        "EACH_QUORUM ConsistencyLevel is only supported for writes");
-                    assertTrue(acceptableErrorMessages.contains(e.getMessage()), String.format("Received: %s", e.getMessage()));
-                } catch (ReadTimeoutException e) {
-                    // expected to fail when the client hasn't marked the
-                    // node as DOWN yet
-                } catch (UnavailableException e) {
-                    // expected to fail when the client has already marked the
-                    // node as DOWN
+                        "ANY ConsistencyLevel is only supported for writes",
+                        "EACH_QUORUM ConsistencyLevel is only supported for writes"
+                    );
+                    assertTrue(acceptableErrorMessages.contains(e.getMessage()), "Got unexpected message " + e.getMessage());
                 }
             }
 
@@ -646,18 +548,15 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 12);
-            assertQueried(CCMBridge.IP_PREFIX + "4", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "5", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "6", 0);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '4', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '5', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '6', 0);
 
             resetCoordinators();
-            c.cassandraCluster.forceStop(2);
-            // FIXME: This sleep is needed to allow the waitFor() to work
-            Thread.sleep(20000);
-            waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
+            stopAndWait(c, 2);
 
             List<ConsistencyLevel> acceptedList = Arrays.asList(
                                                     ConsistencyLevel.ANY,
@@ -740,18 +639,15 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             init(c, 12, ConsistencyLevel.TWO);
             query(c, 12, ConsistencyLevel.TWO);
 
-            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "2", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
-            assertQueried(CCMBridge.IP_PREFIX + "4", 4);
-            assertQueried(CCMBridge.IP_PREFIX + "5", 4);
-            assertQueried(CCMBridge.IP_PREFIX + "6", 4);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '4', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '5', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '6', 0);
 
             resetCoordinators();
-            c.cassandraCluster.forceStop(2);
-            // FIXME: This sleep is needed to allow the waitFor() to work
-            //Thread.sleep(20000);
-            waitForDownWithWait(CCMBridge.IP_PREFIX + "2", c.cluster, 5);
+            c.cassandraCluster.stop(2);
 
             List<ConsistencyLevel> acceptedList = Arrays.asList(
                                                     ConsistencyLevel.ANY,

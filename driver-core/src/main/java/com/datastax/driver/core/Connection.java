@@ -15,21 +15,17 @@
  */
 package com.datastax.driver.core;
 
+import javax.net.ssl.SSLEngine;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.net.ssl.SSLEngine;
 
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
-import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.DriverInternalError;
-
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -39,9 +35,11 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timeout;
 import org.jboss.netty.util.TimerTask;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
 
 // For LoggingHandler
 //import org.jboss.netty.handler.logging.LoggingHandler;
@@ -51,11 +49,11 @@ import org.slf4j.LoggerFactory;
  * A connection to a Cassandra Node.
  */
 class Connection {
-    public static final int MAX_STREAM_PER_CONNECTION = 128;
 
     private static final Logger logger = LoggerFactory.getLogger(Connection.class);
+    private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
-    public final InetAddress address;
+    public final InetSocketAddress address;
     private final String name;
 
     private final Channel channel;
@@ -63,7 +61,7 @@ class Connection {
 
     private final Dispatcher dispatcher = new Dispatcher();
 
-    // Used by connnection pooling to count how many requests are "in flight" on that connection.
+    // Used by connection pooling to count how many requests are "in flight" on that connection.
     public final AtomicInteger inFlight = new AtomicInteger(0);
 
     private final AtomicInteger writer = new AtomicInteger(0);
@@ -72,7 +70,7 @@ class Connection {
     private volatile boolean isDefunct;
     private volatile ConnectionException exception;
 
-    private final AtomicReference<ConnectionShutdownFuture> shutdownFuture = new AtomicReference<ConnectionShutdownFuture>();
+    private final AtomicReference<ConnectionCloseFuture> closeFuture = new AtomicReference<ConnectionCloseFuture>();
 
     /**
      * Create a new connection to a Cassandra node.
@@ -82,16 +80,17 @@ class Connection {
      * @throws ConnectionException if the connection attempts fails or is
      * refused by the server.
      */
-    private Connection(String name, InetAddress address, Factory factory) throws ConnectionException, InterruptedException {
+    protected Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
         this.address = address;
         this.factory = factory;
         this.name = name;
 
         ClientBootstrap bootstrap = factory.newBootstrap();
         ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
-        bootstrap.setPipelineFactory(new PipelineFactory(this, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
+        int protocolVersion = factory.protocolVersion == 1 ? 1 : 2;
+        bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
 
-        ChannelFuture future = bootstrap.connect(new InetSocketAddress(address, factory.getPort()));
+        ChannelFuture future = bootstrap.connect(address);
 
         writer.incrementAndGet();
         try {
@@ -109,7 +108,7 @@ class Connection {
         }
 
         logger.trace("[{}] Connection opened successfully", name);
-        initializeTransport();
+        initializeTransport(protocolVersion);
         logger.trace("[{}] Transport initialized and ready", name);
     }
 
@@ -119,27 +118,34 @@ class Connection {
         String msg = t.getMessage() == null || t.getMessage().isEmpty()
                    ? t.toString()
                    : t.getMessage();
-        return " (" + msg + ")";
+        return " (" + msg + ')';
     }
 
-    private void initializeTransport() throws ConnectionException, InterruptedException {
+    private void initializeTransport(int version) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
         try {
-
             ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
             Message.Response response = write(new Requests.Startup(compression)).get();
             switch (response.type) {
                 case READY:
                     break;
                 case ERROR:
-                    throw defunct(new TransportException(address, String.format("Error initializing connection: %s", ((Responses.Error)response).message)));
+                    Responses.Error error = (Responses.Error)response;
+                    // Testing for a specific string is a tad fragile but well, we don't have much choice
+                    if (error.code == ExceptionCode.PROTOCOL_ERROR && error.message.contains("Invalid or unsupported protocol version"))
+                        throw unsupportedProtocolVersionException(version);
+                    throw defunct(new TransportException(address, String.format("Error initializing connection: %s", error.message)));
                 case AUTHENTICATE:
                     Authenticator authenticator = factory.authProvider.newAuthenticator(address);
-                    byte[] initialResponse = authenticator.initialResponse();
-                    if (null == initialResponse)
-                        initialResponse = new byte[0];
-
-                    Message.Response authResponse = write(new Requests.AuthResponse(initialResponse)).get();
-                    waitForAuthCompletion(authResponse, authenticator);
+                    if (version == 1)
+                    {
+                        if (authenticator instanceof ProtocolV1Authenticator)
+                            authenticateV1(authenticator);
+                        else
+                            // DSE 3.x always uses SASL authentication backported from protocol v2
+                            authenticateV2(authenticator);
+                    }
+                    else
+                        authenticateV2(authenticator);
                     break;
                 default:
                     throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type)));
@@ -151,11 +157,43 @@ class Connection {
         }
     }
 
+    private UnsupportedProtocolVersionException unsupportedProtocolVersionException(int triedVersion) {
+        // Almost like defunct, but we don't want to wrap that exception inside a ConnectionException and
+        // we know it's happening while initializing the transport so we can simplify slightly
+        logger.debug("Got unsupported protocol version error from {} for version {}", address, triedVersion);
+        isDefunct = true;
+        closeAsync();
+        return new UnsupportedProtocolVersionException(address, triedVersion);
+    }
+
+    private void authenticateV1(Authenticator authenticator) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+        Requests.Credentials creds = new Requests.Credentials(((ProtocolV1Authenticator)authenticator).getCredentials());
+        Message.Response authResponse = write(creds).get();
+        switch (authResponse.type) {
+            case READY:
+                break;
+            case ERROR:
+                throw new AuthenticationException(address, ((Responses.Error)authResponse).message);
+            default:
+                throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a CREDENTIALS message", authResponse.type)));
+        }
+    }
+
+    private void authenticateV2(Authenticator authenticator) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+        byte[] initialResponse = authenticator.initialResponse();
+        if (null == initialResponse)
+            initialResponse = EMPTY_BYTE_ARRAY;
+
+        Message.Response authResponse = write(new Requests.AuthResponse(initialResponse)).get();
+        waitForAuthCompletion(authResponse, authenticator);
+    }
+
     private void waitForAuthCompletion(Message.Response authResponse, Authenticator authenticator)
     throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         switch (authResponse.type) {
             case AUTH_SUCCESS:
                 logger.trace("Authentication complete");
+                authenticator.onAuthenticationSuccess(((Responses.AuthSuccess)authResponse).token);
                 break;
             case AUTH_CHALLENGE:
                 byte[] responseToServer = authenticator.evaluateChallenge(((Responses.AuthChallenge)authResponse).token);
@@ -171,7 +209,15 @@ class Connection {
                 }
                 break;
             case ERROR:
-                throw new AuthenticationException(address, ((Responses.Error)authResponse).message);
+                // This is not very nice, but we're trying to identify if we
+                // attempted v2 auth against a server which only supports v1
+                // The AIOOBE indicates that the server didn't recognise the
+                // initial AuthResponse message
+                String message = ((Responses.Error)authResponse).message;
+                if (message.startsWith("java.lang.ArrayIndexOutOfBoundsException: 15"))
+                    message = String.format("Cannot use authenticator %s with protocol version 1, "
+                                  + "only plain text authentication is supported with this protocol version", authenticator);
+                throw new AuthenticationException(address, message);
             default:
                 throw new TransportException(address, String.format("Unexpected %s response message from server to authentication message", authResponse.type));
         }
@@ -179,6 +225,10 @@ class Connection {
 
     public boolean isDefunct() {
         return isDefunct;
+    }
+
+    public int maxAvailableStreams() {
+        return dispatcher.streamIdHandler.maxAvailableStreams();
     }
 
     public ConnectionException lastException() {
@@ -191,7 +241,7 @@ class Connection {
         exception = e;
         isDefunct = true;
         dispatcher.errorOutAllHandler(e);
-        close();
+        closeAsync();
         return e;
     }
 
@@ -210,7 +260,7 @@ class Connection {
             logger.trace("[{}] Setting keyspace {}", name, keyspace);
             long timeout = factory.getConnectTimeoutMillis();
             // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
-            Future future = write(new Requests.Query("USE \"" + keyspace + "\""));
+            Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
             Message.Response response = Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
             switch (response.type) {
                 case RESULT:
@@ -266,12 +316,12 @@ class Connection {
          * never leave a handler that won't get an answer or be errored out.
          */
         if (isDefunct) {
-            dispatcher.removeHandler(handler.streamId);
+            dispatcher.removeHandler(handler.streamId, true);
             throw new ConnectionException(address, "Write attempt on defunct connection");
         }
 
         if (isClosed()) {
-            dispatcher.removeHandler(handler.streamId);
+            dispatcher.removeHandler(handler.streamId, true);
             throw new ConnectionException(address, "Connection has been closed");
         }
 
@@ -292,7 +342,7 @@ class Connection {
                     logger.debug("[{}] Error writing request {}", name, request);
                     // Remove this handler from the dispatcher so it don't get notified of the error
                     // twice (we will fail that method already)
-                    dispatcher.removeHandler(handler.streamId);
+                    dispatcher.removeHandler(handler.streamId, true);
 
                     ConnectionException ce;
                     if (writeFuture.getCause() instanceof java.nio.channels.ClosedChannelException) {
@@ -309,16 +359,16 @@ class Connection {
     }
 
     public boolean isClosed() {
-        return shutdownFuture.get() != null;
+        return closeFuture.get() != null;
     }
 
-    public ShutdownFuture close() {
+    public CloseFuture closeAsync() {
 
-        ConnectionShutdownFuture future = new ConnectionShutdownFuture();
-        if (!shutdownFuture.compareAndSet(null, future))
+        ConnectionCloseFuture future = new ConnectionCloseFuture();
+        if (!closeFuture.compareAndSet(null, future))
         {
-            // Shutdown had already been called, return the existing future
-            return shutdownFuture.get();
+            // close had already been called, return the existing future
+            return closeFuture.get();
         }
 
         logger.trace("[{}] closing connection", name);
@@ -352,14 +402,13 @@ class Connection {
         public final AuthProvider authProvider;
         private volatile boolean isShutdown;
 
-        public Factory(Cluster.Manager manager, AuthProvider authProvider) {
-            this(manager, manager.configuration, authProvider);
-        }
+        volatile int protocolVersion;
 
-        private Factory(DefaultResponseHandler defaultHandler, Configuration configuration, AuthProvider authProvider) {
+        Factory(DefaultResponseHandler defaultHandler, Configuration configuration) {
             this.defaultHandler = defaultHandler;
             this.configuration = configuration;
-            this.authProvider = authProvider;
+            this.authProvider = configuration.getProtocolOptions().getAuthProvider();
+            this.protocolVersion = configuration.getProtocolOptions().initialProtocolVersion;
         }
 
         public int getPort() {
@@ -373,14 +422,27 @@ class Connection {
          *
          * @throws ConnectionException if connection attempt fails.
          */
-        public Connection open(Host host) throws ConnectionException, InterruptedException {
-            InetAddress address = host.getAddress();
+        public Connection open(Host host) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+            InetSocketAddress address = host.getSocketAddress();
 
             if (isShutdown)
                 throw new ConnectionException(address, "Connection factory is shut down");
 
-            String name = address.toString() + "-" + getIdGenerator(host).getAndIncrement();
+            String name = address.toString() + '-' + getIdGenerator(host).getAndIncrement();
             return new Connection(name, address, this);
+        }
+
+        /**
+         * Same as open, but associate the created connection to the provided connection pool.
+         */
+        public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+            InetSocketAddress address = pool.host.getSocketAddress();
+
+            if (isShutdown)
+                throw new ConnectionException(address, "Connection factory is shut down");
+
+            String name = address.toString() + '-' + getIdGenerator(pool.host).getAndIncrement();
+            return new PooledConnection(name, address, this, pool);
         }
 
         private AtomicInteger getIdGenerator(Host host) {
@@ -455,19 +517,27 @@ class Connection {
             assert old == null;
         }
 
-        public void removeHandler(int streamId) {
+        public void removeHandler(int streamId, boolean releaseStreamId) {
+
+            // If we don't release the ID, mark first so that we can rely later on the fact that if
+            // we receive a response for an ID with no handler, it's that this ID has been marked.
+            if (!releaseStreamId)
+                streamIdHandler.mark(streamId);
+
             ResponseHandler handler = pending.remove(streamId);
             if (handler != null)
                 handler.cancelTimeout();
 
-            streamIdHandler.release(streamId);
+            if (releaseStreamId)
+                streamIdHandler.release(streamId);
         }
 
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
             if (!(e.getMessage() instanceof Message.Response)) {
-                logger.error("[{}] Received unexpected message: {}", name, e.getMessage());
-                defunct(new TransportException(address, "Unexpected message received: " + e.getMessage()));
+                String msg = asDebugString(e.getMessage());
+                logger.error("[{}] Received unexpected message: {}", name, msg);
+                defunct(new TransportException(address, "Unexpected message received: " + msg));
             } else {
                 Message.Response response = (Message.Response)e.getMessage();
                 int streamId = response.getStreamId();
@@ -488,20 +558,36 @@ class Connection {
                      *   1) The connection has been defuncted due to some internal error and we've raced between removing the
                      *      handler and actually closing the connection; since the original error has been logged, we're fine
                      *      ignoring this completely.
-                     *   2) This request has timeouted. In that case, we've already switched to another host (or errored out
+                     *   2) This request has timed out. In that case, we've already switched to another host (or errored out
                      *      to the user). So log it for debugging purpose, but it's fine ignoring otherwise.
                      */
-                    logger.debug("[{}] Response received on stream {} but no handler set anymore (either the request has timeouted or it was closed due to another error). Received message is {}", name, streamId, response);
+                    streamIdHandler.unmark(streamId);
+                    if (logger.isDebugEnabled())
+                        logger.debug("[{}] Response received on stream {} but no handler set anymore (either the request has "
+                                   + "timed out or it was closed due to another error). Received message is {}", name, streamId, asDebugString(response));
                     return;
                 }
                 handler.cancelTimeout();
                 handler.callback.onSet(Connection.this, response, System.nanoTime() - handler.startTime);
 
-                // If we happen to be shutdown and we're the last outstand request, we need to signal the shutdown future
+                // If we happen to be closed and we're the last outstanding request, we need to signal the close future
                 // (note: this is racy as the signaling can be called more than once, but that's not a problem)
                 if (isClosed() && pending.isEmpty())
-                    shutdownFuture.get().force();
+                    closeFuture.get().force();
             }
+        }
+
+        // Make sure we don't print huge responses in debug/error logs.
+        private String asDebugString(Object obj)
+        {
+            if (obj == null)
+                return "null";
+
+            String msg = obj.toString();
+            if (msg.length() < 500)
+                return msg;
+
+            return msg.substring(0, 500) + "... [message of size " + msg.length() + " truncated]";
         }
 
         @Override
@@ -537,10 +623,10 @@ class Connection {
         }
     }
 
-    private class ConnectionShutdownFuture extends ShutdownFuture {
+    private class ConnectionCloseFuture extends CloseFuture {
 
         @Override
-        public ConnectionShutdownFuture force() {
+        public ConnectionCloseFuture force() {
             // Note: we must not call releaseExternalResources on the bootstrap, because this shutdown the executors, which are shared
 
             // This method can be thrown during Connection ctor, at which point channel is not yet set. This is ok.
@@ -558,9 +644,9 @@ class Connection {
             future.addListener(new ChannelFutureListener() {
                 public void operationComplete(ChannelFuture future) {
                     if (future.getCause() != null)
-                        ConnectionShutdownFuture.this.setException(future.getCause());
+                        ConnectionCloseFuture.this.setException(future.getCause());
                     else
-                        ConnectionShutdownFuture.this.set(null);
+                        ConnectionCloseFuture.this.set(null);
                 }
             });
             return this;
@@ -570,7 +656,7 @@ class Connection {
     static class Future extends AbstractFuture<Message.Response> implements RequestHandler.Callback {
 
         private final Message.Request request;
-        private volatile InetAddress address;
+        private volatile InetSocketAddress address;
 
         public Future(Message.Request request) {
             this.request = request;
@@ -610,10 +696,10 @@ class Connection {
         public void onTimeout(Connection connection, long latency) {
             assert connection != null; // We always timeout on a specific connection, so this shouldn't be null
             this.address = connection.address;
-            super.setException(new ConnectionException(connection.address, "Operation Timeouted"));
+            super.setException(new ConnectionException(connection.address, "Operation timed out"));
         }
 
-        public InetAddress getAddress() {
+        public InetSocketAddress getAddress() {
             return address;
         }
     }
@@ -651,7 +737,11 @@ class Connection {
         }
 
         public void cancelHandler() {
-            connection.dispatcher.removeHandler(streamId);
+            // We haven't really received a response: we want to remove the handle because we gave up on that
+            // request and there is no point in holding the handler, but we don't release the streamId. If we
+            // were, a new request could reuse that ID but get the answer to the request we just gave up on instead
+            // of its own answer, and we would have no way to detect that.
+            connection.dispatcher.removeHandler(streamId, false);
         }
 
         private TimerTask onTimeoutTask() {
@@ -672,15 +762,18 @@ class Connection {
     private static class PipelineFactory implements ChannelPipelineFactory {
         // Stateless handlers
         private static final Message.ProtocolDecoder messageDecoder = new Message.ProtocolDecoder();
-        private static final Message.ProtocolEncoder messageEncoder = new Message.ProtocolEncoder();
+        private static final Message.ProtocolEncoder messageEncoderV1 = new Message.ProtocolEncoder(1);
+        private static final Message.ProtocolEncoder messageEncoderV2 = new Message.ProtocolEncoder(2);
         private static final Frame.Encoder frameEncoder = new Frame.Encoder();
 
+        private final int protocolVersion;
         private final Connection connection;
         private final FrameCompressor compressor;
         private final SSLOptions sslOptions;
 
-        public PipelineFactory(Connection connection, FrameCompressor compressor, SSLOptions sslOptions) {
+        public PipelineFactory(Connection connection, int protocolVersion, FrameCompressor compressor, SSLOptions sslOptions) {
             this.connection = connection;
+            this.protocolVersion = protocolVersion;
             this.compressor = compressor;
             this.sslOptions = sslOptions;
         }
@@ -693,7 +786,9 @@ class Connection {
                 SSLEngine engine = sslOptions.context.createSSLEngine();
                 engine.setUseClientMode(true);
                 engine.setEnabledCipherSuites(sslOptions.cipherSuites);
-                pipeline.addLast("ssl", new SslHandler(engine));
+                SslHandler handler = new SslHandler(engine);
+                handler.setCloseOnSSLException(true);
+                pipeline.addLast("ssl", handler);
             }
 
             //pipeline.addLast("debug", new LoggingHandler(InternalLogLevel.INFO));
@@ -707,7 +802,7 @@ class Connection {
             }
 
             pipeline.addLast("messageDecoder", messageDecoder);
-            pipeline.addLast("messageEncoder", messageEncoder);
+            pipeline.addLast("messageEncoder", protocolVersion == 1 ? messageEncoderV1 : messageEncoderV2);
 
             pipeline.addLast("dispatcher", connection.dispatcher);
 

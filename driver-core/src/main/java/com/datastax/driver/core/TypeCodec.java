@@ -30,14 +30,14 @@ import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
-
 import com.datastax.driver.core.utils.Bytes;
 
 abstract class TypeCodec<T> {
 
-    private static EnumMap<DataType.Name, TypeCodec<?>> primitiveCodecs = new EnumMap<DataType.Name, TypeCodec<?>>(DataType.Name.class);
+    private static final Map<DataType.Name, TypeCodec<?>> primitiveCodecs = new EnumMap<DataType.Name, TypeCodec<?>>(DataType.Name.class);
     static {
         primitiveCodecs.put(DataType.Name.ASCII,     StringCodec.asciiInstance);
         primitiveCodecs.put(DataType.Name.BIGINT,    LongCodec.instance);
@@ -58,6 +58,28 @@ abstract class TypeCodec<T> {
         primitiveCodecs.put(DataType.Name.CUSTOM,    BytesCodec.instance);
     }
 
+    private static final Map<DataType.Name, TypeCodec<List<?>>> primitiveListsCodecs = new EnumMap<DataType.Name, TypeCodec<List<?>>>(DataType.Name.class);
+    private static final Map<DataType.Name, TypeCodec<Set<?>>> primitiveSetsCodecs = new EnumMap<DataType.Name, TypeCodec<Set<?>>>(DataType.Name.class);
+    private static final Map<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>> primitiveMapsCodecs = new EnumMap<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>>(DataType.Name.class);
+    static {
+        populatePrimitiveCollectionCodecs();
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void populatePrimitiveCollectionCodecs()
+    {
+        for (Map.Entry<DataType.Name, TypeCodec<?>> entry : primitiveCodecs.entrySet()) {
+            DataType.Name type = entry.getKey();
+            TypeCodec<?> codec = entry.getValue();
+            primitiveListsCodecs.put(type, new ListCodec(codec));
+            primitiveSetsCodecs.put(type, new SetCodec(codec));
+            Map<DataType.Name, TypeCodec<Map<?, ?>>> valueMap = new EnumMap<DataType.Name, TypeCodec<Map<?, ?>>>(DataType.Name.class);
+            for (Map.Entry<DataType.Name, TypeCodec<?>> valueEntry : primitiveCodecs.entrySet())
+                valueMap.put(valueEntry.getKey(), new MapCodec(codec, valueEntry.getValue()));
+            primitiveMapsCodecs.put(type, valueMap);
+        }
+    }
+
     private TypeCodec() {}
 
     public abstract T parse(String value);
@@ -70,16 +92,29 @@ abstract class TypeCodec<T> {
         return (TypeCodec<T>)primitiveCodecs.get(name);
     }
 
+    @SuppressWarnings("unchecked")
     static <T> TypeCodec<List<T>> listOf(DataType arg) {
-        return new ListCodec<T>(TypeCodec.<T>createFor(arg.getName()));
+        TypeCodec<List<?>> codec = primitiveListsCodecs.get(arg.getName());
+        return codec != null
+             ? (TypeCodec)codec
+             : new ListCodec<T>(TypeCodec.<T>createFor(arg.getName()));
     }
 
+    @SuppressWarnings("unchecked")
     static <T> TypeCodec<Set<T>> setOf(DataType arg) {
-        return new SetCodec<T>(TypeCodec.<T>createFor(arg.getName()));
+        TypeCodec<Set<?>> codec = primitiveSetsCodecs.get(arg.getName());
+        return codec != null
+             ? (TypeCodec)codec
+             : new SetCodec<T>(TypeCodec.<T>createFor(arg.getName()));
     }
 
+    @SuppressWarnings("unchecked")
     static <K, V> TypeCodec<Map<K, V>> mapOf(DataType keys, DataType values) {
-        return new MapCodec<K, V>(TypeCodec.<K>createFor(keys.getName()), TypeCodec.<V>createFor(values.getName()));
+        Map<DataType.Name, TypeCodec<Map<?, ?>>> valueCodecs = primitiveMapsCodecs.get(keys.getName());
+        TypeCodec<Map<?, ?>> codec = valueCodecs == null ? null : valueCodecs.get(values.getName());
+        return codec != null
+             ? (TypeCodec)codec
+             : new MapCodec<K, V>(TypeCodec.<K>createFor(keys.getName()), TypeCodec.<V>createFor(values.getName()));
     }
 
     /* This is ugly, but not sure how we can do much better/faster
@@ -182,26 +217,26 @@ abstract class TypeCodec<T> {
         private static final Charset utf8Charset = Charset.forName("UTF-8");
         private static final Charset asciiCharset = Charset.forName("US-ASCII");
 
-        // We don't want to recreate the decoders/encoders everytime and they're not threadSafe.
-        private static ThreadLocal<CharsetDecoder> utf8Decoders = new ThreadLocal<CharsetDecoder>() {
+        // We don't want to recreate the decoders/encoders every time and they're not threadSafe.
+        private static final ThreadLocal<CharsetDecoder> utf8Decoders = new ThreadLocal<CharsetDecoder>() {
             @Override
             protected CharsetDecoder initialValue() {
                 return utf8Charset.newDecoder();
             }
         };
-        private static ThreadLocal<CharsetDecoder> asciiDecoders = new ThreadLocal<CharsetDecoder>() {
+        private static final ThreadLocal<CharsetDecoder> asciiDecoders = new ThreadLocal<CharsetDecoder>() {
             @Override
             protected CharsetDecoder initialValue() {
                 return asciiCharset.newDecoder();
             }
         };
-        private static ThreadLocal<CharsetEncoder> utf8Encoders = new ThreadLocal<CharsetEncoder>() {
+        private static final ThreadLocal<CharsetEncoder> utf8Encoders = new ThreadLocal<CharsetEncoder>() {
             @Override
             protected CharsetEncoder initialValue() {
                 return utf8Charset.newEncoder();
             }
         };
-        private static ThreadLocal<CharsetEncoder> asciiEncoders = new ThreadLocal<CharsetEncoder>() {
+        private static final ThreadLocal<CharsetEncoder> asciiEncoders = new ThreadLocal<CharsetEncoder>() {
             @Override
             protected CharsetEncoder initialValue() {
                 return asciiCharset.newEncoder();
@@ -542,15 +577,20 @@ abstract class TypeCodec<T> {
             "yyyy-MM-dd HH:mm:ss",
             "yyyy-MM-dd HH:mmZ",
             "yyyy-MM-dd HH:mm:ssZ",
+            "yyyy-MM-dd HH:mm:ss.SSS",
+            "yyyy-MM-dd HH:mm:ss.SSSZ",
             "yyyy-MM-dd'T'HH:mm",
             "yyyy-MM-dd'T'HH:mmZ",
             "yyyy-MM-dd'T'HH:mm:ss",
             "yyyy-MM-dd'T'HH:mm:ssZ",
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
             "yyyy-MM-dd",
             "yyyy-MM-ddZ"
         };
 
         public static final DateCodec instance = new DateCodec();
+        private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
 
         private DateCodec() {}
 
@@ -559,7 +599,7 @@ abstract class TypeCodec<T> {
          * to parse date strings). It is copied here so as to not create a dependency on apache commons "just
          * for this".
          */
-        private Date parseDate(String str, final String[] parsePatterns) throws ParseException {
+        private static Date parseDate(String str, final String[] parsePatterns) throws ParseException {
             SimpleDateFormat parser = new SimpleDateFormat();
             parser.setLenient(false);
 
@@ -581,7 +621,7 @@ abstract class TypeCodec<T> {
 
         @Override
         public Date parse(String value) {
-            if (value.matches("^\\d+$")) {
+            if (IS_LONG_PATTERN.matcher(value).matches()) {
                 try {
                     return new Date(Long.parseLong(value));
                 } catch (NumberFormatException e) {

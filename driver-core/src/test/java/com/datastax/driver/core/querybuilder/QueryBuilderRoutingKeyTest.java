@@ -16,11 +16,12 @@
 package com.datastax.driver.core.querybuilder;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
 
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 import com.datastax.driver.core.*;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;

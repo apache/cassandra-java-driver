@@ -26,7 +26,7 @@ echo "Building stress application ..."
 echo "\n-- Stress build --\n" >> $LOG_FILE
 
 cd $SCRIPT_DIR/..
-mvn assembly:single >> $LOG_FILE 2>&1
+mvn package assembly:single >> $LOG_FILE 2>&1
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ];
 then
