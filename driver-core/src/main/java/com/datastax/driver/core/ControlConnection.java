@@ -340,7 +340,7 @@ class ControlConnection implements Host.StateListener {
 
         logger.debug("[Control connection] Refreshing node info on {}", host);
         try {
-            DefaultResultSetFuture future = c.address.equals(host.getAddress())
+            DefaultResultSetFuture future = c.address.getAddress().equals(host.getAddress())
                                           ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL))
                                           : new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.getAddress().getHostAddress() + '\''));
             c.write(future);
@@ -435,7 +435,7 @@ class ControlConnection implements Host.StateListener {
             InetAddress peer = row.getInet("peer");
             InetAddress addr = row.getInet("rpc_address");
 
-            if (peer.equals(connection.address) || (addr != null && addr.equals(connection.address))) {
+            if (peer.equals(connection.address.getAddress()) || (addr != null && addr.equals(connection.address.getAddress()))) {
                 // Some DSE versions were inserting a line for the local node in peers (with mostly null values). This has been fixed, but if we
                 // detect that's the case, ignore it as it's not really a big deal.
                 logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connection.address);
@@ -545,7 +545,7 @@ class ControlConnection implements Host.StateListener {
         Connection current = connectionRef.get();
         if (logger.isTraceEnabled())
             logger.trace("[Control connection] {} is down, currently connected to {}", host, current == null ? "nobody" : current.address);
-        if (current != null && current.address.equals(host.getAddress()) && reconnectionAttempt.get() == null) {
+        if (current != null && current.address.getAddress().equals(host.getAddress()) && reconnectionAttempt.get() == null) {
             // We might very be on an I/O thread when we reach this so we should not do that on this thread.
             // Besides, there is no reason to block the onDown method while we try to reconnect.
             cluster.blockingTasksExecutor.submit(new Runnable() {
