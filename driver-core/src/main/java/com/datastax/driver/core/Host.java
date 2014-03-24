@@ -47,6 +47,12 @@ public class Host {
     private volatile String rack;
     private volatile VersionNumber cassandraVersion;
 
+    // The listen_address (really, the broadcast one) as know by Cassandra. We use that internally because
+    // that's the 'peer' in the 'System.peers' table and avoids querying the full peers table in
+    // ControlConnection.refreshNodeInfo. We don't want to expose however because we don't always have the info
+    // (partly because the 'System.local' doesn't have it for some weird reason for instance).
+    volatile InetAddress listenAddress;
+
     // ClusterMetadata keeps one Host object per inet address, so don't use
     // that constructor unless you know what you do (use ClusterMetadata.getHost typically).
     Host(InetSocketAddress address, ConvictionPolicy.Factory policy) {
@@ -63,7 +69,12 @@ public class Host {
         this.rack = rack;
     }
 
-    void setVersion(String cassandraVersion) {
+    void setVersionAndListenAdress(String cassandraVersion, InetAddress listenAddress) {
+        if (listenAddress != null)
+            this.listenAddress = listenAddress;
+
+        if (cassandraVersion == null)
+            return;
         try {
             this.cassandraVersion = VersionNumber.parse(cassandraVersion);
         } catch (IllegalArgumentException e) {

@@ -331,31 +331,44 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    public void refreshNodeInfo(Host host) {
+    private static InetSocketAddress addressToUseForPeerHost(Row peersRow, InetSocketAddress connectedHost, Cluster.Manager cluster) {
+        InetAddress peer = peersRow.getInet("peer");
+        InetAddress addr = peersRow.getInet("rpc_address");
 
-        Connection c = connectionRef.get();
-        // At startup, when we add the initial nodes, this will be null, which is ok
-        if (c == null)
-            return;
+        if (peer.equals(connectedHost.getAddress()) || (addr != null && addr.equals(connectedHost.getAddress()))) {
+            // Some DSE versions were inserting a line for the local node in peers (with mostly null values). This has been fixed, but if we
+            // detect that's the case, ignore it as it's not really a big deal.
+            logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connectedHost);
+            return null;
+        } else if (addr == null) {
+            logger.error("No rpc_address found for host {} in {}'s peers system table. That should not happen but using address {} instead", peer, connectedHost, peer);
+            addr = peer;
+        } else if (addr.equals(bindAllAddress)) {
+            logger.warn("Found host with 0.0.0.0 as rpc_address, using listen_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.", peer);
+            addr = peer;
+        }
+        return cluster.translateAddress(addr);
+    }
 
-        logger.debug("[Control connection] Refreshing node info on {}", host);
+    private Row fetchNodeInfo(Host host, Connection c) {
         try {
-            DefaultResultSetFuture future = c.address.equals(host.getAddress())
-                                          ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL))
-                                          : new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.getAddress().getHostAddress() + '\''));
-            c.write(future);
-            ResultSet rs = future.get();
-            // It's possible our peers selection returns nothing, but that's fine, this method is best effort really.
-            if (rs.isExhausted()) {
-                logger.debug("[control connection] Asked to refresh node info for {} but host not found in {} system table (this can happen)", host.getAddress(), c.address);
-                return;
+            boolean isConnectedHost = c.address.equals(host.getSocketAddress());
+            if (isConnectedHost || host.listenAddress != null) {
+                DefaultResultSetFuture future = isConnectedHost
+                    ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL))
+                    : new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.listenAddress.getHostAddress() + '\''));
+                c.write(future);
+                return future.get().one();
             }
 
-            Row row = rs.one();
-            if (!row.isNull("data_center") || !row.isNull("rack"))
-                updateLocationInfo(host, row.getString("data_center"), row.getString("rack"), cluster);
-            if (!row.isNull("release_version"))
-                host.setVersion(row.getString("release_version"));
+            // We have to fetch the whole peers table and find the host we're looking for
+            DefaultResultSetFuture future = new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS));
+            c.write(future);
+            for (Row row : future.get()) {
+                InetSocketAddress addr = addressToUseForPeerHost(row, c.address, cluster);
+                if (addr != null && addr.equals(host.getSocketAddress()))
+                    return row;
+            }
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing node info ({})", e.getMessage());
             signalError();
@@ -371,6 +384,39 @@ class ControlConnection implements Host.StateListener {
             Thread.currentThread().interrupt();
             logger.debug("[Control connection] Interrupted while refreshing node list and token map, skipping it.");
         }
+        return null;
+    }
+
+    public void refreshNodeInfo(Host host) {
+
+        Connection c = connectionRef.get();
+        // At startup, when we add the initial nodes, this will be null, which is ok
+        if (c == null)
+            return;
+
+        logger.debug("[Control connection] Refreshing node info on {}", host);
+        Row row = fetchNodeInfo(host, c);
+        // It's possible our peers selection returns nothing, but that's fine, this method is best effort really.
+        if (row == null) {
+            logger.debug("[control connection] Asked to refresh node info for {} but host not found in {} system table (this can happen)", host.getSocketAddress(), c.address);
+            return;
+        }
+
+        updateInfo(host, row, cluster);
+    }
+
+    // row can come either from the 'local' table or the 'peers' one
+    private static void updateInfo(Host host, Row row, Cluster.Manager cluster) {
+        if (!row.isNull("data_center") || !row.isNull("rack"))
+            updateLocationInfo(host, row.getString("data_center"), row.getString("rack"), cluster);
+
+        String version = row.getString("release_version");
+        // We don't know if it's a 'local' or a 'peers' row, and only 'peers' rows have the 'peer' field.
+        InetAddress listenAddress = row.getColumnDefinitions().contains("peer")
+                                  ? row.getInet("peer")
+                                  : null;
+
+        host.setVersionAndListenAdress(version, listenAddress);
     }
 
     private static void updateLocationInfo(Host host, String datacenter, String rack, Cluster.Manager cluster) {
@@ -413,11 +459,7 @@ class ControlConnection implements Host.StateListener {
             if (host == null) {
                 logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
-                if (!localRow.isNull("data_center") || !localRow.isNull("rack"))
-                    updateLocationInfo(host, localRow.getString("data_center"), localRow.getString("rack"), cluster);
-                if (!localRow.isNull("release_version"))
-                    host.setVersion(localRow.getString("release_version"));
-
+                updateInfo(host, localRow, cluster);
                 Set<String> tokens = localRow.getSet("tokens", String.class);
                 if (partitioner != null && !tokens.isEmpty())
                     tokenMap.put(host, tokens);
@@ -428,30 +470,19 @@ class ControlConnection implements Host.StateListener {
         List<String> dcs = new ArrayList<String>();
         List<String> racks = new ArrayList<String>();
         List<String> cassandraVersions = new ArrayList<String>();
+        List<InetAddress> listenAddresses = new ArrayList<InetAddress>();
         List<Set<String>> allTokens = new ArrayList<Set<String>>();
 
         for (Row row : peersFuture.get()) {
-
-            InetAddress peer = row.getInet("peer");
-            InetAddress addr = row.getInet("rpc_address");
-
-            if (peer.equals(connection.address) || (addr != null && addr.equals(connection.address))) {
-                // Some DSE versions were inserting a line for the local node in peers (with mostly null values). This has been fixed, but if we
-                // detect that's the case, ignore it as it's not really a big deal.
-                logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connection.address);
+            InetSocketAddress addr = addressToUseForPeerHost(row, connection.address, cluster);
+            if (addr == null)
                 continue;
-            } else if (addr == null) {
-                logger.error("No rpc_address found for host {} in {}'s peers system table. That should not happen but using address {} instead", peer, connection.address, peer);
-                addr = peer;
-            } else if (addr.equals(bindAllAddress)) {
-                logger.warn("Found host with 0.0.0.0 as rpc_address, using listen_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.", peer);
-                addr = peer;
-            }
 
-            foundHosts.add(cluster.translateAddress(addr));
+            foundHosts.add(addr);
             dcs.add(row.getString("data_center"));
             racks.add(row.getString("rack"));
             cassandraVersions.add(row.getString("release_version"));
+            listenAddresses.add(row.getInet("peer"));
             allTokens.add(row.getSet("tokens", String.class));
         }
 
@@ -467,7 +498,7 @@ class ControlConnection implements Host.StateListener {
             if (dcs.get(i) != null || racks.get(i) != null)
                 updateLocationInfo(host, dcs.get(i), racks.get(i), cluster);
             if (cassandraVersions.get(i) != null)
-                host.setVersion(cassandraVersions.get(i));
+                host.setVersionAndListenAdress(cassandraVersions.get(i), listenAddresses.get(i));
 
             if (partitioner != null && !allTokens.get(i).isEmpty())
                 tokenMap.put(host, allTokens.get(i));
@@ -504,14 +535,11 @@ class ControlConnection implements Host.StateListener {
 
             for (Row row : peersFuture.get()) {
 
-                if (row.isNull("rpc_address") || row.isNull("schema_version"))
+                InetSocketAddress addr = addressToUseForPeerHost(row, connection.address, cluster);
+                if (addr == null || row.isNull("schema_version"))
                     continue;
 
-                InetAddress rpc = row.getInet("rpc_address");
-                if (rpc.equals(bindAllAddress))
-                    rpc = row.getInet("peer");
-
-                Host peer = cluster.metadata.getHost(cluster.translateAddress(rpc));
+                Host peer = cluster.metadata.getHost(addr);
                 if (peer != null && peer.isUp())
                     versions.add(row.getUUID("schema_version"));
             }
@@ -545,7 +573,7 @@ class ControlConnection implements Host.StateListener {
         Connection current = connectionRef.get();
         if (logger.isTraceEnabled())
             logger.trace("[Control connection] {} is down, currently connected to {}", host, current == null ? "nobody" : current.address);
-        if (current != null && current.address.equals(host.getAddress()) && reconnectionAttempt.get() == null) {
+        if (current != null && current.address.equals(host.getSocketAddress()) && reconnectionAttempt.get() == null) {
             // We might very be on an I/O thread when we reach this so we should not do that on this thread.
             // Besides, there is no reason to block the onDown method while we try to reconnect.
             cluster.blockingTasksExecutor.submit(new Runnable() {
