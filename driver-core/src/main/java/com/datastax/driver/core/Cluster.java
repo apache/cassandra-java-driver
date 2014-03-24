@@ -1251,14 +1251,23 @@ public class Cluster implements Closeable {
             });
         }
 
-        // Use triggerOnUp unless you're sure you want to run this on the current thread.
         private void onUp(final Host host) throws InterruptedException, ExecutionException {
+            // Note that in generalize we can parallelize the pool creation on
+            // each session, but we shouldn't use executor since we're already
+            // running on it most probably (and so we could deadlock). Use the
+            // blockingExecutor instead, that's why it's for.
+            onUp(host, blockingExecutor);
+        }
+
+        // Use triggerOnUp unless you're sure you want to run this on the current thread.
+        private void onUp(final Host host, ListeningExecutorService poolCreationExecutor) throws InterruptedException, ExecutionException {
             logger.trace("Host {} is UP", host);
 
             if (isClosed())
                 return;
 
-            if (host.isUp())
+            // We don't want to use the public Host.isUp() as this would make us skip the rest for suspected hosts
+            if (host.state == Host.State.UP)
                 return;
 
             if (connectionFactory.protocolVersion == 2 && !supportsProtocolV2(host)) {
@@ -1293,12 +1302,11 @@ public class Cluster implements Closeable {
             loadBalancingPolicy().onUp(host);
             controlConnection.onUp(host);
 
-            // Note that we can parallelize the pool creation on each session, but we shouldn't use executor
-            // since we're already running on it most probably (and so we could deadlock). Use the blockingExecutor
-            // instead, that's why it's for.
+            logger.trace("Adding/renewing host pools for newly UP host {}", host);
+
             List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
             for (SessionManager s : sessions)
-                futures.add(s.addOrRenewPool(host, false, blockingExecutor));
+                futures.add(s.addOrRenewPool(host, false, poolCreationExecutor));
 
             // Only mark the node up once all session have re-added their pool (if the load-balancing
             // policy says it should), so that Host.isUp() don't return true before we're reconnected
@@ -1342,16 +1350,78 @@ public class Cluster implements Closeable {
             return executor.submit(new ExceptionCatchingRunnable() {
                 @Override
                 public void runMayThrow() throws InterruptedException, ExecutionException {
-                    onDown(host, isHostAddition);
+                    onDown(host, isHostAddition, false);
                 }
             });
         }
 
+        public void onSuspected(final Host host) {
+            logger.trace("Host {} is Suspected", host);
+
+            if (isClosed())
+                return;
+
+            // We shouldn't really get there for IGNORED nodes since we shouldn't have
+            // connected to one in the first place, but if we ever do, simply hand it
+            // off to onDown
+            if (loadBalancingPolicy().distance(host) == HostDistance.IGNORED) {
+                triggerOnDown(host);
+                return;
+            }
+
+            // We need to
+            //  1) mark the node suspect if no-one has bitten us to it
+            //  2) start the reconnection attempt
+            //  3) inform the loadbalancing policy
+            // We must do 2) before 3) as we want the policy to be able to rely
+            // on the reconnection attempt future.
+            //
+            // If multiple threads get there, we want to start reconnection attempts only
+            // once, but we also don't want said threads to return from this method before
+            // the loadbalancing policy has been informed (otherwise those threads won't
+            // consider the host suspect but simply ignore it). So we synchronize.
+            synchronized (host) {
+                // If we've already mark the node down/suspected, ignore this
+                if (!host.setSuspected() || host.reconnectionAttempt.get() != null)
+                    return;
+
+                // Start the initial initial reconnection attempt
+                host.initialReconnectionAttempt.set(executor.submit(new ExceptionCatchingRunnable() {
+                    @Override
+                    public void runMayThrow() throws InterruptedException, ExecutionException {
+                        try {
+                            connectionFactory.open(host);
+                            // Note that we want to do the pool creation on this thread because we want that
+                            // when onUp return, the host is ready for querying
+                            onUp(host, MoreExecutors.sameThreadExecutor());
+                        } catch (Exception e) {
+                            onDown(host, false, true);
+                        }
+                    }
+                }));
+
+                loadBalancingPolicy().onSuspected(host);
+            }
+
+            controlConnection.onSuspected(host);
+            for (SessionManager s : sessions)
+                s.onSuspected(host);
+
+            for (Host.StateListener listener : listeners)
+                listener.onSuspected(host);
+        }
+
         // Use triggerOnDown unless you're sure you want to run this on the current thread.
-        private void onDown(final Host host, final boolean isHostAddition) throws InterruptedException, ExecutionException {
+        private void onDown(final Host host, final boolean isHostAddition, final boolean isSuspectedVerification) throws InterruptedException, ExecutionException {
             logger.trace("Host {} is DOWN", host);
 
             if (isClosed())
+                return;
+
+            // If we're SUSPECT and not the task validating the suspection, then some other task is
+            // already checking to verify if the node is really down (or if it's simply that the
+            // connections where broken). So just skip this in that case.
+            if (!isSuspectedVerification && host.state == Host.State.SUSPECT)
                 return;
 
             // Note: we don't want to skip that method if !host.isUp() because we set isUp
@@ -1370,7 +1440,6 @@ public class Cluster implements Closeable {
             boolean wasUp = host.isUp();
             host.setDown();
 
-
             loadBalancingPolicy().onDown(host);
             controlConnection.onDown(host);
             for (SessionManager s : sessions)
@@ -1378,7 +1447,7 @@ public class Cluster implements Closeable {
 
             // Contrarily to other actions of that method, there is no reason to notify listeners
             // unless the host was UP at the beginning of this function since even if a onUp fail
-            // mid-method, listeners won't  have been notified of the UP.
+            // mid-method, listeners won't have been notified of the UP.
             if (wasUp) {
                 for (Host.StateListener listener : listeners)
                     listener.onDown(host);
@@ -1546,8 +1615,17 @@ public class Cluster implements Closeable {
                 return true;
 
             boolean isDown = host.signalConnectionFailure(exception);
-            if (isDown)
-                triggerOnDown(host, isHostAddition);
+            if (isDown) {
+                if (isHostAddition) {
+                    triggerOnDown(host, true);
+                } else {
+                    // Note that we do want to call onSuspected on the current thread, as the whole point is
+                    // that by the time this method return, the host initialReconnectionAttempt will have been
+                    // set and the load balancing policy informed of the suspection. We know that onSuspected
+                    // does little work (and non blocking one) itself however.
+                    onSuspected(host);
+                }
+            }
             return isDown;
         }
 

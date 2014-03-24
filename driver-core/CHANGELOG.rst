@@ -5,6 +5,7 @@ CHANGELOG
 ------
 
 - [bug] Fix potential NPE in ControlConnection (JAVA-373)
+- [improvement] Better handling of dead connections (JAVA-204)
 
 
 2.0.3:

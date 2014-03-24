@@ -270,6 +270,9 @@ class SessionManager extends AbstractSession {
         updateCreatedPools(MoreExecutors.sameThreadExecutor());
     }
 
+    void onSuspected(Host host) {
+    }
+
     void onRemove(Host host) throws InterruptedException, ExecutionException {
         onDown(host);
     }

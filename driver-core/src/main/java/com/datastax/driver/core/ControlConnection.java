@@ -587,6 +587,10 @@ class ControlConnection implements Host.StateListener {
     }
 
     @Override
+    public void onSuspected(Host host) {
+    }
+
+    @Override
     public void onAdd(Host host) {
         refreshNodeListAndTokenMap();
     }

@@ -240,13 +240,16 @@ class Connection {
             logger.debug("Defuncting connection to " + address, e);
         exception = e;
         isDefunct = true;
-        dispatcher.errorOutAllHandler(e);
 
+        // We need to signal the connection failure before erroring out handlers to make
+        // sure the "suspected" mechanism work as expected
         Host host = factory.manager.metadata.getHost(address);
         if (host != null) {
             boolean isDown = factory.manager.signalConnectionFailure(host, e, host.wasJustAdded());
             notifyOwnerWhenDefunct(isDown);
         }
+
+        dispatcher.errorOutAllHandler(e);
 
         closeAsync();
         return e;
