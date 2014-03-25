@@ -129,7 +129,7 @@ public final class Bytes {
      * blob string.
      */
     public static ByteBuffer fromHexString(String str) {
-        if (str.length() & 1 == 1)
+        if ((str.length() & 1) == 1)
             throw new IllegalArgumentException("A CQL blob string must have an even length (since one byte is always 2 hexadecimal character)");
 
         if (str.charAt(0) != '0' || str.charAt(1) != 'x')
