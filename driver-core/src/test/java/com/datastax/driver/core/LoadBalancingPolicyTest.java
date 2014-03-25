@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.*;
 
 import org.testng.annotations.Test;
@@ -74,7 +75,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
     @Test(groups = "long")
     public void whiteListPolicyTest() throws Throwable {
 
-        List<InetAddress> whiteList = Arrays.asList(InetAddress.getByName(CCMBridge.IP_PREFIX + '2'));
+        List<InetSocketAddress> whiteList = Arrays.asList(new InetSocketAddress(InetAddress.getByName(CCMBridge.IP_PREFIX + '2'), 9042));
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), whiteList));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
