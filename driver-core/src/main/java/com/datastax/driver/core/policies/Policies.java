@@ -69,12 +69,15 @@ public class Policies {
     /**
      * The default load balancing policy.
      * <p>
-     * The default load balancing policy is {@link RoundRobinPolicy}.
+     * The default load balancing policy is {@link DCAwareRoundRobinPolicy} with token
+     * awareness (so {@code new TokenAwarePolicy(new DCAwareRoundRobinPolicy())}).
+     *
+     * @return the default load balancing policy.
      */
     public static LoadBalancingPolicy defaultLoadBalancingPolicy() {
         // Note: balancing policies are stateful, so we can't store that in a static or that would screw thing
         // up if multiple Cluster instance are started in the same JVM.
-        return new DCAwareRoundRobinPolicy();
+        return new TokenAwarePolicy(new DCAwareRoundRobinPolicy());
     }
 
     /**
@@ -82,6 +85,8 @@ public class Policies {
      * <p>
      * The default reconnection policy is an {@link ExponentialReconnectionPolicy}
      * where the base delay is 1 second and the max delay is 10 minutes;
+     *
+     * @return the default reconnection policy.
      */
     public static ReconnectionPolicy defaultReconnectionPolicy() {
         return DEFAULT_RECONNECTION_POLICY;
@@ -91,6 +96,8 @@ public class Policies {
      * The default retry policy.
      * <p>
      * The default retry policy is {@link DefaultRetryPolicy}.
+     *
+     * @return the default retry policy.
      */
     public static RetryPolicy defaultRetryPolicy() {
         return DEFAULT_RETRY_POLICY;
@@ -100,6 +107,8 @@ public class Policies {
      * The default address translater.
      * <p>
      * The default address tanslater is {@link IdentityTranslater}.
+     *
+     * @return the default address translater.
      */
     public static AddressTranslater defaultAddressTranslater() {
         return DEFAULT_ADDRESS_TRANSLATER;

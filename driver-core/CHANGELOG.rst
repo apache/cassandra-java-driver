@@ -8,7 +8,8 @@ CHANGELOG
   InetAddress to InetSocketAddress. Same for Initializer#getContactPoints return and
   for AuthProvider#newAuthenticator.
 - [api] The default load balacing policy is now DCAwareRoundRobinPolicy, and the local
-  datacenter is automatically picked based on the first connected node (JAVA-296)
+  datacenter is automatically picked based on the first connected node. Furthermore,
+  the TokenAwarePolicy is also used by default (JAVA-296)
 - [new] New optional AddressTranslater (JAVA-145)
 
 Merged from 1.0 branch:
