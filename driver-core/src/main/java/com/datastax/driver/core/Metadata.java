@@ -211,7 +211,7 @@ public class Metadata {
      * @param id the keyspace or table identifier.
      * @return {@code id} enclosed in double-quotes, for use in methods like
      * {@link #getReplicas}, {@link #getKeyspace}, {@link KeyspaceMetadata#getTable}
-     * or even {@link Session#connect(String)}.
+     * or even {@link Cluster#connect(String)}.
      */
     public static String quote(String id) {
         return '"' + id + '"';

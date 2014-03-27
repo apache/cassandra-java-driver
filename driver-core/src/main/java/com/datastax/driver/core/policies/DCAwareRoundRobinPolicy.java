@@ -136,14 +136,14 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * datacenter and that uses the provided number of host per remote
      * datacenter as failover for the local hosts.
      * <p>
-     * This constructor is equivalent to {@link DCAwareRoundRobinPolicy(String, int)}
+     * This constructor is equivalent to {@link #DCAwareRoundRobinPolicy(String, int)}
      * but allows to override the policy of never using remote data-center
      * nodes for {@code LOCAL_ONE} and {@code LOCAL_QUORUM} queries. It is
      * however inadvisable to do so in almost all cases, as this would
      * potentially break consistency guarantees and if you are fine with that,
      * it's probably better to use a weaker consitency like {@code ONE}, {@code
      * TWO} or {@code THREE}. As such, this constructor should generally
-     * be avoided in favor of {@link DCAwareRoundRobinPolicy(String, int)}.
+     * be avoided in favor of {@link #DCAwareRoundRobinPolicy(String, int)}.
      * Use it only if you know and understand what you do.
      *
      * @param localDc the name of the local datacenter (as known by

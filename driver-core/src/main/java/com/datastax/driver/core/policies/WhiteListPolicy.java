@@ -90,7 +90,7 @@ public class WhiteListPolicy implements LoadBalancingPolicy {
      * Return the HostDistance for the provided host.
      *
      * @param host the host of which to return the distance of.
-     * @return {@link HostDistance.IGNORED} if {@code host} is not part of the white list, the HostDistance
+     * @return {@link HostDistance#IGNORED} if {@code host} is not part of the white list, the HostDistance
      * as returned by the wrapped policy otherwise.
      */
     @Override

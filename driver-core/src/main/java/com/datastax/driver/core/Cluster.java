@@ -406,7 +406,7 @@ public class Cluster implements Closeable {
      * Whether this Cluster instance has been closed.
      * <p>
      * Note that this method returns true as soon as one of the close methods
-     * ({@link closeAsync} or {@link close}) has been called, it does not guarantee
+     * ({@link #closeAsync} or {@link #close}) has been called, it does not guarantee
      * that the closing is done. If you want to guarantee that the closing is done,
      * you can call {@code close()} and wait until it returns (or call the get method
      * on {@code closeAsync()} with a very short timeout and check this doesn't timeout).
