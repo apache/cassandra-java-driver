@@ -175,6 +175,31 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
     }
 
     @Test(groups = "long")
+    public void DCAwareRoundRobinTest2() throws Throwable {
+
+        Cluster.Builder builder = Cluster.builder();
+        CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, 2, builder);
+        try {
+
+            createMultiDCSchema(c.session);
+            init(c, 12);
+            query(c, 12);
+
+            assertQueried(CCMBridge.IP_PREFIX + '1', 6);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 6);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '4', 0);
+
+        } catch (Throwable e) {
+            c.errorOut();
+            throw e;
+        } finally {
+            resetCoordinators();
+            c.discard();
+        }
+    }
+
+    @Test(groups = "long")
     public void dcAwareRoundRobinTestWithOneRemoteHost() throws Throwable {
 
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc2", 1));

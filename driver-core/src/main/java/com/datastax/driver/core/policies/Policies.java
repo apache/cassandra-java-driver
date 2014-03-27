@@ -74,7 +74,7 @@ public class Policies {
     public static LoadBalancingPolicy defaultLoadBalancingPolicy() {
         // Note: balancing policies are stateful, so we can't store that in a static or that would screw thing
         // up if multiple Cluster instance are started in the same JVM.
-        return new RoundRobinPolicy();
+        return new DCAwareRoundRobinPolicy();
     }
 
     /**

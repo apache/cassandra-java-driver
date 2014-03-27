@@ -22,6 +22,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.AbstractIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ConsistencyLevel;
@@ -47,13 +49,37 @@ import com.datastax.driver.core.QueryOptions;
  */
 public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
 
+    private static final Logger logger = LoggerFactory.getLogger(DCAwareRoundRobinPolicy.class);
+
+    private final String UNSET = "";
+
     private final ConcurrentMap<String, CopyOnWriteArrayList<Host>> perDcLiveHosts = new ConcurrentHashMap<String, CopyOnWriteArrayList<Host>>();
     private final AtomicInteger index = new AtomicInteger();
-    private final String localDc;
+
+    private volatile String localDc;
+
     private final int usedHostsPerRemoteDc;
     private final boolean dontHopForLocalCL;
 
     private QueryOptions queryOptions;
+
+    /**
+     * Creates a new datacenter aware round robin policy that auto-discover
+     * the local data-center.
+     * <p>
+     * If this constructor is used, the data-center used as local will the
+     * data-center of the first Cassandra node the driver connects to. This
+     * will always be ok if all the contact points use at {@code Cluster}
+     * creation are in the local data-center. If it's not the case, you should
+     * provide the local data-center name yourself by using one of the other
+     * constructor of this class.
+     * <p>
+     * This constructor is a shortcut for {@code new DCAwareRoundRobinPolicy(null)},
+     * and as such will ignore all hosts in remote data-centers.
+     */
+    public DCAwareRoundRobinPolicy() {
+        this(null);
+    }
 
     /**
      * Creates a new datacenter aware round robin policy given the name of
@@ -66,7 +92,8 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * this is equivalent to {@code new DCAwareRoundRobinPolicy(localDc, 0)}.
      *
      * @param localDc the name of the local datacenter (as known by
-     * Cassandra).
+     * Cassandra). If this is {@code null}, the policy will default to the
+     * data-center of the first node connected to.
      */
     public DCAwareRoundRobinPolicy(String localDc) {
         this(localDc, 0);
@@ -90,7 +117,8 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * thus somewhat break the consistency contract).
      *
      * @param localDc the name of the local datacenter (as known by
-     * Cassandra).
+     * Cassandra). If this is {@code null}, the policy will default to the
+     * data-center of the first node connected to.
      * @param usedHostsPerRemoteDc the number of host per remote
      * datacenter that policies created by the returned factory should
      * consider. Created policies {@code distance} method will return a
@@ -119,7 +147,8 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * Use it only if you know and understand what you do.
      *
      * @param localDc the name of the local datacenter (as known by
-     * Cassandra).
+     * Cassandra). If this is {@code null}, the policy will default to the
+     * data-center of the first node connected to.
      * @param usedHostsPerRemoteDc the number of host per remote
      * datacenter that policies created by the returned factory should
      * consider. Created policies {@code distance} method will return a
@@ -132,14 +161,13 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
      * having consitency {@code LOCAL_ONE} and {@code LOCAL_QUORUM}.
      */
     public DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc, boolean allowRemoteDCsForLocalConsistencyLevel) {
-        this.localDc = localDc;
+        this.localDc = localDc == null ? UNSET : localDc;
         this.usedHostsPerRemoteDc = usedHostsPerRemoteDc;
         this.dontHopForLocalCL = !allowRemoteDCsForLocalConsistencyLevel;
     }
 
     @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
-        this.index.set(new Random().nextInt(Math.max(hosts.size(), 1)));
         this.queryOptions = cluster.getConfiguration().getQueryOptions();
 
         for (Host host : hosts) {
@@ -178,7 +206,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
     @Override
     public HostDistance distance(Host host) {
         String dc = dc(host);
-        if (dc.equals(localDc))
+        if (dc == UNSET || dc.equals(localDc))
             return HostDistance.LOCAL;
 
         CopyOnWriteArrayList<Host> dcHosts = perDcLiveHosts.get(dc);
@@ -278,6 +306,13 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
     @Override
     public void onUp(Host host) {
         String dc = dc(host);
+
+        // If the localDC was in "auto-discover" mode and it's the first host for which we have a DC, use it.
+        if (localDc == UNSET && dc != UNSET) {
+            logger.info("Using data-center name '{}' for DCAwareRoundRobinPolicy (if this is incorrect, please provide the correct datacenter name with DCAwareRoundRobinPolicy constructor)", dc);
+            localDc = dc;
+        }
+
         CopyOnWriteArrayList<Host> dcHosts = perDcLiveHosts.get(dc);
         if (dcHosts == null) {
             CopyOnWriteArrayList<Host> newMap = new CopyOnWriteArrayList<Host>(Collections.singletonList(host));
