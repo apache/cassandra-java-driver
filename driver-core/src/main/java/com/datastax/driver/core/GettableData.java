@@ -469,7 +469,7 @@ public interface GettableData {
      * @param name the name to retrieve.
      * @param keysClass the class for the keys of the map to retrieve.
      * @param valuesClass the class for the values of the map to retrieve.
-     * @return the value of the {@code i}th element as a map of
+     * @return the value of {@code name} as a map of
      * {@code keysClass} to {@code valuesClass} objects. If the value is NULL,
      * an empty map is returned (note that Cassandra makes no difference
      * between an empty map and column of type map that is not set). The
@@ -481,4 +481,28 @@ public interface GettableData {
      * class {@code valuesClass}.
      */
     public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass);
+
+    /**
+     * Return the {@code i}th value as a UDT value.
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @return the value of the {@code i}th element as a UDT value. If the value is NULL,
+     * then {@code null} will be returned.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not a UDT value.
+     */
+    public UDTValue getUDTValue(int i);
+
+    /**
+     * Return the vvalue for {@code name} as a UDT value.
+     *
+     * @param name the name to retrieve.
+     * @return the value of {@code name} as a UDT value. If the value is NULL,
+     * then {@code null} will be returned.
+     *
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws InvalidTypeException if value {@code i} is not a UDT value.
+     */
+    public UDTValue getUDTValue(String name);
 }

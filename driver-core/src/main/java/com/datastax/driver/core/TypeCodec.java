@@ -37,6 +37,11 @@ import com.datastax.driver.core.utils.Bytes;
 
 abstract class TypeCodec<T> {
 
+    // Somehow those don't seem to get properly initialized if they're not here. The reason
+    // escape me right now so let's just leave it here for now
+    public static final StringCodec utf8Instance = new StringCodec(true);
+    public static final StringCodec asciiInstance = new StringCodec(false);
+
     private static final Map<DataType.Name, TypeCodec<?>> primitiveCodecs = new EnumMap<DataType.Name, TypeCodec<?>>(DataType.Name.class);
     static {
         primitiveCodecs.put(DataType.Name.ASCII,     StringCodec.asciiInstance);
@@ -58,27 +63,30 @@ abstract class TypeCodec<T> {
         primitiveCodecs.put(DataType.Name.CUSTOM,    BytesCodec.instance);
     }
 
-    private static final Map<DataType.Name, TypeCodec<List<?>>> primitiveListsCodecs = new EnumMap<DataType.Name, TypeCodec<List<?>>>(DataType.Name.class);
-    private static final Map<DataType.Name, TypeCodec<Set<?>>> primitiveSetsCodecs = new EnumMap<DataType.Name, TypeCodec<Set<?>>>(DataType.Name.class);
-    private static final Map<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>> primitiveMapsCodecs = new EnumMap<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>>(DataType.Name.class);
-    static {
-        populatePrimitiveCollectionCodecs();
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static void populatePrimitiveCollectionCodecs()
+    private static class PrimitiveCollectionCodecs
     {
-        for (Map.Entry<DataType.Name, TypeCodec<?>> entry : primitiveCodecs.entrySet()) {
-            DataType.Name type = entry.getKey();
-            TypeCodec<?> codec = entry.getValue();
-            primitiveListsCodecs.put(type, new ListCodec(codec));
-            primitiveSetsCodecs.put(type, new SetCodec(codec));
-            Map<DataType.Name, TypeCodec<Map<?, ?>>> valueMap = new EnumMap<DataType.Name, TypeCodec<Map<?, ?>>>(DataType.Name.class);
-            for (Map.Entry<DataType.Name, TypeCodec<?>> valueEntry : primitiveCodecs.entrySet())
-                valueMap.put(valueEntry.getKey(), new MapCodec(codec, valueEntry.getValue()));
-            primitiveMapsCodecs.put(type, valueMap);
+        public final Map<DataType.Name, TypeCodec<List<?>>> primitiveListsCodecs = new EnumMap<DataType.Name, TypeCodec<List<?>>>(DataType.Name.class);
+        public final Map<DataType.Name, TypeCodec<Set<?>>> primitiveSetsCodecs = new EnumMap<DataType.Name, TypeCodec<Set<?>>>(DataType.Name.class);
+        public final Map<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>> primitiveMapsCodecs = new EnumMap<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>>(DataType.Name.class);
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        public PrimitiveCollectionCodecs(int protocolVersion)
+        {
+            for (Map.Entry<DataType.Name, TypeCodec<?>> entry : primitiveCodecs.entrySet()) {
+                DataType.Name type = entry.getKey();
+                TypeCodec<?> codec = entry.getValue();
+                primitiveListsCodecs.put(type, new ListCodec(codec, protocolVersion));
+                primitiveSetsCodecs.put(type, new SetCodec(codec, protocolVersion));
+                Map<DataType.Name, TypeCodec<Map<?, ?>>> valueMap = new EnumMap<DataType.Name, TypeCodec<Map<?, ?>>>(DataType.Name.class);
+                for (Map.Entry<DataType.Name, TypeCodec<?>> valueEntry : primitiveCodecs.entrySet())
+                    valueMap.put(valueEntry.getKey(), new MapCodec(codec, valueEntry.getValue(), protocolVersion));
+                primitiveMapsCodecs.put(type, valueMap);
+            }
         }
     }
+
+    private static final PrimitiveCollectionCodecs primitiveCollectionCodecsV2 = new PrimitiveCollectionCodecs(2);
+    private static final PrimitiveCollectionCodecs primitiveCollectionCodecsV3 = new PrimitiveCollectionCodecs(3);
 
     private TypeCodec() {}
 
@@ -93,28 +101,29 @@ abstract class TypeCodec<T> {
     }
 
     @SuppressWarnings("unchecked")
-    static <T> TypeCodec<List<T>> listOf(DataType arg) {
-        TypeCodec<List<?>> codec = primitiveListsCodecs.get(arg.getName());
-        return codec != null
-             ? (TypeCodec)codec
-             : new ListCodec<T>(TypeCodec.<T>createFor(arg.getName()));
+    static <T> TypeCodec<List<T>> listOf(DataType arg, int protocolVersion) {
+        PrimitiveCollectionCodecs codecs = protocolVersion <= 2 ? primitiveCollectionCodecsV2 : primitiveCollectionCodecsV3;
+        TypeCodec<List<?>> codec = codecs.primitiveListsCodecs.get(arg.getName());
+        return codec != null ? (TypeCodec)codec : new ListCodec<Object>(arg.codec(protocolVersion), protocolVersion);
     }
 
     @SuppressWarnings("unchecked")
-    static <T> TypeCodec<Set<T>> setOf(DataType arg) {
-        TypeCodec<Set<?>> codec = primitiveSetsCodecs.get(arg.getName());
-        return codec != null
-             ? (TypeCodec)codec
-             : new SetCodec<T>(TypeCodec.<T>createFor(arg.getName()));
+    static <T> TypeCodec<Set<T>> setOf(DataType arg, int protocolVersion) {
+        PrimitiveCollectionCodecs codecs = protocolVersion <= 2 ? primitiveCollectionCodecsV2 : primitiveCollectionCodecsV3;
+        TypeCodec<Set<?>> codec = codecs.primitiveSetsCodecs.get(arg.getName());
+        return codec != null ? (TypeCodec)codec : new SetCodec<Object>(arg.codec(protocolVersion), protocolVersion);
     }
 
     @SuppressWarnings("unchecked")
-    static <K, V> TypeCodec<Map<K, V>> mapOf(DataType keys, DataType values) {
-        Map<DataType.Name, TypeCodec<Map<?, ?>>> valueCodecs = primitiveMapsCodecs.get(keys.getName());
+    static <K, V> TypeCodec<Map<K, V>> mapOf(DataType keys, DataType values, int protocolVersion) {
+        PrimitiveCollectionCodecs codecs = protocolVersion <= 2 ? primitiveCollectionCodecsV2 : primitiveCollectionCodecsV3;
+        Map<DataType.Name, TypeCodec<Map<?, ?>>> valueCodecs = codecs.primitiveMapsCodecs.get(keys.getName());
         TypeCodec<Map<?, ?>> codec = valueCodecs == null ? null : valueCodecs.get(values.getName());
-        return codec != null
-             ? (TypeCodec)codec
-             : new MapCodec<K, V>(TypeCodec.<K>createFor(keys.getName()), TypeCodec.<V>createFor(values.getName()));
+        return codec != null ? (TypeCodec)codec : new MapCodec<Object, Object>(keys.codec(protocolVersion), values.codec(protocolVersion), protocolVersion);
+    }
+
+    static UDTCodec udtOf(UDTDefinition definition) {
+        return new UDTCodec(definition);
     }
 
     /* This is ugly, but not sure how we can do much better/faster
@@ -195,21 +204,70 @@ abstract class TypeCodec<T> {
         return null;
     }
 
-    // Utility method for collections
-    private static ByteBuffer pack(List<ByteBuffer> buffers, int elements, int size) {
-        ByteBuffer result = ByteBuffer.allocate(2 + size);
-        result.putShort((short)elements);
-        for (ByteBuffer bb : buffers) {
-            result.putShort((short)bb.remaining());
-            result.put(bb.duplicate());
-        }
+    private static ByteBuffer pack(List<ByteBuffer> buffers, int elements, int version) {
+        int size = 0;
+        for (ByteBuffer bb : buffers)
+            size += sizeOfValue(bb, version);
+
+        ByteBuffer result = ByteBuffer.allocate(sizeOfCollectionSize(elements, version) + size);
+        writeCollectionSize(result, elements, version);
+        for (ByteBuffer bb : buffers)
+            writeCollectionValue(result, bb, version);
         return (ByteBuffer)result.flip();
     }
 
-    // Utility method for collections
+    private static void writeCollectionSize(ByteBuffer output, int elements, int version) {
+        if (version >= 3)
+            output.putInt(elements);
+        else
+            output.putShort((short)elements);
+    }
+
     private static int getUnsignedShort(ByteBuffer bb) {
         int length = (bb.get() & 0xFF) << 8;
         return length | (bb.get() & 0xFF);
+    }
+
+    private static int readCollectionSize(ByteBuffer input, int version) {
+        return version >= 3 ? input.getInt() : getUnsignedShort(input);
+    }
+
+    private static int sizeOfCollectionSize(int elements, int version) {
+        return version >= 3 ? 4 : 2;
+    }
+
+    private static void writeCollectionValue(ByteBuffer output, ByteBuffer value, int version) {
+        if (version >= 3) {
+            if (value == null) {
+                output.putInt(-1);
+                return;
+            }
+
+            output.putInt(value.remaining());
+            output.put(value.duplicate());
+        } else {
+            assert value != null;
+            output.putShort((short)value.remaining());
+            output.put(value.duplicate());
+        }
+    }
+
+    private static ByteBuffer readBytes(ByteBuffer bb, int length) {
+        ByteBuffer copy = bb.duplicate();
+        copy.limit(copy.position() + length);
+        bb.position(bb.position() + length);
+        return copy;
+    }
+
+    private static ByteBuffer readCollectionValue(ByteBuffer input, int version) {
+        int size = version >= 3 ? input.getInt() : getUnsignedShort(input);
+        return size < 0 ? null : readBytes(input, size);
+    }
+
+    private static int sizeOfValue(ByteBuffer value, int version) {
+        return version >= 3
+             ? (value == null ? 4 : 4 + value.remaining())
+             : 2 + value.remaining();
     }
 
     static class StringCodec extends TypeCodec<String> {
@@ -242,9 +300,6 @@ abstract class TypeCodec<T> {
                 return asciiCharset.newEncoder();
             }
         };
-
-        static final StringCodec utf8Instance = new StringCodec(true);
-        static final StringCodec asciiInstance = new StringCodec(false);
 
         private final boolean isUTF8;
 
@@ -340,9 +395,8 @@ abstract class TypeCodec<T> {
     }
 
     static class BooleanCodec extends TypeCodec<Boolean> {
-
-        private static final ByteBuffer TRUE = ByteBuffer.wrap(new byte[] {1});
-        private static final ByteBuffer FALSE = ByteBuffer.wrap(new byte[] {0});
+        private static final ByteBuffer TRUE = ByteBuffer.wrap(new byte[]{1});
+        private static final ByteBuffer FALSE = ByteBuffer.wrap(new byte[]{0});
 
         public static final BooleanCodec instance = new BooleanCodec();
 
@@ -728,9 +782,11 @@ abstract class TypeCodec<T> {
     static class ListCodec<T> extends TypeCodec<List<T>> {
 
         private final TypeCodec<T> eltCodec;
+        private final int protocolVersion;
 
-        public ListCodec(TypeCodec<T> eltCodec) {
+        public ListCodec(TypeCodec<T> eltCodec, int protocolVersion) {
             this.eltCodec = eltCodec;
+            this.protocolVersion = protocolVersion;
         }
 
         @Override
@@ -741,26 +797,20 @@ abstract class TypeCodec<T> {
         @Override
         public ByteBuffer serialize(List<T> value) {
             List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(value.size());
-            int size = 0;
-            for (T elt : value) {
-                ByteBuffer bb = eltCodec.serialize(elt);
-                bbs.add(bb);
-                size += 2 + bb.remaining();
-            }
-            return pack(bbs, value.size(), size);
+            for (T elt : value)
+                bbs.add(eltCodec.serialize(elt));
+
+            return pack(bbs, value.size(), protocolVersion);
         }
 
         @Override
         public List<T> deserialize(ByteBuffer bytes) {
             try {
                 ByteBuffer input = bytes.duplicate();
-                int n = getUnsignedShort(input);
+                int n = readCollectionSize(input, protocolVersion);
                 List<T> l = new ArrayList<T>(n);
                 for (int i = 0; i < n; i++) {
-                    int s = getUnsignedShort(input);
-                    byte[] data = new byte[s];
-                    input.get(data);
-                    ByteBuffer databb = ByteBuffer.wrap(data);
+                    ByteBuffer databb = readCollectionValue(input, protocolVersion);
                     l.add(eltCodec.deserialize(databb));
                 }
                 return l;
@@ -773,9 +823,11 @@ abstract class TypeCodec<T> {
     static class SetCodec<T> extends TypeCodec<Set<T>> {
 
         private final TypeCodec<T> eltCodec;
+        private final int protocolVersion;
 
-        public SetCodec(TypeCodec<T> eltCodec) {
+        public SetCodec(TypeCodec<T> eltCodec, int protocolVersion) {
             this.eltCodec = eltCodec;
+            this.protocolVersion = protocolVersion;
         }
 
         @Override
@@ -786,26 +838,20 @@ abstract class TypeCodec<T> {
         @Override
         public ByteBuffer serialize(Set<T> value) {
             List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(value.size());
-            int size = 0;
-            for (T elt : value) {
-                ByteBuffer bb = eltCodec.serialize(elt);
-                bbs.add(bb);
-                size += 2 + bb.remaining();
-            }
-            return pack(bbs, value.size(), size);
+            for (T elt : value)
+                bbs.add(eltCodec.serialize(elt));
+
+            return pack(bbs, value.size(), protocolVersion);
         }
 
         @Override
         public Set<T> deserialize(ByteBuffer bytes) {
             try {
                 ByteBuffer input = bytes.duplicate();
-                int n = getUnsignedShort(input);
+                int n = readCollectionSize(input, protocolVersion);
                 Set<T> l = new LinkedHashSet<T>(n);
                 for (int i = 0; i < n; i++) {
-                    int s = getUnsignedShort(input);
-                    byte[] data = new byte[s];
-                    input.get(data);
-                    ByteBuffer databb = ByteBuffer.wrap(data);
+                    ByteBuffer databb = readCollectionValue(input, protocolVersion);
                     l.add(eltCodec.deserialize(databb));
                 }
                 return l;
@@ -819,10 +865,12 @@ abstract class TypeCodec<T> {
 
         private final TypeCodec<K> keyCodec;
         private final TypeCodec<V> valueCodec;
+        private final int protocolVersion;
 
-        public MapCodec(TypeCodec<K> keyCodec, TypeCodec<V> valueCodec) {
+        public MapCodec(TypeCodec<K> keyCodec, TypeCodec<V> valueCodec, int protocolVersion) {
             this.keyCodec = keyCodec;
             this.valueCodec = valueCodec;
+            this.protocolVersion = protocolVersion;
         }
 
         @Override
@@ -835,38 +883,71 @@ abstract class TypeCodec<T> {
             List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(2 * value.size());
             int size = 0;
             for (Map.Entry<K, V> entry : value.entrySet()) {
-                ByteBuffer bbk = keyCodec.serialize(entry.getKey());
-                ByteBuffer bbv = valueCodec.serialize(entry.getValue());
-                bbs.add(bbk);
-                bbs.add(bbv);
-                size += 4 + bbk.remaining() + bbv.remaining();
+                bbs.add(keyCodec.serialize(entry.getKey()));
+                bbs.add(valueCodec.serialize(entry.getValue()));
             }
-            return pack(bbs, value.size(), size);
+            return pack(bbs, value.size(), protocolVersion);
         }
 
         @Override
         public Map<K, V> deserialize(ByteBuffer bytes) {
             try {
                 ByteBuffer input = bytes.duplicate();
-                int n = getUnsignedShort(input);
+                int n = readCollectionSize(input, protocolVersion);
                 Map<K, V> m = new LinkedHashMap<K, V>(n);
                 for (int i = 0; i < n; i++) {
-                    int sk = getUnsignedShort(input);
-                    byte[] datak = new byte[sk];
-                    input.get(datak);
-                    ByteBuffer kbb = ByteBuffer.wrap(datak);
-
-                    int sv = getUnsignedShort(input);
-                    byte[] datav = new byte[sv];
-                    input.get(datav);
-                    ByteBuffer vbb = ByteBuffer.wrap(datav);
-
+                    ByteBuffer kbb = readCollectionValue(input, protocolVersion);
+                    ByteBuffer vbb = readCollectionValue(input, protocolVersion);
                     m.put(keyCodec.deserialize(kbb), valueCodec.deserialize(vbb));
                 }
                 return m;
             } catch (BufferUnderflowException e) {
                 throw new InvalidTypeException("Not enough bytes to deserialize a map");
             }
+        }
+    }
+
+    static class UDTCodec extends TypeCodec<UDTValue> {
+
+        private final UDTDefinition definition;
+
+        public UDTCodec(UDTDefinition definition) {
+            this.definition = definition;
+        }
+
+        public UDTValue parse(String value) {
+            throw new UnsupportedOperationException();
+        }
+
+        public ByteBuffer serialize(UDTValue value) {
+            int size = 0;
+            List<ByteBuffer> vs = new ArrayList<ByteBuffer>(definition.size());
+            for (int i = 0; i < definition.size(); i++) {
+                ByteBuffer v = value.values[i];
+                vs.add(v);
+                size += 3 + v.remaining();
+            }
+
+            ByteBuffer result = ByteBuffer.allocate(size);
+            for (ByteBuffer bb : vs) {
+                result.putShort((short)bb.remaining());
+                result.put(bb.duplicate());
+                result.put((byte)0);
+            }
+            return (ByteBuffer)result.flip();
+        }
+
+        public UDTValue deserialize(ByteBuffer bytes) {
+            ByteBuffer input = bytes.duplicate();
+            UDTValue value = definition.newValue();
+
+            int i = 0;
+            while (input.hasRemaining() && i < definition.size()) {
+                int n = getUnsignedShort(input);
+                value.values[i++] = readBytes(input, n);
+                input.get(); // EOC since it's a CompositeType encoding
+            }
+            return value;
         }
     }
 }

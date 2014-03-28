@@ -32,6 +32,7 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
     private final List<ByteBuffer> data;
 
     private ArrayBackedRow(ColumnDefinitions metadata, List<ByteBuffer> data) {
+        super(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION);
         this.metadata = metadata;
         this.data = data;
     }
@@ -79,7 +80,7 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
             if (bb == null)
                 sb.append("NULL");
             else
-                sb.append(metadata.getType(i).codec().deserialize(bb).toString());
+                sb.append(metadata.getType(i).codec(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION).deserialize(bb).toString());
         }
         sb.append(']');
         return sb.toString();

@@ -26,25 +26,25 @@ public class TypeCodecTest {
 
     @Test(groups = "unit")
     public void testCustomList() throws Exception {
-        TypeCodec<?> listType = TypeCodec.listOf(CUSTOM_FOO);
+        TypeCodec<?> listType = TypeCodec.listOf(CUSTOM_FOO, 2);
         Assert.assertNotNull(listType);
     }
 
     @Test(groups = "unit")
     public void testCustomSet() throws Exception {
-        TypeCodec<?> setType = TypeCodec.setOf(CUSTOM_FOO);
+        TypeCodec<?> setType = TypeCodec.setOf(CUSTOM_FOO, 2);
         Assert.assertNotNull(setType);
     }
 
     @Test(groups = "unit")
     public void testCustomKeyMap() throws Exception {
-        TypeCodec mapType = TypeCodec.mapOf(CUSTOM_FOO, text());
+        TypeCodec mapType = TypeCodec.mapOf(CUSTOM_FOO, text(), 2);
         Assert.assertNotNull(mapType);
     }
 
     @Test(groups = "unit")
     public void testCustomValueMap() throws Exception {
-        TypeCodec mapType = TypeCodec.mapOf(text(), CUSTOM_FOO);
+        TypeCodec mapType = TypeCodec.mapOf(text(), CUSTOM_FOO, 2);
         Assert.assertNotNull(mapType);
     }
 }

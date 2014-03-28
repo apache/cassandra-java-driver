@@ -49,9 +49,10 @@ public class Metadata {
     }
 
     // Synchronized to make it easy to detect dropped keyspaces
-    synchronized void rebuildSchema(String keyspace, String table, ResultSet ks, ResultSet cfs, ResultSet cols, VersionNumber cassandraVersion) {
+    synchronized void rebuildSchema(String keyspace, String table, ResultSet ks, ResultSet udts, ResultSet cfs, ResultSet cols, VersionNumber cassandraVersion) {
 
         Map<String, List<Row>> cfDefs = new HashMap<String, List<Row>>();
+        Map<String, List<Row>> udtDefs = new HashMap<String, List<Row>>();
         Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = new HashMap<String, Map<String, Map<String, ColumnMetadata.Raw>>>();
 
         // Gather cf defs
@@ -63,6 +64,19 @@ public class Metadata {
                 cfDefs.put(ksName, l);
             }
             l.add(row);
+        }
+
+        // Gather udt defs
+        if (udts != null) {
+            for (Row row : udts) {
+                String ksName = row.getString(KeyspaceMetadata.KS_NAME);
+                List<Row> l = udtDefs.get(ksName);
+                if (l == null) {
+                    l = new ArrayList<Row>();
+                    udtDefs.put(ksName, l);
+                }
+                l.add(row);
+            }
         }
 
         // Gather columns per Cf
@@ -88,7 +102,7 @@ public class Metadata {
             Set<String> addedKs = new HashSet<String>();
             for (Row ksRow : ks) {
                 String ksName = ksRow.getString(KeyspaceMetadata.KS_NAME);
-                KeyspaceMetadata ksm = KeyspaceMetadata.build(ksRow);
+                KeyspaceMetadata ksm = KeyspaceMetadata.build(ksRow, udtDefs.get(ksName));
 
                 if (cfDefs.containsKey(ksName)) {
                     buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), cassandraVersion);

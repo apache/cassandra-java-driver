@@ -25,6 +25,26 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 public abstract class AbstractGettableData implements GettableData {
 
+    protected final int version;
+
+    /**
+     * Creates a new AbstractGettableData object.
+     *
+     * @param protocolVersion the protocol version in which values returned
+     * by {@link #getValue} will be returned. This must be a protocol version
+     * supported by this driver. In general, the correct value will be the
+     * value returned by {@link ProtocolOptions#getProtocolVersion}.
+     *
+     * @throws IllegalArgumentException if {@code protocolVersion} is not a valid protocol version.
+     */
+    protected AbstractGettableData(int protocolVersion) {
+        if (protocolVersion == 0 || protocolVersion > ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION)
+            throw new IllegalArgumentException(String.format("Unsupported protocol version %d; valid values must be between 1 and %d or negative (for auto-detect).",
+                                                             protocolVersion,
+                                                             ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION));
+        this.version = protocolVersion;
+    }
+
     /**
      * Returns the type for the value at index {@code i}.
      *
@@ -407,7 +427,7 @@ public abstract class AbstractGettableData implements GettableData {
         if (value == null)
             return Collections.<T>emptyList();
 
-        return Collections.unmodifiableList((List<T>)type.codec().deserialize(value));
+        return Collections.unmodifiableList((List<T>)type.codec(version).deserialize(value));
     }
 
     /**
@@ -436,7 +456,7 @@ public abstract class AbstractGettableData implements GettableData {
         if (value == null)
             return Collections.<T>emptySet();
 
-        return Collections.unmodifiableSet((Set<T>)type.codec().deserialize(value));
+        return Collections.unmodifiableSet((Set<T>)type.codec(version).deserialize(value));
     }
 
     /**
@@ -466,7 +486,7 @@ public abstract class AbstractGettableData implements GettableData {
         if (value == null)
             return Collections.<K, V>emptyMap();
 
-        return Collections.unmodifiableMap((Map<K, V>)type.codec().deserialize(value));
+        return Collections.unmodifiableMap((Map<K, V>)type.codec(version).deserialize(value));
     }
 
     /**
@@ -475,5 +495,31 @@ public abstract class AbstractGettableData implements GettableData {
     @Override
     public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass) {
         return getMap(getIndexOf(name), keysClass, valuesClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public UDTValue getUDTValue(int i) {
+        DataType type = getType(i);
+        if (type.getName() != DataType.Name.UDT)
+            throw new InvalidTypeException(String.format("Column %s is not a UDT", getName(i)));
+
+        ByteBuffer value = getValue(i);
+        if (value == null || value.remaining() == 0)
+            return null;
+
+        // UDT always use the protocol V3 to encode values
+        return (UDTValue)type.codec(3).deserialize(value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public UDTValue getUDTValue(String name) {
+        return getUDTValue(getIndexOf(name));
     }
 }

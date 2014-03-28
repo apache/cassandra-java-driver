@@ -52,6 +52,7 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_KEYSPACES = "SELECT * FROM system.schema_keyspaces";
     private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
+    private static final String SELECT_USERTYPES = "SELECT * FROM system.schema_usertypes";
 
     private static final String SELECT_PEERS = "SELECT * FROM system.peers";
     private static final String SELECT_LOCAL = "SELECT * FROM system.local WHERE key='local'";
@@ -263,25 +264,6 @@ class ControlConnection implements Host.StateListener {
     }
 
     static void refreshSchema(Connection connection, String keyspace, String table, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
-        // Make sure we're up to date on schema
-        String whereClause = "";
-        if (keyspace != null) {
-            whereClause = " WHERE keyspace_name = '" + keyspace + '\'';
-            if (table != null)
-                whereClause += " AND columnfamily_name = '" + table + '\'';
-        }
-
-        DefaultResultSetFuture ksFuture = table == null
-                                        ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_KEYSPACES + whereClause))
-                                        : null;
-        DefaultResultSetFuture cfFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause));
-        DefaultResultSetFuture colsFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMNS + whereClause));
-
-        if (ksFuture != null)
-            connection.write(ksFuture);
-        connection.write(cfFuture);
-        connection.write(colsFuture);
-
         Host host = cluster.metadata.getHost(connection.address);
         // Neither host, nor it's version should be null. But instead of dying if there is a race or something, we can kind of try to infer
         // a Cassandra version from the protocol version (this is not full proof, we can have the protocol 1 against C* 2.0+, but it's worth
@@ -295,8 +277,32 @@ class ControlConnection implements Host.StateListener {
             cassandraVersion = host.getCassandraVersion();
         }
 
+        // Make sure we're up to date on schema
+        String whereClause = "";
+        if (keyspace != null) {
+            whereClause = " WHERE keyspace_name = '" + keyspace + '\'';
+            if (table != null)
+                whereClause += " AND columnfamily_name = '" + table + '\'';
+        }
+
+        DefaultResultSetFuture ksFuture = table == null
+                                        ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_KEYSPACES + whereClause))
+                                        : null;
+        DefaultResultSetFuture udtFuture = table == null && (cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1))
+                                         ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_USERTYPES + whereClause))
+                                         : null;
+        DefaultResultSetFuture cfFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause));
+        DefaultResultSetFuture colsFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMNS + whereClause));
+
+        if (ksFuture != null)
+            connection.write(ksFuture);
+        if (udtFuture != null)
+            connection.write(udtFuture);
+        connection.write(cfFuture);
+        connection.write(colsFuture);
+
         try {
-            cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get(), cassandraVersion);
+            cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), udtFuture == null ? null : udtFuture.get(), cfFuture.get(), colsFuture.get(), cassandraVersion);
         } catch (RuntimeException e) {
             // Failure to parse the schema is definitively wrong so log a full-on error, but this won't generally prevent queries to
             // work and this can happen when new Cassandra versions modify stuff in the schema and the driver hasn't yet be modified.

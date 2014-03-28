@@ -192,7 +192,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
                         throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting %s but %s provided", i, columnType, expectedClass, providedClass));
                     break;
             }
-            wrapper.values[i] = columnType.codec().serialize(toSet);
+            wrapper.values[i] = columnType.codec(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION).serialize(toSet);
         }
         return this;
     }
@@ -826,6 +826,41 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     }
 
     /**
+     * Sets the {@code i}th value to the provided UDT value.
+     *
+     * @param i the index of the value to set.
+     * @param v the value to set.
+     * @return this BoundStatement .
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this BoundStatement.
+     * @throws InvalidTypeException if value {@code i} is not a UDT value or if its definition
+     * does not correspond to the one of {@code v}.
+     */
+    public BoundStatement setUDTValue(int i, UDTValue v) {
+        return wrapper.setUDTValue(i, v);
+    }
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided UDT value.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set.
+     * @return this BoundStatement.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this BoundStatement.
+     * @throws InvalidTypeException if value {@code i} is not a UDT value or if its definition
+     * does not correspond to the one of {@code v}.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not a UDT value or if the definition of column {@code name} does not correspond to
+     * the one of {@code v}.
+     */
+    public BoundStatement setUDTValue(String name, UDTValue v) {
+        return wrapper.setUDTValue(name, v);
+    }
+
+    /**
      * {@inheritDoc}
      */
     public boolean isNull(int i) {
@@ -1063,10 +1098,24 @@ public class BoundStatement extends Statement implements SettableData<BoundState
         return wrapper.getMap(name, keysClass, valuesClass);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public UDTValue getUDTValue(int i) {
+        return wrapper.getUDTValue(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public UDTValue getUDTValue(String name) {
+        return wrapper.getUDTValue(name);
+    }
+
     static class DataWrapper extends AbstractData<BoundStatement> {
 
         DataWrapper(BoundStatement wrapped, int size) {
-            super(wrapped, size);
+            super(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION, wrapped, size);
         }
 
         protected int[] getAllIndexesOf(String name) {

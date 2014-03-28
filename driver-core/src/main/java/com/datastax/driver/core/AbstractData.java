@@ -29,11 +29,21 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     final T wrapped;
     final ByteBuffer[] values;
 
-    protected AbstractData(T wrapped, int size) {
-        this(wrapped, new ByteBuffer[size]);
+    // Ugly, we coould probably clean that: it is currently needed however because we sometimes
+    // want wrapped to be 'this' (UDTValue), and sometimes some other object (in BoundStatement).
+    @SuppressWarnings("unchecked")
+    protected AbstractData(int protocolVersion, int size) {
+        super(protocolVersion);
+        this.wrapped = (T)this;
+        this.values = new ByteBuffer[size];
     }
 
-    protected AbstractData(T wrapped, ByteBuffer[] values) {
+    protected AbstractData(int protocolVersion, T wrapped, int size) {
+        this(protocolVersion, wrapped, new ByteBuffer[size]);
+    }
+
+    protected AbstractData(int protocolVersion, T wrapped, ByteBuffer[] values) {
+        super(protocolVersion);
         this.wrapped = wrapped;
         this.values = values;
     }
@@ -278,7 +288,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             if (!expectedClass.isAssignableFrom(providedClass))
                 throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting list of %s but provided list of %s", getName(i), type, expectedClass, providedClass));
         }
-        return setValue(i, type.codec().serialize(v));
+        return setValue(i, type.codec(version).serialize(v));
     }
 
     public <E> T setList(String name, List<E> v) {
@@ -307,7 +317,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             if (!expectedKeysClass.isAssignableFrom(providedKeysClass) || !expectedValuesClass.isAssignableFrom(providedValuesClass))
                 throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting map of %s->%s but provided map of %s->%s", getName(i), type, expectedKeysClass, expectedValuesClass, providedKeysClass, providedValuesClass));
         }
-        return setValue(i, type.codec().serialize(v));
+        return setValue(i, type.codec(version).serialize(v));
     }
 
     public <K, V> T setMap(String name, Map<K, V> v) {
@@ -333,7 +343,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             if (!expectedClass.isAssignableFrom(providedClass))
                 throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting set of %s but provided set of %s", getName(i), type, expectedClass, providedClass));
         }
-        return setValue(i, type.codec().serialize(v));
+        return setValue(i, type.codec(version).serialize(v));
     }
 
     public <E> T setSet(String name, Set<E> v) {
@@ -341,5 +351,62 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         for (int i = 0; i < indexes.length; i++)
             setSet(indexes[i], v);
         return wrapped;
+    }
+
+    public T setUDTValue(int i, UDTValue v) {
+        DataType type = getType(i);
+        if (type.getName() != DataType.Name.UDT)
+            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a UDT", getName(i), type));
+
+        if (v == null)
+            return setValue(i, null);
+
+        // UDT always user the V3 protocol version to encode values
+        setValue(i, type.codec(3).serialize(v));
+        return wrapped;
+    }
+
+    public T setUDTValue(String name, UDTValue v) {
+        int[] indexes = getAllIndexesOf(name);
+        for (int i = 0; i < indexes.length; i++)
+            setUDTValue(indexes[i], v);
+        return wrapped;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof UDTValue))
+            return false;
+
+        AbstractData<?> that = (AbstractData<?>)o;
+        if (values.length != that.values.length)
+            return false;
+
+        // Deserializing each value is slightly inefficient, but comparing
+        // the bytes could in theory be wrong (for varint for instance, 2 values
+        // can have different binary representation but be the same value due to
+        // leading zeros). So we don't take any risk.
+        for (int i = 0; i < values.length; i++) {
+            DataType thisType = getType(i);
+            DataType thatType = that.getType(i);
+            if (!thisType.equals(thatType))
+                return false;
+
+            if ((values[i] == null) != (that.values[i] == null))
+                return false;
+
+            if (values[i] != null && !(thisType.deserialize(values[i]).equals(thatType.deserialize(that.values[i]))))
+                return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        // Same as equals
+        int hash = 31;
+        for (int i = 0; i < values.length; i++)
+            hash += values[i] == null ? 1 : getType(i).deserialize(values[i]).hashCode();
+        return hash;
     }
 }

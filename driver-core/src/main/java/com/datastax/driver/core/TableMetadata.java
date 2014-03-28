@@ -329,11 +329,11 @@ public class TableMetadata {
     /**
      * Returns a {@code String} containing CQL queries representing this
      * table and the index on it.
-     *
+     * <p>
      * In other words, this method returns the queries that would allow you to
      * recreate the schema of this table, along with the index defined on
      * columns of this table.
-     *
+     * <p>
      * Note that the returned String is formatted to be human readable (for
      * some definition of human readable at least).
      *
@@ -357,10 +357,10 @@ public class TableMetadata {
 
     /**
      * Returns a CQL query representing this table.
-     *
+     * <p>
      * This method returns a single 'CREATE TABLE' query with the options
      * corresponding to this table definition.
-     *
+     * <p>
      * Note that the returned string is a single line; the returned query
      * is not formatted in any way.
      *
@@ -425,6 +425,11 @@ public class TableMetadata {
         return sb.toString();
     }
 
+    @Override
+    public String toString() {
+        return asCQLQuery();
+    }
+
     private StringBuilder appendClusteringOrder(StringBuilder sb) {
         sb.append("CLUSTERING ORDER BY (");
         for (int i = 0; i < clusteringColumns.size(); i++) {
@@ -456,7 +461,7 @@ public class TableMetadata {
         return newLine(sb, formatted).append(spaces(2, formatted)).append(" AND ");
     }
 
-    private String spaces(int n, boolean formatted) {
+    static String spaces(int n, boolean formatted) {
         if (!formatted)
             return "";
 
@@ -467,7 +472,7 @@ public class TableMetadata {
         return sb.toString();
     }
 
-    private StringBuilder newLine(StringBuilder sb, boolean formatted) {
+    static StringBuilder newLine(StringBuilder sb, boolean formatted) {
         if (formatted)
             sb.append('\n');
         return sb;

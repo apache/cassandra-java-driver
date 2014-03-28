@@ -75,5 +75,4 @@ public class CaseSensitivityTest {
             c.discard();
         }
     }
-
 }

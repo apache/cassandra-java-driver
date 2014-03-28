@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.util.Arrays;
+import java.util.Iterator;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -53,5 +54,45 @@ public class CassandraTypeParserTest {
         assertFalse(r2.isComposite);
         assertEquals(r2.types, Arrays.asList(DataType.timestamp()));
         assertEquals(r2.collections.size(), 0);
+    }
+
+    @Test(groups = "unit")
+    public void parseUserTypes() {
+
+        String s = "org.apache.cassandra.db.marshal.UserType(foo,61646472657373,737472656574:org.apache.cassandra.db.marshal.UTF8Type,7a6970636f6465:org.apache.cassandra.db.marshal.Int32Type,70686f6e6573:org.apache.cassandra.db.marshal.SetType(org.apache.cassandra.db.marshal.UserType(foo,70686f6e65,6e616d65:org.apache.cassandra.db.marshal.UTF8Type,6e756d626572:org.apache.cassandra.db.marshal.UTF8Type)))";
+        UDTDefinition def = CassandraTypeParser.parseOne(s).getUDTDefinition();
+
+        assertEquals(def.getKeyspace(), "foo");
+        assertEquals(def.getName(), "address");
+
+        Iterator<UDTDefinition.Field> iter = def.iterator();
+
+        UDTDefinition.Field field1 = iter.next();
+        assertEquals(field1.getName(), "street");
+        assertEquals(field1.getType(), DataType.text());
+
+        UDTDefinition.Field field2 = iter.next();
+        assertEquals(field2.getName(), "zipcode");
+        assertEquals(field2.getType(), DataType.cint());
+
+        UDTDefinition.Field field3 = iter.next();
+        assertEquals(field3.getName(), "phones");
+
+        DataType st = field3.getType();
+        assertEquals(st.getName(), DataType.Name.SET);
+        UDTDefinition subDef = st.getTypeArguments().get(0).getUDTDefinition();
+
+        assertEquals(subDef.getKeyspace(), "foo");
+        assertEquals(subDef.getName(), "phone");
+
+        Iterator<UDTDefinition.Field> subIter = subDef.iterator();
+
+        UDTDefinition.Field subField1 = subIter.next();
+        assertEquals(subField1.getName(), "name");
+        assertEquals(subField1.getType(), DataType.text());
+
+        UDTDefinition.Field subField2 = subIter.next();
+        assertEquals(subField2.getName(), "number");
+        assertEquals(subField2.getType(), DataType.text());
     }
 }
