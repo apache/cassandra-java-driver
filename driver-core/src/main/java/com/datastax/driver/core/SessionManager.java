@@ -340,7 +340,7 @@ class SessionManager extends AbstractSession {
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
             boolean skipMetadata = protoVersion != 1 && bs.statement.getPreparedId().resultSetMetadata != null;
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.values), skipMetadata, fetchSize, pagingState, scl);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.wrapper.values), skipMetadata, fetchSize, pagingState, scl);
             return new Requests.Execute(bs.statement.getPreparedId().id, options);
         } else {
             assert statement instanceof BatchStatement : statement;

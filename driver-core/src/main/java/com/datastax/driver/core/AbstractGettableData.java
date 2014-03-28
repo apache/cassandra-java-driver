@@ -66,13 +66,13 @@ public abstract class AbstractGettableData implements GettableData {
     protected abstract int getIndexOf(String name);
 
     // Note: we avoid having a vararg method to avoid the array allocation that comes with it.
-    private void checkType(int i, DataType.Name name) {
+    void checkType(int i, DataType.Name name) {
         DataType defined = getType(i);
         if (name != defined.getName())
             throw new InvalidTypeException(String.format("Value %s is of type %s", getName(i), defined));
     }
 
-    private DataType.Name checkType(int i, DataType.Name name1, DataType.Name name2) {
+    DataType.Name checkType(int i, DataType.Name name1, DataType.Name name2) {
         DataType defined = getType(i);
         if (name1 != defined.getName() && name2 != defined.getName())
             throw new InvalidTypeException(String.format("Value %s is of type %s", getName(i), defined));
@@ -80,7 +80,7 @@ public abstract class AbstractGettableData implements GettableData {
         return defined.getName();
     }
 
-    private DataType.Name checkType(int i, DataType.Name name1, DataType.Name name2, DataType.Name name3) {
+    DataType.Name checkType(int i, DataType.Name name1, DataType.Name name2, DataType.Name name3) {
         DataType defined = getType(i);
         if (name1 != defined.getName() && name2 != defined.getName() && name3 != defined.getName())
             throw new InvalidTypeException(String.format("Value %s is of type %s", getName(i), defined));
