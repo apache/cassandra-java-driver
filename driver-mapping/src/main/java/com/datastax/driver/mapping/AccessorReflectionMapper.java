@@ -10,7 +10,7 @@ class AccessorReflectionMapper<T> extends AccessorMapper<T> {
     private final Class<T>[] proxyClasses;
     private final AccessorInvocationHandler<T> handler;
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings("unchecked")
     private AccessorReflectionMapper(Class<T> daoClass, List<MethodMapper> methods) {
         super(daoClass, methods);
         this.proxyClasses = (Class<T>[])new Class[]{ daoClass };

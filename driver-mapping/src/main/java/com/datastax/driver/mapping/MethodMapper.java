@@ -3,13 +3,9 @@ package com.datastax.driver.mapping;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.*;
 
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-
 import com.datastax.driver.core.*;
 
 // TODO: we probably should make that an abstract class and move some bit in a "ReflexionMethodMapper"
@@ -80,7 +76,8 @@ class MethodMapper {
         }
     }
 
-    private void mapType(MappingManager manager, Class<?> fullReturnType, Type type) {
+    @SuppressWarnings("rawtypes")
+	private void mapType(MappingManager manager, Class<?> fullReturnType, Type type) {
 
         if (type instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType)type;

@@ -1,7 +1,6 @@
 package com.datastax.driver.mapping;
 
 import java.lang.reflect.Field;
-import java.util.*;
 
 import com.datastax.driver.core.DataType;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.quote;

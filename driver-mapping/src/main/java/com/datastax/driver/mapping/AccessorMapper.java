@@ -1,6 +1,5 @@
 package com.datastax.driver.mapping;
 
-import java.lang.reflect.Method;
 import java.util.*;
 
 import com.google.common.util.concurrent.Futures;

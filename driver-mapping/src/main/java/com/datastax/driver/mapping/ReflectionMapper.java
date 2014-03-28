@@ -169,7 +169,8 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             }
         }
 
-        @Override
+        @SuppressWarnings("rawtypes")
+		@Override
         public Object getValue(T entity) {
             Object value = super.getValue(entity);
             switch (enumType) {
@@ -189,7 +190,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                     converted = fromString.get(value.toString().toLowerCase());
                     break;
                 case ORDINAL:
-                    converted = javaType.getEnumConstants()[(Integer)converted];
+                    converted = javaType.getEnumConstants()[(Integer)value];
                     break;
             }
             super.setValue(entity, converted);
