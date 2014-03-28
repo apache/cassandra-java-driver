@@ -32,7 +32,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 /**
  * Data types supported by cassandra.
  */
-public class DataType {
+public abstract class DataType {
 
     /**
      * The CQL type name.
@@ -146,28 +146,20 @@ public class DataType {
         }
     }
 
-    private final DataType.Name name;
-    private final List<DataType> typeArguments;
-    private final String customClassName;
-    private final TypeCodec<?> codec;
+    protected final DataType.Name name;
+    protected final TypeCodec<?> codec;
 
     private static final Map<Name, DataType> primitiveTypeMap = new EnumMap<Name, DataType>(Name.class);
     static {
         for (Name name : Name.values()) {
             if (!name.isCollection() && name != Name.CUSTOM)
-                primitiveTypeMap.put(name, new DataType(name, Collections.<DataType>emptyList(), TypeCodec.createFor(name)));
+                primitiveTypeMap.put(name, new DataType.Native(name, TypeCodec.createFor(name)));
         }
     }
     private static final Set<DataType> primitiveTypeSet = ImmutableSet.copyOf(primitiveTypeMap.values());
 
-    private DataType(DataType.Name name, List<DataType> typeArguments, TypeCodec<?> codec) {
-        this(name, typeArguments, null, codec);
-    }
-
-    private DataType(DataType.Name name, List<DataType> typeArguments, String customClassName, TypeCodec<?> codec) {
+    protected DataType(DataType.Name name, TypeCodec<?> codec) {
         this.name = name;
-        this.typeArguments = typeArguments;
-        this.customClassName = customClassName;
         this.codec = codec;
     }
 
@@ -348,7 +340,7 @@ public class DataType {
         // TODO: for list, sets and maps, we could cache them (may or may not be worth it, but since we
         // don't allow nesting of collections, even pregenerating all the lists/sets like we do for
         // primitives wouldn't be very costly)
-        return new DataType(Name.LIST, ImmutableList.of(elementType), TypeCodec.listOf(elementType));
+        return new DataType.Collection(Name.LIST, TypeCodec.listOf(elementType), ImmutableList.of(elementType));
     }
 
     /**
@@ -358,7 +350,7 @@ public class DataType {
      * @return the type of sets of {@code elementType} elements.
      */
     public static DataType set(DataType elementType) {
-        return new DataType(Name.SET, ImmutableList.of(elementType), TypeCodec.setOf(elementType));
+        return new DataType.Collection(Name.SET, TypeCodec.setOf(elementType), ImmutableList.of(elementType));
     }
 
     /**
@@ -369,7 +361,7 @@ public class DataType {
      * @return the type of map of {@code keyType} to {@code valueType} elements.
      */
     public static DataType map(DataType keyType, DataType valueType) {
-        return new DataType(Name.MAP, ImmutableList.of(keyType, valueType), TypeCodec.mapOf(keyType, valueType));
+        return new DataType.Collection(Name.MAP, TypeCodec.mapOf(keyType, valueType), ImmutableList.of(keyType, valueType));
     }
 
     /**
@@ -389,7 +381,7 @@ public class DataType {
     public static DataType custom(String typeClassName) {
         if (typeClassName == null)
             throw new NullPointerException();
-        return new DataType(Name.CUSTOM, Collections.<DataType>emptyList(), typeClassName, TypeCodec.createFor(Name.CUSTOM));
+        return new DataType.Custom(Name.CUSTOM, TypeCodec.createFor(Name.CUSTOM), typeClassName);
     }
 
     /**
@@ -419,7 +411,7 @@ public class DataType {
      * @return an immutable list containing the type arguments of this type.
      */
     public List<DataType> getTypeArguments() {
-        return typeArguments;
+        return Collections.<DataType>emptyList();
     }
 
     /**
@@ -429,7 +421,7 @@ public class DataType {
      * {@code null} for any other type.
      */
     public String getCustomTypeClassName() {
-        return customClassName;
+        return null;
     }
 
     /**
@@ -446,16 +438,7 @@ public class DataType {
      * representation for this type. Please note that values for custom types
      * can never be parsed and will always return this exception.
      */
-    public ByteBuffer parse(String value) {
-        if (name == Name.CUSTOM)
-            throw new InvalidTypeException(String.format("Cannot parse '%s' as value of custom type of class '%s' "
-                                                       + "(values for custom type cannot be parse and must be inputted as bytes directly)", value, customClassName));
-
-        if (name.isCollection())
-            throw new InvalidTypeException(String.format("Cannot parse value as %s, parsing collections is not currently supported", name));
-
-        return codec().serialize(codec.parse(value));
-    }
+    public abstract ByteBuffer parse(String value);
 
     /**
      * Returns whether this type is a collection one, i.e. a list, set or map type.
@@ -575,32 +558,114 @@ public class DataType {
         }
     }
 
-    @Override
-    public final int hashCode() {
-        return Arrays.hashCode(new Object[]{ name, typeArguments, customClassName });
+    private static class Native extends DataType {
+        private Native(DataType.Name name, TypeCodec<?> codec) {
+            super(name, codec);
+        }
+
+        @Override
+        public ByteBuffer parse(String value) {
+            return codec().serialize(codec.parse(value));
+        }
+
+        @Override
+        public final int hashCode() {
+            return name.hashCode();
+        }
+
+        @Override
+        public final boolean equals(Object o) {
+            if(!(o instanceof DataType.Native))
+                return false;
+
+            return name == ((DataType.Native)o).name;
+        }
+
+        @Override
+        public String toString() {
+            return name.toString();
+        }
     }
 
-    @Override
-    public final boolean equals(Object o) {
-        if(!(o instanceof DataType))
-            return false;
+    private static class Collection extends DataType {
 
-        DataType d = (DataType)o;
-        return name == d.name && typeArguments.equals(d.typeArguments) && Objects.equal(customClassName, d.customClassName);
-    }
+        private final List<DataType> typeArguments;
 
-    @Override
-    public String toString() {
-        switch (name) {
-            case LIST:
-            case SET:
-                return String.format("%s<%s>", name, typeArguments.get(0));
-            case MAP:
+        private Collection(DataType.Name name, TypeCodec<?> codec, List<DataType> typeArguments) {
+            super(name, codec);
+            this.typeArguments = typeArguments;
+        }
+
+        @Override
+        public List<DataType> getTypeArguments() {
+            return typeArguments;
+        }
+
+        @Override
+        public ByteBuffer parse(String value) {
+            throw new InvalidTypeException(String.format("Cannot parse value as %s, parsing collections is not currently supported", name));
+        }
+
+        @Override
+        public final int hashCode() {
+            return Arrays.hashCode(new Object[]{ name, typeArguments });
+        }
+
+        @Override
+        public final boolean equals(Object o) {
+            if(!(o instanceof DataType.Collection))
+                return false;
+
+            DataType.Collection d = (DataType.Collection)o;
+            return name == d.name && typeArguments.equals(d.typeArguments);
+        }
+
+        @Override
+        public String toString() {
+            if (name == Name.MAP)
                 return String.format("%s<%s, %s>", name, typeArguments.get(0), typeArguments.get(1));
-            case CUSTOM:
-                return String.format("'%s'", customClassName);
-            default:
-                return name.toString();
+            else
+                return String.format("%s<%s>", name, typeArguments.get(0));
+        }
+    }
+
+    private static class Custom extends DataType {
+
+        private final String customClassName;
+
+        private Custom(DataType.Name name, TypeCodec<?> codec, String className) {
+            super(name, codec);
+            this.customClassName = className;
+        }
+
+        @Override
+        public String getCustomTypeClassName() {
+            return customClassName;
+        }
+
+        @Override
+        public ByteBuffer parse(String value) {
+            throw new InvalidTypeException(String.format("Cannot parse '%s' as value of custom type of class '%s' "
+                        + "(values for custom type cannot be parse and must be inputted as bytes directly)", value, customClassName));
+        }
+
+        @Override
+        public final int hashCode() {
+            return Arrays.hashCode(new Object[]{ name, customClassName });
+        }
+
+        @Override
+        public final boolean equals(Object o) {
+            if(!(o instanceof DataType.Custom))
+                return false;
+
+            DataType.Custom d = (DataType.Custom)o;
+            return name == d.name && Objects.equal(customClassName, d.customClassName);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("'%s'", customClassName);
         }
     }
 }
