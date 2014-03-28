@@ -17,6 +17,8 @@ package com.datastax.driver.core.policies;
 
 import java.net.InetSocketAddress;
 
+import com.datastax.driver.core.Cluster;
+
 /**
  * Translates IP addresses received from Cassandra nodes into locally queriable
  * addresses.

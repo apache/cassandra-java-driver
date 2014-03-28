@@ -56,6 +56,8 @@ class RequestHandler implements Connection.ResponseCallback {
     private volatile List<Host> triedHosts;
     private volatile HostConnectionPool currentPool;
 
+    // Note that we know that queryRetries can only be incremented by one writer at a time so a
+    // volatile is good enough.
     private volatile int queryRetries;
     private volatile ConsistencyLevel retryConsistencyLevel;
 

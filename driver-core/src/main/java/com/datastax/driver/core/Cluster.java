@@ -406,7 +406,7 @@ public class Cluster implements Closeable {
      * Whether this Cluster instance has been closed.
      * <p>
      * Note that this method returns true as soon as one of the close methods
-     * ({@link closeAsync} or {@link close}) has been called, it does not guarantee
+     * ({@link #closeAsync} or {@link #close}) has been called, it does not guarantee
      * that the closing is done. If you want to guarantee that the closing is done,
      * you can call {@code close()} and wait until it returns (or call the get method
      * on {@code closeAsync()} with a very short timeout and check this doesn't timeout).
@@ -618,6 +618,13 @@ public class Cluster implements Closeable {
          * automatically), but it is usually a good idea to provide more than
          * one contact point, because if that single contact point is unavailable,
          * the driver cannot initialize itself correctly.
+         * <p>
+         * Note that by default (that is, unless you use the {@link #withLoadBalancingPolicy})
+         * method of this builder), the first succesfully contacted host will be use
+         * to define the local data-center for the client. If follows that if you are
+         * running Cassandra in a  multiple data-center setting, it is a good idea to
+         * only provided contact points that are in the same datacenter than the client,
+         * or to provide manually the load balancing policy that suits your need.
          *
          * @param address the address of the node to connect to
          * @return this Builder.

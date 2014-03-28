@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -49,7 +49,7 @@ import com.datastax.driver.core.Statement;
  */
 public class WhiteListPolicy implements LoadBalancingPolicy {
     private final LoadBalancingPolicy childPolicy;
-    private final Set<InetAddress> whiteList;
+    private final Set<InetSocketAddress> whiteList;
 
     /**
      * Create a new policy that wraps the provided child policy but only "allow" hosts
@@ -59,7 +59,7 @@ public class WhiteListPolicy implements LoadBalancingPolicy {
      * @param whiteList the white listed hosts. Only hosts from this list may get connected
      * to (whether they will get connected to or not depends on the child policy).
      */
-    public WhiteListPolicy(LoadBalancingPolicy childPolicy, Collection<InetAddress> whiteList) {
+    public WhiteListPolicy(LoadBalancingPolicy childPolicy, Collection<InetSocketAddress> whiteList) {
         this.childPolicy = childPolicy;
         this.whiteList = ImmutableSet.copyOf(whiteList);
     }
@@ -77,7 +77,7 @@ public class WhiteListPolicy implements LoadBalancingPolicy {
     public void init(Cluster cluster, Collection<Host> hosts) {
         List<Host> whiteHosts = new ArrayList<Host>(hosts.size());
         for (Host host : hosts)
-            if (whiteList.contains(host.getAddress()))
+            if (whiteList.contains(host.getSocketAddress()))
                 whiteHosts.add(host);
 
         if (whiteHosts.isEmpty())
@@ -90,12 +90,12 @@ public class WhiteListPolicy implements LoadBalancingPolicy {
      * Return the HostDistance for the provided host.
      *
      * @param host the host of which to return the distance of.
-     * @return {@link HostDistance.IGNORED} if {@code host} is not part of the white list, the HostDistance
+     * @return {@link HostDistance#IGNORED} if {@code host} is not part of the white list, the HostDistance
      * as returned by the wrapped policy otherwise.
      */
     @Override
     public HostDistance distance(Host host) {
-        return whiteList.contains(host.getAddress())
+        return whiteList.contains(host.getSocketAddress())
              ? childPolicy.distance(host)
              : HostDistance.IGNORED;
     }
@@ -121,25 +121,25 @@ public class WhiteListPolicy implements LoadBalancingPolicy {
 
     @Override
     public void onUp(Host host) {
-        if (whiteList.contains(host.getAddress()))
+        if (whiteList.contains(host.getSocketAddress()))
             childPolicy.onUp(host);
     }
 
     @Override
     public void onDown(Host host) {
-        if (whiteList.contains(host.getAddress()))
+        if (whiteList.contains(host.getSocketAddress()))
             childPolicy.onDown(host);
     }
 
     @Override
     public void onAdd(Host host) {
-        if (whiteList.contains(host.getAddress()))
+        if (whiteList.contains(host.getSocketAddress()))
             childPolicy.onAdd(host);
     }
 
     @Override
     public void onRemove(Host host) {
-        if (whiteList.contains(host.getAddress()))
+        if (whiteList.contains(host.getSocketAddress()))
             childPolicy.onRemove(host);
     }
 }
