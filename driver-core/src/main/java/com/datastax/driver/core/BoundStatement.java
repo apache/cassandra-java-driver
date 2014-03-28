@@ -38,7 +38,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * <p>
  * Any variable that hasn't been specifically set will be considered {@code null}.
  */
-public class BoundStatement extends Statement implements SettableData<BoundStatement> {
+public class BoundStatement extends Statement implements SettableData<BoundStatement>, GettableData {
 
     final PreparedStatement statement;
 
@@ -825,6 +825,244 @@ public class BoundStatement extends Statement implements SettableData<BoundState
         return wrapper.setSet(name, v);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public boolean isNull(int i) {
+        return wrapper.isNull(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean isNull(String name) {
+        return wrapper.isNull(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean getBool(int i) {
+        return wrapper.getBool(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean getBool(String name) {
+        return wrapper.getBool(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int getInt(int i) {
+        return wrapper.getInt(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int getInt(String name) {
+        return wrapper.getInt(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public long getLong(int i) {
+        return wrapper.getLong(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public long getLong(String name) {
+        return wrapper.getLong(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Date getDate(int i) {
+        return wrapper.getDate(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Date getDate(String name) {
+        return wrapper.getDate(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public float getFloat(int i) {
+        return wrapper.getFloat(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public float getFloat(String name) {
+        return wrapper.getFloat(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public double getDouble(int i) {
+        return wrapper.getDouble(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public double getDouble(String name) {
+        return wrapper.getDouble(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public ByteBuffer getBytesUnsafe(int i) {
+        return wrapper.getBytesUnsafe(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public ByteBuffer getBytesUnsafe(String name) {
+        return wrapper.getBytesUnsafe(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public ByteBuffer getBytes(int i) {
+        return wrapper.getBytes(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public ByteBuffer getBytes(String name) {
+        return wrapper.getBytes(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String getString(int i) {
+        return wrapper.getString(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String getString(String name) {
+        return wrapper.getString(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public BigInteger getVarint(int i) {
+        return wrapper.getVarint(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public BigInteger getVarint(String name) {
+        return wrapper.getVarint(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public BigDecimal getDecimal(int i) {
+        return wrapper.getDecimal(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public BigDecimal getDecimal(String name) {
+        return wrapper.getDecimal(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public UUID getUUID(int i) {
+        return wrapper.getUUID(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public UUID getUUID(String name) {
+        return wrapper.getUUID(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public InetAddress getInet(int i) {
+        return wrapper.getInet(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public InetAddress getInet(String name) {
+        return wrapper.getInet(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public <T> List<T> getList(int i, Class<T> elementsClass) {
+        return wrapper.getList(i, elementsClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public <T> List<T> getList(String name, Class<T> elementsClass) {
+        return wrapper.getList(name, elementsClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public <T> Set<T> getSet(int i, Class<T> elementsClass) {
+        return wrapper.getSet(i, elementsClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public <T> Set<T> getSet(String name, Class<T> elementsClass) {
+        return wrapper.getSet(name, elementsClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass) {
+        return wrapper.getMap(i, keysClass, valuesClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass) {
+        return wrapper.getMap(name, keysClass, valuesClass);
+    }
+
     static class DataWrapper extends AbstractData<BoundStatement> {
 
         DataWrapper(BoundStatement wrapped, int size) {
@@ -843,5 +1081,4 @@ public class BoundStatement extends Statement implements SettableData<BoundState
             return wrapped.statement.getVariables().getName(i);
         }
     }
-
 }
