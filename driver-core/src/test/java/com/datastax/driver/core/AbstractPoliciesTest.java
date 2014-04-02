@@ -70,6 +70,13 @@ public abstract class AbstractPoliciesTest {
         coordinators = new HashMap<InetAddress, Integer>();
     }
 
+    private String queriedMapString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        for (Map.Entry<InetAddress, Integer> entry : coordinators.entrySet())
+            sb.append(entry.getKey()).append(" : ").append(entry.getValue()).append(", ");
+        return sb.append("}").toString();
+    }
 
     /**
      * Helper test methods
@@ -80,15 +87,7 @@ public abstract class AbstractPoliciesTest {
             if (DEBUG)
                 System.out.println(String.format("Expected: %s\tReceived: %s", n, queried));
             else {
-                queried = queried == null ? 0 : queried;
-
-                String map = new String();
-                if (n != queried) {
-                    for (Map.Entry<InetAddress, Integer> entry : coordinators.entrySet()) {
-                        map += entry.getKey() + " : " + entry.getValue() + ", ";
-                    }
-                }
-                assertEquals(queried == null ? 0 : queried, n, "For " + host + " in {" + map + "}");
+                assertEquals(queried == null ? 0 : queried, n, queriedMapString());
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -103,6 +102,34 @@ public abstract class AbstractPoliciesTest {
                 System.out.println(String.format("Expected > %s\tReceived: %s", n, queried));
             else
                 assertTrue(queried >= n, "For " + host);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** Assert that one of the nodes in the list was queried with n, no matter which one */
+    protected void assertOneNodeQueried(int n, String... hosts) {
+        try {
+            boolean found = false;
+            for (String host : hosts) {
+                InetAddress addr = InetAddress.getByName(host);
+                int queried = coordinators.containsKey(addr) ? coordinators.get(addr) : 0;
+                if (DEBUG)
+                    System.out.println(String.format("Expected: %s\tReceived: %s", n, queried));
+                else {
+
+                    if (n == queried) {
+                        if (found == true)
+                            throw new AssertionError(String.format("Found 2 nodes with " + n + " queries in " + queriedMapString()));
+                        found = true;
+                    } else {
+                        if (queried != 0)
+                            throw new AssertionError(String.format("Host " + addr + " should have be queried: " + queriedMapString()));
+                    }
+                }
+            }
+            if (!found)
+                throw new AssertionError("Found no host queried exactly " + n + " times in " + queriedMapString());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
