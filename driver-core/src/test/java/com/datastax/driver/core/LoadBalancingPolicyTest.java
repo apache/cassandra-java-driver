@@ -249,8 +249,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
             query(c, 12);
 
-            assertQueried(CCMBridge.IP_PREFIX + '1', 12);
-            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
+            assertOneNodeQueried(12, CCMBridge.IP_PREFIX + '1', CCMBridge.IP_PREFIX + '2', CCMBridge.IP_PREFIX + '3');
             assertQueried(CCMBridge.IP_PREFIX + '3', 0);
             assertQueried(CCMBridge.IP_PREFIX + '4', 0);
             assertQueried(CCMBridge.IP_PREFIX + '5', 0);
