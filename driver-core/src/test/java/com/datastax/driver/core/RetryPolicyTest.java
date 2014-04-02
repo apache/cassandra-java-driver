@@ -63,7 +63,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      */
     @Test(groups = "long")
     public void defaultRetryPolicy() throws Throwable {
-        Cluster.Builder builder = Cluster.builder();
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy());
         defaultPolicyTest(builder);
     }
 
@@ -72,7 +72,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      */
     @Test(groups = "long")
     public void defaultLoggingPolicy() throws Throwable {
-        Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE));
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy())
+                                                   .withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE));
         defaultPolicyTest(builder);
     }
 
@@ -82,7 +83,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      */
     @Test(groups = "long")
     public void fallthroughRetryPolicy() throws Throwable {
-        Cluster.Builder builder = Cluster.builder().withRetryPolicy(FallthroughRetryPolicy.INSTANCE);
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy())
+                                                   .withRetryPolicy(FallthroughRetryPolicy.INSTANCE);
         defaultPolicyTest(builder);
     }
 
@@ -92,7 +94,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      */
     @Test(groups = "long")
     public void fallthroughLoggingPolicy() throws Throwable {
-        Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(FallthroughRetryPolicy.INSTANCE));
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy())
+                                                   .withRetryPolicy(new LoggingRetryPolicy(FallthroughRetryPolicy.INSTANCE));
         defaultPolicyTest(builder);
     }
 
@@ -260,7 +263,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      */
     @Test(groups = "long")
     public void downgradingConsistencyRetryPolicy() throws Throwable {
-        Cluster.Builder builder = Cluster.builder().withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy())
+                                                   .withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
         downgradingConsistencyRetryPolicy(builder);
     }
 
@@ -269,7 +273,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      */
     @Test(groups = "long")
     public void downgradingConsistencyLoggingPolicy() throws Throwable {
-        Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE));
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy())
+                                                   .withRetryPolicy(new LoggingRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE));
         downgradingConsistencyRetryPolicy(builder);
     }
 
@@ -365,7 +370,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      */
     @Test(groups = "long")
     public void alwaysIgnoreRetryPolicyTest() throws Throwable {
-        Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(AlwaysIgnoreRetryPolicy.INSTANCE));
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy())
+                                                   .withRetryPolicy(new LoggingRetryPolicy(AlwaysIgnoreRetryPolicy.INSTANCE));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
 
         try {
@@ -466,7 +472,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
      */
     @Test(groups = "long")
     public void alwaysRetryRetryPolicyTest() throws Throwable {
-        Cluster.Builder builder = Cluster.builder().withRetryPolicy(new LoggingRetryPolicy(AlwaysRetryRetryPolicy.INSTANCE));
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new RoundRobinPolicy())
+                                                   .withRetryPolicy(new LoggingRetryPolicy(AlwaysRetryRetryPolicy.INSTANCE));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
 
         try {

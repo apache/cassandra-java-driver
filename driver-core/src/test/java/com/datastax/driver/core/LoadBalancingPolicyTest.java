@@ -177,7 +177,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
     @Test(groups = "long")
     public void DCAwareRoundRobinTest2() throws Throwable {
 
-        Cluster.Builder builder = Cluster.builder();
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc1"));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, 2, builder);
         try {
 
