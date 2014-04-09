@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import org.testng.annotations.Test;
-import static org.testng.Assert.*;
-
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
+import org.testng.annotations.Test;
+
 import static com.datastax.driver.core.TestUtils.waitFor;
 import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
+import static org.testng.Assert.*;
 
 public class RetryPolicyTest extends AbstractPoliciesTest {
 

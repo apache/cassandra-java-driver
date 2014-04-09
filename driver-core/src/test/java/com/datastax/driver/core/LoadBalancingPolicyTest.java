@@ -15,17 +15,21 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.*;
-
-import org.testng.annotations.Test;
-import static org.testng.Assert.*;
-
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnavailableException;
-import com.datastax.driver.core.policies.*;
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.TokenAwarePolicy;
+import com.datastax.driver.core.policies.WhiteListPolicy;
+import org.testng.annotations.Test;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.List;
+
 import static com.datastax.driver.core.TestUtils.*;
+import static org.testng.Assert.*;
 
 public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
