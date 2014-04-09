@@ -119,7 +119,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             boolean readTimeoutOnce = false;
             boolean unavailableOnce = false;
             boolean restartOnce = false;
-            for (int i = 0; i < 4000; ++i) {
+            for (int i = 0; i < 10000; ++i) {
                 try {
                     // Force a ReadTimeoutException to be performed once
                     if (!readTimeoutOnce) {
