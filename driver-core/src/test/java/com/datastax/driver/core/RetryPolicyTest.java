@@ -320,18 +320,14 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
 
             try {
                 query(c, 12, ConsistencyLevel.TWO);
-                fail("Only 1 node should be up and CL.TWO should fail.");
             } catch (Exception e) {
-                // TODO: Figure out exact exception that should be thrown
-                assertTrue(true);
+                fail("Only 1 node is up and CL.TWO should downgrade and pass.");
             }
 
             try {
                 query(c, 12, ConsistencyLevel.ALL);
-                fail("Only 1 node should be up and CL.ALL should fail.");
             } catch (Exception e) {
-                // TODO: Figure out exact exception that should be thrown
-                assertTrue(true);
+                fail("Only 1 node is up and CL.ALL should downgrade and pass.");
             }
 
             query(c, 12, ConsistencyLevel.QUORUM);
