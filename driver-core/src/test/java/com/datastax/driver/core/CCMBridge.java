@@ -327,11 +327,15 @@ public class CCMBridge {
                 String[] contactPoints = new String[totalNodes];
                 for (int i = 0; i < totalNodes; i++)
                     contactPoints[i] = IP_PREFIX + (i+1);
+
+                try { Thread.sleep(1000); } catch (Exception e) {}
+
                 this.cluster = builder.addContactPoints(contactPoints).build();
                 this.session = cluster.connect();
             } catch (NoHostAvailableException e) {
                 for (Map.Entry<InetSocketAddress, Throwable> entry : e.getErrors().entrySet())
                     logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
+                discard();
                 throw new RuntimeException(e);
             }
         }
