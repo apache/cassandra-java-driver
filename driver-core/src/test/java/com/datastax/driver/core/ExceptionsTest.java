@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.*;
 import org.testng.annotations.Test;
+
+import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
-
-import com.datastax.driver.core.exceptions.*;
-import static com.datastax.driver.core.TestUtils.waitForDown;
 
 /**
  * Tests Exception classes with seperate clusters per test, when applicable
@@ -313,7 +313,7 @@ public class ExceptionsTest {
 
             c.cassandraCluster.stop(2);
 
-            waitForDown(CCMBridge.IP_PREFIX + '2', c.cluster);
+            waitForDownWithWait(CCMBridge.IP_PREFIX + '2', c.cluster, 10);
 
             try{
                 c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));

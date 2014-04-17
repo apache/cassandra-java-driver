@@ -15,17 +15,21 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.*;
-
-import org.testng.annotations.Test;
-import static org.testng.Assert.*;
-
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnavailableException;
-import com.datastax.driver.core.policies.*;
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.TokenAwarePolicy;
+import com.datastax.driver.core.policies.WhiteListPolicy;
+import org.testng.annotations.Test;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.List;
+
 import static com.datastax.driver.core.TestUtils.*;
+import static org.testng.Assert.*;
 
 public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
@@ -46,7 +50,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             resetCoordinators();
             c.cassandraCluster.bootstrapNode(3);
             waitFor(CCMBridge.IP_PREFIX + '3', c.cluster);
-            Thread.sleep(30000);
+            Thread.sleep(40000);
 
             query(c, 12);
 
@@ -130,7 +134,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             c.cassandraCluster.decommissionNode(1);
             waitFor(CCMBridge.IP_PREFIX + '5', c.cluster);
             waitForDecommission(CCMBridge.IP_PREFIX + '1', c.cluster);
-            Thread.sleep(30000);
+            Thread.sleep(40000);
 
             query(c, 12);
 
@@ -245,7 +249,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             //
             //resetCoordinators();
             c.cassandraCluster.decommissionNode(5);
-            waitForDecommission(CCMBridge.IP_PREFIX + '5', c.cluster);
+            waitForDecommission(CCMBridge.IP_PREFIX + '5', c.cluster, 60);
 
             query(c, 12);
 
@@ -354,7 +358,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
             resetCoordinators();
             c.cassandraCluster.forceStop(2);
-            waitForDown(CCMBridge.IP_PREFIX + '2', c.cluster);
+            waitForDownWithWait(CCMBridge.IP_PREFIX + '2', c.cluster, 10);
 
             try {
                 query(c, 12, usePrepared);

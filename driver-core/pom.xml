@@ -127,6 +127,8 @@
                 <cassandra.version>${cassandra.version}</cassandra.version>
                 <ipprefix>${ipprefix}</ipprefix>
               </systemPropertyVariables>
+              <!--May be needed for debugging-->
+              <!--<forkMode>never</forkMode>-->
             </configuration>
           </plugin>
           <plugin>
