@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.TimeUnit;
-
 import org.testng.ITestResult;
 import org.testng.TestListenerAdapter;
+
+import java.util.concurrent.TimeUnit;
 
 public class TestListener extends TestListenerAdapter {
 
     private long start_time = System.nanoTime();
     private int test_index = 0;
-    private long totalTests = 0;
 
     static {
         System.out.println("[CCMBridge] Using Cassandra version: " + CCMBridge.CASSANDRA_VERSION);
@@ -66,10 +65,7 @@ public class TestListener extends TestListenerAdapter {
 
     @Override
     public void onTestStart(ITestResult tr) {
-        if (totalTests == 0)
-            totalTests = tr.getTestContext().getAllTestMethods().length;
-
-        System.out.println("Starting " + tr.getTestClass().getName() + '.' + tr.getName() + " [" + ++test_index + '/' + totalTests + "]...");
+        System.out.println("Starting " + tr.getTestClass().getName() + '.' + tr.getName() + " [Test #" + ++test_index + "]...");
     }
 
     static String formatIntoHHMMSS(long secondsTotal) {
