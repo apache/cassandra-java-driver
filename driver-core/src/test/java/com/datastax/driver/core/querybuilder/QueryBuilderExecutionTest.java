@@ -26,7 +26,6 @@ import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.TestUtils;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.testng.Assert.*;
@@ -67,21 +66,15 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
     @Test(groups = "short")
     public void dateHandlingTest() throws Exception {
 
-        try {
-            Date d = new Date();
-            session.execute(insertInto("dateTest").value("t", d));
-            String query = select().from("dateTest").where(eq(token("t"), fcall("token", d))).toString();
-            List<Row> rows = session.execute(query).all();
+        Date d = new Date();
+        session.execute(insertInto("dateTest").value("t", d));
+        String query = select().from("dateTest").where(eq(token("t"), fcall("token", d))).toString();
+        List<Row> rows = session.execute(query).all();
 
-            assertEquals(1, rows.size());
+        assertEquals(1, rows.size());
 
-            Row r1 = rows.get(0);
-            assertEquals(d, r1.getDate("t"));
-        } catch (InvalidQueryException e) {
-            // This is expected when testing the protocol v1
-            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != 1)
-                throw e;
-        }
+        Row r1 = rows.get(0);
+        assertEquals(d, r1.getDate("t"));
     }
 
     @Test(groups = "unit")
