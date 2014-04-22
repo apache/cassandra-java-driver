@@ -19,7 +19,6 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.text.SimpleDateFormat;
 
 import org.apache.cassandra.utils.ByteBufferUtil;
 
@@ -27,16 +26,6 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 abstract class Utils {
 
     private static final Pattern cnamePattern = Pattern.compile("\\w+(?:\\[.+\\])?");
-
-    // We currently format date as strings instead of simply longs due to JAVA-264. We could change
-    // that back to longs (which is cheaper) once C* 1.2 gets eol (since only pre-1.2.16 versions are
-    // affected).
-    private static final ThreadLocal<SimpleDateFormat> dateFormat = new ThreadLocal<SimpleDateFormat>() {
-        @Override
-        protected SimpleDateFormat initialValue() {
-            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-        }
-    };
 
     static StringBuilder joinAndAppend(StringBuilder sb, String separator, List<? extends Appendeable> values) {
         for (int i = 0; i < values.size(); i++) {
@@ -120,7 +109,7 @@ abstract class Utils {
             sb.append("'").append(((InetAddress)value).getHostAddress()).append("'");
             return true;
         } else if (value instanceof Date) {
-            sb.append("'").append(dateFormat.get().format((Date)value)).append("'");
+            sb.append(((Date)value).getTime());
             return true;
         } else if (value instanceof ByteBuffer) {
             sb.append("0x");
