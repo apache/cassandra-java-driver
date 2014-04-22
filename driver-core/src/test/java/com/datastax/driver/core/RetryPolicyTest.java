@@ -15,9 +15,10 @@
  */
 package com.datastax.driver.core;
 
+import org.testng.annotations.Test;
+
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
-import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.TestUtils.waitFor;
 import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
@@ -296,7 +297,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             assertQueried(CCMBridge.IP_PREFIX + '3', 4);
 
             resetCoordinators();
-            c.cassandraCluster.forceStop(2);
+            c.cassandraCluster.stop(2);
             waitForDownWithWait(CCMBridge.IP_PREFIX + '2', c.cluster, 10);
 
             query(c, 12, ConsistencyLevel.ALL);
@@ -306,8 +307,8 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             assertQueried(CCMBridge.IP_PREFIX + '3', 6);
 
             resetCoordinators();
-            c.cassandraCluster.forceStop(1);
-            waitForDownWithWait(CCMBridge.IP_PREFIX + '1', c.cluster, 5);
+            c.cassandraCluster.stop(1);
+            waitForDownWithWait(CCMBridge.IP_PREFIX + '1', c.cluster, 10);
 
             try {
                 query(c, 12, ConsistencyLevel.ALL);
