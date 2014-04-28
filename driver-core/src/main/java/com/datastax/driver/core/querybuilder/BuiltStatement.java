@@ -87,12 +87,12 @@ public abstract class BuiltStatement extends RegularStatement {
         values = null;
 
         if (hasBindMarkers || forceNoValues) {
-            sb = buildQueryString(null);
-        } else {
             List<ByteBuffer> l = new ArrayList<ByteBuffer>();
             sb = buildQueryString(l);
             if (!l.isEmpty())
                 values = l.toArray(new ByteBuffer[l.size()]);
+        } else {
+            sb = buildQueryString(null);
         }
 
         maybeAddSemicolon(sb);
