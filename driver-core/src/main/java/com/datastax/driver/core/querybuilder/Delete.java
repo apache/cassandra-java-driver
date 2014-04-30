@@ -41,7 +41,7 @@ public class Delete extends BuiltStatement {
 
     Delete(TableMetadata table, List<Object> columnNames) {
         super(table);
-        this.table = table.getName();
+        this.table = escapeId(table.getName());
         this.columnNames = columnNames;
         this.where = new Where(this);
         this.usings = new Options(this);

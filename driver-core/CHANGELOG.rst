@@ -11,6 +11,7 @@ CHANGELOG
   datacenter is automatically picked based on the first connected node. Furthermore,
   the TokenAwarePolicy is also used by default (JAVA-296)
 - [new] New optional AddressTranslater (JAVA-145)
+- [bug] Don't remove quotes on keyspace in the query builder (JAVA-321)
 
 Merged from 1.0 branch:
 

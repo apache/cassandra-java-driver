@@ -620,4 +620,25 @@ public class QueryBuilderTest {
         assertEquals(truncate("foo").toString(), "TRUNCATE foo;");
         assertEquals(truncate("foo", quote("Bar")).toString(), "TRUNCATE foo.\"Bar\";");
     }
+
+    @Test(groups = "unit")
+    public void quotingTest() {
+        assertEquals(QueryBuilder.select().from("Metrics", "epochs").getQueryString(),
+            "SELECT * FROM Metrics.epochs;");
+        assertEquals(QueryBuilder.select().from("Metrics", quote("epochs")).getQueryString(),
+            "SELECT * FROM Metrics.\"epochs\";");
+        assertEquals(QueryBuilder.select().from(quote("Metrics"), "epochs").getQueryString(),
+            "SELECT * FROM \"Metrics\".epochs;");
+        assertEquals(QueryBuilder.select().from(quote("Metrics"), quote("epochs")).getQueryString(),
+            "SELECT * FROM \"Metrics\".\"epochs\";");
+
+        assertEquals(QueryBuilder.insertInto("Metrics", "epochs").getQueryString(),
+            "INSERT INTO Metrics.epochs() VALUES ();");
+        assertEquals(QueryBuilder.insertInto("Metrics", quote("epochs")).getQueryString(),
+            "INSERT INTO Metrics.\"epochs\"() VALUES ();");
+        assertEquals(QueryBuilder.insertInto(quote("Metrics"), "epochs").getQueryString(),
+            "INSERT INTO \"Metrics\".epochs() VALUES ();");
+        assertEquals(QueryBuilder.insertInto(quote("Metrics"), quote("epochs")).getQueryString(),
+            "INSERT INTO \"Metrics\".\"epochs\"() VALUES ();");
+    }
 }
