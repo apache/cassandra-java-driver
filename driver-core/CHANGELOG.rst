@@ -12,6 +12,7 @@ CHANGELOG
   the TokenAwarePolicy is also used by default (JAVA-296)
 - [new] New optional AddressTranslater (JAVA-145)
 - [bug] Don't remove quotes on keyspace in the query builder (JAVA-321)
+- [bug] Fix potential NPE while cluster undergo schema changes (JAVA-320)
 
 Merged from 1.0 branch:
 
