@@ -202,8 +202,9 @@ class ArrayBackedResultSet implements ResultSet {
         if (isFullyFetched())
             return Futures.immediateFuture(null);
 
-        if (fetchState.inProgress != null)
-            return fetchState.inProgress;
+        ListenableFuture<Void> inProgress = fetchState.inProgress;
+        if (inProgress != null)
+            return inProgress;
 
         assert fetchState.nextStart != null;
         ByteBuffer state = fetchState.nextStart;

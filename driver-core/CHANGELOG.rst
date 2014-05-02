@@ -14,6 +14,7 @@ CHANGELOG
 - [bug] Don't remove quotes on keyspace in the query builder (JAVA-321)
 - [bug] Fix potential NPE while cluster undergo schema changes (JAVA-320)
 - [bug] Fix thread-safety of page fetching (JAVA-319)
+- [bug] Fix potential NPE using fetchMoreResults (JAVA-318)
 
 Merged from 1.0 branch:
 
