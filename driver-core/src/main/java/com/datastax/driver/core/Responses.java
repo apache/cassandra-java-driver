@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 
@@ -387,7 +388,14 @@ class Responses {
                     int rowCount = body.readInt();
                     int columnCount = metadata.columnCount;
 
-                    Queue<List<ByteBuffer>> data = new ArrayDeque<List<ByteBuffer>>(rowCount);
+                    // If we do have a pagingState, the queue used must be thread safe (and not bounded)
+                    // since we'll  add the following pages to it later (in ArrayBackedResultSet, in the
+                    // onSet of queryNextPage) possibly concurrently from accesses (see JAVA-319 in particular).
+                    // TODO: Using a LinkedBlockingQueue is probably not the most efficient we can do. This
+                    // is a simple solution however until we experiment for an overall faster solution.
+                    Queue<List<ByteBuffer>> data = metadata.pagingState == null
+                                                 ? new ArrayDeque<List<ByteBuffer>>(rowCount)
+                                                 : new LinkedBlockingQueue<List<ByteBuffer>>();
                     for (int i = 0; i < rowCount; i++) {
                         List<ByteBuffer> row = new ArrayList<ByteBuffer>(columnCount);
                         for (int j = 0; j < columnCount; j++)
