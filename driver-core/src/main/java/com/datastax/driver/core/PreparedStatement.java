@@ -153,6 +153,33 @@ public interface PreparedStatement {
     public ConsistencyLevel getConsistencyLevel();
 
     /**
+     * Sets a default serial consistency level for all bound statements 
+     * created from this prepared statement.
+     * <p>
+     * If no serial consistency level is set through this method, the bound statement
+     * created from this object will use the default serial consistency level (SERIAL).
+     * <p>
+     * Changing the default serial consistency level is not retroactive, it only
+     * applies to BoundStatement created after the change.
+     *
+     * @param serialConsistency the default serial consistency level to set.
+     * @return this {@code PreparedStatement} object.
+     *
+     * @throws IllegalArgumentException if {@code serialConsistency} is not one of
+     * {@code ConsistencyLevel.SERIAL} or {@code ConsistencyLevel.LOCAL_SERIAL}.
+     */
+    public PreparedStatement setSerialConsistencyLevel(ConsistencyLevel consistency);
+
+    /**
+     * Returns the default serial consistency level set through {@link #setSerilalConsistencyLevel}.
+     *
+     * @return the default serial consistency level. Returns {@code null} if no
+     * consistency level has been set through this object {@code setSerialConsistencyLevel}
+     * method.
+     */
+    public ConsistencyLevel getSerialConsistencyLevel();
+
+    /**
      * Returns the string of the query that was prepared to yield this {@code
      * PreparedStatement}.
      * <p>

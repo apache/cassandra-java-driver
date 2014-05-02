@@ -30,6 +30,7 @@ public class DefaultPreparedStatement implements PreparedStatement{
     volatile ByteBuffer routingKey;
 
     volatile ConsistencyLevel consistency;
+    volatile ConsistencyLevel serialConsistency;
     volatile boolean traceQuery;
     volatile RetryPolicy retryPolicy;
 
@@ -116,8 +117,7 @@ public class DefaultPreparedStatement implements PreparedStatement{
         return this;
     }
 
-    public ByteBuffer getRoutingKey()
-    {
+    public ByteBuffer getRoutingKey() {
         return routingKey;
     }
 
@@ -128,6 +128,17 @@ public class DefaultPreparedStatement implements PreparedStatement{
 
     public ConsistencyLevel getConsistencyLevel() {
         return consistency;
+    }
+
+    public PreparedStatement setSerialConsistencyLevel(ConsistencyLevel serialConsistency) {
+        if (serialConsistency != ConsistencyLevel.SERIAL && serialConsistency != ConsistencyLevel.LOCAL_SERIAL)
+            throw new IllegalArgumentException();
+        this.serialConsistency = serialConsistency;
+        return this;
+    }
+
+    public ConsistencyLevel getSerialConsistencyLevel() {
+        return serialConsistency;
     }
 
     public String getQueryString() {
