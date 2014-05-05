@@ -277,7 +277,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
                                         ? queryOptions.getConsistencyLevel()
                                         : statement.getConsistencyLevel();
 
-                    if (dontHopForLocalCL && statement.getConsistencyLevel().isDCLocal())
+                    if (dontHopForLocalCL && cl.isDCLocal())
                         return endOfData();
 
                     if (remoteDcs == null) {

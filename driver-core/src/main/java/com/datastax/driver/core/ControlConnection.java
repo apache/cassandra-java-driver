@@ -204,9 +204,9 @@ class ControlConnection implements Host.StateListener {
 
         if (logger.isDebugEnabled()) {
             if (iter.hasNext()) {
-                logger.debug("[Control connection] error on {} connection ({}), trying next host", host, exception.getMessage());
+                logger.debug(String.format("[Control connection] error on %s connection, trying next host", host), exception);
             } else {
-                logger.debug("[Control connection] error on {} connection ({}), no more host to try", host, exception.getMessage());
+                logger.debug(String.format("[Control connection] error on %s connection, no more host to try", host), exception);
             }
         }
         return errors;
