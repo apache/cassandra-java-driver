@@ -9,6 +9,7 @@ CHANGELOG
 - [new] Add new WhiteListPolicy to limit the nodes connected to a particular list
 - [improvement] Do not hop DC for LOCAL_* CL in DCAwareRoundRobinPolicy (JAVA-289)
 - [bug] Revert back to longs for dates in the query builder (JAVA-313)
+- [bug] Don't reconnect to nodes ignored by the load balancing policy (JAVA-314)
 
 
 1.0.6:
