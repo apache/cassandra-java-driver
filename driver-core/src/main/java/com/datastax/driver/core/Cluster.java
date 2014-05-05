@@ -1310,6 +1310,10 @@ public class Cluster implements Closeable {
                     listener.onDown(host);
             }
 
+            // Don't start a reconnection if we ignore the node anyway (JAVA-314)
+            if (loadBalancingPolicy().distance(host) == HostDistance.IGNORED)
+                return;
+
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug("{} is down, scheduling connection retries", host);
             new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
