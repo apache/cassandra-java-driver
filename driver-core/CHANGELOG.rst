@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+2.0.3:
+------
+
+- [new] The new AbsractSession makes mocking of Session easier.
+
+
 2.0.2:
 ------
 

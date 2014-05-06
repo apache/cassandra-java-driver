@@ -36,7 +36,7 @@ import com.datastax.driver.core.policies.ReconnectionPolicy;
 /**
  * Driver implementation of the Session interface.
  */
-class SessionManager implements Session {
+class SessionManager extends AbstractSession {
 
     private static final Logger logger = LoggerFactory.getLogger(Session.class);
 
@@ -80,71 +80,14 @@ class SessionManager implements Session {
         return poolsState.keyspace;
     }
 
-    public ResultSet execute(String query) {
-        return execute(new SimpleStatement(query));
-    }
-
-    public ResultSet execute(String query, Object... values) {
-        return execute(new SimpleStatement(query, values));
-    }
-
-    public ResultSet execute(Statement statement) {
-        return executeAsync(statement).getUninterruptibly();
-    }
-
-    public ResultSetFuture executeAsync(String query) {
-        return executeAsync(new SimpleStatement(query));
-    }
-
-    public ResultSetFuture executeAsync(String query, Object... values) {
-        return executeAsync(new SimpleStatement(query, values));
-    }
-
     public ResultSetFuture executeAsync(Statement statement) {
         return executeQuery(makeRequestMessage(statement, null), statement);
-    }
-
-    public PreparedStatement prepare(String query) {
-        try {
-            return Uninterruptibles.getUninterruptibly(prepareAsync(query));
-        } catch (ExecutionException e) {
-            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
-        }
-    }
-
-    public PreparedStatement prepare(RegularStatement statement) {
-        try {
-            return Uninterruptibles.getUninterruptibly(prepareAsync(statement));
-        } catch (ExecutionException e) {
-            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
-        }
     }
 
     public ListenableFuture<PreparedStatement> prepareAsync(String query) {
         Connection.Future future = new Connection.Future(new Requests.Prepare(query));
         execute(future, Statement.DEFAULT);
         return toPreparedStatement(query, future);
-    }
-
-    public ListenableFuture<PreparedStatement> prepareAsync(final RegularStatement statement) {
-        if (statement.getValues() != null)
-            throw new IllegalArgumentException("A statement to prepare should not have values");
-
-        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.toString());
-        return Futures.transform(prepared, new Function<PreparedStatement, PreparedStatement>() {
-            @Override
-            public PreparedStatement apply(PreparedStatement prepared) {
-                ByteBuffer routingKey = statement.getRoutingKey();
-                if (routingKey != null)
-                    prepared.setRoutingKey(routingKey);
-                prepared.setConsistencyLevel(statement.getConsistencyLevel());
-                if (statement.isTracing())
-                    prepared.enableTracing();
-                prepared.setRetryPolicy(statement.getRetryPolicy());
-
-                return prepared;
-            }
-        });
     }
 
     public CloseFuture closeAsync() {
@@ -165,16 +108,6 @@ class SessionManager implements Session {
 
     public boolean isClosed() {
         return closeFuture.get() != null;
-    }
-
-    public void close() {
-        try {
-            closeAsync().get();
-        } catch (ExecutionException e) {
-            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
     }
 
     public Cluster getCluster() {
