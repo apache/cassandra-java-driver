@@ -259,6 +259,9 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // ready for execution. That way, you can batch stuff for instance (see usage below).
         @Query("UPDATE ks.posts SET content=:arg2 WHERE user_id=:arg0 AND post_id=:arg1")
         public Statement updateContentQuery(UUID userId, UUID postId, String newContent);
+
+        @Query("SELECT * FROM ks.posts")
+        public Result<Post> getAll();
     }
 
     @Test(groups = "short")
@@ -307,6 +310,13 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(p, p1);
 
         Result<Post> r = accessor.getAllAsync(p1.getUserId()).get();
+        assertEquals(r.one(), p1);
+        assertEquals(r.one(), p2);
+        assertEquals(r.one(), p3);
+        assertTrue(r.isExhausted());
+
+        // No argument call
+        r = accessor.getAll();
         assertEquals(r.one(), p1);
         assertEquals(r.one(), p2);
         assertEquals(r.one(), p3);

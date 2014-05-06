@@ -6,6 +6,8 @@ import java.util.*;
 
 class AccessorInvocationHandler<T> implements InvocationHandler {
 
+    private static final Object[] NO_ARGS = new Object[0];
+
     private final AccessorMapper<T> mapper;
 
     private final Map<Method, MethodMapper> methodMap = new HashMap<Method, MethodMapper>();
@@ -23,7 +25,7 @@ class AccessorInvocationHandler<T> implements InvocationHandler {
         if (mapper == null)
             throw new UnsupportedOperationException();
 
-        return method.invoke(args);
+        return method.invoke(args == null ? NO_ARGS : args);
     }
 }
 
