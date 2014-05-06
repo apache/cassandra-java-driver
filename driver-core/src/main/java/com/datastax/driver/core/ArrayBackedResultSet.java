@@ -243,15 +243,15 @@ abstract class ArrayBackedResultSet implements ResultSet {
         // 'currentPage' is empty IFF the ResultSet if fully exhausted.
         private void prepareNextRow() {
             while (currentPage.isEmpty()) {
-                // Check if fully fetched before polling nextPages to make sure we haven't missed
-                // a nextPage added between our poll and the isFullyFetched check.
-                boolean isFullyFetched = isFullyFetched();
+                // Grab the current state now to get a consistent view in this iteration.
+                FetchingState fetchingState = this.fetchState;
+
                 Queue<List<ByteBuffer>> nextPage = nextPages.poll();
                 if (nextPage != null) {
                     currentPage = nextPage;
                     continue;
                 }
-                if (isFullyFetched)
+                if (fetchingState == null)
                     return;
 
                 // We need to know if there is more result, so fetch the next page and
@@ -265,14 +265,10 @@ abstract class ArrayBackedResultSet implements ResultSet {
         }
 
         public ListenableFuture<Void> fetchMoreResults() {
-            // Grab the fetchState locally so it doesn't get nulled out from under us (JAVA-318)
-            // Note that ResultSet is not thread-safe, so the only concurrency we care about
-            // is between the user thread calling this, and a potential concurrently running update
-            // of the next page. This is why we can't start 2 concurrent query of the next page:
-            // either a query is ongoing at the beginning of the method, and we'll return the future
-            // for that query, or none is and none can be started concurrently of the execution of
-            // this method (and so it's ok to call queryNextPage without further check).
-            FetchingState fetchState = this.fetchState;
+            return fetchMoreResults(this.fetchState);
+        }
+
+        private ListenableFuture<Void> fetchMoreResults(FetchingState fetchState) {
             if (fetchState == null)
                 return Futures.immediateFuture(null);
 
