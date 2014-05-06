@@ -63,8 +63,8 @@ abstract class ArrayBackedResultSet implements ResultSet {
                     columnDefs = r.metadata.columns;
                 }
 
-                // info can be null only for internal calls, but we explicitely don't page those. We assert
-                // this explicitely because MultiPage implementation don't support info == null.
+                // info can be null only for internal calls, but we don't page those. We assert
+                // this explicitly because MultiPage implementation don't support info == null.
                 assert r.metadata.pagingState == null || info != null;
                 return r.metadata.pagingState == null
                      ? new SinglePage(columnDefs, r.data, info)
@@ -179,7 +179,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
     private static class MultiPage extends ArrayBackedResultSet {
 
-        private volatile Queue<List<ByteBuffer>> currentPage;
+        private Queue<List<ByteBuffer>> currentPage;
         private final Queue<Queue<List<ByteBuffer>>> nextPages = new ConcurrentLinkedQueue<Queue<List<ByteBuffer>>>();
 
         private final Deque<ExecutionInfo> infos = new LinkedBlockingDeque<ExecutionInfo>();
@@ -243,12 +243,15 @@ abstract class ArrayBackedResultSet implements ResultSet {
         // 'currentPage' is empty IFF the ResultSet if fully exhausted.
         private void prepareNextRow() {
             while (currentPage.isEmpty()) {
+                // Check if fully fetched before polling nextPages to make sure we haven't missed
+                // a nextPage added between our poll and the isFullyFetched check.
+                boolean isFullyFetched = isFullyFetched();
                 Queue<List<ByteBuffer>> nextPage = nextPages.poll();
                 if (nextPage != null) {
                     currentPage = nextPage;
                     continue;
                 }
-                if (isFullyFetched())
+                if (isFullyFetched)
                     return;
 
                 // We need to know if there is more result, so fetch the next page and
