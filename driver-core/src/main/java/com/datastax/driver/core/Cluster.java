@@ -1726,6 +1726,17 @@ public class Cluster implements Closeable {
             return 0;
         }
 
+        void refreshConnectedHosts() {
+            // Deal first with the control connection: if it's connected to a node that is not LOCAL, try
+            // reconnecting (thus letting the loadBalancingPolicy pick a better node)
+            Host ccHost = controlConnection.connectedHost();
+            if (ccHost == null || loadBalancingPolicy().distance(ccHost) != HostDistance.LOCAL)
+                controlConnection.reconnect();
+
+            for (SessionManager s : sessions)
+                s.updateCreatedPools();
+        }
+
         private class ClusterCloseFuture extends CloseFuture.Forwarding {
 
             ClusterCloseFuture(List<CloseFuture> futures) {
