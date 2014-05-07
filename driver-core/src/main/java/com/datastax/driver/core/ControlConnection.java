@@ -87,7 +87,12 @@ class ControlConnection implements Host.StateListener {
         return connection == null ? CloseFuture.immediateFuture() : connection.closeAsync();
     }
 
-    private void reconnect() {
+    Host connectedHost() {
+        Connection current = connectionRef.get();
+        return cluster.metadata.getHost(current.address);
+    }
+
+    void reconnect() {
         if (isShutdown)
             return;
 

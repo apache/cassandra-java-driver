@@ -267,4 +267,13 @@ public class PoolingOptions {
         }
         return this;
     }
+
+    /**
+     * Requests the driver to re-evaluate the {@link HostDistance} (through the configured
+     * {@link LoadBalancingPolicy#distance}) for every known hosts and to drop/add connections to
+     * each hosts according to the computed distance.
+     */
+    public void refreshConnectedHosts() {
+        manager.refreshConnectedHosts();
+    }
 }
