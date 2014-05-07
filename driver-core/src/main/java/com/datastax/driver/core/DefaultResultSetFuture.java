@@ -221,4 +221,3 @@ class DefaultResultSetFuture extends SimpleFuture<ResultSet> implements ResultSe
         }
     }
 }
-

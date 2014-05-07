@@ -229,6 +229,13 @@ public interface Session {
     public boolean shutdown(long timeout, TimeUnit unit);
 
     /**
+     * Whether shutdown has been called on this Session instance.
+     *
+     * @return {@code true} if this instance is shut down, {@code false} otherwise.
+     */
+    public boolean isShutdown();
+
+    /**
      * Returns the {@code Cluster} object this session is part of.
      *
      * @return the {@code Cluster} object this session is part of.

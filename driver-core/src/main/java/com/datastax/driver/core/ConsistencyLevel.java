@@ -61,4 +61,13 @@ public enum ConsistencyLevel
         }
         throw new AssertionError();
     }
+
+    /**
+     * Whether or not the the consistency level applies to the local data-center only.
+     *
+     * @return whether this consistency level is {@code LOCAL_ONE} or {@code LOCAL_QUORUM}.
+     */
+    public boolean isDCLocal() {
+        return this == LOCAL_ONE || this == LOCAL_QUORUM;
+    }
 }

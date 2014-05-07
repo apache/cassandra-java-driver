@@ -155,6 +155,10 @@ class SessionManager implements Session {
         }
     }
 
+    public boolean isShutdown() {
+        return isShutdown.get();
+    }
+
     public Cluster getCluster() {
         return cluster;
     }

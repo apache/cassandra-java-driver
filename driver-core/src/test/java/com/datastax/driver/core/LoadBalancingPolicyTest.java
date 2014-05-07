@@ -15,15 +15,16 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetAddress;
+import java.util.*;
+
 import static com.datastax.driver.core.TestUtils.*;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnavailableException;
-import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
-import com.datastax.driver.core.policies.RoundRobinPolicy;
-import com.datastax.driver.core.policies.TokenAwarePolicy;
+import com.datastax.driver.core.policies.*;
 
 public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
     private static final boolean DEBUG = false;
@@ -62,6 +63,43 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
             assertQueried(CCMBridge.IP_PREFIX + "2", 6);
             assertQueried(CCMBridge.IP_PREFIX + "3", 6);
+
+        } catch (Throwable e) {
+            c.errorOut();
+            throw e;
+        } finally {
+            resetCoordinators();
+            c.discard();
+        }
+    }
+
+    @Test(groups = "long")
+    public void whiteListPolicyTest() throws Throwable {
+
+        List<InetAddress> whiteList = Arrays.asList(InetAddress.getByName(CCMBridge.IP_PREFIX + '2'));
+
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), whiteList));
+        CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
+        try {
+
+            createSchema(c.session);
+            init(c, 12);
+            query(c, 12);
+
+            assertQueried(CCMBridge.IP_PREFIX + "1", 0);
+            assertQueried(CCMBridge.IP_PREFIX + "2", 12);
+            assertQueried(CCMBridge.IP_PREFIX + "3", 0);
+
+            resetCoordinators();
+            c.cassandraCluster.decommissionNode(2);
+            waitForDecommission(CCMBridge.IP_PREFIX + "2", c.cluster);
+
+            try {
+                query(c, 12);
+                fail("Should work, we've only whitelisted node 2 and it's been removed");
+            } catch (NoHostAvailableException e) {
+                // That's what we expected
+            }
 
         } catch (Throwable e) {
             c.errorOut();

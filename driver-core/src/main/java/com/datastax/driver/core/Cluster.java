@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -310,6 +311,16 @@ public class Cluster {
     }
 
     /**
+     * Whether shutdown has been called on this Cluster instance.
+     *
+     * @return {@code true} if {@code shutdown} has been called on this instance,
+     * {@code false} otherwise.
+     */
+    public boolean isShutdown() {
+        return manager.isShutdown.get();
+    }
+
+    /**
      * Initializer for {@link Cluster} instances.
      * <p>
      * If you want to create a new {@code Cluster} instance programmatically,
@@ -451,6 +462,22 @@ public class Cluster {
         public Builder addContactPoints(InetAddress... addresses) {
             for (InetAddress address : addresses)
                 this.addresses.add(address);
+            return this;
+        }
+
+        /**
+         * Adds contact points.
+         *
+         * See {@link Builder#addContactPoint} for more details on contact
+         * points.
+         *
+         * @param addresses addresses of the nodes to add as contact point
+         * @return this Builder
+         *
+         * @see Builder#addContactPoint
+         */
+        public Builder addContactPoints(Collection<InetAddress> addresses) {
+            this.addresses.addAll(addresses);
             return this;
         }
 
@@ -1005,6 +1032,10 @@ public class Cluster {
                     listener.onDown(host);
             }
 
+            // Don't start a reconnection if we ignore the node anyway (JAVA-314)
+            if (loadBalancingPolicy().distance(host) == HostDistance.IGNORED)
+                return;
+
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug("{} is down, scheduling connection retries", host);
             new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
@@ -1372,6 +1403,5 @@ public class Cluster {
             }
             return 0;
         }
-
     }
 }

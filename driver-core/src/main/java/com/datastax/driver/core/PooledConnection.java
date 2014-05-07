@@ -33,8 +33,7 @@ class PooledConnection extends Connection {
      * Return the pooled connection to it's pool.
      * The connection should generally not be reuse after that.
      */
-    public void release()
-    {
+    public void release() {
         pool.returnConnection(this);
     }
 }
