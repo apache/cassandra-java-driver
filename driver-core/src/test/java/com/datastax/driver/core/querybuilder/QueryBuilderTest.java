@@ -639,4 +639,25 @@ public class QueryBuilderTest {
         select = select().all().from("foo").where(eq("k", 4)).and(lte(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
         assertEquals(select.toString(), query);
     }
+
+    @Test(groups = "unit")
+    public void quotingTest() {
+        assertEquals(QueryBuilder.select().from("Metrics", "epochs").getQueryString(),
+            "SELECT * FROM Metrics.epochs;");
+        assertEquals(QueryBuilder.select().from("Metrics", quote("epochs")).getQueryString(),
+            "SELECT * FROM Metrics.\"epochs\";");
+        assertEquals(QueryBuilder.select().from(quote("Metrics"), "epochs").getQueryString(),
+            "SELECT * FROM \"Metrics\".epochs;");
+        assertEquals(QueryBuilder.select().from(quote("Metrics"), quote("epochs")).getQueryString(),
+            "SELECT * FROM \"Metrics\".\"epochs\";");
+
+        assertEquals(QueryBuilder.insertInto("Metrics", "epochs").getQueryString(),
+            "INSERT INTO Metrics.epochs() VALUES ();");
+        assertEquals(QueryBuilder.insertInto("Metrics", quote("epochs")).getQueryString(),
+            "INSERT INTO Metrics.\"epochs\"() VALUES ();");
+        assertEquals(QueryBuilder.insertInto(quote("Metrics"), "epochs").getQueryString(),
+            "INSERT INTO \"Metrics\".epochs() VALUES ();");
+        assertEquals(QueryBuilder.insertInto(quote("Metrics"), quote("epochs")).getQueryString(),
+            "INSERT INTO \"Metrics\".\"epochs\"() VALUES ();");
+    }
 }

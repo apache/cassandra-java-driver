@@ -85,6 +85,29 @@ public class Cluster implements Closeable {
         this(name, contactPoints, configuration, Collections.<Host.StateListener>emptySet());
     }
 
+    /**
+     * Constructs a new Cluster instance.
+     * <p>
+     * This constructor is mainly exposed so Cluster can be sub-classed as a means to make testing/mocking
+     * easier or to "intercept" its method call. Most users shouldn't extend this class however and
+     * should prefer using the {@link #builder}.
+     *
+     * @param initializer the initializer to use.
+     * @see #buildFrom
+     */
+    protected Cluster(Initializer initializer) {
+        this(initializer.getClusterName(),
+             checkNotEmpty(initializer.getContactPoints()),
+             initializer.getConfiguration(),
+             initializer.getInitialListeners());
+    }
+
+    private static List<InetSocketAddress> checkNotEmpty(List<InetSocketAddress> contactPoints) {
+        if (contactPoints.isEmpty())
+            throw new IllegalArgumentException("Cannot build a cluster without contact points");
+        return contactPoints;
+    }
+
     private Cluster(String name, List<InetSocketAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
         this.manager = new Manager(name, contactPoints, configuration, listeners);
     }
@@ -138,11 +161,7 @@ public class Cluster implements Closeable {
      * by {@code initializer} is empty or if not all those contact points have the same port.
      */
     public static Cluster buildFrom(Initializer initializer) {
-        List<InetSocketAddress> contactPoints = initializer.getContactPoints();
-        if (contactPoints.isEmpty())
-            throw new IllegalArgumentException("Cannot build a cluster without contact points");
-
-        return new Cluster(initializer.getClusterName(), contactPoints, initializer.getConfiguration(), initializer.getInitialListeners());
+        return new Cluster(initializer);
     }
 
     /**
@@ -1309,6 +1328,10 @@ public class Cluster implements Closeable {
                 for (Host.StateListener listener : listeners)
                     listener.onDown(host);
             }
+
+            // Don't start a reconnection if we ignore the node anyway (JAVA-314)
+            if (loadBalancingPolicy().distance(host) == HostDistance.IGNORED)
+                return;
 
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug("{} is down, scheduling connection retries", host);

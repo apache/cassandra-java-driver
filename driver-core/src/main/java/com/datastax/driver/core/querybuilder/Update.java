@@ -44,7 +44,7 @@ public class Update extends BuiltStatement {
 
     Update(TableMetadata table) {
         super(table);
-        this.table = table.getName();
+        this.table = escapeId(table.getName());
         this.assignments = new Assignments(this);
         this.where = new Where(this);
         this.usings = new Options(this);

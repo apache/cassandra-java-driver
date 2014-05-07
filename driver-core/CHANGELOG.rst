@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+2.0.3:
+------
+
+- [new] The new AbsractSession makes mocking of Session easier.
+
+
 2.0.2:
 ------
 
@@ -11,12 +17,18 @@ CHANGELOG
   datacenter is automatically picked based on the first connected node. Furthermore,
   the TokenAwarePolicy is also used by default (JAVA-296)
 - [new] New optional AddressTranslater (JAVA-145)
+- [bug] Don't remove quotes on keyspace in the query builder (JAVA-321)
+- [bug] Fix potential NPE while cluster undergo schema changes (JAVA-320)
+- [bug] Fix thread-safety of page fetching (JAVA-319)
+- [bug] Fix potential NPE using fetchMoreResults (JAVA-318)
 
 Merged from 1.0 branch:
 
 - [new] Expose the name of the partitioner in use in the cluster metadata (JAVA-179)
 - [new] Add new WhiteListPolicy to limit the nodes connected to a particular list
 - [improvement] Do not hop DC for LOCAL_* CL in DCAwareRoundRobinPolicy (JAVA-289)
+- [bug] Revert back to longs for dates in the query builder (JAVA-313)
+- [bug] Don't reconnect to nodes ignored by the load balancing policy (JAVA-314)
 
 
 2.0.1:

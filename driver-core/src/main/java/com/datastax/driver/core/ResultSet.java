@@ -162,8 +162,8 @@ public interface ResultSet extends Iterable<Row> {
      * Returns information on the execution of the last query made for this ResultSet.
      * <p>
      * Note that in most cases, a ResultSet is fetched with only one query, but large
-     * result sets can be paged and thus be retrieved by multiple queries. If that is
-     * the case, that method return that {@code ExecutionInfo} for the last query
+     * result sets can be paged and thus be retrieved by multiple queries. In that
+     * case this method return the {@code ExecutionInfo} for the last query
      * performed. To retrieve the information for all queries, use {@link #getAllExecutionInfo}.
      * <p>
      * The returned object includes basic information such as the queried hosts,
