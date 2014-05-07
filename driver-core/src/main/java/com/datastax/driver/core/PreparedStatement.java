@@ -168,10 +168,10 @@ public interface PreparedStatement {
      * @throws IllegalArgumentException if {@code serialConsistency} is not one of
      * {@code ConsistencyLevel.SERIAL} or {@code ConsistencyLevel.LOCAL_SERIAL}.
      */
-    public PreparedStatement setSerialConsistencyLevel(ConsistencyLevel consistency);
+    public PreparedStatement setSerialConsistencyLevel(ConsistencyLevel serialConsistency);
 
     /**
-     * Returns the default serial consistency level set through {@link #setSerilalConsistencyLevel}.
+     * Returns the default serial consistency level set through {@link #setSerialConsistencyLevel}.
      *
      * @return the default serial consistency level. Returns {@code null} if no
      * consistency level has been set through this object {@code setSerialConsistencyLevel}
