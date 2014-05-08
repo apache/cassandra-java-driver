@@ -509,7 +509,7 @@ class ControlConnection implements Host.StateListener {
                 tokenMap.put(host, allTokens.get(i));
 
             if (isNew)
-                cluster.onAdd(host);
+                cluster.triggerOnAdd(host);
         }
 
         // Removes all those that seems to have been removed (since we lost the control connection)
@@ -581,7 +581,7 @@ class ControlConnection implements Host.StateListener {
         if (current != null && current.address.equals(host.getSocketAddress()) && reconnectionAttempt.get() == null) {
             // We might very be on an I/O thread when we reach this so we should not do that on this thread.
             // Besides, there is no reason to block the onDown method while we try to reconnect.
-            cluster.blockingTasksExecutor.submit(new Runnable() {
+            cluster.blockingExecutor.submit(new Runnable() {
                 @Override
                 public void run() {
                     reconnect();

@@ -50,7 +50,7 @@ class HostConnectionPool {
     public volatile HostDistance hostDistance;
     private final SessionManager manager;
 
-    private final List<PooledConnection> connections;
+    final List<PooledConnection> connections;
     private final AtomicInteger open;
     private final Set<Connection> trash = new CopyOnWriteArraySet<Connection>();
 
@@ -361,23 +361,17 @@ class HostConnectionPool {
 
     private void replace(final Connection connection) {
         connections.remove(connection);
-
+        connection.closeAsync();
         manager.blockingExecutor().submit(new Runnable() {
             @Override
             public void run() {
-                connection.closeAsync();
                 addConnectionIfUnderMaximum();
             }
         });
     }
 
     private void close(final Connection connection) {
-        manager.blockingExecutor().submit(new Runnable() {
-            @Override
-            public void run() {
-                connection.closeAsync();
-            }
-        });
+        connection.closeAsync();
     }
 
     public boolean isClosed() {
