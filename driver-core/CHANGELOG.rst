@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+1.0.8:
+------
+
+- [bug] Fix periodic reconnection to down hosts (JAVA-325)
+
+
 1.0.7:
 ------
 

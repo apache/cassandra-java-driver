@@ -994,8 +994,14 @@ public class Cluster {
             if (host.reconnectionAttempt.get() != null)
                 return;
 
+            // Remember if we care about this node at all. We must call this before
+            // we've signalled the load balancing policy, since most policy will always
+            // IGNORE down nodes anyway.
+            HostDistance distance = loadBalancingPolicy().distance(host);
+
             boolean wasUp = host.isUp();
             host.setDown();
+
 
             loadBalancingPolicy().onDown(host);
             controlConnection.onDown(host);
@@ -1011,7 +1017,7 @@ public class Cluster {
             }
 
             // Don't start a reconnection if we ignore the node anyway (JAVA-314)
-            if (loadBalancingPolicy().distance(host) == HostDistance.IGNORED)
+            if (distance == HostDistance.IGNORED)
                 return;
 
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
@@ -1119,7 +1125,7 @@ public class Cluster {
 
             host.setDown();
 
-            logger.trace("Removing host {}", host);
+            logger.debug("Removing host {}", host);
             loadBalancingPolicy().onRemove(host);
             controlConnection.onRemove(host);
             for (SessionManager s : sessions)
