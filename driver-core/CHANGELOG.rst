@@ -7,6 +7,10 @@ CHANGELOG
 - [new] The new AbsractSession makes mocking of Session easier.
 - [new] Allow to trigger a refresh of connected hosts (JAVA-309)
 
+Merged from 1.0 branch:
+
+- [bug] Fix periodic reconnection to down hosts (JAVA-325)
+
 
 2.0.2:
 ------
