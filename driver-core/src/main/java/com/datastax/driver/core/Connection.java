@@ -365,8 +365,7 @@ class Connection {
     public CloseFuture closeAsync() {
 
         ConnectionCloseFuture future = new ConnectionCloseFuture();
-        if (!closeFuture.compareAndSet(null, future))
-        {
+        if (!closeFuture.compareAndSet(null, future)) {
             // close had already been called, return the existing future
             return closeFuture.get();
         }

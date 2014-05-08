@@ -160,19 +160,6 @@ public class Host {
     }
 
     @Override
-    public final int hashCode() {
-        return address.hashCode();
-    }
-
-    @Override
-    public final boolean equals(Object o) {
-        if(!(o instanceof Host))
-            return false;
-
-        return address.equals(((Host)o).address);
-    }
-
-    @Override
     public String toString() {
         return address.toString();
     }
