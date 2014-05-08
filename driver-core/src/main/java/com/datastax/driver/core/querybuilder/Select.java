@@ -234,6 +234,10 @@ public class Select extends BuiltStatement {
         public Select limit(int limit) {
             return statement.limit(limit);
         }
+		
+		public Select limit(BindMarker limit) {
+			return statement.limit(limit);
+		}
     }
 
     /**
