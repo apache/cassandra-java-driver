@@ -56,6 +56,19 @@ public class AbstractReplicationStrategyTest {
         public String getMockAddress() {
             return address;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof HostMock))
+                return false;
+
+            return address.equals(((HostMock)o).address);
+        }
+
+        @Override
+        public int hashCode() {
+            return address.hashCode();
+        }
     }
 
     protected static Token.Factory partitioner() {
