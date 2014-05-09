@@ -15,8 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
@@ -363,9 +362,12 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             try {
                 query(c, 12, usePrepared);
                 fail();
+            } catch (ReadTimeoutException e) {
+                assertEquals(1, e.getRequiredAcknowledgements());
+                assertEquals(0, e.getReceivedAcknowledgements());
             } catch (UnavailableException e) {
-                assertEquals("Not enough replica available for query at consistency ONE (1 required but only 0 alive)",
-                             e.getMessage());
+                assertEquals(1, e.getRequiredReplicas());
+                assertEquals(0, e.getAliveReplicas());
             }
 
             resetCoordinators();
