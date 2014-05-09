@@ -6,6 +6,8 @@ CHANGELOG
 
 - [new] The new AbsractSession makes mocking of Session easier.
 - [new] Allow to trigger a refresh of connected hosts (JAVA-309)
+- [new] New Session#getState method allows to grab information on
+  which nodes a session is connected to (JAVA-265)
 
 
 2.0.2:
