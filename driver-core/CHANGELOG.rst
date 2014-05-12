@@ -11,6 +11,10 @@ CHANGELOG
 - [new] Add QueryBuilder syntax for tuples in where clauses (syntax
   introduced in Cassandra 2.0.6) (JAVA-327)
 
+Merged from 1.0 branch:
+
+- [bug] Fix periodic reconnection to down hosts (JAVA-325)
+
 
 2.0.2:
 ------
