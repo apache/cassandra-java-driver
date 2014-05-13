@@ -48,7 +48,7 @@ public class Select extends BuiltStatement {
 
     Select(TableMetadata table, List<Object> columnNames, boolean isDistinct) {
         super(table);
-        this.table = table.getName();
+        this.table = escapeId(table.getName());
         this.isDistinct = isDistinct;
         this.columnNames = columnNames;
         this.where = new Where(this);

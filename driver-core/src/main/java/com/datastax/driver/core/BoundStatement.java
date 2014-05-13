@@ -54,6 +54,8 @@ public class BoundStatement extends Statement {
 
         if (statement.getConsistencyLevel() != null)
             this.setConsistencyLevel(statement.getConsistencyLevel());
+        if (statement.getSerialConsistencyLevel() != null)
+            this.setSerialConsistencyLevel(statement.getSerialConsistencyLevel());
         if (statement.isTracing())
             this.enableTracing();
         if (statement.getRetryPolicy() != null)

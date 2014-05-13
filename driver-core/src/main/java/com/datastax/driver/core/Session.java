@@ -16,6 +16,8 @@
 package com.datastax.driver.core;
 
 import java.io.Closeable;
+import java.util.Collection;
+import java.util.Map;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -326,4 +328,65 @@ public interface Session extends Closeable {
      * @return the {@code Cluster} object this session is part of.
      */
     public Cluster getCluster();
+
+    /**
+     * Return a snapshot of the state of this Session.
+     * <p>
+     * The returned object provide information on which hosts the session is
+     * connected to, how many connections are opened to each host, etc...
+     * The returned object is immutable, it is a snapshot of the Session State
+     * taken when this method is called.
+     */
+    public State getState();
+
+    /**
+     * The state of a Session.
+     * <p>
+     * This mostly exposes information on the connections maintained by a Session:
+     * which host it is connected to, how many connection is has for each host, etc...
+     */
+    public interface State {
+        /**
+         * The Session to which this State corresponds to.
+         *
+         * @return the Session to which this State corresponds to.
+         */
+        public Session getSession();
+
+        /**
+         * The hosts to which the session is currently connected (more precisely, at the time
+         * this State has been grabbed).
+         * <p>
+         * Please note that this method really returns the hosts for which the session currently
+         * holds a connection pool. A such, it's unlikely but not impossible for a host to be listed
+         * in the output of this method but to have {@code getOpenConnections} return 0, if the
+         * pool itself is created but not connections have been successfully opened yet.
+         *
+         * @return an immutable collection of the hosts to which the session is connected.
+         */
+        public Collection<Host> getConnectedHosts();
+
+        /**
+         * The number of open connections to a given host.
+         *
+         * @param host the host to get open connections for.
+         * @return The number of open connections to {@code host}. If the session
+         * is not connected to that host, 0 is returned.
+         */
+        public int getOpenConnections(Host host);
+
+        /**
+         * The number of queries that are currently being executed though a given host.
+         * <p>
+         * This correspond to the number of queries that have been sent (by the session this
+         * is a State of) to the Cassandra Host on one of its connection but haven't yet returned.
+         * In that sense this provide a sort of measure of how busy the connections to that node
+         * are (at the time the {@code State} was grabbed at least).
+         *
+         * @param host the host to get in-flight queries for.
+         * @return the number of currently (as in 'at the time the state was grabbed') executing
+         * queries to {@code host}.
+         */
+        public int getInFlightQueries(Host host);
+    }
 }

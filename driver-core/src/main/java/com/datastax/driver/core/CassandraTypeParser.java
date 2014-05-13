@@ -64,31 +64,31 @@ class CassandraTypeParser {
             .build();
 
     static DataType parseOne(String className) {
-        Parser parser = new Parser(className, 0);
-        String next = parser.parseNextName();
-
-        if (isReversed(next)) {
-            List<String> l = parser.getTypeParameters();
+        if (isReversed(className)) {
+            // Just skip the ReversedType part, we don't care
+            Parser p = new Parser(className, 0);
+            p.parseNextName();
+            List<String> l = p.getTypeParameters();
             if (l.size() != 1)
                 throw new IllegalStateException();
             className = l.get(0);
         }
 
-        if (className.startsWith(LIST_TYPE)) {
-            parser.parseNextName();
+        Parser parser = new Parser(className, 0);
+        String next = parser.parseNextName();
+
+        if (next.startsWith(LIST_TYPE)) {
             List<String> params = parser.getTypeParameters();
             return DataType.list(parseOne(params.get(0)));
-        } else if (className.startsWith(SET_TYPE)) {
-            parser.parseNextName();
+        } else if (next.startsWith(SET_TYPE)) {
             List<String> params = parser.getTypeParameters();
             return DataType.set(parseOne(params.get(0)));
-        } else if (className.startsWith(MAP_TYPE)) {
-            parser.parseNextName();
+        } else if (next.startsWith(MAP_TYPE)) {
             List<String> params = parser.getTypeParameters();
             return DataType.map(parseOne(params.get(0)), parseOne(params.get(1)));
         }
 
-        DataType type = cassTypeToDataType.get(className);
+        DataType type = cassTypeToDataType.get(next);
         return type == null ? DataType.custom(className) : type;
     }
 

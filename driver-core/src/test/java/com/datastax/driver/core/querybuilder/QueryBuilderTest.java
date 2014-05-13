@@ -620,4 +620,44 @@ public class QueryBuilderTest {
         assertEquals(truncate("foo").toString(), "TRUNCATE foo;");
         assertEquals(truncate("foo", quote("Bar")).toString(), "TRUNCATE foo.\"Bar\";");
     }
+
+    @Test(groups = "unit")
+    public void quotingTest() {
+        assertEquals(QueryBuilder.select().from("Metrics", "epochs").getQueryString(),
+            "SELECT * FROM Metrics.epochs;");
+        assertEquals(QueryBuilder.select().from("Metrics", quote("epochs")).getQueryString(),
+            "SELECT * FROM Metrics.\"epochs\";");
+        assertEquals(QueryBuilder.select().from(quote("Metrics"), "epochs").getQueryString(),
+            "SELECT * FROM \"Metrics\".epochs;");
+        assertEquals(QueryBuilder.select().from(quote("Metrics"), quote("epochs")).getQueryString(),
+            "SELECT * FROM \"Metrics\".\"epochs\";");
+
+        assertEquals(QueryBuilder.insertInto("Metrics", "epochs").getQueryString(),
+            "INSERT INTO Metrics.epochs() VALUES ();");
+        assertEquals(QueryBuilder.insertInto("Metrics", quote("epochs")).getQueryString(),
+            "INSERT INTO Metrics.\"epochs\"() VALUES ();");
+        assertEquals(QueryBuilder.insertInto(quote("Metrics"), "epochs").getQueryString(),
+            "INSERT INTO \"Metrics\".epochs() VALUES ();");
+        assertEquals(QueryBuilder.insertInto(quote("Metrics"), quote("epochs")).getQueryString(),
+            "INSERT INTO \"Metrics\".\"epochs\"() VALUES ();");
+    }
+
+    @Test(groups = "unit")
+    public void compoundWhereClauseTest() throws Exception {
+        String query;
+        Statement select;
+
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)>('a',2);";
+        select = select().all().from("foo").where(eq("k", 4)).and(gt(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)>=('a',2) AND (c1,c2)<('b',0);";
+        select = select().all().from("foo").where(eq("k", 4)).and(gte(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)))
+                                                             .and(lt(Arrays.asList("c1", "c2"), Arrays.<Object>asList("b", 0)));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)<=('a',2);";
+        select = select().all().from("foo").where(eq("k", 4)).and(lte(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
+        assertEquals(select.toString(), query);
+    }
 }

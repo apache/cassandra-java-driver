@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import org.testng.annotations.Test;
-import static org.testng.Assert.*;
-
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
+import org.testng.annotations.Test;
+
 import static com.datastax.driver.core.TestUtils.waitFor;
 import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
+import static org.testng.Assert.*;
 
 public class RetryPolicyTest extends AbstractPoliciesTest {
 
@@ -119,7 +119,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             boolean readTimeoutOnce = false;
             boolean unavailableOnce = false;
             boolean restartOnce = false;
-            for (int i = 0; i < 4000; ++i) {
+            for (int i = 0; i < 10000; ++i) {
                 try {
                     // Force a ReadTimeoutException to be performed once
                     if (!readTimeoutOnce) {
@@ -320,18 +320,14 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
 
             try {
                 query(c, 12, ConsistencyLevel.TWO);
-                fail("Only 1 node should be up and CL.TWO should fail.");
             } catch (Exception e) {
-                // TODO: Figure out exact exception that should be thrown
-                assertTrue(true);
+                fail("Only 1 node is up and CL.TWO should downgrade and pass.");
             }
 
             try {
                 query(c, 12, ConsistencyLevel.ALL);
-                fail("Only 1 node should be up and CL.ALL should fail.");
             } catch (Exception e) {
-                // TODO: Figure out exact exception that should be thrown
-                assertTrue(true);
+                fail("Only 1 node is up and CL.ALL should downgrade and pass.");
             }
 
             query(c, 12, ConsistencyLevel.QUORUM);
