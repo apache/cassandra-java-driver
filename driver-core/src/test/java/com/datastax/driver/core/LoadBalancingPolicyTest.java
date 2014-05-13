@@ -336,7 +336,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
     public void tokenAwareTest(boolean usePrepared) throws Throwable {
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
-        CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
+        CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
         try {
 
             createSchema(c.session);
@@ -348,12 +348,14 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
             // we just hit only one node.
             assertQueried(CCMBridge.IP_PREFIX + '1', 0);
             assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
 
             resetCoordinators();
             query(c, 12);
 
             assertQueried(CCMBridge.IP_PREFIX + '1', 0);
             assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
 
             resetCoordinators();
             c.cassandraCluster.forceStop(2);
@@ -381,6 +383,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
             assertQueried(CCMBridge.IP_PREFIX + '1', 0);
             assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
 
             resetCoordinators();
             c.cassandraCluster.decommissionNode(2);
@@ -388,8 +391,9 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
             query(c, 12);
 
-            assertQueried(CCMBridge.IP_PREFIX + '1', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
             assertQueried(CCMBridge.IP_PREFIX + '2', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 12);
 
         } catch (Throwable e) {
             c.errorOut();
