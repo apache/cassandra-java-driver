@@ -128,8 +128,25 @@ public class Metadata {
             String cfName = cfRow.getString(TableMetadata.CF_NAME);
             try {
                 Map<String, ColumnMetadata.Raw> cols = colsDefs == null ? null : colsDefs.get(cfName);
-                if (cols == null)
-                    cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
+                if (cols == null || cols.isEmpty()) {
+                    if (cassandraVersion.getMajor() >= 2) {
+                        // In C* >= 2.0, we should never have no columns metadata because at the very least we should
+                        // have the metadata corresponding to the default CQL metadata. So if we don't have any columns,
+                        // that can only mean that the table got creating concurrently with our schema queries, and the
+                        // query for columns metadata reached the node before the table was persisted while the table
+                        // metadata one reached it afterwards. We could make the query to the column metadata sequential
+                        // with the table metadata instead of in parallel, but it's probably not worth making it slower
+                        // all the time to avoid this race since 1) it's very very uncommon and 2) we can just ignore the
+                        // incomplete table here for now and it'll get updated next time with no particular consequence
+                        // (if the table creation was concurrent with our querying, we'll get a notifciation later and
+                        // will reupdate the schema for it anyway). See JAVA-320 for why we need this.
+                        continue;
+                    } else {
+                        // C* 1.2 don't persists default CQL metadata, so it's possible not to have columns (for thirft
+                        // tables). But in that case TableMetadata.build() knows how to handle it.
+                        cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
+                    }
+                }
                 TableMetadata.build(ksm, cfRow, cols, cassandraVersion);
             } catch (RuntimeException e) {
                 // See ControlConnection#refreshSchema for why we'd rather not probably this further

@@ -41,7 +41,7 @@ public class Insert extends BuiltStatement {
 
     Insert(TableMetadata table) {
         super(table);
-        this.table = table.getName();
+        this.table = escapeId(table.getName());
         this.usings = new Options(this);
     }
 

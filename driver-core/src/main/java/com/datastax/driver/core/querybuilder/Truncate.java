@@ -25,19 +25,16 @@ import com.datastax.driver.core.TableMetadata;
  */
 public class Truncate extends BuiltStatement {
 
-    private final String keyspace;
     private final String table;
 
     Truncate(String keyspace, String table) {
         super(keyspace);
-        this.keyspace = keyspace;
         this.table = table;
     }
 
     Truncate(TableMetadata table) {
         super(table);
-        this.keyspace = table.getKeyspace().getName();
-        this.table = table.getName();
+        this.table = escapeId(table.getName());
     }
 
     @Override

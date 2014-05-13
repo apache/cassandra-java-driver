@@ -70,9 +70,9 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                             switch (scc.change) {
                                 case CREATED:
                                     if (scc.columnFamily.isEmpty()) {
-                                        session.cluster.manager.refreshSchema(connection, this, rs, null, null);
+                                        session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, null, null);
                                     } else {
-                                        session.cluster.manager.refreshSchema(connection, this, rs, scc.keyspace, null);
+                                        session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, null);
                                     }
                                     break;
                                 case DROPPED:
@@ -82,16 +82,16 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                         // We'll add it back if CASSANDRA-5358 changes that behavior
                                         //if (scc.keyspace.equals(session.poolsState.keyspace))
                                         //    session.poolsState.setKeyspace(null);
-                                        session.cluster.manager.refreshSchema(connection, this, rs, null, null);
+                                        session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, null, null);
                                     } else {
-                                        session.cluster.manager.refreshSchema(connection, this, rs, scc.keyspace, null);
+                                        session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, null);
                                     }
                                     break;
                                 case UPDATED:
                                     if (scc.columnFamily.isEmpty()) {
-                                        session.cluster.manager.refreshSchema(connection, this, rs, scc.keyspace, null);
+                                        session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, null);
                                     } else {
-                                        session.cluster.manager.refreshSchema(connection, this, rs, scc.keyspace, scc.columnFamily);
+                                        session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, scc.columnFamily);
                                     }
                                     break;
                                 default:

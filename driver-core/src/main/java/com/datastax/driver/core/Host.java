@@ -53,8 +53,9 @@ public class Host {
     // (partly because the 'System.local' doesn't have it for some weird reason for instance).
     volatile InetAddress listenAddress;
 
-    // ClusterMetadata keeps one Host object per inet address, so don't use
-    // that constructor unless you know what you do (use ClusterMetadata.getHost typically).
+    // ClusterMetadata keeps one Host object per inet address and we rely on this (more precisely,
+    // we rely on the fact that we can use Object equality as a valid equality), so don't use
+    // that constructor but ClusterMetadata.getHost instead.
     Host(InetSocketAddress address, ConvictionPolicy.Factory policy) {
         if (address == null || policy == null)
             throw new NullPointerException();
@@ -157,19 +158,6 @@ public class Host {
      */
     public boolean isUp() {
         return isUp;
-    }
-
-    @Override
-    public final int hashCode() {
-        return address.hashCode();
-    }
-
-    @Override
-    public final boolean equals(Object o) {
-        if(!(o instanceof Host))
-            return false;
-
-        return address.equals(((Host)o).address);
     }
 
     @Override

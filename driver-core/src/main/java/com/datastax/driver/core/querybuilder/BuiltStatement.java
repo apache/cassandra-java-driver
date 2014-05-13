@@ -28,7 +28,7 @@ import com.datastax.driver.core.policies.RetryPolicy;
  */
 public abstract class BuiltStatement extends RegularStatement {
 
-    private static final Pattern cqlId = Pattern.compile("\\w+");
+    private static final Pattern lowercaseId = Pattern.compile("[a-z][a-z0-9_]*");
 
     private final List<ColumnMetadata> partitionKey;
     private final ByteBuffer[] routingKey;
@@ -48,30 +48,21 @@ public abstract class BuiltStatement extends RegularStatement {
     BuiltStatement(String keyspace) {
         this.partitionKey = null;
         this.routingKey = null;
-        this.keyspace = handleId(keyspace);
-    }
-
-    // Same as in Metadata, but we don't want to expose it publicly there.
-    private static String handleId(String id) {
-        if (id == null)
-            return null;
-
-        if (cqlId.matcher(id).matches())
-            return id.toLowerCase();
-
-        // Check if it's enclosed in quotes. If it is, remove them
-        if (id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
-            return id.substring(1, id.length() - 1);
-
-        // otherwise, just return the id.
-        return id;
+        this.keyspace = keyspace;
     }
 
     BuiltStatement(TableMetadata tableMetadata) {
         this.partitionKey = tableMetadata.getPartitionKey();
         this.routingKey = new ByteBuffer[tableMetadata.getPartitionKey().size()];
-        this.keyspace = tableMetadata.getKeyspace().getName();
+        this.keyspace = escapeId(tableMetadata.getKeyspace().getName());
     }
+
+    // Same as Metadata.escapeId, but we don't have access to it here.
+    protected String escapeId(String ident) {
+        // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
+        return lowercaseId.matcher(ident).matches() ? ident : Metadata.quote(ident);
+    }
+
 
     @Override
     public String getQueryString() {
