@@ -21,13 +21,14 @@ import java.util.Date;
 import java.util.List;
 
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
 
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.TestUtils;
+
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.testng.Assert.*;
 
 public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeCluster {
 
