@@ -407,6 +407,7 @@ public interface Row {
     /**
      * Returns the {@code i}th value of this row as a list.
      *
+     * @param <T> the type of the elements of the list to return.
      * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @param elementsClass the class for the elements of the list to retrieve.
      * @return the value of the {@code i}th column in this row as a list of
@@ -423,6 +424,7 @@ public interface Row {
     /**
      * Returns the value of column {@code name} as a list.
      *
+     * @param <T> the type of the elements of the list to return.
      * @param name the name of the column to retrieve.
      * @param elementsClass the class for the elements of the list to retrieve.
      * @return the value of the {@code i}th column in this row as a list of
@@ -440,6 +442,7 @@ public interface Row {
     /**
      * Returns the {@code i}th value of this row as a set.
      *
+     * @param <T> the type of the elements of the set to return.
      * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @param elementsClass the class for the elements of the set to retrieve.
      * @return the value of the {@code i}th column in this row as a set of
@@ -456,6 +459,7 @@ public interface Row {
     /**
      * Returns the value of column {@code name} as a set.
      *
+     * @param <T> the type of the elements of the set to return.
      * @param name the name of the column to retrieve.
      * @param elementsClass the class for the elements of the set to retrieve.
      * @return the value of the {@code i}th column in this row as a set of
@@ -473,6 +477,8 @@ public interface Row {
     /**
      * Returns the {@code i}th value of this row as a map.
      *
+     * @param <K> the type of the keys of the map to return.
+     * @param <V> the type of the values of the map to return.
      * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @param keysClass the class for the keys of the map to retrieve.
      * @param valuesClass the class for the values of the map to retrieve.
@@ -492,6 +498,8 @@ public interface Row {
     /**
      * Returns the value of column {@code name} as a map.
      *
+     * @param <K> the type of the keys of the map to return.
+     * @param <V> the type of the values of the map to return.
      * @param name the name of the column to retrieve.
      * @param keysClass the class for the keys of the map to retrieve.
      * @param valuesClass the class for the values of the map to retrieve.

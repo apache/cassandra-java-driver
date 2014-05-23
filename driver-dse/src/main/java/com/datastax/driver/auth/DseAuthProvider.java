@@ -29,20 +29,17 @@ import java.net.InetSocketAddress;
  *
  * The SASL protocol name defaults to "dse"; should you need to change that
  * it can be overridden using the <code>dse.sasl.protocol</code> system property.
- * </p>
- *
+ * <p>
  * Keytab and ticket cache settings are specified using a standard JAAS
  * configuration file. The location of the file can be set using the
  * <code>java.security.auth.login.config</code> system property or by adding a
  * <code>login.config.url.n</code> entry in the <code>java.security</code> properties
  * file.
- * </p>
- *
- * See {@link http://docs.oracle.com/javase/1.4.2/docs/guide/security/jaas/tutorials/LoginConfigFile.html}
+ * <p>
+ * See <a href="http://docs.oracle.com/javase/1.4.2/docs/guide/security/jaas/tutorials/LoginConfigFile.html">http://docs.oracle.com/javase/1.4.2/docs/guide/security/jaas/tutorials/LoginConfigFile.html</a>
  * for further details on the Login configuration file and
- * {@link http://docs.oracle.com/javase/6/docs/technotes/guides/security/jaas/tutorials/GeneralAcnOnly.html}
+ * <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/security/jaas/tutorials/GeneralAcnOnly.html">http://docs.oracle.com/javase/6/docs/technotes/guides/security/jaas/tutorials/GeneralAcnOnly.html</a>
  * for more on JAAS in general.
- * </p>
  *
  * <h1>Authentication using ticket cache</h1>
  * Run <code>kinit</code> to obtain a ticket and populate the cache before
@@ -58,7 +55,7 @@ import java.net.InetSocketAddress;
  *
  *
  * <h1>Authentication using a keytab file</h1>
- * <p>To enable authentication using a keytab file, specify its location on disk.
+ * To enable authentication using a keytab file, specify its location on disk.
  * If your keytab contains more than one principal key, you should also specify
  * which one to select.
  *

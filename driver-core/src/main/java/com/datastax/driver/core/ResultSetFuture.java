@@ -44,6 +44,8 @@ public interface ResultSetFuture extends ListenableFuture<ResultSet> {
      * </ul>
      * As such, it is the preferred way to get the future result.
      *
+     * @return the query result set.
+     *
      * @throws NoHostAvailableException if no host in the cluster can be
      * contacted successfully to execute this query.
      * @throws QueryExecutionException if the query triggered an execution
@@ -66,6 +68,10 @@ public interface ResultSetFuture extends ListenableFuture<ResultSet> {
      *   with ExecutionException.</li>
      * </ul>
      * As such, it is the preferred way to get the future result.
+     *
+     * @param timeout the time to wait for the query to return.
+     * @param unit the unit for {@code timeout}.
+     * @return the query result set.
      *
      * @throws NoHostAvailableException if no host in the cluster can be
      * contacted successfully to execute this query.
@@ -105,7 +111,7 @@ public interface ResultSetFuture extends ListenableFuture<ResultSet> {
      *                            // side is released immediately
      *       ... handle timeout ...
      *   }
-     * <pre>
+     * </pre>
      *
      * @param mayInterruptIfRunning the value of this parameter is currently
      * ignored.

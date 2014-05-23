@@ -798,6 +798,7 @@ public class BoundStatement extends Statement {
      * <p>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
+     * @param <T> the type of the elements of the list to set.
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
@@ -836,6 +837,7 @@ public class BoundStatement extends Statement {
      * <p>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
+     * @param <T> the type of the elements of the list to set.
      * @param name the name of the variable to set; if multiple variables
      * {@code name} are prepared, all of them are set.
      * @param v the value to set.
@@ -861,6 +863,8 @@ public class BoundStatement extends Statement {
      * <p>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
+     * @param <K> the type of the keys for the map to set.
+     * @param <V> the type of the values for the map to set.
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
@@ -901,6 +905,8 @@ public class BoundStatement extends Statement {
      * <p>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
+     * @param <K> the type of the keys for the map to set.
+     * @param <V> the type of the values for the map to set.
      * @param name the name of the variable to set; if multiple variables
      * {@code name} are prepared, all of them are set.
      * @param v the value to set.
@@ -926,6 +932,7 @@ public class BoundStatement extends Statement {
      * <p>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
+     * @param <T> the type of the elements of the set to set.
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
@@ -963,6 +970,7 @@ public class BoundStatement extends Statement {
      * <p>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
+     * @param <T> the type of the elements of the set to set.
      * @param name the name of the variable to set; if multiple variables
      * {@code name} are prepared, all of them are set.
      * @param v the value to set.

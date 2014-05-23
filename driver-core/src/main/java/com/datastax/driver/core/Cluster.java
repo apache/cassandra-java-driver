@@ -78,6 +78,7 @@ public class Cluster implements Closeable {
      * should prefer either using the {@link #builder} or calling {@link #buildFrom} with a custom
      * Initializer.
      *
+     * @param name the name to use for the cluster (this is not the Cassandra cluster name, see {@link #getClusterName}).
      * @param contactPoints the list of contact points to use for the new cluster.
      * @param configuration the configuration for the new cluster.
      */
@@ -186,7 +187,7 @@ public class Cluster implements Closeable {
      * <p>
      * Once a session returned by this method gets initialized (see above), it
      * will be set to no keyspace. If you want to set such session to a
-     * keyspace, you will have to explicitly execute a 'USE <mykeyspace>' query.
+     * keyspace, you will have to explicitly execute a 'USE mykeyspace' query.
      * <p>
      * Note that if you do not particularly need to defer initialization, it is
      * simpler to use one of the {@code connect()} method of this class.

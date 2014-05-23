@@ -29,7 +29,7 @@ import com.google.common.util.concurrent.*;
 public abstract class AbstractSession implements Session {
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public ResultSet execute(String query) {
@@ -37,7 +37,7 @@ public abstract class AbstractSession implements Session {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public ResultSet execute(String query, Object... values) {
@@ -45,7 +45,7 @@ public abstract class AbstractSession implements Session {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public ResultSet execute(Statement statement) {
@@ -53,7 +53,7 @@ public abstract class AbstractSession implements Session {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public ResultSetFuture executeAsync(String query) {
@@ -61,7 +61,7 @@ public abstract class AbstractSession implements Session {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public ResultSetFuture executeAsync(String query, Object... values) {
@@ -69,7 +69,7 @@ public abstract class AbstractSession implements Session {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public PreparedStatement prepare(String query) {
@@ -81,7 +81,7 @@ public abstract class AbstractSession implements Session {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public PreparedStatement prepare(RegularStatement statement) {
@@ -93,7 +93,7 @@ public abstract class AbstractSession implements Session {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public ListenableFuture<PreparedStatement> prepareAsync(final RegularStatement statement) {
@@ -118,7 +118,7 @@ public abstract class AbstractSession implements Session {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void close() {

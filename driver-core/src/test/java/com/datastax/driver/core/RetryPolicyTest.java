@@ -15,9 +15,10 @@
  */
 package com.datastax.driver.core;
 
+import org.testng.annotations.Test;
+
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
-import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.TestUtils.waitFor;
 import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
@@ -296,7 +297,7 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             assertQueried(CCMBridge.IP_PREFIX + '3', 4);
 
             resetCoordinators();
-            c.cassandraCluster.forceStop(2);
+            c.cassandraCluster.stop(2);
             waitForDownWithWait(CCMBridge.IP_PREFIX + '2', c.cluster, 10);
 
             query(c, 12, ConsistencyLevel.ALL);
@@ -306,17 +307,17 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             assertQueried(CCMBridge.IP_PREFIX + '3', 6);
 
             resetCoordinators();
-            c.cassandraCluster.forceStop(1);
-            waitForDownWithWait(CCMBridge.IP_PREFIX + '1', c.cluster, 5);
+            c.cassandraCluster.stop(1);
+            waitForDownWithWait(CCMBridge.IP_PREFIX + '1', c.cluster, 10);
 
             try {
                 query(c, 12, ConsistencyLevel.ALL);
-                fail();
             } catch (ReadTimeoutException e) {
                 assertEquals("Cassandra timeout during read query at consistency TWO (2 responses were required but only 1 replica responded)", e.getMessage());
             }
 
             Thread.sleep(15000);
+            resetCoordinators();
 
             try {
                 query(c, 12, ConsistencyLevel.TWO);
@@ -324,11 +325,23 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
                 fail("Only 1 node is up and CL.TWO should downgrade and pass.");
             }
 
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 12);
+
+            resetCoordinators();
+
             try {
                 query(c, 12, ConsistencyLevel.ALL);
             } catch (Exception e) {
                 fail("Only 1 node is up and CL.ALL should downgrade and pass.");
             }
+
+            assertQueried(CCMBridge.IP_PREFIX + '1', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 12);
+
+            resetCoordinators();
 
             query(c, 12, ConsistencyLevel.QUORUM);
 
