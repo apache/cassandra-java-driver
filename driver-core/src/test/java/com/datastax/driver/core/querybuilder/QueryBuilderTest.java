@@ -290,8 +290,8 @@ public class QueryBuilderTest {
         delete = delete("a", "b", "c").from("foo", "bar").where().and(eq("k", 1)).using(timestamp(1240003134L));
         assertEquals(delete.toString(), query);
 
-        query = "DELETE FROM foo.bar WHERE k1=1 AND k2=1;";
-        delete = delete().from("foo", "bar").where(eq("k1", 1)).and(eq("k2", 1));
+        query = "DELETE FROM foo.bar WHERE k1='foo' AND k2=1;";
+        delete = delete().from("foo", "bar").where(eq("k1", "foo")).and(eq("k2", 1));
         assertEquals(delete.toString(), query);
 
         try {
