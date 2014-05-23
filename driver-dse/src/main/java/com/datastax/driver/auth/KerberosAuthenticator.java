@@ -28,11 +28,9 @@ import java.net.InetSocketAddress;
 
 /**
  * Responsible for authenticating with secured DSE services using Kerberos
- * over GSSAPI & SASL. The actual SASL negotiation is delegated to a
+ * over GSSAPI &amp; SASL. The actual SASL negotiation is delegated to a
  * PrivilegedSaslClient which performs the priviledged actions on behalf
  * of the logged in user.
- * </p>
- *
  */
 public class KerberosAuthenticator implements Authenticator
 {

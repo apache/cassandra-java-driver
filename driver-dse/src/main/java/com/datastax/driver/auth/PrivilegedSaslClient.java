@@ -94,7 +94,6 @@ public class PrivilegedSaslClient
     /**
      * Generate an initial token to start the SASL handshake with server.
      * @return SaslTokenRequestMessage message to be sent to server.
-     * @throws java.io.IOException
      */
     public byte[] getInitialResponse()
     {

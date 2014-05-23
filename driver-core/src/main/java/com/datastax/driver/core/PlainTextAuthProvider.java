@@ -54,8 +54,6 @@ public class PlainTextAuthProvider implements AuthProvider {
      * @param host the Cassandra host with which we want to authenticate
      * @return an Authenticator instance which can be used to perform
      * authentication negotiations on behalf of the client
-     * @throws SaslException if an unsupported SASL mechanism is supplied
-     * or an error is encountered when initialising the authenticator
      */
     public Authenticator newAuthenticator(InetSocketAddress host) {
         return new PlainTextAuthenticator(username, password);

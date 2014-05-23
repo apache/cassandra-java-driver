@@ -353,6 +353,10 @@ public class Select extends BuiltStatement {
          * as a column name (in a select clause), you will need to use the
          * {@link QueryBuilder#column} method, and so 
          * {@code fcall("textToBlob", QueryBuilder.column(foo)}.
+         *
+         * @param name the name of the function.
+         * @param parameters the parameters for the function call.
+         * @return this in-build SELECT statement
          */
         public abstract SelectionOrAlias fcall(String name, Object... parameters);
     }

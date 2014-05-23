@@ -36,6 +36,8 @@ public interface ReconnectionPolicy {
 
     /**
      * Creates a new schedule for reconnection attempts.
+     *
+     * @return the created schedule.
      */
     public ReconnectionSchedule newSchedule();
 

@@ -876,6 +876,7 @@ public final class QueryBuilder {
      * <p>
      * The following table exemplify the behavior of this function:
      * <table border=1>
+     *   <caption>Examples of use</caption>
      *   <tr><th>Code</th><th>Resulting query string</th></tr>
      *   <tr><td>{@code select().from("t").where(eq("c", "C'est la vie!")); }</td><td>{@code "SELECT * FROM t WHERE c='C''est la vie!';"}</td></tr>
      *   <tr><td>{@code select().from("t").where(eq("c", raw("C'est la vie!"))); }</td><td>{@code "SELECT * FROM t WHERE c=C'est la vie!;"}</td></tr>

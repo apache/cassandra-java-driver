@@ -21,6 +21,8 @@ import java.util.Map;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import com.datastax.driver.core.exceptions.*;
+
 /**
  * A session holds connections to a Cassandra cluster, allowing it to be queried.
  *
@@ -336,6 +338,8 @@ public interface Session extends Closeable {
      * connected to, how many connections are opened to each host, etc...
      * The returned object is immutable, it is a snapshot of the Session State
      * taken when this method is called.
+     *
+     * @return a snapshot of the state of this Session.
      */
     public State getState();
 

@@ -63,6 +63,8 @@ public class VersionNumber implements Comparable<VersionNumber> {
      * "patch" version number, Z, can be ommitted, in which case it is assumed to be 0.
      *
      * @param version the string to parse
+     * @return the parsed version number.
+     *
      * @throws IllegalArgumentException if the provided string does not
      * represent a valid version.
      */

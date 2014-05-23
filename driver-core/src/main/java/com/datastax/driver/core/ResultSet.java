@@ -133,7 +133,7 @@ public interface ResultSet extends Iterable<Row> {
      *   ResultSet rs = session.execute(...);
      *   Iterator&lt;Row&gt; iter = rs.iterator();
      *   while (iter.hasNext()) {
-     *       if (rs.getAvailableWithoutFetching() == 100 && !rs.isFullyFetched())
+     *       if (rs.getAvailableWithoutFetching() == 100 &amp;&amp; !rs.isFullyFetched())
      *           rs.fetchMoreResults();
      *       Row row = iter.next()
      *       ... process the row ...
