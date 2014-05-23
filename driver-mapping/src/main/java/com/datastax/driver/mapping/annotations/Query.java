@@ -19,6 +19,8 @@ public @interface Query {
      * the second one by {@code :arg1}, ... Alternatively, if a parameter of the annonated
      * method has a {@link Param} annotation, the value of that latter annoation should be
      * used instead.
+     *
+     * @return the CQL query to use.
      */
     String value();
 }

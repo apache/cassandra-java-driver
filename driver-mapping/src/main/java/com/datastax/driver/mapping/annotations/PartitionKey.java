@@ -17,6 +17,8 @@ import java.lang.annotation.Target;
 public @interface PartitionKey {
     /**
      * Ordinal to add when the partition key has multiple components.
+     *
+     * @return the ordinal to use.
      */
     int value() default 0;
 }

@@ -18,12 +18,24 @@ import com.datastax.driver.core.Configuration;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface QueryParameters {
-    /** The consistency level to use for the operation. */
+    /**
+     * The consistency level to use for the operation.
+     *
+     * @return the consistency level to use for the operation.
+     */
     String consistency() default "";
 
-    /** The fetch size to use for paging the result of this operation. */
+    /**
+     * The fetch size to use for paging the result of this operation.
+     *
+     * @return the fetch size to use for the operation.
+     */
     int fetchSize() default -1;
 
-    /** Whether tracing should be enabled for this operation. */
+    /**
+     * Whether tracing should be enabled for this operation.
+     *
+     * @return whether tracing should be enabled for this operation.
+     */
     boolean tracing() default false;
 }

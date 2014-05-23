@@ -17,6 +17,8 @@ public @interface ClusteringColumn {
     /**
      * Ordinal to add when several clustering columns are declared within a single
      * entity.
+     *
+     * @return the ordinal value.
      */
     int value() default 0;
 }

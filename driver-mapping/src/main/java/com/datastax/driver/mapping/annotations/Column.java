@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * Note that this annotation is generally optional in the sense that any field
  * of a class annotated by {@link Table} will be mapped by default to a column
  * having the same name than this field unless that field has the
- * {@link Transcient} annotation. As such, this annotation is mainly useful when
+ * {@link Transient} annotation. As such, this annotation is mainly useful when
  * the name to map the field to is not the same one that the field itself (but
  * can be added without it's name parameter for documentation sake).
  */
@@ -22,9 +22,16 @@ public @interface Column {
     /**
      * Name of the column being mapped in Cassandra. By default, the name of the
      * field will be used.
+     *
+     * @return the name of the mapped column in Cassandra, or {@code ""} to use
+     * the field name.
      */
     String name() default "";
 
-    /** Whether the column name is a case sensitive one */
+    /**
+     * Whether the column name is a case sensitive one.
+     *
+     * @return whether the column name is a case sensitive one.
+     */
     boolean caseSensitive() default false;
 }

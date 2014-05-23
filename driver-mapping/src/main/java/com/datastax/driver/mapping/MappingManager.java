@@ -50,6 +50,7 @@ public class MappingManager {
      * The {@code MappingManager} only ever keep one Mapper for each class, and so calling this
      * method multiple time on the same class will always return the same object.
      *
+     * @param <T> the type of the class to map.
      * @param klass the (annotated) class for which to return the mapper.
      * @return the {@code Mapper} object for class {@code klass}.
      */
@@ -64,6 +65,7 @@ public class MappingManager {
      * The {@code MappingManager} only ever keep one Accessor for each class, and so calling this
      * method multiple time on the same class will always return the same object.
      *
+     * @param <T> the type of the accessor class.
      * @param klass the (annotated) class for which to create an accessor object.
      * @return the accessor object for class {@code klass}.
      */

@@ -17,6 +17,10 @@ import com.datastax.driver.mapping.EnumType;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Enumerated {
-    /** How the enumeration must be persisted. */
+    /**
+     * How the enumeration must be persisted.
+     *
+     * @return the {@link EnumType} to use for mapping this enumeration.
+     */
     EnumType value() default EnumType.STRING;
 }

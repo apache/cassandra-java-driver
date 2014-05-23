@@ -12,7 +12,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Param {
-    /** The name for the parameter */
+    /**
+     * The name for the parameter
+     *
+     * @return the name of the parameter.
+     */
     String value();
 }
-

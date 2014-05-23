@@ -218,6 +218,7 @@ public class Mapper<T> {
      * This method is basically equivalent to: {@code getManager().getSession().executeAsync(deleteQuery(entity))}.
      *
      * @param entity the entity to delete.
+     * @return a future on the completion of the deletion.
      */
     public ListenableFuture<Void> deleteAsync(T entity) {
         return Futures.transform(session().executeAsync(deleteQuery(entity)), NOOP);
@@ -246,6 +247,7 @@ public class Mapper<T> {
      *
      * @param primaryKey the primary key of the entity to delete, or more precisely
      * the values for the columns of said primary key in the order of the primary key.
+     * @return a future on the completion of the deletion.
      *
      * @throws IllegalArgumentException if the number of value provided differ from
      * the number of columns composing the PRIMARY KEY of the mapped class, or if
