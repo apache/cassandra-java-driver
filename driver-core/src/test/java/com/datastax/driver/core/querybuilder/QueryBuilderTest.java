@@ -60,6 +60,14 @@ public class QueryBuilderTest {
         query = "SELECT DISTINCT longName AS a,ttl(longName) AS ttla FROM foo LIMIT :limit;";
         select = select().distinct().column("longName").as("a").ttl("longName").as("ttla").from("foo").limit(bindMarker("limit"));
         assertEquals(select.toString(), query);
+		
+        query = "SELECT DISTINCT longName AS a,ttl(longName) AS ttla FROM foo WHERE k IN () LIMIT :limit;";
+        select = select().distinct().column("longName").as("a").ttl("longName").as("ttla").from("foo").where(in("k")).limit(bindMarker("limit"));
+        assertEquals(select.toString(), query);
+		
+		query = "SELECT * FROM foo WHERE bar=:barmark AND baz=:bazmark LIMIT :limit;";
+		select = select().all().from("foo").where().and(eq("bar", bindMarker("barmark"))).and(eq("baz", bindMarker("bazmark"))).limit(bindMarker("limit"));
+		assertEquals(select.toString(), query);
 
         query = "SELECT a FROM foo WHERE k IN ();";
         select = select("a").from("foo").where(in("k"));
