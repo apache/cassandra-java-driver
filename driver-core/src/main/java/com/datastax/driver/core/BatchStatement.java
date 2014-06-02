@@ -171,6 +171,26 @@ public class BatchStatement extends Statement {
         return this;
     }
 
+    /**
+     * Throws an {@code UnsupportedOperationException} as setting the serial consistency is
+     * currently not supported for protocol batches by Cassandra.
+     * <p>
+     * The current version of the protocol uses does not allow to provide a serial consistency level
+     * for protocol batches (the batch created through this class). This is fixed by the protocol
+     * version 3 that will be part of Cassandra 2.1 and will be supported by the driver version 2.1.
+     * Until then, protocol batch with conditions will have their serial consistency level hardcoded
+     * to SERIAL. If you need to execute a batch with LOCAL_SERIAL, you will have to use a CQL batch.
+     *
+     * @param serialConsistency the serial consistency level
+     * @return nothing since this call currently always throws an {@code UnsupportedOperationException}.
+     *
+     * @throws UnsupportedOperationException see above.
+     */
+    @Override
+    public Statement setSerialConsistencyLevel(ConsistencyLevel serialConsistency) {
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public ByteBuffer getRoutingKey() {
         for (Statement statement : statements) {

@@ -77,6 +77,7 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void casBatchTest() throws Throwable {
+        // This will only work with C* 2.0.9 (CASSANDRA-7337)
         try {
             PreparedStatement st = session.prepare("INSERT INTO test (k, v) VALUES (?, ?) IF NOT EXISTS");
 
