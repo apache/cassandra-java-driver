@@ -28,12 +28,8 @@ import com.google.common.collect.Iterators;
 public class UDTDefinition implements Iterable<UDTDefinition.Field> {
 
     private static final String TYPE_NAME = "type_name";
-    private static final String COLS_NAMES = "column_names";
-    private static final String COLS_TYPES = "column_types";
-
-    // We need to know the protocol version in use when creating UDTValue to know how to
-    // serialize/deserialize collections. So store it there. Not meant to be public.
-    final int protocolVersion;
+    private static final String COLS_NAMES = "field_names";
+    private static final String COLS_TYPES = "field_types";
 
     private final String keyspace;
     private final String name;
@@ -47,8 +43,7 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
     // implementation.
     final Map<String, int[]> byName;
 
-    UDTDefinition(int protocolVersion, String keyspace, String name, Collection<Field> fields) {
-        this.protocolVersion = protocolVersion;
+    UDTDefinition(String keyspace, String name, Collection<Field> fields) {
         this.keyspace = keyspace;
         this.name = name;
         this.byIdx = fields.toArray(new Field[fields.size()]);
@@ -59,7 +54,7 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
         this.byName = builder.build();
     }
 
-    static UDTDefinition build(Row row, int protocolVersion) {
+    static UDTDefinition build(Row row) {
         String keyspace = row.getString(KeyspaceMetadata.KS_NAME);
         String name = row.getString(TYPE_NAME);
 
@@ -70,7 +65,7 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
         for (int i = 0; i < fieldNames.size(); i++)
             fields.add(new Field(fieldNames.get(i), CassandraTypeParser.parseOne(fieldTypes.get(i))));
 
-        return new UDTDefinition(protocolVersion, keyspace, name, fields);
+        return new UDTDefinition(keyspace, name, fields);
     }
 
     /**

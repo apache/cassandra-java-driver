@@ -925,14 +925,17 @@ abstract class TypeCodec<T> {
             for (int i = 0; i < definition.size(); i++) {
                 ByteBuffer v = value.values[i];
                 vs.add(v);
-                size += 3 + v.remaining();
+                size += 4 + (v == null ? 0 : v.remaining());
             }
 
             ByteBuffer result = ByteBuffer.allocate(size);
             for (ByteBuffer bb : vs) {
-                result.putShort((short)bb.remaining());
-                result.put(bb.duplicate());
-                result.put((byte)0);
+                if (bb == null) {
+                    result.putInt(-1);
+                } else {
+                    result.putInt(bb.remaining());
+                    result.put(bb.duplicate());
+                }
             }
             return (ByteBuffer)result.flip();
         }
@@ -943,9 +946,8 @@ abstract class TypeCodec<T> {
 
             int i = 0;
             while (input.hasRemaining() && i < definition.size()) {
-                int n = getUnsignedShort(input);
-                value.values[i++] = readBytes(input, n);
-                input.get(); // EOC since it's a CompositeType encoding
+                int n = input.getInt();
+                value.values[i++] = n < 0 ? null : readBytes(input, n);
             }
             return value;
         }

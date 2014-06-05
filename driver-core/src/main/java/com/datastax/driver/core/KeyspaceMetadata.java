@@ -61,7 +61,7 @@ public class KeyspaceMetadata {
             return ksm;
 
         for (Row r : udtRows) {
-            UDTDefinition def = UDTDefinition.build(r, ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION);
+            UDTDefinition def = UDTDefinition.build(r);
             ksm.userTypes.put(def.getName(), def);
         }
 

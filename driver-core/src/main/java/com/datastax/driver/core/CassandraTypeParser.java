@@ -100,7 +100,7 @@ class CassandraTypeParser {
             List<UDTDefinition.Field> fields = new ArrayList<UDTDefinition.Field>(rawFields.size());
             for (Map.Entry<String, String> entry : rawFields.entrySet())
                 fields.add(new UDTDefinition.Field(entry.getKey(), parseOne(entry.getValue())));
-            return DataType.userType(new UDTDefinition(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION, keyspace, typeName, fields));
+            return DataType.userType(new UDTDefinition(keyspace, typeName, fields));
         }
 
         DataType type = cassTypeToDataType.get(next);
