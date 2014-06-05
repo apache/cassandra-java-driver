@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -128,7 +127,7 @@ public class Metadata {
             // wrong. Log an error an schedule a full schema rebuilt.
             if (ksm == null) {
                 logger.error(String.format("Asked to rebuild table %s.%s but I don't know keyspace %s", keyspace, table, keyspace));
-                cluster.submitSchemaRefresh(null, null);
+                cluster.submitSchemaRefresh(null, null, null);
                 return;
             }
 

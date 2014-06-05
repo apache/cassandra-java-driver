@@ -21,7 +21,6 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -385,6 +384,34 @@ public class Cluster implements Closeable {
     }
 
     /**
+     * Registers the provided tracker to be updated with schema change events.
+     * <p>
+     * Registering the same listener multiple times is a no-op.
+     *
+     * @param tracker the new {@link SchemaChangeTracker} to register.
+     * @return this {@code Cluster} object;
+     */
+    public Cluster register(SchemaChangeTracker tracker) {
+        manager.schemaChangeTrackers.add(tracker);
+        return this;
+    }
+
+    /**
+     * Unregisters the provided schema change tracker from being updated
+     * with schema change events.
+     * <p>
+     * This method is a no-op if {@code tracker} hadn't previously be
+     * registered against this Cluster.
+     *
+     * @param tracker the {@link SchemaChangeTracker} to unregister.
+     * @return this {@code Cluster} object;
+     */
+    public Cluster unregister(SchemaChangeTracker tracker) {
+        manager.schemaChangeTrackers.remove(tracker);
+        return this;
+    }
+
+    /**
      * Initiates a shutdown of this cluster instance.
      * <p>
      * This method is asynchronous and return a future on the completion
@@ -518,7 +545,7 @@ public class Cluster implements Closeable {
         private AddressTranslater addressTranslater;
 
         private ProtocolOptions.Compression compression = ProtocolOptions.Compression.NONE;
-        private SSLOptions sslOptions = null;
+        private SSLOptions sslOptions;
         private boolean metricsEnabled = true;
         private boolean jmxEnabled = true;
 
@@ -1074,6 +1101,7 @@ public class Cluster implements Closeable {
 
         final Set<Host.StateListener> listeners;
         final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
+        final Set<SchemaChangeTracker> schemaChangeTrackers = new CopyOnWriteArraySet<SchemaChangeTracker>();
 
         private Manager(String clusterName, List<InetSocketAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
             logger.debug("Starting new cluster with contact points " + contactPoints);
@@ -1626,12 +1654,38 @@ public class Cluster implements Closeable {
             }
         }
 
-        public void submitSchemaRefresh(final String keyspace, final String table) {
+        public void submitSchemaRefresh(final String keyspace, final String table, final ProtocolEvent.SchemaChange scc) {
             logger.trace("Submitting schema refresh");
             executor.submit(new ExceptionCatchingRunnable() {
                 @Override
                 public void runMayThrow() throws InterruptedException, ExecutionException {
                     controlConnection.refreshSchema(keyspace, table);
+
+                    if (scc != null)
+                        switch (scc.change) {
+                            case CREATED:
+                                for (SchemaChangeTracker tracker : schemaChangeTrackers) {
+                                    if (scc.table.isEmpty())
+                                        tracker.onKeyspaceCreated(scc.keyspace);
+                                    else
+                                        tracker.onTableOrTypeCreated(scc.keyspace, scc.table);
+                                }
+                                break;
+                            case UPDATED:
+                                for (SchemaChangeTracker tracker : schemaChangeTrackers) {
+                                    if (scc.table.isEmpty())
+                                        tracker.onKeyspaceUpdated(scc.keyspace);
+                                    else
+                                        tracker.onTableOrTypeUpdated(scc.keyspace, scc.table);
+                                }
+                            case DROPPED:
+                                for (SchemaChangeTracker tracker : schemaChangeTrackers) {
+                                    if (scc.table.isEmpty())
+                                        tracker.onKeyspaceDropped(scc.keyspace);
+                                    else
+                                        tracker.onTableOrTypeDropped(scc.keyspace, scc.table);
+                                }
+                        }
                 }
             });
         }
@@ -1652,7 +1706,7 @@ public class Cluster implements Closeable {
                         ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this);
                     } catch (Exception e) {
                         logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
-                        submitSchemaRefresh(keyspace, table);
+                        submitSchemaRefresh(keyspace, table, null);
                     } finally {
                         // Always sets the result
                         future.setResult(rs);
@@ -1763,24 +1817,51 @@ public class Cluster implements Closeable {
                     switch (scc.change) {
                         case CREATED:
                             if (scc.table.isEmpty())
-                                submitSchemaRefresh(null, null);
+                                submitSchemaRefresh(null, null, scc);
                             else
-                                submitSchemaRefresh(scc.keyspace, null);
+                                submitSchemaRefresh(scc.keyspace, null, scc);
                             break;
                         case DROPPED:
                             if (scc.table.isEmpty())
-                                submitSchemaRefresh(null, null);
+                                submitSchemaRefresh(null, null, scc);
                             else
-                                submitSchemaRefresh(scc.keyspace, null);
+                                submitSchemaRefresh(scc.keyspace, null, scc);
                             break;
                         case UPDATED:
                             if (scc.table.isEmpty())
-                                submitSchemaRefresh(scc.keyspace, null);
+                                submitSchemaRefresh(scc.keyspace, null, scc);
                             else
-                                submitSchemaRefresh(scc.keyspace, scc.table);
+                                submitSchemaRefresh(scc.keyspace, scc.table, scc);
                             break;
                     }
                     break;
+            }
+        }
+
+        private void reportCreated(String keyspace, String table) {
+            for (SchemaChangeTracker tracker : schemaChangeTrackers) {
+                if (table.isEmpty())
+                    tracker.onKeyspaceCreated(keyspace);
+                else
+                    tracker.onTableOrTypeCreated(keyspace, table);
+            }
+        }
+
+        private void reportDropped(String keyspace, String table) {
+            for (SchemaChangeTracker tracker : schemaChangeTrackers) {
+                if (table.isEmpty())
+                    tracker.onKeyspaceDropped(keyspace);
+                else
+                    tracker.onTableOrTypeDropped(keyspace, table);
+            }
+        }
+
+        private void reportUpdated(String keyspace, String table) {
+            for (SchemaChangeTracker tracker : schemaChangeTrackers) {
+                if (table.isEmpty())
+                    tracker.onKeyspaceUpdated(keyspace);
+                else
+                    tracker.onTableOrTypeUpdated(keyspace, table);
             }
         }
 
