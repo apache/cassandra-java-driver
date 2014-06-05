@@ -315,6 +315,14 @@ public class QueryBuilderTest {
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid timestamp, must be positive");
         }
+        
+        query = "DELETE FROM foo.bar WHERE k1='foo' IF EXISTS;";
+        delete = delete().from("foo", "bar").where(eq("k1", "foo")).ifExists();
+        assertEquals(delete.toString(), query);
+        
+        query = "DELETE FROM foo.bar WHERE k1='foo' IF a=1 AND b=2;";
+        delete = delete().from("foo", "bar").where(eq("k1", "foo")).onlyIf(eq("a", 1)).and(eq("b", 2));
+        assertEquals(delete.toString(), query);
     }
 
     @Test(groups = "unit")

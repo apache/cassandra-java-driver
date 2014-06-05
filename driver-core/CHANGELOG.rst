@@ -5,6 +5,7 @@ CHANGELOG
 ------
 
 - [bug] Check cluster name when connecting to a new node (JAVA-397)
+- [bug] Add missing CAS delete support in QueryBuilder (JAVA-326)
 
 2.0.5:
 ------
