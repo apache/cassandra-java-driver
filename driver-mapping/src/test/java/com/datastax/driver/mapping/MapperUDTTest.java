@@ -1,0 +1,357 @@
+package com.datastax.driver.mapping;
+
+import static org.testng.Assert.assertEquals;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import org.testng.annotations.Test;
+import org.testng.collections.Lists;
+
+import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.driver.mapping.annotations.Accessor;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.Param;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Query;
+import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.UserDefinedType;
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
+
+public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
+
+    protected Collection<String> getTableDefinitions() {
+        return Arrays.asList("CREATE TYPE address (street text, city text, zip_code int, phones set<text>)",
+                             "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, main_address address, other_addresses map<text,address>)",
+                             "CREATE TYPE sub(i int)",
+                             "CREATE TABLE collection_examples (id int PRIMARY KEY, l list<sub>, s set<sub>, m1 map<int,sub>, m2 map<sub,int>, m3 map<sub,sub>)");
+    }
+
+    @Table(keyspace = "ks", name = "users",
+           readConsistency = "QUORUM",
+           writeConsistency = "QUORUM")
+    public static class User {
+        @PartitionKey
+        @Column(name = "user_id")
+        private UUID userId;
+
+        private String name;
+
+        @Column(name = "main_address")
+        private Address mainAddress;
+
+        @Column(name = "other_addresses")
+        private Map<String, Address> otherAddresses;
+
+        public User() {
+        }
+
+        public User(String name, Address address) {
+            this.userId = UUIDs.random();
+            this.name = name;
+            this.mainAddress = address;
+            this.otherAddresses = new HashMap<String, Address>();
+        }
+
+        public UUID getUserId() {
+            return userId;
+        }
+
+        public void setUserId(UUID userId) {
+            this.userId = userId;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public Address getMainAddress() {
+            return mainAddress;
+        }
+
+        public void setMainAddress(Address address) {
+            this.mainAddress = address;
+        }
+
+        public Map<String, Address> getOtherAddresses() {
+            return otherAddresses;
+        }
+
+        public void setOtherAddresses(Map<String, Address> otherAddresses) {
+            this.otherAddresses = otherAddresses;
+        }
+
+        public void addOtherAddress(String name, Address address) {
+            this.otherAddresses.put(name, address);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other instanceof User) {
+                User that = (User) other;
+                return Objects.equal(this.userId, that.userId) &&
+                       Objects.equal(this.name, that.name) &&
+                       Objects.equal(this.mainAddress, that.mainAddress) &&
+                       Objects.equal(this.otherAddresses, that.otherAddresses);
+            }
+            return false;
+        }
+    }
+
+    @UserDefinedType(keyspace = "ks", name = "address")
+    public static class Address {
+        private String street;
+
+        private String city;
+
+        @Column(name = "zip_code")
+        private int zipCode;
+
+        private Set<String> phones;
+
+        public Address() {
+        }
+
+        public Address(String street, String city, int zipCode, String... phones) {
+            this.street = street;
+            this.city = city;
+            this.zipCode = zipCode;
+            this.phones = new HashSet<String>();
+            for (String phone : phones) {
+                this.phones.add(phone);
+            }
+        }
+
+        public String getStreet() {
+            return street;
+        }
+
+        public void setStreet(String street) {
+            this.street = street;
+        }
+
+        public String getCity() {
+            return city;
+        }
+
+        public void setCity(String city) {
+            this.city = city;
+        }
+
+        public int getZipCode() {
+            return zipCode;
+        }
+
+        public void setZipCode(int zipCode) {
+            this.zipCode = zipCode;
+        }
+
+        public Set<String> getPhones() {
+            return phones;
+        }
+
+        public void setPhones(Set<String> phones) {
+            this.phones = phones;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other instanceof Address) {
+                Address that = (Address) other;
+                return Objects.equal(this.street, that.street) &&
+                       Objects.equal(this.city, that.city) &&
+                       Objects.equal(this.zipCode, that.zipCode) &&
+                       Objects.equal(this.phones, that.phones);
+            }
+            return false;
+        }
+    }
+
+    @Accessor
+    public interface UserAccessor {
+        @Query("SELECT * FROM ks.users WHERE user_id=:userId")
+        User getOne(@Param("userId") UUID userId);
+
+        @Query("UPDATE ks.users SET other_addresses[:arg1]=:arg2 WHERE user_id=:arg0")
+        ResultSet addAddress(UUID id, String addressName, Address address);
+    }
+
+    @Test(groups = "short")
+    public void testNestedEntity() throws Exception {
+        Mapper<User> m = new MappingManager(session).mapper(User.class);
+
+        User u1 = new User("Paul", new Address("12 4th Street", "Springfield", 12345, "12341343", "435423245"));
+        u1.addOtherAddress("work", new Address("5 Main Street", "Springfield", 12345, "23431342"));
+        m.save(u1);
+
+        assertEquals(m.get(u1.getUserId()), u1);
+    }
+
+    @Test(groups = "short")
+    public void testAccessor() throws Exception {
+        MappingManager manager = new MappingManager(session);
+
+        Mapper<User> m = new MappingManager(session).mapper(User.class);
+        User u1 = new User("Paul", new Address("12 4th Street", "Springfield", 12345, "12341343", "435423245"));
+        m.save(u1);
+
+        UserAccessor userAccessor = manager.createAccessor(UserAccessor.class);
+
+        Address workAddress = new Address("5 Main Street", "Springfield", 12345, "23431342");
+        userAccessor.addAddress(u1.getUserId(), "work", workAddress);
+
+        User u2 = userAccessor.getOne(u1.getUserId());
+        assertEquals(workAddress, u2.getOtherAddresses().get("work"));
+    }
+
+    @UserDefinedType(keyspace = "ks", name = "sub")
+    public static class Sub {
+        private int i;
+        
+        public Sub() {
+        }
+
+        public Sub(int i) {
+            this.i = i;
+        }
+
+        public int getI() {
+            return i;
+        }
+
+        public void setI(int i) {
+            this.i = i;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other instanceof Sub) {
+                Sub that = (Sub) other;
+                return this.i == that.i;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(i);
+        }
+    }
+
+    @Table(keyspace = "ks", name = "collection_examples")
+    public static class CollectionExamples {
+        @PartitionKey
+        private int id;
+
+        private List<Sub> l;
+
+        private Set<Sub> s;
+
+        private Map<Integer, Sub> m1;
+
+        private Map<Sub, Integer> m2;
+
+        private Map<Sub, Sub> m3;
+
+        public CollectionExamples() {
+        }
+
+        public CollectionExamples(int id, int value) {
+            this.id = id;
+            // Just fill the collections with random values
+            Sub sub1 = new Sub(value);
+            Sub sub2 = new Sub(value + 1);
+            this.l = Lists.newArrayList(sub1, sub2);
+            this.s = Sets.newHashSet(sub1, sub2);
+            this.m1 = ImmutableMap.of(1, sub1, 2, sub2);
+            this.m2 = ImmutableMap.of(sub1, 1, sub2, 2);
+            this.m3 = ImmutableMap.of(sub1, sub1, sub2, sub2);
+        }
+        
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public List<Sub> getL() {
+            return l;
+        }
+
+        public void setL(List<Sub> l) {
+            this.l = l;
+        }
+
+        public Set<Sub> getS() {
+            return s;
+        }
+
+        public void setS(Set<Sub> s) {
+            this.s = s;
+        }
+
+        public Map<Integer, Sub> getM1() {
+            return m1;
+        }
+
+        public void setM1(Map<Integer, Sub> m1) {
+            this.m1 = m1;
+        }
+
+        public Map<Sub, Integer> getM2() {
+            return m2;
+        }
+
+        public void setM2(Map<Sub, Integer> m2) {
+            this.m2 = m2;
+        }
+
+        public Map<Sub, Sub> getM3() {
+            return m3;
+        }
+
+        public void setM3(Map<Sub, Sub> m3) {
+            this.m3 = m3;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other instanceof CollectionExamples) {
+                CollectionExamples that = (CollectionExamples) other;
+                return Objects.equal(this.id, that.id) &&
+                       Objects.equal(this.l, that.l) &&
+                       Objects.equal(this.s, that.s) &&
+                       Objects.equal(this.m1, that.m1) &&
+                       Objects.equal(this.m2, that.m2) &&
+                       Objects.equal(this.m3, that.m3);
+            }
+            return false;
+        }
+    }
+
+    @Test(groups = "short")
+    public void testCollections() throws Exception {
+        Mapper<CollectionExamples> m = new MappingManager(session).mapper(CollectionExamples.class);
+        
+        CollectionExamples c = new CollectionExamples(1, 1);
+        m.save(c);
+        
+        assertEquals(m.get(c.getId()), c);
+    }
+}

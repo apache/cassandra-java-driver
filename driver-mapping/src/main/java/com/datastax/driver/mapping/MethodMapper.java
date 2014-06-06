@@ -3,10 +3,20 @@ package com.datastax.driver.mapping;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.datastax.driver.core.*;
 
 // TODO: we probably should make that an abstract class and move some bit in a "ReflexionMethodMapper"
 // subclass for consistency with the rest, but we can see to that later
@@ -14,7 +24,7 @@ class MethodMapper {
 
     public final Method method;
     public final String queryString;
-    public final String[] paramNames;
+    public final ParamMapper[] paramMappers;
 
     private final ConsistencyLevel consistency;
     private final int fetchSize;
@@ -28,10 +38,10 @@ class MethodMapper {
     private boolean mapOne;
     private boolean async;
 
-    MethodMapper(Method method, String queryString, String[] paramNames, ConsistencyLevel consistency, int fetchSize, boolean enableTracing) {
+    MethodMapper(Method method, String queryString, ParamMapper[] paramMappers, ConsistencyLevel consistency, int fetchSize, boolean enableTracing) {
         this.method = method;
         this.queryString = queryString;
-        this.paramNames = paramNames;
+        this.paramMappers = paramMappers;
         this.consistency = consistency;
         this.fetchSize = fetchSize;
         this.tracing = enableTracing;
@@ -106,11 +116,7 @@ class MethodMapper {
         BoundStatement bs = statement.bind();
 
         for (int i = 0; i < args.length; i++) {
-            Object arg = args[i];
-            if (arg == null)
-                continue;
-
-            bs.setBytesUnsafe(paramNames[i], DataType.serializeValue(args[i]));
+            paramMappers[i].setValue(bs, args[i]);
         }
 
         if (consistency != null)
@@ -138,6 +144,86 @@ class MethodMapper {
 
             Result<?> result = returnMapper.map(rs);
             return mapOne ? result.one() : result;
+        }
+    }
+    
+    static class ParamMapper {
+        private final String paramName;
+
+        public ParamMapper(String paramName) {
+            this.paramName = paramName;
+        }
+
+        void setValue(BoundStatement boundStatement, Object arg) {
+            if (arg != null) {
+                boundStatement.setBytesUnsafe(paramName, DataType.serializeValue(arg));
+            }
+        }
+    }
+    
+    static class UDTParamMapper<V> extends ParamMapper {
+        private final NestedMapper<V> nestedMapper;
+
+        UDTParamMapper(String paramName, NestedMapper<V> nestedMapper) {
+            super(paramName);
+            this.nestedMapper = nestedMapper;
+        }
+        
+        @Override
+        void setValue(BoundStatement boundStatement, Object arg) {
+            @SuppressWarnings("unchecked")
+            V entity = (V) arg;
+            super.setValue(boundStatement, nestedMapper.toUDTValue(entity));
+        }
+    }
+    
+    static class UDTListParamMapper<V> extends ParamMapper {
+        private final NestedMapper<V> valueMapper;
+
+        UDTListParamMapper(String paramName, NestedMapper<V> valueMapper) {
+            super(paramName);
+            this.valueMapper = valueMapper;
+        }
+        
+        @Override
+        void setValue(BoundStatement boundStatement, Object arg) {
+            @SuppressWarnings("unchecked")
+            List<V> nestedEntities = (List<V>) arg;
+            super.setValue(boundStatement, valueMapper.toUDTValues(nestedEntities));
+        }
+    }
+    
+    static class UDTSetParamMapper<V> extends ParamMapper {
+        private final NestedMapper<V> valueMapper;
+        
+        UDTSetParamMapper(String paramName, NestedMapper<V> valueMapper) {
+            super(paramName);
+            this.valueMapper = valueMapper;
+        }
+        
+        @Override
+        void setValue(BoundStatement boundStatement, Object arg) {
+            @SuppressWarnings("unchecked")
+            Set<V> nestedEntities = (Set<V>) arg;
+            super.setValue(boundStatement, valueMapper.toUDTValues(nestedEntities));
+        }
+    }
+    
+    static class UDTMapParamMapper<K, V> extends ParamMapper {
+        private final NestedMapper<K> keyMapper;
+        private final NestedMapper<V> valueMapper;
+        
+        UDTMapParamMapper(String paramName, NestedMapper<K> keyMapper, NestedMapper<V> valueMapper) {
+            super(paramName);
+            this.keyMapper = keyMapper;
+            this.valueMapper = valueMapper;
+        }
+        
+        @Override
+        void setValue(BoundStatement boundStatement, Object arg) {
+            @SuppressWarnings("unchecked")
+            Map<K, V> nestedEntities = (Map<K, V>) arg;
+            super.setValue(boundStatement, NestedMapper.toUDTValues(nestedEntities, keyMapper, valueMapper));
         }
     }
 }

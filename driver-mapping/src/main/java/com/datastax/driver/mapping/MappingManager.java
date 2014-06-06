@@ -17,6 +17,7 @@ public class MappingManager {
     private final Session session;
 
     private volatile Map<Class<?>, Mapper<?>> mappers = Collections.<Class<?>, Mapper<?>>emptyMap();
+    private volatile Map<Class<?>, NestedMapper<?>> nestedMappers = Collections.<Class<?>, NestedMapper<?>>emptyMap();
     private volatile Map<Class<?>, Object> accessors = Collections.<Class<?>, Object>emptyMap();
 
     /**
@@ -80,7 +81,7 @@ public class MappingManager {
             synchronized (mappers) {
                 mapper = (Mapper<T>)mappers.get(klass);
                 if (mapper == null) {
-                    EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, ReflectionMapper.factory());
+                    EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, ReflectionMapper.factory(), this);
                     mapper = new Mapper<T>(this, klass, entityMapper);
                     Map<Class<?>, Mapper<?>> newMappers = new HashMap<Class<?>, Mapper<?>>(mappers);
                     newMappers.put(klass, mapper);
@@ -90,6 +91,24 @@ public class MappingManager {
         }
         return mapper;
     }
+    
+    @SuppressWarnings("unchecked")
+    <T> NestedMapper<T> getNestedMapper(Class<T> klass) {
+        NestedMapper<T> mapper = (NestedMapper<T>)nestedMappers.get(klass);
+        if (mapper == null) {
+            synchronized (nestedMappers) {
+                mapper = (NestedMapper<T>)nestedMappers.get(klass);
+                if (mapper == null) {
+                    EntityMapper<T> entityMapper = AnnotationParser.parseNested(klass, ReflectionMapper.factory(), this);
+                    mapper = new NestedMapper<T>(entityMapper);
+                    Map<Class<?>, NestedMapper<?>> newMappers = new HashMap<Class<?>, NestedMapper<?>>(nestedMappers);
+                    newMappers.put(klass, mapper);
+                    nestedMappers = newMappers;
+                }
+            }
+        }
+        return mapper;        
+    }
 
     @SuppressWarnings("unchecked")
     private <T> T getAccessor(Class<T> klass) {
@@ -98,7 +117,7 @@ public class MappingManager {
             synchronized (accessors) {
                 accessor = (T)accessors.get(klass);
                 if (accessor == null) {
-                    AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, AccessorReflectionMapper.factory());
+                    AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, AccessorReflectionMapper.factory(), this);
                     mapper.prepare(this);
                     accessor = mapper.createProxy();
                     Map<Class<?>, Object> newAccessors = new HashMap<Class<?>, Object>(accessors);

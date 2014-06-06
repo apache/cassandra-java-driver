@@ -3,9 +3,17 @@ package com.datastax.driver.mapping;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.utils.Reflection;
+import com.datastax.driver.mapping.MethodMapper.ParamMapper;
+import com.datastax.driver.mapping.MethodMapper.UDTListParamMapper;
+import com.datastax.driver.mapping.MethodMapper.UDTMapParamMapper;
+import com.datastax.driver.mapping.MethodMapper.UDTParamMapper;
+import com.datastax.driver.mapping.MethodMapper.UDTSetParamMapper;
 import com.datastax.driver.mapping.annotations.*;
 
 /**
@@ -21,7 +29,7 @@ class AnnotationParser {
 
     private AnnotationParser() {}
 
-    public static <T> EntityMapper<T> parseEntity(Class<T> entityClass, EntityMapper.Factory factory) {
+    public static <T> EntityMapper<T> parseEntity(Class<T> entityClass, EntityMapper.Factory factory, MappingManager mappingManager) {
         Table table = entityClass.getAnnotation(Table.class);
         if (table == null)
             throw new IllegalArgumentException("@Table annotation was not found on class " + entityClass.getName());
@@ -61,18 +69,49 @@ class AnnotationParser {
         validateOrder(pks, "@PartitionKey");
         validateOrder(ccs, "@ClusteringColumn");
 
-        mapper.addColumns(convert(pks, factory, mapper.entityClass),
-                          convert(ccs, factory, mapper.entityClass),
-                          convert(rgs, factory, mapper.entityClass));
+        mapper.addColumns(convert(pks, factory, mapper.entityClass, mappingManager),
+                          convert(ccs, factory, mapper.entityClass, mappingManager),
+                          convert(rgs, factory, mapper.entityClass, mappingManager));
+        return mapper;
+    }
+    
+    public static <T> EntityMapper<T> parseNested(Class<T> nestedClass, EntityMapper.Factory factory, MappingManager mappingManager) {
+        UserDefinedType udt = nestedClass.getAnnotation(UserDefinedType.class);
+        if (udt == null)
+            throw new IllegalArgumentException(String.format("@%s annotation was not found on class %s", UserDefinedType.class.getSimpleName(), nestedClass.getName()));    
+
+        String ksName = udt.caseSensitiveKeyspace() ? udt.keyspace() : udt.keyspace().toLowerCase();
+        String udtName = udt.caseSensitiveType() ? udt.name() : udt.name().toLowerCase();
+       
+        EntityMapper<T> mapper = factory.create(nestedClass, ksName, udtName, null, null);
+        
+        List<Field> columns = new ArrayList<Field>();
+        
+        for (Field field : nestedClass.getDeclaredFields()) {
+            if (field.getAnnotation(Transient.class) != null)
+                continue;
+
+            switch (kind(field)) {
+                case PARTITION_KEY:
+                    throw new IllegalArgumentException("Annotation @PartitionKey is not allowed in a nested class");
+                case CLUSTERING_COLUMN:
+                    throw new IllegalArgumentException("Annotation @ClusteringColumn is not allowed in a nested class");
+                default:
+                    columns.add(field);
+                    break;
+            }
+        }
+
+        mapper.addColumns(convert(columns, factory, nestedClass, mappingManager));
         return mapper;
     }
 
-    private static <T> List<ColumnMapper<T>> convert(List<Field> fields, EntityMapper.Factory factory, Class<T> klass) {
+    private static <T> List<ColumnMapper<T>> convert(List<Field> fields, EntityMapper.Factory factory, Class<T> klass, MappingManager mappingManager) {
         List<ColumnMapper<T>> mappers = new ArrayList<ColumnMapper<T>>(fields.size());
         for (int i = 0; i < fields.size(); i++) {
             Field field = fields.get(i);
             int pos = position(field);
-            mappers.add(factory.createColumnMapper(klass, field, pos < 0 ? i : pos));
+            mappers.add(factory.createColumnMapper(klass, field, pos < 0 ? i : pos, mappingManager));
         }
         return mappers;
     }
@@ -126,7 +165,7 @@ class AnnotationParser {
         return column.caseSensitive() ? column.name() : column.name().toLowerCase();
     }
 
-    public static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, AccessorMapper.Factory factory) {
+    public static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, AccessorMapper.Factory factory, MappingManager mappingManager) {
         if (!accClass.isInterface())
             throw new IllegalArgumentException("@Accessor annotation is only allowed on interfaces");
 
@@ -143,16 +182,20 @@ class AnnotationParser {
             String queryString = query.value();
 
             Annotation[][] paramAnnotations = m.getParameterAnnotations();
-            String[] paramNames = new String[paramAnnotations.length];
-            outer:
-            for (int i = 0; i < paramNames.length; i++) {
+            Type[] paramTypes = m.getGenericParameterTypes();
+            ParamMapper[] paramMappers = new ParamMapper[paramAnnotations.length];
+            for (int i = 0; i < paramMappers.length; i++) {
+                String paramName = null;
                 for (Annotation a : paramAnnotations[i]) {
                     if (a.annotationType().equals(Param.class)) {
-                       paramNames[i] = ((Param)a).value();
-                       continue outer;
+                        paramName = ((Param) a).value();
+                        break;
                     }
                 }
-                paramNames[i] = "arg" + i;
+                if (paramName == null) {
+                    paramName = "arg" + i;
+                }
+                paramMappers[i] = newParamMapper(accClass.getName(), m.getName(), paramName, paramTypes[i], paramAnnotations[i], mappingManager);
             }
 
             ConsistencyLevel cl = null;
@@ -166,9 +209,49 @@ class AnnotationParser {
                 tracing = options.tracing();
             }
 
-            methods.add(new MethodMapper(m, queryString, paramNames, cl, fetchSize, tracing));
+            methods.add(new MethodMapper(m, queryString, paramMappers, cl, fetchSize, tracing));
         }
 
         return factory.create(accClass, methods);
+    }
+    
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static ParamMapper newParamMapper(String className, String methodName, String paramName, Type paramType, Annotation[] paramAnnotations, MappingManager mappingManager) {
+        // TODO support enums
+
+        if (paramType instanceof Class) {
+            Class<?> paramClass = (Class<?>) paramType;
+            if (paramClass.isAnnotationPresent(UserDefinedType.class)) {
+                NestedMapper<?> nestedMapper = mappingManager.getNestedMapper(paramClass);
+                return new UDTParamMapper(paramName, nestedMapper);
+            }
+            return new ParamMapper(paramName); 
+        } if (paramType instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType) paramType;
+            Type raw = pt.getRawType();
+            if (!(raw instanceof Class))
+                throw new IllegalArgumentException(String.format("Cannot map class %s for parameter %s of %s.%s", paramType, paramName, className, methodName));
+            Class<?> klass = (Class<?>)raw;
+            Class<?> firstTypeParam = Reflection.getParam(pt, 0, paramName);
+            if (List.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UserDefinedType.class)) {
+                NestedMapper<?> valueMapper = mappingManager.getNestedMapper(firstTypeParam);
+                return new UDTListParamMapper(paramName, valueMapper);
+            }
+            if (Set.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UserDefinedType.class)) {
+                NestedMapper<?> valueMapper = mappingManager.getNestedMapper(firstTypeParam);
+                return new UDTSetParamMapper(paramName, valueMapper);                
+            }
+            if (Map.class.isAssignableFrom(klass)) {
+                Class<?> secondTypeParam = Reflection.getParam(pt, 1, paramName);
+                NestedMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UserDefinedType.class) ? mappingManager.getNestedMapper(firstTypeParam) : null;
+                NestedMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UserDefinedType.class) ? mappingManager.getNestedMapper(secondTypeParam) : null;
+                if (keyMapper != null || valueMapper != null) {
+                    return new UDTMapParamMapper(paramName, keyMapper, valueMapper);
+                }
+            }
+            return new ParamMapper(paramName); 
+        } else {
+            throw new IllegalArgumentException(String.format("Cannot map class %s for parameter %s of %s.%s", paramType, paramName, className, methodName));
+        }
     }
 }

@@ -200,6 +200,10 @@ abstract class TypeCodec<T> {
                  ? null
                  : DataType.map(keyType, valueType);
         }
+        
+        if (value instanceof UDTValue) {
+            return DataType.userType(((UDTValue) value).getDefinition());
+        }
 
         return null;
     }
