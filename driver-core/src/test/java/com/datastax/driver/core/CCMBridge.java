@@ -97,7 +97,7 @@ public class CCMBridge {
     }
 
     public void start() {
-        execute("ccm start");
+        execute("ccm start --wait-other-notice --wait-for-binary-proto");
     }
 
     public void stop() {
@@ -110,12 +110,12 @@ public class CCMBridge {
 
     public void start(int n) {
         logger.info("Starting: " + IP_PREFIX + n);
-        execute("ccm node%d start", n);
+        execute("ccm node%d start --wait-other-notice --wait-for-binary-proto", n);
     }
 
     public void start(int n, String option) {
         logger.info("Starting: " + IP_PREFIX + n + " with " + option);
-        execute("ccm node%d start --jvm_arg=%s", n, option);
+        execute("ccm node%d start --wait-other-notice --wait-for-binary-proto --jvm_arg=%s", n, option);
     }
 
     public void stop(int n) {
@@ -150,7 +150,7 @@ public class CCMBridge {
             execute("ccm add node%d -i %s%d -j %d -b", n, IP_PREFIX, n, 7000 + 100*n);
         else
             execute("ccm add node%d -i %s%d -j %d -b -d %s", n, IP_PREFIX, n, 7000 + 100*n, dc);
-        execute("ccm node%d start", n);
+        execute("ccm node%d start --wait-other-notice --wait-for-binary-proto", n);
     }
 
     public void decommissionNode(int n) {
