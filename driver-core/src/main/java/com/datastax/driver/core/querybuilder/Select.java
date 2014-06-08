@@ -234,6 +234,20 @@ public class Select extends BuiltStatement {
         public Select limit(int limit) {
             return statement.limit(limit);
         }
+
+        /**
+         * Adds a bind marker for the LIMIT clause to the SELECT statement this
+         * Where clause if part of.
+         *
+         * @param limit the bind marker to use as limit.
+         * @return the select statement this Where clause if part of.
+         *
+         * @throws IllegalStateException if a LIMIT clause has already been
+         * provided.
+         */
+        public Select limit(BindMarker limit) {
+            return statement.limit(limit);
+        }
     }
 
     /**

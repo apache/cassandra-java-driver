@@ -51,9 +51,9 @@ public class Delete extends BuiltStatement {
     StringBuilder buildQueryString(List<ByteBuffer> variables) {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("DELETE ");
+        builder.append("DELETE");
         if (columnNames != null)
-            Utils.joinAndAppendNames(builder, ",", columnNames);
+            Utils.joinAndAppendNames(builder.append(" "), ",", columnNames);
 
         builder.append(" FROM ");
         if (keyspace != null)
