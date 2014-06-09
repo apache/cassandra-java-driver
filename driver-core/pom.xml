@@ -15,11 +15,13 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  
   <parent>
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>cassandra-driver-parent</artifactId>
     <version>2.1.0-SNAPSHOT</version>
   </parent>
+  
   <artifactId>cassandra-driver-core</artifactId>
   <packaging>bundle</packaging>
   <name>DataStax Java Driver for Apache Cassandra - Core</name>
@@ -248,12 +250,6 @@
       <comments>Apache License Version 2.0</comments>
     </license>
   </licenses>
-
-  <scm>
-    <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
-    <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
-    <url>https://github.com/datastax/java-driver</url>
-  </scm>
 
   <developers>
     <developer>
