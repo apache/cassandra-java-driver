@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
 
-abstract class TypeCodec<T> {
+public abstract class TypeCodec<T> {
 
     // Somehow those don't seem to get properly initialized if they're not here. The reason
     // escape me right now so let's just leave it here for now
@@ -270,7 +270,7 @@ abstract class TypeCodec<T> {
              : 2 + value.remaining();
     }
 
-    static class StringCodec extends TypeCodec<String> {
+    public static class StringCodec extends TypeCodec<String> {
 
         private static final Charset utf8Charset = Charset.forName("UTF-8");
         private static final Charset asciiCharset = Charset.forName("US-ASCII");
@@ -333,7 +333,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class LongCodec extends TypeCodec<Long> {
+    public static class LongCodec extends TypeCodec<Long> {
 
         public static final LongCodec instance = new LongCodec();
 
@@ -372,7 +372,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class BytesCodec extends TypeCodec<ByteBuffer> {
+    public static class BytesCodec extends TypeCodec<ByteBuffer> {
 
         public static final BytesCodec instance = new BytesCodec();
 
@@ -394,7 +394,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class BooleanCodec extends TypeCodec<Boolean> {
+    public static class BooleanCodec extends TypeCodec<Boolean> {
         private static final ByteBuffer TRUE = ByteBuffer.wrap(new byte[]{1});
         private static final ByteBuffer FALSE = ByteBuffer.wrap(new byte[]{0});
 
@@ -434,7 +434,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class DecimalCodec extends TypeCodec<BigDecimal> {
+    public static class DecimalCodec extends TypeCodec<BigDecimal> {
 
         public static final DecimalCodec instance = new DecimalCodec();
 
@@ -477,7 +477,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class DoubleCodec extends TypeCodec<Double> {
+    public static class DoubleCodec extends TypeCodec<Double> {
 
         public static final DoubleCodec instance = new DoubleCodec();
 
@@ -516,7 +516,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class FloatCodec extends TypeCodec<Float> {
+    public static class FloatCodec extends TypeCodec<Float> {
 
         public static final FloatCodec instance = new FloatCodec();
 
@@ -555,7 +555,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class InetCodec extends TypeCodec<InetAddress> {
+    public static class InetCodec extends TypeCodec<InetAddress> {
 
         public static final InetCodec instance = new InetCodec();
 
@@ -585,7 +585,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class IntCodec extends TypeCodec<Integer> {
+    public static class IntCodec extends TypeCodec<Integer> {
 
         public static final IntCodec instance = new IntCodec();
 
@@ -624,7 +624,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class DateCodec extends TypeCodec<Date> {
+    public static class DateCodec extends TypeCodec<Date> {
 
         private static final String[] iso8601Patterns = new String[] {
             "yyyy-MM-dd HH:mm",
@@ -701,7 +701,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class UUIDCodec extends TypeCodec<UUID> {
+    public static class UUIDCodec extends TypeCodec<UUID> {
 
         public static final UUIDCodec instance = new UUIDCodec();
 
@@ -726,11 +726,11 @@ abstract class TypeCodec<T> {
 
         @Override
         public UUID deserialize(ByteBuffer bytes) {
-            return new UUID(bytes.getLong(bytes.position() + 0), bytes.getLong(bytes.position() + 8));
+            return new UUID(bytes.getLong(bytes.position()), bytes.getLong(bytes.position() + 8));
         }
     }
 
-    static class TimeUUIDCodec extends UUIDCodec {
+    public static class TimeUUIDCodec extends UUIDCodec {
 
         public static final TimeUUIDCodec instance = new TimeUUIDCodec();
 
@@ -753,7 +753,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class BigIntegerCodec extends TypeCodec<BigInteger> {
+    public static class BigIntegerCodec extends TypeCodec<BigInteger> {
 
         public static final BigIntegerCodec instance = new BigIntegerCodec();
 
@@ -779,7 +779,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class ListCodec<T> extends TypeCodec<List<T>> {
+    public static class ListCodec<T> extends TypeCodec<List<T>> {
 
         private final TypeCodec<T> eltCodec;
         private final int protocolVersion;
@@ -820,7 +820,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class SetCodec<T> extends TypeCodec<Set<T>> {
+    public static class SetCodec<T> extends TypeCodec<Set<T>> {
 
         private final TypeCodec<T> eltCodec;
         private final int protocolVersion;
@@ -861,7 +861,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class MapCodec<K, V> extends TypeCodec<Map<K, V>> {
+    public static class MapCodec<K, V> extends TypeCodec<Map<K, V>> {
 
         private final TypeCodec<K> keyCodec;
         private final TypeCodec<V> valueCodec;
@@ -907,7 +907,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class UDTCodec extends TypeCodec<UDTValue> {
+    public static class UDTCodec extends TypeCodec<UDTValue> {
 
         private final UDTDefinition definition;
 
