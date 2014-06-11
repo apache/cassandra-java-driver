@@ -220,4 +220,30 @@ class MethodMapper {
             super.setValue(boundStatement, UDTMapper.toUDTValues(nestedEntities, keyMapper, valueMapper));
         }
     }
+
+    static class EnumParamMapper extends ParamMapper {
+
+        private final EnumType enumType;
+
+        public EnumParamMapper(String paramName, EnumType enumType) {
+            super(paramName);
+            this.enumType = enumType;
+        }
+
+        @Override
+        void setValue(BoundStatement boundStatement, Object arg) {
+            super.setValue(boundStatement, convert(arg));
+        }
+
+        @SuppressWarnings("rawtypes")
+        private Object convert(Object arg) {
+            switch (enumType) {
+            case STRING:
+                return arg.toString();
+            case ORDINAL:
+                return ((Enum) arg).ordinal();
+            }
+            throw new AssertionError();
+        }
+    }
 }

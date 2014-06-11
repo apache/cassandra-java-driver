@@ -5,12 +5,16 @@ import java.util.*;
 
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListenableFuture;
+
 import org.testng.annotations.Test;
+
 import static org.testng.Assert.*;
 
+import com.datastax.driver.mapping.MapperTest.User.Gender;
 import com.datastax.driver.mapping.annotations.*;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.UUIDs;
+
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 /**
@@ -263,6 +267,13 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         @Query("SELECT * FROM ks.posts")
         public Result<Post> getAll();
     }
+    
+    @Accessor
+    public interface UserAccessor {
+        // Demonstrates use of an enum as an accessor parameter
+        @Query("UPDATE user SET name=:arg1, gender=:arg2 WHERE user_id=:arg2")
+        ResultSet updateNameAndGender(UUID userId, String name, Gender gender);
+    }
 
     @Test(groups = "short")
     public void testStaticEntity() throws Exception {
@@ -302,29 +313,29 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         m.save(p3);
 
         // Creates the accessor proxy defined above
-        PostAccessor accessor = manager.createAccessor(PostAccessor.class);
+        PostAccessor postAccessor = manager.createAccessor(PostAccessor.class);
 
         // Note that getOne is really the same than m.get(), it's just there
         // for demonstration sake.
-        Post p = accessor.getOne(p1.getUserId(), p1.getPostId());
+        Post p = postAccessor.getOne(p1.getUserId(), p1.getPostId());
         assertEquals(p, p1);
 
-        Result<Post> r = accessor.getAllAsync(p1.getUserId()).get();
+        Result<Post> r = postAccessor.getAllAsync(p1.getUserId()).get();
         assertEquals(r.one(), p1);
         assertEquals(r.one(), p2);
         assertEquals(r.one(), p3);
         assertTrue(r.isExhausted());
 
         // No argument call
-        r = accessor.getAll();
+        r = postAccessor.getAll();
         assertEquals(r.one(), p1);
         assertEquals(r.one(), p2);
         assertEquals(r.one(), p3);
         assertTrue(r.isExhausted());
 
         BatchStatement batch = new BatchStatement();
-        batch.add(accessor.updateContentQuery(p1.getUserId(), p1.getPostId(), "Something different"));
-        batch.add(accessor.updateContentQuery(p2.getUserId(), p2.getPostId(), "A different something"));
+        batch.add(postAccessor.updateContentQuery(p1.getUserId(), p1.getPostId(), "Something different"));
+        batch.add(postAccessor.updateContentQuery(p2.getUserId(), p2.getPostId(), "A different something"));
         manager.getSession().execute(batch);
 
         Post p1New = m.get(p1.getUserId(), p1.getPostId());
@@ -338,6 +349,12 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // Check delete by primary key too
         m.delete(p3.getUserId(), p3.getPostId());
 
-        assertTrue(accessor.getAllAsync(u1.getUserId()).get().isExhausted());
+        assertTrue(postAccessor.getAllAsync(u1.getUserId()).get().isExhausted());
+        
+        // Pass an enum constant as an accessor parameter
+        UserAccessor userAccessor = manager.createAccessor(UserAccessor.class);
+        userAccessor.updateNameAndGender(u1.getUserId(), "Paule", User.Gender.FEMALE);
+        Mapper<User> userMapper = manager.mapper(User.class);
+        assertEquals(userMapper.get(u1.getUserId()).getGender(), User.Gender.FEMALE);
     }
 }

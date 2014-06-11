@@ -14,6 +14,7 @@ import com.datastax.driver.mapping.MethodMapper.UDTListParamMapper;
 import com.datastax.driver.mapping.MethodMapper.UDTMapParamMapper;
 import com.datastax.driver.mapping.MethodMapper.UDTParamMapper;
 import com.datastax.driver.mapping.MethodMapper.UDTSetParamMapper;
+import com.datastax.driver.mapping.MethodMapper.EnumParamMapper;
 import com.datastax.driver.mapping.annotations.*;
 
 /**
@@ -223,13 +224,19 @@ class AnnotationParser {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static ParamMapper newParamMapper(String className, String methodName, String paramName, Type paramType, Annotation[] paramAnnotations, MappingManager mappingManager) {
-        // TODO support enums
-
         if (paramType instanceof Class) {
             Class<?> paramClass = (Class<?>) paramType;
             if (paramClass.isAnnotationPresent(UDT.class)) {
                 UDTMapper<?> udtMapper = mappingManager.getUDTMapper(paramClass);
                 return new UDTParamMapper(paramName, udtMapper);
+            } else if (paramClass.isEnum()) {
+                EnumType enumType = EnumType.STRING;
+                for (Annotation annotation : paramAnnotations) {
+                    if (annotation instanceof Enumerated) {
+                        enumType = ((Enumerated) annotation).value();
+                    }
+                }
+                return new EnumParamMapper(paramName, enumType);
             }
             return new ParamMapper(paramName);
         } if (paramType instanceof ParameterizedType) {
