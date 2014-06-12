@@ -62,11 +62,18 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
+	<configuration>
+            <source>1.6</source>
+            <target>1.6</target>
+            <optimize>true</optimize>
+            <showDeprecation>true</showDeprecation>
+            <showWarnings>true</showWarnings>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
-		  <!-- Needed for testing -->
+	  <!-- Needed for testing -->
           <execution>
             <goals>
               <goal>test-jar</goal>

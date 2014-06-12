@@ -20,6 +20,7 @@ import java.util.*;
 import com.google.common.collect.ImmutableMap;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
 
 /*
@@ -42,6 +43,7 @@ class CassandraTypeParser {
     private static final String LIST_TYPE = "org.apache.cassandra.db.marshal.ListType";
     private static final String SET_TYPE = "org.apache.cassandra.db.marshal.SetType";
     private static final String MAP_TYPE = "org.apache.cassandra.db.marshal.MapType";
+	private static final String USER_DEFINED_TYPE = "org.apache.cassandra.db.marshal.UserType";
 
     private static ImmutableMap<String, DataType> cassTypeToDataType =
         new ImmutableMap.Builder<String, DataType>()
@@ -103,7 +105,11 @@ class CassandraTypeParser {
     private static boolean isCollection(String className) {
         return className.startsWith(COLLECTION_TYPE);
     }
-
+	
+	static boolean isUserDefinedType(String className) {
+		return className.startsWith(USER_DEFINED_TYPE);
+	}
+	
     static ParseResult parseWithComposite(String className) {
         Parser parser = new Parser(className, 0);
 
@@ -154,7 +160,7 @@ class CassandraTypeParser {
             this.collections = collections;
         }
     }
-
+	
     private static class Parser {
 
         private final String str;
@@ -346,4 +352,111 @@ class CassandraTypeParser {
             return str.charAt(idx++);
         }
     }
+	
+	/* Parsing for User Defined Types */
+	
+	static UserDefinedTypeDefinition parseUserDefinedType(String customTypeClassName) {
+		try {
+		
+			final String params = customTypeClassName.substring(USER_DEFINED_TYPE.length() + 1, customTypeClassName.length() - 1);
+
+			int commaIndex = params.indexOf(CLASS_NAME_PARAMETER_SEPARATOR);
+			if (commaIndex < 0) {
+				throw new DriverInternalError("No key space name found in cassandra type class name '" + customTypeClassName + "'");
+			}
+			final String keySpace = params.substring(0, commaIndex);
+
+			final int nameStartIndex = commaIndex + 1;
+			commaIndex = params.indexOf(CLASS_NAME_PARAMETER_SEPARATOR, nameStartIndex);
+			if (commaIndex < 0) {
+				throw new DriverInternalError("No UDT name found in cassandra type class name '" + customTypeClassName + "'");
+			}
+			final String name = parseHexString(params.substring(nameStartIndex, commaIndex));
+
+			final LinkedHashMap<String, DataType> columns = new LinkedHashMap<String, DataType>();
+			int columnStart = commaIndex + 1;
+			int columnNameEnd = params.indexOf(USER_DEFINED_TYPE_COLUMN_PARAMETER_SEPARATOR, columnStart);
+			
+			while (columnNameEnd > 0) { // For each column
+				
+				final String columnHexName = params.substring(columnStart, columnNameEnd);
+				
+				int nextComma = params.indexOf(CLASS_NAME_PARAMETER_SEPARATOR, columnNameEnd + 1);
+				if (nextComma < 0) {
+					nextComma = params.length(); // We reach the end
+				}
+				int columnTypeParamStart = params.indexOf(CLASS_NAME_PARAMETER_START_CHAR, columnNameEnd + 1);
+				String columnType;
+				if (columnTypeParamStart < 0 || nextComma < columnTypeParamStart) {
+					
+					// The column type has no param : nextComma == nextColumnStart
+					columnType = params.substring(columnNameEnd + 1, nextComma);
+					columnStart = nextComma + 1;
+					
+				} else {
+					
+					// The column type has some params (that can contains other params, etc ...)
+					int start = columnTypeParamStart;
+					int end = columnTypeParamStart;
+					int nestingCount = 1;
+					do {
+						final int previousStart = start + 1;
+						start = params.indexOf(CLASS_NAME_PARAMETER_START_CHAR, previousStart);
+						end = params.indexOf(CLASS_NAME_PARAMETER_END_CHAR, previousStart);
+						if (end < 0) {
+							throw new DriverInternalError("No type param end found from index " + start + " in cassandra type class name '" + customTypeClassName + "'");
+						}
+						if (start < 0 || start > end) {
+							nestingCount--;
+						} else {
+							nestingCount++;
+						}
+					}
+					while (nestingCount > 0);
+					
+					columnType = params.substring(columnNameEnd + 1, end + 1);
+					columnStart = end + 2; // the next 2 characters are "),"
+				}
+				
+				columns.put(parseHexString(columnHexName), parseOne(columnType));
+				columnNameEnd = params.indexOf(USER_DEFINED_TYPE_COLUMN_PARAMETER_SEPARATOR, columnStart);
+			}
+
+			return new UserDefinedTypeDefinition(keySpace, name, columns);
+			
+		} catch (StringIndexOutOfBoundsException e) {
+			/* Thrown by String.subString() */
+			throw new DriverInternalError("Error while parsing cassandra type class name '" + customTypeClassName + "'", e);	
+		} 
+	}
+	
+	private static String parseHexString(String hexStr) {
+		try {
+			return TypeCodec.StringCodec.asciiInstance.deserialize(Bytes.fromHexString(HEX_STRING_PREFIX + hexStr));
+		} catch (IllegalArgumentException e) {
+			throw new DriverInternalError("Failed to parse an hex-string type name '" + hexStr + "'", e);
+		} catch (InvalidTypeException e) {
+			throw new DriverInternalError("Failed to parse an hex-string type name '" + hexStr + "'", e);
+		}
+	}
+	
+	private static final String HEX_STRING_PREFIX = "0x";
+	private static final char CLASS_NAME_PARAMETER_SEPARATOR = ',';
+	private static final char USER_DEFINED_TYPE_COLUMN_PARAMETER_SEPARATOR = ':';
+	private static final char CLASS_NAME_PARAMETER_START_CHAR = '(';
+	private static final char CLASS_NAME_PARAMETER_END_CHAR = ')';
+	
+	static class UserDefinedTypeDefinition {
+		
+		public final String keySpace;
+		public final String name;
+		public final Map<String, DataType> columns; // The map must be ordered
+
+		private UserDefinedTypeDefinition(String keySpace, String name, LinkedHashMap<String, DataType> columns) {
+			this.keySpace = keySpace;
+			this.name = name;
+			this.columns = columns;
+		}
+	}
+
 }

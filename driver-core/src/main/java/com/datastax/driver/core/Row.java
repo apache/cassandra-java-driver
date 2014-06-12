@@ -516,4 +516,30 @@ public interface Row {
      * class {@code valuesClass}.
      */
     public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass);
+	
+	/**
+     * Returns the {@code i}th value of this row as a User-Defined-Type.
+     *
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
+     * @return the value of the {@code i}th column in this row as an inner-row. If the
+     * value is NULL, NULL is returned.
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
+     * @throws InvalidTypeException if column {@code i} is not of type USER_DEFINED.
+     */
+    public UDTValue getUDT(int i);
+
+    /**
+     * Returns the value of column {@code name} as a User-Defined-Type.
+     *
+     * @param name the name of the column to retrieve.
+     * @return the value of column {@code name} as an inner-row. If the value is NULL,
+     * NULL is returned.
+     *
+     * @throws IllegalArgumentException if {@code name} is not part of the
+     * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
+     * @throws InvalidTypeException if column {@code name} is not of type USER_DEFINED.
+     */
+    public UDTValue getUDT(String name);
+
 }

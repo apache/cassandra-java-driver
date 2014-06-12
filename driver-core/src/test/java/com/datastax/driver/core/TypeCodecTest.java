@@ -38,13 +38,13 @@ public class TypeCodecTest {
 
     @Test(groups = "unit")
     public void testCustomKeyMap() throws Exception {
-        TypeCodec mapType = TypeCodec.mapOf(CUSTOM_FOO, text());
+        TypeCodec<?> mapType = TypeCodec.mapOf(CUSTOM_FOO, text());
         Assert.assertNotNull(mapType);
     }
 
     @Test(groups = "unit")
     public void testCustomValueMap() throws Exception {
-        TypeCodec mapType = TypeCodec.mapOf(text(), CUSTOM_FOO);
+        TypeCodec<?> mapType = TypeCodec.mapOf(text(), CUSTOM_FOO);
         Assert.assertNotNull(mapType);
     }
 }

@@ -31,7 +31,7 @@ class ArrayBackedRow implements Row {
     private final ColumnDefinitions metadata;
     private final List<ByteBuffer> data;
 
-    private ArrayBackedRow(ColumnDefinitions metadata, List<ByteBuffer> data) {
+    ArrayBackedRow(ColumnDefinitions metadata, List<ByteBuffer> data) {
         this.metadata = metadata;
         this.data = data;
     }
@@ -253,7 +253,7 @@ class ArrayBackedRow implements Row {
         if (value == null)
             return Collections.<T>emptyList();
 
-        return Collections.unmodifiableList((List<T>)type.codec().deserialize(value));
+        return Collections.unmodifiableList((List<T>) getCodec(type).deserialize(value));
     }
 
     public <T> List<T> getList(String name, Class<T> elementsClass) {
@@ -274,7 +274,7 @@ class ArrayBackedRow implements Row {
         if (value == null)
             return Collections.<T>emptySet();
 
-        return Collections.unmodifiableSet((Set<T>)type.codec().deserialize(value));
+        return Collections.unmodifiableSet((Set<T>) getCodec(type).deserialize(value));
     }
 
     public <T> Set<T> getSet(String name, Class<T> elementsClass) {
@@ -283,7 +283,7 @@ class ArrayBackedRow implements Row {
 
     @SuppressWarnings("unchecked")
     public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass) {
-        DataType type = metadata.getType(i);
+        final DataType type = metadata.getType(i);
         if (type.getName() != DataType.Name.MAP)
             throw new InvalidTypeException(String.format("Column %s is not of map type", metadata.getName(i)));
 
@@ -296,12 +296,52 @@ class ArrayBackedRow implements Row {
         if (value == null)
             return Collections.<K, V>emptyMap();
 
-        return Collections.unmodifiableMap((Map<K, V>)type.codec().deserialize(value));
+        return Collections.unmodifiableMap((Map<K, V>) getCodec(type).deserialize(value));
     }
 
     public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass) {
         return getMap(metadata.getFirstIdx(name), keysClass, valuesClass);
     }
+	
+	protected TypeCodec<Object> getCodec(DataType type) {
+		return type.codec(); // Always use the CQL V2 codecs that are set by default.
+	}
+	
+	@Override
+	public UDTValue getUDT(int i) {
+		
+		final DataType type = metadata.getType(i);
+		if (type.getName() != DataType.Name.CUSTOM) {
+			throw new InvalidTypeException(String.format("Column %s is not of custom type", metadata.getName(i)));
+		}
+		final String customTypeClassName = type.getCustomTypeClassName();
+		if (customTypeClassName == null || !CassandraTypeParser.isUserDefinedType(customTypeClassName)) {
+			throw new InvalidTypeException(String.format("Column %s is not of user defined type", metadata.getName(i)));
+		}
+		
+        final ByteBuffer value = data.get(i);
+        if (value == null)
+            return null;
+		
+		final CassandraTypeParser.UserDefinedTypeDefinition udtDefinition = CassandraTypeParser.parseUserDefinedType(customTypeClassName);
+		final int columnCount =  udtDefinition.columns.size();
+		final TypeCodec<List<ByteBuffer>> udtCodec = new TypeCodec.UserDefinedTypeCodec(columnCount);
+		
+		final List<ByteBuffer> columnsData = udtCodec.deserialize(value);
+		
+		final ColumnDefinitions.Definition[] defs = new ColumnDefinitions.Definition[columnCount];
+		int j = 0;
+		for (Map.Entry<String, DataType> colEntry : udtDefinition.columns.entrySet()) {
+			defs[j] = new ColumnDefinitions.Definition(udtDefinition.keySpace, udtDefinition.name, colEntry.getKey(), colEntry.getValue());
+			j++;
+		}
+		return UDTValue.fromData(udtDefinition.keySpace, metadata.getTable(i), new ColumnDefinitions(defs), columnsData);
+	}
+
+	@Override
+	public UDTValue getUDT(String name) {
+        return getUDT(metadata.getFirstIdx(name));
+	}
 
     @Override
     public String toString() {
@@ -319,4 +359,5 @@ class ArrayBackedRow implements Row {
         sb.append(']');
         return sb.toString();
     }
+
 }

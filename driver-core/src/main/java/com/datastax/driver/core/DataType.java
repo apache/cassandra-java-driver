@@ -190,7 +190,7 @@ public class DataType {
     }
 
     @SuppressWarnings("unchecked")
-    TypeCodec<Object> codec() {
+    public TypeCodec<Object> codec() {
         return (TypeCodec<Object>)codec;
     }
 

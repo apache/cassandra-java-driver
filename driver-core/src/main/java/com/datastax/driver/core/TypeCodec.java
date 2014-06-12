@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
+import java.nio.BufferOverflowException;
 
 abstract class TypeCodec<T> {
 
@@ -193,23 +194,6 @@ abstract class TypeCodec<T> {
         }
 
         return null;
-    }
-
-    // Utility method for collections
-    private static ByteBuffer pack(List<ByteBuffer> buffers, int elements, int size) {
-        ByteBuffer result = ByteBuffer.allocate(2 + size);
-        result.putShort((short)elements);
-        for (ByteBuffer bb : buffers) {
-            result.putShort((short)bb.remaining());
-            result.put(bb.duplicate());
-        }
-        return (ByteBuffer)result.flip();
-    }
-
-    // Utility method for collections
-    private static int getUnsignedShort(ByteBuffer bb) {
-        int length = (bb.get() & 0xFF) << 8;
-        return length | (bb.get() & 0xFF);
     }
 
     static class StringCodec extends TypeCodec<String> {
@@ -725,11 +709,16 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class ListCodec<T> extends TypeCodec<List<T>> {
+    static class ListCodec<T> extends CollectionCodec<List<T>> {
 
         private final TypeCodec<T> eltCodec;
 
         public ListCodec(TypeCodec<T> eltCodec) {
+            this(eltCodec, true, new ListCodec<T>(eltCodec, false, null));
+        }
+
+        private ListCodec(TypeCodec<T> eltCodec, boolean v2, ListCodec<T> otherVersion) {
+			super(v2, otherVersion);
             this.eltCodec = eltCodec;
         }
 
@@ -740,12 +729,15 @@ abstract class TypeCodec<T> {
 
         @Override
         public ByteBuffer serialize(List<T> value) {
+			if (value == null) {
+				return NULL_VALUE;
+			}
             List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(value.size());
             int size = 0;
             for (T elt : value) {
                 ByteBuffer bb = eltCodec.serialize(elt);
                 bbs.add(bb);
-                size += 2 + bb.remaining();
+                size += getSizeLength() + bb.remaining();
             }
             return pack(bbs, value.size(), size);
         }
@@ -754,27 +746,41 @@ abstract class TypeCodec<T> {
         public List<T> deserialize(ByteBuffer bytes) {
             try {
                 ByteBuffer input = bytes.duplicate();
-                int n = getUnsignedShort(input);
+                int n = getSize(input);
+				if (n < 0) {
+					return null;
+				}
                 List<T> l = new ArrayList<T>(n);
                 for (int i = 0; i < n; i++) {
-                    int s = getUnsignedShort(input);
-                    byte[] data = new byte[s];
-                    input.get(data);
-                    ByteBuffer databb = ByteBuffer.wrap(data);
-                    l.add(eltCodec.deserialize(databb));
+                    int s = getSize(input);
+					ByteBuffer databb;
+					if (s < 0) {
+						databb = null;
+					} else {
+						byte[] data = new byte[s];
+						input.get(data);
+						databb = ByteBuffer.wrap(data);
+					}
+                    l.add(databb != null ? eltCodec.deserialize(databb) : null);
                 }
                 return l;
             } catch (BufferUnderflowException e) {
                 throw new InvalidTypeException("Not enough bytes to deserialize list");
             }
         }
+
     }
 
-    static class SetCodec<T> extends TypeCodec<Set<T>> {
+    static class SetCodec<T> extends CollectionCodec<Set<T>> {
 
         private final TypeCodec<T> eltCodec;
 
         public SetCodec(TypeCodec<T> eltCodec) {
+            this(eltCodec, true, new SetCodec<T>(eltCodec, false, null));
+        }
+
+        private SetCodec(TypeCodec<T> eltCodec, boolean v2, SetCodec<T> otherVersion) {
+			super(v2, otherVersion);
             this.eltCodec = eltCodec;
         }
 
@@ -785,12 +791,15 @@ abstract class TypeCodec<T> {
 
         @Override
         public ByteBuffer serialize(Set<T> value) {
+			if (value == null) {
+				return NULL_VALUE;
+			}
             List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(value.size());
             int size = 0;
             for (T elt : value) {
                 ByteBuffer bb = eltCodec.serialize(elt);
                 bbs.add(bb);
-                size += 2 + bb.remaining();
+                size += getSizeLength() + bb.remaining();
             }
             return pack(bbs, value.size(), size);
         }
@@ -799,14 +808,22 @@ abstract class TypeCodec<T> {
         public Set<T> deserialize(ByteBuffer bytes) {
             try {
                 ByteBuffer input = bytes.duplicate();
-                int n = getUnsignedShort(input);
+                int n = getSize(input);
+				if (n < 0) {
+					return null;
+				}
                 Set<T> l = new LinkedHashSet<T>(n);
                 for (int i = 0; i < n; i++) {
-                    int s = getUnsignedShort(input);
-                    byte[] data = new byte[s];
-                    input.get(data);
-                    ByteBuffer databb = ByteBuffer.wrap(data);
-                    l.add(eltCodec.deserialize(databb));
+                    int s = getSize(input);
+					ByteBuffer databb;
+					if (s < 0) {
+						databb = null;
+					} else {
+						byte[] data = new byte[s];
+						input.get(data);
+						databb = ByteBuffer.wrap(data);
+					}
+                    l.add(databb != null ? eltCodec.deserialize(databb) : null);
                 }
                 return l;
             } catch (BufferUnderflowException e) {
@@ -815,16 +832,21 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class MapCodec<K, V> extends TypeCodec<Map<K, V>> {
+    static class MapCodec<K, V> extends CollectionCodec<Map<K, V>> {
 
         private final TypeCodec<K> keyCodec;
         private final TypeCodec<V> valueCodec;
 
         public MapCodec(TypeCodec<K> keyCodec, TypeCodec<V> valueCodec) {
+			this(keyCodec, valueCodec, true, new MapCodec<K,V>(keyCodec, valueCodec, false, null));
+        }
+
+        private MapCodec(TypeCodec<K> keyCodec, TypeCodec<V> valueCodec, boolean v2, MapCodec<K, V> otherVersion) {
+			super(v2, otherVersion);
             this.keyCodec = keyCodec;
             this.valueCodec = valueCodec;
         }
-
+		
         @Override
         public Map<K, V> parse(String value) {
             throw new UnsupportedOperationException();
@@ -832,6 +854,9 @@ abstract class TypeCodec<T> {
 
         @Override
         public ByteBuffer serialize(Map<K, V> value) {
+			if (value == null) {
+				return NULL_VALUE;
+			}
             List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(2 * value.size());
             int size = 0;
             for (Map.Entry<K, V> entry : value.entrySet()) {
@@ -839,7 +864,7 @@ abstract class TypeCodec<T> {
                 ByteBuffer bbv = valueCodec.serialize(entry.getValue());
                 bbs.add(bbk);
                 bbs.add(bbv);
-                size += 4 + bbk.remaining() + bbv.remaining();
+                size += (2 * getSizeLength()) + bbk.remaining() + bbv.remaining();
             }
             return pack(bbs, value.size(), size);
         }
@@ -848,20 +873,35 @@ abstract class TypeCodec<T> {
         public Map<K, V> deserialize(ByteBuffer bytes) {
             try {
                 ByteBuffer input = bytes.duplicate();
-                int n = getUnsignedShort(input);
+                int n = getSize(input);
+				if (n < 0) {
+					return null;
+				}
                 Map<K, V> m = new LinkedHashMap<K, V>(n);
                 for (int i = 0; i < n; i++) {
-                    int sk = getUnsignedShort(input);
-                    byte[] datak = new byte[sk];
-                    input.get(datak);
-                    ByteBuffer kbb = ByteBuffer.wrap(datak);
+					
+                    int sk = getSize(input);
+					ByteBuffer kbb;
+					if (sk < 0) {
+						kbb = null;
+					} else {
+						byte[] datak = new byte[sk];
+						input.get(datak);
+						kbb = ByteBuffer.wrap(datak);
+					}
+					
+                    int sv = getSize(input);
+					ByteBuffer vbb;
+					if (sv < 0) {
+						vbb = null;
+					} else {
+						byte[] datav = new byte[sv];
+						input.get(datav);
+						vbb = ByteBuffer.wrap(datav);
+					}
 
-                    int sv = getUnsignedShort(input);
-                    byte[] datav = new byte[sv];
-                    input.get(datav);
-                    ByteBuffer vbb = ByteBuffer.wrap(datav);
-
-                    m.put(keyCodec.deserialize(kbb), valueCodec.deserialize(vbb));
+                    m.put(kbb != null ? keyCodec.deserialize(kbb) : null, 
+						  vbb != null ? valueCodec.deserialize(vbb) : null);
                 }
                 return m;
             } catch (BufferUnderflowException e) {
@@ -869,4 +909,145 @@ abstract class TypeCodec<T> {
             }
         }
     }
+	
+	static abstract class CollectionCodec<T> extends TypeCodec<T> {
+		
+		protected static final ByteBuffer NULL_VALUE = ByteBuffer.allocate(4);
+		static {
+			NULL_VALUE.putInt(-1);
+		}
+
+		private CollectionCodec(boolean protocolVersion2, CollectionCodec<T> otherVersion) {
+			this.protocolVersion2 = protocolVersion2;
+			this.otherVersion = otherVersion;
+		}
+
+		// CQL version supported by the codec
+		private final boolean protocolVersion2;
+		// The instance that supports the other CQL version (for caching)
+		private final CollectionCodec<T> otherVersion;
+		
+		CollectionCodec<T> getVersion(boolean protocolVersion2) {
+			return this.protocolVersion2 == protocolVersion2 ? this : otherVersion;
+		}
+		
+		boolean supportsCqlVersion2() { return protocolVersion2; }
+		
+		protected int getSizeLength() {
+			return protocolVersion2 ? 2 : 4;
+		}
+		
+		protected int getSize(ByteBuffer bb) {
+			return protocolVersion2 ? getUnsignedShort(bb) : bb.getInt();
+		}
+		
+		protected ByteBuffer pack(List<ByteBuffer> bbs, int count, int size) {
+			return protocolVersion2 ? packV2(bbs, count, size) : packV3(bbs, count, size);
+		}
+		
+		private static ByteBuffer packV2(List<ByteBuffer> buffers, int elements, int size) {
+			ByteBuffer result = ByteBuffer.allocate(2 + size);
+			result.putShort((short)elements);
+			for (ByteBuffer bb : buffers) {
+				result.putShort((short)bb.remaining());
+				result.put(bb.duplicate());
+			}
+			return (ByteBuffer)result.flip();
+		}
+
+		private static ByteBuffer packV3(List<ByteBuffer> buffers, int elements, int size) {
+			ByteBuffer result = ByteBuffer.allocate(4 + size);
+			result.putInt(elements);
+			for (ByteBuffer bb : buffers) {
+				result.putInt(bb.remaining());
+				result.put(bb.duplicate());
+			}
+			return (ByteBuffer)result.flip();
+		}
+
+		private static int getUnsignedShort(ByteBuffer bb) {
+			int length = (bb.get() & 0xFF) << 8;
+			return length | (bb.get() & 0xFF);
+		}
+		
+
+	}
+	
+	static class UserDefinedTypeCodec extends TypeCodec<List<ByteBuffer>> {
+		
+		private static final int SIZE_INFO_LENGTH = 4; // An integer size
+		private static final ByteBuffer NULL_VALUE = ByteBuffer.allocate(SIZE_INFO_LENGTH);
+		static {
+			NULL_VALUE.putInt(-1);
+		}
+		
+		//static UserDefinedTypeCodec instance = new UserDefinedTypeCodec(null);
+		
+		public UserDefinedTypeCodec(Integer columnCount) {
+			this.columnCount = columnCount;
+		}
+		
+		private final Integer columnCount; // Can be null (could be convenient for caching)
+
+		@Override
+		public List<ByteBuffer> parse(String value) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ByteBuffer serialize(List<ByteBuffer> values) {
+			if (values == null) {
+				return NULL_VALUE;
+			}
+			int size = 0;
+			for (ByteBuffer val : values) {
+				size += (SIZE_INFO_LENGTH + val.capacity());
+			}
+			final ByteBuffer output = ByteBuffer.allocate(size);
+			for (int i = 0; i < (columnCount != null ? columnCount : values.size()); i++) {
+				try {
+					final ByteBuffer val = values.get(i);
+					output.putInt(val.capacity());
+					output.put(val);
+				} catch (BufferOverflowException e) {
+					throw new InvalidTypeException("Not enough bytes in the buffer for the "+i+"-th attribute of the UDT ; " + e.getMessage());
+				} catch (IndexOutOfBoundsException e) {
+					throw new InvalidTypeException("The "+i+"-th attribute of the UDT was not provided; " + e.getMessage());
+				}
+			}
+			return output;
+		}
+
+		@Override
+		public List<ByteBuffer> deserialize(ByteBuffer bb) {
+			
+			if (bb == null) { return null; }
+		
+			final ByteBuffer input = bb.duplicate();
+			final List<ByteBuffer> output = new ArrayList<ByteBuffer>(columnCount != null ? columnCount : 0);
+			int remaining = input.remaining();
+			int attrIndex = 0;
+			while (remaining > SIZE_INFO_LENGTH && (columnCount == null || attrIndex < columnCount)) {
+				try {
+					final int attrSize = input.getInt();
+					if (attrSize < 0) {
+						output.add(null);
+						remaining -= SIZE_INFO_LENGTH;
+					} else {
+						final byte[] value = new byte[attrSize];
+						input.get(value); // Get the value
+						output.add(ByteBuffer.wrap(value));
+						remaining -= (SIZE_INFO_LENGTH + attrSize);
+					}
+					attrIndex ++;
+				} catch (BufferUnderflowException  e) {
+					throw new InvalidTypeException("Not enough bytes remaining for the "+attrIndex+"-th attribute of the UDT : "+e.getMessage());
+				}
+			}
+			
+			return output;
+		}
+		
+	}
+	
 }

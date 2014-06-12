@@ -257,6 +257,7 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
             case TIMESTAMP:
                 Date v2 = (Date) SAMPLE_DATA.get(dataType);
                 value = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(v2);
+				break;
             case ASCII:
             case TEXT:
             case VARCHAR:
