@@ -75,6 +75,12 @@
     </license>
   </licenses>
 
+  <scm>
+    <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
+    <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
+    <url>https://github.com/datastax/java-driver</url>
+  </scm>
+
   <developers>
     <developer>
       <name>Various</name>
