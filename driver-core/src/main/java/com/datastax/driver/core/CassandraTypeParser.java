@@ -34,7 +34,7 @@ import com.datastax.driver.core.utils.Bytes;
  * problem because in theory we'll only parse class names coming from Cassandra and
  * so there shouldn't be anything wrong with them.
  */
-public class CassandraTypeParser {
+class CassandraTypeParser {
 
     private static final String REVERSED_TYPE = "org.apache.cassandra.db.marshal.ReversedType";
     private static final String COMPOSITE_TYPE = "org.apache.cassandra.db.marshal.CompositeType";
@@ -64,7 +64,7 @@ public class CassandraTypeParser {
             .put("org.apache.cassandra.db.marshal.TimeUUIDType",      DataType.timeuuid())
             .build();
 
-    public static DataType parseOne(String className) {
+    static DataType parseOne(String className) {
         if (isReversed(className)) {
             // Just skip the ReversedType part, we don't care
             Parser p = new Parser(className, 0);
@@ -373,7 +373,7 @@ public class CassandraTypeParser {
 
         @Override
         public String toString() {
-            return str.substring(0, idx) + '[' + (idx == str.length() ? "" : str.charAt(idx)) + ']' + str.substring(idx+1);
+            return str.substring(0, idx) + "[" + (idx == str.length() ? "" : str.charAt(idx)) + "]" + str.substring(idx+1);
         }
     }
 }
