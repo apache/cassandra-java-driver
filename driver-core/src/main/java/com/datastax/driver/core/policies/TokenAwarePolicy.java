@@ -151,4 +151,9 @@ public class TokenAwarePolicy implements LoadBalancingPolicy {
     public void onRemove(Host host) {
         childPolicy.onRemove(host);
     }
+
+    @Override
+    public void onLocationUpdated(Host host) {
+        childPolicy.onLocationUpdated(host);
+    }
 }

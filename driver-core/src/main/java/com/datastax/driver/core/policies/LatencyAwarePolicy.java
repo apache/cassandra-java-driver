@@ -278,6 +278,11 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         latencyTracker.resetHost(host);
     }
 
+    @Override
+    public void onLocationUpdated(Host host) {
+        childPolicy.onLocationUpdated(host);
+    }
+
     /**
      * An immutable snapshot of the per-host scores (and stats in general)
      * maintained by {@code LatencyAwarePolicy} to base its decision upon.

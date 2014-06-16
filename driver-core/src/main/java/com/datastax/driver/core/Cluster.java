@@ -21,7 +21,6 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -1522,6 +1521,18 @@ public class Cluster implements Closeable {
 
             for (Host.StateListener listener : listeners)
                 listener.onRemove(host);
+        }
+
+        // This is called only from ControlConnection which already runs on a dedicated thread
+        // pool, so we don't expose a triggerOnLocationUpdated like for other events
+        void onLocationUpdated(Host host) {
+            if (isClosed())
+                return;
+
+            logger.debug("Location updated for host {}: dc={}, rack={}", host, host.getDatacenter(), host.getRack());
+            loadBalancingPolicy().onLocationUpdated(host);
+            for (Host.StateListener listener : listeners)
+                listener.onLocationUpdated(host);
         }
 
         public boolean signalConnectionFailure(Host host, ConnectionException exception, boolean isHostAddition) {

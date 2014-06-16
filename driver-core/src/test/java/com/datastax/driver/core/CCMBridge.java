@@ -165,6 +165,10 @@ public class CCMBridge {
         execute("ccm populate -n %d -i %s", n, IP_PREFIX);
     }
 
+    public void relocate(int n, String datacenter, String rack) {
+        execute("ccm node%d relocate %s %s", n, datacenter, rack);
+    }
+
     private void execute(String command, Object... args) {
         try {
             String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;

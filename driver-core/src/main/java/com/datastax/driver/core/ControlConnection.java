@@ -428,12 +428,8 @@ class ControlConnection implements Host.StateListener {
         if (Objects.equal(host.getDatacenter(), datacenter) && Objects.equal(host.getRack(), rack))
             return;
 
-        // If the dc/rack information changes, we need to update the load balancing policy.
-        // For that, we remove and re-add the node against the policy. Not the most elegant, and assumes
-        // that the policy will update correctly, but in practice this should work.
-        cluster.loadBalancingPolicy().onDown(host);
         host.setLocationInfo(datacenter, rack);
-        cluster.loadBalancingPolicy().onAdd(host);
+        cluster.onLocationUpdated(host);
     }
 
     private static void refreshNodeListAndTokenMap(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
@@ -598,5 +594,9 @@ class ControlConnection implements Host.StateListener {
     @Override
     public void onRemove(Host host) {
         refreshNodeListAndTokenMap();
+    }
+
+    @Override
+    public void onLocationUpdated(Host host) {
     }
 }

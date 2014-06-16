@@ -142,4 +142,10 @@ public class WhiteListPolicy implements LoadBalancingPolicy {
         if (whiteList.contains(host.getSocketAddress()))
             childPolicy.onRemove(host);
     }
+
+    @Override
+    public void onLocationUpdated(Host host) {
+        if (whiteList.contains(host.getSocketAddress()))
+            childPolicy.onLocationUpdated(host);
+    }
 }

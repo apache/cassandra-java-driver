@@ -16,6 +16,7 @@
 package com.datastax.driver.core.policies;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -339,5 +340,26 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
     @Override
     public void onRemove(Host host) {
         onDown(host);
+    }
+
+    @Override
+    public void onLocationUpdated(Host host) {
+        String previousDc = previousDc(host);
+        String newDc = dc(host);
+        if (previousDc != null && !newDc.equals(previousDc)) {
+            perDcLiveHosts.get(previousDc).remove(host);
+            onUp(host);
+        }
+    }
+
+    private String previousDc(Host host) {
+        for (Entry<String, CopyOnWriteArrayList<Host>> entry : perDcLiveHosts.entrySet()) {
+            String dc = entry.getKey();
+            CopyOnWriteArrayList<Host> dcHosts = entry.getValue();
+            if (dcHosts.contains(host)) {
+                return dc;
+            }
+        }
+        return null;
     }
 }
