@@ -17,16 +17,14 @@ package com.datastax.driver.core;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 import static com.datastax.driver.core.TestUtils.*;
 
-/**
- * Simple test of the Sessions methods against a one node cluster.
- */
 public class StateListenerTest {
 
     @Test(groups = "long")
-    public void listenerTest() throws Throwable {
+    public void singleNodeTest() throws Throwable {
 
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, Cluster.builder());
         Cluster cluster = c.cluster;
@@ -66,12 +64,47 @@ public class StateListenerTest {
         }
     }
 
+    @Test(groups = "long")
+    public void relocationTest() throws Throwable {
+
+        CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, 1, Cluster.builder());
+        Cluster cluster = c.cluster;
+
+        try {
+            CountingListener listener = new CountingListener();
+            cluster.register(listener);
+
+            c.cassandraCluster.relocate(1, "dc1", "r2");
+
+            // Cassandra watches the topology configuration files every minute,
+            // we wait at most twice that
+            long timeout = System.currentTimeMillis() + 2 * 60 * 1000;
+
+            while (true) {
+                Thread.sleep(10 * 1000);
+                cluster.manager.controlConnection.refreshNodeListAndTokenMap();
+                if (listener.updates == 1) {
+                    break;
+                } else if (System.currentTimeMillis() > timeout) {
+                    fail("Did not receive expected event (onLocationUpdated) on time");
+                }
+            }
+            assertEquals(listener.downs, 0);
+        } catch (Throwable e) {
+            c.errorOut();
+            throw e;
+        } finally {
+            c.discard();
+        }
+    }
+
     private static class CountingListener implements Host.StateListener {
 
         public int adds;
         public int removes;
         public int ups;
         public int downs;
+        public int updates;
 
         public void onAdd(Host host) {
             adds++;
@@ -87,6 +120,11 @@ public class StateListenerTest {
 
         public void onRemove(Host host) {
             removes++;
+        }
+
+        @Override
+        public void onLocationUpdated(Host host) {
+            updates++;
         }
     }
 }

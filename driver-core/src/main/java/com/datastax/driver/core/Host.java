@@ -106,7 +106,7 @@ public class Host {
     /**
      * Returns the name of the datacenter this host is part of.
      * <p>
-     * The returned datacenter name is the one as known by Cassandra. 
+     * The returned datacenter name is the one as known by Cassandra.
      * It is also possible for this information to be unavailable. In that
      * case this method returns {@code null}, and the caller should always be aware
      * of this possibility.
@@ -182,7 +182,7 @@ public class Host {
      * Interface for listeners that are interested in hosts added, up, down and
      * removed events.
      * <p>
-     * It is possible for the same event to be fired multiple times, 
+     * It is possible for the same event to be fired multiple times,
      * particularly for up or down events. Therefore, a listener should
      * ignore the same event if it has already been notified of a
      * node's state.
@@ -218,5 +218,19 @@ public class Host {
          * @param host the removed host.
          */
         public void onRemove(Host host);
+
+        /**
+         * Called when the location information of a node (datacenter and/or
+         * rack) gets updated.
+         * <p>
+         * Note that under certain conditions, this event might get fired before
+         * {@link #onAdd(Host)} when a new node is added. Listener
+         * implementations can handle that by simply ignoring location updates
+         * for unknown nodes.
+         * </p>
+         *
+         * @param host the updated host.
+         */
+        public void onLocationUpdated(Host host);
     }
 }

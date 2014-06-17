@@ -1542,6 +1542,18 @@ public class Cluster implements Closeable {
                 listener.onRemove(host);
         }
 
+        // This is called only from ControlConnection which already runs on a dedicated thread
+        // pool, so we don't expose a triggerOnLocationUpdated like for other events
+        void onLocationUpdated(Host host) {
+            if (isClosed())
+                return;
+
+            logger.debug("Location updated for host {}: dc={}, rack={}", host, host.getDatacenter(), host.getRack());
+            loadBalancingPolicy().onLocationUpdated(host);
+            for (Host.StateListener listener : listeners)
+                listener.onLocationUpdated(host);
+        }
+
         public boolean signalConnectionFailure(Host host, ConnectionException exception, boolean isHostAddition) {
             boolean isDown = host.signalConnectionFailure(exception);
             if (isDown)
