@@ -8,12 +8,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import com.datastax.driver.core.ProtocolOptions;
-import com.datastax.driver.core.UDTDefinition;
-import com.datastax.driver.core.UDTDefinition.Field;
-import com.datastax.driver.core.UDTValue;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.UDTDefinition.Field;
 
 /**
  * An object handling the mapping of a class used as a field of another class.
@@ -45,35 +44,35 @@ class NestedMapper<T> {
         }
         return udtValue;
     }
-    
+
     List<UDTValue> toUDTValues(List<T> nestedEntities) {
         List<UDTValue> udtValues = new ArrayList<UDTValue>(nestedEntities.size());
         for (T nestedEntity : nestedEntities) {
             UDTValue udtValue = toUDTValue(nestedEntity);
             udtValues.add(udtValue);
-        }            
+        }
         return udtValues;
     }
-    
+
     Set<UDTValue> toUDTValues(Set<T> nestedEntities) {
         Set<UDTValue> udtValues = Sets.newHashSetWithExpectedSize(nestedEntities.size());
         for (T nestedEntity : nestedEntities) {
             UDTValue udtValue = toUDTValue(nestedEntity);
             udtValues.add(udtValue);
-        }            
+        }
         return udtValues;
     }
-    
+
     /*
      * Map conversion methods are static because they use two mappers, either of
      * which (but not both) may be null.
-     * 
+     *
      * This reflects the fact that the map datatype can use UDTs as keys, or
      * values, or both.
      */
     static <K, V> Map<Object, Object> toUDTValues(Map<K, V> nestedEntities, NestedMapper<K> keyMapper, NestedMapper<V> valueMapper) {
         assert keyMapper != null || valueMapper != null;
-        Map<Object, Object> udtValues = Maps.newHashMapWithExpectedSize(nestedEntities.size()); 
+        Map<Object, Object> udtValues = Maps.newHashMapWithExpectedSize(nestedEntities.size());
         for (Entry<K, V> entry : nestedEntities.entrySet()) {
             Object key = (keyMapper == null) ? entry.getKey() : keyMapper.toUDTValue(entry.getKey());
             Object value = (valueMapper == null) ? entry.getValue() : valueMapper.toUDTValue(entry.getValue());
@@ -91,7 +90,7 @@ class NestedMapper<T> {
         }
         return nestedEntity;
     }
-    
+
     List<T> toNestedEntities(List<UDTValue> udtValues) {
         List<T> nestedEntities = new ArrayList<T>(udtValues.size());
         for (UDTValue udtValue : udtValues) {
@@ -99,7 +98,7 @@ class NestedMapper<T> {
         }
         return nestedEntities;
     }
-    
+
     Set<T> toNestedEntities(Set<UDTValue> udtValues) {
         Set<T> nestedEntities = Sets.newHashSetWithExpectedSize(udtValues.size());
         for (UDTValue udtValue : udtValues) {
@@ -107,13 +106,13 @@ class NestedMapper<T> {
         }
         return nestedEntities;
     }
-    
+
     @SuppressWarnings("unchecked")
     static <K, V> Map<K, V> toNestedEntities(Map<Object, Object> udtValues, NestedMapper<K> keyMapper, NestedMapper<V> valueMapper) {
         Map<K, V> nestedEntities = Maps.newHashMapWithExpectedSize(udtValues.size());
         for (Entry<Object, Object> entry : udtValues.entrySet()) {
             K key = (keyMapper == null) ? (K) entry.getKey() : keyMapper.toNestedEntity((UDTValue) entry.getKey());
-            V value = (valueMapper == null) ? (V) entry.getValue() : valueMapper.toNestedEntity((UDTValue)entry.getValue()); 
+            V value = (valueMapper == null) ? (V) entry.getValue() : valueMapper.toNestedEntity((UDTValue)entry.getValue());
             nestedEntities.put(key, value);
         }
         return nestedEntities;

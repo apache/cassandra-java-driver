@@ -91,7 +91,7 @@ public class MappingManager {
         }
         return mapper;
     }
-    
+
     @SuppressWarnings("unchecked")
     <T> NestedMapper<T> getNestedMapper(Class<T> klass) {
         NestedMapper<T> mapper = (NestedMapper<T>)nestedMappers.get(klass);
@@ -107,7 +107,7 @@ public class MappingManager {
                 }
             }
         }
-        return mapper;        
+        return mapper;
     }
 
     @SuppressWarnings("unchecked")

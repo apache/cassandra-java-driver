@@ -1,32 +1,17 @@
 package com.datastax.driver.mapping;
 
-import static org.testng.Assert.assertEquals;
+import java.util.*;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
-import org.testng.annotations.Test;
-import org.testng.collections.Lists;
-
-import com.datastax.driver.core.CCMBridge;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.Accessor;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.Param;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Query;
-import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.UserDefinedType;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
+import org.testng.annotations.Test;
+import org.testng.collections.Lists;
+import static org.testng.Assert.assertEquals;
+
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.driver.mapping.annotations.*;
 
 public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -221,7 +206,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
     @UserDefinedType(keyspace = "ks", name = "sub")
     public static class Sub {
         private int i;
-        
+
         public Sub() {
         }
 
@@ -281,7 +266,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
             this.m2 = ImmutableMap.of(sub1, 1, sub2, 2);
             this.m3 = ImmutableMap.of(sub1, sub1, sub2, sub2);
         }
-        
+
         public int getId() {
             return id;
         }
@@ -348,10 +333,10 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void testCollections() throws Exception {
         Mapper<CollectionExamples> m = new MappingManager(session).mapper(CollectionExamples.class);
-        
+
         CollectionExamples c = new CollectionExamples(1, 1);
         m.save(c);
-        
+
         assertEquals(m.get(c.getId()), c);
     }
 }

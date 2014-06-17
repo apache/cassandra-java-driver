@@ -27,7 +27,6 @@ import java.util.*;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-
 import org.jboss.netty.buffer.ChannelBuffer;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
@@ -391,7 +390,7 @@ public abstract class DataType {
 
     /**
      * Returns a User Defined Type (UDT).
-     * 
+     *
      * @param definition the description of the type's keyspace, name and fields.
      * @return the UDT defined by {@code definition}.
      */
@@ -401,19 +400,19 @@ public abstract class DataType {
 
     /**
      * Returns the appropriate data type to map a Java field.
-     * 
+     *
      * @param f the field to map.
      * @return the corresponding data type.
      */
     public static DataType of(Field f) {
         Type type = f.getGenericType();
-    
+
         if (type instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType)type;
             Type raw = pt.getRawType();
             if (!(raw instanceof Class))
                 throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
-    
+
             Class<?> klass = (Class<?>)raw;
             if (List.class.isAssignableFrom(klass)) {
                 return list(DataType.of(Reflection.getParam(pt, 0, f.getName()), f));
@@ -426,10 +425,10 @@ public abstract class DataType {
             }
             throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
         }
-    
+
         if (!(type instanceof Class))
             throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
-    
+
         return DataType.of((Class<?>)type, f);
     }
 
@@ -441,7 +440,7 @@ public abstract class DataType {
      * (for example {@code String} in {@code List<String>}), otherwise use
      * {@link #of(Field)}.
      * </p>
-     * 
+     *
      * @param klass the Java type to map.
      * @param f the Java field in which the type is used.
      * @return the corresponding data type.
@@ -449,7 +448,7 @@ public abstract class DataType {
     public static DataType of(Class<?> klass, Field f) {
         if (ByteBuffer.class.isAssignableFrom(klass))
             return blob();
-    
+
         if (klass == int.class || Integer.class.isAssignableFrom(klass))
                 return cint();
         if (klass == long.class || Long.class.isAssignableFrom(klass))
@@ -460,12 +459,12 @@ public abstract class DataType {
             return cdouble();
         if (klass == boolean.class || Boolean.class.isAssignableFrom(klass))
             return cboolean();
-    
+
         if (BigDecimal.class.isAssignableFrom(klass))
             return decimal();
         if (BigInteger.class.isAssignableFrom(klass))
             return decimal();
-    
+
         if (String.class.isAssignableFrom(klass))
             return text();
         if (InetAddress.class.isAssignableFrom(klass))
@@ -474,10 +473,10 @@ public abstract class DataType {
             return timestamp();
         if (UUID.class.isAssignableFrom(klass))
             return uuid();
-        
+
         if (Collection.class.isAssignableFrom(klass))
             throw new IllegalArgumentException(String.format("Cannot map non-parametrized collection type %s for field %s; Please use a concrete type parameter", klass.getName(), f.getName()));
-    
+
         throw new IllegalArgumentException(String.format("Cannot map unknow class %s for field %s", klass.getName(), f));
     }
 
@@ -598,7 +597,7 @@ public abstract class DataType {
 
     /**
      * Serialize a value of this type to bytes, with the given protocol version.
-     * 
+     *
      * @param value the value to serialize.
      * @param protocolVersion the protocol version.
      * @return the value serialized, or {@code null} if {@code value} is null.
@@ -611,14 +610,14 @@ public abstract class DataType {
         Class<?> expectedClass = asJavaClass();
         if (!expectedClass.isAssignableFrom(providedClass))
             throw new InvalidTypeException(String.format("Invalid value for CQL type %s, expecting %s but %s provided", toString(), expectedClass, providedClass));
-        
+
         try {
             return codec(protocolVersion).serialize(value);
         } catch (ClassCastException e) {
             // With collections, the element type has not been checked, so it can throw
             throw new InvalidTypeException("Invalid type for collection element: " + e.getMessage());
         }
-    }    
+    }
 
     /**
      * Deserialize a value of this type from the provided bytes.
@@ -646,17 +645,17 @@ public abstract class DataType {
 
     /**
      * Deserialize a value of this type from the provided bytes, with the given protocol version.
-     * 
+     *
      * @param bytes bytes holding the value to deserialize.
      * @param protocolVersion the protocol version.
      * @return the deserialized value (of class {@code this.asJavaClass()}).
-     * 
+     *
      * @see #deserialize(ByteBuffer)
      */
     public Object deserialize(ByteBuffer bytes, int protocolVersion) {
         return codec(protocolVersion).deserialize(bytes);
     }
-    
+
     /**
      * Serialize an object based on its java class.
      * <p>

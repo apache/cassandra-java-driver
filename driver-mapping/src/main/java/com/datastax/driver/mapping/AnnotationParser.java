@@ -74,19 +74,19 @@ class AnnotationParser {
                           convert(rgs, factory, mapper.entityClass, mappingManager));
         return mapper;
     }
-    
+
     public static <T> EntityMapper<T> parseNested(Class<T> nestedClass, EntityMapper.Factory factory, MappingManager mappingManager) {
         UserDefinedType udt = nestedClass.getAnnotation(UserDefinedType.class);
         if (udt == null)
-            throw new IllegalArgumentException(String.format("@%s annotation was not found on class %s", UserDefinedType.class.getSimpleName(), nestedClass.getName()));    
+            throw new IllegalArgumentException(String.format("@%s annotation was not found on class %s", UserDefinedType.class.getSimpleName(), nestedClass.getName()));
 
         String ksName = udt.caseSensitiveKeyspace() ? udt.keyspace() : udt.keyspace().toLowerCase();
         String udtName = udt.caseSensitiveType() ? udt.name() : udt.name().toLowerCase();
-       
+
         EntityMapper<T> mapper = factory.create(nestedClass, ksName, udtName, null, null);
-        
+
         List<Field> columns = new ArrayList<Field>();
-        
+
         for (Field field : nestedClass.getDeclaredFields()) {
             if (field.getAnnotation(Transient.class) != null)
                 continue;
@@ -214,7 +214,7 @@ class AnnotationParser {
 
         return factory.create(accClass, methods);
     }
-    
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static ParamMapper newParamMapper(String className, String methodName, String paramName, Type paramType, Annotation[] paramAnnotations, MappingManager mappingManager) {
         // TODO support enums
@@ -225,7 +225,7 @@ class AnnotationParser {
                 NestedMapper<?> nestedMapper = mappingManager.getNestedMapper(paramClass);
                 return new UDTParamMapper(paramName, nestedMapper);
             }
-            return new ParamMapper(paramName); 
+            return new ParamMapper(paramName);
         } if (paramType instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType) paramType;
             Type raw = pt.getRawType();
@@ -239,7 +239,7 @@ class AnnotationParser {
             }
             if (Set.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UserDefinedType.class)) {
                 NestedMapper<?> valueMapper = mappingManager.getNestedMapper(firstTypeParam);
-                return new UDTSetParamMapper(paramName, valueMapper);                
+                return new UDTSetParamMapper(paramName, valueMapper);
             }
             if (Map.class.isAssignableFrom(klass)) {
                 Class<?> secondTypeParam = Reflection.getParam(pt, 1, paramName);
@@ -249,7 +249,7 @@ class AnnotationParser {
                     return new UDTMapParamMapper(paramName, keyMapper, valueMapper);
                 }
             }
-            return new ParamMapper(paramName); 
+            return new ParamMapper(paramName);
         } else {
             throw new IllegalArgumentException(String.format("Cannot map class %s for parameter %s of %s.%s", paramType, paramName, className, methodName));
         }

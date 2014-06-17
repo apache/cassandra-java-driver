@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 import com.datastax.driver.core.ConsistencyLevel;
-
 import static com.datastax.driver.core.querybuilder.QueryBuilder.quote;
 
 abstract class EntityMapper<T> {
@@ -55,10 +54,10 @@ abstract class EntityMapper<T> {
 
         addColumns(rgs);
     }
-    
+
     public void addColumns(List<ColumnMapper<T>> rgs) {
         regularColumns.addAll(rgs);
-        allColumns.addAll(rgs);        
+        allColumns.addAll(rgs);
     }
 
     public abstract T newEntity();
@@ -69,6 +68,6 @@ abstract class EntityMapper<T> {
 
     interface Factory {
         public <T> EntityMapper<T> create(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency);
-        public <T> ColumnMapper<T> createColumnMapper(Class<T> componentClass, Field field, int position, MappingManager mappingManager);        
+        public <T> ColumnMapper<T> createColumnMapper(Class<T> componentClass, Field field, int position, MappingManager mappingManager);
     }
 }

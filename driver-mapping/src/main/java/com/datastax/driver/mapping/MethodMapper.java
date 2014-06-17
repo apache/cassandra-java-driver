@@ -7,16 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.Statement;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+
+import com.datastax.driver.core.*;
 
 // TODO: we probably should make that an abstract class and move some bit in a "ReflexionMethodMapper"
 // subclass for consistency with the rest, but we can see to that later
@@ -146,7 +140,7 @@ class MethodMapper {
             return mapOne ? result.one() : result;
         }
     }
-    
+
     static class ParamMapper {
         private final String paramName;
 
@@ -160,7 +154,7 @@ class MethodMapper {
             }
         }
     }
-    
+
     static class UDTParamMapper<V> extends ParamMapper {
         private final NestedMapper<V> nestedMapper;
 
@@ -168,7 +162,7 @@ class MethodMapper {
             super(paramName);
             this.nestedMapper = nestedMapper;
         }
-        
+
         @Override
         void setValue(BoundStatement boundStatement, Object arg) {
             @SuppressWarnings("unchecked")
@@ -176,7 +170,7 @@ class MethodMapper {
             super.setValue(boundStatement, nestedMapper.toUDTValue(entity));
         }
     }
-    
+
     static class UDTListParamMapper<V> extends ParamMapper {
         private final NestedMapper<V> valueMapper;
 
@@ -184,7 +178,7 @@ class MethodMapper {
             super(paramName);
             this.valueMapper = valueMapper;
         }
-        
+
         @Override
         void setValue(BoundStatement boundStatement, Object arg) {
             @SuppressWarnings("unchecked")
@@ -192,15 +186,15 @@ class MethodMapper {
             super.setValue(boundStatement, valueMapper.toUDTValues(nestedEntities));
         }
     }
-    
+
     static class UDTSetParamMapper<V> extends ParamMapper {
         private final NestedMapper<V> valueMapper;
-        
+
         UDTSetParamMapper(String paramName, NestedMapper<V> valueMapper) {
             super(paramName);
             this.valueMapper = valueMapper;
         }
-        
+
         @Override
         void setValue(BoundStatement boundStatement, Object arg) {
             @SuppressWarnings("unchecked")
@@ -208,17 +202,17 @@ class MethodMapper {
             super.setValue(boundStatement, valueMapper.toUDTValues(nestedEntities));
         }
     }
-    
+
     static class UDTMapParamMapper<K, V> extends ParamMapper {
         private final NestedMapper<K> keyMapper;
         private final NestedMapper<V> valueMapper;
-        
+
         UDTMapParamMapper(String paramName, NestedMapper<K> keyMapper, NestedMapper<V> valueMapper) {
             super(paramName);
             this.keyMapper = keyMapper;
             this.valueMapper = valueMapper;
         }
-        
+
         @Override
         void setValue(BoundStatement boundStatement, Object arg) {
             @SuppressWarnings("unchecked")

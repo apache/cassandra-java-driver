@@ -10,8 +10,8 @@ import java.lang.reflect.Type;
 public class Reflection {
 
     /**
-     * Gets a type argument from a parameterized type. 
-     * 
+     * Gets a type argument from a parameterized type.
+     *
      * @param pt the parameterized type.
      * @param arg the index of the argument to retrieve.
      * @param name the name of the element (field or method argument).
