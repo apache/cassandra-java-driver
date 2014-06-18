@@ -135,7 +135,7 @@ class Connection {
                     Responses.Error error = (Responses.Error)response;
                     // Testing for a specific string is a tad fragile but well, we don't have much choice
                     if (error.code == ExceptionCode.PROTOCOL_ERROR && error.message.contains("Invalid or unsupported protocol version"))
-                        throw unsupportedProtocolVersionException(version);
+                        throw unsupportedProtocolVersionException(version, error.serverProtocolVersion);
                     throw defunct(new TransportException(address, String.format("Error initializing connection: %s", error.message)));
                 case AUTHENTICATE:
                     Authenticator authenticator = factory.authProvider.newAuthenticator(address);
@@ -160,13 +160,13 @@ class Connection {
         }
     }
 
-    private UnsupportedProtocolVersionException unsupportedProtocolVersionException(int triedVersion) {
+    private UnsupportedProtocolVersionException unsupportedProtocolVersionException(int triedVersion, int serverProtocolVersion) {
         // Almost like defunct, but we don't want to wrap that exception inside a ConnectionException and
         // we know it's happening while initializing the transport so we can simplify slightly
-        if (logger.isDebugEnabled()) logger.debug("Got unsupported protocol version error from {} for version {}", address, triedVersion);
+        if (logger.isDebugEnabled()) logger.debug("Got unsupported protocol version error from {} for version {} - server version is {}", address, triedVersion, serverProtocolVersion);
         isDefunct = true;
         closeAsync();
-        return new UnsupportedProtocolVersionException(address, triedVersion);
+        return new UnsupportedProtocolVersionException(address, triedVersion, serverProtocolVersion);
     }
 
     private void authenticateV1(Authenticator authenticator) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {

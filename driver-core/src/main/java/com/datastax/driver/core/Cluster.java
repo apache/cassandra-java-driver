@@ -24,6 +24,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.datastax.driver.core.exceptions.DriverException;
 import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -1149,20 +1150,22 @@ public class Cluster implements Closeable {
             loadBalancingPolicy().init(Cluster.this, metadata.allHosts());
 
             try {
-                while (true) {
+                try {
+                    controlConnection.connect();
+                    if (connectionFactory.protocolVersion < 0)
+                        connectionFactory.protocolVersion = ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION;
+                } catch (UnsupportedProtocolVersionException e) {
+                    if (logger.isDebugEnabled()) logger.debug("{}: retrying with server indicated version {}", e.getMessage(), e.serverProtocolVersion);
+                    if (e.serverProtocolVersion < 0 || e.serverProtocolVersion > ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION)
+                        throw new DriverException("cannot connect because server does not support version "+e.versionUnsupported+" but resonded with version "+e.serverProtocolVersion+
+                            ": "+e.address+' ' +e.getMessage());
+                    connectionFactory.protocolVersion = e.serverProtocolVersion;
+
                     try {
                         controlConnection.connect();
-                        if (connectionFactory.protocolVersion < 0)
-                            connectionFactory.protocolVersion = ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION;
-
-                        return;
-                    } catch (UnsupportedProtocolVersionException e) {
-                        assert connectionFactory.protocolVersion < 1;
-                        // For now, all C* version supports the protocol version 1
-                        if (e.versionUnsupported <= 1)
-                            throw new DriverInternalError("Got a node that don't even support the protocol version 1, this makes no sense", e);
-                        if (logger.isDebugEnabled()) logger.debug("{}: retrying with version {}", e.getMessage(), e.versionUnsupported - 1);
-                        connectionFactory.protocolVersion = e.versionUnsupported - 1;
+                    } catch (UnsupportedProtocolVersionException e1) {
+                        throw new DriverException("cannot reconnect because server does not support version "+e.versionUnsupported+" but resonded with version "+e.serverProtocolVersion+
+                            ": "+e.address+' ' +e.getMessage());
                     }
                 }
             } catch (NoHostAvailableException e) {

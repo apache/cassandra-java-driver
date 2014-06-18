@@ -137,9 +137,9 @@ abstract class Message {
 
         public enum Type {
             ERROR          (0,
-                Responses.Error.decoder,
-                Responses.Error.decoder,
-                Responses.Error.decoder),
+                Responses.Error.decoderV1,
+                Responses.Error.decoderV2,
+                Responses.Error.decoderV3),
             READY          (2,
                 Responses.Ready.decoder,
                 Responses.Ready.decoder,

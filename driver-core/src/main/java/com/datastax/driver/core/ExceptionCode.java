@@ -53,7 +53,7 @@ enum ExceptionCode {
             valueToCode.put(code.value, code);
     }
 
-    private ExceptionCode(int value) {
+    ExceptionCode(int value) {
         this.value = value;
     }
 

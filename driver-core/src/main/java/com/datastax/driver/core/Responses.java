@@ -30,7 +30,15 @@ class Responses {
 
     public static class Error extends Message.Response {
 
-        public static final Message.Decoder<Error> decoder = new Message.Decoder<Error>() {
+        public static final Message.Decoder<Error> decoderV1 = new ErrorDecoder(1);
+        public static final Message.Decoder<Error> decoderV2 = new ErrorDecoder(2);
+        public static final Message.Decoder<Error> decoderV3 = new ErrorDecoder(3);
+
+        static final class ErrorDecoder implements Message.Decoder<Error> {
+            private final int protocolVersion;
+
+            ErrorDecoder(int protocolVersion) {this.protocolVersion = protocolVersion;}
+
             @Override
             public Error decode(ChannelBuffer body) {
                 ExceptionCode code = ExceptionCode.fromValue(body.readInt());
@@ -65,16 +73,18 @@ class Responses {
                         infos = new AlreadyExistsException(ksName, cfName);
                         break;
                 }
-                return new Error(code, msg, infos);
+                return new Error(protocolVersion, code, msg, infos);
             }
-        };
+        }
 
+        public final int serverProtocolVersion;
         public final ExceptionCode code;
         public final String message;
         public final Object infos; // can be null
 
-        private Error(ExceptionCode code, String message, Object infos) {
+        private Error(int serverProtocolVersion, ExceptionCode code, String message, Object infos) {
             super(Message.Response.Type.ERROR);
+            this.serverProtocolVersion = serverProtocolVersion;
             this.code = code;
             this.message = message;
             this.infos = infos;
