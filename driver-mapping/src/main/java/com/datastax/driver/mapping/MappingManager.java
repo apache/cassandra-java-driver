@@ -17,7 +17,7 @@ public class MappingManager {
     private final Session session;
 
     private volatile Map<Class<?>, Mapper<?>> mappers = Collections.<Class<?>, Mapper<?>>emptyMap();
-    private volatile Map<Class<?>, NestedMapper<?>> nestedMappers = Collections.<Class<?>, NestedMapper<?>>emptyMap();
+    private volatile Map<Class<?>, UDTMapper<?>> udtMappers = Collections.<Class<?>, UDTMapper<?>>emptyMap();
     private volatile Map<Class<?>, Object> accessors = Collections.<Class<?>, Object>emptyMap();
 
     /**
@@ -48,8 +48,8 @@ public class MappingManager {
      * Creates a {@code Mapper} for the provided class (that must be annotated by a
      * {@link Table} annotation).
      * <p>
-     * The {@code MappingManager} only ever keep one Mapper for each class, and so calling this
-     * method multiple time on the same class will always return the same object.
+     * The {@code MappingManager} only ever keeps one Mapper for each class, and so calling this
+     * method multiple times on the same class will always return the same object.
      *
      * @param <T> the type of the class to map.
      * @param klass the (annotated) class for which to return the mapper.
@@ -60,7 +60,25 @@ public class MappingManager {
     }
 
     /**
-     * Creates an accessor object based on teh provided interface (that must be annotated by
+     * Creates a {@code UDTMapper} for the provided class (that must be
+     * annotated by a {@link UDT} annotation).
+     *
+     * <p>
+     * The {@code MappingManager} only ever keeps one {@code UDTMapper} for each
+     * class, and so calling this method multiple times on the same class will
+     * always return the same object.
+     * </p>
+     *
+     * @param <T> the type of the class to map.
+     * @param klass the (annotated) class for which to return the mapper.
+     * @return the {@code UDTMapper} object for class {@code klass}.
+     */
+    public <T> UDTMapper<T> udtMapper(Class<T> klass) {
+        return getUDTMapper(klass);
+    }
+
+    /**
+     * Creates an accessor object based on the provided interface (that must be annotated by
      * a {@link Accessor} annotation).
      * <p>
      * The {@code MappingManager} only ever keep one Accessor for each class, and so calling this
@@ -93,17 +111,17 @@ public class MappingManager {
     }
 
     @SuppressWarnings("unchecked")
-    <T> NestedMapper<T> getNestedMapper(Class<T> klass) {
-        NestedMapper<T> mapper = (NestedMapper<T>)nestedMappers.get(klass);
+    <T> UDTMapper<T> getUDTMapper(Class<T> klass) {
+        UDTMapper<T> mapper = (UDTMapper<T>)udtMappers.get(klass);
         if (mapper == null) {
-            synchronized (nestedMappers) {
-                mapper = (NestedMapper<T>)nestedMappers.get(klass);
+            synchronized (udtMappers) {
+                mapper = (UDTMapper<T>)udtMappers.get(klass);
                 if (mapper == null) {
                     EntityMapper<T> entityMapper = AnnotationParser.parseNested(klass, ReflectionMapper.factory(), this);
-                    mapper = new NestedMapper<T>(entityMapper);
-                    Map<Class<?>, NestedMapper<?>> newMappers = new HashMap<Class<?>, NestedMapper<?>>(nestedMappers);
+                    mapper = new UDTMapper<T>(entityMapper);
+                    Map<Class<?>, UDTMapper<?>> newMappers = new HashMap<Class<?>, UDTMapper<?>>(udtMappers);
                     newMappers.put(klass, mapper);
-                    nestedMappers = newMappers;
+                    udtMappers = newMappers;
                 }
             }
         }

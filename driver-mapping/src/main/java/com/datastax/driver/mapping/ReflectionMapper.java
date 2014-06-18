@@ -127,35 +127,35 @@ class ReflectionMapper<T> extends EntityMapper<T> {
     }
 
     private static class UDTColumnMapper<T, U> extends LiteralMapper<T> {
-        private final NestedMapper<U> nestedMapper;
+        private final UDTMapper<U> udtMapper;
 
-        private UDTColumnMapper(Field field, int position, PropertyDescriptor pd, NestedMapper<U> nestedMapper) {
-            super(field, DataType.userType(nestedMapper.getUdtDefinition()), position, pd);
-            this.nestedMapper = nestedMapper;
+        private UDTColumnMapper(Field field, int position, PropertyDescriptor pd, UDTMapper<U> udtMapper) {
+            super(field, DataType.userType(udtMapper.getUdtDefinition()), position, pd);
+            this.udtMapper = udtMapper;
         }
 
         @Override
         public Object getValue(T entity) {
             @SuppressWarnings("unchecked")
             U nestedEntity = (U) super.getValue(entity);
-            return nestedMapper.toUDTValue(nestedEntity);
+            return udtMapper.toUDTValue(nestedEntity);
         }
 
         @Override
         public void setValue(Object entity, Object value) {
             assert value instanceof UDTValue;
             UDTValue udtValue = (UDTValue) value;
-            assert udtValue.getDefinition().equals(nestedMapper.getUdtDefinition());
+            assert udtValue.getDefinition().equals(udtMapper.getUdtDefinition());
 
-            super.setValue(entity, nestedMapper.toNestedEntity((udtValue)));
+            super.setValue(entity, udtMapper.toNestedEntity((udtValue)));
         }
     }
 
     private static class UDTListMapper<T, V> extends LiteralMapper<T> {
 
-        private final NestedMapper<V> valueMapper;
+        private final UDTMapper<V> valueMapper;
 
-        UDTListMapper(Field field, int position, PropertyDescriptor pd, NestedMapper<V> valueMapper) {
+        UDTListMapper(Field field, int position, PropertyDescriptor pd, UDTMapper<V> valueMapper) {
             super(field, DataType.list(DataType.userType(valueMapper.getUdtDefinition())), position, pd);
             this.valueMapper = valueMapper;
         }
@@ -177,9 +177,9 @@ class ReflectionMapper<T> extends EntityMapper<T> {
 
     private static class UDTSetMapper<T, V> extends LiteralMapper<T> {
 
-        private final NestedMapper<V> valueMapper;
+        private final UDTMapper<V> valueMapper;
 
-        UDTSetMapper(Field field, int position, PropertyDescriptor pd, NestedMapper<V> valueMapper) {
+        UDTSetMapper(Field field, int position, PropertyDescriptor pd, UDTMapper<V> valueMapper) {
             super(field, DataType.set(DataType.userType(valueMapper.getUdtDefinition())), position, pd);
             this.valueMapper = valueMapper;
         }
@@ -207,10 +207,10 @@ class ReflectionMapper<T> extends EntityMapper<T> {
      * </p>
      */
     private static class UDTMapMapper<T, K, V> extends LiteralMapper<T> {
-        private final NestedMapper<K> keyMapper;
-        private final NestedMapper<V> valueMapper;
+        private final UDTMapper<K> keyMapper;
+        private final UDTMapper<V> valueMapper;
 
-        UDTMapMapper(Field field, int position, PropertyDescriptor pd, NestedMapper<K> keyMapper, NestedMapper<V> valueMapper, Class<?> keyClass, Class<?> valueClass) {
+        UDTMapMapper(Field field, int position, PropertyDescriptor pd, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper, Class<?> keyClass, Class<?> valueClass) {
             super(field, buildDataType(field, keyMapper, valueMapper, keyClass, valueClass), position, pd);
             this.keyMapper = keyMapper;
             this.valueMapper = valueMapper;
@@ -220,17 +220,17 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         public Object getValue(T entity) {
             @SuppressWarnings("unchecked")
             Map<K, V> nestedEntities = (Map<K, V>) super.getValue(entity);
-            return NestedMapper.toUDTValues(nestedEntities, keyMapper, valueMapper);
+            return UDTMapper.toUDTValues(nestedEntities, keyMapper, valueMapper);
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public void setValue(Object entity, Object fieldValue) {
             Map<Object, Object> udtValues = (Map<Object, Object>) fieldValue;
-            super.setValue(entity, NestedMapper.toNestedEntities(udtValues, keyMapper, valueMapper));
+            super.setValue(entity, UDTMapper.toNestedEntities(udtValues, keyMapper, valueMapper));
         }
 
-        private static <K, V> DataType buildDataType(Field field, NestedMapper<K> keyMapper, NestedMapper<V> valueMapper, Class<?> keyClass, Class<?> valueClass) {
+        private static <K, V> DataType buildDataType(Field field, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper, Class<?> keyClass, Class<?> valueClass) {
             assert keyMapper != null || valueMapper != null;
 
             DataType keyType = (keyMapper != null) ?
@@ -323,8 +323,8 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                 }
 
                 if (field.getType().isAnnotationPresent(UDT.class)) {
-                    NestedMapper<?> nestedMapper = mappingManager.getNestedMapper(field.getType());
-                    return (ColumnMapper<T>) new UDTColumnMapper(field, position, pd, nestedMapper);
+                    UDTMapper<?> udtMapper = mappingManager.getUDTMapper(field.getType());
+                    return (ColumnMapper<T>) new UDTColumnMapper(field, position, pd, udtMapper);
                 }
 
                 if (field.getGenericType() instanceof ParameterizedType) {
@@ -336,17 +336,17 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                     Class<?> klass = (Class<?>)raw;
                     Class<?> firstTypeParam = ReflectionUtils.getParam(pt, 0, field.getName());
                     if (List.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
-                        NestedMapper<?> valueMapper = mappingManager.getNestedMapper(firstTypeParam);
+                        UDTMapper<?> valueMapper = mappingManager.getUDTMapper(firstTypeParam);
                         return (ColumnMapper<T>) new UDTListMapper(field, position, pd, valueMapper);
                     }
                     if (Set.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
-                        NestedMapper<?> valueMapper = mappingManager.getNestedMapper(firstTypeParam);
+                        UDTMapper<?> valueMapper = mappingManager.getUDTMapper(firstTypeParam);
                         return (ColumnMapper<T>) new UDTSetMapper(field, position, pd, valueMapper);
                     }
                     if (Map.class.isAssignableFrom(klass)) {
                         Class<?> secondTypeParam = ReflectionUtils.getParam(pt, 1, field.getName());
-                        NestedMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getNestedMapper(firstTypeParam) : null;
-                        NestedMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getNestedMapper(secondTypeParam) : null;
+                        UDTMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getUDTMapper(firstTypeParam) : null;
+                        UDTMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getUDTMapper(secondTypeParam) : null;
 
                         if (keyMapper != null || valueMapper != null) {
                             return (ColumnMapper<T>) new UDTMapMapper(field, position, pd, keyMapper, valueMapper, firstTypeParam, secondTypeParam);

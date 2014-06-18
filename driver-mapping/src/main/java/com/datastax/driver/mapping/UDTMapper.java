@@ -1,11 +1,7 @@
 package com.datastax.driver.mapping;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.Map.Entry;
 
 import com.google.common.collect.Maps;
@@ -15,21 +11,44 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.core.UDTDefinition.Field;
 
 /**
- * An object handling the mapping of a class used as a field of another class.
+ * An object handling the mapping of a particular class to a UDT.
  * <p>
- * This kind of class will be mapped to a User Defined Type.
+ * A {@code UDTMapper} object is obtained from a {@code MappingManager} using the
+ * {@link MappingManager#udtMapper} method.
  * </p>
  */
-class NestedMapper<T> {
+public class UDTMapper<T> {
     // UDTs are always serialized with the v3 protocol
     private static final int UDT_PROTOCOL_VERSION = Math.max(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION, 3);
 
     private final EntityMapper<T> entityMapper;
     private final UDTDefinition udtDefinition;
 
-    NestedMapper(EntityMapper<T> entityMapper) {
+    UDTMapper(EntityMapper<T> entityMapper) {
         this.entityMapper = entityMapper;
         this.udtDefinition = new UDTDefinition(entityMapper.getKeyspace(), entityMapper.getTable(), gatherUDTFields(entityMapper));
+    }
+
+    /**
+     * Converts a {@link UDTValue} (returned by the core API) to the mapped
+     * class.
+     *
+     * @param v the {@code UDTValue}.
+     * @return an instance of the mapped class.
+     *
+     * @throws IllegalArgumentException if the {@code UDTValue} is not of the
+     * type indicated in the mapped class's {@code @UDT} annotation.
+     */
+    public T map(UDTValue v) {
+        if (!v.getDefinition().equals(udtDefinition)) {
+            String message = String.format("UDT conversion mismatch: expected type %s.%s, got %s.%s",
+                                           udtDefinition.getKeyspace(),
+                                           udtDefinition.getName(),
+                                           v.getDefinition().getKeyspace(),
+                                           v.getDefinition().getName());
+            throw new IllegalArgumentException(message);
+        }
+        return toNestedEntity(v);
     }
 
     UDTDefinition getUdtDefinition() {
@@ -70,7 +89,7 @@ class NestedMapper<T> {
      * This reflects the fact that the map datatype can use UDTs as keys, or
      * values, or both.
      */
-    static <K, V> Map<Object, Object> toUDTValues(Map<K, V> nestedEntities, NestedMapper<K> keyMapper, NestedMapper<V> valueMapper) {
+    static <K, V> Map<Object, Object> toUDTValues(Map<K, V> nestedEntities, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper) {
         assert keyMapper != null || valueMapper != null;
         Map<Object, Object> udtValues = Maps.newHashMapWithExpectedSize(nestedEntities.size());
         for (Entry<K, V> entry : nestedEntities.entrySet()) {
@@ -108,7 +127,7 @@ class NestedMapper<T> {
     }
 
     @SuppressWarnings("unchecked")
-    static <K, V> Map<K, V> toNestedEntities(Map<Object, Object> udtValues, NestedMapper<K> keyMapper, NestedMapper<V> valueMapper) {
+    static <K, V> Map<K, V> toNestedEntities(Map<Object, Object> udtValues, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper) {
         Map<K, V> nestedEntities = Maps.newHashMapWithExpectedSize(udtValues.size());
         for (Entry<Object, Object> entry : udtValues.entrySet()) {
             K key = (keyMapper == null) ? (K) entry.getKey() : keyMapper.toNestedEntity((UDTValue) entry.getKey());

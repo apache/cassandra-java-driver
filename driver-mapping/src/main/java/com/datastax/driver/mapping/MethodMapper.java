@@ -156,25 +156,25 @@ class MethodMapper {
     }
 
     static class UDTParamMapper<V> extends ParamMapper {
-        private final NestedMapper<V> nestedMapper;
+        private final UDTMapper<V> udtMapper;
 
-        UDTParamMapper(String paramName, NestedMapper<V> nestedMapper) {
+        UDTParamMapper(String paramName, UDTMapper<V> udtMapper) {
             super(paramName);
-            this.nestedMapper = nestedMapper;
+            this.udtMapper = udtMapper;
         }
 
         @Override
         void setValue(BoundStatement boundStatement, Object arg) {
             @SuppressWarnings("unchecked")
             V entity = (V) arg;
-            super.setValue(boundStatement, nestedMapper.toUDTValue(entity));
+            super.setValue(boundStatement, udtMapper.toUDTValue(entity));
         }
     }
 
     static class UDTListParamMapper<V> extends ParamMapper {
-        private final NestedMapper<V> valueMapper;
+        private final UDTMapper<V> valueMapper;
 
-        UDTListParamMapper(String paramName, NestedMapper<V> valueMapper) {
+        UDTListParamMapper(String paramName, UDTMapper<V> valueMapper) {
             super(paramName);
             this.valueMapper = valueMapper;
         }
@@ -188,9 +188,9 @@ class MethodMapper {
     }
 
     static class UDTSetParamMapper<V> extends ParamMapper {
-        private final NestedMapper<V> valueMapper;
+        private final UDTMapper<V> valueMapper;
 
-        UDTSetParamMapper(String paramName, NestedMapper<V> valueMapper) {
+        UDTSetParamMapper(String paramName, UDTMapper<V> valueMapper) {
             super(paramName);
             this.valueMapper = valueMapper;
         }
@@ -204,10 +204,10 @@ class MethodMapper {
     }
 
     static class UDTMapParamMapper<K, V> extends ParamMapper {
-        private final NestedMapper<K> keyMapper;
-        private final NestedMapper<V> valueMapper;
+        private final UDTMapper<K> keyMapper;
+        private final UDTMapper<V> valueMapper;
 
-        UDTMapParamMapper(String paramName, NestedMapper<K> keyMapper, NestedMapper<V> valueMapper) {
+        UDTMapParamMapper(String paramName, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper) {
             super(paramName);
             this.keyMapper = keyMapper;
             this.valueMapper = valueMapper;
@@ -217,7 +217,7 @@ class MethodMapper {
         void setValue(BoundStatement boundStatement, Object arg) {
             @SuppressWarnings("unchecked")
             Map<K, V> nestedEntities = (Map<K, V>) arg;
-            super.setValue(boundStatement, NestedMapper.toUDTValues(nestedEntities, keyMapper, valueMapper));
+            super.setValue(boundStatement, UDTMapper.toUDTValues(nestedEntities, keyMapper, valueMapper));
         }
     }
 }

@@ -228,8 +228,8 @@ class AnnotationParser {
         if (paramType instanceof Class) {
             Class<?> paramClass = (Class<?>) paramType;
             if (paramClass.isAnnotationPresent(UDT.class)) {
-                NestedMapper<?> nestedMapper = mappingManager.getNestedMapper(paramClass);
-                return new UDTParamMapper(paramName, nestedMapper);
+                UDTMapper<?> udtMapper = mappingManager.getUDTMapper(paramClass);
+                return new UDTParamMapper(paramName, udtMapper);
             }
             return new ParamMapper(paramName);
         } if (paramType instanceof ParameterizedType) {
@@ -240,17 +240,17 @@ class AnnotationParser {
             Class<?> klass = (Class<?>)raw;
             Class<?> firstTypeParam = ReflectionUtils.getParam(pt, 0, paramName);
             if (List.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
-                NestedMapper<?> valueMapper = mappingManager.getNestedMapper(firstTypeParam);
+                UDTMapper<?> valueMapper = mappingManager.getUDTMapper(firstTypeParam);
                 return new UDTListParamMapper(paramName, valueMapper);
             }
             if (Set.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
-                NestedMapper<?> valueMapper = mappingManager.getNestedMapper(firstTypeParam);
+                UDTMapper<?> valueMapper = mappingManager.getUDTMapper(firstTypeParam);
                 return new UDTSetParamMapper(paramName, valueMapper);
             }
             if (Map.class.isAssignableFrom(klass)) {
                 Class<?> secondTypeParam = ReflectionUtils.getParam(pt, 1, paramName);
-                NestedMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getNestedMapper(firstTypeParam) : null;
-                NestedMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getNestedMapper(secondTypeParam) : null;
+                UDTMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getUDTMapper(firstTypeParam) : null;
+                UDTMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getUDTMapper(secondTypeParam) : null;
                 if (keyMapper != null || valueMapper != null) {
                     return new UDTMapParamMapper(paramName, keyMapper, valueMapper);
                 }
