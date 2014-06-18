@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * A value for a User Defined Type.
@@ -24,7 +25,11 @@ public class TupleValue extends AbstractData<TupleValue> {
 
     private final DataType[] types;
 
-    public TupleValue(int protocolVersion, DataType[] types) {
+    public TupleValue(int protocolVersion, List<DataType> types) {
+        this(protocolVersion, types.toArray(new DataType[types.size()]));
+    }
+
+    TupleValue(int protocolVersion, DataType[] types) {
         // All things in a UDT are encoded with the protocol v3
         super(protocolVersion, types.length);
         this.types = types;

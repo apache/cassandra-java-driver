@@ -166,7 +166,7 @@ public abstract class DataType {
 
     static {
         for (Name name : Name.values()) {
-            if (!name.isCollection() && name != Name.CUSTOM && name != Name.UDT) {
+            if (!name.isCollection() && name != Name.CUSTOM && name != Name.UDT && name != Name.TUPLE) {
                 primitiveTypeMap.put(name, new DataType.Native(name));
             }
         }

@@ -66,9 +66,8 @@ public class StreamIdGeneratorTest {
         assertEquals(generator.next(), 1);
         assertEquals(generator.next(), 4);
 
-        for (int i = 5; i < 32768; i++) {
-          System.out.println(i);
-            assertEquals(generator.next(), i);}
+        for (int i = 5; i < 32768; i++)
+            assertEquals(generator.next(), i);
 
         generator.release(100);
         assertEquals(generator.next(), 100);

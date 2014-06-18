@@ -41,7 +41,7 @@ public class CCMBridge {
 
     public static final String IP_PREFIX;
 
-    private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d+(-\\w+)?";
+    private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d+(-\\w+)?(-\\w+)?";
 
     static final File CASSANDRA_DIR;
     static final String CASSANDRA_VERSION;
@@ -165,8 +165,8 @@ public class CCMBridge {
     }
 
     private void execute(String command, Object... args) {
+        String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
         try {
-            String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
             if (logger.isDebugEnabled()) logger.debug("Executing: {}", fullCommand);
             Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
             int retValue = p.waitFor();
@@ -188,7 +188,7 @@ public class CCMBridge {
                 throw new RuntimeException();
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("failed to execute "+fullCommand, e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
