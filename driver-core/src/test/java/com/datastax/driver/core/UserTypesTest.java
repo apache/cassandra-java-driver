@@ -21,7 +21,8 @@ import com.google.common.collect.ImmutableSet;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+
+import static com.datastax.driver.core.Metadata.quote;
 
 public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -33,7 +34,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             return Collections.<String>emptySet();
 
         String type1 = "CREATE TYPE phone (alias text, number text)";
-        String type2 = "CREATE TYPE address (street text, zip int, phones set<phone>)";
+        String type2 = "CREATE TYPE address (street text, \"ZIP\" int, phones set<phone>)";
 
         String table = "CREATE TABLE user (id int PRIMARY KEY, addr address)";
 
@@ -59,7 +60,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
             UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
 
-            UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt("zip", 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
+            UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP"), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
 
             session.execute(ins.bind(userId, addr));
 
