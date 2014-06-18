@@ -26,19 +26,19 @@ public class UDTValue extends AbstractData<UDTValue> {
 
     UDTValue(UDTDefinition definition) {
         // All things in a UDT are encoded with the protocol v3
-        super(3, definition.size());
+        super(definition.protocolVersion, definition.size());
         this.definition = definition;
     }
 
-    protected DataType getType(int i) {
+    @Override protected DataType getType(int i) {
         return definition.byIdx[i].getType();
     }
 
-    protected String getName(int i) {
+    @Override protected String getName(int i) {
         return definition.byIdx[i].getName();
     }
 
-    protected int[] getAllIndexesOf(String name) {
+    @Override protected int[] getAllIndexesOf(String name) {
         int[] indexes = definition.byName.get(name);
         if (indexes == null)
             throw new IllegalArgumentException(name + " is not a field defined in this UDT");
@@ -78,16 +78,16 @@ public class UDTValue extends AbstractData<UDTValue> {
         // formatting code from the queryBuilder to DataType (say some DataType.format(Object))
         // method.
         StringBuilder sb = new StringBuilder();
-        sb.append("{");
+        sb.append('{');
         for (int i = 0; i < values.length; i++) {
             if (i > 0)
-                sb.append(",");
+                sb.append(',');
 
             sb.append(getName(i));
-            sb.append(":");
-            sb.append(values[i] == null ? "null" : getType(i).deserialize(values[i]));
+            sb.append(':');
+            sb.append(values[i] == null ? "null" : getType(i).deserialize(values[i], version));
         }
-        sb.append("}");
+        sb.append('}');
         return sb.toString();
     }
 }

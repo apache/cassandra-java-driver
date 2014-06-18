@@ -304,7 +304,7 @@ class ControlConnection implements Host.StateListener {
         connection.write(colsFuture);
 
         try {
-            cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), udtFuture == null ? null : udtFuture.get(), cfFuture.get(), colsFuture.get(), cassandraVersion);
+            cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), udtFuture == null ? null : udtFuture.get(), cfFuture.get(), colsFuture.get(), cluster.protocolVersion(), cassandraVersion);
         } catch (RuntimeException e) {
             // Failure to parse the schema is definitively wrong so log a full-on error, but this won't generally prevent queries to
             // work and this can happen when new Cassandra versions modify stuff in the schema and the driver hasn't yet be modified.

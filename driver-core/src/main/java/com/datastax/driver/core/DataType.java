@@ -88,7 +88,7 @@ public abstract class DataType {
             }
         }
 
-        private Name(int protocolId, Class<?> javaType) {
+        Name(int protocolId, Class<?> javaType) {
             this.protocolId = protocolId;
             this.javaType = javaType;
         }
@@ -178,21 +178,21 @@ public abstract class DataType {
         this.name = name;
     }
 
-    static DataType decode(ChannelBuffer buffer) {
+    static DataType decode(int protocolVersion, ChannelBuffer buffer) {
         Name name = Name.fromProtocolId(buffer.readUnsignedShort());
         switch (name) {
             case CUSTOM:
                 String className = CBUtil.readString(buffer);
                 return CassandraTypeParser.isUserType(className)
-                    ? CassandraTypeParser.parseOne(className)
+                    ? CassandraTypeParser.parseOne(protocolVersion, className)
                     : custom(className);
             case LIST:
-                return list(decode(buffer));
+                return list(decode(protocolVersion, buffer));
             case SET:
-                return set(decode(buffer));
+                return set(decode(protocolVersion, buffer));
             case MAP:
-                DataType keys = decode(buffer);
-                DataType values = decode(buffer);
+                DataType keys = decode(protocolVersion, buffer);
+                DataType values = decode(protocolVersion, buffer);
                 return map(keys, values);
             case UDT:
                 String keyspace = CBUtil.readString(buffer);
@@ -201,15 +201,15 @@ public abstract class DataType {
                 List<UDTDefinition.Field> fields = new ArrayList<UDTDefinition.Field>(nFields);
                 for (int i = 0; i < nFields; i++) {
                     String fieldName = CBUtil.readString(buffer);
-                    DataType fieldType = decode(buffer);
+                    DataType fieldType = decode(protocolVersion, buffer);
                     fields.add(new UDTDefinition.Field(fieldName, fieldType));
                 }
-                return userType(new UDTDefinition(keyspace, type, fields));
+                return userType(new UDTDefinition(protocolVersion, keyspace, type, fields));
             case TUPLE:
                 nFields = buffer.readShort() & 0xffff;
                 DataType[] types = new DataType[nFields];
                 for (int i = 0; i < nFields; i++) {
-                    types[i] = decode(buffer);
+                    types[i] = decode(protocolVersion, buffer);
                 }
                 return tupleType(types);
             default:
@@ -510,7 +510,7 @@ public abstract class DataType {
      * @see Name#asJavaClass
      */
     public Class<?> asJavaClass() {
-        return getName().asJavaClass();
+        return name.asJavaClass();
     }
 
     /**
@@ -534,8 +534,14 @@ public abstract class DataType {
      * @return the value serialized, or {@code null} if {@code value} is null.
      * @throws InvalidTypeException if {@code value} is not a valid object
      *                              for this {@code DataType}.
+     * @deprecated will always serialize with protocol version 2 to ensure backwards compatibility - use {@link #serialize(Object, int)} instead.
      */
+    @Deprecated
     public ByteBuffer serialize(Object value) {
+        return serialize(value, 2);
+    }
+
+    public ByteBuffer serialize(Object value, int protocolVersion) {
         Class<?> providedClass = value.getClass();
         Class<?> expectedClass = asJavaClass();
         if (!expectedClass.isAssignableFrom(providedClass)) {
@@ -544,7 +550,7 @@ public abstract class DataType {
         }
 
         try {
-            return codec(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION).serialize(value);
+            return codec(protocolVersion).serialize(value);
         } catch (ClassCastException e) {
             // With collections, the element type has not been checked, so it can throw
             throw new InvalidTypeException("Invalid type for collection element: " + e.getMessage());
@@ -569,9 +575,15 @@ public abstract class DataType {
      * this implementation can generally be ignored).
      * @throws InvalidTypeException if {@code bytes} is not a valid
      *                              encoding of an object of this {@code DataType}.
+     * @deprecated will always deserialize with protocol version 2 to ensure backwards compatibility - use {@link #deserialize(ByteBuffer, int)} instead.
      */
+    @Deprecated
     public Object deserialize(ByteBuffer bytes) {
-        return codec(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION).deserialize(bytes);
+        return deserialize(bytes, 2);
+    }
+
+    public Object deserialize(ByteBuffer bytes, int protocolVersion) {
+        return codec(protocolVersion).deserialize(bytes);
     }
 
     /**
@@ -589,8 +601,14 @@ public abstract class DataType {
      * @throws IllegalArgumentException if {@code value} is not of a type
      *                                  corresponding to a CQL3 type, i.e. is not a Class that could be returned
      *                                  by {@link DataType#asJavaClass}.
+     * @deprecated will always serialize with protocol version 2 to ensure backwards compatibility - use {@link #serializeValue(Object, int)} instead.
      */
+    @Deprecated
     public static ByteBuffer serializeValue(Object value) {
+        return serializeValue(value, 2);
+    }
+
+    public static ByteBuffer serializeValue(Object value, int protocolVersion) {
         if (value == null) {
             return null;
         }
@@ -601,7 +619,7 @@ public abstract class DataType {
         }
 
         try {
-            return dt.serialize(value);
+            return dt.serialize(value, protocolVersion);
         } catch (InvalidTypeException e) {
             // In theory we couldn't get that if getDataTypeFor does his job correctly,
             // but there is no point in sending an exception that the user won't expect if we're
@@ -636,7 +654,7 @@ public abstract class DataType {
                 return false;
             }
 
-            return name == ((DataType.Native) o).name;
+            return name == ((DataType) o).name;
         }
 
         @Override
@@ -712,7 +730,7 @@ public abstract class DataType {
 
         @SuppressWarnings("unchecked")
         @Override TypeCodec<Object> codec(int protocolVersion) {
-            return (TypeCodec) TypeCodec.tupleOf(types);
+            return (TypeCodec) TypeCodec.tupleOf(protocolVersion, types);
         }
 
         @Override
@@ -754,7 +772,7 @@ public abstract class DataType {
 
         @SuppressWarnings("unchecked")
         @Override TypeCodec<Object> codec(int protocolVersion) {
-            return (TypeCodec) TypeCodec.udtOf(definition);
+            return (TypeCodec) TypeCodec.udtOf(protocolVersion, definition);
         }
 
         @Override

@@ -364,7 +364,7 @@ class Responses {
                     this.pagingState = pagingState;
                 }
 
-                public static Metadata decode(ChannelBuffer body) {
+                public static Metadata decode(int protocolVersion, ChannelBuffer body) {
 
                     // flags & column count
                     EnumSet<Flag> flags = Flag.deserialize(body.readInt());
@@ -393,7 +393,7 @@ class Responses {
                         String ksName = globalTablesSpec ? globalKsName : CBUtil.readString(body);
                         String cfName = globalTablesSpec ? globalCfName : CBUtil.readString(body);
                         String name = CBUtil.readString(body);
-                        DataType type = DataType.decode(body);
+                        DataType type = DataType.decode(protocolVersion, body);
                         defs[i] = new ColumnDefinitions.Definition(ksName, cfName, name, type);
                     }
 
@@ -425,7 +425,7 @@ class Responses {
 
                 @Override public Result decode(ChannelBuffer body) {
 
-                    Metadata metadata = Metadata.decode(body);
+                    Metadata metadata = Metadata.decode(protocolVersion, body);
 
                     int rowCount = body.readInt();
                     int columnCount = metadata.columnCount;
@@ -469,7 +469,7 @@ class Responses {
                             if (metadata.columns == null)
                                 sb.append(Bytes.toHexString(v));
                             else
-                                sb.append(metadata.columns.getType(i).deserialize(v));
+                                sb.append(metadata.columns.getType(i).deserialize(v, protocolVersion));
                         }
                     }
                     sb.append('\n');
@@ -484,7 +484,7 @@ class Responses {
             public static final Message.Decoder<Result> subcodecV1 = new Message.Decoder<Result>() {
                 @Override public Result decode(ChannelBuffer body) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
-                    Rows.Metadata metadata = Rows.Metadata.decode(body);
+                    Rows.Metadata metadata = Rows.Metadata.decode(1, body);
                     return new Prepared(1, id, metadata, Rows.Metadata.EMPTY);
                 }
             };
@@ -492,8 +492,8 @@ class Responses {
             public static final Message.Decoder<Result> subcodecV2 = new Message.Decoder<Result>() {
                 @Override public Result decode(ChannelBuffer body) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
-                    Rows.Metadata metadata = Rows.Metadata.decode(body);
-                    Rows.Metadata resultMetadata = Rows.Metadata.decode(body);
+                    Rows.Metadata metadata = Rows.Metadata.decode(2, body);
+                    Rows.Metadata resultMetadata = Rows.Metadata.decode(2, body);
                     return new Prepared(2, id, metadata, resultMetadata);
                 }
             };
@@ -501,8 +501,8 @@ class Responses {
             public static final Message.Decoder<Result> subcodecV3 = new Message.Decoder<Result>() {
                 @Override public Result decode(ChannelBuffer body) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
-                    Rows.Metadata metadata = Rows.Metadata.decode(body);
-                    Rows.Metadata resultMetadata = Rows.Metadata.decode(body);
+                    Rows.Metadata metadata = Rows.Metadata.decode(3, body);
+                    Rows.Metadata resultMetadata = Rows.Metadata.decode(3, body);
                     return new Prepared(3, id, metadata, resultMetadata);
                 }
             };

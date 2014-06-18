@@ -402,7 +402,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             if ((values[i] == null) != (that.values[i] == null))
                 return false;
 
-            if (values[i] != null && !(thisType.deserialize(values[i]).equals(thatType.deserialize(that.values[i]))))
+            if (values[i] != null && !(thisType.deserialize(values[i], version).equals(thatType.deserialize(that.values[i], version))))
                 return false;
         }
         return true;
@@ -413,7 +413,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         // Same as equals
         int hash = 31;
         for (int i = 0; i < values.length; i++)
-            hash += values[i] == null ? 1 : getType(i).deserialize(values[i]).hashCode();
+            hash += values[i] == null ? 1 : getType(i).deserialize(values[i], version).hashCode();
         return hash;
     }
 }

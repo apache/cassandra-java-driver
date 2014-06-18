@@ -45,7 +45,7 @@ public class KeyspaceMetadata {
         this.strategy = ReplicationStrategy.create(replication);
     }
 
-    static KeyspaceMetadata build(Row row, List<Row> udtRows) {
+    static KeyspaceMetadata build(int protocolVersion, Row row, List<Row> udtRows) {
 
         String name = row.getString(KS_NAME);
         boolean durableWrites = row.getBool(DURABLE_WRITES);
@@ -60,7 +60,7 @@ public class KeyspaceMetadata {
             return ksm;
 
         for (Row r : udtRows) {
-            UDTDefinition def = UDTDefinition.build(r);
+            UDTDefinition def = UDTDefinition.build(protocolVersion, r);
             ksm.userTypes.put(def.getName(), def);
         }
 

@@ -31,6 +31,8 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
     private static final String COLS_NAMES = "field_names";
     private static final String COLS_TYPES = "field_types";
 
+    final int protocolVersion;
+
     private final String keyspace;
     private final String name;
 
@@ -43,7 +45,8 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
     // implementation.
     final Map<String, int[]> byName;
 
-    UDTDefinition(String keyspace, String name, Collection<Field> fields) {
+    UDTDefinition(int protocolVersion, String keyspace, String name, Collection<Field> fields) {
+        this.protocolVersion = protocolVersion;
         this.keyspace = keyspace;
         this.name = name;
         this.byIdx = fields.toArray(new Field[fields.size()]);
@@ -54,7 +57,7 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
         this.byName = builder.build();
     }
 
-    static UDTDefinition build(Row row) {
+    static UDTDefinition build(int protocolVersion, Row row) {
         String keyspace = row.getString(KeyspaceMetadata.KS_NAME);
         String name = row.getString(TYPE_NAME);
 
@@ -63,9 +66,9 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
 
         List<Field> fields = new ArrayList<Field>(fieldNames.size());
         for (int i = 0; i < fieldNames.size(); i++)
-            fields.add(new Field(fieldNames.get(i), CassandraTypeParser.parseOne(fieldTypes.get(i))));
+            fields.add(new Field(fieldNames.get(i), CassandraTypeParser.parseOne(protocolVersion, fieldTypes.get(i))));
 
-        return new UDTDefinition(keyspace, name, fields);
+        return new UDTDefinition(protocolVersion, keyspace, name, fields);
     }
 
     /**

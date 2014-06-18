@@ -26,17 +26,17 @@ public class CassandraTypeParserTest {
     @Test(groups = "unit")
     public void parseOneTest() {
 
-        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.InetAddressType"), DataType.inet());
-        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ListType(org.apache.cassandra.db.marshal.UTF8Type)"), DataType.list(DataType.text()));
-        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ReversedType(org.apache.cassandra.db.marshal.UTF8Type)"), DataType.text());
+        assertEquals(CassandraTypeParser.parseOne(2, "org.apache.cassandra.db.marshal.InetAddressType"), DataType.inet());
+        assertEquals(CassandraTypeParser.parseOne(2, "org.apache.cassandra.db.marshal.ListType(org.apache.cassandra.db.marshal.UTF8Type)"), DataType.list(DataType.text()));
+        assertEquals(CassandraTypeParser.parseOne(2, "org.apache.cassandra.db.marshal.ReversedType(org.apache.cassandra.db.marshal.UTF8Type)"), DataType.text());
 
         String s;
 
         s = "org.apache.cassandra.db.marshal.CompositeType(org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.Int32Type)";
-        assertEquals(CassandraTypeParser.parseOne(s), DataType.custom(s));
+        assertEquals(CassandraTypeParser.parseOne(2, s), DataType.custom(s));
 
         s = "org.apache.cassandra.db.marshal.ReversedType(org.apache.cassandra.db.marshal.ListType(org.apache.cassandra.db.marshal.Int32Type))";
-        assertEquals(CassandraTypeParser.parseOne(s), DataType.list(DataType.cint()));
+        assertEquals(CassandraTypeParser.parseOne(2, s), DataType.list(DataType.cint()));
     }
 
     @Test(groups = "unit")
@@ -44,13 +44,13 @@ public class CassandraTypeParserTest {
 
         String s = "org.apache.cassandra.db.marshal.CompositeType(org.apache.cassandra.db.marshal.Int32Type, org.apache.cassandra.db.marshal.UTF8Type,";
               s += "org.apache.cassandra.db.marshal.ColumnToCollectionType(6162:org.apache.cassandra.db.marshal.ListType(org.apache.cassandra.db.marshal.Int32Type)))";
-        CassandraTypeParser.ParseResult r1 = CassandraTypeParser.parseWithComposite(s);
+        CassandraTypeParser.ParseResult r1 = CassandraTypeParser.parseWithComposite(2, s);
         assertTrue(r1.isComposite);
         assertEquals(r1.types, Arrays.asList(DataType.cint(), DataType.text()));
         assertEquals(r1.collections.size(), 1);
         assertEquals(r1.collections.get("ab"), DataType.list(DataType.cint()));
 
-        CassandraTypeParser.ParseResult r2 = CassandraTypeParser.parseWithComposite("org.apache.cassandra.db.marshal.TimestampType");
+        CassandraTypeParser.ParseResult r2 = CassandraTypeParser.parseWithComposite(2, "org.apache.cassandra.db.marshal.TimestampType");
         assertFalse(r2.isComposite);
         assertEquals(r2.types, Arrays.asList(DataType.timestamp()));
         assertEquals(r2.collections.size(), 0);
@@ -60,7 +60,7 @@ public class CassandraTypeParserTest {
     public void parseUserTypes() {
 
         String s = "org.apache.cassandra.db.marshal.UserType(foo,61646472657373,737472656574:org.apache.cassandra.db.marshal.UTF8Type,7a6970636f6465:org.apache.cassandra.db.marshal.Int32Type,70686f6e6573:org.apache.cassandra.db.marshal.SetType(org.apache.cassandra.db.marshal.UserType(foo,70686f6e65,6e616d65:org.apache.cassandra.db.marshal.UTF8Type,6e756d626572:org.apache.cassandra.db.marshal.UTF8Type)))";
-        UDTDefinition def = CassandraTypeParser.parseOne(s).getUDTDefinition();
+        UDTDefinition def = CassandraTypeParser.parseOne(2, s).getUDTDefinition();
 
         assertEquals(def.getKeyspace(), "foo");
         assertEquals(def.getName(), "address");

@@ -122,12 +122,12 @@ abstract class TypeCodec<T> {
         return codec != null ? (TypeCodec)codec : new MapCodec<Object, Object>(keys.codec(protocolVersion), values.codec(protocolVersion), protocolVersion);
     }
 
-    static TupleCodec tupleOf(DataType[] types) {
-        return new TupleCodec(types);
+    static TupleCodec tupleOf(int protocolVersion, DataType[] types) {
+        return new TupleCodec(protocolVersion, types);
     }
 
-    static UDTCodec udtOf(UDTDefinition definition) {
-        return new UDTCodec(definition);
+    static UDTCodec udtOf(int protocolVersion, UDTDefinition definition) {
+        return new UDTCodec(protocolVersion, definition);
     }
 
     /* This is ugly, but not sure how we can do much better/faster
@@ -912,9 +912,11 @@ abstract class TypeCodec<T> {
 
     static class UDTCodec extends TypeCodec<UDTValue> {
 
+        private final int protocolVersion;
         private final UDTDefinition definition;
 
-        public UDTCodec(UDTDefinition definition) {
+        public UDTCodec(int protocolVersion, UDTDefinition definition) {
+            this.protocolVersion = protocolVersion;
             this.definition = definition;
         }
 
@@ -958,9 +960,11 @@ abstract class TypeCodec<T> {
 
     static class TupleCodec extends TypeCodec<TupleValue> {
 
+        private final int protocolVersion;
         private final DataType[] types;
 
-        public TupleCodec(DataType[] types) {
+        public TupleCodec(int protocolVersion, DataType[] types) {
+            this.protocolVersion = protocolVersion;
             this.types = types;
         }
 
@@ -991,7 +995,7 @@ abstract class TypeCodec<T> {
 
         @Override public TupleValue deserialize(ByteBuffer bytes) {
             ByteBuffer input = bytes.duplicate();
-            TupleValue value = new TupleValue(types);
+            TupleValue value = new TupleValue(protocolVersion, types);
 
             int i = 0;
             while (input.hasRemaining() && i < types.length) {

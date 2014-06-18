@@ -24,9 +24,9 @@ public class TupleValue extends AbstractData<TupleValue> {
 
     private final DataType[] types;
 
-    public TupleValue(DataType[] types) {
+    public TupleValue(int protocolVersion, DataType[] types) {
         // All things in a UDT are encoded with the protocol v3
-        super(3, types.length);
+        super(protocolVersion, types.length);
         this.types = types;
     }
 
@@ -70,7 +70,7 @@ public class TupleValue extends AbstractData<TupleValue> {
         for (int i = 0; i < values.length; i++) {
             if (i > 0)
                 sb.append(',');
-            sb.append(values[i] == null ? "null" : getType(i).deserialize(values[i]));
+            sb.append(values[i] == null ? "null" : getType(i).deserialize(values[i], version));
         }
         sb.append('}');
         return sb.toString();
