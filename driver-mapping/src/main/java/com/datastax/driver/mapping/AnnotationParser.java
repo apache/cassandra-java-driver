@@ -8,7 +8,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.utils.Reflection;
+
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
 import com.datastax.driver.mapping.MethodMapper.UDTListParamMapper;
 import com.datastax.driver.mapping.MethodMapper.UDTMapParamMapper;
@@ -232,7 +232,7 @@ class AnnotationParser {
             if (!(raw instanceof Class))
                 throw new IllegalArgumentException(String.format("Cannot map class %s for parameter %s of %s.%s", paramType, paramName, className, methodName));
             Class<?> klass = (Class<?>)raw;
-            Class<?> firstTypeParam = Reflection.getParam(pt, 0, paramName);
+            Class<?> firstTypeParam = ReflectionUtils.getParam(pt, 0, paramName);
             if (List.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UserDefinedType.class)) {
                 NestedMapper<?> valueMapper = mappingManager.getNestedMapper(firstTypeParam);
                 return new UDTListParamMapper(paramName, valueMapper);
@@ -242,7 +242,7 @@ class AnnotationParser {
                 return new UDTSetParamMapper(paramName, valueMapper);
             }
             if (Map.class.isAssignableFrom(klass)) {
-                Class<?> secondTypeParam = Reflection.getParam(pt, 1, paramName);
+                Class<?> secondTypeParam = ReflectionUtils.getParam(pt, 1, paramName);
                 NestedMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UserDefinedType.class) ? mappingManager.getNestedMapper(firstTypeParam) : null;
                 NestedMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UserDefinedType.class) ? mappingManager.getNestedMapper(secondTypeParam) : null;
                 if (keyMapper != null || valueMapper != null) {

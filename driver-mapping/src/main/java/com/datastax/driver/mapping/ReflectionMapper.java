@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.utils.Reflection;
 
 import com.datastax.driver.mapping.annotations.UserDefinedType;
 
@@ -255,13 +254,13 @@ class ReflectionMapper<T> extends EntityMapper<T> {
 
             Class<?> klass = (Class<?>)raw;
             if (List.class.isAssignableFrom(klass)) {
-                return DataType.list(getSimpleType(Reflection.getParam(pt, 0, f.getName()), f));
+                return DataType.list(getSimpleType(ReflectionUtils.getParam(pt, 0, f.getName()), f));
             }
             if (Set.class.isAssignableFrom(klass)) {
-                return DataType.set(getSimpleType(Reflection.getParam(pt, 0, f.getName()), f));
+                return DataType.set(getSimpleType(ReflectionUtils.getParam(pt, 0, f.getName()), f));
             }
             if (Map.class.isAssignableFrom(klass)) {
-                return DataType.map(getSimpleType(Reflection.getParam(pt, 0, f.getName()), f), getSimpleType(Reflection.getParam(pt, 1, f.getName()), f));
+                return DataType.map(getSimpleType(ReflectionUtils.getParam(pt, 0, f.getName()), f), getSimpleType(ReflectionUtils.getParam(pt, 1, f.getName()), f));
             }
             throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
         }
@@ -335,7 +334,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                         throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", field, field.getName()));
 
                     Class<?> klass = (Class<?>)raw;
-                    Class<?> firstTypeParam = Reflection.getParam(pt, 0, field.getName());
+                    Class<?> firstTypeParam = ReflectionUtils.getParam(pt, 0, field.getName());
                     if (List.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UserDefinedType.class)) {
                         NestedMapper<?> valueMapper = mappingManager.getNestedMapper(firstTypeParam);
                         return (ColumnMapper<T>) new UDTListMapper(field, position, pd, valueMapper);
@@ -345,7 +344,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                         return (ColumnMapper<T>) new UDTSetMapper(field, position, pd, valueMapper);
                     }
                     if (Map.class.isAssignableFrom(klass)) {
-                        Class<?> secondTypeParam = Reflection.getParam(pt, 1, field.getName());
+                        Class<?> secondTypeParam = ReflectionUtils.getParam(pt, 1, field.getName());
                         NestedMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UserDefinedType.class) ? mappingManager.getNestedMapper(firstTypeParam) : null;
                         NestedMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UserDefinedType.class) ? mappingManager.getNestedMapper(secondTypeParam) : null;
 

@@ -1,13 +1,12 @@
-package com.datastax.driver.core.utils;
+package com.datastax.driver.mapping;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 /**
  * Utility methods related to reflection.
  */
-public class Reflection {
+class ReflectionUtils {
 
     /**
      * Gets a type argument from a parameterized type.
@@ -17,7 +16,7 @@ public class Reflection {
      * @param name the name of the element (field or method argument).
      * @return the type argument.
      */
-    public static Class<?> getParam(ParameterizedType pt, int arg, String name) {
+    static Class<?> getParam(ParameterizedType pt, int arg, String name) {
         Type ft = pt.getActualTypeArguments()[arg];
         if (!(ft instanceof Class))
             throw new IllegalArgumentException(String.format("Cannot map parameter of class %s for %s", pt, name));
