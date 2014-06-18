@@ -6,13 +6,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.math.BigInteger;
+import java.math.BigDecimal;
+import java.util.*;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.Reflection;
+
 import com.datastax.driver.mapping.annotations.UserDefinedType;
 
 /**
@@ -46,7 +48,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         private final Method writeMethod;
 
         private LiteralMapper(Field field, int position, PropertyDescriptor pd) {
-            this(field, DataType.of(field), position, pd);
+            this(field, extractType(field), position, pd);
         }
 
         private LiteralMapper(Field field, DataType type, int position, PropertyDescriptor pd) {
@@ -234,12 +236,75 @@ class ReflectionMapper<T> extends EntityMapper<T> {
 
             DataType keyType = (keyMapper != null) ?
                                                   DataType.userType(keyMapper.getUdtDefinition()) :
-                                                  DataType.of(keyClass, field);
+                                                  getSimpleType(keyClass, field);
             DataType valueType = (valueMapper != null) ?
                                                   DataType.userType(valueMapper.getUdtDefinition()) :
-                                                  DataType.of(valueClass, field);
+                                                  getSimpleType(valueClass, field);
             return DataType.map(keyType, valueType);
         }
+    }
+
+    static DataType extractType(Field f) {
+        Type type = f.getGenericType();
+
+        if (type instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType)type;
+            Type raw = pt.getRawType();
+            if (!(raw instanceof Class))
+                throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
+
+            Class<?> klass = (Class<?>)raw;
+            if (List.class.isAssignableFrom(klass)) {
+                return DataType.list(getSimpleType(Reflection.getParam(pt, 0, f.getName()), f));
+            }
+            if (Set.class.isAssignableFrom(klass)) {
+                return DataType.set(getSimpleType(Reflection.getParam(pt, 0, f.getName()), f));
+            }
+            if (Map.class.isAssignableFrom(klass)) {
+                return DataType.map(getSimpleType(Reflection.getParam(pt, 0, f.getName()), f), getSimpleType(Reflection.getParam(pt, 1, f.getName()), f));
+            }
+            throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
+        }
+
+        if (!(type instanceof Class))
+            throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
+
+        return getSimpleType((Class<?>)type, f);
+    }
+
+    static DataType getSimpleType(Class<?> klass, Field f) {
+        if (ByteBuffer.class.isAssignableFrom(klass))
+            return DataType.blob();
+
+        if (klass == int.class || Integer.class.isAssignableFrom(klass))
+                return DataType.cint();
+        if (klass == long.class || Long.class.isAssignableFrom(klass))
+            return DataType.bigint();
+        if (klass == float.class || Float.class.isAssignableFrom(klass))
+            return DataType.cfloat();
+        if (klass == double.class || Double.class.isAssignableFrom(klass))
+            return DataType.cdouble();
+        if (klass == boolean.class || Boolean.class.isAssignableFrom(klass))
+            return DataType.cboolean();
+
+        if (BigDecimal.class.isAssignableFrom(klass))
+            return DataType.decimal();
+        if (BigInteger.class.isAssignableFrom(klass))
+            return DataType.decimal();
+
+        if (String.class.isAssignableFrom(klass))
+            return DataType.text();
+        if (InetAddress.class.isAssignableFrom(klass))
+            return DataType.inet();
+        if (Date.class.isAssignableFrom(klass))
+            return DataType.timestamp();
+        if (UUID.class.isAssignableFrom(klass))
+            return DataType.uuid();
+
+        if (Collection.class.isAssignableFrom(klass))
+            throw new IllegalArgumentException(String.format("Cannot map non-parametrized collection type %s for field %s; Please use a concrete type parameter", klass.getName(), f.getName()));
+
+        throw new IllegalArgumentException(String.format("Cannot map unknow class %s for field %s", klass.getName(), f));
     }
 
     private static class ReflectionFactory implements Factory {

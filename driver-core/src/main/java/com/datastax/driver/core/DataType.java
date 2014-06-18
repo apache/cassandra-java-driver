@@ -15,9 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -31,7 +28,6 @@ import org.jboss.netty.buffer.ChannelBuffer;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
-import com.datastax.driver.core.utils.Reflection;
 
 /**
  * Data types supported by cassandra.
@@ -396,88 +392,6 @@ public abstract class DataType {
      */
     public static DataType userType(UDTDefinition definition) {
         return new UserType(definition);
-    }
-
-    /**
-     * Returns the appropriate data type to map a Java field.
-     *
-     * @param f the field to map.
-     * @return the corresponding data type.
-     */
-    public static DataType of(Field f) {
-        Type type = f.getGenericType();
-
-        if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType)type;
-            Type raw = pt.getRawType();
-            if (!(raw instanceof Class))
-                throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
-
-            Class<?> klass = (Class<?>)raw;
-            if (List.class.isAssignableFrom(klass)) {
-                return list(DataType.of(Reflection.getParam(pt, 0, f.getName()), f));
-            }
-            if (Set.class.isAssignableFrom(klass)) {
-                return set(DataType.of(Reflection.getParam(pt, 0, f.getName()), f));
-            }
-            if (Map.class.isAssignableFrom(klass)) {
-                return map(DataType.of(Reflection.getParam(pt, 0, f.getName()), f), DataType.of(Reflection.getParam(pt, 1, f.getName()), f));
-            }
-            throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
-        }
-
-        if (!(type instanceof Class))
-            throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
-
-        return DataType.of((Class<?>)type, f);
-    }
-
-    /**
-     * Returns the appropriate data type to map a Java type in a Java field.
-     * <p>
-     * This should only be called from outside when the Java type is not the
-     * type of the field itself, i.e. for a type parameter of a generic type
-     * (for example {@code String} in {@code List<String>}), otherwise use
-     * {@link #of(Field)}.
-     * </p>
-     *
-     * @param klass the Java type to map.
-     * @param f the Java field in which the type is used.
-     * @return the corresponding data type.
-     */
-    public static DataType of(Class<?> klass, Field f) {
-        if (ByteBuffer.class.isAssignableFrom(klass))
-            return blob();
-
-        if (klass == int.class || Integer.class.isAssignableFrom(klass))
-                return cint();
-        if (klass == long.class || Long.class.isAssignableFrom(klass))
-            return bigint();
-        if (klass == float.class || Float.class.isAssignableFrom(klass))
-            return cfloat();
-        if (klass == double.class || Double.class.isAssignableFrom(klass))
-            return cdouble();
-        if (klass == boolean.class || Boolean.class.isAssignableFrom(klass))
-            return cboolean();
-
-        if (BigDecimal.class.isAssignableFrom(klass))
-            return decimal();
-        if (BigInteger.class.isAssignableFrom(klass))
-            return decimal();
-
-        if (String.class.isAssignableFrom(klass))
-            return text();
-        if (InetAddress.class.isAssignableFrom(klass))
-            return inet();
-        if (Date.class.isAssignableFrom(klass))
-            return timestamp();
-        if (UUID.class.isAssignableFrom(klass))
-            return uuid();
-
-        if (Collection.class.isAssignableFrom(klass))
-            throw new IllegalArgumentException(String.format("Cannot map non-parametrized collection type %s for field %s; Please use a concrete type parameter", klass.getName(), f.getName()));
-
-        throw new IllegalArgumentException(String.format("Cannot map unknow class %s for field %s", klass.getName(), f));
     }
 
     /**
