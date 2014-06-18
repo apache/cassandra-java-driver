@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface UserDefinedType {
+public @interface UDT {
     /**
      * The name of the keyspace the type is part of.
      *

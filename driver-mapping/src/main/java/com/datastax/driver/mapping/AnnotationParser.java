@@ -76,9 +76,9 @@ class AnnotationParser {
     }
 
     public static <T> EntityMapper<T> parseNested(Class<T> nestedClass, EntityMapper.Factory factory, MappingManager mappingManager) {
-        UserDefinedType udt = nestedClass.getAnnotation(UserDefinedType.class);
+        UDT udt = nestedClass.getAnnotation(UDT.class);
         if (udt == null)
-            throw new IllegalArgumentException(String.format("@%s annotation was not found on class %s", UserDefinedType.class.getSimpleName(), nestedClass.getName()));
+            throw new IllegalArgumentException(String.format("@%s annotation was not found on class %s", UDT.class.getSimpleName(), nestedClass.getName()));
 
         String ksName = udt.caseSensitiveKeyspace() ? udt.keyspace() : udt.keyspace().toLowerCase();
         String udtName = udt.caseSensitiveType() ? udt.name() : udt.name().toLowerCase();
@@ -221,7 +221,7 @@ class AnnotationParser {
 
         if (paramType instanceof Class) {
             Class<?> paramClass = (Class<?>) paramType;
-            if (paramClass.isAnnotationPresent(UserDefinedType.class)) {
+            if (paramClass.isAnnotationPresent(UDT.class)) {
                 NestedMapper<?> nestedMapper = mappingManager.getNestedMapper(paramClass);
                 return new UDTParamMapper(paramName, nestedMapper);
             }
@@ -233,18 +233,18 @@ class AnnotationParser {
                 throw new IllegalArgumentException(String.format("Cannot map class %s for parameter %s of %s.%s", paramType, paramName, className, methodName));
             Class<?> klass = (Class<?>)raw;
             Class<?> firstTypeParam = ReflectionUtils.getParam(pt, 0, paramName);
-            if (List.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UserDefinedType.class)) {
+            if (List.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
                 NestedMapper<?> valueMapper = mappingManager.getNestedMapper(firstTypeParam);
                 return new UDTListParamMapper(paramName, valueMapper);
             }
-            if (Set.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UserDefinedType.class)) {
+            if (Set.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
                 NestedMapper<?> valueMapper = mappingManager.getNestedMapper(firstTypeParam);
                 return new UDTSetParamMapper(paramName, valueMapper);
             }
             if (Map.class.isAssignableFrom(klass)) {
                 Class<?> secondTypeParam = ReflectionUtils.getParam(pt, 1, paramName);
-                NestedMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UserDefinedType.class) ? mappingManager.getNestedMapper(firstTypeParam) : null;
-                NestedMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UserDefinedType.class) ? mappingManager.getNestedMapper(secondTypeParam) : null;
+                NestedMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getNestedMapper(firstTypeParam) : null;
+                NestedMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getNestedMapper(secondTypeParam) : null;
                 if (keyMapper != null || valueMapper != null) {
                     return new UDTMapParamMapper(paramName, keyMapper, valueMapper);
                 }

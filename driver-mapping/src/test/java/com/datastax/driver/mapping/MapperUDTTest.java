@@ -97,7 +97,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @UserDefinedType(keyspace = "ks", name = "address")
+    @UDT(keyspace = "ks", name = "address")
     public static class Address {
         private String street;
 
@@ -203,7 +203,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(workAddress, u2.getOtherAddresses().get("work"));
     }
 
-    @UserDefinedType(keyspace = "ks", name = "sub")
+    @UDT(keyspace = "ks", name = "sub")
     public static class Sub {
         private int i;
 

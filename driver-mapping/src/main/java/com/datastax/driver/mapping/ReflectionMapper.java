@@ -14,7 +14,7 @@ import java.util.*;
 
 import com.datastax.driver.core.*;
 
-import com.datastax.driver.mapping.annotations.UserDefinedType;
+import com.datastax.driver.mapping.annotations.UDT;
 
 /**
  * An {@link EntityMapper} implementation that use reflection to read and write fields
@@ -322,7 +322,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                     return new EnumMapper<T>(field, position, pd, AnnotationParser.enumType(field));
                 }
 
-                if (field.getType().isAnnotationPresent(UserDefinedType.class)) {
+                if (field.getType().isAnnotationPresent(UDT.class)) {
                     NestedMapper<?> nestedMapper = mappingManager.getNestedMapper(field.getType());
                     return (ColumnMapper<T>) new UDTColumnMapper(field, position, pd, nestedMapper);
                 }
@@ -335,18 +335,18 @@ class ReflectionMapper<T> extends EntityMapper<T> {
 
                     Class<?> klass = (Class<?>)raw;
                     Class<?> firstTypeParam = ReflectionUtils.getParam(pt, 0, field.getName());
-                    if (List.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UserDefinedType.class)) {
+                    if (List.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
                         NestedMapper<?> valueMapper = mappingManager.getNestedMapper(firstTypeParam);
                         return (ColumnMapper<T>) new UDTListMapper(field, position, pd, valueMapper);
                     }
-                    if (Set.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UserDefinedType.class)) {
+                    if (Set.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
                         NestedMapper<?> valueMapper = mappingManager.getNestedMapper(firstTypeParam);
                         return (ColumnMapper<T>) new UDTSetMapper(field, position, pd, valueMapper);
                     }
                     if (Map.class.isAssignableFrom(klass)) {
                         Class<?> secondTypeParam = ReflectionUtils.getParam(pt, 1, field.getName());
-                        NestedMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UserDefinedType.class) ? mappingManager.getNestedMapper(firstTypeParam) : null;
-                        NestedMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UserDefinedType.class) ? mappingManager.getNestedMapper(secondTypeParam) : null;
+                        NestedMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getNestedMapper(firstTypeParam) : null;
+                        NestedMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getNestedMapper(secondTypeParam) : null;
 
                         if (keyMapper != null || valueMapper != null) {
                             return (ColumnMapper<T>) new UDTMapMapper(field, position, pd, keyMapper, valueMapper, firstTypeParam, secondTypeParam);
