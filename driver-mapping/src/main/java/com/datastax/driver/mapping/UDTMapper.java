@@ -8,7 +8,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.UDTDefinition.Field;
 
 /**
  * An object handling the mapping of a particular class to a UDT.
@@ -24,9 +23,15 @@ public class UDTMapper<T> {
     private final EntityMapper<T> entityMapper;
     private final UDTDefinition udtDefinition;
 
-    UDTMapper(EntityMapper<T> entityMapper) {
+    UDTMapper(EntityMapper<T> entityMapper, Session session) {
         this.entityMapper = entityMapper;
-        this.udtDefinition = new UDTDefinition(entityMapper.getKeyspace(), entityMapper.getTable(), gatherUDTFields(entityMapper));
+
+        String keyspace = entityMapper.getKeyspace();
+        String udt = entityMapper.getTable();
+        udtDefinition = session.getCluster().getMetadata().getKeyspace(keyspace).getUserType(udt);
+        if (udtDefinition == null) {
+            throw new IllegalArgumentException(String.format("Type \"%s\" does not exist in keyspace \"%s\"", udt, keyspace));
+        }
     }
 
     /**
@@ -135,14 +140,5 @@ public class UDTMapper<T> {
             nestedEntities.put(key, value);
         }
         return nestedEntities;
-    }
-
-    private static <T> Collection<Field> gatherUDTFields(EntityMapper<T> entityMapper) {
-        List<ColumnMapper<T>> columns = entityMapper.allColumns();
-        List<Field> fields = new ArrayList<Field>(columns.size());
-        for (ColumnMapper<T> column : columns) {
-            fields.add(new Field(column.getColumnName(), column.getDataType()));
-        }
-        return fields;
     }
 }

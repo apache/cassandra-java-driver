@@ -43,7 +43,7 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
     // implementation.
     final Map<String, int[]> byName;
 
-    public UDTDefinition(String keyspace, String name, Collection<Field> fields) {
+    UDTDefinition(String keyspace, String name, Collection<Field> fields) {
         this.keyspace = keyspace;
         this.name = name;
         this.byIdx = fields.toArray(new Field[fields.size()]);

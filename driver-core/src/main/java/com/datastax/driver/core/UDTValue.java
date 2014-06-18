@@ -15,8 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Arrays;
-
 /**
  * A value for a User Defined Type.
  */
@@ -39,7 +37,7 @@ public class UDTValue extends AbstractData<UDTValue> {
     }
 
     protected int[] getAllIndexesOf(String name) {
-        int[] indexes = definition.byName.get(name);
+        int[] indexes = definition.byName.get(Metadata.handleId(name));
         if (indexes == null)
             throw new IllegalArgumentException(name + " is not a field defined in this UDT");
         return indexes;
