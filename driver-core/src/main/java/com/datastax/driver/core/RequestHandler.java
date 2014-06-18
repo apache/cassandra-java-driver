@@ -96,7 +96,7 @@ class RequestHandler implements Connection.ResponseCallback {
         try {
             while (queryPlan.hasNext() && !isCanceled) {
                 Host host = queryPlan.next();
-                logger.trace("Querying node {}", host);
+                if (logger.isTraceEnabled()) logger.trace("Querying node {}", host);
                 if (query(host))
                     return;
             }
@@ -153,7 +153,7 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     private void logError(InetSocketAddress address, Throwable exception) {
-        logger.debug("Error querying {}, trying next host (error is: {})", address, exception.toString());
+        if (logger.isDebugEnabled()) logger.debug("Error querying {}, trying next host (error is: {})", address, exception.toString());
         if (errors == null)
             errors = new HashMap<InetSocketAddress, Throwable>();
         errors.put(address, exception);
@@ -341,7 +341,7 @@ class RequestHandler implements Connection.ResponseCallback {
                             // prepare the query correctly and let the query executing return a meaningful error message
                             if (prepareKeyspace != null && (currentKeyspace == null || !currentKeyspace.equals(prepareKeyspace)))
                             {
-                                logger.trace("Setting keyspace for prepared query to {}", prepareKeyspace);
+                                if (logger.isTraceEnabled()) logger.trace("Setting keyspace for prepared query to {}", prepareKeyspace);
                                 connection.setKeyspace(prepareKeyspace);
                             }
 
@@ -351,7 +351,7 @@ class RequestHandler implements Connection.ResponseCallback {
                                 // Always reset the previous keyspace if needed
                                 if (connection.keyspace() == null || !connection.keyspace().equals(currentKeyspace))
                                 {
-                                    logger.trace("Setting back keyspace post query preparation to {}", currentKeyspace);
+                                    if (logger.isTraceEnabled()) logger.trace("Setting back keyspace post query preparation to {}", currentKeyspace);
                                     connection.setKeyspace(currentKeyspace);
                                 }
                             }
@@ -412,7 +412,7 @@ class RequestHandler implements Connection.ResponseCallback {
                 switch (response.type) {
                     case RESULT:
                         if (((Responses.Result)response).kind == Responses.Result.Kind.PREPARED) {
-                            logger.trace("Scheduling retry now that query is prepared");
+                            if (logger.isTraceEnabled()) logger.trace("Scheduling retry now that query is prepared");
                             retry(true, null);
                         } else {
                             logError(connection.address, new DriverException("Got unexpected response to prepare message: " + response));

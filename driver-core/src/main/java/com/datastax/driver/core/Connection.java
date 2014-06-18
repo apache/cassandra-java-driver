@@ -110,9 +110,9 @@ class Connection {
             writer.decrementAndGet();
         }
 
-        logger.trace("[{}] Connection opened successfully", name);
+        if (logger.isTraceEnabled()) logger.trace("[{}] Connection opened successfully", name);
         initializeTransport(protocolVersion);
-        logger.trace("[{}] Transport initialized and ready", name);
+        if (logger.isTraceEnabled()) logger.trace("[{}] Transport initialized and ready", name);
     }
 
     private static String extractMessage(Throwable t) {
@@ -163,7 +163,7 @@ class Connection {
     private UnsupportedProtocolVersionException unsupportedProtocolVersionException(int triedVersion) {
         // Almost like defunct, but we don't want to wrap that exception inside a ConnectionException and
         // we know it's happening while initializing the transport so we can simplify slightly
-        logger.debug("Got unsupported protocol version error from {} for version {}", address, triedVersion);
+        if (logger.isDebugEnabled()) logger.debug("Got unsupported protocol version error from {} for version {}", address, triedVersion);
         isDefunct = true;
         closeAsync();
         return new UnsupportedProtocolVersionException(address, triedVersion);
@@ -195,7 +195,7 @@ class Connection {
     throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         switch (authResponse.type) {
             case AUTH_SUCCESS:
-                logger.trace("Authentication complete");
+                if (logger.isTraceEnabled()) logger.trace("Authentication complete");
                 authenticator.onAuthenticationSuccess(((Responses.AuthSuccess)authResponse).token);
                 break;
             case AUTH_CHALLENGE:
@@ -203,11 +203,11 @@ class Connection {
                 if (responseToServer == null) {
                     // If we generate a null response, then authentication has completed, return without
                     // sending a further response back to the server.
-                    logger.trace("Authentication complete (No response to server)");
+                    if (logger.isTraceEnabled()) logger.trace("Authentication complete (No response to server)");
                     return;
                 } else {
                     // Otherwise, send the challenge response back to the server
-                    logger.trace("Sending Auth response to challenge");
+                    if (logger.isTraceEnabled()) logger.trace("Sending Auth response to challenge");
                     waitForAuthCompletion(write(new Requests.AuthResponse(responseToServer)).get(), authenticator);
                 }
                 break;
@@ -260,7 +260,7 @@ class Connection {
             return;
 
         try {
-            logger.trace("[{}] Setting keyspace {}", name, keyspace);
+            if (logger.isTraceEnabled()) logger.trace("[{}] Setting keyspace {}", name, keyspace);
             long timeout = factory.getConnectTimeoutMillis();
             // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
             Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
@@ -328,7 +328,7 @@ class Connection {
             throw new ConnectionException(address, "Connection has been closed");
         }
 
-        logger.trace("[{}] writing request {}", name, request);
+        if (logger.isTraceEnabled()) logger.trace("[{}] writing request {}", name, request);
         writer.incrementAndGet();
         channel.write(request).addListener(writeHandler(request, handler));
         return handler;
@@ -342,7 +342,7 @@ class Connection {
                 writer.decrementAndGet();
 
                 if (!writeFuture.isSuccess()) {
-                    logger.debug("[{}] Error writing request {}", name, request);
+                    if (logger.isDebugEnabled()) logger.debug("[{}] Error writing request {}", name, request);
                     // Remove this handler from the dispatcher so it don't get notified of the error
                     // twice (we will fail that method already)
                     dispatcher.removeHandler(handler.streamId, true);
@@ -355,7 +355,7 @@ class Connection {
                     }
                     handler.callback.onException(Connection.this, defunct(ce), System.nanoTime() - handler.startTime);
                 } else {
-                    logger.trace("[{}] request sent successfully", name);
+                    if (logger.isTraceEnabled()) logger.trace("[{}] request sent successfully", name);
                 }
             }
         };
@@ -373,7 +373,7 @@ class Connection {
             return closeFuture.get();
         }
 
-        logger.trace("[{}] closing connection", name);
+        if (logger.isTraceEnabled()) logger.trace("[{}] closing connection", name);
 
         // New writes will be refused now that the future is setup.
         // We must now wait on the last ongoing queries to return, which will in turn trigger
@@ -548,7 +548,7 @@ class Connection {
                 Message.Response response = (Message.Response)e.getMessage();
                 int streamId = response.getStreamId();
 
-                logger.trace("[{}] received: {}", name, e.getMessage());
+                if (logger.isTraceEnabled()) logger.trace("[{}] received: {}", name, e.getMessage());
 
                 if (streamId < 0) {
                     factory.defaultHandler.handle(response);

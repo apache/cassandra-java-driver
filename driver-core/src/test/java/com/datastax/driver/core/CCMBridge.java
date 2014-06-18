@@ -167,7 +167,7 @@ public class CCMBridge {
     private void execute(String command, Object... args) {
         try {
             String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
-            logger.debug("Executing: " + fullCommand);
+            if (logger.isDebugEnabled()) logger.debug("Executing: {}", fullCommand);
             Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
             int retValue = p.waitFor();
 
@@ -197,7 +197,7 @@ public class CCMBridge {
     private void executeAndPrint(String command, Object... args) {
         try {
             String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
-            logger.debug("Executing: " + fullCommand);
+            if (logger.isDebugEnabled()) logger.debug("Executing: {}", fullCommand);
             Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
             int retValue = p.waitFor();
 

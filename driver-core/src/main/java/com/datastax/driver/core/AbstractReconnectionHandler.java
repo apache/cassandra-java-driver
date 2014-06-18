@@ -57,7 +57,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
 
     public void start() {
         long firstDelay = schedule.nextDelayMs();
-        logger.debug("First reconnection scheduled in {}ms", firstDelay);
+        if (logger.isDebugEnabled()) logger.debug("First reconnection scheduled in {}ms", firstDelay);
         try {
             localFuture = executor.schedule(this, firstDelay, TimeUnit.MILLISECONDS);
 
@@ -73,7 +73,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
             readyForNext = true;
         } catch (RejectedExecutionException e) {
             // The executor has been shutdown, fair enough, just ignore
-            logger.debug("Aborting reconnection handling since the cluster is shutting down");
+            if (logger.isDebugEnabled()) logger.debug("Aborting reconnection handling since the cluster is shutting down");
         }
     }
 

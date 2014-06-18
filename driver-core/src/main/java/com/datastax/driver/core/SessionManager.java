@@ -185,7 +185,7 @@ class SessionManager extends AbstractSession {
         // Creating a pool is somewhat long since it has to create the connection, so do it asynchronously.
         return executor.submit(new Callable<Boolean>() {
             @Override public Boolean call() {
-                logger.debug("Adding {} to list of queried hosts", host);
+                if (logger.isDebugEnabled()) logger.debug("Adding {} to list of queried hosts", host);
                 try {
                     HostConnectionPool previous = pools.put(host, new HostConnectionPool(host, distance, SessionManager.this));
                     if (previous != null)
@@ -200,7 +200,7 @@ class SessionManager extends AbstractSession {
                     cluster.manager.signalConnectionFailure(host, new ConnectionException(e.address, e.getMessage()), isHostAddition);
                     return false;
                 } catch (ConnectionException e) {
-                    logger.debug("Error creating pool to {} ({})", host, e.getMessage());
+                    if (logger.isDebugEnabled()) logger.debug("Error creating pool to {} ({})", host, e.getMessage());
                     cluster.manager.signalConnectionFailure(host, e, isHostAddition);
                     return false;
                 }

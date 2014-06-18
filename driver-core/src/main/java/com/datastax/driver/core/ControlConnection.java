@@ -158,7 +158,7 @@ class ControlConnection implements Host.StateListener {
     }
 
     private void setNewConnection(Connection newConnection) {
-        logger.debug("[Control connection] Successfully connected to {}", newConnection.address);
+        if (logger.isDebugEnabled()) logger.debug("[Control connection] Successfully connected to {}", newConnection.address);
         Connection old = connectionRef.getAndSet(newConnection);
         if (old != null && !old.isClosed())
             old.closeAsync();
@@ -185,7 +185,7 @@ class ControlConnection implements Host.StateListener {
                     // Cluster.init() will handle it. Otherwise, just mark this node in error.
                     if (cluster.protocolVersion() < 1)
                         throw e;
-                    logger.debug("Ignoring host {}: {}", host, e.getMessage());
+                    if (logger.isDebugEnabled()) logger.debug("Ignoring host {}: {}", host, e.getMessage());
                     errors = logError(host, e.getCause(), errors, iter);
                 }
             }
@@ -222,7 +222,7 @@ class ControlConnection implements Host.StateListener {
         Connection connection = cluster.connectionFactory.open(host);
 
         try {
-            logger.trace("[Control connection] Registering for events");
+            if (logger.isTraceEnabled()) logger.trace("[Control connection] Registering for events");
             List<ProtocolEvent.Type> evs = Arrays.asList(
                 ProtocolEvent.Type.TOPOLOGY_CHANGE,
                 ProtocolEvent.Type.STATUS_CHANGE,
@@ -230,10 +230,10 @@ class ControlConnection implements Host.StateListener {
             );
             connection.write(new Requests.Register(evs));
 
-            logger.debug("[Control connection] Refreshing node list and token map");
+            if (logger.isDebugEnabled()) logger.debug("[Control connection] Refreshing node list and token map");
             refreshNodeListAndTokenMap(connection, cluster);
 
-            logger.debug("[Control connection] Refreshing schema");
+            if (logger.isDebugEnabled()) logger.debug("[Control connection] Refreshing schema");
             refreshSchema(connection, null, null, cluster);
             return connection;
         } catch (BusyConnectionException e) {
@@ -246,11 +246,11 @@ class ControlConnection implements Host.StateListener {
     }
 
     public void refreshSchema(String keyspace, String table) throws InterruptedException {
-        logger.debug("[Control connection] Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : '.' + table);
+        if (logger.isDebugEnabled()) logger.debug("[Control connection] Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : '.' + table);
         try {
             refreshSchema(connectionRef.get(), keyspace, table, cluster);
         } catch (ConnectionException e) {
-            logger.debug("[Control connection] Connection error while refreshing schema ({})", e.getMessage());
+            if (logger.isDebugEnabled()) logger.debug("[Control connection] Connection error while refreshing schema ({})", e.getMessage());
             signalError();
         } catch (ExecutionException e) {
             // If we're being shutdown during schema refresh, this can happen. That's fine so don't scare the user.
@@ -258,7 +258,7 @@ class ControlConnection implements Host.StateListener {
                 logger.error("[Control connection] Unexpected error while refreshing schema", e);
             signalError();
         } catch (BusyConnectionException e) {
-            logger.debug("[Control connection] Connection is busy, reconnecting");
+            if (logger.isDebugEnabled()) logger.debug("[Control connection] Connection is busy, reconnecting");
             signalError();
         }
     }
@@ -324,11 +324,11 @@ class ControlConnection implements Host.StateListener {
         if (c == null)
             return;
 
-        logger.debug("[Control connection] Refreshing node list and token map");
+        if (logger.isDebugEnabled()) logger.debug("[Control connection] Refreshing node list and token map");
         try {
             refreshNodeListAndTokenMap(c, cluster);
         } catch (ConnectionException e) {
-            logger.debug("[Control connection] Connection error while refreshing node list and token map ({})", e.getMessage());
+            if (logger.isDebugEnabled()) logger.debug("[Control connection] Connection error while refreshing node list and token map ({})", e.getMessage());
             signalError();
         } catch (ExecutionException e) {
             // If we're being shutdown during refresh, this can happen. That's fine so don't scare the user.
@@ -336,11 +336,11 @@ class ControlConnection implements Host.StateListener {
                 logger.error("[Control connection] Unexpected error while refreshing node list and token map", e);
             signalError();
         } catch (BusyConnectionException e) {
-            logger.debug("[Control connection] Connection is busy, reconnecting");
+            if (logger.isDebugEnabled()) logger.debug("[Control connection] Connection is busy, reconnecting");
             signalError();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.debug("[Control connection] Interrupted while refreshing node list and token map, skipping it.");
+            if (logger.isDebugEnabled()) logger.debug("[Control connection] Interrupted while refreshing node list and token map, skipping it.");
         }
     }
 
@@ -351,7 +351,7 @@ class ControlConnection implements Host.StateListener {
         if (peer.equals(connectedHost.getAddress()) || (addr != null && addr.equals(connectedHost.getAddress()))) {
             // Some DSE versions were inserting a line for the local node in peers (with mostly null values). This has been fixed, but if we
             // detect that's the case, ignore it as it's not really a big deal.
-            logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connectedHost);
+            if (logger.isDebugEnabled()) logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connectedHost);
             return null;
         } else if (addr == null) {
             logger.error("No rpc_address found for host {} in {}'s peers system table. That should not happen but using address {} instead", peer, connectedHost, peer);
@@ -383,19 +383,19 @@ class ControlConnection implements Host.StateListener {
                     return row;
             }
         } catch (ConnectionException e) {
-            logger.debug("[Control connection] Connection error while refreshing node info ({})", e.getMessage());
+            if (logger.isDebugEnabled()) logger.debug("[Control connection] Connection error while refreshing node info ({})", e.getMessage());
             signalError();
         } catch (ExecutionException e) {
             // If we're being shutdown during refresh, this can happen. That's fine so don't scare the user.
             if (!isShutdown)
-                logger.debug("[Control connection] Unexpected error while refreshing node info", e);
+                if (logger.isDebugEnabled()) logger.debug("[Control connection] Unexpected error while refreshing node info", e);
             signalError();
         } catch (BusyConnectionException e) {
-            logger.debug("[Control connection] Connection is busy, reconnecting");
+            if (logger.isDebugEnabled()) logger.debug("[Control connection] Connection is busy, reconnecting");
             signalError();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.debug("[Control connection] Interrupted while refreshing node list and token map, skipping it.");
+            if (logger.isDebugEnabled()) logger.debug("[Control connection] Interrupted while refreshing node list and token map, skipping it.");
         }
         return null;
     }
@@ -407,11 +407,11 @@ class ControlConnection implements Host.StateListener {
         if (c == null)
             return;
 
-        logger.debug("[Control connection] Refreshing node info on {}", host);
+        if (logger.isDebugEnabled()) logger.debug("[Control connection] Refreshing node info on {}", host);
         Row row = fetchNodeInfo(host, c);
         // It's possible our peers selection returns nothing, but that's fine, this method is best effort really.
         if (row == null) {
-            logger.debug("[control connection] Asked to refresh node info for {} but host not found in {} system table (this can happen)", host.getSocketAddress(), c.address);
+            if (logger.isDebugEnabled()) logger.debug("[control connection] Asked to refresh node info for {} but host not found in {} system table (this can happen)", host.getSocketAddress(), c.address);
             return;
         }
 
@@ -470,7 +470,7 @@ class ControlConnection implements Host.StateListener {
             // In theory host can't be null. However there is no point in risking a NPE in case we
             // have a race between a node removal and this.
             if (host == null) {
-                logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
+                if (logger.isDebugEnabled()) logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
                 updateInfo(host, localRow, cluster);
                 Set<String> tokens = localRow.getSet("tokens", String.class);
@@ -557,7 +557,7 @@ class ControlConnection implements Host.StateListener {
                     versions.add(row.getUUID("schema_version"));
             }
 
-            logger.debug("Checking for schema agreement: versions are {}", versions);
+            if (logger.isDebugEnabled()) logger.debug("Checking for schema agreement: versions are {}", versions);
 
             if (versions.size() <= 1)
                 return true;

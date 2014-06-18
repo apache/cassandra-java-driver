@@ -1104,7 +1104,7 @@ public class Cluster implements Closeable {
         final Set<SchemaChangeTracker> schemaChangeTrackers = new CopyOnWriteArraySet<SchemaChangeTracker>();
 
         private Manager(String clusterName, List<InetSocketAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
-            logger.debug("Starting new cluster with contact points " + contactPoints);
+            if (logger.isDebugEnabled()) logger.debug("Starting new cluster with contact points {}", contactPoints);
 
             this.clusterName = clusterName == null ? generateClusterName() : clusterName;
             this.configuration = configuration;
@@ -1161,7 +1161,7 @@ public class Cluster implements Closeable {
                         // For now, all C* version supports the protocol version 1
                         if (e.versionUnsupported <= 1)
                             throw new DriverInternalError("Got a node that don't even support the protocol version 1, this makes no sense", e);
-                        logger.debug("{}: retrying with version {}", e.getMessage(), e.versionUnsupported - 1);
+                        if (logger.isDebugEnabled()) logger.debug("{}: retrying with version {}", e.getMessage(), e.versionUnsupported - 1);
                         connectionFactory.protocolVersion = e.versionUnsupported - 1;
                     }
                 }
@@ -1214,7 +1214,7 @@ public class Cluster implements Closeable {
             if (future != null)
                 return future;
 
-            logger.debug("Shutting down");
+            if (logger.isDebugEnabled()) logger.debug("Shutting down");
 
             // If we're shutting down, there is no point in waiting on scheduled reconnections, nor on notifications
             // delivery so we use shutdownNow
@@ -1259,7 +1259,7 @@ public class Cluster implements Closeable {
 
         // Use triggerOnUp unless you're sure you want to run this on the current thread.
         private void onUp(final Host host) throws InterruptedException, ExecutionException {
-            logger.trace("Host {} is UP", host);
+            if (logger.isTraceEnabled()) logger.trace("Host {} is UP", host);
 
             if (isClosed())
                 return;
@@ -1275,7 +1275,7 @@ public class Cluster implements Closeable {
             // If there is a reconnection attempt scheduled for that node, cancel it
             ScheduledFuture<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
             if (scheduledAttempt != null) {
-                logger.debug("Cancelling reconnection attempt since node is UP");
+                if (logger.isDebugEnabled()) logger.debug("Cancelling reconnection attempt since node is UP");
                 scheduledAttempt.cancel(false);
             }
 
@@ -1315,7 +1315,7 @@ public class Cluster implements Closeable {
                     // If any of the creation failed, they will have signaled a connection failure
                     // which will trigger a reconnection to the node. So don't bother marking UP.
                     if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
-                        logger.debug("Connection pool cannot be created, not marking {} UP", host);
+                        if (logger.isDebugEnabled()) logger.debug("Connection pool cannot be created, not marking {} UP", host);
                         return;
                     }
 
@@ -1355,7 +1355,7 @@ public class Cluster implements Closeable {
 
         // Use triggerOnDown unless you're sure you want to run this on the current thread.
         private void onDown(final Host host, final boolean isHostAddition) throws InterruptedException, ExecutionException {
-            logger.trace("Host {} is DOWN", host);
+            if (logger.isTraceEnabled()) logger.trace("Host {} is DOWN", host);
 
             if (isClosed())
                 return;
@@ -1395,7 +1395,7 @@ public class Cluster implements Closeable {
                 return;
 
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
-            logger.debug("{} is down, scheduling connection retries", host);
+            if (logger.isDebugEnabled()) logger.debug("{} is down, scheduling connection retries", host);
             new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
 
                 @Override protected Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
@@ -1403,7 +1403,7 @@ public class Cluster implements Closeable {
                 }
 
                 @Override protected void onReconnection(Connection connection) {
-                    logger.debug("Successful reconnection to {}, setting host UP", host);
+                    if (logger.isDebugEnabled()) logger.debug("Successful reconnection to {}, setting host UP", host);
                     // Make sure we have up-to-date infos on that host before adding it (so we typically
                     // catch that an upgraded node uses a new cassandra version).
                     controlConnection.refreshNodeInfo(host);
@@ -1496,7 +1496,7 @@ public class Cluster implements Closeable {
                     // If any of the creation failed, they will have signaled a connection failure
                     // which will trigger a reconnection to the node. So don't bother marking UP.
                     if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
-                        logger.debug("Connection pool cannot be created, not marking {} UP", host);
+                        if (logger.isDebugEnabled()) logger.debug("Connection pool cannot be created, not marking {} UP", host);
                         return;
                     }
 
@@ -1537,7 +1537,7 @@ public class Cluster implements Closeable {
 
             host.setDown();
 
-            logger.debug("Removing host {}", host);
+            if (logger.isDebugEnabled()) logger.debug("Removing host {}", host);
             loadBalancingPolicy().onRemove(host);
             controlConnection.onRemove(host);
             for (SessionManager s : sessions)
@@ -1592,7 +1592,7 @@ public class Cluster implements Closeable {
             if (preparedQueries.isEmpty())
                 return;
 
-            logger.debug("Preparing {} prepared queries on newly up node {}", preparedQueries.size(), host);
+            if (logger.isDebugEnabled()) logger.debug("Preparing {} prepared queries on newly up node {}", preparedQueries.size(), host);
             try {
                 Connection connection = connectionFactory.open(host);
 
@@ -1638,7 +1638,7 @@ public class Cluster implements Closeable {
                                 // This "might" happen if we drop a CF but haven't removed it's prepared queries (which we don't do
                                 // currently). It's not a big deal however as if it's a more serious problem it'll show up later when
                                 // the query is tried for execution.
-                                logger.debug("Unexpected error while preparing queries on new/newly up host", e);
+                                if (logger.isDebugEnabled()) logger.debug("Unexpected error while preparing queries on new/newly up host", e);
                             }
                         }
                     }
@@ -1655,7 +1655,7 @@ public class Cluster implements Closeable {
         }
 
         public void submitSchemaRefresh(final String keyspace, final String table, final ProtocolEvent.SchemaChange scc) {
-            logger.trace("Submitting schema refresh");
+            if (logger.isTraceEnabled()) logger.trace("Submitting schema refresh");
             executor.submit(new ExceptionCatchingRunnable() {
                 @Override
                 public void runMayThrow() throws InterruptedException, ExecutionException {
@@ -1748,7 +1748,7 @@ public class Cluster implements Closeable {
 
             ProtocolEvent event = ((Responses.Event)response).event;
 
-            logger.debug("Received event {}, scheduling delivery", response);
+            if (logger.isDebugEnabled()) logger.debug("Received event {}, scheduling delivery", response);
 
             switch (event.type) {
                 case TOPOLOGY_CHANGE:
