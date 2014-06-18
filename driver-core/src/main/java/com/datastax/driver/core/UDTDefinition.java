@@ -230,7 +230,7 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
         private final String name;
         private final DataType type;
 
-        public Field(String name, DataType type) {
+        Field(String name, DataType type) {
             this.name = name;
             this.type = type;
         }

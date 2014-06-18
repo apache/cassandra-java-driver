@@ -61,7 +61,7 @@ public class UDTMapper<T> {
     }
 
     UDTValue toUDTValue(T nestedEntity) {
-        UDTValue udtValue = new UDTValue(udtDefinition);
+        UDTValue udtValue = udtDefinition.newValue();
         for (ColumnMapper<T> cm : entityMapper.allColumns()) {
             Object value = cm.getValue(nestedEntity);
             udtValue.setBytesUnsafe(cm.getColumnName(), value == null ? null : cm.getDataType().serialize(value, UDT_PROTOCOL_VERSION));

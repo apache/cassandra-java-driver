@@ -22,7 +22,7 @@ public class UDTValue extends AbstractData<UDTValue> {
 
     private final UDTDefinition definition;
 
-    public UDTValue(UDTDefinition definition) {
+    UDTValue(UDTDefinition definition) {
         // All things in a UDT are encoded with the protocol v3
         super(3, definition.size());
         this.definition = definition;
