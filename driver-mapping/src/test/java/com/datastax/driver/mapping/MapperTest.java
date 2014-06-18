@@ -5,17 +5,13 @@ import java.util.*;
 
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListenableFuture;
-
 import org.testng.annotations.Test;
-
 import static org.testng.Assert.*;
 
 import com.datastax.driver.mapping.MapperTest.User.Gender;
 import com.datastax.driver.mapping.annotations.*;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.UUIDs;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 /**
  * Basic tests for the mapping module.
@@ -129,7 +125,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
      * Another annotated entity, but that correspond to a table that has a
      * clustering column. Note that if there is more than one clustering column,
      * the order must be specified (@ClusteringColumn(0), @ClusteringColumn(1), ...).
-     * The same stands for the @PartitionKey. 
+     * The same stands for the @PartitionKey.
      */
     @Table(keyspace = "ks", name = "posts")
     public static class Post {
@@ -267,7 +263,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         @Query("SELECT * FROM ks.posts")
         public Result<Post> getAll();
     }
-    
+
     @Accessor
     public interface UserAccessor {
         // Demonstrates use of an enum as an accessor parameter
@@ -350,7 +346,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         m.delete(p3.getUserId(), p3.getPostId());
 
         assertTrue(postAccessor.getAllAsync(u1.getUserId()).get().isExhausted());
-        
+
         // Pass an enum constant as an accessor parameter
         UserAccessor userAccessor = manager.createAccessor(UserAccessor.class);
         userAccessor.updateNameAndGender(u1.getUserId(), "Paule", User.Gender.FEMALE);
