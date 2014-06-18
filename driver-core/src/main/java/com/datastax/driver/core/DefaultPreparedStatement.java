@@ -22,19 +22,20 @@ import com.datastax.driver.core.policies.RetryPolicy;
 
 public class DefaultPreparedStatement implements PreparedStatement{
 
+    final int protocolVersion;
     final PreparedId preparedId;
-
     final String query;
+
     final String queryKeyspace;
 
     volatile ByteBuffer routingKey;
-
     volatile ConsistencyLevel consistency;
     volatile ConsistencyLevel serialConsistency;
     volatile boolean traceQuery;
     volatile RetryPolicy retryPolicy;
 
-    private DefaultPreparedStatement(PreparedId id, String query, String queryKeyspace) {
+    private DefaultPreparedStatement(int protocolVersion, PreparedId id, String query, String queryKeyspace) {
+        this.protocolVersion = protocolVersion;
         this.preparedId = id;
         this.query = query;
         this.queryKeyspace = queryKeyspace;
@@ -46,7 +47,7 @@ public class DefaultPreparedStatement implements PreparedStatement{
         ColumnDefinitions defs = msg.metadata.columns;
 
         if (defs.size() == 0)
-            return new DefaultPreparedStatement(new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null), query, queryKeyspace);
+            return new DefaultPreparedStatement(msg.protocolVersion, new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null), query, queryKeyspace);
 
         List<ColumnMetadata> partitionKeyColumns = null;
         int[] pkIndexes = null;
@@ -67,7 +68,7 @@ public class DefaultPreparedStatement implements PreparedStatement{
 
         PreparedId prepId = new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, allSet(pkIndexes) ? pkIndexes : null);
 
-        return new DefaultPreparedStatement(prepId, query, queryKeyspace);
+        return new DefaultPreparedStatement(msg.protocolVersion, prepId, query, queryKeyspace);
     }
 
     private static void maybeGetIndex(String name, int j, List<ColumnMetadata> pkColumns, int[] pkIndexes) {

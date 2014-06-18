@@ -29,14 +29,26 @@ class ProtocolEvent {
         this.type = type;
     }
 
-    public static ProtocolEvent deserialize(ChannelBuffer cb) {
+    public static ProtocolEvent deserializeV1(ChannelBuffer cb) {
         switch (CBUtil.readEnumValue(Type.class, cb)) {
             case TOPOLOGY_CHANGE:
                 return TopologyChange.deserializeEvent(cb);
             case STATUS_CHANGE:
                 return StatusChange.deserializeEvent(cb);
             case SCHEMA_CHANGE:
-                return SchemaChange.deserializeEvent(cb);
+                return SchemaChange.deserializeEventV1(cb);
+        }
+        throw new AssertionError();
+    }
+
+    public static ProtocolEvent deserializeV3(ChannelBuffer cb) {
+        switch (CBUtil.readEnumValue(Type.class, cb)) {
+            case TOPOLOGY_CHANGE:
+                return TopologyChange.deserializeEvent(cb);
+            case STATUS_CHANGE:
+                return StatusChange.deserializeEvent(cb);
+            case SCHEMA_CHANGE:
+                return SchemaChange.deserializeEventV3(cb);
         }
         throw new AssertionError();
     }
@@ -95,29 +107,48 @@ class ProtocolEvent {
     public static class SchemaChange extends ProtocolEvent {
 
         public enum Change { CREATED, UPDATED, DROPPED }
+        public enum Target { KEYSPACE, TABLE, TYPE }
 
         public final Change change;
+        public final Target target;
         public final String keyspace;
-        public final String table;
+        public final String name;
 
-        public SchemaChange(Change change, String keyspace, String table) {
+        public SchemaChange(Change change, Target target, String keyspace, String name) {
             super(Type.SCHEMA_CHANGE);
             this.change = change;
+            this.target = target;
             this.keyspace = keyspace;
-            this.table = table;
+            this.name = name;
         }
 
         // Assumes the type has already been deserialized
-        private static SchemaChange deserializeEvent(ChannelBuffer cb) {
+        private static SchemaChange deserializeEventV1(ChannelBuffer cb) {
             Change change = CBUtil.readEnumValue(Change.class, cb);
             String keyspace = CBUtil.readString(cb);
-            String table = CBUtil.readString(cb);
-            return new SchemaChange(change, keyspace, table);
+            String name = CBUtil.readString(cb);
+            Target target = name.isEmpty() ? Target.KEYSPACE : Target.TABLE;
+            return new SchemaChange(change, target, keyspace, name);
+        }
+
+        // Assumes the type has already been deserialized
+        private static SchemaChange deserializeEventV3(ChannelBuffer cb) {
+            Change change = CBUtil.readEnumValue(Change.class, cb);
+            Target target = CBUtil.readEnumValue(Target.class, cb);
+            String keyspace = CBUtil.readString(cb);
+            String name = "";
+            switch (target) {
+                case TABLE:
+                case TYPE:
+                    name = CBUtil.readString(cb);
+                    break;
+            }
+            return new SchemaChange(change, target, keyspace, name);
         }
 
         @Override
         public String toString() {
-            return change + " " + keyspace + (table.isEmpty() ? "" : '.' + table);
+            return change.toString() + ' ' + target + ' ' +keyspace + (name.isEmpty() ? "" : '.' + name);
         }
     }
 

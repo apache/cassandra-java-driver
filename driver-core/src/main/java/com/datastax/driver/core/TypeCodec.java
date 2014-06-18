@@ -122,6 +122,10 @@ abstract class TypeCodec<T> {
         return codec != null ? (TypeCodec)codec : new MapCodec<Object, Object>(keys.codec(protocolVersion), values.codec(protocolVersion), protocolVersion);
     }
 
+    static TupleCodec tupleOf(DataType[] types) {
+        return new TupleCodec(types);
+    }
+
     static UDTCodec udtOf(UDTDefinition definition) {
         return new UDTCodec(definition);
     }
@@ -259,7 +263,7 @@ abstract class TypeCodec<T> {
         return copy;
     }
 
-    private static ByteBuffer readCollectionValue(ByteBuffer input, int version) {
+    static ByteBuffer readCollectionValue(ByteBuffer input, int version) {
         int size = version >= 3 ? input.getInt() : getUnsignedShort(input);
         return size < 0 ? null : readBytes(input, size);
     }
@@ -626,7 +630,7 @@ abstract class TypeCodec<T> {
 
     static class DateCodec extends TypeCodec<Date> {
 
-        private static final String[] iso8601Patterns = new String[] {
+        private static final String[] iso8601Patterns = {
             "yyyy-MM-dd HH:mm",
             "yyyy-MM-dd HH:mm:ss",
             "yyyy-MM-dd HH:mmZ",
@@ -653,7 +657,7 @@ abstract class TypeCodec<T> {
          * to parse date strings). It is copied here so as to not create a dependency on apache commons "just
          * for this".
          */
-        private static Date parseDate(String str, final String[] parsePatterns) throws ParseException {
+        private static Date parseDate(String str, String[] parsePatterns) throws ParseException {
             SimpleDateFormat parser = new SimpleDateFormat();
             parser.setLenient(false);
 
@@ -726,7 +730,7 @@ abstract class TypeCodec<T> {
 
         @Override
         public UUID deserialize(ByteBuffer bytes) {
-            return new UUID(bytes.getLong(bytes.position() + 0), bytes.getLong(bytes.position() + 8));
+            return new UUID(bytes.getLong(bytes.position()), bytes.getLong(bytes.position() + 8));
         }
     }
 
@@ -881,7 +885,6 @@ abstract class TypeCodec<T> {
         @Override
         public ByteBuffer serialize(Map<K, V> value) {
             List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(2 * value.size());
-            int size = 0;
             for (Map.Entry<K, V> entry : value.entrySet()) {
                 bbs.add(keyCodec.serialize(entry.getKey()));
                 bbs.add(valueCodec.serialize(entry.getValue()));
@@ -915,11 +918,11 @@ abstract class TypeCodec<T> {
             this.definition = definition;
         }
 
-        public UDTValue parse(String value) {
+        @Override public UDTValue parse(String value) {
             throw new UnsupportedOperationException();
         }
 
-        public ByteBuffer serialize(UDTValue value) {
+        @Override public ByteBuffer serialize(UDTValue value) {
             int size = 0;
             List<ByteBuffer> vs = new ArrayList<ByteBuffer>(definition.size());
             for (int i = 0; i < definition.size(); i++) {
@@ -940,12 +943,58 @@ abstract class TypeCodec<T> {
             return (ByteBuffer)result.flip();
         }
 
-        public UDTValue deserialize(ByteBuffer bytes) {
+        @Override public UDTValue deserialize(ByteBuffer bytes) {
             ByteBuffer input = bytes.duplicate();
             UDTValue value = definition.newValue();
 
             int i = 0;
             while (input.hasRemaining() && i < definition.size()) {
+                int n = input.getInt();
+                value.values[i++] = n < 0 ? null : readBytes(input, n);
+            }
+            return value;
+        }
+    }
+
+    static class TupleCodec extends TypeCodec<TupleValue> {
+
+        private final DataType[] types;
+
+        public TupleCodec(DataType[] types) {
+            this.types = types;
+        }
+
+        @Override public TupleValue parse(String value) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override public ByteBuffer serialize(TupleValue value) {
+            int size = 0;
+            List<ByteBuffer> vs = new ArrayList<ByteBuffer>(value.values.length);
+            for (int i = 0; i < types.length; i++) {
+                ByteBuffer v = value.values[i];
+                vs.add(v);
+                size += 4 + (v == null ? 0 : v.remaining());
+            }
+
+            ByteBuffer result = ByteBuffer.allocate(size);
+            for (ByteBuffer bb : vs) {
+                if (bb == null) {
+                    result.putInt(-1);
+                } else {
+                    result.putInt(bb.remaining());
+                    result.put(bb.duplicate());
+                }
+            }
+            return (ByteBuffer)result.flip();
+        }
+
+        @Override public TupleValue deserialize(ByteBuffer bytes) {
+            ByteBuffer input = bytes.duplicate();
+            TupleValue value = new TupleValue(types);
+
+            int i = 0;
+            while (input.hasRemaining() && i < types.length) {
                 int n = input.getInt();
                 value.values[i++] = n < 0 ? null : readBytes(input, n);
             }

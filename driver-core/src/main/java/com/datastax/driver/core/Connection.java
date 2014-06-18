@@ -16,8 +16,8 @@
 package com.datastax.driver.core;
 
 import javax.net.ssl.SSLEngine;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.channels.ClosedChannelException;
 import java.util.Iterator;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,7 +59,7 @@ class Connection {
     private final Channel channel;
     private final Factory factory;
 
-    private final Dispatcher dispatcher = new Dispatcher();
+    private final Dispatcher dispatcher;
 
     // Used by connection pooling to count how many requests are "in flight" on that connection.
     public final AtomicInteger inFlight = new AtomicInteger(0);
@@ -88,6 +88,9 @@ class Connection {
         ClientBootstrap bootstrap = factory.newBootstrap();
         ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
         int protocolVersion = factory.protocolVersion < 0 ? ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION : factory.protocolVersion;
+
+        dispatcher = new Dispatcher(protocolVersion);
+
         bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
 
         ChannelFuture future = bootstrap.connect(address);
@@ -345,7 +348,7 @@ class Connection {
                     dispatcher.removeHandler(handler.streamId, true);
 
                     ConnectionException ce;
-                    if (writeFuture.getCause() instanceof java.nio.channels.ClosedChannelException) {
+                    if (writeFuture.getCause() instanceof ClosedChannelException) {
                         ce = new TransportException(address, "Error writing: Closed channel");
                     } else {
                         ce = new TransportException(address, "Error writing", writeFuture.getCause());
@@ -508,8 +511,12 @@ class Connection {
 
     private class Dispatcher extends SimpleChannelUpstreamHandler {
 
-        public final StreamIdGenerator streamIdHandler = new StreamIdGenerator();
+        public final StreamIdGenerator streamIdHandler;
         private final ConcurrentMap<Integer, ResponseHandler> pending = new ConcurrentHashMap<Integer, ResponseHandler>();
+
+        public Dispatcher(int protocolVersion) {
+            streamIdHandler = StreamIdGenerator.forProtocolVersion(protocolVersion);
+        }
 
         public void add(ResponseHandler handler) {
             ResponseHandler old = pending.put(handler.streamId, handler);
@@ -640,7 +647,7 @@ class Connection {
 
             ChannelFuture future = channel.close();
             future.addListener(new ChannelFutureListener() {
-                public void operationComplete(ChannelFuture future) {
+                @Override public void operationComplete(ChannelFuture future) {
                     if (future.getCause() != null)
                         ConnectionCloseFuture.this.setException(future.getCause());
                     else
@@ -678,7 +685,7 @@ class Connection {
         @Override
         public void onSet(Connection connection, Message.Response response, long latency) {
             this.address = connection.address;
-            super.set(response);
+            set(response);
         }
 
         @Override
@@ -687,14 +694,14 @@ class Connection {
             // an exception, consumers shouldn't assume the address is not null.
             if (connection != null)
                 this.address = connection.address;
-            super.setException(exception);
+            setException(exception);
         }
 
         @Override
         public void onTimeout(Connection connection, long latency) {
             assert connection != null; // We always timeout on a specific connection, so this shouldn't be null
             this.address = connection.address;
-            super.setException(new ConnectionException(connection.address, "Operation timed out"));
+            setException(new ConnectionException(connection.address, "Operation timed out"));
         }
 
         public InetSocketAddress getAddress() {
@@ -703,10 +710,10 @@ class Connection {
     }
 
     interface ResponseCallback {
-        public Message.Request request();
-        public void onSet(Connection connection, Message.Response response, long latency);
-        public void onException(Connection connection, Exception exception, long latency);
-        public void onTimeout(Connection connection, long latency);
+        Message.Request request();
+        void onSet(Connection connection, Message.Response response, long latency);
+        void onException(Connection connection, Exception exception, long latency);
+        void onTimeout(Connection connection, long latency);
     }
 
     static class ResponseHandler {
@@ -754,7 +761,7 @@ class Connection {
     }
 
     public interface DefaultResponseHandler {
-        public void handle(Message.Response response);
+        void handle(Message.Response response);
     }
 
     private static class PipelineFactory implements ChannelPipelineFactory {
@@ -762,6 +769,7 @@ class Connection {
         private static final Message.ProtocolDecoder messageDecoder = new Message.ProtocolDecoder();
         private static final Message.ProtocolEncoder messageEncoderV1 = new Message.ProtocolEncoder(1);
         private static final Message.ProtocolEncoder messageEncoderV2 = new Message.ProtocolEncoder(2);
+        private static final Message.ProtocolEncoder messageEncoderV3 = new Message.ProtocolEncoder(3);
         private static final Frame.Encoder frameEncoder = new Frame.Encoder();
 
         private final int protocolVersion;
@@ -800,7 +808,7 @@ class Connection {
             }
 
             pipeline.addLast("messageDecoder", messageDecoder);
-            pipeline.addLast("messageEncoder", protocolVersion == 1 ? messageEncoderV1 : messageEncoderV2);
+            pipeline.addLast("messageEncoder", protocolVersion == 3 ? messageEncoderV3 : (protocolVersion == 1 ? messageEncoderV1 : messageEncoderV2));
 
             pipeline.addLast("dispatcher", connection.dispatcher);
 

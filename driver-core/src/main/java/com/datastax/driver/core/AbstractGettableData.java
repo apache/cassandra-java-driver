@@ -25,7 +25,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 public abstract class AbstractGettableData implements GettableData {
 
-    protected final int version;
+    final int version;
 
     /**
      * Creates a new AbstractGettableData object.
@@ -38,11 +38,10 @@ public abstract class AbstractGettableData implements GettableData {
      * @throws IllegalArgumentException if {@code protocolVersion} is not a valid protocol version.
      */
     protected AbstractGettableData(int protocolVersion) {
-        // TODO: reenable once NEWEST_SUPPORTED_PROTOCOL_VERSION is bumped to 3
-        //if (protocolVersion == 0 || protocolVersion > ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION)
-        //    throw new IllegalArgumentException(String.format("Unsupported protocol version %d; valid values must be between 1 and %d or negative (for auto-detect).",
-        //                                                     protocolVersion,
-        //                                                     ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION));
+        if (protocolVersion == 0 || protocolVersion > ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION)
+            throw new IllegalArgumentException(String.format("Unsupported protocol version %d; valid values must be between 1 and %d or negative (for auto-detect).",
+                                                             protocolVersion,
+                                                             ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION));
         this.version = protocolVersion;
     }
 

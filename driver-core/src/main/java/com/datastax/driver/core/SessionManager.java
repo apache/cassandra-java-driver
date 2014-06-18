@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.*;
@@ -55,7 +55,7 @@ class SessionManager extends AbstractSession {
         this.poolsState = new HostConnectionPool.PoolState();
     }
 
-    public synchronized Session init() {
+    @Override public synchronized Session init() {
         if (isInit)
             return this;
 
@@ -77,21 +77,21 @@ class SessionManager extends AbstractSession {
         return this;
     }
 
-    public String getLoggedKeyspace() {
+    @Override public String getLoggedKeyspace() {
         return poolsState.keyspace;
     }
 
-    public ResultSetFuture executeAsync(Statement statement) {
+    @Override public ResultSetFuture executeAsync(Statement statement) {
         return executeQuery(makeRequestMessage(statement, null), statement);
     }
 
-    public ListenableFuture<PreparedStatement> prepareAsync(String query) {
+    @Override public ListenableFuture<PreparedStatement> prepareAsync(String query) {
         Connection.Future future = new Connection.Future(new Requests.Prepare(query));
         execute(future, Statement.DEFAULT);
         return toPreparedStatement(query, future);
     }
 
-    public CloseFuture closeAsync() {
+    @Override public CloseFuture closeAsync() {
         CloseFuture future = closeFuture.get();
         if (future != null)
             return future;
@@ -107,21 +107,21 @@ class SessionManager extends AbstractSession {
             : closeFuture.get(); // We raced, it's ok, return the future that was actually set
     }
 
-    public boolean isClosed() {
+    @Override public boolean isClosed() {
         return closeFuture.get() != null;
     }
 
-    public Cluster getCluster() {
+    @Override public Cluster getCluster() {
         return cluster;
     }
 
-    public Session.State getState() {
+    @Override public Session.State getState() {
         return new State(this);
     }
 
     private ListenableFuture<PreparedStatement> toPreparedStatement(final String query, final Connection.Future future) {
         return Futures.transform(future, new Function<Message.Response, PreparedStatement>() {
-            public PreparedStatement apply(Message.Response response) {
+            @Override public PreparedStatement apply(Message.Response response) {
                 switch (response.type) {
                     case RESULT:
                         Responses.Result rm = (Responses.Result)response;
@@ -184,7 +184,7 @@ class SessionManager extends AbstractSession {
 
         // Creating a pool is somewhat long since it has to create the connection, so do it asynchronously.
         return executor.submit(new Callable<Boolean>() {
-            public Boolean call() {
+            @Override public Boolean call() {
                 logger.debug("Adding {} to list of queried hosts", host);
                 try {
                     HostConnectionPool previous = pools.put(host, new HostConnectionPool(host, distance, SessionManager.this));
@@ -209,7 +209,7 @@ class SessionManager extends AbstractSession {
     }
 
     ListenableFuture<?> removePool(Host host) {
-        final HostConnectionPool pool = pools.remove(host);
+        HostConnectionPool pool = pools.remove(host);
         return pool == null
              ? Futures.immediateFuture(null)
              : pool.closeAsync();
@@ -325,8 +325,8 @@ class SessionManager extends AbstractSession {
             // It saddens me that we special case for the query builder here, but for now this is simpler.
             // We could provide a general API in RegularStatement instead at some point but it's unclear what's
             // the cleanest way to do that is right now (and it's probably not really that useful anyway).
-            if (protoVersion == 1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
-                ((com.datastax.driver.core.querybuilder.BuiltStatement)rs).setForceNoValues(true);
+            if (protoVersion == 1 && rs instanceof BuiltStatement)
+                ((BuiltStatement)rs).setForceNoValues(true);
 
             ByteBuffer[] rawValues = rs.getValues();
 
@@ -335,12 +335,12 @@ class SessionManager extends AbstractSession {
 
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
             String qString = rs.getQueryString();
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false, fetchSize, pagingState, scl);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false, fetchSize, pagingState, scl, rs.getDefaultTimestamp());
             return new Requests.Query(qString, options);
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
             boolean skipMetadata = protoVersion != 1 && bs.statement.getPreparedId().resultSetMetadata != null;
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.wrapper.values), skipMetadata, fetchSize, pagingState, scl);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.wrapper.values), skipMetadata, fetchSize, pagingState, scl, bs.getDefaultTimestamp());
             return new Requests.Execute(bs.statement.getPreparedId().id, options);
         } else {
             assert statement instanceof BatchStatement : statement;
@@ -351,7 +351,7 @@ class SessionManager extends AbstractSession {
 
             BatchStatement bs = (BatchStatement)statement;
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
-            return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl);
+            return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl, bs.getSerialConsistencyLevel(), bs.getDefaultTimestamp());
         }
     }
 
@@ -452,20 +452,20 @@ class SessionManager extends AbstractSession {
             return -1;
         }
 
-        public Session getSession() {
+        @Override public Session getSession() {
             return session;
         }
 
-        public Collection<Host> getConnectedHosts() {
+        @Override public Collection<Host> getConnectedHosts() {
             return connectedHosts;
         }
 
-        public int getOpenConnections(Host host) {
+        @Override public int getOpenConnections(Host host) {
             int i = getIdx(host);
             return i < 0 ? 0 : openConnections[i];
         }
 
-        public int getInFlightQueries(Host host) {
+        @Override public int getInFlightQueries(Host host) {
             int i = getIdx(host);
             return i < 0 ? 0 : inFlightQueries[i];
         }

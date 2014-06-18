@@ -34,8 +34,7 @@ public class KeyspaceMetadata {
     private final ReplicationStrategy strategy;
     private final Map<String, String> replication;
 
-    // TODO: I don't think we change those, so there is probably no need for ConcurrentHashMap. Check if
-    // that's the case.
+    // TODO: I don't think we change those, so there is probably no need for ConcurrentHashMap. Check if that's the case.
     private final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
     private final Map<String, UDTDefinition> userTypes = new ConcurrentHashMap<String, UDTDefinition>();
 

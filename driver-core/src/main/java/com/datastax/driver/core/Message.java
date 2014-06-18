@@ -37,12 +37,12 @@ abstract class Message {
     protected static final Logger logger = LoggerFactory.getLogger(Message.class);
 
     public interface Coder<R extends Request> {
-        public void encode(R request, ChannelBuffer dest);
-        public int encodedSize(R request);
+        void encode(R request, ChannelBuffer dest);
+        int encodedSize(R request);
     }
 
     public interface Decoder<R extends Response> {
-        public R decode(ChannelBuffer body);
+        R decode(ChannelBuffer body);
     }
 
     private volatile int streamId;
@@ -61,30 +61,59 @@ abstract class Message {
     public static abstract class Request extends Message {
 
         public enum Type {
-            STARTUP        (1, Requests.Startup.coder, Requests.Startup.coder),
-            CREDENTIALS    (4, Requests.Credentials.coder, null),
-            OPTIONS        (5, Requests.Options.coder, Requests.Options.coder),
-            QUERY          (7, Requests.Query.coderV1, Requests.Query.coderV2),
-            PREPARE        (9, Requests.Prepare.coder, Requests.Prepare.coder),
-            EXECUTE        (10, Requests.Execute.coderV1, Requests.Execute.coderV2),
-            REGISTER       (11, Requests.Register.coder, Requests.Register.coder),
-            BATCH          (13, null, Requests.Batch.coder),
-            AUTH_RESPONSE  (15, Requests.AuthResponse.coder, Requests.AuthResponse.coder);
+            STARTUP        (1,
+                Requests.Startup.coder,
+                Requests.Startup.coder,
+                Requests.Startup.coder),
+            CREDENTIALS    (4,
+                Requests.Credentials.coder,
+                null,
+                null),
+            OPTIONS        (5,
+                Requests.Options.coder,
+                Requests.Options.coder,
+                Requests.Options.coder),
+            QUERY          (7,
+                Requests.Query.coderV1,
+                Requests.Query.coderV2,
+                Requests.Query.coderV3),
+            PREPARE        (9,
+                Requests.Prepare.coder,
+                Requests.Prepare.coder,
+                Requests.Prepare.coder),
+            EXECUTE        (10,
+                Requests.Execute.coderV1,
+                Requests.Execute.coderV2,
+                Requests.Execute.coderV3),
+            REGISTER       (11,
+                Requests.Register.coder,
+                Requests.Register.coder,
+                Requests.Register.coder),
+            BATCH          (13,
+                null,
+                Requests.Batch.coderV2,
+                Requests.Batch.coderV3),
+            AUTH_RESPONSE  (15,
+                Requests.AuthResponse.coder,
+                Requests.AuthResponse.coder,
+                Requests.AuthResponse.coder);
 
             public final int opcode;
             private final Coder<?> coderV1;
             private final Coder<?> coderV2;
+            private final Coder<?> coderV3;
 
-            private Type(int opcode, Coder<?> coderV1, Coder<?> coderV2) {
+            Type(int opcode, Coder<?> coderV1, Coder<?> coderV2, Coder<?> coderV3) {
                 this.opcode = opcode;
                 this.coderV1 = coderV1;
                 this.coderV2 = coderV2;
+                this.coderV3 = coderV3;
             }
 
             public Coder<?> coder(int version)
             {
-                assert version == 1 || version == 2 : "Unsupported protocol version, we shouldn't have arrived here";
-                return version == 1 ? coderV1 : coderV2;
+                assert version == 1 || version == 2 || version == 3 : "Unsupported protocol version, we shouldn't have arrived here";
+                return version == 3 ? coderV3 : (version == 1 ? coderV1 : coderV2);
             }
         }
 
@@ -107,18 +136,43 @@ abstract class Message {
     public static abstract class Response extends Message {
 
         public enum Type {
-            ERROR          (0, Responses.Error.decoder, Responses.Error.decoder),
-            READY          (2, Responses.Ready.decoder, Responses.Ready.decoder),
-            AUTHENTICATE   (3, Responses.Authenticate.decoder, Responses.Authenticate.decoder),
-            SUPPORTED      (6, Responses.Supported.decoder, Responses.Supported.decoder),
-            RESULT         (8, Responses.Result.decoderV1, Responses.Result.decoderV2),
-            EVENT          (12, Responses.Event.decoder, Responses.Event.decoder),
-            AUTH_CHALLENGE (14, Responses.AuthChallenge.decoder, Responses.AuthChallenge.decoder),
-            AUTH_SUCCESS   (16, Responses.AuthSuccess.decoder, Responses.AuthSuccess.decoder);
+            ERROR          (0,
+                Responses.Error.decoder,
+                Responses.Error.decoder,
+                Responses.Error.decoder),
+            READY          (2,
+                Responses.Ready.decoder,
+                Responses.Ready.decoder,
+                Responses.Ready.decoder),
+            AUTHENTICATE   (3,
+                Responses.Authenticate.decoder,
+                Responses.Authenticate.decoder,
+                Responses.Authenticate.decoder),
+            SUPPORTED      (6,
+                Responses.Supported.decoder,
+                Responses.Supported.decoder,
+                Responses.Supported.decoder),
+            RESULT         (8,
+                Responses.Result.decoderV1,
+                Responses.Result.decoderV2,
+                Responses.Result.decoderV3),
+            EVENT          (12,
+                Responses.Event.decoderV1,
+                Responses.Event.decoderV1,
+                Responses.Event.decoderV3),
+            AUTH_CHALLENGE (14,
+                Responses.AuthChallenge.decoder,
+                Responses.AuthChallenge.decoder,
+                Responses.AuthChallenge.decoder),
+            AUTH_SUCCESS   (16,
+                Responses.AuthSuccess.decoder,
+                Responses.AuthSuccess.decoder,
+                Responses.AuthSuccess.decoder);
 
             public final int opcode;
             private final Decoder<?> decoderV1;
             private final Decoder<?> decoderV2;
+            private final Decoder<?> decoderV3;
 
             private static final Type[] opcodeIdx;
             static {
@@ -133,13 +187,16 @@ abstract class Message {
                 }
             }
 
-            private Type(int opcode, Decoder<?> decoderV1, Decoder<?> decoderV2) {
+            Type(int opcode, Decoder<?> decoderV1, Decoder<?> decoderV2, Decoder<?> decoderV3) {
                 this.opcode = opcode;
                 this.decoderV1 = decoderV1;
                 this.decoderV2 = decoderV2;
+                this.decoderV3 = decoderV3;
             }
 
             public static Type fromOpcode(int opcode) {
+                if (opcode < 0 || opcode >= opcodeIdx.length || opcodeIdx[opcode] == null)
+                    throw new DriverInternalError(String.format("Unknown response opcode %d", opcode));
                 Type t = opcodeIdx[opcode];
                 if (t == null)
                     throw new DriverInternalError(String.format("Unknown response opcode %d", opcode));
@@ -148,8 +205,8 @@ abstract class Message {
 
             public Decoder<?> decoder(int version)
             {
-                assert version == 1 || version == 2 : "Unsupported protocol version, we shouldn't have arrived here";
-                return version == 1 ? decoderV1 : decoderV2;
+                assert version == 1 || version == 2 || version == 3 : "Unsupported protocol version, we shouldn't have arrived here";
+                return version == 3 ? decoderV3 : (version == 2 ? decoderV2 : decoderV1);
             }
         }
 
@@ -172,7 +229,7 @@ abstract class Message {
 
     public static class ProtocolDecoder extends OneToOneDecoder {
 
-        public Object decode(ChannelHandlerContext ctx, Channel channel, Object msg) {
+        @Override public Object decode(ChannelHandlerContext ctx, Channel channel, Object msg) {
             assert msg instanceof Frame : "Expecting frame, got " + msg;
 
             Frame frame = (Frame)msg;
@@ -192,7 +249,7 @@ abstract class Message {
             this.protocolVersion = version;
         }
 
-        @SuppressWarnings("unchecked")
+        @Override @SuppressWarnings("unchecked")
         public Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) {
             assert msg instanceof Request : "Expecting request, got " + msg;
 

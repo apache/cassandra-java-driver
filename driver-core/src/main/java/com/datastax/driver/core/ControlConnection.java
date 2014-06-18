@@ -270,7 +270,9 @@ class ControlConnection implements Host.StateListener {
         // a shot, and since we log in this case, it should be relatively easy to debug when if this ever fail).
         VersionNumber cassandraVersion;
         if (host == null || host.getCassandraVersion() == null) {
-            cassandraVersion = cluster.protocolVersion() == 1 ? VersionNumber.parse("1.2.0") : VersionNumber.parse("2.0.0");
+            cassandraVersion =
+                    cluster.protocolVersion() == 3 ? VersionNumber.parse("2.1.0") :
+                    cluster.protocolVersion() == 1 ? VersionNumber.parse("1.2.0") : VersionNumber.parse("2.0.0");
             logger.warn("Cannot find Cassandra version for host {} to parse the schema, using {} based on protocol version in use. "
                       + "If parsing the schema fails, this could be the cause", connection.address, cassandraVersion);
         } else {

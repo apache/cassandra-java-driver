@@ -18,8 +18,12 @@ package com.datastax.driver.core;
 /**
  * Interface for objects that are interested in tracking schema change events in the cluster.
  * <p>
+ * Extend {@link com.datastax.driver.core.AbstractSchemaChangeTracker} in your implementations.
+ * </p>
+ * <p>
  * An implementation of this interface can be registered against a Cluster
  * object through the {@link com.datastax.driver.core.Cluster#register} method.
+ * </p>
  */
 public interface SchemaChangeTracker {
 
@@ -28,21 +32,21 @@ public interface SchemaChangeTracker {
      *
      * @param keyspace the name of the keyspace that has been newly added.
      */
-    public void onKeyspaceCreated(String keyspace);
+    void onKeyspaceCreated(String keyspace);
 
     /**
      * Called when a keyspace has been dropped.
      *
      * @param keyspace the name of the keyspace that has been dropped.
      */
-    public void onKeyspaceDropped(String keyspace);
+    void onKeyspaceDropped(String keyspace);
 
     /**
      * Called when a keyspace has been updated.
      *
      * @param keyspace the name of the keyspace that has been updated.
      */
-    public void onKeyspaceUpdated(String keyspace);
+    void onKeyspaceUpdated(String keyspace);
 
     /**
      * Called when a table has been created.
@@ -50,7 +54,7 @@ public interface SchemaChangeTracker {
      * @param keyspace the name of the table's keyspace.
      * @param table the name of the table that has been newly added.
      */
-    public void onTableOrTypeCreated(String keyspace, String table);
+    void onTableCreated(String keyspace, String table);
 
     /**
      * Called when a table has been dropped.
@@ -58,7 +62,7 @@ public interface SchemaChangeTracker {
      * @param keyspace the name of the table's keyspace.
      * @param table the name of the table that has been dropped.
      */
-    public void onTableOrTypeDropped(String keyspace, String table);
+    void onTableDropped(String keyspace, String table);
 
     /**
      * Called when a table has been updated.
@@ -66,5 +70,29 @@ public interface SchemaChangeTracker {
      * @param keyspace the name of the table's keyspace.
      * @param table the name of the table that has been updated.
      */
-    public void onTableOrTypeUpdated(String keyspace, String table);
+    void onTableUpdated(String keyspace, String table);
+
+    /**
+     * Called when a user type has been created.
+     *
+     * @param keyspace the name of the table's keyspace.
+     * @param type the name of the user type that has been newly added.
+     */
+    void onTypeCreated(String keyspace, String type);
+
+    /**
+     * Called when a user type has been dropped.
+     *
+     * @param keyspace the name of the table's keyspace.
+     * @param type the name of the user type that has been dropped.
+     */
+    void onTypeDropped(String keyspace, String type);
+
+    /**
+     * Called when a user type has been updated.
+     *
+     * @param keyspace the name of the table's keyspace.
+     * @param type the name of the user type that has been updated.
+     */
+    void onTypeUpdated(String keyspace, String type);
 }
