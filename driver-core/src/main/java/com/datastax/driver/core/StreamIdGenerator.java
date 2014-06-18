@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
  */
 class StreamIdGenerator {
 
-    private static final int MAX_STREAM_PER_CONNECTION = 128;
+    static final int MAX_STREAM_PER_CONNECTION = 128;
 
     private static final long MAX_UNSIGNED_LONG = -1L;
 
