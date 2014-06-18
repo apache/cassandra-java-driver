@@ -159,10 +159,16 @@ class AnnotationParser {
 
     public static String columnName(Field field) {
         Column column = field.getAnnotation(Column.class);
-        if (column == null)
-            return field.getName();
+        if (column != null) {
+            return column.caseSensitive() ? column.name() : column.name().toLowerCase();
+        }
 
-        return column.caseSensitive() ? column.name() : column.name().toLowerCase();
+        com.datastax.driver.mapping.annotations.Field udtField = field.getAnnotation(com.datastax.driver.mapping.annotations.Field.class);
+        if (udtField != null) {
+            return udtField.caseSensitive() ? udtField.name() : udtField.name().toLowerCase();
+        }
+
+        return field.getName();
     }
 
     public static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, AccessorMapper.Factory factory, MappingManager mappingManager) {

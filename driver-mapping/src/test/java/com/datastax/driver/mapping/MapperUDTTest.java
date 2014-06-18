@@ -103,7 +103,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
         private String city;
 
-        @Column(name = "zip_code")
+        @Field(name = "zip_code")
         private int zipCode;
 
         private Set<String> phones;
