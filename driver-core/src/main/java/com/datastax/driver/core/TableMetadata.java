@@ -93,12 +93,12 @@ public class TableMetadata {
         this.cassandraVersion = cassandraVersion;
     }
 
-    static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols, VersionNumber cassandraVersion) {
+    static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols, int protocolVersion, VersionNumber cassandraVersion) {
 
         String name = row.getString(CF_NAME);
 
-        CassandraTypeParser.ParseResult keyValidator = CassandraTypeParser.parseWithComposite(row.getString(KEY_VALIDATOR));
-        CassandraTypeParser.ParseResult comparator = CassandraTypeParser.parseWithComposite(row.getString(COMPARATOR));
+        CassandraTypeParser.ParseResult keyValidator = CassandraTypeParser.parseWithComposite(protocolVersion, row.getString(KEY_VALIDATOR));
+        CassandraTypeParser.ParseResult comparator = CassandraTypeParser.parseWithComposite(protocolVersion, row.getString(COMPARATOR));
         List<String> columnAliases = cassandraVersion.getMajor() >= 2 || row.getString(COLUMN_ALIASES) == null
                                    ? Collections.<String>emptyList()
                                    : SimpleJSONParser.parseStringList(row.getString(COLUMN_ALIASES));
@@ -151,7 +151,7 @@ public class TableMetadata {
             // We have a value alias if we're dense
             if (isDense) {
                 String alias = row.isNull(VALUE_ALIAS) ? DEFAULT_VALUE_ALIAS : row.getString(VALUE_ALIAS);
-                DataType type = CassandraTypeParser.parseOne(row.getString(VALIDATOR));
+                DataType type = CassandraTypeParser.parseOne(protocolVersion, row.getString(VALIDATOR));
                 otherColumns.add(ColumnMetadata.forAlias(tm, alias, type));
             }
         }

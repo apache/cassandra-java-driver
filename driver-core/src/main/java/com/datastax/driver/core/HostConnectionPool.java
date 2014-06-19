@@ -91,7 +91,7 @@ class HostConnectionPool {
         this.connections = new CopyOnWriteArrayList<PooledConnection>(l);
         this.open = new AtomicInteger(connections.size());
 
-        logger.trace("Created connection pool to host {}", host);
+        if (logger.isTraceEnabled()) logger.trace("Created connection pool to host {}", host);
     }
 
     private PoolingOptions options() {
@@ -327,7 +327,7 @@ class HostConnectionPool {
             return false;
         } catch (ConnectionException e) {
             open.decrementAndGet();
-            logger.debug("Connection error to {} while creating additional connection", host);
+            if (logger.isDebugEnabled()) logger.debug("Connection error to {} while creating additional connection", host);
             if (manager.cluster.manager.signalConnectionFailure(host, e, false))
                 closeAsync();
             return false;
@@ -355,7 +355,7 @@ class HostConnectionPool {
                 break;
         }
 
-        logger.debug("Creating new connection on busy pool to {}", host);
+        if (logger.isDebugEnabled()) logger.debug("Creating new connection on busy pool to {}", host);
         manager.blockingExecutor().submit(newConnectionTask);
     }
 
@@ -384,7 +384,7 @@ class HostConnectionPool {
         if (future != null)
             return future;
 
-        logger.debug("Shutting down pool");
+        if (logger.isDebugEnabled()) logger.debug("Shutting down pool");
 
         // Wake up all threads that waits
         signalAllAvailableConnection();

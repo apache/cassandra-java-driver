@@ -165,6 +165,17 @@ public class DataTypeTest extends CCMBridge.PerClassSingleNodeCluster {
                 case VARINT:
                     sampleData.put(dataType, new BigInteger(Integer.toString(Integer.MAX_VALUE) + "000"));
                     break;
+                case UDT:
+                    Collection<UDTDefinition.Field> fields = Arrays.asList(
+                        new UDTDefinition.Field("f1", DataType.bigint()),
+                        new UDTDefinition.Field("f2", DataType.text())
+                    );
+                    UDTDefinition udtDefinition = new UDTDefinition(3, "ks", "type", fields);
+                    sampleData.put(dataType, new UDTValue(udtDefinition));
+                    break;
+                case TUPLE:
+                    sampleData.put(dataType, new TupleValue(3, Arrays.asList(DataType.cint(), DataType.text())));
+                    break;
                 default:
                     throw new RuntimeException("Missing handling of " + dataType);
             }

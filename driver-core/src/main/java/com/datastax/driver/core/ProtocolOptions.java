@@ -60,7 +60,7 @@ public class ProtocolOptions {
         public String toString() {
             return protocolName;
         }
-    };
+    }
 
     /**
      * The default port for Cassandra native binary protocol: 9042.
@@ -70,7 +70,7 @@ public class ProtocolOptions {
     /**
      * The newest version of the protocol that this version of the driver support.
      */
-    public static final int NEWEST_SUPPORTED_PROTOCOL_VERSION = 2;
+    public static final int NEWEST_SUPPORTED_PROTOCOL_VERSION = 3;
 
     private volatile Cluster.Manager manager;
 
@@ -109,7 +109,7 @@ public class ProtocolOptions {
      * @param port the port to use for the binary protocol.
      * @param protocolVersion the protocol version to use. This can be a negative number, in which case the
      * version uses will be the biggest version supported by the <em>first</em> node the driver connects to.
-     * Otherwise, it must be between 1 and {@link NEWEST_SUPPORTED_PROTOCOL_VERSION} to force using a particular
+     * Otherwise, it must be between 1 and {@link #NEWEST_SUPPORTED_PROTOCOL_VERSION} to force using a particular
      * protocol version. See
      * {@link Cluster.Builder#withProtocolVersion} for more details.
      * @param sslOptions the SSL options to use. Use {@code null} if SSL is not

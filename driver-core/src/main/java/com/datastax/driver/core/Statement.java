@@ -42,6 +42,7 @@ public abstract class Statement {
     private volatile ConsistencyLevel serialConsistency;
     private volatile boolean traceQuery;
     private volatile int fetchSize;
+    private volatile long defaultTimestamp;
 
     private volatile RetryPolicy retryPolicy;
 
@@ -115,6 +116,14 @@ public abstract class Statement {
      */
     public ConsistencyLevel getSerialConsistencyLevel() {
         return serialConsistency;
+    }
+
+    public long getDefaultTimestamp() {
+        return defaultTimestamp;
+    }
+
+    public void setDefaultTimestamp(long defaultTimestamp) {
+        this.defaultTimestamp = defaultTimestamp;
     }
 
     /**

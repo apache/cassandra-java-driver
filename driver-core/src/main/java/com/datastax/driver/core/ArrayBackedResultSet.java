@@ -39,9 +39,11 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
     private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque<List<ByteBuffer>>(0);
 
+    protected final int protocolVersion;
     protected final ColumnDefinitions metadata;
 
-    private ArrayBackedResultSet(ColumnDefinitions metadata) {
+    private ArrayBackedResultSet(int protocolVersion, ColumnDefinitions metadata) {
+        this.protocolVersion = protocolVersion;
         this.metadata = metadata;
     }
 
@@ -67,8 +69,8 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 // this explicitly because MultiPage implementation don't support info == null.
                 assert r.metadata.pagingState == null || info != null;
                 return r.metadata.pagingState == null
-                     ? new SinglePage(columnDefs, r.data, info)
-                     : new MultiPage(columnDefs, r.data, info, r.metadata.pagingState, session, statement);
+                     ? new SinglePage(r.protocolVersion, columnDefs, r.data, info)
+                     : new MultiPage(r.protocolVersion, columnDefs, r.data, info, r.metadata.pagingState, session, statement);
 
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
@@ -87,14 +89,14 @@ abstract class ArrayBackedResultSet implements ResultSet {
     }
 
     private static ArrayBackedResultSet empty(ExecutionInfo info) {
-        return new SinglePage(ColumnDefinitions.EMPTY, EMPTY_QUEUE, info);
+        return new SinglePage(1, ColumnDefinitions.EMPTY, EMPTY_QUEUE, info);
     }
 
-    public ColumnDefinitions getColumnDefinitions() {
+    @Override public ColumnDefinitions getColumnDefinitions() {
         return metadata;
     }
 
-    public List<Row> all() {
+    @Override public List<Row> all() {
         if (isExhausted())
             return Collections.emptyList();
 
@@ -140,39 +142,40 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final Queue<List<ByteBuffer>> rows;
         private final ExecutionInfo info;
 
-        private SinglePage(ColumnDefinitions metadata,
+        private SinglePage(int protocolVersion,
+                           ColumnDefinitions metadata,
                            Queue<List<ByteBuffer>> rows,
                            ExecutionInfo info) {
-            super(metadata);
+            super(protocolVersion, metadata);
             this.info = info;
             this.rows = rows;
         }
 
-        public boolean isExhausted() {
+        @Override public boolean isExhausted() {
             return rows.isEmpty();
         }
 
-        public Row one() {
-            return ArrayBackedRow.fromData(metadata, rows.poll());
+        @Override public Row one() {
+            return ArrayBackedRow.fromData(protocolVersion, metadata, rows.poll());
         }
 
-        public int getAvailableWithoutFetching() {
+        @Override public int getAvailableWithoutFetching() {
             return rows.size();
         }
 
-        public boolean isFullyFetched() {
+        @Override public boolean isFullyFetched() {
             return true;
         }
 
-        public ListenableFuture<Void> fetchMoreResults() {
+        @Override public ListenableFuture<Void> fetchMoreResults() {
             return Futures.immediateFuture(null);
         }
 
-        public ExecutionInfo getExecutionInfo() {
+        @Override public ExecutionInfo getExecutionInfo() {
             return info;
         }
 
-        public List<ExecutionInfo> getAllExecutionInfo() {
+        @Override public List<ExecutionInfo> getAllExecutionInfo() {
             return Collections.singletonList(info);
         }
     }
@@ -202,14 +205,15 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final SessionManager session;
         private final Statement statement;
 
-        private MultiPage(ColumnDefinitions metadata,
+        private MultiPage(int protocolVersion,
+                          ColumnDefinitions metadata,
                           Queue<List<ByteBuffer>> rows,
                           ExecutionInfo info,
                           ByteBuffer pagingState,
                           SessionManager session,
                           Statement statement) {
 
-            super(metadata);
+            super(protocolVersion, metadata);
             this.currentPage = rows;
             this.infos.offer(info);
 
@@ -218,24 +222,24 @@ abstract class ArrayBackedResultSet implements ResultSet {
             this.statement = statement;
         }
 
-        public boolean isExhausted() {
+        @Override public boolean isExhausted() {
             prepareNextRow();
             return currentPage.isEmpty();
         }
 
-        public Row one() {
+        @Override public Row one() {
             prepareNextRow();
-            return ArrayBackedRow.fromData(metadata, currentPage.poll());
+            return ArrayBackedRow.fromData(protocolVersion, metadata, currentPage.poll());
         }
 
-        public int getAvailableWithoutFetching() {
+        @Override public int getAvailableWithoutFetching() {
             int available = currentPage.size();
             for (Queue<List<ByteBuffer>> page : nextPages)
                 available += page.size();
             return available;
         }
 
-        public boolean isFullyFetched() {
+        @Override public boolean isFullyFetched() {
             return fetchState == null;
         }
 
@@ -264,7 +268,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
             }
         }
 
-        public ListenableFuture<Void> fetchMoreResults() {
+        @Override public ListenableFuture<Void> fetchMoreResults() {
             return fetchMoreResults(this.fetchState);
         }
 
@@ -361,11 +365,11 @@ abstract class ArrayBackedResultSet implements ResultSet {
             return future;
         }
 
-        public ExecutionInfo getExecutionInfo() {
+        @Override public ExecutionInfo getExecutionInfo() {
             return infos.getLast();
         }
 
-        public List<ExecutionInfo> getAllExecutionInfo() {
+        @Override public List<ExecutionInfo> getAllExecutionInfo() {
             return new ArrayList<ExecutionInfo>(infos);
         }
 

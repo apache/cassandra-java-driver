@@ -16,51 +16,44 @@
 package com.datastax.driver.core;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * A value for a User Defined Type.
  */
-public class UDTValue extends AbstractData<UDTValue> {
+public class TupleValue extends AbstractData<TupleValue> {
 
-    private final UDTDefinition definition;
+    private final DataType[] types;
 
-    UDTValue(UDTDefinition definition) {
+    public TupleValue(int protocolVersion, List<DataType> types) {
+        this(protocolVersion, types.toArray(new DataType[types.size()]));
+    }
+
+    TupleValue(int protocolVersion, DataType[] types) {
         // All things in a UDT are encoded with the protocol v3
-        super(definition.protocolVersion, definition.size());
-        this.definition = definition;
+        super(protocolVersion, types.length);
+        this.types = types;
     }
 
     @Override protected DataType getType(int i) {
-        return definition.byIdx[i].getType();
+        return types[i];
     }
 
     @Override protected String getName(int i) {
-        return definition.byIdx[i].getName();
+        return null;
     }
 
     @Override protected int[] getAllIndexesOf(String name) {
-        int[] indexes = definition.byName.get(name);
-        if (indexes == null)
-            throw new IllegalArgumentException(name + " is not a field defined in this UDT");
-        return indexes;
-    }
-
-    /**
-     * The definition of the UDT this is a value of.
-     *
-     * @return the definition of the UDT this is a value of.
-     */
-    public UDTDefinition getDefinition() {
-        return definition;
+        return null;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof UDTValue))
+        if (!(o instanceof TupleValue))
             return false;
 
-        UDTValue that = (UDTValue)o;
-        if (!definition.equals(that.definition))
+        TupleValue that = (TupleValue)o;
+        if (!Arrays.equals(types, that.types))
             return false;
 
         return super.equals(o);
@@ -82,12 +75,13 @@ public class UDTValue extends AbstractData<UDTValue> {
         for (int i = 0; i < values.length; i++) {
             if (i > 0)
                 sb.append(',');
-
-            sb.append(getName(i));
-            sb.append(':');
             sb.append(values[i] == null ? "null" : getType(i).deserialize(values[i], version));
         }
         sb.append('}');
         return sb.toString();
+    }
+
+    public int size() {
+        return values.length;
     }
 }

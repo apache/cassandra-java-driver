@@ -34,8 +34,7 @@ public class KeyspaceMetadata {
     private final ReplicationStrategy strategy;
     private final Map<String, String> replication;
 
-    // TODO: I don't think we change those, so there is probably no need for ConcurrentHashMap. Check if
-    // that's the case.
+    // TODO: I don't think we change those, so there is probably no need for ConcurrentHashMap. Check if that's the case.
     private final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
     private final Map<String, UDTDefinition> userTypes = new ConcurrentHashMap<String, UDTDefinition>();
 
@@ -46,7 +45,7 @@ public class KeyspaceMetadata {
         this.strategy = ReplicationStrategy.create(replication);
     }
 
-    static KeyspaceMetadata build(Row row, List<Row> udtRows) {
+    static KeyspaceMetadata build(int protocolVersion, Row row, List<Row> udtRows) {
 
         String name = row.getString(KS_NAME);
         boolean durableWrites = row.getBool(DURABLE_WRITES);
@@ -61,7 +60,7 @@ public class KeyspaceMetadata {
             return ksm;
 
         for (Row r : udtRows) {
-            UDTDefinition def = UDTDefinition.build(r);
+            UDTDefinition def = UDTDefinition.build(protocolVersion, r);
             ksm.userTypes.put(def.getName(), def);
         }
 

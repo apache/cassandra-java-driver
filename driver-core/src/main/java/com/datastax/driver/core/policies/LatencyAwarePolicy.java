@@ -106,7 +106,7 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         @Override
         public void run() {
             try {
-                logger.trace("Updating LatencyAwarePolicy minimum");
+                if (logger.isTraceEnabled()) logger.trace("Updating LatencyAwarePolicy minimum");
                 latencyTracker.updateMin();
 
                 if (logger.isDebugEnabled()) {
@@ -126,20 +126,22 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
                             continue;
 
                         if (stats.lastUpdatedSince() > retryPeriod) {
-                            if (excludedAtLastTick.contains(host))
-                                logger.debug(String.format("Previously avoided host %s has not be queried since %.3fms: will be reconsidered.", host, inMS(stats.lastUpdatedSince())));
+                            if (logger.isDebugEnabled())
+                                if (excludedAtLastTick.contains(host))
+                                    logger.debug(String.format("Previously avoided host %s has not be queried since %.3fms: will be reconsidered.", host, inMS(stats.lastUpdatedSince())));
                             continue;
                         }
 
                         if (stats.getLatencyScore() > ((long)(exclusionThreshold * currentMin))) {
                             excludedThisTick.add(host);
-                            if (!excludedAtLastTick.contains(host))
-                                logger.debug(String.format("Host %s has an average latency score of %.3fms, more than %f times more than the minimum %.3fms: will be avoided temporarily.",
+                            if (logger.isDebugEnabled())
+                                if (!excludedAtLastTick.contains(host))
+                                    logger.debug(String.format("Host %s has an average latency score of %.3fms, more than %f times more than the minimum %.3fms: will be avoided temporarily.",
                                                           host, inMS(stats.getLatencyScore()), exclusionThreshold, inMS(currentMin)));
                             continue;
                         }
 
-                        if (excludedAtLastTick.contains(host)) {
+                        if (logger.isDebugEnabled()) if (excludedAtLastTick.contains(host)) {
                             logger.debug("Previously avoided host {} average latency has come back within accepted bounds: will be reconsidered.", host);
                         }
                     }

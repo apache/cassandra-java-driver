@@ -22,9 +22,9 @@ import static org.testng.Assert.fail;
 public class StreamIdGeneratorTest {
 
     @Test(groups = "unit")
-    public void SimpleGenIdTest() throws Exception {
+    public void simpleGenIdTestV2() throws Exception {
 
-        StreamIdGenerator generator = new StreamIdGenerator();
+        StreamIdGenerator generator = StreamIdGenerator.forProtocolVersion(2);
 
         assertEquals(generator.next(), 0);
         assertEquals(generator.next(), 1);
@@ -37,6 +37,36 @@ public class StreamIdGeneratorTest {
         assertEquals(generator.next(), 4);
 
         for (int i = 5; i < 128; i++)
+            assertEquals(generator.next(), i);
+
+        generator.release(100);
+        assertEquals(generator.next(), 100);
+
+        try {
+            generator.next();
+            fail("No more streamId should be available");
+        } catch (BusyConnectionException e) {
+            // Ok, expected
+        }
+    }
+
+
+    @Test(groups = "unit")
+    public void simpleGenIdTestV3() throws Exception {
+
+        StreamIdGenerator generator = StreamIdGenerator.forProtocolVersion(3);
+
+        assertEquals(generator.next(), 0);
+        assertEquals(generator.next(), 1);
+        generator.release(0);
+        assertEquals(generator.next(), 0);
+        assertEquals(generator.next(), 2);
+        assertEquals(generator.next(), 3);
+        generator.release(1);
+        assertEquals(generator.next(), 1);
+        assertEquals(generator.next(), 4);
+
+        for (int i = 5; i < 32768; i++)
             assertEquals(generator.next(), i);
 
         generator.release(100);

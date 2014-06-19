@@ -96,10 +96,10 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                     + ") WITH CLUSTERING ORDER BY (v1 DESC, v2 ASC)\n"
                     + "   AND read_repair_chance = 0.5\n"
                     + "   AND dclocal_read_repair_chance = 0.6\n"
-                    + "   AND replicate_on_write = true\n"
+                    //+ "   AND replicate_on_write = true\n"
                     + "   AND gc_grace_seconds = 42\n"
                     + "   AND bloom_filter_fp_chance = 0.01\n"
-                    + "   AND caching = 'ALL'\n"
+                    + "   AND caching = '{\"keys\":\"ALL\", \"rows_per_partition\":\"ALL\"}'\n"
                     + "   AND comment = 'My awesome table'\n"
                     + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
                     + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };";

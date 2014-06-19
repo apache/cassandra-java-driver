@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -49,7 +48,7 @@ public class Metadata {
     }
 
     // Synchronized to make it easy to detect dropped keyspaces
-    synchronized void rebuildSchema(String keyspace, String table, ResultSet ks, ResultSet udts, ResultSet cfs, ResultSet cols, VersionNumber cassandraVersion) {
+    synchronized void rebuildSchema(String keyspace, String table, ResultSet ks, ResultSet udts, ResultSet cfs, ResultSet cols, int protocolVersion, VersionNumber cassandraVersion) {
 
         Map<String, List<Row>> cfDefs = new HashMap<String, List<Row>>();
         Map<String, List<Row>> udtDefs = new HashMap<String, List<Row>>();
@@ -93,7 +92,7 @@ public class Metadata {
                 l = new HashMap<String, ColumnMetadata.Raw>();
                 colsByCf.put(cfName, l);
             }
-            ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row, cassandraVersion);
+            ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row, protocolVersion, cassandraVersion);
             l.put(c.name, c);
         }
 
@@ -102,10 +101,10 @@ public class Metadata {
             Set<String> addedKs = new HashSet<String>();
             for (Row ksRow : ks) {
                 String ksName = ksRow.getString(KeyspaceMetadata.KS_NAME);
-                KeyspaceMetadata ksm = KeyspaceMetadata.build(ksRow, udtDefs.get(ksName));
+                KeyspaceMetadata ksm = KeyspaceMetadata.build(protocolVersion, ksRow, udtDefs.get(ksName));
 
                 if (cfDefs.containsKey(ksName)) {
-                    buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), cassandraVersion);
+                    buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), protocolVersion, cassandraVersion);
                 }
                 addedKs.add(ksName);
                 keyspaces.put(ksName, ksm);
@@ -128,16 +127,16 @@ public class Metadata {
             // wrong. Log an error an schedule a full schema rebuilt.
             if (ksm == null) {
                 logger.error(String.format("Asked to rebuild table %s.%s but I don't know keyspace %s", keyspace, table, keyspace));
-                cluster.submitSchemaRefresh(null, null);
+                cluster.submitSchemaRefresh(null, null, null);
                 return;
             }
 
             if (cfDefs.containsKey(keyspace))
-                buildTableMetadata(ksm, cfDefs.get(keyspace), colsDefs.get(keyspace), cassandraVersion);
+                buildTableMetadata(ksm, cfDefs.get(keyspace), colsDefs.get(keyspace), protocolVersion, cassandraVersion);
         }
     }
 
-    private void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, VersionNumber cassandraVersion) {
+    private void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, int protocolVersion, VersionNumber cassandraVersion) {
         for (Row cfRow : cfRows) {
             String cfName = cfRow.getString(TableMetadata.CF_NAME);
             try {
@@ -161,7 +160,7 @@ public class Metadata {
                         cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
                     }
                 }
-                TableMetadata.build(ksm, cfRow, cols, cassandraVersion);
+                TableMetadata.build(ksm, cfRow, cols, protocolVersion, cassandraVersion);
             } catch (RuntimeException e) {
                 // See ControlConnection#refreshSchema for why we'd rather not probably this further
                 logger.error(String.format("Error parsing schema for table %s.%s: "

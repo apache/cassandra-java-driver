@@ -64,7 +64,7 @@ class CassandraTypeParser {
             .put("org.apache.cassandra.db.marshal.TimeUUIDType",      DataType.timeuuid())
             .build();
 
-    static DataType parseOne(String className) {
+    static DataType parseOne(int protocolVersion, String className) {
         if (isReversed(className)) {
             // Just skip the ReversedType part, we don't care
             Parser p = new Parser(className, 0);
@@ -79,14 +79,14 @@ class CassandraTypeParser {
         String next = parser.parseNextName();
 
         if (next.startsWith(LIST_TYPE))
-            return DataType.list(parseOne(parser.getTypeParameters().get(0)));
+            return DataType.list(parseOne(protocolVersion, parser.getTypeParameters().get(0)));
 
         if (next.startsWith(SET_TYPE))
-            return DataType.set(parseOne(parser.getTypeParameters().get(0)));
+            return DataType.set(parseOne(protocolVersion, parser.getTypeParameters().get(0)));
 
         if (next.startsWith(MAP_TYPE)) {
             List<String> params = parser.getTypeParameters();
-            return DataType.map(parseOne(params.get(0)), parseOne(params.get(1)));
+            return DataType.map(parseOne(protocolVersion, params.get(0)), parseOne(protocolVersion, params.get(1)));
         }
 
         if (isUserType(next)) {
@@ -99,8 +99,8 @@ class CassandraTypeParser {
             Map<String, String> rawFields = parser.getNameAndTypeParameters();
             List<UDTDefinition.Field> fields = new ArrayList<UDTDefinition.Field>(rawFields.size());
             for (Map.Entry<String, String> entry : rawFields.entrySet())
-                fields.add(new UDTDefinition.Field(entry.getKey(), parseOne(entry.getValue())));
-            return DataType.userType(new UDTDefinition(keyspace, typeName, fields));
+                fields.add(new UDTDefinition.Field(entry.getKey(), parseOne(protocolVersion, entry.getValue())));
+            return DataType.userType(new UDTDefinition(protocolVersion, keyspace, typeName, fields));
         }
 
         DataType type = cassTypeToDataType.get(next);
@@ -123,12 +123,12 @@ class CassandraTypeParser {
         return className.startsWith(COLLECTION_TYPE);
     }
 
-    static ParseResult parseWithComposite(String className) {
+    static ParseResult parseWithComposite(int protocolVersion, String className) {
         Parser parser = new Parser(className, 0);
 
         String next = parser.parseNextName();
         if (!isComposite(next))
-            return new ParseResult(parseOne(className), isReversed(next));
+            return new ParseResult(parseOne(protocolVersion, className), isReversed(next));
 
         List<String> subClassNames = parser.getTypeParameters();
         int count = subClassNames.size();
@@ -140,13 +140,13 @@ class CassandraTypeParser {
             collectionParser.parseNextName(); // skips columnToCollectionType
             Map<String, String> params = collectionParser.getCollectionsParameters();
             for (Map.Entry<String, String> entry : params.entrySet())
-                collections.put(entry.getKey(), parseOne(entry.getValue()));
+                collections.put(entry.getKey(), parseOne(protocolVersion, entry.getValue()));
         }
 
         List<DataType> types = new ArrayList<DataType>(count);
         List<Boolean> reversed = new ArrayList<Boolean>(count);
         for (int i = 0; i < count; i++) {
-            types.add(parseOne(subClassNames.get(i)));
+            types.add(parseOne(protocolVersion, subClassNames.get(i)));
             reversed.add(isReversed(subClassNames.get(i)));
         }
 

@@ -53,7 +53,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      */
     public BoundStatement(PreparedStatement statement) {
         this.statement = statement;
-        this.wrapper = new DataWrapper(this, statement.getVariables().size());
+        this.wrapper = new DataWrapper(this, ((DefaultPreparedStatement)statement).protocolVersion, statement.getVariables().size());
 
         if (statement.getConsistencyLevel() != null)
             this.setConsistencyLevel(statement.getConsistencyLevel());
@@ -192,7 +192,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
                         throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting %s but %s provided", i, columnType, expectedClass, providedClass));
                     break;
             }
-            wrapper.values[i] = columnType.codec(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION).serialize(toSet);
+            wrapper.values[i] = columnType.codec(wrapper.version).serialize(toSet);
         }
         return this;
     }
@@ -266,7 +266,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type BOOLEAN.
      */
-    public BoundStatement setBool(int i, boolean v) {
+    @Override public BoundStatement setBool(int i, boolean v) {
         return wrapper.setBool(i, v);
     }
 
@@ -283,7 +283,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type BOOLEAN.
      */
-    public BoundStatement setBool(String name, boolean v) {
+    @Override public BoundStatement setBool(String name, boolean v) {
         return wrapper.setBool(name, v);
     }
 
@@ -297,7 +297,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type INT.
      */
-    public BoundStatement setInt(int i, int v) {
+    @Override public BoundStatement setInt(int i, int v) {
         return wrapper.setInt(i, v);
     }
 
@@ -314,7 +314,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type INT.
      */
-    public BoundStatement setInt(String name, int v) {
+    @Override public BoundStatement setInt(String name, int v) {
         return wrapper.setInt(name, v);
     }
 
@@ -328,7 +328,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type BIGINT or COUNTER.
      */
-    public BoundStatement setLong(int i, long v) {
+    @Override public BoundStatement setLong(int i, long v) {
         return wrapper.setLong(i, v);
     }
 
@@ -346,7 +346,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type BIGINT or COUNTER.
      */
-    public BoundStatement setLong(String name, long v) {
+    @Override public BoundStatement setLong(String name, long v) {
         return wrapper.setLong(name, v);
     }
 
@@ -360,7 +360,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
      */
-    public BoundStatement setDate(int i, Date v) {
+    @Override public BoundStatement setDate(int i, Date v) {
         return wrapper.setDate(i, v);
     }
 
@@ -378,7 +378,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type TIMESTAMP.
      */
-    public BoundStatement setDate(String name, Date v) {
+    @Override public BoundStatement setDate(String name, Date v) {
         return wrapper.setDate(name, v);
     }
 
@@ -392,7 +392,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type FLOAT.
      */
-    public BoundStatement setFloat(int i, float v) {
+    @Override public BoundStatement setFloat(int i, float v) {
         return wrapper.setFloat(i, v);
     }
 
@@ -410,7 +410,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type FLOAT.
      */
-    public BoundStatement setFloat(String name, float v) {
+    @Override public BoundStatement setFloat(String name, float v) {
         return wrapper.setFloat(name, v);
     }
 
@@ -424,7 +424,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type DOUBLE.
      */
-    public BoundStatement setDouble(int i, double v) {
+    @Override public BoundStatement setDouble(int i, double v) {
         return wrapper.setDouble(i, v);
     }
 
@@ -442,7 +442,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type DOUBLE.
      */
-    public BoundStatement setDouble(String name, double v) {
+    @Override public BoundStatement setDouble(String name, double v) {
         return wrapper.setDouble(name, v);
     }
 
@@ -457,7 +457,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException if column {@code i} is of neither of the
      * following types: VARCHAR, TEXT or ASCII.
      */
-    public BoundStatement setString(int i, String v) {
+    @Override public BoundStatement setString(int i, String v) {
         return wrapper.setString(i, v);
     }
 
@@ -475,7 +475,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * of neither of the following types: VARCHAR, TEXT or ASCII.
      */
-    public BoundStatement setString(String name, String v) {
+    @Override public BoundStatement setString(String name, String v) {
         return wrapper.setString(name, v);
     }
 
@@ -493,7 +493,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type BLOB.
      */
-    public BoundStatement setBytes(int i, ByteBuffer v) {
+    @Override public BoundStatement setBytes(int i, ByteBuffer v) {
         return wrapper.setBytes(i, v);
     }
 
@@ -514,7 +514,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException if (any occurrence of) {@code name} is not of type BLOB.
      */
-    public BoundStatement setBytes(String name, ByteBuffer v) {
+    @Override public BoundStatement setBytes(String name, ByteBuffer v) {
         return wrapper.setBytes(name, v);
     }
 
@@ -532,7 +532,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      */
-    public BoundStatement setBytesUnsafe(int i, ByteBuffer v) {
+    @Override public BoundStatement setBytesUnsafe(int i, ByteBuffer v) {
         return wrapper.setBytesUnsafe(i, v);
     }
 
@@ -553,7 +553,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
-    public BoundStatement setBytesUnsafe(String name, ByteBuffer v) {
+    @Override public BoundStatement setBytesUnsafe(String name, ByteBuffer v) {
         return wrapper.setBytesUnsafe(name, v);
     }
 
@@ -567,7 +567,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type VARINT.
      */
-    public BoundStatement setVarint(int i, BigInteger v) {
+    @Override public BoundStatement setVarint(int i, BigInteger v) {
         return wrapper.setVarint(i, v);
     }
 
@@ -585,7 +585,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type VARINT.
      */
-    public BoundStatement setVarint(String name, BigInteger v) {
+    @Override public BoundStatement setVarint(String name, BigInteger v) {
         return wrapper.setVarint(name, v);
     }
 
@@ -599,7 +599,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type DECIMAL.
      */
-    public BoundStatement setDecimal(int i, BigDecimal v) {
+    @Override public BoundStatement setDecimal(int i, BigDecimal v) {
         return wrapper.setDecimal(i, v);
     }
 
@@ -617,7 +617,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type DECIMAL.
      */
-    public BoundStatement setDecimal(String name, BigDecimal v) {
+    @Override public BoundStatement setDecimal(String name, BigDecimal v) {
         return wrapper.setDecimal(name, v);
     }
 
@@ -633,7 +633,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * TIMEUUID, or if column {@code i} is of type TIMEUUID but {@code v} is
      * not a type 1 UUID.
      */
-    public BoundStatement setUUID(int i, UUID v) {
+    @Override public BoundStatement setUUID(int i, UUID v) {
         return wrapper.setUUID(i, v);
     }
 
@@ -652,7 +652,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * not of type UUID or TIMEUUID, or if column {@code name} is of type
      * TIMEUUID but {@code v} is not a type 1 UUID.
      */
-    public BoundStatement setUUID(String name, UUID v) {
+    @Override public BoundStatement setUUID(String name, UUID v) {
         return wrapper.setUUID(name, v);
     }
 
@@ -666,7 +666,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type INET.
      */
-    public BoundStatement setInet(int i, InetAddress v) {
+    @Override public BoundStatement setInet(int i, InetAddress v) {
         return wrapper.setInet(i, v);
     }
 
@@ -684,7 +684,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type INET.
      */
-    public BoundStatement setInet(String name, InetAddress v) {
+    @Override public BoundStatement setInet(String name, InetAddress v) {
         return wrapper.setInet(name, v);
     }
 
@@ -705,7 +705,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
-    public <T> BoundStatement setList(int i, List<T> v) {
+    @Override public <T> BoundStatement setList(int i, List<T> v) {
         return wrapper.setList(i, v);
     }
 
@@ -729,7 +729,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
-    public <T> BoundStatement setList(String name, List<T> v) {
+    @Override public <T> BoundStatement setList(String name, List<T> v) {
         return wrapper.setList(name, v);
     }
 
@@ -751,7 +751,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
-    public <K, V> BoundStatement setMap(int i, Map<K, V> v) {
+    @Override public <K, V> BoundStatement setMap(int i, Map<K, V> v) {
         return wrapper.setMap(i, v);
     }
 
@@ -776,7 +776,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
-    public <K, V> BoundStatement setMap(String name, Map<K, V> v) {
+    @Override public <K, V> BoundStatement setMap(String name, Map<K, V> v) {
         return wrapper.setMap(name, v);
     }
 
@@ -797,7 +797,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
-    public <T> BoundStatement setSet(int i, Set<T> v) {
+    @Override public <T> BoundStatement setSet(int i, Set<T> v) {
         return wrapper.setSet(i, v);
     }
 
@@ -821,7 +821,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
-    public <T> BoundStatement setSet(String name, Set<T> v) {
+    @Override public <T> BoundStatement setSet(String name, Set<T> v) {
         return wrapper.setSet(name, v);
     }
 
@@ -836,7 +836,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException if value {@code i} is not a UDT value or if its definition
      * does not correspond to the one of {@code v}.
      */
-    public BoundStatement setUDTValue(int i, UDTValue v) {
+    @Override public BoundStatement setUDTValue(int i, UDTValue v) {
         return wrapper.setUDTValue(i, v);
     }
 
@@ -856,277 +856,277 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * not a UDT value or if the definition of column {@code name} does not correspond to
      * the one of {@code v}.
      */
-    public BoundStatement setUDTValue(String name, UDTValue v) {
+    @Override public BoundStatement setUDTValue(String name, UDTValue v) {
         return wrapper.setUDTValue(name, v);
     }
 
     /**
      * {@inheritDoc}
      */
-    public boolean isNull(int i) {
+    @Override public boolean isNull(int i) {
         return wrapper.isNull(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public boolean isNull(String name) {
+    @Override public boolean isNull(String name) {
         return wrapper.isNull(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public boolean getBool(int i) {
+    @Override public boolean getBool(int i) {
         return wrapper.getBool(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public boolean getBool(String name) {
+    @Override public boolean getBool(String name) {
         return wrapper.getBool(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public int getInt(int i) {
+    @Override public int getInt(int i) {
         return wrapper.getInt(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public int getInt(String name) {
+    @Override public int getInt(String name) {
         return wrapper.getInt(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public long getLong(int i) {
+    @Override public long getLong(int i) {
         return wrapper.getLong(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public long getLong(String name) {
+    @Override public long getLong(String name) {
         return wrapper.getLong(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public Date getDate(int i) {
+    @Override public Date getDate(int i) {
         return wrapper.getDate(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public Date getDate(String name) {
+    @Override public Date getDate(String name) {
         return wrapper.getDate(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public float getFloat(int i) {
+    @Override public float getFloat(int i) {
         return wrapper.getFloat(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public float getFloat(String name) {
+    @Override public float getFloat(String name) {
         return wrapper.getFloat(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public double getDouble(int i) {
+    @Override public double getDouble(int i) {
         return wrapper.getDouble(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public double getDouble(String name) {
+    @Override public double getDouble(String name) {
         return wrapper.getDouble(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public ByteBuffer getBytesUnsafe(int i) {
+    @Override public ByteBuffer getBytesUnsafe(int i) {
         return wrapper.getBytesUnsafe(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public ByteBuffer getBytesUnsafe(String name) {
+    @Override public ByteBuffer getBytesUnsafe(String name) {
         return wrapper.getBytesUnsafe(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public ByteBuffer getBytes(int i) {
+    @Override public ByteBuffer getBytes(int i) {
         return wrapper.getBytes(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public ByteBuffer getBytes(String name) {
+    @Override public ByteBuffer getBytes(String name) {
         return wrapper.getBytes(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public String getString(int i) {
+    @Override public String getString(int i) {
         return wrapper.getString(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public String getString(String name) {
+    @Override public String getString(String name) {
         return wrapper.getString(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public BigInteger getVarint(int i) {
+    @Override public BigInteger getVarint(int i) {
         return wrapper.getVarint(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public BigInteger getVarint(String name) {
+    @Override public BigInteger getVarint(String name) {
         return wrapper.getVarint(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public BigDecimal getDecimal(int i) {
+    @Override public BigDecimal getDecimal(int i) {
         return wrapper.getDecimal(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public BigDecimal getDecimal(String name) {
+    @Override public BigDecimal getDecimal(String name) {
         return wrapper.getDecimal(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public UUID getUUID(int i) {
+    @Override public UUID getUUID(int i) {
         return wrapper.getUUID(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public UUID getUUID(String name) {
+    @Override public UUID getUUID(String name) {
         return wrapper.getUUID(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public InetAddress getInet(int i) {
+    @Override public InetAddress getInet(int i) {
         return wrapper.getInet(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public InetAddress getInet(String name) {
+    @Override public InetAddress getInet(String name) {
         return wrapper.getInet(name);
     }
 
     /**
      * {@inheritDoc}
      */
-    public <T> List<T> getList(int i, Class<T> elementsClass) {
+    @Override public <T> List<T> getList(int i, Class<T> elementsClass) {
         return wrapper.getList(i, elementsClass);
     }
 
     /**
      * {@inheritDoc}
      */
-    public <T> List<T> getList(String name, Class<T> elementsClass) {
+    @Override public <T> List<T> getList(String name, Class<T> elementsClass) {
         return wrapper.getList(name, elementsClass);
     }
 
     /**
      * {@inheritDoc}
      */
-    public <T> Set<T> getSet(int i, Class<T> elementsClass) {
+    @Override public <T> Set<T> getSet(int i, Class<T> elementsClass) {
         return wrapper.getSet(i, elementsClass);
     }
 
     /**
      * {@inheritDoc}
      */
-    public <T> Set<T> getSet(String name, Class<T> elementsClass) {
+    @Override public <T> Set<T> getSet(String name, Class<T> elementsClass) {
         return wrapper.getSet(name, elementsClass);
     }
 
     /**
      * {@inheritDoc}
      */
-    public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass) {
+    @Override public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass) {
         return wrapper.getMap(i, keysClass, valuesClass);
     }
 
     /**
      * {@inheritDoc}
      */
-    public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass) {
+    @Override public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass) {
         return wrapper.getMap(name, keysClass, valuesClass);
     }
 
     /**
      * {@inheritDoc}
      */
-    public UDTValue getUDTValue(int i) {
+    @Override public UDTValue getUDTValue(int i) {
         return wrapper.getUDTValue(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public UDTValue getUDTValue(String name) {
+    @Override public UDTValue getUDTValue(String name) {
         return wrapper.getUDTValue(name);
     }
 
     static class DataWrapper extends AbstractData<BoundStatement> {
 
-        DataWrapper(BoundStatement wrapped, int size) {
-            super(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION, wrapped, size);
+        DataWrapper(BoundStatement wrapped, int protocolVersion, int size) {
+            super(protocolVersion, wrapped, size);
         }
 
-        protected int[] getAllIndexesOf(String name) {
+        @Override protected int[] getAllIndexesOf(String name) {
             return wrapped.statement.getVariables().getAllIdx(name);
         }
 
-        protected DataType getType(int i) {
+        @Override protected DataType getType(int i) {
             return wrapped.statement.getVariables().getType(i);
         }
 
-        protected String getName(int i) {
+        @Override protected String getName(int i) {
             return wrapped.statement.getVariables().getName(i);
         }
     }
