@@ -40,9 +40,11 @@ abstract class ArrayBackedResultSet implements ResultSet {
     private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque<List<ByteBuffer>>(0);
 
     protected final ColumnDefinitions metadata;
+    private final boolean wasApplied;
 
-    private ArrayBackedResultSet(ColumnDefinitions metadata) {
+    private ArrayBackedResultSet(ColumnDefinitions metadata, List<ByteBuffer> firstRow) {
         this.metadata = metadata;
+        this.wasApplied = checkWasApplied(firstRow, metadata);
     }
 
     static ArrayBackedResultSet fromMessage(Responses.Result msg, SessionManager session, ExecutionInfo info, Statement statement) {
@@ -128,6 +130,11 @@ abstract class ArrayBackedResultSet implements ResultSet {
     }
 
     @Override
+    public boolean wasApplied() {
+        return wasApplied;
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("ResultSet[ exhausted: ").append(isExhausted());
@@ -143,7 +150,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private SinglePage(ColumnDefinitions metadata,
                            Queue<List<ByteBuffer>> rows,
                            ExecutionInfo info) {
-            super(metadata);
+            super(metadata, rows.peek());
             this.info = info;
             this.rows = rows;
         }
@@ -209,7 +216,10 @@ abstract class ArrayBackedResultSet implements ResultSet {
                           SessionManager session,
                           Statement statement) {
 
-            super(metadata);
+            // Note: as of Cassandra 2.1.0, it turns out that the result of a CAS update is never paged, so
+            // we could hard-code the result of wasApplied in this class to "true". However, we can not be sure
+            // that this will never change, so apply the generic check by peeking at the first row.
+            super(metadata, rows.peek());
             this.currentPage = rows;
             this.infos.offer(info);
 
@@ -379,5 +389,27 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 this.inProgress = inProgress;
             }
         }
+    }
+
+    // This method checks the value of the "[applied]" column manually, to avoid instantiating an ArrayBackedRow
+    // object that we would throw away immediately.
+    private static boolean checkWasApplied(List<ByteBuffer> firstRow, ColumnDefinitions metadata) {
+        // If the column is not present or not a boolean, we assume the query
+        // was not a conditional statement, and therefore return true.
+        if (firstRow == null)
+            return true;
+        int[] is = metadata.findAllIdx("[applied]");
+        if (is == null)
+            return true;
+        int i = is[0];
+        if (!DataType.cboolean().equals(metadata.getType(i)))
+            return true;
+
+        // Otherwise return the value of the column
+        ByteBuffer value = firstRow.get(i);
+        if (value == null || value.remaining() == 0)
+            return false;
+
+        return TypeCodec.BooleanCodec.instance.deserializeNoBoxing(value);
     }
 }
