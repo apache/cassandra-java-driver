@@ -926,15 +926,12 @@ abstract class TypeCodec<T> {
 
         @Override public ByteBuffer serialize(UDTValue value) {
             int size = 0;
-            List<ByteBuffer> vs = new ArrayList<ByteBuffer>(definition.size());
-            for (int i = 0; i < definition.size(); i++) {
-                ByteBuffer v = value.values[i];
-                vs.add(v);
+            for (ByteBuffer v : value.values) {
                 size += 4 + (v == null ? 0 : v.remaining());
             }
 
             ByteBuffer result = ByteBuffer.allocate(size);
-            for (ByteBuffer bb : vs) {
+            for (ByteBuffer bb : value.values) {
                 if (bb == null) {
                     result.putInt(-1);
                 } else {
@@ -974,15 +971,12 @@ abstract class TypeCodec<T> {
 
         @Override public ByteBuffer serialize(TupleValue value) {
             int size = 0;
-            List<ByteBuffer> vs = new ArrayList<ByteBuffer>(value.values.length);
-            for (int i = 0; i < types.length; i++) {
-                ByteBuffer v = value.values[i];
-                vs.add(v);
+            for (ByteBuffer v : value.values) {
                 size += 4 + (v == null ? 0 : v.remaining());
             }
 
             ByteBuffer result = ByteBuffer.allocate(size);
-            for (ByteBuffer bb : vs) {
+            for (ByteBuffer bb : value.values) {
                 if (bb == null) {
                     result.putInt(-1);
                 } else {

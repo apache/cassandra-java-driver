@@ -756,8 +756,12 @@ public abstract class DataType {
 
         @Override
         public String toString() {
-            // TODO return something useful...
-            return "tuple-type";
+            StringBuilder sb = new StringBuilder();
+            for (DataType type : types) {
+                sb.append(sb.length()==0 ? "tuple<" : ", ");
+                sb.append(type);
+            }
+            return sb.append('>').toString();
         }
     }
 
