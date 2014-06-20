@@ -182,8 +182,8 @@ class MethodMapper {
         @Override
         void setValue(BoundStatement boundStatement, Object arg) {
             @SuppressWarnings("unchecked")
-            List<V> nestedEntities = (List<V>) arg;
-            super.setValue(boundStatement, valueMapper.toUDTValues(nestedEntities));
+            List<V> entities = (List<V>) arg;
+            super.setValue(boundStatement, valueMapper.toUDTValues(entities));
         }
     }
 
@@ -198,8 +198,8 @@ class MethodMapper {
         @Override
         void setValue(BoundStatement boundStatement, Object arg) {
             @SuppressWarnings("unchecked")
-            Set<V> nestedEntities = (Set<V>) arg;
-            super.setValue(boundStatement, valueMapper.toUDTValues(nestedEntities));
+            Set<V> entities = (Set<V>) arg;
+            super.setValue(boundStatement, valueMapper.toUDTValues(entities));
         }
     }
 
@@ -216,8 +216,8 @@ class MethodMapper {
         @Override
         void setValue(BoundStatement boundStatement, Object arg) {
             @SuppressWarnings("unchecked")
-            Map<K, V> nestedEntities = (Map<K, V>) arg;
-            super.setValue(boundStatement, UDTMapper.toUDTValues(nestedEntities, keyMapper, valueMapper));
+            Map<K, V> entities = (Map<K, V>) arg;
+            super.setValue(boundStatement, UDTMapper.toUDTValues(entities, keyMapper, valueMapper));
         }
     }
 

@@ -494,26 +494,16 @@ public abstract class DataType {
     }
 
     /**
-     * Serialize a value of this type to bytes.
+     * Serialize a value of this type to bytes, with the given protocol version.
      * <p>
      * The actual format of the resulting bytes will correspond to the
-     * Cassandra encoding for this type.
+     * Cassandra encoding for this type (for the requested protocol version).
      *
      * @param value the value to serialize.
-     * @return the value serialized, or {@code null} if {@code value} is null.
-     *
-     * @throws InvalidTypeException if {@code value} is not a valid object
-     * for this {@code DataType}.
-     */
-    public ByteBuffer serialize(Object value) {
-        return serialize(value, ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION);
-    }
-
-    /**
-     * Serialize a value of this type to bytes, with the given protocol version.
-     *
-     * @param value the value to serialize.
-     * @param protocolVersion the protocol version.
+     * @param protocolVersion the protocol version to use when serializing
+     * {@code bytes}. In most cases, the proper value to provide for this argument
+     * is the value returned by {@link ProtocolOptions.getProtocolVersion} (which
+     * is the protocol version in use by the driver).
      * @return the value serialized, or {@code null} if {@code value} is null.
      *
      * @throws InvalidTypeException if {@code value} is not a valid object
@@ -534,12 +524,13 @@ public abstract class DataType {
     }
 
     /**
-     * Deserialize a value of this type from the provided bytes.
-     * <p>
-     * The format of {@code bytes} must correspond to the Cassandra
-     * encoding for this type.
+     * Deserialize a value of this type from the provided bytes using the given protocol version.
      *
      * @param bytes bytes holding the value to deserialize.
+     * @param protocolVersion the protocol version to use when deserializing
+     * {@code bytes}. In most cases, the proper value to provide for this argument
+     * is the value returned by {@link ProtocolOptions.getProtocolVersion} (which
+     * is the protocol version in use by the driver).
      * @return the deserialized value (of class {@code this.asJavaClass()}).
      * Will return {@code null} if either {@code bytes} is {@code null} or if
      * {@code bytes.remaining() == 0} and this type has no value corresponding
@@ -548,23 +539,10 @@ public abstract class DataType {
      * accept empty byte buffer as valid value of those type, and so we avoid
      * throwing an exception in that case. It is however highly discouraged to
      * store empty byte buffers for types for which it doesn't make sense, so
-     * this implementation can generally be ignored).
+     * this detail can generally be ignored).
      *
      * @throws InvalidTypeException if {@code bytes} is not a valid
      * encoding of an object of this {@code DataType}.
-     */
-    public Object deserialize(ByteBuffer bytes) {
-        return deserialize(bytes, ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION);
-    }
-
-    /**
-     * Deserialize a value of this type from the provided bytes, with the given protocol version.
-     *
-     * @param bytes bytes holding the value to deserialize.
-     * @param protocolVersion the protocol version.
-     * @return the deserialized value (of class {@code this.asJavaClass()}).
-     *
-     * @see #deserialize(ByteBuffer)
      */
     public Object deserialize(ByteBuffer bytes, int protocolVersion) {
         return codec(protocolVersion).deserialize(bytes);

@@ -117,7 +117,7 @@ public class MappingManager {
             synchronized (udtMappers) {
                 mapper = (UDTMapper<T>)udtMappers.get(klass);
                 if (mapper == null) {
-                    EntityMapper<T> entityMapper = AnnotationParser.parseNested(klass, ReflectionMapper.factory(), this);
+                    EntityMapper<T> entityMapper = AnnotationParser.parseUDT(klass, ReflectionMapper.factory(), this);
                     mapper = new UDTMapper<T>(entityMapper, session);
                     Map<Class<?>, UDTMapper<?>> newMappers = new HashMap<Class<?>, UDTMapper<?>>(udtMappers);
                     newMappers.put(klass, mapper);

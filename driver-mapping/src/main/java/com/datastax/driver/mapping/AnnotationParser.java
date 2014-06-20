@@ -76,34 +76,34 @@ class AnnotationParser {
         return mapper;
     }
 
-    public static <T> EntityMapper<T> parseNested(Class<T> nestedClass, EntityMapper.Factory factory, MappingManager mappingManager) {
-        UDT udt = nestedClass.getAnnotation(UDT.class);
+    public static <T> EntityMapper<T> parseUDT(Class<T> udtClass, EntityMapper.Factory factory, MappingManager mappingManager) {
+        UDT udt = udtClass.getAnnotation(UDT.class);
         if (udt == null)
-            throw new IllegalArgumentException(String.format("@%s annotation was not found on class %s", UDT.class.getSimpleName(), nestedClass.getName()));
+            throw new IllegalArgumentException(String.format("@%s annotation was not found on class %s", UDT.class.getSimpleName(), udtClass.getName()));
 
         String ksName = udt.caseSensitiveKeyspace() ? udt.keyspace() : udt.keyspace().toLowerCase();
         String udtName = udt.caseSensitiveType() ? udt.name() : udt.name().toLowerCase();
 
-        EntityMapper<T> mapper = factory.create(nestedClass, ksName, udtName, null, null);
+        EntityMapper<T> mapper = factory.create(udtClass, ksName, udtName, null, null);
 
         List<Field> columns = new ArrayList<Field>();
 
-        for (Field field : nestedClass.getDeclaredFields()) {
+        for (Field field : udtClass.getDeclaredFields()) {
             if (field.getAnnotation(Transient.class) != null)
                 continue;
 
             switch (kind(field)) {
                 case PARTITION_KEY:
-                    throw new IllegalArgumentException("Annotation @PartitionKey is not allowed in a nested class");
+                    throw new IllegalArgumentException("Annotation @PartitionKey is not allowed in a class annotated by @UDT");
                 case CLUSTERING_COLUMN:
-                    throw new IllegalArgumentException("Annotation @ClusteringColumn is not allowed in a nested class");
+                    throw new IllegalArgumentException("Annotation @ClusteringColumn is not allowed in a class annotated by @UDT");
                 default:
                     columns.add(field);
                     break;
             }
         }
 
-        mapper.addColumns(convert(columns, factory, nestedClass, mappingManager));
+        mapper.addColumns(convert(columns, factory, udtClass, mappingManager));
         return mapper;
     }
 

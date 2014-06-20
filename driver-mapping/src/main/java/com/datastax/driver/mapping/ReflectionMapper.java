@@ -137,8 +137,8 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         @Override
         public Object getValue(T entity) {
             @SuppressWarnings("unchecked")
-            U nestedEntity = (U) super.getValue(entity);
-            return udtMapper.toUDTValue(nestedEntity);
+            U udtEntity = (U) super.getValue(entity);
+            return udtMapper.toUDTValue(udtEntity);
         }
 
         @Override
@@ -147,7 +147,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             UDTValue udtValue = (UDTValue) value;
             assert udtValue.getDefinition().equals(udtMapper.getUdtDefinition());
 
-            super.setValue(entity, udtMapper.toNestedEntity((udtValue)));
+            super.setValue(entity, udtMapper.toEntity((udtValue)));
         }
     }
 
@@ -163,15 +163,15 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         @Override
         public Object getValue(T entity) {
             @SuppressWarnings("unchecked")
-            List<V> nestedEntities = (List<V>) super.getValue(entity);
-            return valueMapper.toUDTValues(nestedEntities);
+            List<V> entities = (List<V>) super.getValue(entity);
+            return valueMapper.toUDTValues(entities);
         }
 
         @Override
         public void setValue(Object entity, Object value) {
             @SuppressWarnings("unchecked")
             List<UDTValue> udtValues = (List<UDTValue>) value;
-            super.setValue(entity, valueMapper.toNestedEntities(udtValues));
+            super.setValue(entity, valueMapper.toEntities(udtValues));
         }
     }
 
@@ -187,15 +187,15 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         @Override
         public Object getValue(T entity) {
             @SuppressWarnings("unchecked")
-            Set<V> nestedEntities = (Set<V>) super.getValue(entity);
-            return valueMapper.toUDTValues(nestedEntities);
+            Set<V> entities = (Set<V>) super.getValue(entity);
+            return valueMapper.toUDTValues(entities);
         }
 
         @Override
         public void setValue(Object entity, Object value) {
             @SuppressWarnings("unchecked")
             Set<UDTValue> udtValues = (Set<UDTValue>) value;
-            super.setValue(entity, valueMapper.toNestedEntities(udtValues));
+            super.setValue(entity, valueMapper.toEntities(udtValues));
         }
     }
 
@@ -219,15 +219,15 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         @Override
         public Object getValue(T entity) {
             @SuppressWarnings("unchecked")
-            Map<K, V> nestedEntities = (Map<K, V>) super.getValue(entity);
-            return UDTMapper.toUDTValues(nestedEntities, keyMapper, valueMapper);
+            Map<K, V> entities = (Map<K, V>) super.getValue(entity);
+            return UDTMapper.toUDTValues(entities, keyMapper, valueMapper);
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public void setValue(Object entity, Object fieldValue) {
             Map<Object, Object> udtValues = (Map<Object, Object>) fieldValue;
-            super.setValue(entity, UDTMapper.toNestedEntities(udtValues, keyMapper, valueMapper));
+            super.setValue(entity, UDTMapper.toEntities(udtValues, keyMapper, valueMapper));
         }
 
         private static <K, V> DataType buildDataType(Field field, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper, Class<?> keyClass, Class<?> valueClass) {

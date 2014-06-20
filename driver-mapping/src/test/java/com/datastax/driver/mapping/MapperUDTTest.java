@@ -176,7 +176,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
-    public void testNestedEntity() throws Exception {
+    public void testSimpleEntity() throws Exception {
         Mapper<User> m = new MappingManager(session).mapper(User.class);
 
         User u1 = new User("Paul", new Address("12 4th Street", "Springfield", 12345, "12341343", "435423245"));
