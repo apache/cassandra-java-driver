@@ -177,6 +177,13 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
 
         for (Host host : hosts) {
             String dc = dc(host);
+
+            // If the localDC was in "auto-discover" mode and it's the first host for which we have a DC, use it.
+            if (localDc == UNSET && dc != UNSET) {
+                logger.info("Using data-center name '{}' for DCAwareRoundRobinPolicy (if this is incorrect, please provide the correct datacenter name with DCAwareRoundRobinPolicy constructor)", dc);
+                localDc = dc;
+            }
+
             CopyOnWriteArrayList<Host> prev = perDcLiveHosts.get(dc);
             if (prev == null)
                 perDcLiveHosts.put(dc, new CopyOnWriteArrayList<Host>(Collections.singletonList(host)));
