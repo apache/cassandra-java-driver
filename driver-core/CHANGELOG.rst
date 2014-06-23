@@ -7,6 +7,7 @@ CHANGELOG
 - [improvement] Better handling of dead connections (JAVA-204)
 - [bug] Fix potential NPE in ControlConnection (JAVA-373)
 - [bug] Throws NPE when passed null for a contact point (JAVA-291)
+- [bug] Avoid LoadBalancingPolicy onDown+onUp at startup (JAVA-315)
 
 
 2.0.3:
