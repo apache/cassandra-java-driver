@@ -25,6 +25,7 @@ public class Mapper<T> {
     private static final Logger logger = LoggerFactory.getLogger(EntityMapper.class);
 
     final MappingManager manager;
+    final int protocolVersion;
     final Class<T> klass;
     final EntityMapper<T> mapper;
     final TableMetadata tableMetadata;
@@ -45,6 +46,7 @@ public class Mapper<T> {
         KeyspaceMetadata keyspace = session().getCluster().getMetadata().getKeyspace(mapper.getKeyspace());
         this.tableMetadata = keyspace == null ? null : keyspace.getTable(Metadata.quote(mapper.getTable()));
 
+        this.protocolVersion = manager.getSession().getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
         this.mapOneFunction = new Function<ResultSet, T>() {
             public T apply(ResultSet rs) {
                 return Mapper.this.map(rs).one();
@@ -107,7 +109,7 @@ public class Mapper<T> {
         int i = 0;
         for (ColumnMapper<T> cm : mapper.allColumns()) {
             Object value = cm.getValue(entity);
-            bs.setBytesUnsafe(i++, value == null ? null : cm.getDataType().serialize(value));
+            bs.setBytesUnsafe(i++, value == null ? null : cm.getDataType().serialize(value, protocolVersion));
         }
 
         if (mapper.writeConsistency != null)
@@ -193,7 +195,7 @@ public class Mapper<T> {
             Object value = primaryKey[i];
             if (value == null)
                 throw new IllegalArgumentException(String.format("Invalid null value for PRIMARY KEY column %s (argument %d)", column.getColumnName(), i));
-            bs.setBytesUnsafe(i, column.getDataType().serialize(value));
+            bs.setBytesUnsafe(i, column.getDataType().serialize(value, protocolVersion));
         }
 
         if (mapper.writeConsistency != null)
@@ -267,7 +269,7 @@ public class Mapper<T> {
      * and vice-versa.
      */
     public Result<T> map(ResultSet resultSet) {
-        return new Result<T>(resultSet, mapper);
+        return new Result<T>(resultSet, mapper, protocolVersion);
     }
 
     /**
@@ -300,7 +302,7 @@ public class Mapper<T> {
             Object value = primaryKey[i];
             if (value == null)
                 throw new IllegalArgumentException(String.format("Invalid null value for PRIMARY KEY column %s (argument %d)", column.getColumnName(), i));
-            bs.setBytesUnsafe(i, column.getDataType().serialize(value));
+            bs.setBytesUnsafe(i, column.getDataType().serialize(value, protocolVersion));
         }
 
         if (mapper.readConsistency != null)

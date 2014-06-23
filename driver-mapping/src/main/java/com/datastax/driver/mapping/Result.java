@@ -16,10 +16,12 @@ public class Result<T> implements Iterable<T> {
 
     private final ResultSet rs;
     private final EntityMapper<T> mapper;
+    private final int protocolVersion;
 
-    Result(ResultSet rs, EntityMapper<T> mapper) {
+    Result(ResultSet rs, EntityMapper<T> mapper, int protocolVersion) {
         this.rs = rs;
         this.mapper = mapper;
+        this.protocolVersion = protocolVersion;
     }
 
     private T map(Row row) {
@@ -27,7 +29,7 @@ public class Result<T> implements Iterable<T> {
         for (ColumnMapper<T> cm : mapper.allColumns()) {
             ByteBuffer bytes = row.getBytesUnsafe(cm.getColumnName());
             if (bytes != null)
-                cm.setValue(entity, cm.getDataType().deserialize(bytes));
+                cm.setValue(entity, cm.getDataType().deserialize(bytes, protocolVersion));
         }
         return entity;
     }
