@@ -24,7 +24,7 @@ import java.nio.ByteBuffer;
 public class SimpleStatement extends RegularStatement {
 
     private final String query;
-    private final ByteBuffer[] values;
+    private final Object[] values;
 
     private volatile ByteBuffer routingKey;
     private volatile String keyspace;
@@ -84,14 +84,14 @@ public class SimpleStatement extends RegularStatement {
      */
     public SimpleStatement(String query, Object... values) {
         this.query = query;
-        this.values = convert(values);
+        this.values = values;
     }
 
-    private static ByteBuffer[] convert(Object[] values) {
+    private static ByteBuffer[] convert(Object[] values, int protocolVersion) {
         ByteBuffer[] serializedValues = new ByteBuffer[values.length];
         for (int i = 0; i < values.length; i++) {
             try {
-                serializedValues[i] = DataType.serializeValue(values[i]);
+                serializedValues[i] = DataType.serializeValue(values[i], protocolVersion);
             } catch (IllegalArgumentException e) {
                 // Catch and rethrow to provide a more helpful error message (one that include which value is bad)
                 throw new IllegalArgumentException(String.format("Value %d of type %s does not correspond to any CQL3 type", i, values[i].getClass()));
@@ -111,8 +111,13 @@ public class SimpleStatement extends RegularStatement {
     }
 
     @Override
-    public ByteBuffer[] getValues() {
-        return values;
+    public ByteBuffer[] getValues(int protocolVersion) {
+        return convert(values, protocolVersion);
+    }
+
+    @Override
+    public boolean hasValues() {
+        return values != null && values.length > 0;
     }
 
     /**

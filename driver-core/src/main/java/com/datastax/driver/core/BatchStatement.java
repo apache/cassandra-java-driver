@@ -79,12 +79,12 @@ public class BatchStatement extends Statement {
         this.batchType = batchType;
     }
 
-    IdAndValues getIdAndValues() {
+    IdAndValues getIdAndValues(int protocolVersion) {
         IdAndValues idAndVals = new IdAndValues(statements.size());
         for (Statement statement : statements) {
             if (statement instanceof RegularStatement) {
                 RegularStatement st = (RegularStatement)statement;
-                ByteBuffer[] vals = st.getValues();
+                ByteBuffer[] vals = st.getValues(protocolVersion);
                 idAndVals.ids.add(st.getQueryString());
                 idAndVals.values.add(vals == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(vals));
             } else {

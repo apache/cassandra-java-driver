@@ -45,7 +45,7 @@ public class Batch extends BuiltStatement {
     }
 
     @Override
-    StringBuilder buildQueryString(List<ByteBuffer> variables) {
+    StringBuilder buildQueryString(List<Object> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append(isCounterOp()
@@ -70,11 +70,11 @@ public class Batch extends BuiltStatement {
                 if (!str.trim().endsWith(";"))
                     builder.append(';');
 
-                if (variables != null) {
-                    ByteBuffer[] vars = stmt.getValues();
-                    if (vars != null) {
-                        Collections.addAll(variables, vars);
-                    }
+                // For !BuiltStatement, we know that variables == null since we explicitely set 'hasBindMarkers' below
+                if ((stmt instanceof BuiltStatement) && variables != null) {
+                    List<Object> vals = ((BuiltStatement)stmt).getRawValues();
+                    if (vals != null)
+                        variables.addAll(vals);
                 }
             }
         }

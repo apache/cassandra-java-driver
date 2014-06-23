@@ -25,7 +25,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 public abstract class AbstractGettableData implements GettableData {
 
-    protected final int version;
+    protected final int protocolVersion;
 
     /**
      * Creates a new AbstractGettableData object.
@@ -43,7 +43,7 @@ public abstract class AbstractGettableData implements GettableData {
         //    throw new IllegalArgumentException(String.format("Unsupported protocol version %d; valid values must be between 1 and %d or negative (for auto-detect).",
         //                                                     protocolVersion,
         //                                                     ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION));
-        this.version = protocolVersion;
+        this.protocolVersion = protocolVersion;
     }
 
     /**
@@ -428,7 +428,7 @@ public abstract class AbstractGettableData implements GettableData {
         if (value == null)
             return Collections.<T>emptyList();
 
-        return Collections.unmodifiableList((List<T>)type.codec(version).deserialize(value));
+        return Collections.unmodifiableList((List<T>)type.codec(protocolVersion).deserialize(value));
     }
 
     /**
@@ -457,7 +457,7 @@ public abstract class AbstractGettableData implements GettableData {
         if (value == null)
             return Collections.<T>emptySet();
 
-        return Collections.unmodifiableSet((Set<T>)type.codec(version).deserialize(value));
+        return Collections.unmodifiableSet((Set<T>)type.codec(protocolVersion).deserialize(value));
     }
 
     /**
@@ -487,7 +487,7 @@ public abstract class AbstractGettableData implements GettableData {
         if (value == null)
             return Collections.<K, V>emptyMap();
 
-        return Collections.unmodifiableMap((Map<K, V>)type.codec(version).deserialize(value));
+        return Collections.unmodifiableMap((Map<K, V>)type.codec(protocolVersion).deserialize(value));
     }
 
     /**

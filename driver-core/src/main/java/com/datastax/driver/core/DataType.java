@@ -502,7 +502,7 @@ public abstract class DataType {
      * @param value the value to serialize.
      * @param protocolVersion the protocol version to use when serializing
      * {@code bytes}. In most cases, the proper value to provide for this argument
-     * is the value returned by {@link ProtocolOptions.getProtocolVersion} (which
+     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
      * is the protocol version in use by the driver).
      * @return the value serialized, or {@code null} if {@code value} is null.
      *
@@ -529,7 +529,7 @@ public abstract class DataType {
      * @param bytes bytes holding the value to deserialize.
      * @param protocolVersion the protocol version to use when deserializing
      * {@code bytes}. In most cases, the proper value to provide for this argument
-     * is the value returned by {@link ProtocolOptions.getProtocolVersion} (which
+     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
      * is the protocol version in use by the driver).
      * @return the deserialized value (of class {@code this.asJavaClass()}).
      * Will return {@code null} if either {@code bytes} is {@code null} or if
@@ -559,13 +559,17 @@ public abstract class DataType {
      * the {@link #serialize} method instead as it is going to be faster.
      *
      * @param value the value to serialize.
+     * @param protocolVersion the protocol version to use when deserializing
+     * {@code bytes}. In most cases, the proper value to provide for this argument
+     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
+     * is the protocol version in use by the driver).
      * @return the value serialized, or {@code null} if {@code value} is null.
      *
      * @throws IllegalArgumentException if {@code value} is not of a type
      * corresponding to a CQL3 type, i.e. is not a Class that could be returned
      * by {@link DataType#asJavaClass}.
      */
-    public static ByteBuffer serializeValue(Object value) {
+    public static ByteBuffer serializeValue(Object value, int protocolVersion) {
         if (value == null)
             return null;
 
@@ -574,7 +578,7 @@ public abstract class DataType {
             throw new IllegalArgumentException(String.format("Value of type %s does not correspond to any CQL3 type", value.getClass()));
 
         try {
-            return dt.serialize(value);
+            return dt.serialize(value, protocolVersion);
         } catch (InvalidTypeException e) {
             // In theory we couldn't get that if getDataTypeFor does his job correctly,
             // but there is no point in sending an exception that the user won't expect if we're

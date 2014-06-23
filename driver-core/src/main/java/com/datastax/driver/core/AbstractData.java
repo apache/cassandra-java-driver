@@ -288,7 +288,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             if (!expectedClass.isAssignableFrom(providedClass))
                 throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting list of %s but provided list of %s", getName(i), type, expectedClass, providedClass));
         }
-        return setValue(i, type.codec(version).serialize(v));
+        return setValue(i, type.codec(protocolVersion).serialize(v));
     }
 
     public <E> T setList(String name, List<E> v) {
@@ -317,7 +317,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             if (!expectedKeysClass.isAssignableFrom(providedKeysClass) || !expectedValuesClass.isAssignableFrom(providedValuesClass))
                 throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting map of %s->%s but provided map of %s->%s", getName(i), type, expectedKeysClass, expectedValuesClass, providedKeysClass, providedValuesClass));
         }
-        return setValue(i, type.codec(version).serialize(v));
+        return setValue(i, type.codec(protocolVersion).serialize(v));
     }
 
     public <K, V> T setMap(String name, Map<K, V> v) {
@@ -343,7 +343,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             if (!expectedClass.isAssignableFrom(providedClass))
                 throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting set of %s but provided set of %s", getName(i), type, expectedClass, providedClass));
         }
-        return setValue(i, type.codec(version).serialize(v));
+        return setValue(i, type.codec(protocolVersion).serialize(v));
     }
 
     public <E> T setSet(String name, Set<E> v) {
@@ -395,7 +395,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             if ((values[i] == null) != (that.values[i] == null))
                 return false;
 
-            if (values[i] != null && !(thisType.deserialize(values[i]).equals(thatType.deserialize(that.values[i]))))
+            if (values[i] != null && !(thisType.deserialize(values[i], protocolVersion).equals(thatType.deserialize(that.values[i], protocolVersion))))
                 return false;
         }
         return true;
@@ -406,7 +406,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         // Same as equals
         int hash = 31;
         for (int i = 0; i < values.length; i++)
-            hash += values[i] == null ? 1 : getType(i).deserialize(values[i]).hashCode();
+            hash += values[i] == null ? 1 : getType(i).deserialize(values[i], protocolVersion).hashCode();
         return hash;
     }
 }

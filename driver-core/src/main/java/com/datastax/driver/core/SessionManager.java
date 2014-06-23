@@ -328,7 +328,7 @@ class SessionManager extends AbstractSession {
             if (protoVersion == 1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
                 ((com.datastax.driver.core.querybuilder.BuiltStatement)rs).setForceNoValues(true);
 
-            ByteBuffer[] rawValues = rs.getValues();
+            ByteBuffer[] rawValues = rs.getValues(protoVersion);
 
             if (protoVersion == 1 && rawValues != null)
                 throw new UnsupportedFeatureException("Binary values are not supported");
@@ -350,7 +350,7 @@ class SessionManager extends AbstractSession {
                 throw new UnsupportedFeatureException("Protocol level batching is not supported");
 
             BatchStatement bs = (BatchStatement)statement;
-            BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
+            BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protoVersion);
             return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl);
         }
     }

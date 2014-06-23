@@ -83,7 +83,7 @@ public class UDTValue extends AbstractData<UDTValue> {
 
             sb.append(getName(i));
             sb.append(":");
-            sb.append(values[i] == null ? "null" : getType(i).deserialize(values[i]));
+            sb.append(values[i] == null ? "null" : getType(i).deserialize(values[i], 3));
         }
         sb.append("}");
         return sb.toString();

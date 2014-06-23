@@ -97,7 +97,7 @@ public abstract class AbstractSession implements Session {
      */
     @Override
     public ListenableFuture<PreparedStatement> prepareAsync(final RegularStatement statement) {
-        if (statement.getValues() != null)
+        if (statement.hasValues())
             throw new IllegalArgumentException("A statement to prepare should not have values");
 
         ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.toString());

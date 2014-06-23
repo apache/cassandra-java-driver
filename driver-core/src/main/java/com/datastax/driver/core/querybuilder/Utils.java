@@ -30,8 +30,7 @@ abstract class Utils {
 
     private static final Pattern cnamePattern = Pattern.compile("\\w+(?:\\[.+\\])?");
 
-
-    static StringBuilder joinAndAppend(StringBuilder sb, String separator, List<? extends Appendeable> values, List<ByteBuffer> variables) {
+    static StringBuilder joinAndAppend(StringBuilder sb, String separator, List<? extends Appendeable> values, List<Object> variables) {
         for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);
@@ -49,7 +48,7 @@ abstract class Utils {
         return sb;
     }
 
-    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<Object> values, List<ByteBuffer> variables) {
+    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<Object> values, List<Object> variables) {
         for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);
@@ -59,33 +58,38 @@ abstract class Utils {
     }
 
     // Returns null if it's not really serializable (function call, bind markers, ...)
-    static ByteBuffer serializeValue(Object value) {
+    static boolean isSerializable(Object value) {
         if (value == QueryBuilder.bindMarker() || value instanceof FCall || value instanceof CName)
-            return null;
+            return false;
 
         // We also don't serialize fixed size number types. The reason is that if we do it, we will
         // force a particular size (4 bytes for ints, ...) and for the query builder, we don't want
         // users to have to bother with that.
         if (value instanceof Number && !(value instanceof BigInteger || value instanceof BigDecimal))
-            return null;
+            return false;
 
-        try {
-            return DataType.serializeValue(value);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+        return true;
     }
 
-    static StringBuilder appendValue(Object value, StringBuilder sb, List<ByteBuffer> variables) {
-        if (variables == null)
-            return appendValue(value, sb, false);
+    static ByteBuffer[] convert(List<Object> values, int protocolVersion) {
+        ByteBuffer[] serializedValues = new ByteBuffer[values.size()];
+        for (int i = 0; i < values.size(); i++) {
+            try {
+                serializedValues[i] = DataType.serializeValue(values.get(i), protocolVersion);
+            } catch (IllegalArgumentException e) {
+                // Catch and rethrow to provide a more helpful error message (one that include which value is bad)
+                throw new IllegalArgumentException(String.format("Value %d of type %s does not correspond to any CQL3 type", i, values.get(i).getClass()));
+            }
+        }
+        return serializedValues;
+    }
 
-        ByteBuffer bb = serializeValue(value);
-        if (bb == null)
+    static StringBuilder appendValue(Object value, StringBuilder sb, List<Object> variables) {
+        if (variables == null || !isSerializable(value))
             return appendValue(value, sb, false);
 
         sb.append('?');
-        variables.add(bb);
+        variables.add(value);
         return sb;
     }
 
@@ -184,14 +188,13 @@ abstract class Utils {
         }
     }
 
-    static StringBuilder appendCollection(Object value, StringBuilder sb, List<ByteBuffer> variables) {
-        ByteBuffer bb = variables == null ? null : serializeValue(value);
-        if (bb == null) {
+    static StringBuilder appendCollection(Object value, StringBuilder sb, List<Object> variables) {
+        if (variables == null || !isSerializable(value)) {
             boolean wasCollection = appendValueIfCollection(value, sb, false);
             assert wasCollection;
         } else {
             sb.append('?');
-            variables.add(bb);
+            variables.add(value);
         }
         return sb;
     }
@@ -310,7 +313,7 @@ abstract class Utils {
     }
 
     static abstract class Appendeable {
-        abstract void appendTo(StringBuilder sb, List<ByteBuffer> values);
+        abstract void appendTo(StringBuilder sb, List<Object> values);
         abstract boolean containsBindMarker();
     }
 

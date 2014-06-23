@@ -49,12 +49,23 @@ public abstract class RegularStatement extends Statement {
      * 1 through {@link Cluster.Builder#withProtocolVersion} or you use
      * Cassandra 1.2).
      *
+     * @param protocolVersion the protocol version in which the returned values
+     * must be serialized for.
      * @return the values to use for this statement or {@code null} if there is
      * no such values.
      *
      * @see SimpleStatement#SimpleStatement(String, Object...)
      */
-    public abstract ByteBuffer[] getValues();
+    public abstract ByteBuffer[] getValues(int protocolVersion);
+
+    /**
+     * Whether or not this statement has values, that is if {@code getValues}
+     * will return {@code null} or not.
+     *
+     * @return {@code false} if {@link #getValues} returns {@code null}, {@code true}
+     * otherwise.
+     */
+    public abstract boolean hasValues();
 
     @Override
     public String toString() {
