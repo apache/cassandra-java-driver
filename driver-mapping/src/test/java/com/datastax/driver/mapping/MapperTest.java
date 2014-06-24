@@ -1,6 +1,7 @@
 package com.datastax.driver.mapping;
 
 import java.net.InetAddress;
+import com.datastax.driver.mapping.annotations.Table;
 import java.util.*;
 
 import com.google.common.base.Objects;
@@ -250,15 +251,15 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // Note that the following method will be asynchronous (it will use executeAsync
         // underneath) because it's return type is a ListenableFuture. Similarly, we know
         // that we need to map the result to the Post entity thanks to the return type.
-        @Query("SELECT * FROM ks.posts WHERE user_id=:arg0")
+        @Query("SELECT * FROM ks.posts WHERE user_id=?")
         @QueryParameters(consistency="QUORUM")
         public ListenableFuture<Result<Post>> getAllAsync(UUID userId);
 
         // The method above actually query stuff, but if a method is declared to return
         // a Statement, it will not execute anything, but just return you the BoundStatement
         // ready for execution. That way, you can batch stuff for instance (see usage below).
-        @Query("UPDATE ks.posts SET content=:arg2 WHERE user_id=:arg0 AND post_id=:arg1")
-        public Statement updateContentQuery(UUID userId, UUID postId, String newContent);
+        @Query("UPDATE ks.posts SET content=? WHERE user_id=? AND post_id=?")
+        public Statement updateContentQuery(String newContent, UUID userId, UUID postId);
 
         @Query("SELECT * FROM ks.posts")
         public Result<Post> getAll();
@@ -267,8 +268,8 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
     @Accessor
     public interface UserAccessor {
         // Demonstrates use of an enum as an accessor parameter
-        @Query("UPDATE user SET name=:arg1, gender=:arg2 WHERE user_id=:arg2")
-        ResultSet updateNameAndGender(UUID userId, String name, Gender gender);
+        @Query("UPDATE ks.users SET name=?, gender=? WHERE user_id=?")
+        ResultSet updateNameAndGender(String name, Gender gender, UUID userId);
     }
 
     @Test(groups = "short")
@@ -330,8 +331,8 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         assertTrue(r.isExhausted());
 
         BatchStatement batch = new BatchStatement();
-        batch.add(postAccessor.updateContentQuery(p1.getUserId(), p1.getPostId(), "Something different"));
-        batch.add(postAccessor.updateContentQuery(p2.getUserId(), p2.getPostId(), "A different something"));
+        batch.add(postAccessor.updateContentQuery("Something different", p1.getUserId(), p1.getPostId()));
+        batch.add(postAccessor.updateContentQuery("A different something", p2.getUserId(), p2.getPostId()));
         manager.getSession().execute(batch);
 
         Post p1New = m.get(p1.getUserId(), p1.getPostId());
@@ -349,7 +350,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // Pass an enum constant as an accessor parameter
         UserAccessor userAccessor = manager.createAccessor(UserAccessor.class);
-        userAccessor.updateNameAndGender(u1.getUserId(), "Paule", User.Gender.FEMALE);
+        userAccessor.updateNameAndGender("Paule", User.Gender.FEMALE, u1.getUserId());
         Mapper<User> userMapper = manager.mapper(User.class);
         assertEquals(userMapper.get(u1.getUserId()).getGender(), User.Gender.FEMALE);
     }

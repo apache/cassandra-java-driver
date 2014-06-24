@@ -191,6 +191,7 @@ class AnnotationParser {
             Annotation[][] paramAnnotations = m.getParameterAnnotations();
             Type[] paramTypes = m.getGenericParameterTypes();
             ParamMapper[] paramMappers = new ParamMapper[paramAnnotations.length];
+            Boolean hasParamAnnotation = null;
             for (int i = 0; i < paramMappers.length; i++) {
                 String paramName = null;
                 for (Annotation a : paramAnnotations[i]) {
@@ -199,10 +200,12 @@ class AnnotationParser {
                         break;
                     }
                 }
-                if (paramName == null) {
-                    paramName = "arg" + i;
-                }
-                paramMappers[i] = newParamMapper(accClass.getName(), m.getName(), paramName, paramTypes[i], paramAnnotations[i], mappingManager);
+                if (hasParamAnnotation == null)
+                    hasParamAnnotation = (paramName != null);
+                if (hasParamAnnotation != (paramName != null))
+                    throw new IllegalArgumentException(String.format("For method '%s', either all or none of the paramaters of a method must have a @Param annotation", m.getName()));
+
+                paramMappers[i] = newParamMapper(accClass.getName(), m.getName(), i, paramName, paramTypes[i], paramAnnotations[i], mappingManager);
             }
 
             ConsistencyLevel cl = null;
@@ -223,12 +226,12 @@ class AnnotationParser {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private static ParamMapper newParamMapper(String className, String methodName, String paramName, Type paramType, Annotation[] paramAnnotations, MappingManager mappingManager) {
+    private static ParamMapper newParamMapper(String className, String methodName, int idx, String paramName, Type paramType, Annotation[] paramAnnotations, MappingManager mappingManager) {
         if (paramType instanceof Class) {
             Class<?> paramClass = (Class<?>) paramType;
             if (paramClass.isAnnotationPresent(UDT.class)) {
                 UDTMapper<?> udtMapper = mappingManager.getUDTMapper(paramClass);
-                return new UDTParamMapper(paramName, udtMapper);
+                return new UDTParamMapper(paramName, idx, udtMapper);
             } else if (paramClass.isEnum()) {
                 EnumType enumType = EnumType.STRING;
                 for (Annotation annotation : paramAnnotations) {
@@ -236,9 +239,9 @@ class AnnotationParser {
                         enumType = ((Enumerated) annotation).value();
                     }
                 }
-                return new EnumParamMapper(paramName, enumType);
+                return new EnumParamMapper(paramName, idx, enumType);
             }
-            return new ParamMapper(paramName);
+            return new ParamMapper(paramName, idx);
         } if (paramType instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType) paramType;
             Type raw = pt.getRawType();
@@ -248,21 +251,21 @@ class AnnotationParser {
             Class<?> firstTypeParam = ReflectionUtils.getParam(pt, 0, paramName);
             if (List.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
                 UDTMapper<?> valueMapper = mappingManager.getUDTMapper(firstTypeParam);
-                return new UDTListParamMapper(paramName, valueMapper);
+                return new UDTListParamMapper(paramName, idx, valueMapper);
             }
             if (Set.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
                 UDTMapper<?> valueMapper = mappingManager.getUDTMapper(firstTypeParam);
-                return new UDTSetParamMapper(paramName, valueMapper);
+                return new UDTSetParamMapper(paramName, idx, valueMapper);
             }
             if (Map.class.isAssignableFrom(klass)) {
                 Class<?> secondTypeParam = ReflectionUtils.getParam(pt, 1, paramName);
                 UDTMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getUDTMapper(firstTypeParam) : null;
                 UDTMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getUDTMapper(secondTypeParam) : null;
                 if (keyMapper != null || valueMapper != null) {
-                    return new UDTMapParamMapper(paramName, keyMapper, valueMapper);
+                    return new UDTMapParamMapper(paramName, idx, keyMapper, valueMapper);
                 }
             }
-            return new ParamMapper(paramName);
+            return new ParamMapper(paramName, idx);
         } else {
             throw new IllegalArgumentException(String.format("Cannot map class %s for parameter %s of %s.%s", paramType, paramName, className, methodName));
         }

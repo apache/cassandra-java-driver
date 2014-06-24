@@ -112,7 +112,7 @@ public class SimpleStatement extends RegularStatement {
 
     @Override
     public ByteBuffer[] getValues(int protocolVersion) {
-        return convert(values, protocolVersion);
+        return values == null ? null : convert(values, protocolVersion);
     }
 
     @Override

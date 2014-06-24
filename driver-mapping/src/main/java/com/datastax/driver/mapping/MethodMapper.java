@@ -143,15 +143,21 @@ class MethodMapper {
     }
 
     static class ParamMapper {
+        // We'll only set one of the other. If paramName is null, then paramIdx is used.
         private final String paramName;
+        private final int paramIdx;
 
-        public ParamMapper(String paramName) {
+        public ParamMapper(String paramName, int paramIdx) {
             this.paramName = paramName;
+            this.paramIdx = paramIdx;
         }
 
         void setValue(BoundStatement boundStatement, Object arg, int protocolVersion) {
             if (arg != null) {
-                boundStatement.setBytesUnsafe(paramName, DataType.serializeValue(arg, protocolVersion));
+                if (paramName == null)
+                    boundStatement.setBytesUnsafe(paramIdx, DataType.serializeValue(arg, protocolVersion));
+                else
+                    boundStatement.setBytesUnsafe(paramName, DataType.serializeValue(arg, protocolVersion));
             }
         }
     }
@@ -159,8 +165,8 @@ class MethodMapper {
     static class UDTParamMapper<V> extends ParamMapper {
         private final UDTMapper<V> udtMapper;
 
-        UDTParamMapper(String paramName, UDTMapper<V> udtMapper) {
-            super(paramName);
+        UDTParamMapper(String paramName, int paramIdx, UDTMapper<V> udtMapper) {
+            super(paramName, paramIdx);
             this.udtMapper = udtMapper;
         }
 
@@ -175,8 +181,8 @@ class MethodMapper {
     static class UDTListParamMapper<V> extends ParamMapper {
         private final UDTMapper<V> valueMapper;
 
-        UDTListParamMapper(String paramName, UDTMapper<V> valueMapper) {
-            super(paramName);
+        UDTListParamMapper(String paramName, int paramIdx, UDTMapper<V> valueMapper) {
+            super(paramName, paramIdx);
             this.valueMapper = valueMapper;
         }
 
@@ -191,8 +197,8 @@ class MethodMapper {
     static class UDTSetParamMapper<V> extends ParamMapper {
         private final UDTMapper<V> valueMapper;
 
-        UDTSetParamMapper(String paramName, UDTMapper<V> valueMapper) {
-            super(paramName);
+        UDTSetParamMapper(String paramName, int paramIdx, UDTMapper<V> valueMapper) {
+            super(paramName, paramIdx);
             this.valueMapper = valueMapper;
         }
 
@@ -208,8 +214,8 @@ class MethodMapper {
         private final UDTMapper<K> keyMapper;
         private final UDTMapper<V> valueMapper;
 
-        UDTMapParamMapper(String paramName, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper) {
-            super(paramName);
+        UDTMapParamMapper(String paramName, int paramIdx, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper) {
+            super(paramName, paramIdx);
             this.keyMapper = keyMapper;
             this.valueMapper = valueMapper;
         }
@@ -226,8 +232,8 @@ class MethodMapper {
 
         private final EnumType enumType;
 
-        public EnumParamMapper(String paramName, EnumType enumType) {
-            super(paramName);
+        public EnumParamMapper(String paramName, int paramIdx, EnumType enumType) {
+            super(paramName, paramIdx);
             this.enumType = enumType;
         }
 
