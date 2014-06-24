@@ -599,7 +599,7 @@ public abstract class DataType {
 
         @Override
         public ByteBuffer parse(String value) {
-            TypeCodec<Object> codec = codec(0);;
+            TypeCodec<Object> codec = codec(0);
             return codec.serialize(codec.parse(value));
         }
 

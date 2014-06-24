@@ -40,9 +40,11 @@ abstract class ArrayBackedResultSet implements ResultSet {
     private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque<List<ByteBuffer>>(0);
 
     protected final ColumnDefinitions metadata;
+    protected final int protocolVersion;
 
-    private ArrayBackedResultSet(ColumnDefinitions metadata) {
+    private ArrayBackedResultSet(ColumnDefinitions metadata, int protocolVersion) {
         this.metadata = metadata;
+        this.protocolVersion = protocolVersion;
     }
 
     static ArrayBackedResultSet fromMessage(Responses.Result msg, SessionManager session, ExecutionInfo info, Statement statement) {
@@ -63,12 +65,13 @@ abstract class ArrayBackedResultSet implements ResultSet {
                     columnDefs = r.metadata.columns;
                 }
 
+                int protocolVersion = session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
                 // info can be null only for internal calls, but we don't page those. We assert
                 // this explicitly because MultiPage implementation don't support info == null.
                 assert r.metadata.pagingState == null || info != null;
                 return r.metadata.pagingState == null
-                     ? new SinglePage(columnDefs, r.data, info)
-                     : new MultiPage(columnDefs, r.data, info, r.metadata.pagingState, session, statement);
+                     ? new SinglePage(columnDefs, protocolVersion, r.data, info)
+                     : new MultiPage(columnDefs, protocolVersion, r.data, info, r.metadata.pagingState, session, statement);
 
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
@@ -87,7 +90,8 @@ abstract class ArrayBackedResultSet implements ResultSet {
     }
 
     private static ArrayBackedResultSet empty(ExecutionInfo info) {
-        return new SinglePage(ColumnDefinitions.EMPTY, EMPTY_QUEUE, info);
+        // We could pass the protocol version but we know we won't need it so passing a bogus value (-1)
+        return new SinglePage(ColumnDefinitions.EMPTY, -1, EMPTY_QUEUE, info);
     }
 
     public ColumnDefinitions getColumnDefinitions() {
@@ -141,9 +145,10 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final ExecutionInfo info;
 
         private SinglePage(ColumnDefinitions metadata,
+                           int protocolVersion,
                            Queue<List<ByteBuffer>> rows,
                            ExecutionInfo info) {
-            super(metadata);
+            super(metadata, protocolVersion);
             this.info = info;
             this.rows = rows;
         }
@@ -153,7 +158,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         }
 
         public Row one() {
-            return ArrayBackedRow.fromData(metadata, rows.poll());
+            return ArrayBackedRow.fromData(metadata, protocolVersion, rows.poll());
         }
 
         public int getAvailableWithoutFetching() {
@@ -203,13 +208,14 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final Statement statement;
 
         private MultiPage(ColumnDefinitions metadata,
+                          int protocolVersion,
                           Queue<List<ByteBuffer>> rows,
                           ExecutionInfo info,
                           ByteBuffer pagingState,
                           SessionManager session,
                           Statement statement) {
 
-            super(metadata);
+            super(metadata, protocolVersion);
             this.currentPage = rows;
             this.infos.offer(info);
 
@@ -225,7 +231,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
         public Row one() {
             prepareNextRow();
-            return ArrayBackedRow.fromData(metadata, currentPage.poll());
+            return ArrayBackedRow.fromData(metadata, protocolVersion, currentPage.poll());
         }
 
         public int getAvailableWithoutFetching() {

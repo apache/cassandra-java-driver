@@ -53,7 +53,6 @@ class MethodMapper {
 
         // TODO: we should also validate the types of the parameters...
 
-
         Class<?> returnType = method.getReturnType();
         if (Void.class.isAssignableFrom(returnType) || ResultSet.class.isAssignableFrom(returnType))
             return;

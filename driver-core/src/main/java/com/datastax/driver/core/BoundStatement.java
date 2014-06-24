@@ -192,7 +192,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
                         throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting %s but %s provided", i, columnType, expectedClass, providedClass));
                     break;
             }
-            wrapper.values[i] = columnType.codec(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION).serialize(toSet);
+            wrapper.values[i] = columnType.codec(statement.getPreparedId().protocolVersion).serialize(toSet);
         }
         return this;
     }
@@ -1115,7 +1115,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     static class DataWrapper extends AbstractData<BoundStatement> {
 
         DataWrapper(BoundStatement wrapped, int size) {
-            super(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION, wrapped, size);
+            super(wrapped.statement.getPreparedId().protocolVersion, wrapped, size);
         }
 
         protected int[] getAllIndexesOf(String name) {

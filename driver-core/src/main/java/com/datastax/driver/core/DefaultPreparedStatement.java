@@ -40,13 +40,13 @@ public class DefaultPreparedStatement implements PreparedStatement{
         this.queryKeyspace = queryKeyspace;
     }
 
-    static DefaultPreparedStatement fromMessage(Responses.Result.Prepared msg, Metadata clusterMetadata, String query, String queryKeyspace) {
+    static DefaultPreparedStatement fromMessage(Responses.Result.Prepared msg, Metadata clusterMetadata, int protocolVersion, String query, String queryKeyspace) {
         assert msg.metadata.columns != null;
 
         ColumnDefinitions defs = msg.metadata.columns;
 
         if (defs.size() == 0)
-            return new DefaultPreparedStatement(new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null), query, queryKeyspace);
+            return new DefaultPreparedStatement(new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null, protocolVersion), query, queryKeyspace);
 
         List<ColumnMetadata> partitionKeyColumns = null;
         int[] pkIndexes = null;
@@ -65,7 +65,7 @@ public class DefaultPreparedStatement implements PreparedStatement{
         for (int i = 0; i < defs.size(); i++)
             maybeGetIndex(defs.getName(i), i, partitionKeyColumns, pkIndexes);
 
-        PreparedId prepId = new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, allSet(pkIndexes) ? pkIndexes : null);
+        PreparedId prepId = new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, allSet(pkIndexes) ? pkIndexes : null, protocolVersion);
 
         return new DefaultPreparedStatement(prepId, query, queryKeyspace);
     }
