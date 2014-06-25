@@ -445,20 +445,21 @@ public abstract class DataType {
     }
 
     /**
-     * Parses a string value for the type this object represent, returning its
-     * Cassandra binary representation.
-     * <p>
-     * Please note that currently, parsing collections is not supported and will
-     * throw an {@code InvalidTypeException}.
+     * Parses a string CQL value for the type this object represent, returning its
+     * value as a Java object.
      *
      * @param value the value to parse.
-     * @return the binary representation of {@code value}.
+     * @return a java object representing {@code value}. If {@code value == null}, then
+     * {@code null} is returned.
      *
-     * @throws InvalidTypeException if {@code value} is not a valid string
+     * @throws InvalidTypeException if {@code value} is not a valid CQL string
      * representation for this type. Please note that values for custom types
      * can never be parsed and will always return this exception.
      */
-    public abstract ByteBuffer parse(String value);
+    public Object parse(String value) {
+        // We don't care about the protocol version for parsing
+        return value == null ? null : codec(-1).parse(value);
+    }
 
     /**
      * Returns whether this type is a collection one, i.e. a list, set or map type.
@@ -598,12 +599,6 @@ public abstract class DataType {
         }
 
         @Override
-        public ByteBuffer parse(String value) {
-            TypeCodec<Object> codec = codec(0);
-            return codec.serialize(codec.parse(value));
-        }
-
-        @Override
         public final int hashCode() {
             return name.hashCode();
         }
@@ -646,11 +641,6 @@ public abstract class DataType {
         @Override
         public List<DataType> getTypeArguments() {
             return typeArguments;
-        }
-
-        @Override
-        public ByteBuffer parse(String value) {
-            throw new InvalidTypeException(String.format("Cannot parse value as %s, parsing collections is not currently supported", name));
         }
 
         @Override
@@ -697,12 +687,6 @@ public abstract class DataType {
         }
 
         @Override
-        public ByteBuffer parse(String value) {
-            // TODO: we actuall need that, because UDT can be in the partition key and so BuiltStatement needs that
-            throw new InvalidTypeException(String.format("Cannot parse value as %s, parsing user types is not currently supported", name));
-        }
-
-        @Override
         public final int hashCode() {
             return Arrays.hashCode(new Object[]{ name, definition });
         }
@@ -745,7 +729,7 @@ public abstract class DataType {
         @Override
         public ByteBuffer parse(String value) {
             throw new InvalidTypeException(String.format("Cannot parse '%s' as value of custom type of class '%s' "
-                        + "(values for custom type cannot be parse and must be inputted as bytes directly)", value, customClassName));
+                        + "(values for custom type cannot be parsed and must be inputted as bytes directly)", value, customClassName));
         }
 
         @Override

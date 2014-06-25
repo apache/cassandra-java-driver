@@ -86,38 +86,34 @@ abstract class Utils {
 
     static StringBuilder appendValue(Object value, StringBuilder sb, List<Object> variables) {
         if (variables == null || !isSerializable(value))
-            return appendValue(value, sb, false);
+            return appendValue(value, sb);
 
         sb.append('?');
         variables.add(value);
         return sb;
     }
 
-    static StringBuilder appendFlatValue(Object value, StringBuilder sb) {
-        appendFlatValue(value, sb, false);
-        return sb;
-    }
-
-    private static StringBuilder appendValue(Object value, StringBuilder sb, boolean rawValue) {
+    private static StringBuilder appendValue(Object value, StringBuilder sb) {
         // That is kind of lame but lacking a better solution
         if (appendValueIfLiteral(value, sb))
             return sb;
 
-        if (appendValueIfCollection(value, sb, rawValue))
+        if (appendValueIfCollection(value, sb))
             return sb;
 
-        appendStringIfValid(value, sb, rawValue);
+        appendStringIfValid(value, sb);
         return sb;
     }
 
-    private static void appendFlatValue(Object value, StringBuilder sb, boolean rawValue) {
+    static StringBuilder appendFlatValue(Object value, StringBuilder sb) {
         if (appendValueIfLiteral(value, sb))
-            return;
+            return sb;
 
-        appendStringIfValid(value, sb, rawValue);
+        appendStringIfValid(value, sb);
+        return sb;
     }
 
-    private static void appendStringIfValid(Object value, StringBuilder sb, boolean rawValue) {
+    private static void appendStringIfValid(Object value, StringBuilder sb) {
         if (value instanceof RawString) {
             sb.append(value.toString());
         } else {
@@ -127,11 +123,7 @@ abstract class Utils {
                     msg += " (for blob values, make sure to use a ByteBuffer)";
                 throw new IllegalArgumentException(msg);
             }
-
-            if (rawValue)
-                sb.append((String)value);
-            else
-                appendValueString((String)value, sb);
+            appendValueString((String)value, sb);
         }
     }
 
@@ -173,15 +165,15 @@ abstract class Utils {
     }
 
     @SuppressWarnings("rawtypes")
-    private static boolean appendValueIfCollection(Object value, StringBuilder sb, boolean rawValue) {
+    private static boolean appendValueIfCollection(Object value, StringBuilder sb) {
         if (value instanceof List) {
-            appendList((List)value, sb, rawValue);
+            appendList((List)value, sb);
             return true;
         } else if (value instanceof Set) {
-            appendSet((Set)value, sb, rawValue);
+            appendSet((Set)value, sb);
             return true;
         } else if (value instanceof Map) {
-            appendMap((Map)value, sb, rawValue);
+            appendMap((Map)value, sb);
             return true;
         } else {
             return false;
@@ -190,7 +182,7 @@ abstract class Utils {
 
     static StringBuilder appendCollection(Object value, StringBuilder sb, List<Object> variables) {
         if (variables == null || !isSerializable(value)) {
-            boolean wasCollection = appendValueIfCollection(value, sb, false);
+            boolean wasCollection = appendValueIfCollection(value, sb);
             assert wasCollection;
         } else {
             sb.append('?');
@@ -200,37 +192,41 @@ abstract class Utils {
     }
 
     static StringBuilder appendList(List<?> l, StringBuilder sb) {
-        return appendList(l, sb, false);
-    }
-
-    private static StringBuilder appendList(List<?> l, StringBuilder sb, boolean rawValue) {
         sb.append('[');
         for (int i = 0; i < l.size(); i++) {
             if (i > 0)
                 sb.append(',');
-            appendFlatValue(l.get(i), sb, rawValue);
+            appendFlatValue(l.get(i), sb);
         }
         sb.append(']');
         return sb;
     }
 
     static StringBuilder appendSet(Set<?> s, StringBuilder sb) {
-        return appendSet(s, sb, false);
-    }
-
-    private static StringBuilder appendSet(Set<?> s, StringBuilder sb, boolean rawValue) {
         sb.append('{');
         boolean first = true;
         for (Object elt : s) {
             if (first) first = false; else sb.append(',');
-            appendFlatValue(elt, sb, rawValue);
+            appendFlatValue(elt, sb);
         }
         sb.append('}');
         return sb;
     }
 
     static StringBuilder appendMap(Map<?, ?> m, StringBuilder sb) {
-        return appendMap(m, sb, false);
+        sb.append('{');
+        boolean first = true;
+        for (Map.Entry<?, ?> entry : m.entrySet()) {
+            if (first)
+                first = false;
+            else
+                sb.append(',');
+            appendFlatValue(entry.getKey(), sb);
+            sb.append(':');
+            appendFlatValue(entry.getValue(), sb);
+        }
+        sb.append('}');
+        return sb;
     }
 
     static boolean containsBindMarker(Object value) {
@@ -247,22 +243,6 @@ abstract class Utils {
         return false;
     }
 
-    private static StringBuilder appendMap(Map<?, ?> m, StringBuilder sb, boolean rawValue) {
-        sb.append('{');
-        boolean first = true;
-        for (Map.Entry<?, ?> entry : m.entrySet()) {
-            if (first)
-                first = false;
-            else
-                sb.append(',');
-            appendFlatValue(entry.getKey(), sb, rawValue);
-            sb.append(':');
-            appendFlatValue(entry.getValue(), sb, rawValue);
-        }
-        sb.append('}');
-        return sb;
-    }
-
     private static StringBuilder appendValueString(String value, StringBuilder sb) {
         return sb.append('\'').append(replace(value, '\'', "''")).append('\'');
     }
@@ -275,7 +255,7 @@ abstract class Utils {
     }
 
     static String toRawString(Object value) {
-        return appendValue(value, new StringBuilder(), true).toString();
+        return appendValue(value, new StringBuilder()).toString();
     }
 
     static StringBuilder appendName(String name, StringBuilder sb) {

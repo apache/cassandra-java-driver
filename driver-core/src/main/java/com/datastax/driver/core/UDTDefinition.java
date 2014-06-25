@@ -20,6 +20,8 @@ import java.util.*;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
 /**
  * The concrete definition of a user defined type (UDT).
  * <p>
@@ -221,6 +223,60 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
     @Override
     public String toString() {
         return asCQLQuery();
+    }
+
+    // We don't want to expose that, it's already exposed through DataType.parse
+    UDTValue parseValue(String value) {
+        UDTValue v = newValue();
+
+        int idx = ParseUtils.skipSpaces(value, 0);
+        if (value.charAt(idx++) != '{')
+            throw new InvalidTypeException(String.format("Cannot parse UDT value from \"%s\", at character %d expecting '{' but got '%c'", value, idx, value.charAt(idx)));
+
+        idx = ParseUtils.skipSpaces(value, idx);
+
+        if (value.charAt(idx) == '}')
+            return v;
+
+        while (idx < value.length()) {
+
+            int n;
+            try {
+                n = ParseUtils.skipCQLId(value, idx);
+            } catch (IllegalArgumentException e) {
+                throw new InvalidTypeException(String.format("Cannot parse UDT value from \"%s\", cannot parse a CQL identifier at character %d", value, idx), e);
+            }
+            String name = value.substring(idx, n);
+            idx = n;
+
+            if (!contains(name))
+                throw new InvalidTypeException(String.format("Unknown field %s in value \"%s\"", name, value));
+
+            idx = ParseUtils.skipSpaces(value, idx);
+            if (value.charAt(idx++) != ':')
+                throw new InvalidTypeException(String.format("Cannot parse UDT value from \"%s\", at character %d expecting ':' but got '%c'", value, idx, value.charAt(idx)));
+            idx = ParseUtils.skipSpaces(value, idx);
+
+            try {
+                n = ParseUtils.skipCQLValue(value, idx);
+            } catch (IllegalArgumentException e) {
+                throw new InvalidTypeException(String.format("Cannot parse UDT value from \"%s\", invalid CQL value at character %d", value, idx), e);
+            }
+
+            DataType dt = getFieldType(name);
+            v.setBytesUnsafe(name, dt.serialize(dt.parse(value.substring(idx, n)), 3));
+            idx = n;
+
+            idx = ParseUtils.skipSpaces(value, idx);
+            if (value.charAt(idx) == '}')
+                return v;
+            if (value.charAt(idx) != ',')
+                throw new InvalidTypeException(String.format("Cannot parse UDT value from \"%s\", at character %d expecting ',' but got '%c'", value, idx, value.charAt(idx)));
+            ++idx; // skip ','
+
+            idx = ParseUtils.skipSpaces(value, idx);
+        }
+        throw new InvalidTypeException(String.format("Malformed UDT value \"%s\", missing closing '}'", value));
     }
 
     /**

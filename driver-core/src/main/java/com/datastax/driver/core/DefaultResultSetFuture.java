@@ -34,11 +34,13 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
     private static final Logger logger = LoggerFactory.getLogger(ResultSetFuture.class);
 
     private final SessionManager session;
+    private final int protocolVersion;
     private final Message.Request request;
     private volatile RequestHandler handler;
 
-    DefaultResultSetFuture(SessionManager session, Message.Request request) {
+    DefaultResultSetFuture(SessionManager session, int protocolVersion, Message.Request request) {
         this.session = session;
+        this.protocolVersion = protocolVersion;
         this.request = request;
     }
 
@@ -62,11 +64,11 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                         case SET_KEYSPACE:
                             // propagate the keyspace change to other connections
                             session.poolsState.setKeyspace(((Responses.Result.SetKeyspace)rm).keyspace);
-                            set(ArrayBackedResultSet.fromMessage(rm, session, info, statement));
+                            set(ArrayBackedResultSet.fromMessage(rm, session, protocolVersion, info, statement));
                             break;
                         case SCHEMA_CHANGE:
                             Responses.Result.SchemaChange scc = (Responses.Result.SchemaChange)rm;
-                            ResultSet rs = ArrayBackedResultSet.fromMessage(rm, session, info, statement);
+                            ResultSet rs = ArrayBackedResultSet.fromMessage(rm, session, protocolVersion, info, statement);
                             switch (scc.change) {
                                 case CREATED:
                                     if (scc.columnFamily.isEmpty()) {
@@ -100,7 +102,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                             }
                             break;
                         default:
-                            set(ArrayBackedResultSet.fromMessage(rm, session, info, statement));
+                            set(ArrayBackedResultSet.fromMessage(rm, session, protocolVersion, info, statement));
                             break;
                     }
                     break;

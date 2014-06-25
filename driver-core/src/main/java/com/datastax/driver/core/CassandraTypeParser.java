@@ -315,16 +315,12 @@ class CassandraTypeParser {
             return i >= str.length();
         }
 
-        private static boolean isBlank(int c) {
-            return c == ' ' || c == '\t' || c == '\n';
-        }
-
         private void skipBlank() {
             idx = skipBlank(str, idx);
         }
 
         private static int skipBlank(String str, int i) {
-            while (!isEOS(str, i) && isBlank(str.charAt(i)))
+            while (!isEOS(str, i) && ParseUtils.isBlank(str.charAt(i)))
                 ++i;
 
             return i;
@@ -340,7 +336,7 @@ class CassandraTypeParser {
                         return true;
                     else
                         commaFound = true;
-                } else if (!isBlank(c)) {
+                } else if (!ParseUtils.isBlank(c)) {
                     return true;
                 }
                 ++idx;
@@ -348,19 +344,10 @@ class CassandraTypeParser {
             return false;
         }
 
-        /*
-         * [0..9a..bA..B-+._&]
-         */
-        private static boolean isIdentifierChar(int c) {
-            return (c >= '0' && c <= '9')
-                || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-                || c == '-' || c == '+' || c == '.' || c == '_' || c == '&';
-        }
-
         // left idx positioned on the character stopping the read
         public String readNextIdentifier() {
             int i = idx;
-            while (!isEOS() && isIdentifierChar(str.charAt(idx)))
+            while (!isEOS() && ParseUtils.isIdentifierChar(str.charAt(idx)))
                 ++idx;
 
             return str.substring(i, idx);

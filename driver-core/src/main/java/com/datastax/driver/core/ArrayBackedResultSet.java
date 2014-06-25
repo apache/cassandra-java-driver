@@ -47,7 +47,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         this.protocolVersion = protocolVersion;
     }
 
-    static ArrayBackedResultSet fromMessage(Responses.Result msg, SessionManager session, ExecutionInfo info, Statement statement) {
+    static ArrayBackedResultSet fromMessage(Responses.Result msg, SessionManager session, int protocolVersion, ExecutionInfo info, Statement statement) {
         info = update(info, msg, session);
 
         switch (msg.kind) {
@@ -65,7 +65,6 @@ abstract class ArrayBackedResultSet implements ResultSet {
                     columnDefs = r.metadata.columns;
                 }
 
-                int protocolVersion = session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
                 // info can be null only for internal calls, but we don't page those. We assert
                 // this explicitly because MultiPage implementation don't support info == null.
                 assert r.metadata.pagingState == null || info != null;

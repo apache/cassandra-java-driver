@@ -400,7 +400,7 @@ class SessionManager extends AbstractSession {
         if (statement.isTracing())
             msg.setTracingRequested();
 
-        DefaultResultSetFuture future = new DefaultResultSetFuture(this, msg);
+        DefaultResultSetFuture future = new DefaultResultSetFuture(this, configuration().getProtocolOptions().getProtocolVersion(), msg);
         execute(future, statement);
         return future;
     }

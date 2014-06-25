@@ -134,7 +134,10 @@ public abstract class BuiltStatement extends RegularStatement {
 
         for (int i = 0; i < partitionKey.size(); i++) {
             if (name.equals(partitionKey.get(i).getName()) && Utils.isRawValue(value)) {
-                routingKey[i] = partitionKey.get(i).getType().parse(Utils.toRawString(value));
+                DataType dt = partitionKey.get(i).getType();
+                // We don't really care which protocol version we use, since the only place it matters if for
+                // collections (not inside UDT), and those are not allowed in a partition key anyway, hence the hardcoding.
+                routingKey[i] = dt.serialize(dt.parse(Utils.toRawString(value)), 3);
                 return;
             }
         }

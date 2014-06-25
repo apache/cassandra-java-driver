@@ -286,13 +286,13 @@ class ControlConnection implements Host.StateListener {
         }
 
         DefaultResultSetFuture ksFuture = table == null
-                                        ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_KEYSPACES + whereClause))
+                                        ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_KEYSPACES + whereClause))
                                         : null;
         DefaultResultSetFuture udtFuture = table == null && (cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1))
-                                         ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_USERTYPES + whereClause))
+                                         ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_USERTYPES + whereClause))
                                          : null;
-        DefaultResultSetFuture cfFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause));
-        DefaultResultSetFuture colsFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMNS + whereClause));
+        DefaultResultSetFuture cfFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause));
+        DefaultResultSetFuture colsFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMNS + whereClause));
 
         if (ksFuture != null)
             connection.write(ksFuture);
@@ -366,14 +366,14 @@ class ControlConnection implements Host.StateListener {
             boolean isConnectedHost = c.address.equals(host.getSocketAddress());
             if (isConnectedHost || host.listenAddress != null) {
                 DefaultResultSetFuture future = isConnectedHost
-                    ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL))
-                    : new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.listenAddress.getHostAddress() + '\''));
+                    ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_LOCAL))
+                    : new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.listenAddress.getHostAddress() + '\''));
                 c.write(future);
                 return future.get().one();
             }
 
             // We have to fetch the whole peers table and find the host we're looking for
-            DefaultResultSetFuture future = new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS));
+            DefaultResultSetFuture future = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
             c.write(future);
             for (Row row : future.get()) {
                 InetSocketAddress addr = addressToUseForPeerHost(row, c.address, cluster);
@@ -445,8 +445,8 @@ class ControlConnection implements Host.StateListener {
     private static void refreshNodeListAndTokenMap(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         // Make sure we're up to date on nodes and tokens
 
-        DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL));
-        DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS));
+        DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_LOCAL));
+        DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
         connection.write(localFuture);
         connection.write(peersFuture);
 
@@ -533,8 +533,8 @@ class ControlConnection implements Host.StateListener {
         long elapsed = 0;
         while (elapsed < MAX_SCHEMA_AGREEMENT_WAIT_MS) {
 
-            DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_PEERS));
-            DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_LOCAL));
+            DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_PEERS));
+            DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_LOCAL));
             connection.write(peersFuture);
             connection.write(localFuture);
 

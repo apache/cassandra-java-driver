@@ -313,7 +313,10 @@ abstract class TypeCodec<T> {
 
         @Override
         public String parse(String value) {
-            return value;
+            if (value.charAt(0) != '\'' || value.charAt(value.length() - 1) != '\'')
+                throw new InvalidTypeException("text values must enclosed by a single quotes");
+
+            return value.substring(1, value.length() - 1).replace("''", "'");
         }
 
         @Override
@@ -795,7 +798,36 @@ abstract class TypeCodec<T> {
 
         @Override
         public List<T> parse(String value) {
-            throw new UnsupportedOperationException();
+            int idx = ParseUtils.skipSpaces(value, 0);
+            if (value.charAt(idx++) != '[')
+                throw new InvalidTypeException(String.format("cannot parse list value from \"%s\", at character %d expecting '[' but got '%c'", value, idx, value.charAt(idx)));
+
+            idx = ParseUtils.skipSpaces(value, idx);
+
+            if (value.charAt(idx) == ']')
+                return Collections.<T>emptyList();
+
+            List<T> l = new ArrayList<T>();
+            while (idx < value.length()) {
+                int n;
+                try {
+                    n = ParseUtils.skipCQLValue(value, idx);
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidTypeException(String.format("Cannot parse list value from \"%s\", invalid CQL value at character %d", value, idx), e);
+                }
+
+                l.add(eltCodec.parse(value.substring(idx, n)));
+                idx = n;
+
+                idx = ParseUtils.skipSpaces(value, idx);
+                if (value.charAt(idx) == ']')
+                    return l;
+                if (value.charAt(idx++) != ',')
+                    throw new InvalidTypeException(String.format("Cannot parse list value from \"%s\", at character %d expecting ',' but got '%c'", value, idx, value.charAt(idx)));
+
+                idx = ParseUtils.skipSpaces(value, idx);
+            }
+            throw new InvalidTypeException(String.format("Malformed list value \"%s\", missing closing ']'", value));
         }
 
         @Override
@@ -836,7 +868,36 @@ abstract class TypeCodec<T> {
 
         @Override
         public Set<T> parse(String value) {
-            throw new UnsupportedOperationException();
+            int idx = ParseUtils.skipSpaces(value, 0);
+            if (value.charAt(idx++) != '{')
+                throw new InvalidTypeException(String.format("cannot parse set value from \"%s\", at character %d expecting '{' but got '%c'", value, idx, value.charAt(idx)));
+
+            idx = ParseUtils.skipSpaces(value, idx);
+
+            if (value.charAt(idx) == '}')
+                return Collections.<T>emptySet();
+
+            Set<T> s = new HashSet<T>();
+            while (idx < value.length()) {
+                int n;
+                try {
+                    n = ParseUtils.skipCQLValue(value, idx);
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidTypeException(String.format("Cannot parse set value from \"%s\", invalid CQL value at character %d", value, idx), e);
+                }
+
+                s.add(eltCodec.parse(value.substring(idx, n)));
+                idx = n;
+
+                idx = ParseUtils.skipSpaces(value, idx);
+                if (value.charAt(idx) == '}')
+                    return s;
+                if (value.charAt(idx++) != ',')
+                    throw new InvalidTypeException(String.format("Cannot parse set value from \"%s\", at character %d expecting ',' but got '%c'", value, idx, value.charAt(idx)));
+
+                idx = ParseUtils.skipSpaces(value, idx);
+            }
+            throw new InvalidTypeException(String.format("Malformed set value \"%s\", missing closing '}'", value));
         }
 
         @Override
@@ -879,7 +940,53 @@ abstract class TypeCodec<T> {
 
         @Override
         public Map<K, V> parse(String value) {
-            throw new UnsupportedOperationException();
+            int idx = ParseUtils.skipSpaces(value, 0);
+            if (value.charAt(idx++) != '{')
+                throw new InvalidTypeException(String.format("cannot parse map value from \"%s\", at character %d expecting '{' but got '%c'", value, idx, value.charAt(idx)));
+
+            idx = ParseUtils.skipSpaces(value, idx);
+
+            if (value.charAt(idx) == '}')
+                return Collections.<K, V>emptyMap();
+
+            Map<K, V> m = new HashMap<K, V>();
+            while (idx < value.length()) {
+                int n;
+                try {
+                    n = ParseUtils.skipCQLValue(value, idx);
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidTypeException(String.format("Cannot parse map value from \"%s\", invalid CQL value at character %d", value, idx), e);
+                }
+
+                K k = keyCodec.parse(value.substring(idx, n));
+                idx = n;
+
+                idx = ParseUtils.skipSpaces(value, idx);
+                if (value.charAt(idx++) != ':')
+                    throw new InvalidTypeException(String.format("Cannot parse map value from \"%s\", at character %d expecting ':' but got '%c'", value, idx, value.charAt(idx)));
+                idx = ParseUtils.skipSpaces(value, idx);
+
+                try {
+                    n = ParseUtils.skipCQLValue(value, idx);
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidTypeException(String.format("Cannot parse map value from \"%s\", invalid CQL value at character %d", value, idx), e);
+                }
+
+                V v = valueCodec.parse(value.substring(idx, n));
+                idx = n;
+
+                m.put(k, v);
+
+                idx = ParseUtils.skipSpaces(value, idx);
+                if (value.charAt(idx) == '}')
+                    return m;
+                if (value.charAt(idx++) != ',')
+                    throw new InvalidTypeException(String.format("Cannot parse map value from \"%s\", at character %d expecting ',' but got '%c'", value, idx, value.charAt(idx)));
+
+                idx = ParseUtils.skipSpaces(value, idx);
+
+            }
+            throw new InvalidTypeException(String.format("Malformed map value \"%s\", missing closing '}'", value));
         }
 
         @Override
@@ -920,7 +1027,7 @@ abstract class TypeCodec<T> {
         }
 
         public UDTValue parse(String value) {
-            throw new UnsupportedOperationException();
+            return definition.parseValue(value);
         }
 
         public ByteBuffer serialize(UDTValue value) {
