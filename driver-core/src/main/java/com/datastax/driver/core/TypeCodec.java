@@ -145,7 +145,7 @@ abstract class TypeCodec<T> {
             if (value instanceof BigDecimal)
                 return DataType.decimal();
             if (value instanceof BigInteger)
-                return DataType.decimal();
+                return DataType.varint();
             return null;
         }
 

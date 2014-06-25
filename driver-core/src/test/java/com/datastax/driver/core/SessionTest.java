@@ -130,5 +130,4 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             cluster.getConfiguration().getProtocolOptions().setCompression(ProtocolOptions.Compression.NONE);
         }
     }
-
 }
