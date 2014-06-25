@@ -61,6 +61,14 @@ public class QueryBuilderTest {
         select = select().distinct().column("longName").as("a").ttl("longName").as("ttla").from("foo").limit(bindMarker("limit"));
         assertEquals(select.toString(), query);
 
+        query = "SELECT DISTINCT longName AS a,ttl(longName) AS ttla FROM foo WHERE k IN () LIMIT :limit;";
+        select = select().distinct().column("longName").as("a").ttl("longName").as("ttla").from("foo").where(in("k")).limit(bindMarker("limit"));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM foo WHERE bar=:barmark AND baz=:bazmark LIMIT :limit;";
+        select = select().all().from("foo").where().and(eq("bar", bindMarker("barmark"))).and(eq("baz", bindMarker("bazmark"))).limit(bindMarker("limit"));
+        assertEquals(select.toString(), query);
+
         query = "SELECT a FROM foo WHERE k IN ();";
         select = select("a").from("foo").where(in("k"));
         assertEquals(select.toString(), query);
@@ -280,7 +288,7 @@ public class QueryBuilderTest {
         delete = delete("a", "b", "c").from("foo");
         assertEquals(delete.toString(), query);
 
-        query = "DELETE  FROM foo USING TIMESTAMP 1240003134 WHERE k='value';";
+        query = "DELETE FROM foo USING TIMESTAMP 1240003134 WHERE k='value';";
         delete = delete().all().from("foo").using(timestamp(1240003134L)).where(eq("k", "value"));
         assertEquals(delete.toString(), query);
         delete = delete().from("foo").using(timestamp(1240003134L)).where(eq("k", "value"));
@@ -288,6 +296,10 @@ public class QueryBuilderTest {
 
         query = "DELETE a,b,c FROM foo.bar USING TIMESTAMP 1240003134 WHERE k=1;";
         delete = delete("a", "b", "c").from("foo", "bar").where().and(eq("k", 1)).using(timestamp(1240003134L));
+        assertEquals(delete.toString(), query);
+
+        query = "DELETE FROM foo.bar WHERE k1='foo' AND k2=1;";
+        delete = delete().from("foo", "bar").where(eq("k1", "foo")).and(eq("k2", 1));
         assertEquals(delete.toString(), query);
 
         try {
@@ -553,23 +565,23 @@ public class QueryBuilderTest {
         String query;
         Statement delete;
 
-        query = "DELETE  FROM \"foo WHERE k=4\";";
+        query = "DELETE FROM \"foo WHERE k=4\";";
         delete = delete().from("foo WHERE k=4");
         assertEquals(delete.toString(), query);
 
-        query = "DELETE  FROM foo WHERE k='4 AND c=5';";
+        query = "DELETE FROM foo WHERE k='4 AND c=5';";
         delete = delete().from("foo").where(eq("k", "4 AND c=5"));
         assertEquals(delete.toString(), query);
 
-        query = "DELETE  FROM foo WHERE k='4'' AND c=''5';";
+        query = "DELETE FROM foo WHERE k='4'' AND c=''5';";
         delete = delete().from("foo").where(eq("k", "4' AND c='5"));
         assertEquals(delete.toString(), query);
 
-        query = "DELETE  FROM foo WHERE k='4'' OR ''1''=''1';";
+        query = "DELETE FROM foo WHERE k='4'' OR ''1''=''1';";
         delete = delete().from("foo").where(eq("k", "4' OR '1'='1"));
         assertEquals(delete.toString(), query);
 
-        query = "DELETE  FROM foo WHERE k='4; --test comment;';";
+        query = "DELETE FROM foo WHERE k='4; --test comment;';";
         delete = delete().from("foo").where(eq("k", "4; --test comment;"));
         assertEquals(delete.toString(), query);
 
@@ -582,11 +594,11 @@ public class QueryBuilderTest {
                 .where(in("a", "b", "c'); --comment"));
         assertEquals(delete.toString(), query);
 
-        query = "DELETE  FROM foo WHERE \"k=1 OR k\">42;";
+        query = "DELETE FROM foo WHERE \"k=1 OR k\">42;";
         delete = delete().from("foo").where(gt("k=1 OR k", 42));
         assertEquals(delete.toString(), query);
 
-        query = "DELETE  FROM foo WHERE token(\"k)>0 OR token(k\")>token(42);";
+        query = "DELETE FROM foo WHERE token(\"k)>0 OR token(k\")>token(42);";
         delete = delete().from("foo").where(gt(token("k)>0 OR token(k"), fcall("token", 42)));
         assertEquals(delete.toString(), query);
     }

@@ -408,6 +408,22 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         primitiveSelectTest();
     }
 
+    @Test(groups = "short")
+    public void primitiveInsertWithValueTest() throws Throwable {
+        for (DataType dt : DataType.allPrimitiveTypes()) {
+            if (exclude(dt))
+                continue;
+
+            session.execute(String.format(PRIMITIVE_INSERT_FORMAT, dt, "?"), SAMPLE_DATA.get(dt), SAMPLE_DATA.get(dt));
+        }
+        // Kind of checking results (kind of because the schema used by this class make it ultra painful
+        // somehow to use a different partition for different tests, so that the insert done here actually
+        // conflict with the one in primitiveInsertTest. So all we check is that we don't write something
+        // horribly wrong, but if the inserts of this test where to do nothing, the following check might
+        // not work. We should fix the schema used by this class)
+        primitiveSelectTest();
+    }
+
     /**
      * Test simple statement inserts for all collection data types
      */

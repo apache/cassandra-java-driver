@@ -21,7 +21,6 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -31,6 +30,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.SetMultimap;
 import com.google.common.util.concurrent.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -140,6 +140,10 @@ public class Cluster implements Closeable {
      * can be reached.
      * @throws AuthenticationException if an authentication error occurs
      * while contacting the initial contact points.
+     * @throws IllegalStateException if the Cluster was closed prior to calling
+     * this method. This can occur either directly (through {@link #close()} or
+     * {@link #closeAsync()}), or as a result of an error while initializing the
+     * Cluster.
      */
     public Cluster init() {
         this.manager.init();
@@ -202,17 +206,21 @@ public class Cluster implements Closeable {
      * Creates a new session on this cluster and initialize it.
      * <p>
      * Note that this method will initialize the newly created session, trying
-     * to connect to the Cassandra nodes before returning. If you only want
-     * to create a Session object without initializing it right away, see
+     * to connect to the Cassandra nodes before returning. If you only want to
+     * create a Session object without initializing it right away, see
      * {@link #newSession}.
      *
      * @return a new session on this cluster sets to no keyspace.
      *
-     * @throws NoHostAvailableException if the Cluster has not been initialized yet
-     * ({@link #init} has not be called and this is the first connect call) and
-     * no host amongst the contact points can be reached.
-     * @throws AuthenticationException if an authentication error occurs
-     * while contacting the initial contact points.
+     * @throws NoHostAvailableException if the Cluster has not been initialized
+     * yet ({@link #init} has not be called and this is the first connect call)
+     * and no host amongst the contact points can be reached.
+     * @throws AuthenticationException if an authentication error occurs while
+     * contacting the initial contact points.
+     * @throws IllegalStateException if the Cluster was closed prior to calling
+     * this method. This can occur either directly (through {@link #close()} or
+     * {@link #closeAsync()}), or as a result of an error while initializing the
+     * Cluster.
      */
     public Session connect() {
         init();
@@ -222,12 +230,12 @@ public class Cluster implements Closeable {
     }
 
     /**
-     * Creates a new session on this cluster, initialize it and sets the keyspace
-     * to the provided one.
+     * Creates a new session on this cluster, initialize it and sets the
+     * keyspace to the provided one.
      * <p>
      * Note that this method will initialize the newly created session, trying
-     * to connect to the Cassandra nodes before returning. If you only want
-     * to create a Session object without initializing it right away, see
+     * to connect to the Cassandra nodes before returning. If you only want to
+     * create a Session object without initializing it right away, see
      * {@link #newSession}.
      *
      * @param keyspace The name of the keyspace to use for the created
@@ -235,22 +243,33 @@ public class Cluster implements Closeable {
      * @return a new session on this cluster sets to keyspace
      * {@code keyspaceName}.
      *
-     * @throws NoHostAvailableException if the Cluster has not been initialized yet
-     * ({@link #init} has not be called and this is the first connect call) and
-     * no host amongst the contact points can be reached, or if no host can be
-     * contacted to set the {@code keyspace}.
-     * @throws AuthenticationException if an authentication error occurs
-     * while contacting the initial contact points.
+     * @throws NoHostAvailableException if the Cluster has not been initialized
+     * yet ({@link #init} has not be called and this is the first connect call)
+     * and no host amongst the contact points can be reached, or if no host can
+     * be contacted to set the {@code keyspace}.
+     * @throws AuthenticationException if an authentication error occurs while
+     * contacting the initial contact points.
+     * @throws IllegalStateException if the Cluster was closed prior to calling
+     * this method. This can occur either directly (through {@link #close()} or
+     * {@link #closeAsync()}), or as a result of an error while initializing the
+     * Cluster.
      */
     public Session connect(String keyspace) {
-        SessionManager session = (SessionManager)connect();
+        long timeout = getConfiguration().getSocketOptions().getConnectTimeoutMillis();
+        Session session = connect();
         try {
-            session.setKeyspace(keyspace);
+            ResultSetFuture future = session.executeAsync("USE " + keyspace);
+            // Note: using the connection timeout isn't perfectly correct, we should probably change that someday
+            Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
+            return session;
+        } catch (TimeoutException e) {
+            throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
+        } catch (ExecutionException e) {
+            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
         } catch (RuntimeException e) {
             session.close();
             throw e;
         }
-        return session;
     }
 
     /**
@@ -286,6 +305,10 @@ public class Cluster implements Closeable {
      * and no host amongst the contact points can be reached.
      * @throws AuthenticationException if an authentication error occurs
      * while contacting the initial contact points.
+     * @throws IllegalStateException if the Cluster was closed prior to calling
+     * this method. This can occur either directly (through {@link #close()} or
+     * {@link #closeAsync()}), or as a result of an error while initializing the
+     * Cluster.
      */
     public Metadata getMetadata() {
         manager.init();
@@ -1097,6 +1120,8 @@ public class Cluster implements Closeable {
         // Initialization is not too performance intensive and in practice there shouldn't be contention
         // on it so synchronized is good enough.
         synchronized void init() {
+            if (isClosed())
+                throw new IllegalStateException("Can't use this Cluster instance because it was previously closed");
             if (isInit)
                 return;
             isInit = true;
