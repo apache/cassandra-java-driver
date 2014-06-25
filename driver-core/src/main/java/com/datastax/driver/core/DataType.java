@@ -462,6 +462,21 @@ public abstract class DataType {
     }
 
     /**
+     * Format a Java object as an equivalent CQL value.
+     *
+     * @param value the value to format.
+     * @return a string corresponding to the CQL representation of {@code value}.
+     *
+     * @throws InvalidTypeException if {@code value} does not correspond to
+     * a CQL value (known by the driver). Please note that for custom types this
+     * method will always return this exception.
+     */
+    public String format(Object value) {
+        // We don't care about the protocol version for formatting
+        return value == null ? null : codec(-1).format(value);
+    }
+
+    /**
      * Returns whether this type is a collection one, i.e. a list, set or map type.
      *
      * @return whether this type is a collection one.
@@ -727,9 +742,13 @@ public abstract class DataType {
         }
 
         @Override
-        public ByteBuffer parse(String value) {
-            throw new InvalidTypeException(String.format("Cannot parse '%s' as value of custom type of class '%s' "
-                        + "(values for custom type cannot be parsed and must be inputted as bytes directly)", value, customClassName));
+        public Object parse(String value) {
+            throw new InvalidTypeException("Cannot parse values of custom types");
+        }
+
+        @Override
+        public String format(Object value) {
+            throw new InvalidTypeException("Cannot format values of custom types");
         }
 
         @Override

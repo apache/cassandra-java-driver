@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
+import static com.datastax.driver.core.DataTypeTest.exclude;
 
 
 /**
@@ -54,10 +55,6 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
 
     private final static Collection<String> COLLECTION_INSERT_STATEMENTS = getCollectionInsertStatements();
     private final static HashMap<DataType, String> COLLECTION_SELECT_STATEMENTS = getCollectionSelectStatements();
-
-    private static boolean exclude(DataType t) {
-        return t.getName() == DataType.Name.COUNTER;
-    }
 
     /**
      * Generates the table definitions that will be used in testing
@@ -240,6 +237,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
     /**
      * Helper method to stringify SAMPLE_DATA for simple insert statements
      */
+    @SuppressWarnings("fallthrough")
     private static String helperStringifiedData(DataType dataType) {
         String value = SAMPLE_DATA.get(dataType).toString();
 

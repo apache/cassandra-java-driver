@@ -15,6 +15,9 @@
  */
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
+import java.util.Map;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -38,13 +41,13 @@ public class TypeCodecTest {
 
     @Test(groups = "unit")
     public void testCustomKeyMap() throws Exception {
-        TypeCodec mapType = TypeCodec.mapOf(CUSTOM_FOO, text(), 2);
+        TypeCodec<Map<ByteBuffer, String>> mapType = TypeCodec.mapOf(CUSTOM_FOO, text(), 2);
         Assert.assertNotNull(mapType);
     }
 
     @Test(groups = "unit")
     public void testCustomValueMap() throws Exception {
-        TypeCodec mapType = TypeCodec.mapOf(text(), CUSTOM_FOO, 2);
+        TypeCodec<Map<String, ByteBuffer>> mapType = TypeCodec.mapOf(text(), CUSTOM_FOO, 2);
         Assert.assertNotNull(mapType);
     }
 }
