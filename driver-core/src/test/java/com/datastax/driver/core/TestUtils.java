@@ -23,6 +23,7 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.SkipException;
 
 /**
  * A number of static fields/methods handy for tests.
@@ -356,5 +357,16 @@ public abstract class TestUtils {
 
     private static boolean testHost(Host host, boolean testForDown) {
         return testForDown ? !host.isUp() : host.isUp();
+    }
+
+    public static void versionCheck(double majorCheck, int minorCheck, String skipString) {
+        String version = System.getProperty("cassandra.version");
+        String[] versionArray = version.split("\\.");
+        double major = Double.parseDouble(versionArray[0] + "." + versionArray[1]);
+        int minor = Integer.parseInt(versionArray[2]);
+
+        if (major < majorCheck || (major == majorCheck && minor < minorCheck)) {
+            throw new SkipException(skipString);
+        }
     }
 }
