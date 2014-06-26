@@ -34,6 +34,7 @@ package com.datastax.driver.core;
  * are in a remote data center for instance).
  */
 public enum HostDistance {
+    // Note: PoolingOptions rely on the order of the enum.
     LOCAL,
     REMOTE,
     IGNORED
