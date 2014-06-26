@@ -32,8 +32,12 @@ import com.datastax.driver.core.exceptions.*;
  * it makes sense), etc...
  * <p>
  * Session instances are thread-safe and usually a single instance is enough
- * per application. However, a given session can only be set to one keyspace
- * at a time, so one instance per keyspace is necessary.
+ * per application. As a given session can only be "logged" into one keyspace at
+ * a time (where the "logged" keyspace is the one used by query if the query doesn't
+ * explicitely use a fully qualified table name), it can make sense to create one
+ * session per keyspace used. This is however not necessary to query multiple keyspaces
+ * since it is always possible to use a single session with fully qualified table name
+ * in queries.
  */
 public interface Session extends Closeable {
 

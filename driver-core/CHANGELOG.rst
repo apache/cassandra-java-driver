@@ -10,6 +10,8 @@ CHANGELOG
   which nodes a session is connected to (JAVA-265)
 - [new] Add QueryBuilder syntax for tuples in where clauses (syntax
   introduced in Cassandra 2.0.6) (JAVA-327)
+- [improvement] Properly validate arguments of PoolingOptions methods
+  (JAVA-359)
 - [bug] Fix bogus rejection of BigInteger in 'execute with values'
   (JAVA-368)
 - [bug] Signal connection failure sooner to avoid missing them

@@ -53,17 +53,11 @@ public class PoolingOptions {
 
     private volatile Cluster.Manager manager;
 
-    private volatile int minSimultaneousRequestsForLocal = DEFAULT_MIN_REQUESTS;
-    private volatile int minSimultaneousRequestsForRemote = DEFAULT_MIN_REQUESTS;
+    private final int[] minSimultaneousRequests = new int[]{ DEFAULT_MIN_REQUESTS, DEFAULT_MIN_REQUESTS, 0 };
+    private final int[] maxSimultaneousRequests = new int[]{ DEFAULT_MAX_REQUESTS, DEFAULT_MAX_REQUESTS, 0 };
 
-    private volatile int maxSimultaneousRequestsForLocal = DEFAULT_MAX_REQUESTS;
-    private volatile int maxSimultaneousRequestsForRemote = DEFAULT_MAX_REQUESTS;
-
-    private volatile int coreConnectionsForLocal = DEFAULT_CORE_POOL_LOCAL;
-    private volatile int coreConnectionsForRemote = DEFAULT_CORE_POOL_REMOTE;
-
-    private volatile int maxConnectionsForLocal = DEFAULT_MAX_POOL_LOCAL;
-    private volatile int maxConnectionsForRemote = DEFAULT_MAX_POOL_REMOTE;
+    private final int[] coreConnections = new int[] { DEFAULT_CORE_POOL_LOCAL, DEFAULT_CORE_POOL_REMOTE, 0 };
+    private final int[] maxConnections = new int[] { DEFAULT_MAX_POOL_LOCAL , DEFAULT_MAX_POOL_REMOTE, 0 };
 
     public PoolingOptions() {}
 
@@ -87,14 +81,7 @@ public class PoolingOptions {
      * @return the configured threshold, or the default one if none have been set.
      */
     public int getMinSimultaneousRequestsPerConnectionThreshold(HostDistance distance) {
-        switch (distance) {
-            case LOCAL:
-                return minSimultaneousRequestsForLocal;
-            case REMOTE:
-                return minSimultaneousRequestsForRemote;
-            default:
-                return 0;
-        }
+        return minSimultaneousRequests[distance.ordinal()];
     }
 
     /**
@@ -102,22 +89,19 @@ public class PoolingOptions {
      * connections in excess are reclaimed.
      *
      * @param distance the {@code HostDistance} for which to configure this threshold.
-     * @param minSimultaneousRequests the value to set.
+     * @param newMinSimultaneousRequests the value to set (between 0 and 128).
      * @return this {@code PoolingOptions}.
      *
-     * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}.
+     * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}, or if {@code minSimultaneousRequests}
+     * is not in range, or if {@code newMinSimultaneousRequests} is greater than the maximum value for this distance.
      */
-    public PoolingOptions setMinSimultaneousRequestsPerConnectionThreshold(HostDistance distance, int minSimultaneousRequests) {
-        switch (distance) {
-            case LOCAL:
-                minSimultaneousRequestsForLocal = minSimultaneousRequests;
-                break;
-            case REMOTE:
-                minSimultaneousRequestsForRemote = minSimultaneousRequests;
-                break;
-            default:
-                throw new IllegalArgumentException("Cannot set min streams per connection threshold for " + distance + " hosts");
-        }
+    public synchronized PoolingOptions setMinSimultaneousRequestsPerConnectionThreshold(HostDistance distance, int newMinSimultaneousRequests) {
+        if (distance == HostDistance.IGNORED)
+            throw new IllegalArgumentException("Cannot set min simultaneous requests per connection threshold for " + distance + " hosts");
+
+        checkRequestsPerConnectionRange(newMinSimultaneousRequests, "Min simultaneous requests per connection", distance);
+        checkRequestsPerConnectionOrder(newMinSimultaneousRequests, maxSimultaneousRequests[distance.ordinal()], distance);
+        minSimultaneousRequests[distance.ordinal()] = newMinSimultaneousRequests;
         return this;
     }
 
@@ -141,14 +125,7 @@ public class PoolingOptions {
      * @return the configured threshold, or the default one if none have been set.
      */
     public int getMaxSimultaneousRequestsPerConnectionThreshold(HostDistance distance) {
-        switch (distance) {
-            case LOCAL:
-                return maxSimultaneousRequestsForLocal;
-            case REMOTE:
-                return maxSimultaneousRequestsForRemote;
-            default:
-                return 0;
-        }
+        return maxSimultaneousRequests[distance.ordinal()];
     }
 
     /**
@@ -156,22 +133,19 @@ public class PoolingOptions {
      * which more connections are created.
      *
      * @param distance the {@code HostDistance} for which to configure this threshold.
-     * @param maxSimultaneousRequests the value to set.
+     * @param newMaxSimultaneousRequests the value to set (between 0 and 128).
      * @return this {@code PoolingOptions}.
      *
-     * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}.
+     * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}, or if {@code maxSimultaneousRequests}
+     * is not in range, or if {@code newMaxSimultaneousRequests} is less than the minimum value for this distance.
      */
-    public PoolingOptions setMaxSimultaneousRequestsPerConnectionThreshold(HostDistance distance, int maxSimultaneousRequests) {
-        switch (distance) {
-            case LOCAL:
-                maxSimultaneousRequestsForLocal = maxSimultaneousRequests;
-                break;
-            case REMOTE:
-                maxSimultaneousRequestsForRemote = maxSimultaneousRequests;
-                break;
-            default:
-                throw new IllegalArgumentException("Cannot set max streams per connection threshold for " + distance + " hosts");
-        }
+    public synchronized PoolingOptions setMaxSimultaneousRequestsPerConnectionThreshold(HostDistance distance, int newMaxSimultaneousRequests) {
+        if (distance == HostDistance.IGNORED)
+            throw new IllegalArgumentException("Cannot set max simultaneous requests per connection threshold for " + distance + " hosts");
+
+        checkRequestsPerConnectionRange(newMaxSimultaneousRequests, "Max simultaneous requests per connection", distance);
+        checkRequestsPerConnectionOrder(minSimultaneousRequests[distance.ordinal()], newMaxSimultaneousRequests, distance);
+        maxSimultaneousRequests[distance.ordinal()] = newMaxSimultaneousRequests;
         return this;
     }
 
@@ -186,42 +160,28 @@ public class PoolingOptions {
      * @return the core number of connections per host at distance {@code distance}.
      */
     public int getCoreConnectionsPerHost(HostDistance distance) {
-        switch (distance) {
-            case LOCAL:
-                return coreConnectionsForLocal;
-            case REMOTE:
-                return coreConnectionsForRemote;
-            default:
-                return 0;
-        }
+        return coreConnections[distance.ordinal()];
     }
 
     /**
      * Sets the core number of connections per host.
      *
      * @param distance the {@code HostDistance} for which to set this threshold.
-     * @param coreConnections the value to set
+     * @param newCoreConnections the value to set
      * @return this {@code PoolingOptions}.
      *
-     * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}.
+     * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED},
+     * or if {@code newCoreConnections} is greater than the maximum value for this distance.
      */
-    public PoolingOptions setCoreConnectionsPerHost(HostDistance distance, int coreConnections) {
-        switch (distance) {
-            case LOCAL:
-                int oldLocalCore = coreConnectionsForLocal;
-                coreConnectionsForLocal = coreConnections;
-                if (oldLocalCore < coreConnectionsForLocal && manager != null)
-                    manager.ensurePoolsSizing();
-                break;
-            case REMOTE:
-                int oldRemoteCore = coreConnectionsForRemote;
-                coreConnectionsForRemote = coreConnections;
-                if (oldRemoteCore < coreConnectionsForRemote && manager != null)
-                    manager.ensurePoolsSizing();
-                break;
-            default:
+    public synchronized PoolingOptions setCoreConnectionsPerHost(HostDistance distance, int newCoreConnections) {
+        if (distance == HostDistance.IGNORED)
                 throw new IllegalArgumentException("Cannot set core connections per host for " + distance + " hosts");
-        }
+
+        checkConnectionsPerHostOrder(newCoreConnections, maxConnections[distance.ordinal()], distance);
+        int oldCore = coreConnections[distance.ordinal()];
+        coreConnections[distance.ordinal()] = newCoreConnections;
+        if (oldCore < newCoreConnections && manager != null)
+            manager.ensurePoolsSizing();
         return this;
     }
 
@@ -235,36 +195,25 @@ public class PoolingOptions {
      * @return the maximum number of connections per host at distance {@code distance}.
      */
     public int getMaxConnectionsPerHost(HostDistance distance) {
-        switch (distance) {
-            case LOCAL:
-                return maxConnectionsForLocal;
-            case REMOTE:
-                return maxConnectionsForRemote;
-            default:
-                return 0;
-        }
+        return maxConnections[distance.ordinal()];
     }
 
     /**
      * Sets the maximum number of connections per host.
      *
      * @param distance the {@code HostDistance} for which to set this threshold.
-     * @param maxConnections the value to set
+     * @param newMaxConnections the value to set
      * @return this {@code PoolingOptions}.
      *
-     * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}.
+     * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED},
+     * or if {@code newMaxConnections} is less than the core value for this distance.
      */
-    public PoolingOptions setMaxConnectionsPerHost(HostDistance distance, int maxConnections) {
-        switch (distance) {
-            case LOCAL:
-                maxConnectionsForLocal = maxConnections;
-                break;
-            case REMOTE:
-                maxConnectionsForRemote = maxConnections;
-                break;
-            default:
-                throw new IllegalArgumentException("Cannot set max connections per host for " + distance + " hosts");
-        }
+    public synchronized PoolingOptions setMaxConnectionsPerHost(HostDistance distance, int newMaxConnections) {
+        if (distance == HostDistance.IGNORED)
+            throw new IllegalArgumentException("Cannot set max connections per host for " + distance + " hosts");
+
+        checkConnectionsPerHostOrder(coreConnections[distance.ordinal()], newMaxConnections, distance);
+        maxConnections[distance.ordinal()] = newMaxConnections;
         return this;
     }
 
@@ -275,5 +224,24 @@ public class PoolingOptions {
      */
     public void refreshConnectedHosts() {
         manager.refreshConnectedHosts();
+    }
+
+    private static void checkRequestsPerConnectionRange(int value, String description, HostDistance distance) {
+        if (value < 0 || value > StreamIdGenerator.MAX_STREAM_PER_CONNECTION)
+            throw new IllegalArgumentException(String.format("%s for %s hosts must be in the range (0, %d)",
+                                                             description, distance,
+                                                             StreamIdGenerator.MAX_STREAM_PER_CONNECTION));
+    }
+
+    private static void checkRequestsPerConnectionOrder(int min, int max, HostDistance distance) {
+        if (min > max)
+            throw new IllegalArgumentException(String.format("Min simultaneous requests per connection for %s hosts must be less than max (%d > %d)",
+                                                             distance, min, max));
+    }
+
+    private static void checkConnectionsPerHostOrder(int core, int max, HostDistance distance) {
+        if (core > max)
+            throw new IllegalArgumentException(String.format("Core connections for %s hosts must be less than max (%d > %d)",
+                                                             distance, core, max));
     }
 }
