@@ -36,4 +36,18 @@ class PooledConnection extends Connection {
     public void release() {
         pool.returnConnection(this);
     }
+
+    @Override
+    protected void notifyOwnerWhenDefunct(boolean hostIsDown) {
+        // This can happen if an exception is thrown at construction time. In
+        // that case the pool will handle it itself.
+        if (pool == null)
+            return;
+
+        if (hostIsDown) {
+            pool.closeAsync();
+        } else {
+            pool.replace(this);
+        }
+    }
 }
