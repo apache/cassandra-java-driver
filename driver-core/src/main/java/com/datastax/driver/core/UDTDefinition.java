@@ -45,7 +45,7 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
     // implementation.
     final Map<String, int[]> byName;
 
-    UDTDefinition(String keyspace, String name, Collection<Field> fields) {
+    public UDTDefinition(String keyspace, String name, Collection<Field> fields) {
         this.keyspace = keyspace;
         this.name = name;
         this.byIdx = fields.toArray(new Field[fields.size()]);
@@ -286,7 +286,7 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
         private final String name;
         private final DataType type;
 
-        Field(String name, DataType type) {
+        public Field(String name, DataType type) {
             this.name = name;
             this.type = type;
         }
