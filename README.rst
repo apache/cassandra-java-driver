@@ -35,7 +35,7 @@ it in your application using the following Maven dependency::
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>1.0.7</version>
+      <version>1.0.8</version>
     </dependency>
     
 **DSE users** should use the following Maven dependency (*note the version is set to 1.0.5-dse*)::
@@ -51,7 +51,7 @@ it in your application using the following Maven dependency::
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>2.0.2</version>
+      <version>2.0.3</version>
     </dependency>
 
 
