@@ -40,7 +40,7 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.*;
 
 /**
- * information and known state of a Cassandra cluster.
+ * Informations and known state of a Cassandra cluster.
  * <p>
  * This is the main entry point of the driver. A simple example of access to a
  * Cassandra cluster would be:
@@ -127,8 +127,8 @@ public class Cluster implements Closeable {
      * one contact point can be reached) without creating a first {@code
      * Session}.
      * <p>
-     * Please note that this method only create one connection for metadata
-     * gathering reasons. In particular, it doesn't create any connection pool.
+     * Please note that this method only creates one control connection for
+     * gathering cluster metadata. In particular, it doesn't create any connection pools.
      * Those are created when a new {@code Session} is created through
      * {@code connect}.
      * <p>
@@ -186,8 +186,7 @@ public class Cluster implements Closeable {
      * Because this method does not perform any initialization, it cannot fail.
      * The initialization of the session (the connection of the Session to the
      * Cassandra nodes) will occur if either the {@link Session#init} method is
-     * called explicitly, or the time the
-     * returned session object is called.
+     * called explicitly, or whenever the returned session object is use.
      * <p>
      * Once a session returned by this method gets initialized (see above), it
      * will be set to no keyspace. If you want to set such session to a
