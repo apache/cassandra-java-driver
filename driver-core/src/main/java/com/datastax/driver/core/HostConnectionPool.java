@@ -244,12 +244,9 @@ class HostConnectionPool {
 
         int inFlight = connection.inFlight.decrementAndGet();
 
-        if (connection.isDefunct()) {
-            if (manager.cluster.manager.signalConnectionFailure(host, connection.lastException(), false))
-                closeAsync();
-            else
-                replace(connection);
-        } else {
+        // If the connection is defunct, we have already replaced it or closed
+        // the pool as part of marking it.
+        if (!connection.isDefunct()) {
 
             if (trash.contains(connection) && inFlight == 0) {
                 if (trash.remove(connection))
@@ -359,7 +356,7 @@ class HostConnectionPool {
         manager.blockingExecutor().submit(newConnectionTask);
     }
 
-    private void replace(final Connection connection) {
+    void replace(final Connection connection) {
         connections.remove(connection);
         connection.closeAsync();
         manager.blockingExecutor().submit(new Runnable() {

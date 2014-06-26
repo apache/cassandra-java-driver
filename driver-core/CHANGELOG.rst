@@ -12,6 +12,8 @@ CHANGELOG
   introduced in Cassandra 2.0.6) (JAVA-327)
 - [bug] Fix bogus rejection of BigInteger in 'execute with values'
   (JAVA-368)
+- [bug] Signal connection failure sooner to avoid missing them
+  (JAVA-367)
 
 Merged from 1.0 branch:
 

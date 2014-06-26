@@ -241,8 +241,18 @@ class Connection {
         exception = e;
         isDefunct = true;
         dispatcher.errorOutAllHandler(e);
+
+        Host host = factory.manager.metadata.getHost(address);
+        if (host != null) {
+            boolean isDown = factory.manager.signalConnectionFailure(host, e, host.wasJustAdded());
+            notifyOwnerWhenDefunct(isDown);
+        }
+
         closeAsync();
         return e;
+    }
+
+    protected void notifyOwnerWhenDefunct(boolean hostIsDown) {
     }
 
     public String keyspace() {
@@ -396,6 +406,7 @@ class Connection {
 
         private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
         public final DefaultResponseHandler defaultHandler;
+        final Cluster.Manager manager;
         public final Configuration configuration;
 
         public final AuthProvider authProvider;
@@ -403,8 +414,9 @@ class Connection {
 
         volatile int protocolVersion;
 
-        Factory(DefaultResponseHandler defaultHandler, Configuration configuration) {
-            this.defaultHandler = defaultHandler;
+        Factory(Cluster.Manager manager, Configuration configuration) {
+            this.defaultHandler = manager;
+            this.manager = manager;
             this.configuration = configuration;
             this.authProvider = configuration.getProtocolOptions().getAuthProvider();
             this.protocolVersion = configuration.getProtocolOptions().initialProtocolVersion;

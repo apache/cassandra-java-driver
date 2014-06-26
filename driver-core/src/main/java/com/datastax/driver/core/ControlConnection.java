@@ -140,21 +140,13 @@ class ControlConnection implements Host.StateListener {
     }
 
     private void signalError() {
-
-        // Try just signaling the host monitor, as this will trigger a reconnect as part to marking the host down.
+        // If the connection was marked as defunct, this already reported the
+        // node down, which will trigger a reconnect. Otherwise, just reconnect
+        // manually
         Connection connection = connectionRef.get();
-        if (connection != null && connection.isDefunct()) {
-            Host host = cluster.metadata.getHost(connection.address);
-            // Host might be null in the case the host has been removed, but it means this has
-            // been reported already so it's fine.
-            if (host != null) {
-                cluster.signalConnectionFailure(host, connection.lastException(), false);
-                return;
-            }
+        if (connection == null || !connection.isDefunct()) {
+            reconnect();
         }
-
-        // If the connection is not defunct, or the host has left, just reconnect manually
-        reconnect();
     }
 
     private void setNewConnection(Connection newConnection) {

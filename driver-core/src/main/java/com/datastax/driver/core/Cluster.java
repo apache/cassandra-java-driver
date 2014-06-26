@@ -1544,6 +1544,9 @@ public class Cluster implements Closeable {
         }
 
         public boolean signalConnectionFailure(Host host, ConnectionException exception, boolean isHostAddition) {
+            if (isClosed())
+                return true;
+
             boolean isDown = host.signalConnectionFailure(exception);
             if (isDown)
                 triggerOnDown(host, isHostAddition);

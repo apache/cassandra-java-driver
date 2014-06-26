@@ -24,6 +24,8 @@ import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.datastax.driver.core.Host.State.*;
+
 /**
  * A Cassandra node.
  *
@@ -35,7 +37,8 @@ public class Host {
 
     private final InetSocketAddress address;
 
-    private volatile boolean isUp;
+    enum State { ADDED, DOWN, UP }
+    private volatile State state;
     private final ConvictionPolicy policy;
 
     // Tracks reconnection attempts to that host so we avoid adding multiple tasks
@@ -63,6 +66,7 @@ public class Host {
         this.address = address;
         this.policy = policy.create(this);
         this.defaultExecutionInfo = new ExecutionInfo(ImmutableList.of(this));
+        this.state = ADDED;
     }
 
     void setLocationInfo(String datacenter, String rack) {
@@ -106,7 +110,7 @@ public class Host {
     /**
      * Returns the name of the datacenter this host is part of.
      * <p>
-     * The returned datacenter name is the one as known by Cassandra. 
+     * The returned datacenter name is the one as known by Cassandra.
      * It is also possible for this information to be unavailable. In that
      * case this method returns {@code null}, and the caller should always be aware
      * of this possibility.
@@ -157,7 +161,11 @@ public class Host {
      * @return whether the node is considered up.
      */
     public boolean isUp() {
-        return isUp;
+        return state == UP;
+    }
+
+    boolean wasJustAdded() {
+        return state == ADDED;
     }
 
     @Override
@@ -166,12 +174,12 @@ public class Host {
     }
 
     void setDown() {
-        isUp = false;
+        state = DOWN;
     }
 
     void setUp() {
         policy.reset();
-        isUp = true;
+        state = UP;
     }
 
     boolean signalConnectionFailure(ConnectionException exception) {
@@ -182,7 +190,7 @@ public class Host {
      * Interface for listeners that are interested in hosts added, up, down and
      * removed events.
      * <p>
-     * It is possible for the same event to be fired multiple times, 
+     * It is possible for the same event to be fired multiple times,
      * particularly for up or down events. Therefore, a listener should
      * ignore the same event if it has already been notified of a
      * node's state.
