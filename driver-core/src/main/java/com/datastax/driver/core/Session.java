@@ -334,7 +334,7 @@ public interface Session extends Closeable {
     /**
      * Return a snapshot of the state of this Session.
      * <p>
-     * The returned object provide information on which hosts the session is
+     * The returned object provides information on which hosts the session is
      * connected to, how many connections are opened to each host, etc...
      * The returned object is immutable, it is a snapshot of the Session State
      * taken when this method is called.

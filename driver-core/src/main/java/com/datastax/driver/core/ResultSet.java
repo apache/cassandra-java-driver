@@ -104,20 +104,20 @@ public interface ResultSet extends Iterable<Row> {
     public int getAvailableWithoutFetching();
 
     /**
-     * Whether all results from this result set has been fetched from the
+     * Whether all results from this result set have been fetched from the
      * database.
      * <p>
      * Note that if {@code isFullyFetched()}, then {@link #getAvailableWithoutFetching}
-     * will return how much rows remains in the result set before exhaustion. But
+     * will return how many rows remain in the result set before exhaustion. But
      * please note that {@code !isFullyFetched()} never guarantees that the result set
-     * is not exhausted (you should call {@code isExhausted()} to make sure of it).
+     * is not exhausted (you should call {@code isExhausted()} to verify it).
      *
      * @return whether all results have been fetched.
      */
     public boolean isFullyFetched();
 
     /**
-     * Force the fetching the next page of results for this result set, if any.
+     * Force fetching the next page of results for this result set, if any.
      * <p>
      * This method is entirely optional. It will be called automatically while
      * the result set is consumed (through {@link #one}, {@link #all} or iteration)
