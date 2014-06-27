@@ -240,7 +240,11 @@ class ControlConnection implements Host.StateListener {
     public void refreshSchema(String keyspace, String table) throws InterruptedException {
         logger.debug("[Control connection] Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : '.' + table);
         try {
-            refreshSchema(connectionRef.get(), keyspace, table, cluster);
+            Connection c = connectionRef.get();
+            // At startup, when we add the initial nodes, this will be null, which is ok
+            if (c == null)
+                return;
+            refreshSchema(c, keyspace, table, cluster);
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing schema ({})", e.getMessage());
             signalError();

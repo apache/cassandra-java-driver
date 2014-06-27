@@ -186,7 +186,7 @@ public class Cluster implements Closeable {
      * Because this method does not perform any initialization, it cannot fail.
      * The initialization of the session (the connection of the Session to the
      * Cassandra nodes) will occur if either the {@link Session#init} method is
-     * called explicitly, or whenever the returned session object is use.
+     * called explicitly, or whenever the returned session object is used.
      * <p>
      * Once a session returned by this method gets initialized (see above), it
      * will be set to no keyspace. If you want to set such session to a
