@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+2.0.4:
+------
+
+- [bug] Fix potential NPE in ControlConnection (JAVA-373)
+
+
 2.0.3:
 ------
 
