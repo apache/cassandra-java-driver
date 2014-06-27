@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A connection that is associated to a pool.
@@ -23,6 +24,8 @@ import java.net.InetSocketAddress;
 class PooledConnection extends Connection {
 
     private final HostConnectionPool pool;
+
+    final AtomicBoolean markForTrash = new AtomicBoolean();
 
     PooledConnection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
         super(name, address, factory);
@@ -47,7 +50,7 @@ class PooledConnection extends Connection {
         if (hostIsDown) {
             pool.closeAsync();
         } else {
-            pool.replace(this);
+            pool.replaceDefunctConnection(this);
         }
     }
 }
