@@ -23,15 +23,13 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 import static com.datastax.driver.core.Metadata.quote;
+import static com.datastax.driver.core.TestUtils.versionCheck;
 
 public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
-        // TODO: we could automate this for all test somehow
-        VersionNumber v = cluster.getMetadata().getAllHosts().iterator().next().getCassandraVersion();
-        if (v.getMajor() < 2 || (v.getMajor() == 2) && v.getMinor() < 1)
-            return Collections.<String>emptySet();
+        versionCheck(2.1, 0, "This will only work with Cassandra 2.1.0");
 
         String type1 = "CREATE TYPE phone (alias text, number text)";
         String type2 = "CREATE TYPE address (street text, \"ZIP\" int, phones set<phone>)";
@@ -43,11 +41,6 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void simpleWriteReadTest() throws Exception {
-
-        VersionNumber v = cluster.getMetadata().getAllHosts().iterator().next().getCassandraVersion();
-        if (v.getMajor() < 2 || (v.getMajor() == 2) && v.getMinor() < 1)
-            return;
-
         int userId = 0;
 
         try {

@@ -43,6 +43,7 @@ class CassandraTypeParser {
     private static final String SET_TYPE = "org.apache.cassandra.db.marshal.SetType";
     private static final String MAP_TYPE = "org.apache.cassandra.db.marshal.MapType";
     private static final String UDT_TYPE = "org.apache.cassandra.db.marshal.UserType";
+    private static final String TUPLE_TYPE = "org.apache.cassandra.db.marshal.TupleType";
 
     private static ImmutableMap<String, DataType> cassTypeToDataType =
         new ImmutableMap.Builder<String, DataType>()
@@ -103,6 +104,15 @@ class CassandraTypeParser {
             return DataType.userType(new UDTDefinition(keyspace, typeName, fields));
         }
 
+        if (isTupleType(next)) {
+            List<String> rawTypes = parser.getTypeParameters();
+            List<DataType> types = new ArrayList<DataType>(rawTypes.size());
+            for (String rawType : rawTypes) {
+                types.add(parseOne(rawType));
+            }
+            return DataType.tupleType(types);
+        }
+
         DataType type = cassTypeToDataType.get(next);
         return type == null ? DataType.custom(className) : type;
     }
@@ -113,6 +123,10 @@ class CassandraTypeParser {
 
     public static boolean isUserType(String className) {
         return className.startsWith(UDT_TYPE);
+    }
+
+    public static boolean isTupleType(String className) {
+        return className.startsWith(TUPLE_TYPE);
     }
 
     private static boolean isComposite(String className) {
