@@ -495,7 +495,7 @@ public interface GettableData {
     public UDTValue getUDTValue(int i);
 
     /**
-     * Return the vvalue for {@code name} as a UDT value.
+     * Return the value for {@code name} as a UDT value.
      *
      * @param name the name to retrieve.
      * @return the value of {@code name} as a UDT value. If the value is NULL,
@@ -505,4 +505,28 @@ public interface GettableData {
      * @throws InvalidTypeException if value {@code i} is not a UDT value.
      */
     public UDTValue getUDTValue(String name);
+
+    /**
+     * Return the {@code i}th value as a tuple value.
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @return the value of the {@code i}th element as a tuple value. If the value is NULL,
+     * then {@code null} will be returned.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not a tuple value.
+     */
+    public TupleValue getTupleValue(int i);
+
+    /**
+     * Return the value for {@code name} as a tuple value.
+     *
+     * @param name the name to retrieve.
+     * @return the value of {@code name} as a tuple value. If the value is NULL,
+     * then {@code null} will be returned.
+     *
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws InvalidTypeException if value {@code i} is not a tuple value.
+     */
+    public TupleValue getTupleValue(String name);
 }

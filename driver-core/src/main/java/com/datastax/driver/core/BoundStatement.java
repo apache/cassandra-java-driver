@@ -27,7 +27,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * A prepared statement with values bound to the bind variables.
  * <p>
  * Once values has been provided for the variables of the {@link PreparedStatement}
- * it has been created from, such BoundStatement can be executed (through 
+ * it has been created from, such BoundStatement can be executed (through
  * {@link Session#execute(Statement)}).
  * <p>
  * The values of a BoundStatement can be set by either index or name. When
@@ -91,7 +91,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * bound to a non-null value.
      *
      * @param name the name of the variable to check.
-     * @return whether the first occurrence of variable {@code name} has been 
+     * @return whether the first occurrence of variable {@code name} has been
      * bound to a non-null value.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -850,14 +850,45 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @return this BoundStatement.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this BoundStatement.
-     * @throws InvalidTypeException if value {@code i} is not a UDT value or if its definition
-     * does not correspond to the one of {@code v}.
      * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not a UDT value or if the definition of column {@code name} does not correspond to
      * the one of {@code v}.
      */
     public BoundStatement setUDTValue(String name, UDTValue v) {
         return wrapper.setUDTValue(name, v);
+    }
+
+    /**
+     * Sets the {@code i}th value to the provided tuple value.
+     *
+     * @param i the index of the value to set.
+     * @param v the value to set.
+     * @return this BoundStatement.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this BoundStatement.
+     * @throws InvalidTypeException if value {@code i} is not a tuple value or if its types
+     * do not correspond to the ones of {@code v}.
+     */
+    public BoundStatement setTupleValue(int i, TupleValue v) {
+        return wrapper.setTupleValue(i, v);
+    }
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided tuple value.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set.
+     * @return this BoundStatement.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this BoundStatement.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not a tuple value or if the types of column {@code name} do not correspond to
+     * the ones of {@code v}.
+     */
+    public BoundStatement setTupleValue(String name, TupleValue v) {
+        return wrapper.setTupleValue(name, v);
     }
 
     /**
@@ -1110,6 +1141,20 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      */
     public UDTValue getUDTValue(String name) {
         return wrapper.getUDTValue(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public TupleValue getTupleValue(int i) {
+        return wrapper.getTupleValue(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public TupleValue getTupleValue(String name) {
+        return wrapper.getTupleValue(name);
     }
 
     static class DataWrapper extends AbstractData<BoundStatement> {

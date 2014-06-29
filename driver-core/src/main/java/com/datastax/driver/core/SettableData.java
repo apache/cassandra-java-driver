@@ -539,4 +539,33 @@ public interface SettableData<T extends SettableData<T>> {
      * the one of {@code v}.
      */
     public T setUDTValue(String name, UDTValue v);
+
+    /**
+     * Sets the {@code i}th value to the provided tuple value.
+     *
+     * @param i the index of the value to set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not a tuple value or if its types
+     * do not correspond to the ones of {@code v}.
+     */
+    public T setTupleValue(int i, TupleValue v);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided tuple value.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not a tuple value or if the types of column {@code name} do not correspond to
+     * the ones of {@code v}.
+     */
+    public T setTupleValue(String name, TupleValue v);
 }

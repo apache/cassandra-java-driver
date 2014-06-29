@@ -373,9 +373,29 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    public T setTupleValue(int i, TupleValue v) {
+        DataType type = getType(i);
+        if (type.getName() != DataType.Name.TUPLE)
+            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a tuple", getName(i), type));
+
+        if (v == null)
+            return setValue(i, null);
+
+        // UDT always user the V3 protocol version to encode values
+        setValue(i, type.codec(3).serialize(v));
+        return wrapped;
+    }
+
+    public T setTupleValue(String name, TupleValue v) {
+        int[] indexes = getAllIndexesOf(name);
+        for (int i = 0; i < indexes.length; i++)
+            setTupleValue(indexes[i], v);
+        return wrapped;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof UDTValue))
+        if (!(o instanceof AbstractData))
             return false;
 
         AbstractData<?> that = (AbstractData<?>)o;

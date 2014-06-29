@@ -523,4 +523,30 @@ public abstract class AbstractGettableData implements GettableData {
     public UDTValue getUDTValue(String name) {
         return getUDTValue(getIndexOf(name));
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public TupleValue getTupleValue(int i) {
+        DataType type = getType(i);
+        if (type.getName() != DataType.Name.TUPLE)
+            throw new InvalidTypeException(String.format("Column %s is not a tuple", getName(i)));
+
+        ByteBuffer value = getValue(i);
+        if (value == null || value.remaining() == 0)
+            return null;
+
+        // tuples always use the protocol V3 to encode values
+        return (TupleValue)type.codec(3).deserialize(value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public TupleValue getTupleValue(String name) {
+        return getTupleValue(getIndexOf(name));
+    }
 }
