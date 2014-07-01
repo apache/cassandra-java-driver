@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -34,6 +35,15 @@ public class TupleValue extends AbstractData<TupleValue> {
         // All things in a tuple are encoded with the protocol v3
         super(3, types.size());
         this.types = types;
+    }
+
+    /**
+     * Builds a new value for a tuple.
+     *
+     * @param types the types of the tuple's components.
+     */
+    public TupleValue(DataType... types) {
+        this(Arrays.asList(types));
     }
 
     protected DataType getType(int i) {
@@ -89,58 +99,5 @@ public class TupleValue extends AbstractData<TupleValue> {
         }
         sb.append(")");
         return sb.toString();
-    }
-
-    /**
-     * Builds a tuple value containing the provided components.
-     *
-     * <p>
-     * The CQL {@code DataType} of each component is inferred from its Java class,
-     * using the following correspondence:
-     * <table>
-     *   <caption>Java class to DataType correspondence</caption>
-     *   <tr><th>Java Class </th><th>DataType (CQL)</th></tr>
-     *   <tr><td>ByteBuffer </td><td>BLOB</td></tr>
-     *   <tr><td>Integer    </td><td>INT</td></tr>
-     *   <tr><td>Long       </td><td>BIGINT</td></tr>
-     *   <tr><td>Float      </td><td>FLOAT</td></tr>
-     *   <tr><td>Double     </td><td>DOUBLE</td></tr>
-     *   <tr><td>BigDecimal </td><td>DECIMAL</td></tr>
-     *   <tr><td>BigInteger </td><td>VARINT</td></tr>
-     *   <tr><td>String     </td><td>TEXT</td></tr>
-     *   <tr><td>Boolean    </td><td>BOOLEAN</td></tr>
-     *   <tr><td>InetAddress</td><td>INET</td></tr>
-     *   <tr><td>Date       </td><td>TIMESTAMP</td></tr>
-     *   <tr><td>UUID       </td><td>UUID</td></tr>
-     *   <tr><td>List       </td><td>LIST</td></tr>
-     *   <tr><td>Set        </td><td>SET</td></tr>
-     *   <tr><td>Map        </td><td>MAP</td></tr>
-     *   <tr><td>UDTValue   </td><td>UDT</td></tr>
-     *   <tr><td>TupleValue </td><td>TUPLE</td></tr>
-     * </table>
-     * <p>
-     * Note that this might not be adequate for Java types that map to multiple
-     * CQL types (for example, String could also be mapped to ASCII or VARCHAR).
-     * Also, collection element types are inferred from the first element (or
-     * first key/value pair for Map); for empty collections, the BLOB type is
-     * used (for example, an empty List is mapped to LIST&lt;BLOB&gt;).
-     * <p>
-     * For cases where this type mapping is not what you want, use {@link #TupleValue(List)}
-     * to pass an explicit list of types, then set the values manually.
-     *
-     * @param components the components.
-     * @return a tuple value containing {@code components}.
-     */
-    public static TupleValue of(Object... components) {
-        List<DataType> types = new ArrayList<DataType>(components.length);
-        for (Object component : components) {
-            DataType type = TypeCodec.getDataTypeFor(component);
-            types.add(type);
-        }
-        TupleValue v = new TupleValue(types);
-        for (int i = 0; i < components.length; i++) {
-            v.setBytesUnsafe(i, types.get(i).serialize(components[i], 3));
-        }
-        return v;
     }
 }
