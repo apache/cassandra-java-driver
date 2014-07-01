@@ -28,7 +28,7 @@ public class TupleValue extends AbstractData<TupleValue> {
     /**
      * Builds a new value for a tuple.
      *
-     * @param types the types of the tuple's elements.
+     * @param types the types of the tuple's components.
      */
     public TupleValue(List<DataType> types) {
         // All things in a tuple are encoded with the protocol v3
@@ -42,18 +42,18 @@ public class TupleValue extends AbstractData<TupleValue> {
 
     @Override
     protected String getName(int i) {
-        throw new UnsupportedOperationException("The fields of a tuple don't have names");
+        throw new UnsupportedOperationException("The components of a tuple don't have names");
     }
 
     @Override
     protected int[] getAllIndexesOf(String name) {
-        throw new UnsupportedOperationException("The fields of a tuple don't have names");
+        throw new UnsupportedOperationException("The components of a tuple don't have names");
     }
 
     /**
-     * The types of the fields of this tuple.
+     * The types of the components of this tuple.
      *
-     * @return the types of the fields of this tuple.
+     * @return the types of the components of this tuple.
      */
     public List<DataType> getTypes() {
         return types;
@@ -92,10 +92,10 @@ public class TupleValue extends AbstractData<TupleValue> {
     }
 
     /**
-     * Builds a tuple value containing the provided elements.
+     * Builds a tuple value containing the provided components.
      *
      * <p>
-     * The CQL {@code DataType} of each element is inferred from its Java class,
+     * The CQL {@code DataType} of each component is inferred from its Java class,
      * using the following correspondence:
      * <table>
      *   <caption>Java class to DataType correspondence</caption>
@@ -128,18 +128,18 @@ public class TupleValue extends AbstractData<TupleValue> {
      * For cases where this type mapping is not what you want, use {@link #TupleValue(List)}
      * to pass an explicit list of types, then set the values manually.
      *
-     * @param elements the elements.
-     * @return a tuple value containing {@code elements}.
+     * @param components the components.
+     * @return a tuple value containing {@code components}.
      */
-    public static TupleValue of(Object... elements) {
-        List<DataType> types = new ArrayList<DataType>(elements.length);
-        for (Object element : elements) {
-            DataType type = TypeCodec.getDataTypeFor(element);
+    public static TupleValue of(Object... components) {
+        List<DataType> types = new ArrayList<DataType>(components.length);
+        for (Object component : components) {
+            DataType type = TypeCodec.getDataTypeFor(component);
             types.add(type);
         }
         TupleValue v = new TupleValue(types);
-        for (int i = 0; i < elements.length; i++) {
-            v.setBytesUnsafe(i, types.get(i).serialize(elements[i], 3));
+        for (int i = 0; i < components.length; i++) {
+            v.setBytesUnsafe(i, types.get(i).serialize(components[i], 3));
         }
         return v;
     }

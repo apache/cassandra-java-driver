@@ -361,7 +361,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         if (v == null)
             return setValue(i, null);
 
-        // UDT always user the V3 protocol version to encode values
+        // UDT always use the V3 protocol version to encode values
         setValue(i, type.codec(3).serialize(v));
         return wrapped;
     }
@@ -381,7 +381,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         if (v == null)
             return setValue(i, null);
 
-        // UDT always user the V3 protocol version to encode values
+        // Tuples always user the V3 protocol version to encode values
         setValue(i, type.codec(3).serialize(v));
         return wrapped;
     }

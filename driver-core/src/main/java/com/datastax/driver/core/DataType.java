@@ -399,7 +399,7 @@ public abstract class DataType {
     /**
      * Returns a Tuple type.
      *
-     * @param types the types of the tuple's elements.
+     * @param types the types of the tuple's components.
      * @return the tuple type composed of {@code types}.
      */
     public static DataType tupleType(List<DataType> types) {
@@ -447,9 +447,9 @@ public abstract class DataType {
     }
 
     /**
-     * Returns the types of the elements for tuples.
+     * Returns the types of the components for tuples.
      *
-     * @return the types of the elements for a tuple, or {@code null} for any other
+     * @return the types of the components for a tuple, or {@code null} for any other
      * type.
      */
     public List<DataType> getTupleTypes() {
