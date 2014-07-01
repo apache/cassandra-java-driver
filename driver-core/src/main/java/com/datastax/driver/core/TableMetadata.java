@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.util.*;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,7 @@ public class TableMetadata {
     private static final Logger logger = LoggerFactory.getLogger(TableMetadata.class);
 
     static final String CF_NAME                      = "columnfamily_name";
+    private static final String CF_ID                = "cf_id";
 
     private static final String KEY_VALIDATOR        = "key_validator";
     private static final String COMPARATOR           = "comparator";
@@ -51,6 +53,7 @@ public class TableMetadata {
 
     private final KeyspaceMetadata keyspace;
     private final String name;
+    private final UUID id;
     private final List<ColumnMetadata> partitionKey;
     private final List<ColumnMetadata> clusteringColumns;
     private final Map<String, ColumnMetadata> columns;
@@ -77,6 +80,7 @@ public class TableMetadata {
 
     private TableMetadata(KeyspaceMetadata keyspace,
                           String name,
+                          UUID id,
                           List<ColumnMetadata> partitionKey,
                           List<ColumnMetadata> clusteringColumns,
                           LinkedHashMap<String, ColumnMetadata> columns,
@@ -85,6 +89,7 @@ public class TableMetadata {
                           VersionNumber cassandraVersion) {
         this.keyspace = keyspace;
         this.name = name;
+        this.id = id;
         this.partitionKey = partitionKey;
         this.clusteringColumns = clusteringColumns;
         this.columns = columns;
@@ -96,6 +101,9 @@ public class TableMetadata {
     static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols, VersionNumber cassandraVersion) {
 
         String name = row.getString(CF_NAME);
+        UUID id = (cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1))
+                ? row.getUUID(CF_ID)
+                : null;
 
         CassandraTypeParser.ParseResult keyValidator = CassandraTypeParser.parseWithComposite(row.getString(KEY_VALIDATOR));
         CassandraTypeParser.ParseResult comparator = CassandraTypeParser.parseWithComposite(row.getString(COMPARATOR));
@@ -125,7 +133,7 @@ public class TableMetadata {
                                        ksm.getName(), name, ksm.getName(), name), e);
         }
 
-        TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
+        TableMetadata tm = new TableMetadata(ksm, name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
 
         // We use this temporary set just so non PK columns are added in lexicographical order, which is the one of a
         // 'SELECT * FROM ...'
@@ -220,6 +228,18 @@ public class TableMetadata {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * Returns the unique id of this table.
+     * <p>
+     * Note: this id is available in Cassandra 2.1 and above. It will be
+     * {@code null} for earlier versions.
+     *
+     * @return the unique id of the table.
+     */
+    public UUID getId() {
+        return id;
     }
 
     /**
@@ -411,7 +431,10 @@ public class TableMetadata {
             and(sb, formatted).append("replicate_on_write = ").append(options.replicateOnWrite);
         and(sb, formatted).append("gc_grace_seconds = ").append(options.gcGrace);
         and(sb, formatted).append("bloom_filter_fp_chance = ").append(options.bfFpChance);
-        and(sb, formatted).append("caching = '").append(options.caching).append('\'');
+        if (cassandraVersion.getMajor() < 2 || cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() < 1)
+            and(sb, formatted).append("caching = '").append(options.caching.get("keys")).append('\'');
+        else
+            and(sb, formatted).append("caching = ").append(formatOptionMap(options.caching));
         if (options.comment != null)
             and(sb, formatted).append("comment = '").append(options.comment).append('\'');
         and(sb, formatted).append("compaction = ").append(formatOptionMap(options.compaction));
@@ -419,7 +442,12 @@ public class TableMetadata {
         if (cassandraVersion.getMajor() >= 2) {
             and(sb, formatted).append("default_time_to_live = ").append(options.defaultTTL);
             and(sb, formatted).append("speculative_retry = '").append(options.speculativeRetry).append('\'');
-            and(sb, formatted).append("index_interval = ").append(options.indexInterval);
+            if (options.indexInterval != null)
+                and(sb, formatted).append("index_interval = ").append(options.indexInterval);
+        }
+        if (cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1)) {
+            and(sb, formatted).append("min_index_interval = ").append(options.minIndexInterval);
+            and(sb, formatted).append("max_index_interval = ").append(options.maxIndexInterval);
         }
         sb.append(';');
         return sb.toString();
@@ -480,23 +508,25 @@ public class TableMetadata {
 
     public static class Options {
 
-        private static final String COMMENT                  = "comment";
-        private static final String READ_REPAIR              = "read_repair_chance";
-        private static final String LOCAL_READ_REPAIR        = "local_read_repair_chance";
-        private static final String REPLICATE_ON_WRITE       = "replicate_on_write";
-        private static final String GC_GRACE                 = "gc_grace_seconds";
-        private static final String BF_FP_CHANCE             = "bloom_filter_fp_chance";
-        private static final String CACHING                  = "caching";
-        private static final String COMPACTION_CLASS         = "compaction_strategy_class";
-        private static final String COMPACTION_OPTIONS       = "compaction_strategy_options";
-        private static final String MIN_COMPACTION_THRESHOLD = "min_compaction_threshold";
-        private static final String MAX_COMPACTION_THRESHOLD = "max_compaction_threshold";
-        private static final String POPULATE_CACHE_ON_FLUSH  = "populate_io_cache_on_flush";
-        private static final String COMPRESSION_PARAMS       = "compression_parameters";
-        private static final String MEMTABLE_FLUSH_PERIOD_MS = "memtable_flush_period_in_ms";
-        private static final String DEFAULT_TTL              = "default_time_to_live";
-        private static final String SPECULATIVE_RETRY        = "speculative_retry";
-        private static final String INDEX_INTERVAL           = "index_interval";
+        private static final String COMMENT                     = "comment";
+        private static final String READ_REPAIR                 = "read_repair_chance";
+        private static final String LOCAL_READ_REPAIR           = "local_read_repair_chance";
+        private static final String REPLICATE_ON_WRITE          = "replicate_on_write";
+        private static final String GC_GRACE                    = "gc_grace_seconds";
+        private static final String BF_FP_CHANCE                = "bloom_filter_fp_chance";
+        private static final String CACHING                     = "caching";
+        private static final String COMPACTION_CLASS            = "compaction_strategy_class";
+        private static final String COMPACTION_OPTIONS          = "compaction_strategy_options";
+        private static final String MIN_COMPACTION_THRESHOLD    = "min_compaction_threshold";
+        private static final String MAX_COMPACTION_THRESHOLD    = "max_compaction_threshold";
+        private static final String POPULATE_CACHE_ON_FLUSH     = "populate_io_cache_on_flush";
+        private static final String COMPRESSION_PARAMS          = "compression_parameters";
+        private static final String MEMTABLE_FLUSH_PERIOD_MS    = "memtable_flush_period_in_ms";
+        private static final String DEFAULT_TTL                 = "default_time_to_live";
+        private static final String SPECULATIVE_RETRY           = "speculative_retry";
+        private static final String INDEX_INTERVAL              = "index_interval";
+        private static final String MIN_INDEX_INTERVAL          = "min_index_interval";
+        private static final String MAX_INDEX_INTERVAL          = "max_index_interval";
 
         private static final double DEFAULT_BF_FP_CHANCE = 0.01;
         private static final boolean DEFAULT_POPULATE_CACHE_ON_FLUSH = false;
@@ -504,6 +534,8 @@ public class TableMetadata {
         private static final int DEFAULT_DEFAULT_TTL = 0;
         private static final String DEFAULT_SPECULATIVE_RETRY = "NONE";
         private static final int DEFAULT_INDEX_INTERVAL = 128;
+        private static final int DEFAULT_MIN_INDEX_INTERVAL = 128;
+        private static final int DEFAULT_MAX_INDEX_INTERVAL = 2048;
 
         private final boolean isCompactStorage;
 
@@ -513,12 +545,14 @@ public class TableMetadata {
         private final boolean replicateOnWrite;
         private final int gcGrace;
         private final double bfFpChance;
-        private final String caching;
+        private final Map<String, String> caching;
         private final boolean populateCacheOnFlush;
         private final int memtableFlushPeriodMs;
         private final int defaultTTL;
         private final String speculativeRetry;
-        private final int indexInterval;
+        private final Integer indexInterval;
+        private final Integer minIndexInterval;
+        private final Integer maxIndexInterval;
         private final Map<String, String> compaction = new HashMap<String, String>();
         private final Map<String, String> compression = new HashMap<String, String>();
 
@@ -527,15 +561,34 @@ public class TableMetadata {
             this.comment = row.isNull(COMMENT) ? "" : row.getString(COMMENT);
             this.readRepair = row.getDouble(READ_REPAIR);
             this.localReadRepair = row.getDouble(LOCAL_READ_REPAIR);
-            this.replicateOnWrite = (version.getMajor() > 2 || (version.getMajor() == 2 && version.getMinor() >= 1)) || row.isNull(REPLICATE_ON_WRITE) ? true : row.getBool(REPLICATE_ON_WRITE);
+            boolean is210OrMore = version.getMajor() > 2 || (version.getMajor() == 2 && version.getMinor() >= 1);
+            this.replicateOnWrite = is210OrMore || row.isNull(REPLICATE_ON_WRITE) ? true : row.getBool(REPLICATE_ON_WRITE);
             this.gcGrace = row.getInt(GC_GRACE);
             this.bfFpChance = row.isNull(BF_FP_CHANCE) ? DEFAULT_BF_FP_CHANCE : row.getDouble(BF_FP_CHANCE);
-            this.caching = row.getString(CACHING);
+            this.caching = is210OrMore
+                         ? SimpleJSONParser.parseStringMap(row.getString(CACHING))
+                         : ImmutableMap.of("keys", row.getString(CACHING));
             this.populateCacheOnFlush = row.isNull(POPULATE_CACHE_ON_FLUSH) ? DEFAULT_POPULATE_CACHE_ON_FLUSH : row.getBool(POPULATE_CACHE_ON_FLUSH);
             this.memtableFlushPeriodMs = version.getMajor() < 2 || row.isNull(MEMTABLE_FLUSH_PERIOD_MS) ? DEFAULT_MEMTABLE_FLUSH_PERIOD : row.getInt(MEMTABLE_FLUSH_PERIOD_MS);
             this.defaultTTL = version.getMajor() < 2 || row.isNull(DEFAULT_TTL) ? DEFAULT_DEFAULT_TTL : row.getInt(DEFAULT_TTL);
             this.speculativeRetry = version.getMajor() < 2 || row.isNull(SPECULATIVE_RETRY) ? DEFAULT_SPECULATIVE_RETRY : row.getString(SPECULATIVE_RETRY);
-            this.indexInterval = version.getMajor() < 2 || row.isNull(INDEX_INTERVAL) ? DEFAULT_INDEX_INTERVAL : row.getInt(INDEX_INTERVAL);
+
+            if (version.getMajor() >= 2 && !is210OrMore)
+                this.indexInterval = row.isNull(INDEX_INTERVAL) ? DEFAULT_INDEX_INTERVAL : row.getInt(INDEX_INTERVAL);
+            else
+                this.indexInterval = null;
+
+            if (is210OrMore) {
+                this.minIndexInterval = row.isNull(MIN_INDEX_INTERVAL)
+                                      ? DEFAULT_MIN_INDEX_INTERVAL
+                                      : row.getInt(MIN_INDEX_INTERVAL);
+                this.maxIndexInterval = row.isNull(MAX_INDEX_INTERVAL)
+                                      ? DEFAULT_MAX_INDEX_INTERVAL
+                                      : row.getInt(MAX_INDEX_INTERVAL);
+            } else {
+                this.minIndexInterval = null;
+                this.maxIndexInterval = null;
+            }
 
             this.compaction.put("class", row.getString(COMPACTION_CLASS));
             this.compaction.putAll(SimpleJSONParser.parseStringMap(row.getString(COMPACTION_OPTIONS)));
@@ -609,11 +662,11 @@ public class TableMetadata {
         }
 
         /**
-         * Returns the caching option for this table.
+         * Returns the caching options for this table.
          *
-         * @return the caching option for this table.
+         * @return the caching options for this table.
          */
-        public String getCaching() {
+        public Map<String, String> getCaching() {
             return caching;
         }
 
@@ -669,12 +722,37 @@ public class TableMetadata {
          * <p>
          * Note: this option is not available in Cassandra 1.2 (more precisely, it is not
          * configurable per-table) and will return 128 (the default index interval) when
-         * connected to 1.2 nodes.
+         * connected to 1.2 nodes. It is deprecated in Cassandra 2.1 and above, and will
+         * therefore return {@code null} for 2.1 nodes.
          *
          * @return the index interval option for this table.
          */
-        public int getIndexInterval() {
+        public Integer getIndexInterval() {
             return indexInterval;
+        }
+
+        /**
+         * Returns the minimum index interval option for this table.
+         * <p>
+         * Note: this option is available in Cassandra 2.1 and above, and will return
+         * {@code null} for earlier versions.
+         *
+         * @return the minimum index interval option for this table.
+         */
+        public Integer getMinIndexInterval() {
+            return minIndexInterval;
+        }
+
+        /**
+         * Returns the maximum index interval option for this table.
+         * <p>
+         * Note: this option is available in Cassandra 2.1 and above, and will return
+         * {@code null} for earlier versions.
+         *
+         * @return the maximum index interval option for this table.
+         */
+        public Integer getMaxIndexInterval() {
+            return maxIndexInterval;
         }
 
         /**
