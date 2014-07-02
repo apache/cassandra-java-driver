@@ -100,4 +100,25 @@ public class TupleValue extends AbstractData<TupleValue> {
         sb.append(")");
         return sb.toString();
     }
+
+    public static BuilderExpectingValues withTypes(DataType... types) {
+        return new BuilderExpectingValues(Arrays.asList(types));
+    }
+
+    static class BuilderExpectingValues {
+
+        private final List<DataType> types;
+
+        public BuilderExpectingValues(List<DataType> types) {
+            this.types = types;
+        }
+
+        public TupleValue withValues(Object... values) {
+            TupleValue t = new TupleValue(types);
+            for (int i = 0; i < values.length; i++) {
+                t.setValue(i, types.get(i).serialize(values[i], 3));
+            }
+            return t;
+        }
+    }
 }

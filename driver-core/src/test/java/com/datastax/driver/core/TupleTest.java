@@ -17,10 +17,8 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void simpleValueTest() throws Exception {
-        TupleValue v = new TupleValue(DataType.cint(), DataType.text(), DataType.cfloat());
-        v.setInt(0, 1);
-        v.setString(1, "a");
-        v.setFloat(2, 1.0f);
+        TupleValue v = TupleValue.withTypes(DataType.cint(), DataType.text(), DataType.cfloat())
+                                 .withValues(1, "a", 1.0f);
 
         assertEquals(v.getTypes().size(), 3);
         assertEquals(v.getTypes().get(0), DataType.cint());
@@ -42,10 +40,8 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
             PreparedStatement sel = session.prepare("SELECT * FROM t WHERE k=?");
 
             int k = 1;
-            TupleValue v = new TupleValue(DataType.cint(), DataType.text(), DataType.cfloat());
-            v.setInt(0, 1);
-            v.setString(1, "a");
-            v.setFloat(2, 1.0f);
+            TupleValue v = TupleValue.withTypes(DataType.cint(), DataType.text(), DataType.cfloat())
+                                     .withValues(1, "a", 1.0f);
 
             session.execute(ins.bind(k, v));
             TupleValue v2 = session.execute(sel.bind(k)).one().getTupleValue("v");
@@ -54,10 +50,8 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
             // Test simple statement interpolation
             k = 2;
-            v = new TupleValue(DataType.cint(), DataType.text(), DataType.cfloat());
-            v.setInt(0, 2);
-            v.setString(1, "b");
-            v.setFloat(2, 2.0f);
+            v = TupleValue.withTypes(DataType.cint(), DataType.text(), DataType.cfloat())
+                          .withValues(2, "b", 2.0f);
 
             session.execute("INSERT INTO t(k, v) VALUES (?, ?)", k, v);
             v2 = session.execute(sel.bind(k)).one().getTupleValue("v");
