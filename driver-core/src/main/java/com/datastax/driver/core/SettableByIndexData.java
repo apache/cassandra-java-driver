@@ -11,7 +11,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 /**
  * Collection of (typed) CQL values that can set by index (starting a 0).
  */
-public interface SettableByIndexData<T extends SettableData<T>> {
+public interface SettableByIndexData<T extends SettableByIndexData<T>> {
 
     /**
      * Sets the {@code i}th value to the provided boolean.

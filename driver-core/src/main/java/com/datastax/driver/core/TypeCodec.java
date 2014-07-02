@@ -1137,7 +1137,6 @@ abstract class TypeCodec<T> {
         @Override
         public ByteBuffer serialize(Map<K, V> value) {
             List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(2 * value.size());
-            int size = 0;
             for (Map.Entry<K, V> entry : value.entrySet()) {
                 bbs.add(keyCodec.serialize(entry.getKey()));
                 bbs.add(valueCodec.serialize(entry.getValue()));
@@ -1163,17 +1162,26 @@ abstract class TypeCodec<T> {
         }
     }
 
-    // Factors common code between UDTCodec and TupleCodec.
-    static abstract class AbstractDataCodec<T extends AbstractData<T>> extends TypeCodec<T> {
-        protected abstract T newValue();
+    static class UDTCodec extends TypeCodec<UDTValue> {
+
+        private final UDTDefinition definition;
+
+        public UDTCodec(UDTDefinition definition) {
+            this.definition = definition;
+        }
 
         @Override
-        public String format(T value) {
+        public UDTValue parse(String value) {
+            return definition.parseValue(value);
+        }
+
+        @Override
+        public String format(UDTValue value) {
             return value.toString();
         }
 
         @Override
-        public ByteBuffer serialize(T value) {
+        public ByteBuffer serialize(UDTValue value) {
             int size = 0;
             for (ByteBuffer v : value.values)
                 size += 4 + (v == null ? 0 : v.remaining());
@@ -1191,9 +1199,9 @@ abstract class TypeCodec<T> {
         }
 
         @Override
-        public T deserialize(ByteBuffer bytes) {
+        public UDTValue deserialize(ByteBuffer bytes) {
             ByteBuffer input = bytes.duplicate();
-            T value = newValue();
+            UDTValue value = definition.newValue();
 
             int i = 0;
             while (input.hasRemaining() && i < value.values.length) {
@@ -1204,26 +1212,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class UDTCodec extends AbstractDataCodec<UDTValue> {
-
-        private final UDTDefinition definition;
-
-        public UDTCodec(UDTDefinition definition) {
-            this.definition = definition;
-        }
-
-        @Override
-        public UDTValue parse(String value) {
-            return definition.parseValue(value);
-        }
-
-        @Override
-        protected UDTValue newValue() {
-            return definition.newValue();
-        }
-    }
-
-    static class TupleCodec extends AbstractDataCodec<TupleValue> {
+    static class TupleCodec extends TypeCodec<TupleValue> {
 
         private final List<DataType> types;
 
@@ -1271,8 +1260,39 @@ abstract class TypeCodec<T> {
         }
 
         @Override
-        protected TupleValue newValue() {
-            return new TupleValue(types);
+        public String format(TupleValue value) {
+            return value.toString();
+        }
+
+        @Override
+        public ByteBuffer serialize(TupleValue value) {
+            int size = 0;
+            for (ByteBuffer v : value.values)
+                size += 4 + (v == null ? 0 : v.remaining());
+
+            ByteBuffer result = ByteBuffer.allocate(size);
+            for (ByteBuffer bb : value.values) {
+                if (bb == null) {
+                    result.putInt(-1);
+                } else {
+                    result.putInt(bb.remaining());
+                    result.put(bb.duplicate());
+                }
+            }
+            return (ByteBuffer)result.flip();
+        }
+
+        @Override
+        public TupleValue deserialize(ByteBuffer bytes) {
+            ByteBuffer input = bytes.duplicate();
+            TupleValue value = new TupleValue(types);
+
+            int i = 0;
+            while (input.hasRemaining() && i < value.values.length) {
+                int n = input.getInt();
+                value.values[i++] = n < 0 ? null : readBytes(input, n);
+            }
+            return value;
         }
     }
 }

@@ -15,14 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  * A value for a Tuple.
  */
-public class TupleValue extends AbstractData<TupleValue> {
+public class TupleValue extends AbstractAddressableByIndexData<TupleValue> {
 
     private final List<DataType> types;
 
@@ -52,12 +51,8 @@ public class TupleValue extends AbstractData<TupleValue> {
 
     @Override
     protected String getName(int i) {
-        throw new UnsupportedOperationException("The components of a tuple don't have names");
-    }
-
-    @Override
-    protected int[] getAllIndexesOf(String name) {
-        throw new UnsupportedOperationException("The components of a tuple don't have names");
+        // This is used for error messages
+        return "component" + i;
     }
 
     /**
