@@ -387,26 +387,6 @@ public abstract class DataType {
     }
 
     /**
-     * Returns a User Defined Type (UDT).
-     *
-     * @param definition the description of the type's keyspace, name and fields.
-     * @return the UDT defined by {@code definition}.
-     */
-    public static DataType userType(UDTDefinition definition) {
-        return new UserType(definition);
-    }
-
-    /**
-     * Returns a Tuple type.
-     *
-     * @param types the types of the tuple's components.
-     * @return the tuple type composed of {@code types}.
-     */
-    public static DataType tupleType(List<DataType> types) {
-        return new TupleType(types);
-    }
-
-    /**
      * Returns the name of that type.
      *
      * @return the name of that type.
@@ -434,26 +414,6 @@ public abstract class DataType {
      */
     public List<DataType> getTypeArguments() {
         return Collections.<DataType>emptyList();
-    }
-
-    /**
-     * Returns their definition for user defined types (UDT).
-     *
-     * @return the definition of a user defined type or {@code null} for any other
-     * type.
-     */
-    public UDTDefinition getUDTDefinition() {
-        return null;
-    }
-
-    /**
-     * Returns the types of the components for tuples.
-     *
-     * @return the types of the components for a tuple, or {@code null} for any other
-     * type.
-     */
-    public List<DataType> getTupleTypes() {
-        return null;
     }
 
     /**
@@ -700,91 +660,6 @@ public abstract class DataType {
                 return String.format("%s<%s, %s>", name, typeArguments.get(0), typeArguments.get(1));
             else
                 return String.format("%s<%s>", name, typeArguments.get(0));
-        }
-    }
-
-    private static class UserType extends DataType {
-
-        private final UDTDefinition definition;
-
-        private UserType(UDTDefinition definition) {
-            super(DataType.Name.UDT);
-            this.definition = definition;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        TypeCodec<Object> codec(int protocolVersion) {
-            return (TypeCodec)TypeCodec.udtOf(definition);
-        }
-
-        @Override
-        public UDTDefinition getUDTDefinition() {
-            return definition;
-        }
-
-        @Override
-        public final int hashCode() {
-            return Arrays.hashCode(new Object[]{ name, definition });
-        }
-
-        @Override
-        public final boolean equals(Object o) {
-            if(!(o instanceof DataType.UserType))
-                return false;
-
-            DataType.UserType d = (DataType.UserType)o;
-            return name == d.name && definition.equals(d.definition);
-        }
-
-        @Override
-        public String toString() {
-            return Metadata.escapeId(definition.getKeyspace()) + '.' + Metadata.escapeId(definition.getName());
-        }
-    }
-
-    private static class TupleType extends DataType {
-
-        private final List<DataType> types;
-
-        private TupleType(List<DataType> types) {
-            super(DataType.Name.TUPLE);
-            this.types = types;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        TypeCodec<Object> codec(int protocolVersion) {
-            return (TypeCodec)TypeCodec.tupleOf(types);
-        }
-
-        @Override
-        public List<DataType> getTupleTypes() {
-            return types;
-        }
-
-        @Override
-        public int hashCode() {
-            return Arrays.hashCode(new Object[]{ name, types });
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof DataType.TupleType))
-                return false;
-
-            DataType.TupleType d = (DataType.TupleType)o;
-            return name == d.name && types.equals(d.types);
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            for (DataType type : types) {
-                sb.append(sb.length() == 0 ? "tuple<" : ", ");
-                sb.append(type);
-            }
-            return sb.append(">").toString();
         }
     }
 

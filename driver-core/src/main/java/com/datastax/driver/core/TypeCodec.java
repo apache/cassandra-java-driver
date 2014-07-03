@@ -124,12 +124,12 @@ abstract class TypeCodec<T> {
         return codec != null ? (TypeCodec)codec : new MapCodec<Object, Object>(keys.codec(protocolVersion), values.codec(protocolVersion), protocolVersion);
     }
 
-    static UDTCodec udtOf(UDTDefinition definition) {
+    static UDTCodec udtOf(UserType definition) {
         return new UDTCodec(definition);
     }
 
-    static TupleCodec tupleOf(List<DataType> types) {
-        return new TupleCodec(types);
+    static TupleCodec tupleOf(TupleType type) {
+        return new TupleCodec(type);
     }
 
     /* This is ugly, but not sure how we can do much better/faster
@@ -208,11 +208,11 @@ abstract class TypeCodec<T> {
         }
 
         if (value instanceof UDTValue) {
-            return DataType.userType(((UDTValue) value).getDefinition());
+            return ((UDTValue) value).getType();
         }
 
         if (value instanceof TupleValue) {
-            return DataType.tupleType(((TupleValue) value).getTypes());
+            return ((TupleValue) value).getType();
         }
 
         return null;
@@ -1164,9 +1164,9 @@ abstract class TypeCodec<T> {
 
     static class UDTCodec extends TypeCodec<UDTValue> {
 
-        private final UDTDefinition definition;
+        private final UserType definition;
 
-        public UDTCodec(UDTDefinition definition) {
+        public UDTCodec(UserType definition) {
             this.definition = definition;
         }
 
@@ -1214,15 +1214,15 @@ abstract class TypeCodec<T> {
 
     static class TupleCodec extends TypeCodec<TupleValue> {
 
-        private final List<DataType> types;
+        private final TupleType type;
 
-        public TupleCodec(List<DataType> types) {
-            this.types = types;
+        public TupleCodec(TupleType type) {
+            this.type = type;
         }
 
         @Override
         public TupleValue parse(String value) {
-            TupleValue v = new TupleValue(types);
+            TupleValue v = type.newValue();
 
             int idx = ParseUtils.skipSpaces(value, 0);
             if (value.charAt(idx++) != '(')
@@ -1242,7 +1242,7 @@ abstract class TypeCodec<T> {
                     throw new InvalidTypeException(String.format("Cannot parse tuple value from \"%s\", invalid CQL value at character %d", value, idx), e);
                 }
 
-                DataType dt = types.get(i);
+                DataType dt = type.getComponentTypes().get(i);
                 v.setBytesUnsafe(i, dt.serialize(dt.parse(value.substring(idx, n)), 3));
                 idx = n;
                 i += 1;
@@ -1285,7 +1285,7 @@ abstract class TypeCodec<T> {
         @Override
         public TupleValue deserialize(ByteBuffer bytes) {
             ByteBuffer input = bytes.duplicate();
-            TupleValue value = new TupleValue(types);
+            TupleValue value = type.newValue();
 
             int i = 0;
             while (input.hasRemaining() && i < value.values.length) {

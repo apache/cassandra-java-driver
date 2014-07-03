@@ -20,9 +20,9 @@ package com.datastax.driver.core;
  */
 public class UDTValue extends AbstractData<UDTValue> {
 
-    private final UDTDefinition definition;
+    private final UserType definition;
 
-    UDTValue(UDTDefinition definition) {
+    UDTValue(UserType definition) {
         // All things in a UDT are encoded with the protocol v3
         super(3, definition.size());
         this.definition = definition;
@@ -44,11 +44,11 @@ public class UDTValue extends AbstractData<UDTValue> {
     }
 
     /**
-     * The definition of the UDT this is a value of.
+     * The UDT this is a value of.
      *
-     * @return the definition of the UDT this is a value of.
+     * @return the UDT this is a value of.
      */
-    public UDTDefinition getDefinition() {
+    public UserType getType() {
         return definition;
     }
 

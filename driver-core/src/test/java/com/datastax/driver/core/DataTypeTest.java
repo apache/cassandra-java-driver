@@ -171,12 +171,12 @@ public class DataTypeTest {
 
         String toParse = "{t:'fo''o', i:3, l:['a', 'b'], s:{3:{a:0x01}}}";
 
-        final UDTDefinition udt1 = new UDTDefinition("ks", "t", Arrays.asList(new UDTDefinition.Field("a", DataType.blob())));
-        UDTDefinition udt2 = new UDTDefinition("ks", "t", Arrays.asList(
-            new UDTDefinition.Field("t", DataType.text()),
-            new UDTDefinition.Field("i", DataType.cint()),
-            new UDTDefinition.Field("l", DataType.list(DataType.text())),
-            new UDTDefinition.Field("s", DataType.map(DataType.cint(), DataType.userType(udt1)))
+        final UserType udt1 = new UserType("ks", "t", Arrays.asList(new UserType.Field("a", DataType.blob())));
+        UserType udt2 = new UserType("ks", "t", Arrays.asList(
+            new UserType.Field("t", DataType.text()),
+            new UserType.Field("i", DataType.cint()),
+            new UserType.Field("l", DataType.list(DataType.text())),
+            new UserType.Field("s", DataType.map(DataType.cint(), udt1))
         ));
 
         UDTValue toFormat = udt2.newValue();
@@ -185,23 +185,19 @@ public class DataTypeTest {
         toFormat.setList("l", Arrays.<String>asList("a", "b"));
         toFormat.setMap("s", new HashMap<Integer, UDTValue>(){{ put(3, udt1.newValue().setBytes("a", ByteBuffer.wrap(new byte[]{1}))); }});
 
-        DataType dt = DataType.userType(udt2);
-        assertEquals(dt.parse(toParse), toFormat);
-        assertEquals(dt.format(toFormat), toParse);
+        assertEquals(udt2.parse(toParse), toFormat);
+        assertEquals(udt2.format(toFormat), toParse);
     }
 
     @Test(groups = "unit")
     public void parseFormatTupleTest() {
 
         String toParse = "(1, 'foo', 1.0)";
-        TupleValue toFormat = new TupleValue(DataType.cint(), DataType.text(), DataType.cfloat());
-        toFormat.setInt(0, 1);
-        toFormat.setString(1, "foo");
-        toFormat.setFloat(2, 1.0f);
+        TupleType t = TupleType.of(DataType.cint(), DataType.text(), DataType.cfloat());
+        TupleValue toFormat = t.newValue(1, "foo", 1.0f);
 
-        DataType dt = DataType.tupleType(Arrays.asList(DataType.cint(), DataType.text(), DataType.cfloat()));
-        assertEquals(dt.parse(toParse), toFormat);
-        assertEquals(dt.format(toFormat), toParse);
+        assertEquals(t.parse(toParse), toFormat);
+        assertEquals(t.format(toFormat), toParse);
     }
 
     @Test(groups = "unit")

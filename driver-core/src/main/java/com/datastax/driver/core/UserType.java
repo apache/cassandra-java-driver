@@ -23,18 +23,18 @@ import com.google.common.collect.Iterators;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
- * The concrete definition of a user defined type (UDT).
+ * A User Defined Type (UDT).
  * <p>
  * A UDT is a essentially a named collection of fields (with a name and a type).
  */
-public class UDTDefinition implements Iterable<UDTDefinition.Field> {
+public class UserType extends DataType implements Iterable<UserType.Field>{
 
     private static final String TYPE_NAME = "type_name";
     private static final String COLS_NAMES = "field_names";
     private static final String COLS_TYPES = "field_types";
 
     private final String keyspace;
-    private final String name;
+    private final String typeName;
 
     // Note that we don't expose the order of fields, from an API perspective this is a map
     // of String->Field, but internally we care about the order because the serialization format
@@ -45,9 +45,11 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
     // implementation.
     final Map<String, int[]> byName;
 
-    UDTDefinition(String keyspace, String name, Collection<Field> fields) {
+    UserType(String keyspace, String typeName, Collection<Field> fields) {
+        super(DataType.Name.UDT);
+
         this.keyspace = keyspace;
-        this.name = name;
+        this.typeName = typeName;
         this.byIdx = fields.toArray(new Field[fields.size()]);
 
         ImmutableMap.Builder<String, int[]> builder = new ImmutableMap.Builder<String, int[]>();
@@ -56,7 +58,7 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
         this.byName = builder.build();
     }
 
-    static UDTDefinition build(Row row) {
+    static UserType build(Row row) {
         String keyspace = row.getString(KeyspaceMetadata.KS_NAME);
         String name = row.getString(TYPE_NAME);
 
@@ -67,7 +69,13 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
         for (int i = 0; i < fieldNames.size(); i++)
             fields.add(new Field(fieldNames.get(i), CassandraTypeParser.parseOne(fieldTypes.get(i))));
 
-        return new UDTDefinition(keyspace, name, fields);
+        return new UserType(keyspace, name, fields);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    TypeCodec<Object> codec(int protocolVersion) {
+        return (TypeCodec)TypeCodec.udtOf(this);
     }
 
     /**
@@ -89,12 +97,12 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
     }
 
     /**
-     * The name of this UDT.
+     * The name of this user type.
      *
-     * @return the name of this UDT.
+     * @return the name of this user type.
      */
-    public String getName() {
-        return name;
+    public String getTypeName() {
+        return typeName;
     }
 
     /**
@@ -160,20 +168,20 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
 
     @Override
     public final int hashCode() {
-        return Arrays.hashCode(new Object[]{ keyspace, name, byIdx });
+        return Arrays.hashCode(new Object[]{ name, keyspace, typeName, byIdx });
     }
 
     @Override
     public final boolean equals(Object o) {
-        if(!(o instanceof UDTDefinition))
+        if(!(o instanceof UserType))
             return false;
 
-        UDTDefinition other = (UDTDefinition)o;
+        UserType other = (UserType)o;
 
         // Note: we don't test byName because it's redundant with byIdx in practice,
         // but also because the map holds 'int[]' which don't have proper equal.
         return keyspace.equals(other.keyspace)
-            && name.equals(other.name)
+            && typeName.equals(other.typeName)
             && Arrays.equals(byIdx, other.byIdx);
     }
 
@@ -208,7 +216,7 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
     private String asCQLQuery(boolean formatted) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("CREATE TYPE ").append(Metadata.escapeId(keyspace)).append('.').append(Metadata.escapeId(name)).append(" (");
+        sb.append("CREATE TYPE ").append(Metadata.escapeId(keyspace)).append('.').append(Metadata.escapeId(typeName)).append(" (");
         TableMetadata.newLine(sb, formatted);
         for (int i = 0; i < byIdx.length; i++) {
             sb.append(TableMetadata.spaces(4, formatted)).append(byIdx[i]);
@@ -222,7 +230,7 @@ public class UDTDefinition implements Iterable<UDTDefinition.Field> {
 
     @Override
     public String toString() {
-        return asCQLQuery();
+        return Metadata.escapeId(getKeyspace()) + '.' + Metadata.escapeId(getTypeName());
     }
 
     // We don't want to expose that, it's already exposed through DataType.parse

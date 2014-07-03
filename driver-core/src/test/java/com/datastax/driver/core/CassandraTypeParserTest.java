@@ -61,38 +61,38 @@ public class CassandraTypeParserTest {
     public void parseUserTypes() {
 
         String s = "org.apache.cassandra.db.marshal.UserType(foo,61646472657373,737472656574:org.apache.cassandra.db.marshal.UTF8Type,7a6970636f6465:org.apache.cassandra.db.marshal.Int32Type,70686f6e6573:org.apache.cassandra.db.marshal.SetType(org.apache.cassandra.db.marshal.UserType(foo,70686f6e65,6e616d65:org.apache.cassandra.db.marshal.UTF8Type,6e756d626572:org.apache.cassandra.db.marshal.UTF8Type)))";
-        UDTDefinition def = CassandraTypeParser.parseOne(s).getUDTDefinition();
+        UserType def = (UserType)CassandraTypeParser.parseOne(s);
 
         assertEquals(def.getKeyspace(), "foo");
-        assertEquals(def.getName(), "address");
+        assertEquals(def.getTypeName(), "address");
 
-        Iterator<UDTDefinition.Field> iter = def.iterator();
+        Iterator<UserType.Field> iter = def.iterator();
 
-        UDTDefinition.Field field1 = iter.next();
+        UserType.Field field1 = iter.next();
         assertEquals(field1.getName(), "street");
         assertEquals(field1.getType(), DataType.text());
 
-        UDTDefinition.Field field2 = iter.next();
+        UserType.Field field2 = iter.next();
         assertEquals(field2.getName(), "zipcode");
         assertEquals(field2.getType(), DataType.cint());
 
-        UDTDefinition.Field field3 = iter.next();
+        UserType.Field field3 = iter.next();
         assertEquals(field3.getName(), "phones");
 
         DataType st = field3.getType();
         assertEquals(st.getName(), DataType.Name.SET);
-        UDTDefinition subDef = st.getTypeArguments().get(0).getUDTDefinition();
+        UserType subDef = (UserType)st.getTypeArguments().get(0);
 
         assertEquals(subDef.getKeyspace(), "foo");
-        assertEquals(subDef.getName(), "phone");
+        assertEquals(subDef.getTypeName(), "phone");
 
-        Iterator<UDTDefinition.Field> subIter = subDef.iterator();
+        Iterator<UserType.Field> subIter = subDef.iterator();
 
-        UDTDefinition.Field subField1 = subIter.next();
+        UserType.Field subField1 = subIter.next();
         assertEquals(subField1.getName(), "name");
         assertEquals(subField1.getType(), DataType.text());
 
-        UDTDefinition.Field subField2 = subIter.next();
+        UserType.Field subField2 = subIter.next();
         assertEquals(subField2.getName(), "number");
         assertEquals(subField2.getType(), DataType.text());
     }
@@ -100,10 +100,10 @@ public class CassandraTypeParserTest {
     @Test(groups = "unit")
     public void parseTupleTest() {
         String s = "org.apache.cassandra.db.marshal.TupleType(org.apache.cassandra.db.marshal.Int32Type,org.apache.cassandra.db.marshal.UTF8Type,org.apache.cassandra.db.marshal.FloatType)";
-        List<DataType> types = CassandraTypeParser.parseOne(s).getTupleTypes();
-        assertNotNull(types);
-        assertEquals(types.get(0), DataType.cint());
-        assertEquals(types.get(1), DataType.text());
-        assertEquals(types.get(2), DataType.cfloat());
+        TupleType type = (TupleType)CassandraTypeParser.parseOne(s);
+        assertNotNull(type);
+        assertEquals(type.getComponentTypes().get(0), DataType.cint());
+        assertEquals(type.getComponentTypes().get(1), DataType.text());
+        assertEquals(type.getComponentTypes().get(2), DataType.cfloat());
     }
 }

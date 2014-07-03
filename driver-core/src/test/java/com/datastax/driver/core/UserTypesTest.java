@@ -47,8 +47,8 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             PreparedStatement ins = session.prepare("INSERT INTO user(id, addr) VALUES (?, ?)");
             PreparedStatement sel = session.prepare("SELECT * FROM user WHERE id=?");
 
-            UDTDefinition addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
-            UDTDefinition phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+            UserType addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
+            UserType phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
 
             UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
             UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");

@@ -23,30 +23,21 @@ import java.util.List;
  */
 public class TupleValue extends AbstractAddressableByIndexData<TupleValue> {
 
-    private final List<DataType> types;
+    private final TupleType type;
 
     /**
      * Builds a new value for a tuple.
      *
      * @param types the types of the tuple's components.
      */
-    public TupleValue(List<DataType> types) {
+    TupleValue(TupleType type) {
         // All things in a tuple are encoded with the protocol v3
-        super(3, types.size());
-        this.types = types;
-    }
-
-    /**
-     * Builds a new value for a tuple.
-     *
-     * @param types the types of the tuple's components.
-     */
-    public TupleValue(DataType... types) {
-        this(Arrays.asList(types));
+        super(3, type.getComponentTypes().size());
+        this.type = type;
     }
 
     protected DataType getType(int i) {
-        return types.get(i);
+        return type.getComponentTypes().get(i);
     }
 
     @Override
@@ -56,12 +47,12 @@ public class TupleValue extends AbstractAddressableByIndexData<TupleValue> {
     }
 
     /**
-     * The types of the components of this tuple.
+     * The tuple type this is a value of.
      *
-     * @return the types of the components of this tuple.
+     * @return The tuple type this is a value of.
      */
-    public List<DataType> getTypes() {
-        return types;
+    public TupleType getType() {
+        return type;
     }
 
     @Override
@@ -70,7 +61,7 @@ public class TupleValue extends AbstractAddressableByIndexData<TupleValue> {
             return false;
 
         TupleValue that = (TupleValue)o;
-        if (!types.equals(that.types))
+        if (!type.equals(that.type))
             return false;
 
         return super.equals(o);

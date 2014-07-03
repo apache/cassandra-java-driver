@@ -37,7 +37,7 @@ public class KeyspaceMetadata {
     // TODO: I don't think we change those, so there is probably no need for ConcurrentHashMap. Check if
     // that's the case.
     private final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
-    private final Map<String, UDTDefinition> userTypes = new ConcurrentHashMap<String, UDTDefinition>();
+    private final Map<String, UserType> userTypes = new ConcurrentHashMap<String, UserType>();
 
     private KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
         this.name = name;
@@ -61,8 +61,8 @@ public class KeyspaceMetadata {
             return ksm;
 
         for (Row r : udtRows) {
-            UDTDefinition def = UDTDefinition.build(r);
-            ksm.userTypes.put(def.getName(), def);
+            UserType def = UserType.build(r);
+            ksm.userTypes.put(def.getTypeName(), def);
         }
 
         return ksm;
@@ -124,7 +124,7 @@ public class KeyspaceMetadata {
      * @return the definition for {@code name} if it exists in this keyspace,
      * {@code null} otherwise.
      */
-    public UDTDefinition getUserType(String name) {
+    public UserType getUserType(String name) {
         return userTypes.get(Metadata.handleId(name));
     }
 
@@ -134,8 +134,8 @@ public class KeyspaceMetadata {
      * @return a collection of the definition for the user types defined in this
      * keyspace.
      */
-    public Collection<UDTDefinition> getUserTypes() {
-        return Collections.<UDTDefinition>unmodifiableCollection(userTypes.values());
+    public Collection<UserType> getUserTypes() {
+        return Collections.<UserType>unmodifiableCollection(userTypes.values());
     }
 
     /**
@@ -157,7 +157,7 @@ public class KeyspaceMetadata {
 
         sb.append(asCQLQuery()).append('\n');
 
-        for (UDTDefinition udt : userTypes.values())
+        for (UserType udt : userTypes.values())
             sb.append('\n').append(udt.exportAsString()).append('\n');
 
         for (TableMetadata tm : tables.values())

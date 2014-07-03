@@ -98,10 +98,10 @@ class CassandraTypeParser {
             String typeName = TypeCodec.StringCodec.utf8Instance.deserialize(Bytes.fromHexString("0x" + parser.readOne()));
             parser.skipBlankAndComma();
             Map<String, String> rawFields = parser.getNameAndTypeParameters();
-            List<UDTDefinition.Field> fields = new ArrayList<UDTDefinition.Field>(rawFields.size());
+            List<UserType.Field> fields = new ArrayList<UserType.Field>(rawFields.size());
             for (Map.Entry<String, String> entry : rawFields.entrySet())
-                fields.add(new UDTDefinition.Field(entry.getKey(), parseOne(entry.getValue())));
-            return DataType.userType(new UDTDefinition(keyspace, typeName, fields));
+                fields.add(new UserType.Field(entry.getKey(), parseOne(entry.getValue())));
+            return new UserType(keyspace, typeName, fields);
         }
 
         if (isTupleType(next)) {
@@ -110,7 +110,7 @@ class CassandraTypeParser {
             for (String rawType : rawTypes) {
                 types.add(parseOne(rawType));
             }
-            return DataType.tupleType(types);
+            return new TupleType(types);
         }
 
         DataType type = cassTypeToDataType.get(next);
