@@ -81,6 +81,9 @@ public class StateListenerTest {
             ups++;
         }
 
+        public void onSuspected(Host host) {
+        }
+
         public void onDown(Host host) {
             downs++;
         }

@@ -410,6 +410,8 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
 
     @Test(groups = "short")
     public void primitiveInsertWithValueTest() throws Throwable {
+        TestUtils.versionCheck(2.0, 0, "This feature requires protocol v2");
+
         for (DataType dt : DataType.allPrimitiveTypes()) {
             if (exclude(dt))
                 continue;
