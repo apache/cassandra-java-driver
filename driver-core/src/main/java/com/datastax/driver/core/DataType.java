@@ -58,7 +58,8 @@ public abstract class DataType {
         LIST      (32, List.class),
         SET       (34, Set.class),
         MAP       (33, Map.class),
-        UDT       (40, UDTValue.class), // TODO: we currently have no protocol id, so using a fake one to not throw off the logic below.
+        UDT       (48, UDTValue.class),
+        TUPLE     (49, TupleValue.class),
         CUSTOM    (0,  ByteBuffer.class);
 
         final int protocolId;
@@ -131,6 +132,7 @@ public abstract class DataType {
          *   <tr><td>TIMESTAMP     </td><td>Date</td></tr>
          *   <tr><td>UUID          </td><td>UUID</td></tr>
          *   <tr><td>UDT           </td><td>UDTValue</td></tr>
+         *   <tr><td>TUPLE         </td><td>TupleValue</td></tr>
          *   <tr><td>VARCHAR       </td><td>String</td></tr>
          *   <tr><td>VARINT        </td><td>BigInteger</td></tr>
          *   <tr><td>TIMEUUID      </td><td>UUID</td></tr>
@@ -153,7 +155,7 @@ public abstract class DataType {
     private static final Map<Name, DataType> primitiveTypeMap = new EnumMap<Name, DataType>(Name.class);
     static {
         for (Name name : Name.values()) {
-            if (!name.isCollection() && name != Name.CUSTOM && name != Name.UDT)
+            if (!name.isCollection() && name != Name.CUSTOM && name != Name.UDT && name != Name.TUPLE)
                 primitiveTypeMap.put(name, new DataType.Native(name));
         }
     }
@@ -168,7 +170,7 @@ public abstract class DataType {
         switch (name) {
             case CUSTOM:
                 String className = CBUtil.readString(buffer);
-                return CassandraTypeParser.isUserType(className)
+                return CassandraTypeParser.isUserType(className) || CassandraTypeParser.isTupleType(className)
                      ? CassandraTypeParser.parseOne(className)
                      : custom(className);
             case LIST:
@@ -395,6 +397,16 @@ public abstract class DataType {
     }
 
     /**
+     * Returns a Tuple type.
+     *
+     * @param types the types of the tuple's components.
+     * @return the tuple type composed of {@code types}.
+     */
+    public static DataType tupleType(List<DataType> types) {
+        return new TupleType(types);
+    }
+
+    /**
      * Returns the name of that type.
      *
      * @return the name of that type.
@@ -431,6 +443,16 @@ public abstract class DataType {
      * type.
      */
     public UDTDefinition getUDTDefinition() {
+        return null;
+    }
+
+    /**
+     * Returns the types of the components for tuples.
+     *
+     * @return the types of the components for a tuple, or {@code null} for any other
+     * type.
+     */
+    public List<DataType> getTupleTypes() {
         return null;
     }
 
@@ -718,6 +740,51 @@ public abstract class DataType {
         @Override
         public String toString() {
             return Metadata.escapeId(definition.getKeyspace()) + '.' + Metadata.escapeId(definition.getName());
+        }
+    }
+
+    private static class TupleType extends DataType {
+
+        private final List<DataType> types;
+
+        private TupleType(List<DataType> types) {
+            super(DataType.Name.TUPLE);
+            this.types = types;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        TypeCodec<Object> codec(int protocolVersion) {
+            return (TypeCodec)TypeCodec.tupleOf(types);
+        }
+
+        @Override
+        public List<DataType> getTupleTypes() {
+            return types;
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(new Object[]{ name, types });
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof DataType.TupleType))
+                return false;
+
+            DataType.TupleType d = (DataType.TupleType)o;
+            return name == d.name && types.equals(d.types);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            for (DataType type : types) {
+                sb.append(sb.length() == 0 ? "tuple<" : ", ");
+                sb.append(type);
+            }
+            return sb.append(">").toString();
         }
     }
 

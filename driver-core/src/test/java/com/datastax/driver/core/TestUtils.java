@@ -361,7 +361,7 @@ public abstract class TestUtils {
 
     public static void versionCheck(double majorCheck, int minorCheck, String skipString) {
         String version = System.getProperty("cassandra.version");
-        String[] versionArray = version.split("\\.");
+        String[] versionArray = version.split("\\.|-");
         double major = Double.parseDouble(versionArray[0] + "." + versionArray[1]);
         int minor = Integer.parseInt(versionArray[2]);
 

@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -94,5 +95,15 @@ public class CassandraTypeParserTest {
         UDTDefinition.Field subField2 = subIter.next();
         assertEquals(subField2.getName(), "number");
         assertEquals(subField2.getType(), DataType.text());
+    }
+
+    @Test(groups = "unit")
+    public void parseTupleTest() {
+        String s = "org.apache.cassandra.db.marshal.TupleType(org.apache.cassandra.db.marshal.Int32Type,org.apache.cassandra.db.marshal.UTF8Type,org.apache.cassandra.db.marshal.FloatType)";
+        List<DataType> types = CassandraTypeParser.parseOne(s).getTupleTypes();
+        assertNotNull(types);
+        assertEquals(types.get(0), DataType.cint());
+        assertEquals(types.get(1), DataType.text());
+        assertEquals(types.get(2), DataType.cfloat());
     }
 }

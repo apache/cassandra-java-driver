@@ -190,6 +190,17 @@ public class DataTypeTest {
         assertEquals(dt.format(toFormat), toParse);
     }
 
+    @Test(groups = "unit")
+    public void parseFormatTupleTest() {
+
+        String toParse = "(1, 'foo', 1.0)";
+        TupleValue toFormat = TupleValue.withTypes(DataType.cint(), DataType.text(), DataType.cfloat())
+                                        .withValues(1, "foo", 1.0f);
+
+        DataType dt = DataType.tupleType(Arrays.asList(DataType.cint(), DataType.text(), DataType.cfloat()));
+        assertEquals(dt.parse(toParse), toFormat);
+        assertEquals(dt.format(toFormat), toParse);
+    }
 
     @Test(groups = "unit")
     public void serializeDeserializeTest() {

@@ -128,8 +128,12 @@ abstract class TypeCodec<T> {
         return new UDTCodec(definition);
     }
 
+    static TupleCodec tupleOf(List<DataType> types) {
+        return new TupleCodec(types);
+    }
+
     /* This is ugly, but not sure how we can do much better/faster
-     * Returns if it's doesn't correspond to a known type.
+     * Returns null if it's doesn't correspond to a known type.
      *
      * Also, note that this only a dataType that is fit for the value,
      * but for instance, for a UUID, this will return DataType.uuid() but
@@ -205,6 +209,10 @@ abstract class TypeCodec<T> {
 
         if (value instanceof UDTValue) {
             return DataType.userType(((UDTValue) value).getDefinition());
+        }
+
+        if (value instanceof TupleValue) {
+            return DataType.tupleType(((TupleValue) value).getTypes());
         }
 
         return null;
@@ -1129,7 +1137,6 @@ abstract class TypeCodec<T> {
         @Override
         public ByteBuffer serialize(Map<K, V> value) {
             List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(2 * value.size());
-            int size = 0;
             for (Map.Entry<K, V> entry : value.entrySet()) {
                 bbs.add(keyCodec.serialize(entry.getKey()));
                 bbs.add(valueCodec.serialize(entry.getValue()));
@@ -1176,15 +1183,11 @@ abstract class TypeCodec<T> {
         @Override
         public ByteBuffer serialize(UDTValue value) {
             int size = 0;
-            List<ByteBuffer> vs = new ArrayList<ByteBuffer>(definition.size());
-            for (int i = 0; i < definition.size(); i++) {
-                ByteBuffer v = value.values[i];
-                vs.add(v);
+            for (ByteBuffer v : value.values)
                 size += 4 + (v == null ? 0 : v.remaining());
-            }
 
             ByteBuffer result = ByteBuffer.allocate(size);
-            for (ByteBuffer bb : vs) {
+            for (ByteBuffer bb : value.values) {
                 if (bb == null) {
                     result.putInt(-1);
                 } else {
@@ -1201,7 +1204,91 @@ abstract class TypeCodec<T> {
             UDTValue value = definition.newValue();
 
             int i = 0;
-            while (input.hasRemaining() && i < definition.size()) {
+            while (input.hasRemaining() && i < value.values.length) {
+                int n = input.getInt();
+                value.values[i++] = n < 0 ? null : readBytes(input, n);
+            }
+            return value;
+        }
+    }
+
+    static class TupleCodec extends TypeCodec<TupleValue> {
+
+        private final List<DataType> types;
+
+        public TupleCodec(List<DataType> types) {
+            this.types = types;
+        }
+
+        @Override
+        public TupleValue parse(String value) {
+            TupleValue v = new TupleValue(types);
+
+            int idx = ParseUtils.skipSpaces(value, 0);
+            if (value.charAt(idx++) != '(')
+                throw new InvalidTypeException(String.format("Cannot parse tuple value from \"%s\", at character %d expecting '(' but got '%c'", value, idx, value.charAt(idx)));
+
+            idx = ParseUtils.skipSpaces(value, idx);
+
+            if (value.charAt(idx) == ')')
+                return v;
+
+            int i = 0;
+            while (idx < value.length()) {
+                int n;
+                try {
+                    n = ParseUtils.skipCQLValue(value, idx);
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidTypeException(String.format("Cannot parse tuple value from \"%s\", invalid CQL value at character %d", value, idx), e);
+                }
+
+                DataType dt = types.get(i);
+                v.setBytesUnsafe(i, dt.serialize(dt.parse(value.substring(idx, n)), 3));
+                idx = n;
+                i += 1;
+
+                idx = ParseUtils.skipSpaces(value, idx);
+                if (value.charAt(idx) == ')')
+                    return v;
+                if (value.charAt(idx) != ',')
+                    throw new InvalidTypeException(String.format("Cannot parse tuple value from \"%s\", at character %d expecting ',' but got '%c'", value, idx, value.charAt(idx)));
+                ++idx; // skip ','
+
+                idx = ParseUtils.skipSpaces(value, idx);
+            }
+            throw new InvalidTypeException(String.format("Malformed tuple value \"%s\", missing closing ')'", value));
+        }
+
+        @Override
+        public String format(TupleValue value) {
+            return value.toString();
+        }
+
+        @Override
+        public ByteBuffer serialize(TupleValue value) {
+            int size = 0;
+            for (ByteBuffer v : value.values)
+                size += 4 + (v == null ? 0 : v.remaining());
+
+            ByteBuffer result = ByteBuffer.allocate(size);
+            for (ByteBuffer bb : value.values) {
+                if (bb == null) {
+                    result.putInt(-1);
+                } else {
+                    result.putInt(bb.remaining());
+                    result.put(bb.duplicate());
+                }
+            }
+            return (ByteBuffer)result.flip();
+        }
+
+        @Override
+        public TupleValue deserialize(ByteBuffer bytes) {
+            ByteBuffer input = bytes.duplicate();
+            TupleValue value = new TupleValue(types);
+
+            int i = 0;
+            while (input.hasRemaining() && i < value.values.length) {
                 int n = input.getInt();
                 value.values[i++] = n < 0 ? null : readBytes(input, n);
             }

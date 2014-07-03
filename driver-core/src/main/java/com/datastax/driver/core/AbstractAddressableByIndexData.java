@@ -1,18 +1,3 @@
-/*
- *      Copyright (C) 2012 DataStax Inc.
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- */
 package com.datastax.driver.core;
 
 import java.math.BigDecimal;
@@ -23,44 +8,23 @@ import java.util.*;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
-// We don't want to expose this one: it's less useful externally and it's a bit ugly to expose anyway (but it's convenient).
-abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableData implements SettableData<T> {
+abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> extends AbstractGettableByIndexData implements SettableByIndexData<T> {
 
-    final T wrapped;
     final ByteBuffer[] values;
 
-    // Ugly, we coould probably clean that: it is currently needed however because we sometimes
-    // want wrapped to be 'this' (UDTValue), and sometimes some other object (in BoundStatement).
-    @SuppressWarnings("unchecked")
-    protected AbstractData(int protocolVersion, int size) {
+    protected AbstractAddressableByIndexData(int protocolVersion, int size) {
         super(protocolVersion);
-        this.wrapped = (T)this;
         this.values = new ByteBuffer[size];
     }
 
-    protected AbstractData(int protocolVersion, T wrapped, int size) {
-        this(protocolVersion, wrapped, new ByteBuffer[size]);
-    }
-
-    protected AbstractData(int protocolVersion, T wrapped, ByteBuffer[] values) {
-        super(protocolVersion);
-        this.wrapped = wrapped;
-        this.values = values;
-    }
-
-    protected abstract int[] getAllIndexesOf(String name);
-
-    private T setValue(int i, ByteBuffer value) {
+    @SuppressWarnings("unchecked")
+    protected T setValue(int i, ByteBuffer value) {
         values[i] = value;
-        return wrapped;
+        return (T)this;
     }
 
     protected ByteBuffer getValue(int i) {
         return values[i];
-    }
-
-    protected int getIndexOf(String name) {
-        return getAllIndexesOf(name)[0];
     }
 
     public T setBool(int i, boolean v) {
@@ -68,29 +32,9 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return setValue(i, TypeCodec.BooleanCodec.instance.serializeNoBoxing(v));
     }
 
-    public T setBool(String name, boolean v) {
-        int[] indexes = getAllIndexesOf(name);
-        ByteBuffer value = TypeCodec.BooleanCodec.instance.serializeNoBoxing(v);
-        for (int i = 0; i < indexes.length; i++) {
-            checkType(indexes[i], DataType.Name.BOOLEAN);
-            setValue(indexes[i], value);
-        }
-        return wrapped;
-    }
-
     public T setInt(int i, int v) {
         checkType(i, DataType.Name.INT);
         return setValue(i, TypeCodec.IntCodec.instance.serializeNoBoxing(v));
-    }
-
-    public T setInt(String name, int v) {
-        int[] indexes = getAllIndexesOf(name);
-        ByteBuffer value = TypeCodec.IntCodec.instance.serializeNoBoxing(v);
-        for (int i = 0; i < indexes.length; i++) {
-            checkType(indexes[i], DataType.Name.INT);
-            setValue(indexes[i], value);
-        }
-        return wrapped;
     }
 
     public T setLong(int i, long v) {
@@ -98,29 +42,9 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return setValue(i, TypeCodec.LongCodec.instance.serializeNoBoxing(v));
     }
 
-    public T setLong(String name, long v) {
-        int[] indexes = getAllIndexesOf(name);
-        ByteBuffer value = TypeCodec.LongCodec.instance.serializeNoBoxing(v);
-        for (int i = 0; i < indexes.length; i++) {
-            checkType(indexes[i], DataType.Name.BIGINT, DataType.Name.COUNTER);
-            setValue(indexes[i], value);
-        }
-        return wrapped;
-    }
-
     public T setDate(int i, Date v) {
         checkType(i, DataType.Name.TIMESTAMP);
         return setValue(i, v == null ? null : TypeCodec.DateCodec.instance.serialize(v));
-    }
-
-    public T setDate(String name, Date v) {
-        int[] indexes = getAllIndexesOf(name);
-        ByteBuffer value = v == null ? null : TypeCodec.DateCodec.instance.serialize(v);
-        for (int i = 0; i < indexes.length; i++) {
-            checkType(indexes[i], DataType.Name.TIMESTAMP);
-            setValue(indexes[i], value);
-        }
-        return wrapped;
     }
 
     public T setFloat(int i, float v) {
@@ -128,29 +52,9 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return setValue(i, TypeCodec.FloatCodec.instance.serializeNoBoxing(v));
     }
 
-    public T setFloat(String name, float v) {
-        int[] indexes = getAllIndexesOf(name);
-        ByteBuffer value = TypeCodec.FloatCodec.instance.serializeNoBoxing(v);
-        for (int i = 0; i < indexes.length; i++) {
-            checkType(indexes[i], DataType.Name.FLOAT);
-            setValue(indexes[i], value);
-        }
-        return wrapped;
-    }
-
     public T setDouble(int i, double v) {
         checkType(i, DataType.Name.DOUBLE);
         return setValue(i, TypeCodec.DoubleCodec.instance.serializeNoBoxing(v));
-    }
-
-    public T setDouble(String name, double v) {
-        int[] indexes = getAllIndexesOf(name);
-        ByteBuffer value = TypeCodec.DoubleCodec.instance.serializeNoBoxing(v);
-        for (int i = 0; i < indexes.length; i++) {
-            checkType(indexes[i], DataType.Name.DOUBLE);
-            setValue(indexes[i], value);
-        }
-        return wrapped;
     }
 
     public T setString(int i, String v) {
@@ -166,38 +70,13 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         }
     }
 
-    public T setString(String name, String v) {
-        int[] indexes = getAllIndexesOf(name);
-        for (int i = 0; i < indexes.length; i++)
-            setString(indexes[i], v);
-        return wrapped;
-    }
-
     public T setBytes(int i, ByteBuffer v) {
         checkType(i, DataType.Name.BLOB);
         return setBytesUnsafe(i, v);
     }
 
-    public T setBytes(String name, ByteBuffer v) {
-        int[] indexes = getAllIndexesOf(name);
-        ByteBuffer value = v == null ? null : v.duplicate();
-        for (int i = 0; i < indexes.length; i++) {
-            checkType(indexes[i], DataType.Name.BLOB);
-            setValue(indexes[i], value);
-        }
-        return wrapped;
-    }
-
     public T setBytesUnsafe(int i, ByteBuffer v) {
         return setValue(i, v == null ? null : v.duplicate());
-    }
-
-    public T setBytesUnsafe(String name, ByteBuffer v) {
-        int[] indexes = getAllIndexesOf(name);
-        ByteBuffer value = v == null ? null : v.duplicate();
-        for (int i = 0; i < indexes.length; i++)
-            setValue(indexes[i], value);
-        return wrapped;
     }
 
     public T setVarint(int i, BigInteger v) {
@@ -205,29 +84,9 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return setValue(i, v == null ? null : TypeCodec.BigIntegerCodec.instance.serialize(v));
     }
 
-    public T setVarint(String name, BigInteger v) {
-        int[] indexes = getAllIndexesOf(name);
-        ByteBuffer value = v == null ? null : TypeCodec.BigIntegerCodec.instance.serialize(v);
-        for (int i = 0; i < indexes.length; i++) {
-            checkType(indexes[i], DataType.Name.VARINT);
-            setValue(indexes[i], value);
-        }
-        return wrapped;
-    }
-
     public T setDecimal(int i, BigDecimal v) {
         checkType(i, DataType.Name.DECIMAL);
         return setValue(i, v == null ? null : TypeCodec.DecimalCodec.instance.serialize(v));
-    }
-
-    public T setDecimal(String name, BigDecimal v) {
-        int[] indexes = getAllIndexesOf(name);
-        ByteBuffer value = v == null ? null : TypeCodec.DecimalCodec.instance.serialize(v);
-        for (int i = 0; i < indexes.length; i++) {
-            checkType(indexes[i], DataType.Name.DECIMAL);
-            setValue(indexes[i], value);
-        }
-        return wrapped;
     }
 
     public T setUUID(int i, UUID v) {
@@ -244,31 +103,9 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
              : setValue(i, TypeCodec.TimeUUIDCodec.instance.serialize(v));
     }
 
-    public T setUUID(String name, UUID v) {
-        int[] indexes = getAllIndexesOf(name);
-        ByteBuffer value = v == null ? null : TypeCodec.UUIDCodec.instance.serialize(v);
-        for (int i = 0; i < indexes.length; i++) {
-            DataType.Name type = checkType(indexes[i], DataType.Name.UUID, DataType.Name.TIMEUUID);
-            if (v != null && type == DataType.Name.TIMEUUID && v.version() != 1)
-                throw new InvalidTypeException(String.format("%s is not a Type 1 (time-based) UUID", v));
-            setValue(indexes[i], value);
-        }
-        return wrapped;
-    }
-
     public T setInet(int i, InetAddress v) {
         checkType(i, DataType.Name.INET);
         return setValue(i, v == null ? null : TypeCodec.InetCodec.instance.serialize(v));
-    }
-
-    public T setInet(String name, InetAddress v) {
-        int[] indexes = getAllIndexesOf(name);
-        ByteBuffer value = v == null ? null : TypeCodec.InetCodec.instance.serialize(v);
-        for (int i = 0; i < indexes.length; i++) {
-            checkType(indexes[i], DataType.Name.INET);
-            setValue(indexes[i], value);
-        }
-        return wrapped;
     }
 
     public <E> T setList(int i, List<E> v) {
@@ -289,13 +126,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
                 throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting list of %s but provided list of %s", getName(i), type, expectedClass, providedClass));
         }
         return setValue(i, type.codec(protocolVersion).serialize(v));
-    }
-
-    public <E> T setList(String name, List<E> v) {
-        int[] indexes = getAllIndexesOf(name);
-        for (int i = 0; i < indexes.length; i++)
-            setList(indexes[i], v);
-        return wrapped;
     }
 
     public <K, V> T setMap(int i, Map<K, V> v) {
@@ -320,13 +150,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return setValue(i, type.codec(protocolVersion).serialize(v));
     }
 
-    public <K, V> T setMap(String name, Map<K, V> v) {
-        int[] indexes = getAllIndexesOf(name);
-        for (int i = 0; i < indexes.length; i++)
-            setMap(indexes[i], v);
-        return wrapped;
-    }
-
     public <E> T setSet(int i, Set<E> v) {
         DataType type = getType(i);
         if (type.getName() != DataType.Name.SET)
@@ -346,13 +169,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return setValue(i, type.codec(protocolVersion).serialize(v));
     }
 
-    public <E> T setSet(String name, Set<E> v) {
-        int[] indexes = getAllIndexesOf(name);
-        for (int i = 0; i < indexes.length; i++)
-            setSet(indexes[i], v);
-        return wrapped;
-    }
-
     public T setUDTValue(int i, UDTValue v) {
         DataType type = getType(i);
         if (type.getName() != DataType.Name.UDT)
@@ -362,15 +178,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             return setValue(i, null);
 
         // UDT always use the V3 protocol version to encode values
-        setValue(i, type.codec(3).serialize(v));
-        return wrapped;
-    }
-
-    public T setUDTValue(String name, UDTValue v) {
-        int[] indexes = getAllIndexesOf(name);
-        for (int i = 0; i < indexes.length; i++)
-            setUDTValue(indexes[i], v);
-        return wrapped;
+        return setValue(i, type.codec(3).serialize(v));
     }
 
     public T setTupleValue(int i, TupleValue v) {
@@ -382,23 +190,15 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             return setValue(i, null);
 
         // Tuples always user the V3 protocol version to encode values
-        setValue(i, type.codec(3).serialize(v));
-        return wrapped;
-    }
-
-    public T setTupleValue(String name, TupleValue v) {
-        int[] indexes = getAllIndexesOf(name);
-        for (int i = 0; i < indexes.length; i++)
-            setTupleValue(indexes[i], v);
-        return wrapped;
+        return setValue(i, type.codec(3).serialize(v));
     }
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof AbstractData))
+        if (!(o instanceof AbstractAddressableByIndexData))
             return false;
 
-        AbstractData<?> that = (AbstractData<?>)o;
+        AbstractAddressableByIndexData<?> that = (AbstractAddressableByIndexData<?>)o;
         if (values.length != that.values.length)
             return false;
 
