@@ -677,6 +677,12 @@ public class Cluster implements Closeable {
          * permission to resolve the host name is denied.
          */
         public Builder addContactPoint(String address) {
+            // We explicitely check for nulls because InetAdress.getByName() will happily
+            // accept it and use localhost (while a null here almost likely mean a user error,
+            // not "connect to localhost")
+            if (address == null)
+                throw new NullPointerException();
+
             try {
                 this.rawAddresses.add(InetAddress.getByName(address));
                 return this;

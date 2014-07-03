@@ -4,8 +4,9 @@ CHANGELOG
 2.0.4:
 ------
 
-- [bug] Fix potential NPE in ControlConnection (JAVA-373)
 - [improvement] Better handling of dead connections (JAVA-204)
+- [bug] Fix potential NPE in ControlConnection (JAVA-373)
+- [bug] Throws NPE when passed null for a contact point (JAVA-291)
 
 
 2.0.3:
