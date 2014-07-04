@@ -16,7 +16,7 @@ public class LoadBalancingPolicyBootstrapTest {
     CountingPolicy policy;
     CCMBridge.CCMCluster c;
 
-    @BeforeClass
+    @BeforeClass(groups = "short")
     private void setup() {
         policy = new CountingPolicy(new RoundRobinPolicy());
         Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(policy);
@@ -32,7 +32,7 @@ public class LoadBalancingPolicyBootstrapTest {
         assertEquals(policy.downs, 0, "downs\n" + policy.history);
     }
 
-    @AfterClass
+    @AfterClass(groups = "short")
     private void tearDown() {
         c.discard();
     }
