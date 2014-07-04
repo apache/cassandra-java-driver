@@ -1132,21 +1132,9 @@ public class Cluster implements Closeable {
             for (InetSocketAddress address : contactPoints) {
                 // We don't want to signal -- call onAdd() -- because nothing is ready
                 // yet (loadbalancing policy, control connection, ...). All we want is
-                // create the Host object so we can initialize the loadBalancing policy.
-                // But this also mean we should signal the external listeners manually.
-                // Note: we mark the initial contact point as UP, because we have no prior
-                // notion of their state and no real way to know until we connect to them
-                // (since the node status is not exposed by C* in the System tables). This
-                // may not be correct.
+                // create the Host object so we can initialize the control connection.
                 Host host = metadata.add(address);
-                if (host != null) {
-                    host.setUp();
-                    for (Host.StateListener listener : listeners)
-                        listener.onAdd(host);
-                }
             }
-
-            loadBalancingPolicy().init(Cluster.this, metadata.allHosts());
 
             try {
                 while (true) {
@@ -1154,6 +1142,13 @@ public class Cluster implements Closeable {
                         controlConnection.connect();
                         if (connectionFactory.protocolVersion < 0)
                             connectionFactory.protocolVersion = 2;
+
+                        // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
+                        // rack...) to initialize the load balancing policy
+                        Collection<Host> hosts = metadata.allHosts();
+                        loadBalancingPolicy().init(Cluster.this, hosts);
+                        for (Host host : hosts)
+                            triggerOnAdd(host);
 
                         return;
                     } catch (UnsupportedProtocolVersionException e) {
@@ -1644,13 +1639,17 @@ public class Cluster implements Closeable {
             return newHost.getCassandraVersion() == null || newHost.getCassandraVersion().getMajor() >= 2;
         }
 
-        public void removeHost(Host host) {
+        public void removeHost(Host host, boolean isInitialConnection) {
             if (host == null)
                 return;
 
             if (metadata.remove(host)) {
-                logger.info("Cassandra host {} removed", host);
-                triggerOnRemove(host);
+                if (isInitialConnection) {
+                    logger.warn("You listed {} in your contact points, but it could not be reached at startup", host);
+                } else {
+                    logger.info("Cassandra host {} removed", host);
+                    triggerOnRemove(host);
+                }
             }
         }
 
@@ -1763,7 +1762,7 @@ public class Cluster implements Closeable {
                         // that querying a table just after having created it don't fail.
                         if (!ControlConnection.waitForSchemaAgreement(connection, Cluster.Manager.this))
                             logger.warn("No schema agreement from live replicas after {} ms. The schema may not be up to date on some nodes.", ControlConnection.MAX_SCHEMA_AGREEMENT_WAIT_MS);
-                        ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this);
+                        ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this, false);
                     } catch (Exception e) {
                         logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
                         submitSchemaRefresh(keyspace, table);
@@ -1813,7 +1812,7 @@ public class Cluster implements Closeable {
                             }
                             break;
                         case REMOVED_NODE:
-                            removeHost(metadata.getHost(tpAddr));
+                            removeHost(metadata.getHost(tpAddr), false);
                             break;
                         case MOVED_NODE:
                             executor.submit(new ExceptionCatchingRunnable() {
