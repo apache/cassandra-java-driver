@@ -223,8 +223,13 @@ class ControlConnection implements Host.StateListener {
             );
             connection.write(new Requests.Register(evs));
 
+            // We need to refresh the node list first so we know about the cassandra version of
+            // the node we're connecting to.
+            refreshNodeListAndTokenMap(connection, cluster, isInitialConnection);
+
             // Note that refreshing the schema will trigger refreshNodeListAndTokenMap since table == null
-            refreshSchema(connection, null, null, cluster, isInitialConnection);
+            logger.debug("[Control connection] Refreshing schema");
+            refreshSchema(connection, null, null, cluster, isInitialConnection, true);
             return connection;
         } catch (BusyConnectionException e) {
             connection.closeAsync().get();
@@ -242,7 +247,7 @@ class ControlConnection implements Host.StateListener {
             // At startup, when we add the initial nodes, this will be null, which is ok
             if (c == null)
                 return;
-            refreshSchema(c, keyspace, table, cluster, false);
+            refreshSchema(c, keyspace, table, cluster, false, false);
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing schema ({})", e.getMessage());
             signalError();
@@ -257,9 +262,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    static void refreshSchema(Connection connection, String keyspace, String table, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
-        logger.debug("[Control connection] Refreshing schema");
-
+    static void refreshSchema(Connection connection, String keyspace, String table, Cluster.Manager cluster, boolean isInitialConnection, boolean dontReloadNodeInfo) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         // Make sure we're up to date on schema
         String whereClause = "";
         if (keyspace != null) {
@@ -303,7 +306,7 @@ class ControlConnection implements Host.StateListener {
 
         // If the table is null, we either rebuild all from scratch or have an updated keyspace. In both case, rebuild the token map
         // since some replication on some keyspace may have changed
-        if (table == null)
+        if (table == null && !dontReloadNodeInfo)
             refreshNodeListAndTokenMap(connection, cluster, false);
     }
 
@@ -577,8 +580,8 @@ class ControlConnection implements Host.StateListener {
     public void onDown(Host host) {
         // If that's the host we're connected to, and we haven't yet schedule a reconnection, preemptively start one
         Connection current = connectionRef.get();
-        if (logger.isTraceEnabled())
-            logger.trace("[Control connection] {} is down, currently connected to {}", host, current == null ? "nobody" : current.address);
+        if (logger.isDebugEnabled())
+            logger.debug("[Control connection] {} is down, currently connected to {}", host, current == null ? "nobody" : current.address);
         if (current != null && current.address.equals(host.getSocketAddress()) && reconnectionAttempt.get() == null) {
             // We might very be on an I/O thread when we reach this so we should not do that on this thread.
             // Besides, there is no reason to block the onDown method while we try to reconnect.
@@ -597,7 +600,11 @@ class ControlConnection implements Host.StateListener {
 
     @Override
     public void onAdd(Host host) {
-        refreshNodeListAndTokenMap();
+        // Refresh infos and token map if we didn't knew about that host, i.e. if we either don't have basic infos on it,
+        // or it's not part of our computed token map
+        Metadata.TokenMap tkmap = cluster.metadata.tokenMap;
+        if (host.getCassandraVersion() == null || tkmap == null || !tkmap.hosts.contains(host))
+            refreshNodeListAndTokenMap();
     }
 
     @Override

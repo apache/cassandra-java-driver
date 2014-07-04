@@ -109,7 +109,7 @@ class Connection {
 
         logger.trace("[{}] Connection opened successfully", name);
         initializeTransport(protocolVersion);
-        logger.trace("[{}] Transport initialized and ready", name);
+        logger.debug("[{}] Transport initialized and ready", name);
         isInitialized = true;
     }
 
@@ -382,7 +382,7 @@ class Connection {
             return closeFuture.get();
         }
 
-        logger.trace("[{}] closing connection", name);
+        logger.debug("[{}] closing connection", name);
 
         // New writes will be refused now that the future is setup.
         // We must now wait on the last ongoing queries to return, which will in turn trigger
@@ -604,8 +604,8 @@ class Connection {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
-            if (logger.isTraceEnabled())
-                logger.trace(String.format("[%s] connection error", name), e.getCause());
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("[%s] connection error", name), e.getCause());
 
             // Ignore exception while writing, this will be handled by write() directly
             if (writer.get() > 0)

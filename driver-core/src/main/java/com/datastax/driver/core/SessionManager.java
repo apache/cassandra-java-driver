@@ -21,12 +21,14 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
@@ -45,6 +47,8 @@ class SessionManager extends AbstractSession {
     final ConcurrentMap<Host, HostConnectionPool> pools;
     final HostConnectionPool.PoolState poolsState;
     final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
+
+    private final Striped<Lock> poolCreationLocks = Striped.lazyWeakLock(5);
 
     private volatile boolean isInit;
 
@@ -65,7 +69,7 @@ class SessionManager extends AbstractSession {
         // Create pool to initial nodes (and wait for them to be created)
         for (Host host : cluster.getMetadata().allHosts()) {
             try {
-                addOrRenewPool(host, false, executor()).get();
+                maybeAddPool(host, executor()).get();
             } catch (ExecutionException e) {
                 // This is not supposed to happen
                 throw new DriverInternalError(e);
@@ -177,7 +181,8 @@ class SessionManager extends AbstractSession {
         return cluster.manager.blockingExecutor;
     }
 
-    ListenableFuture<Boolean> addOrRenewPool(final Host host, final boolean isHostAddition, ListeningExecutorService executor) {
+    // Returns whether there was problem creating the pool
+    ListenableFuture<Boolean> forceRenewPool(final Host host, ListeningExecutorService executor) {
         final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
             return Futures.immediateFuture(true);
@@ -185,14 +190,71 @@ class SessionManager extends AbstractSession {
         // Creating a pool is somewhat long since it has to create the connection, so do it asynchronously.
         return executor.submit(new Callable<Boolean>() {
             public Boolean call() {
-                logger.debug("Adding {} to list of queried hosts", host);
+                while (true) {
+                    try {
+                        HostConnectionPool previous = pools.put(host, new HostConnectionPool(host, distance, SessionManager.this));
+                        if (previous == null) {
+                            logger.debug("Added connection pool for {}", host);
+                        } else {
+                            logger.debug("Renewed connection pool for {}", host);
+                            previous.closeAsync();
+                        }
+                        return true;
+                    } catch (Exception e) {
+                        logger.error("Error creating pool to " + host, e);
+                        return false;
+                    }
+                }
+            }
+        });
+    }
+
+    // Replace pool for a given only if it's the given previous value (which can be null)
+    // Note that the goal of this function is to make sure that 2 concurrent thread calling
+    // maybeAddPool don't end up creating 2 HostConnectionPool. We can't rely on the pools
+    // ConcurrentMap only for that since it's the duplicate HostConnectionPool creation we
+    // want to avoid
+    private boolean replacePool(Host host, HostDistance distance, HostConnectionPool condition) throws ConnectionException, UnsupportedProtocolVersionException {
+        Lock l = poolCreationLocks.get(host);
+        l.lock();
+        try {
+            HostConnectionPool previous = pools.get(host);
+            if (previous != condition)
+                return false;
+
+            pools.put(host, new HostConnectionPool(host, distance, this));
+            return true;
+        } finally {
+            l.unlock();
+        }
+    }
+
+    // Returns whether there was problem creating the pool
+    ListenableFuture<Boolean> maybeAddPool(final Host host, ListeningExecutorService executor) {
+        final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
+        if (distance == HostDistance.IGNORED)
+            return Futures.immediateFuture(true);
+
+        HostConnectionPool previous = pools.get(host);
+        if (previous != null && !previous.isClosed())
+            return Futures.immediateFuture(true);
+
+        // Creating a pool is somewhat long since it has to create the connection, so do it asynchronously.
+        return executor.submit(new Callable<Boolean>() {
+            public Boolean call() {
                 try {
-                    HostConnectionPool previous = pools.put(host, new HostConnectionPool(host, distance, SessionManager.this));
-                    if (previous != null)
-                        previous.closeAsync(); // The previous was probably already shutdown but that's ok
-                    return true;
+                    while (true) {
+                        HostConnectionPool previous = pools.get(host);
+                        if (previous != null && !previous.isClosed())
+                            return true;
+
+                        if (replacePool(host, distance, previous)) {
+                            logger.debug("Added connection pool for {}", host);
+                            return true;
+                        }
+                    }
                 } catch (Exception e) {
-                    logger.error("Error creating pool to {} ({})", host, e.getMessage());
+                    logger.error("Error creating pool to " + host, e);
                     return false;
                 }
             }
@@ -228,7 +290,7 @@ class SessionManager extends AbstractSession {
 
                 if (pool == null) {
                     if (dist != HostDistance.IGNORED && h.isUp())
-                        poolCreationFutures.add(addOrRenewPool(h, false, executor));
+                        poolCreationFutures.add(maybeAddPool(h, executor));
                 } else if (dist != pool.hostDistance) {
                     if (dist == HostDistance.IGNORED) {
                         toRemove.add(h);

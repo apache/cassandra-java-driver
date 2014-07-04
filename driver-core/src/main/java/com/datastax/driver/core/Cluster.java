@@ -1266,7 +1266,7 @@ public class Cluster implements Closeable {
 
         // Use triggerOnUp unless you're sure you want to run this on the current thread.
         private void onUp(final Host host, ListeningExecutorService poolCreationExecutor) throws InterruptedException, ExecutionException {
-            logger.trace("Host {} is UP", host);
+            logger.debug("Host {} is UP", host);
 
             if (isClosed())
                 return;
@@ -1311,7 +1311,7 @@ public class Cluster implements Closeable {
 
             List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
             for (SessionManager s : sessions)
-                futures.add(s.addOrRenewPool(host, false, poolCreationExecutor));
+                futures.add(s.forceRenewPool(host, poolCreationExecutor));
 
             // Only mark the node up once all session have re-added their pool (if the load-balancing
             // policy says it should), so that Host.isUp() don't return true before we're reconnected
@@ -1361,7 +1361,7 @@ public class Cluster implements Closeable {
         }
 
         public void onSuspected(final Host host) {
-            logger.trace("Host {} is Suspected", host);
+            logger.debug("Host {} is Suspected", host);
 
             if (isClosed())
                 return;
@@ -1419,7 +1419,7 @@ public class Cluster implements Closeable {
 
         // Use triggerOnDown unless you're sure you want to run this on the current thread.
         private void onDown(final Host host, final boolean isHostAddition, final boolean isSuspectedVerification) throws InterruptedException, ExecutionException {
-            logger.trace("Host {} is DOWN", host);
+            logger.debug("Host {} is DOWN", host);
 
             if (isClosed())
                 return;
@@ -1558,7 +1558,7 @@ public class Cluster implements Closeable {
 
             List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
             for (SessionManager s : sessions)
-                futures.add(s.addOrRenewPool(host, true, blockingExecutor));
+                futures.add(s.maybeAddPool(host, blockingExecutor));
 
             // Only mark the node up once all session have added their pool (if the load-balancing
             // policy says it should), so that Host.isUp() don't return true before we're reconnected
@@ -1768,7 +1768,7 @@ public class Cluster implements Closeable {
                         // that querying a table just after having created it don't fail.
                         if (!ControlConnection.waitForSchemaAgreement(connection, Cluster.Manager.this))
                             logger.warn("No schema agreement from live replicas after {} ms. The schema may not be up to date on some nodes.", ControlConnection.MAX_SCHEMA_AGREEMENT_WAIT_MS);
-                        ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this, false);
+                        ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this, false, false);
                     } catch (Exception e) {
                         logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
                         submitSchemaRefresh(keyspace, table);
@@ -1940,14 +1940,17 @@ public class Cluster implements Closeable {
                  */
                 (new Thread("Shutdown-checker") {
                     public void run() {
-                        connectionFactory.shutdown();
-
                         // Just wait indefinitely on the the completion of the thread pools. Provided the user
                         // call force(), we'll never really block forever.
                         try {
                             reconnectionExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
                             scheduledTasksExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
                             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+
+                            // Some of the jobs on the executors can be doing query stuff, so close the
+                            // connectionFactory at the very last
+                            connectionFactory.shutdown();
+
                             set(null);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();

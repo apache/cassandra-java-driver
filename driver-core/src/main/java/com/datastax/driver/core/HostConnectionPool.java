@@ -377,8 +377,6 @@ class HostConnectionPool {
         if (future != null)
             return future;
 
-        logger.debug("Shutting down pool");
-
         // Wake up all threads that waits
         signalAllAvailableConnection();
 
