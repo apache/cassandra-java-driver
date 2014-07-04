@@ -1065,6 +1065,7 @@ public class Cluster implements Closeable {
 
         final String clusterName;
         private boolean isInit;
+        private volatile boolean isFullyInit;
 
         // Initial contacts point
         final List<InetSocketAddress> contactPoints;
@@ -1155,6 +1156,7 @@ public class Cluster implements Closeable {
                         if (connectionFactory.protocolVersion < 0)
                             connectionFactory.protocolVersion = 2;
 
+                        isFullyInit = true;
                         return;
                     } catch (UnsupportedProtocolVersionException e) {
                         assert connectionFactory.protocolVersion < 1;
@@ -1621,13 +1623,15 @@ public class Cluster implements Closeable {
                 listener.onRemove(host);
         }
 
-        public boolean signalConnectionFailure(Host host, ConnectionException exception, boolean isHostAddition) {
-            if (isClosed())
+        public boolean signalConnectionFailure(Host host, ConnectionException exception, boolean isHostAddition, boolean markSuspected) {
+            // Don't signal failure until we've fully initialized the controlConnection as this might mess up with
+            // the protocol detection
+            if (!isFullyInit || isClosed())
                 return true;
 
             boolean isDown = host.signalConnectionFailure(exception);
             if (isDown) {
-                if (isHostAddition) {
+                if (isHostAddition || !markSuspected) {
                     triggerOnDown(host, true);
                 } else {
                     // Note that we do want to call onSuspected on the current thread, as the whole point is

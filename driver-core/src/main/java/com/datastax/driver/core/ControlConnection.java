@@ -168,7 +168,6 @@ class ControlConnection implements Host.StateListener {
                     return tryConnect(host);
                 } catch (ConnectionException e) {
                     errors = logError(host, e, errors, iter);
-                    cluster.signalConnectionFailure(host, e, false);
                 } catch (ExecutionException e) {
                     errors = logError(host, e.getCause(), errors, iter);
                 } catch (UnsupportedProtocolVersionException e) {

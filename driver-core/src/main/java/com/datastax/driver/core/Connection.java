@@ -67,8 +67,8 @@ class Connection {
     private final AtomicInteger writer = new AtomicInteger(0);
     private volatile String keyspace;
 
+    private volatile boolean isInitialized;
     private volatile boolean isDefunct;
-    private volatile ConnectionException exception;
 
     private final AtomicReference<ConnectionCloseFuture> closeFuture = new AtomicReference<ConnectionCloseFuture>();
 
@@ -101,7 +101,7 @@ class Connection {
             {
                 if (logger.isDebugEnabled())
                     logger.debug(String.format("[%s] Error connecting to %s%s", name, address, extractMessage(future.getCause())));
-                throw new TransportException(address, "Cannot connect", future.getCause());
+                throw defunct(new TransportException(address, "Cannot connect", future.getCause()));
             }
         } finally {
             writer.decrementAndGet();
@@ -110,6 +110,7 @@ class Connection {
         logger.trace("[{}] Connection opened successfully", name);
         initializeTransport(protocolVersion);
         logger.trace("[{}] Transport initialized and ready", name);
+        isInitialized = true;
     }
 
     private static String extractMessage(Throwable t) {
@@ -151,19 +152,17 @@ class Connection {
                     throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type)));
             }
         } catch (BusyConnectionException e) {
-            throw new DriverInternalError("Newly created connection should not be busy");
+            throw defunct(new DriverInternalError("Newly created connection should not be busy"));
         } catch (ExecutionException e) {
             throw defunct(new ConnectionException(address, String.format("Unexpected error during transport initialization (%s)", e.getCause()), e.getCause()));
         }
     }
 
     private UnsupportedProtocolVersionException unsupportedProtocolVersionException(int triedVersion) {
-        // Almost like defunct, but we don't want to wrap that exception inside a ConnectionException and
-        // we know it's happening while initializing the transport so we can simplify slightly
         logger.debug("Got unsupported protocol version error from {} for version {}", address, triedVersion);
-        isDefunct = true;
-        closeAsync();
-        return new UnsupportedProtocolVersionException(address, triedVersion);
+        UnsupportedProtocolVersionException exc = new UnsupportedProtocolVersionException(address, triedVersion);
+        defunct(new TransportException(address, "Cannot initialize transport", exc));
+        return exc;
     }
 
     private void authenticateV1(Authenticator authenticator) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
@@ -173,7 +172,7 @@ class Connection {
             case READY:
                 break;
             case ERROR:
-                throw new AuthenticationException(address, ((Responses.Error)authResponse).message);
+                throw defunct(new AuthenticationException(address, ((Responses.Error)authResponse).message));
             default:
                 throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a CREDENTIALS message", authResponse.type)));
         }
@@ -188,8 +187,7 @@ class Connection {
         waitForAuthCompletion(authResponse, authenticator);
     }
 
-    private void waitForAuthCompletion(Message.Response authResponse, Authenticator authenticator)
-    throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    private void waitForAuthCompletion(Message.Response authResponse, Authenticator authenticator) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         switch (authResponse.type) {
             case AUTH_SUCCESS:
                 logger.trace("Authentication complete");
@@ -217,9 +215,9 @@ class Connection {
                 if (message.startsWith("java.lang.ArrayIndexOutOfBoundsException: 15"))
                     message = String.format("Cannot use authenticator %s with protocol version 1, "
                                   + "only plain text authentication is supported with this protocol version", authenticator);
-                throw new AuthenticationException(address, message);
+                throw defunct(new AuthenticationException(address, message));
             default:
-                throw new TransportException(address, String.format("Unexpected %s response message from server to authentication message", authResponse.type));
+                throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to authentication message", authResponse.type)));
         }
     }
 
@@ -231,25 +229,26 @@ class Connection {
         return dispatcher.streamIdHandler.maxAvailableStreams();
     }
 
-    public ConnectionException lastException() {
-        return exception;
-    }
-
-    ConnectionException defunct(ConnectionException e) {
+    <E extends Exception> E defunct(E e) {
         if (logger.isDebugEnabled())
             logger.debug("Defuncting connection to " + address, e);
-        exception = e;
         isDefunct = true;
+
+        // If we're initializing the connection, we know there is not handlers yet
+        ConnectionException ce = e instanceof ConnectionException
+                               ? (ConnectionException)e
+                               : new ConnectionException(address, "Connection problem", e);
 
         // We need to signal the connection failure before erroring out handlers to make
         // sure the "suspected" mechanism work as expected
         Host host = factory.manager.metadata.getHost(address);
         if (host != null) {
-            boolean isDown = factory.manager.signalConnectionFailure(host, e, host.wasJustAdded());
+            boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded(), isInitialized);
             notifyOwnerWhenDefunct(isDown);
         }
 
-        dispatcher.errorOutAllHandler(e);
+        if (!isInitialized)
+            dispatcher.errorOutAllHandler(ce);
 
         closeAsync();
         return e;
@@ -627,9 +626,9 @@ class Connection {
 
         @Override
         public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) {
-            // If we've closed the channel server side then we don't really want to defunct the connection, but
+            // If we've closed the channel client side then we don't really want to defunct the connection, but
             // if there is remaining thread waiting on us, we still want to wake them up
-            if (isClosed())
+            if (!isInitialized || isClosed())
                 errorOutAllHandler(new TransportException(address, "Channel has been closed"));
             else
                 defunct(new TransportException(address, "Channel has been closed"));

@@ -325,20 +325,16 @@ class HostConnectionPool {
         } catch (ConnectionException e) {
             open.decrementAndGet();
             logger.debug("Connection error to {} while creating additional connection", host);
-            if (manager.cluster.manager.signalConnectionFailure(host, e, false))
-                closeAsync();
             return false;
         } catch (AuthenticationException e) {
             // This shouldn't really happen in theory
             open.decrementAndGet();
             logger.error("Authentication error while creating additional connection (error is: {})", e.getMessage());
-            closeAsync();
             return false;
         } catch (UnsupportedProtocolVersionException e) {
             // This shouldn't happen since we shouldn't have been able to connect in the first place
             open.decrementAndGet();
             logger.error("UnsupportedProtocolVersionException error while creating additional connection (error is: {})", e.getMessage());
-            closeAsync();
             return false;
         }
     }

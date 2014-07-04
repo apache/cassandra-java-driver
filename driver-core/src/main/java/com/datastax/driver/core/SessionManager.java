@@ -191,17 +191,8 @@ class SessionManager extends AbstractSession {
                     if (previous != null)
                         previous.closeAsync(); // The previous was probably already shutdown but that's ok
                     return true;
-                } catch (AuthenticationException e) {
+                } catch (Exception e) {
                     logger.error("Error creating pool to {} ({})", host, e.getMessage());
-                    cluster.manager.signalConnectionFailure(host, new ConnectionException(e.getAddress(), e.getMessage()), isHostAddition);
-                    return false;
-                } catch (UnsupportedProtocolVersionException e) {
-                    logger.error("Error creating pool to {} ({})", host, e.getMessage());
-                    cluster.manager.signalConnectionFailure(host, new ConnectionException(e.address, e.getMessage()), isHostAddition);
-                    return false;
-                } catch (ConnectionException e) {
-                    logger.debug("Error creating pool to {} ({})", host, e.getMessage());
-                    cluster.manager.signalConnectionFailure(host, e, isHostAddition);
                     return false;
                 }
             }
