@@ -77,7 +77,7 @@ class ControlConnection implements Host.StateListener {
         if (isShutdown)
             return;
 
-        setNewConnection(reconnectInternal());
+        setNewConnection(reconnectInternal(cluster.metadata.allHosts().iterator(), true));
     }
 
     public CloseFuture closeAsync() {
@@ -98,14 +98,14 @@ class ControlConnection implements Host.StateListener {
             return;
 
         try {
-            setNewConnection(reconnectInternal());
+            setNewConnection(reconnectInternal(queryPlan(), false));
         } catch (NoHostAvailableException e) {
             logger.error("[Control connection] Cannot connect to any host, scheduling retry");
             new AbstractReconnectionHandler(cluster.reconnectionExecutor, cluster.reconnectionPolicy().newSchedule(), reconnectionAttempt) {
                 @Override
                 protected Connection tryReconnect() throws ConnectionException {
                     try {
-                        return reconnectInternal();
+                        return reconnectInternal(queryPlan(), false);
                     } catch (NoHostAvailableException e) {
                         throw new ConnectionException(null, e.getMessage());
                     } catch (UnsupportedProtocolVersionException e) {
@@ -139,6 +139,10 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
+    private Iterator<Host> queryPlan() {
+        return cluster.loadBalancingPolicy().newQueryPlan(null, Statement.DEFAULT);
+    }
+
     private void signalError() {
         // If the connection was marked as defunct, this already reported the
         // node down, which will trigger a reconnect. Otherwise, just reconnect
@@ -156,9 +160,8 @@ class ControlConnection implements Host.StateListener {
             old.closeAsync();
     }
 
-    private Connection reconnectInternal() throws UnsupportedProtocolVersionException {
+    private Connection reconnectInternal(Iterator<Host> iter, boolean isInitialConnection) throws UnsupportedProtocolVersionException {
 
-        Iterator<Host> iter = cluster.loadBalancingPolicy().newQueryPlan(null, Statement.DEFAULT);
         Map<InetSocketAddress, Throwable> errors = null;
 
         Host host = null;
@@ -166,10 +169,9 @@ class ControlConnection implements Host.StateListener {
             while (iter.hasNext()) {
                 host = iter.next();
                 try {
-                    return tryConnect(host);
+                    return tryConnect(host, isInitialConnection);
                 } catch (ConnectionException e) {
                     errors = logError(host, e, errors, iter);
-                    cluster.signalConnectionFailure(host, e, false);
                 } catch (ExecutionException e) {
                     errors = logError(host, e.getCause(), errors, iter);
                 } catch (UnsupportedProtocolVersionException e) {
@@ -210,7 +212,7 @@ class ControlConnection implements Host.StateListener {
         return errors;
     }
 
-    private Connection tryConnect(Host host) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException {
+    private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException {
         Connection connection = cluster.connectionFactory.open(host);
 
         try {
@@ -222,11 +224,13 @@ class ControlConnection implements Host.StateListener {
             );
             connection.write(new Requests.Register(evs));
 
-            logger.debug("[Control connection] Refreshing node list and token map");
-            refreshNodeListAndTokenMap(connection, cluster);
+            // We need to refresh the node list first so we know about the cassandra version of
+            // the node we're connecting to.
+            refreshNodeListAndTokenMap(connection, cluster, isInitialConnection);
 
+            // Note that refreshing the schema will trigger refreshNodeListAndTokenMap since table == null
             logger.debug("[Control connection] Refreshing schema");
-            refreshSchema(connection, null, null, cluster);
+            refreshSchema(connection, null, null, cluster, isInitialConnection, true);
             return connection;
         } catch (BusyConnectionException e) {
             connection.closeAsync().get();
@@ -244,7 +248,7 @@ class ControlConnection implements Host.StateListener {
             // At startup, when we add the initial nodes, this will be null, which is ok
             if (c == null)
                 return;
-            refreshSchema(c, keyspace, table, cluster);
+            refreshSchema(c, keyspace, table, cluster, false, false);
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing schema ({})", e.getMessage());
             signalError();
@@ -259,7 +263,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    static void refreshSchema(Connection connection, String keyspace, String table, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    static void refreshSchema(Connection connection, String keyspace, String table, Cluster.Manager cluster, boolean isInitialConnection, boolean dontReloadNodeInfo) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         Host host = cluster.metadata.getHost(connection.address);
         // Neither host, nor it's version should be null. But instead of dying if there is a race or something, we can kind of try to infer
         // a Cassandra version from the protocol version (this is not full proof, we can have the protocol 1 against C* 2.0+, but it's worth
@@ -308,8 +312,8 @@ class ControlConnection implements Host.StateListener {
 
         // If the table is null, we either rebuild all from scratch or have an updated keyspace. In both case, rebuild the token map
         // since some replication on some keyspace may have changed
-        if (table == null)
-            refreshNodeListAndTokenMap(connection, cluster);
+        if (table == null && !dontReloadNodeInfo)
+            refreshNodeListAndTokenMap(connection, cluster, false);
     }
 
     public void refreshNodeListAndTokenMap() {
@@ -320,7 +324,7 @@ class ControlConnection implements Host.StateListener {
 
         logger.debug("[Control connection] Refreshing node list and token map");
         try {
-            refreshNodeListAndTokenMap(c, cluster);
+            refreshNodeListAndTokenMap(c, cluster, false);
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing node list and token map ({})", e.getMessage());
             signalError();
@@ -430,15 +434,19 @@ class ControlConnection implements Host.StateListener {
         if (Objects.equal(host.getDatacenter(), datacenter) && Objects.equal(host.getRack(), rack))
             return;
 
-        // If the dc/rack information changes, we need to update the load balancing policy.
+        // If the dc/rack information changes for an existing node, we need to update the load balancing policy.
         // For that, we remove and re-add the node against the policy. Not the most elegant, and assumes
         // that the policy will update correctly, but in practice this should work.
-        cluster.loadBalancingPolicy().onDown(host);
+        if (!host.wasJustAdded())
+            cluster.loadBalancingPolicy().onDown(host);
         host.setLocationInfo(datacenter, rack);
-        cluster.loadBalancingPolicy().onAdd(host);
+        if (!host.wasJustAdded())
+            cluster.loadBalancingPolicy().onAdd(host);
     }
 
-    private static void refreshNodeListAndTokenMap(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    private static void refreshNodeListAndTokenMap(Connection connection, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+        logger.debug("[Control connection] Refreshing node list and token map");
+
         // Make sure we're up to date on nodes and tokens
 
         DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_LOCAL));
@@ -510,7 +518,7 @@ class ControlConnection implements Host.StateListener {
             if (partitioner != null && !allTokens.get(i).isEmpty())
                 tokenMap.put(host, allTokens.get(i));
 
-            if (isNew)
+            if (isNew && !isInitialConnection)
                 cluster.triggerOnAdd(host);
         }
 
@@ -518,7 +526,7 @@ class ControlConnection implements Host.StateListener {
         Set<InetSocketAddress> foundHostsSet = new HashSet<InetSocketAddress>(foundHosts);
         for (Host host : cluster.metadata.allHosts())
             if (!host.getSocketAddress().equals(connection.address) && !foundHostsSet.contains(host.getSocketAddress()))
-                cluster.removeHost(host);
+                cluster.removeHost(host, isInitialConnection);
 
         cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
     }
@@ -578,8 +586,8 @@ class ControlConnection implements Host.StateListener {
     public void onDown(Host host) {
         // If that's the host we're connected to, and we haven't yet schedule a reconnection, preemptively start one
         Connection current = connectionRef.get();
-        if (logger.isTraceEnabled())
-            logger.trace("[Control connection] {} is down, currently connected to {}", host, current == null ? "nobody" : current.address);
+        if (logger.isDebugEnabled())
+            logger.debug("[Control connection] {} is down, currently connected to {}", host, current == null ? "nobody" : current.address);
         if (current != null && current.address.equals(host.getSocketAddress()) && reconnectionAttempt.get() == null) {
             // We might very be on an I/O thread when we reach this so we should not do that on this thread.
             // Besides, there is no reason to block the onDown method while we try to reconnect.
@@ -598,7 +606,11 @@ class ControlConnection implements Host.StateListener {
 
     @Override
     public void onAdd(Host host) {
-        refreshNodeListAndTokenMap();
+        // Refresh infos and token map if we didn't knew about that host, i.e. if we either don't have basic infos on it,
+        // or it's not part of our computed token map
+        Metadata.TokenMap tkmap = cluster.metadata.tokenMap;
+        if (host.getCassandraVersion() == null || tkmap == null || !tkmap.hosts.contains(host))
+            refreshNodeListAndTokenMap();
     }
 
     @Override

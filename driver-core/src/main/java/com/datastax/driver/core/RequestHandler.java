@@ -341,7 +341,7 @@ class RequestHandler implements Connection.ResponseCallback {
                             // prepare the query correctly and let the query executing return a meaningful error message
                             if (prepareKeyspace != null && (currentKeyspace == null || !currentKeyspace.equals(prepareKeyspace)))
                             {
-                                logger.trace("Setting keyspace for prepared query to {}", prepareKeyspace);
+                                logger.debug("Setting keyspace for prepared query to {}", prepareKeyspace);
                                 connection.setKeyspace(prepareKeyspace);
                             }
 
@@ -351,7 +351,7 @@ class RequestHandler implements Connection.ResponseCallback {
                                 // Always reset the previous keyspace if needed
                                 if (connection.keyspace() == null || !connection.keyspace().equals(currentKeyspace))
                                 {
-                                    logger.trace("Setting back keyspace post query preparation to {}", currentKeyspace);
+                                    logger.debug("Setting back keyspace post query preparation to {}", currentKeyspace);
                                     connection.setKeyspace(currentKeyspace);
                                 }
                             }
@@ -369,8 +369,8 @@ class RequestHandler implements Connection.ResponseCallback {
                         switch (retry.getType()) {
                             case RETRY:
                                 ++queryRetries;
-                                if (logger.isTraceEnabled())
-                                    logger.trace("Doing retry {} for query {} at consistency {}", queryRetries, statement, retry.getRetryConsistencyLevel());
+                                if (logger.isDebugEnabled())
+                                    logger.debug("Doing retry {} for query {} at consistency {}", queryRetries, statement, retry.getRetryConsistencyLevel());
                                 if (metricsEnabled())
                                     metrics().getErrorMetrics().getRetries().inc();
                                 retry(true, retry.getRetryConsistencyLevel());
@@ -412,7 +412,7 @@ class RequestHandler implements Connection.ResponseCallback {
                 switch (response.type) {
                     case RESULT:
                         if (((Responses.Result)response).kind == Responses.Result.Kind.PREPARED) {
-                            logger.trace("Scheduling retry now that query is prepared");
+                            logger.debug("Scheduling retry now that query is prepared");
                             retry(true, null);
                         } else {
                             logError(connection.address, new DriverException("Got unexpected response to prepare message: " + response));

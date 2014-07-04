@@ -39,7 +39,7 @@ public class Metadata {
     volatile String partitioner;
     private final ConcurrentMap<InetSocketAddress, Host> hosts = new ConcurrentHashMap<InetSocketAddress, Host>();
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
-    private volatile TokenMap tokenMap;
+    volatile TokenMap tokenMap;
 
     private static final Pattern cqlId = Pattern.compile("\\w+");
     private static final Pattern lowercaseId = Pattern.compile("[a-z][a-z0-9_]*");
@@ -348,15 +348,18 @@ public class Metadata {
         private final Token.Factory factory;
         private final Map<String, Map<Token, Set<Host>>> tokenToHosts;
         private final List<Token> ring;
+        final Set<Host> hosts;
 
-        private TokenMap(Token.Factory factory, Map<String, Map<Token, Set<Host>>> tokenToHosts, List<Token> ring) {
+        private TokenMap(Token.Factory factory, Map<String, Map<Token, Set<Host>>> tokenToHosts, List<Token> ring, Set<Host> hosts) {
             this.factory = factory;
             this.tokenToHosts = tokenToHosts;
             this.ring = ring;
+            this.hosts = hosts;
         }
 
         public static TokenMap build(Token.Factory factory, Map<Host, Collection<String>> allTokens, Collection<KeyspaceMetadata> keyspaces) {
 
+            Set<Host> hosts = allTokens.keySet();
             Map<Token, Host> tokenToPrimary = new HashMap<Token, Host>();
             Set<Token> allSorted = new TreeSet<Token>();
 
@@ -385,7 +388,7 @@ public class Metadata {
                     tokenToHosts.put(keyspace.getName(), strategy.computeTokenToReplicaMap(tokenToPrimary, ring));
                 }
             }
-            return new TokenMap(factory, tokenToHosts, ring);
+            return new TokenMap(factory, tokenToHosts, ring, hosts);
         }
 
         private Set<Host> getReplicas(String keyspace, Token token) {
