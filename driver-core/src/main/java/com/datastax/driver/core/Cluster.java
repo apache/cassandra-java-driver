@@ -1396,7 +1396,8 @@ public class Cluster implements Closeable {
                     @Override
                     public void runMayThrow() throws InterruptedException, ExecutionException {
                         try {
-                            connectionFactory.open(host);
+                            // TODO: as for the ReconnectionHandler, we could avoid "wasting" this connection
+                            connectionFactory.open(host).closeAsync();
                             // Note that we want to do the pool creation on this thread because we want that
                             // when onUp return, the host is ready for querying
                             onUp(host, MoreExecutors.sameThreadExecutor());
@@ -1472,6 +1473,10 @@ public class Cluster implements Closeable {
                 }
 
                 protected void onReconnection(Connection connection) {
+                    // We don't use that first connection so close it.
+                    // TODO: this is a bit wasteful, we should consider passing it to onAdd/onUp so
+                    // we use it for the first HostConnectionPool created
+                    connection.closeAsync();
                     logger.debug("Successful reconnection to {}, setting host UP", host);
                     // Make sure we have up-to-date infos on that host before adding it (so we typically
                     // catch that an upgraded node uses a new cassandra version).
