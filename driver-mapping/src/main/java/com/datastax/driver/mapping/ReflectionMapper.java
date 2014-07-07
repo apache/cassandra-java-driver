@@ -130,7 +130,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         private final UDTMapper<U> udtMapper;
 
         private UDTColumnMapper(Field field, int position, PropertyDescriptor pd, UDTMapper<U> udtMapper) {
-            super(field, DataType.userType(udtMapper.getUdtDefinition()), position, pd);
+            super(field, udtMapper.getUserType(), position, pd);
             this.udtMapper = udtMapper;
         }
 
@@ -145,7 +145,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         public void setValue(Object entity, Object value) {
             assert value instanceof UDTValue;
             UDTValue udtValue = (UDTValue) value;
-            assert udtValue.getDefinition().equals(udtMapper.getUdtDefinition());
+            assert udtValue.getType().equals(udtMapper.getUserType());
 
             super.setValue(entity, udtMapper.toEntity((udtValue)));
         }
@@ -156,7 +156,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         private final UDTMapper<V> valueMapper;
 
         UDTListMapper(Field field, int position, PropertyDescriptor pd, UDTMapper<V> valueMapper) {
-            super(field, DataType.list(DataType.userType(valueMapper.getUdtDefinition())), position, pd);
+            super(field, DataType.list(valueMapper.getUserType()), position, pd);
             this.valueMapper = valueMapper;
         }
 
@@ -180,7 +180,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         private final UDTMapper<V> valueMapper;
 
         UDTSetMapper(Field field, int position, PropertyDescriptor pd, UDTMapper<V> valueMapper) {
-            super(field, DataType.set(DataType.userType(valueMapper.getUdtDefinition())), position, pd);
+            super(field, DataType.set(valueMapper.getUserType()), position, pd);
             this.valueMapper = valueMapper;
         }
 
@@ -234,10 +234,10 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             assert keyMapper != null || valueMapper != null;
 
             DataType keyType = (keyMapper != null) ?
-                                                  DataType.userType(keyMapper.getUdtDefinition()) :
+                                                  keyMapper.getUserType() :
                                                   getSimpleType(keyClass, field);
             DataType valueType = (valueMapper != null) ?
-                                                  DataType.userType(valueMapper.getUdtDefinition()) :
+                                                  valueMapper.getUserType() :
                                                   getSimpleType(valueClass, field);
             return DataType.map(keyType, valueType);
         }
