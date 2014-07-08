@@ -70,7 +70,7 @@ public class ProtocolOptions {
     /**
      * The newest version of the protocol that this version of the driver support.
      */
-    public static final int NEWEST_SUPPORTED_PROTOCOL_VERSION = 2;
+    public static final int NEWEST_SUPPORTED_PROTOCOL_VERSION = 3;
 
     private volatile Cluster.Manager manager;
 

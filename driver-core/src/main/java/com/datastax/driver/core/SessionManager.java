@@ -407,7 +407,7 @@ class SessionManager extends AbstractSession {
 
             BatchStatement bs = (BatchStatement)statement;
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protoVersion);
-            return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl);
+            return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl, bs.getSerialConsistencyLevel(), 0L);
         }
     }
 

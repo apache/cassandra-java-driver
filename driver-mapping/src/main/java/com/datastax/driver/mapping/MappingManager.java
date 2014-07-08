@@ -61,7 +61,7 @@ public class MappingManager {
 
     /**
      * Creates a {@code UDTMapper} for the provided class (that must be
-     * annotated by a {@link UDT} annotation).
+     * annotated by a {@link com.datastax.driver.mapping.annotations.UDT} annotation).
      *
      * <p>
      * The {@code MappingManager} only ever keeps one {@code UDTMapper} for each

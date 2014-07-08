@@ -31,7 +31,17 @@ class Responses {
 
     public static class Error extends Message.Response {
 
-        public static final Message.Decoder<Error> decoder = new Message.Decoder<Error>() {
+        public static final Message.Decoder<Error> decoderV1 = new ErrorDecoder(1);
+        public static final Message.Decoder<Error> decoderV2 = new ErrorDecoder(2);
+        public static final Message.Decoder<Error> decoderV3 = new ErrorDecoder(3);
+
+        static final class ErrorDecoder implements Message.Decoder<Error> {
+            private final int protocolVersion;
+
+            ErrorDecoder(int protocolVersion) {
+                this.protocolVersion = protocolVersion;
+            }
+
             @Override
             public Error decode(ChannelBuffer body) {
                 ExceptionCode code = ExceptionCode.fromValue(body.readInt());
@@ -66,16 +76,18 @@ class Responses {
                         infos = new AlreadyExistsException(ksName, cfName);
                         break;
                 }
-                return new Error(code, msg, infos);
+                return new Error(protocolVersion, code, msg, infos);
             }
-        };
+        }
 
+        public final int serverProtocolVersion;
         public final ExceptionCode code;
         public final String message;
         public final Object infos; // can be null
 
-        private Error(ExceptionCode code, String message, Object infos) {
+        private Error(int serverProtocolVersion, ExceptionCode code, String message, Object infos) {
             super(Message.Response.Type.ERROR);
+            this.serverProtocolVersion = serverProtocolVersion;
             this.code = code;
             this.message = message;
             this.infos = infos;
@@ -202,16 +214,24 @@ class Responses {
             }
         };
 
+        public static final Message.Decoder<Result> decoderV3 = new Message.Decoder<Result>() {
+            public Result decode(ChannelBuffer body) {
+                Kind kind = Kind.fromId(body.readInt());
+                return kind.subDecoderV3.decode(body);
+            }
+        };
+
         public enum Kind {
-            VOID         (1, Void.subcodec, Void.subcodec),
-            ROWS         (2, Rows.subcodec, Rows.subcodec),
-            SET_KEYSPACE (3, SetKeyspace.subcodec, SetKeyspace.subcodec),
-            PREPARED     (4, Prepared.subcodecV1, Prepared.subcodecV2),
-            SCHEMA_CHANGE(5, SchemaChange.subcodec, SchemaChange.subcodec);
+            VOID         (1, Void.subcodec, Void.subcodec, Void.subcodec),
+            ROWS         (2, Rows.subcodec, Rows.subcodec, Rows.subcodec),
+            SET_KEYSPACE (3, SetKeyspace.subcodec, SetKeyspace.subcodec, SetKeyspace.subcodec),
+            PREPARED     (4, Prepared.subcodecV1, Prepared.subcodecV2, Prepared.subcodecV3),
+            SCHEMA_CHANGE(5, SchemaChange.subcodecV1, SchemaChange.subcodecV2, SchemaChange.subcodecV3);
 
             private final int id;
             private final Message.Decoder<Result> subDecoderV1;
             private final Message.Decoder<Result> subDecoderV2;
+            private final Message.Decoder<Result> subDecoderV3;
 
             private static final Kind[] ids;
             static {
@@ -226,10 +246,11 @@ class Responses {
                 }
             }
 
-            private Kind(int id, Message.Decoder<Result> subDecoderV1, Message.Decoder<Result> subDecoderV2) {
+            private Kind(int id, Message.Decoder<Result> subDecoderV1, Message.Decoder<Result> subDecoderV2, Message.Decoder<Result> subDecoderV3) {
                 this.id = id;
                 this.subDecoderV1 = subDecoderV1;
                 this.subDecoderV2 = subDecoderV2;
+                this.subDecoderV3 = subDecoderV3;
             }
 
             public static Kind fromId(int id) {
@@ -460,6 +481,15 @@ class Responses {
                 }
             };
 
+            public static final Message.Decoder<Result> subcodecV3 = new Message.Decoder<Result>() {
+                public Result decode(ChannelBuffer body) {
+                    MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
+                    Rows.Metadata metadata = Rows.Metadata.decode(body);
+                    Rows.Metadata resultMetadata = Rows.Metadata.decode(body);
+                    return new Prepared(id, metadata, resultMetadata);
+                }
+            };
+
             public final MD5Digest statementId;
             public final Rows.Metadata metadata;
             public final Rows.Metadata resultMetadata;
@@ -480,40 +510,71 @@ class Responses {
         public static class SchemaChange extends Result {
 
             public enum Change { CREATED, UPDATED, DROPPED }
+            public enum Target { KEYSPACE, TABLE, TYPE }
 
             public final Change change;
+            public final Target target;
             public final String keyspace;
-            public final String columnFamily;
+            public final String name;
 
-            public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+            public static final Message.Decoder<Result> subcodecV1 = new Message.Decoder<Result>() {
+                public Result decode(ChannelBuffer body)
+                {
+                    // Note: the CREATE KEYSPACE/TABLE/TYPE SCHEMA_CHANGE response is different from the SCHEMA_CHANGE EVENT type
+                    Change change = CBUtil.readEnumValue(Change.class, body);
+                    String keyspace = CBUtil.readString(body);
+                    String name = CBUtil.readString(body);
+                    return new SchemaChange(change, name.isEmpty() ? Target.KEYSPACE : Target.TABLE, keyspace, name);
+                }
+            };
+
+            public static final Message.Decoder<Result> subcodecV2 = new Message.Decoder<Result>() {
                 public Result decode(ChannelBuffer body)
                 {
                     Change change = CBUtil.readEnumValue(Change.class, body);
                     String keyspace = CBUtil.readString(body);
-                    String columnFamily = CBUtil.readString(body);
-                    return new SchemaChange(change, keyspace, columnFamily);
+                    String name = CBUtil.readString(body);
+                    return new SchemaChange(change, name.isEmpty() ? Target.KEYSPACE : Target.TABLE, keyspace, name);
                 }
             };
 
-            private SchemaChange(Change change, String keyspace, String columnFamily) {
+            public static final Message.Decoder<Result> subcodecV3 = new Message.Decoder<Result>() {
+                public Result decode(ChannelBuffer body)
+                {
+                    // Note: the CREATE KEYSPACE/TABLE/TYPE SCHEMA_CHANGE response is different from the SCHEMA_CHANGE EVENT type
+                    Change change = CBUtil.readEnumValue(Change.class, body);
+                    Target target = CBUtil.readEnumValue(Target.class, body);
+                    String keyspace = CBUtil.readString(body);
+                    String name = target != Target.KEYSPACE ? CBUtil.readString(body) : "";
+                    return new SchemaChange(change, target, keyspace, name);
+                }
+            };
+
+            private SchemaChange(Change change, Target target, String keyspace, String name) {
                 super(Kind.SCHEMA_CHANGE);
                 this.change = change;
+                this.target = target;
                 this.keyspace = keyspace;
-                this.columnFamily = columnFamily;
+                this.name = name;
             }
 
             @Override
             public String toString() {
-                return "RESULT schema change " + change + " on " + keyspace + (columnFamily.isEmpty() ? "" : '.' + columnFamily);
+                return "RESULT schema change " + change + " on " + target + ' ' + keyspace + (name.isEmpty() ? "" : '.' + name);
             }
         }
     }
 
     public static class Event extends Message.Response {
 
-        public static final Message.Decoder<Event> decoder = new Message.Decoder<Event>() {
+        public static final Message.Decoder<Event> decoderV1 = new Message.Decoder<Event>() {
             public Event decode(ChannelBuffer body) {
-                return new Event(ProtocolEvent.deserialize(body));
+                return new Event(ProtocolEvent.deserializeV1(body));
+            }
+        };
+        public static final Message.Decoder<Event> decoderV3 = new Message.Decoder<Event>() {
+            public Event decode(ChannelBuffer body) {
+                return new Event(ProtocolEvent.deserializeV3(body));
             }
         };
 

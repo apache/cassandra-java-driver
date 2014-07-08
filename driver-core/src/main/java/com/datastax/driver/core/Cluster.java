@@ -24,6 +24,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.datastax.driver.core.exceptions.DriverException;
 import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -1140,32 +1141,38 @@ public class Cluster implements Closeable {
             }
 
             try {
-                while (true) {
+                try {
+                    controlConnection.connect();
+                    if (connectionFactory.protocolVersion < 0)
+                        connectionFactory.protocolVersion = ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION;
+                } catch (UnsupportedProtocolVersionException e) {
+                    assert connectionFactory.protocolVersion < 1;
+                    // For now, all C* version supports the protocol version 1
+                    if (e.versionUnsupported <= 1)
+                        throw new DriverInternalError("Got a node that don't even support the protocol version 1, this makes no sense", e);
+
+                    logger.debug("{}: retrying with server indicated version {}", e.getMessage(), e.serverProtocolVersion);
+                    if (e.serverProtocolVersion < 0 || e.serverProtocolVersion > ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION)
+                        throw new DriverException("cannot connect because server does not support version "+e.versionUnsupported+" but resonded with version "+e.serverProtocolVersion+
+                            ": "+e.address+' ' +e.getMessage());
+                    connectionFactory.protocolVersion = e.serverProtocolVersion;
                     try {
                         controlConnection.connect();
-                        if (connectionFactory.protocolVersion < 0)
-                            connectionFactory.protocolVersion = ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION;
-
-                        // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
-                        // rack...) to initialize the load balancing policy
-                        Collection<Host> hosts = metadata.allHosts();
-                        loadBalancingPolicy().init(Cluster.this, hosts);
-
-                        isFullyInit = true;
-
-                        for (Host host : hosts)
-                            triggerOnAdd(host);
-
-                        return;
-                    } catch (UnsupportedProtocolVersionException e) {
-                        assert connectionFactory.protocolVersion < 1;
-                        // For now, all C* version supports the protocol version 1
-                        if (e.versionUnsupported <= 1)
-                            throw new DriverInternalError("Got a node that don't even support the protocol version 1, this makes no sense", e);
-                        logger.debug("{}: retrying with version {}", e.getMessage(), e.versionUnsupported - 1);
-                        connectionFactory.protocolVersion = e.versionUnsupported - 1;
+                    } catch (UnsupportedProtocolVersionException e1) {
+                        throw new DriverException("cannot reconnect because server does not support version "+e.versionUnsupported+" but responded with version "+e.serverProtocolVersion+
+                            ": "+e.address+' ' +e.getMessage());
                     }
                 }
+
+                // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
+                // rack...) to initialize the load balancing policy
+                Collection<Host> hosts = metadata.allHosts();
+                loadBalancingPolicy().init(Cluster.this, hosts);
+
+                isFullyInit = true;
+
+                for (Host host : hosts)
+                    triggerOnAdd(host);
             } catch (NoHostAvailableException e) {
                 close();
                 throw e;
@@ -1277,7 +1284,7 @@ public class Cluster implements Closeable {
             if (host.state == Host.State.UP)
                 return;
 
-            if (connectionFactory.protocolVersion == 2 && !supportsProtocolV2(host)) {
+            if (connectionFactory.protocolVersion >= 2 && !supportsProtocolV2(host)) {
                 logUnsupportedVersionProtocol(host);
                 return;
             }
@@ -1524,7 +1531,7 @@ public class Cluster implements Closeable {
 
             logger.info("New Cassandra host {} added", host);
 
-            if (connectionFactory.protocolVersion == 2 && !supportsProtocolV2(host)) {
+            if (connectionFactory.protocolVersion >= 2 && !supportsProtocolV2(host)) {
                 logUnsupportedVersionProtocol(host);
                 return;
             }
@@ -1883,22 +1890,22 @@ public class Cluster implements Closeable {
                     ProtocolEvent.SchemaChange scc = (ProtocolEvent.SchemaChange)event;
                     switch (scc.change) {
                         case CREATED:
-                            if (scc.table.isEmpty())
+                            if (scc.name.isEmpty())
                                 submitSchemaRefresh(null, null);
                             else
                                 submitSchemaRefresh(scc.keyspace, null);
                             break;
                         case DROPPED:
-                            if (scc.table.isEmpty())
+                            if (scc.name.isEmpty())
                                 submitSchemaRefresh(null, null);
                             else
                                 submitSchemaRefresh(scc.keyspace, null);
                             break;
                         case UPDATED:
-                            if (scc.table.isEmpty())
+                            if (scc.name.isEmpty())
                                 submitSchemaRefresh(scc.keyspace, null);
                             else
-                                submitSchemaRefresh(scc.keyspace, scc.table);
+                                submitSchemaRefresh(scc.keyspace, scc.name);
                             break;
                     }
                     break;

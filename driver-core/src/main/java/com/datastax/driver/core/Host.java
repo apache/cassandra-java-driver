@@ -245,15 +245,15 @@ public class Host {
          * the connection was disfunctional but that the node was not really down.
          * If this fails however, this means the node is truly dead, onDown() is
          * called and further reconnection attempts are scheduled according to the
-         * {@link ReconnectionPolicy} in place.
+         * {@link com.datastax.driver.core.policies.ReconnectionPolicy} in place.
          * <p>
          * When this event is triggered, it is possible to call the host
-         * {@link getInitialReconnectionAttemptFuture} method to wait until the
+         * {@link #getInitialReconnectionAttemptFuture} method to wait until the
          * initial and immediate reconnection attempt succeed or fail.
          * <p>
          * Note that some StateListener may ignore that event. If a node that
          * that is suspected down turns out to be truly down (that is, the driver
-         * cannot successfully connect to it right away), then {@link onDown} will
+         * cannot successfully connect to it right away), then {@link #onDown} will
          * be called.
          */
         public void onSuspected(Host host);

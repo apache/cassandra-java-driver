@@ -133,7 +133,7 @@ class Connection {
                     Responses.Error error = (Responses.Error)response;
                     // Testing for a specific string is a tad fragile but well, we don't have much choice
                     if (error.code == ExceptionCode.PROTOCOL_ERROR && error.message.contains("Invalid or unsupported protocol version"))
-                        throw unsupportedProtocolVersionException(version);
+                        throw unsupportedProtocolVersionException(version, error.serverProtocolVersion);
                     throw defunct(new TransportException(address, String.format("Error initializing connection: %s", error.message)));
                 case AUTHENTICATE:
                     Authenticator authenticator = factory.authProvider.newAuthenticator(address);
@@ -158,9 +158,9 @@ class Connection {
         }
     }
 
-    private UnsupportedProtocolVersionException unsupportedProtocolVersionException(int triedVersion) {
-        logger.debug("Got unsupported protocol version error from {} for version {}", address, triedVersion);
-        UnsupportedProtocolVersionException exc = new UnsupportedProtocolVersionException(address, triedVersion);
+    private UnsupportedProtocolVersionException unsupportedProtocolVersionException(int triedVersion, int serverProtocolVersion) {
+        logger.debug("Got unsupported protocol version error from {} for version {} server supports version {}", address, triedVersion, serverProtocolVersion);
+        UnsupportedProtocolVersionException exc = new UnsupportedProtocolVersionException(address, triedVersion, serverProtocolVersion);
         defunct(new TransportException(address, "Cannot initialize transport", exc));
         return exc;
     }
@@ -776,6 +776,7 @@ class Connection {
         private static final Message.ProtocolDecoder messageDecoder = new Message.ProtocolDecoder();
         private static final Message.ProtocolEncoder messageEncoderV1 = new Message.ProtocolEncoder(1);
         private static final Message.ProtocolEncoder messageEncoderV2 = new Message.ProtocolEncoder(2);
+        private static final Message.ProtocolEncoder messageEncoderV3 = new Message.ProtocolEncoder(3);
         private static final Frame.Encoder frameEncoder = new Frame.Encoder();
 
         private final int protocolVersion;
@@ -814,7 +815,7 @@ class Connection {
             }
 
             pipeline.addLast("messageDecoder", messageDecoder);
-            pipeline.addLast("messageEncoder", protocolVersion == 1 ? messageEncoderV1 : messageEncoderV2);
+            pipeline.addLast("messageEncoder", protocolVersion == 3 ? messageEncoderV3 : (protocolVersion == 1 ? messageEncoderV1 : messageEncoderV2));
 
             pipeline.addLast("dispatcher", connection.dispatcher);
 

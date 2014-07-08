@@ -283,6 +283,15 @@ public class Metadata {
     }
 
     /**
+     * The native protocol version used to communicate with the cluster.
+     *
+     * @return the native protocol version used to communicate with the cluster.
+     */
+    public int getProtocolVersion() {
+        return cluster.protocolVersion();
+    }
+
+    /**
      * The partitioner in use as reported by the Cassandra nodes.
      *
      * @return the partitioner in use as reported by the Cassandra nodes.
