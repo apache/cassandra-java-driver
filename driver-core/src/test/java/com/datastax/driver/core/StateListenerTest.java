@@ -25,7 +25,7 @@ import static com.datastax.driver.core.TestUtils.*;
  */
 public class StateListenerTest {
 
-    @Test(groups = "long")
+    @Test(groups = "short")
     public void listenerTest() throws Throwable {
 
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, Cluster.builder());
