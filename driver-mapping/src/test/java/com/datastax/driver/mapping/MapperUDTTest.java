@@ -171,8 +171,8 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         @Query("SELECT * FROM ks.users WHERE user_id=:userId")
         User getOne(@Param("userId") UUID userId);
 
-        @Query("UPDATE ks.users SET other_addresses[:arg1]=:arg2 WHERE user_id=:arg0")
-        ResultSet addAddress(UUID id, String addressName, Address address);
+        @Query("UPDATE ks.users SET other_addresses[:name]=:address WHERE user_id=:id")
+        ResultSet addAddress(@Param("id") UUID id, @Param("name") String addressName, @Param("address") Address address);
     }
 
     @Test(groups = "short")

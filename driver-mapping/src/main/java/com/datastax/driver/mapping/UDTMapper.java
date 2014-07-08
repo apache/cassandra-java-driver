@@ -21,15 +21,15 @@ public class UDTMapper<T> {
     private static final int UDT_PROTOCOL_VERSION = Math.max(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION, 3);
 
     private final EntityMapper<T> entityMapper;
-    private final UDTDefinition udtDefinition;
+    private final UserType userType;
 
     UDTMapper(EntityMapper<T> entityMapper, Session session) {
         this.entityMapper = entityMapper;
 
         String keyspace = entityMapper.getKeyspace();
         String udt = entityMapper.getTable();
-        udtDefinition = session.getCluster().getMetadata().getKeyspace(keyspace).getUserType(udt);
-        if (udtDefinition == null) {
+        userType = session.getCluster().getMetadata().getKeyspace(keyspace).getUserType(udt);
+        if (userType == null) {
             throw new IllegalArgumentException(String.format("Type \"%s\" does not exist in keyspace \"%s\"", udt, keyspace));
         }
     }
@@ -45,23 +45,20 @@ public class UDTMapper<T> {
      * type indicated in the mapped class's {@code @UDT} annotation.
      */
     public T map(UDTValue v) {
-        if (!v.getDefinition().equals(udtDefinition)) {
-            String message = String.format("UDT conversion mismatch: expected type %s.%s, got %s.%s",
-                                           udtDefinition.getKeyspace(),
-                                           udtDefinition.getName(),
-                                           v.getDefinition().getKeyspace(),
-                                           v.getDefinition().getName());
+        if (!v.getType().equals(userType)) {
+            String message = String.format("UDT conversion mismatch: expected type %s, got %s",
+                                           userType, v.getType());
             throw new IllegalArgumentException(message);
         }
         return toEntity(v);
     }
 
-    UDTDefinition getUdtDefinition() {
-        return udtDefinition;
+    UserType getUserType() {
+        return userType;
     }
 
     UDTValue toUDTValue(T entity) {
-        UDTValue udtValue = udtDefinition.newValue();
+        UDTValue udtValue = userType.newValue();
         for (ColumnMapper<T> cm : entityMapper.allColumns()) {
             Object value = cm.getValue(entity);
             udtValue.setBytesUnsafe(cm.getColumnName(), value == null ? null : cm.getDataType().serialize(value, UDT_PROTOCOL_VERSION));
