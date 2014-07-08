@@ -21,11 +21,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
@@ -214,42 +210,13 @@ abstract class TypeCodec<T> {
 
     static class StringCodec extends TypeCodec<String> {
 
-        private static final Charset utf8Charset = Charset.forName("UTF-8");
-        private static final Charset asciiCharset = Charset.forName("US-ASCII");
+        static final StringCodec utf8Instance = new StringCodec(Charset.forName("UTF-8"));
+        static final StringCodec asciiInstance = new StringCodec(Charset.forName("US-ASCII"));
 
-        // We don't want to recreate the decoders/encoders every time and they're not threadSafe.
-        private static final ThreadLocal<CharsetDecoder> utf8Decoders = new ThreadLocal<CharsetDecoder>() {
-            @Override
-            protected CharsetDecoder initialValue() {
-                return utf8Charset.newDecoder();
-            }
-        };
-        private static final ThreadLocal<CharsetDecoder> asciiDecoders = new ThreadLocal<CharsetDecoder>() {
-            @Override
-            protected CharsetDecoder initialValue() {
-                return asciiCharset.newDecoder();
-            }
-        };
-        private static final ThreadLocal<CharsetEncoder> utf8Encoders = new ThreadLocal<CharsetEncoder>() {
-            @Override
-            protected CharsetEncoder initialValue() {
-                return utf8Charset.newEncoder();
-            }
-        };
-        private static final ThreadLocal<CharsetEncoder> asciiEncoders = new ThreadLocal<CharsetEncoder>() {
-            @Override
-            protected CharsetEncoder initialValue() {
-                return asciiCharset.newEncoder();
-            }
-        };
+        private final Charset charset;
 
-        static final StringCodec utf8Instance = new StringCodec(true);
-        static final StringCodec asciiInstance = new StringCodec(false);
-
-        private final boolean isUTF8;
-
-        private StringCodec(boolean isUTF8) {
-            this.isUTF8 = isUTF8;
+        private StringCodec(Charset charset) {
+            this.charset = charset;
         }
 
         @Override
@@ -259,22 +226,12 @@ abstract class TypeCodec<T> {
 
         @Override
         public ByteBuffer serialize(String value) {
-            try {
-                CharsetEncoder encoder = isUTF8 ? utf8Encoders.get() : asciiEncoders.get();
-                return encoder.encode(CharBuffer.wrap(value));
-            } catch (CharacterCodingException e) {
-                throw new InvalidTypeException("Invalid " + (isUTF8 ? "UTF-8" : "ASCII") + " string");
-            }
+            return ByteBuffer.wrap(value.getBytes(charset));
         }
 
         @Override
         public String deserialize(ByteBuffer bytes) {
-            try {
-                CharsetDecoder decoder = isUTF8 ? utf8Decoders.get() : asciiDecoders.get();
-                return decoder.decode(bytes.duplicate()).toString();
-            } catch (CharacterCodingException e) {
-                throw new InvalidTypeException("Invalid " + (isUTF8 ? "UTF-8" : "ASCII") + " bytes");
-            }
+            return new String(Bytes.getArray(bytes), charset);
         }
     }
 
