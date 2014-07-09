@@ -1629,7 +1629,7 @@ public class Cluster implements Closeable {
             boolean isDown = host.signalConnectionFailure(exception);
             if (isDown) {
                 if (isHostAddition || !markSuspected) {
-                    triggerOnDown(host, true);
+                    triggerOnDown(host, isHostAddition);
                 } else {
                     // Note that we do want to call onSuspected on the current thread, as the whole point is
                     // that by the time this method return, the host initialReconnectionAttempt will have been
