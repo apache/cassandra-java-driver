@@ -1143,24 +1143,23 @@ public class Cluster implements Closeable {
             try {
                 try {
                     controlConnection.connect();
-                    if (connectionFactory.protocolVersion < 0)
-                        connectionFactory.protocolVersion = ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION;
+                    if (connectionFactory.protocolVersion == null)
+                        connectionFactory.protocolVersion = ProtocolVersion.NEWEST_SUPPORTED;
                 } catch (UnsupportedProtocolVersionException e) {
                     assert connectionFactory.protocolVersion < 1;
                     // For now, all C* version supports the protocol version 1
                     if (e.versionUnsupported <= 1)
                         throw new DriverInternalError("Got a node that don't even support the protocol version 1, this makes no sense", e);
 
-                    logger.debug("{}: retrying with server indicated version {}", e.getMessage(), e.serverProtocolVersion);
+                    logger.debug("Cannot connect with protocol {}, trying {}", e., e.serverProtocolVersion);
                     if (e.serverProtocolVersion < 0 || e.serverProtocolVersion > ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION)
-                        throw new DriverException("cannot connect because server does not support version "+e.versionUnsupported+" but resonded with version "+e.serverProtocolVersion+
-                            ": "+e.address+' ' +e.getMessage());
+                        throw new DriverInternalError("Non-sensical version number from host", e);
+
                     connectionFactory.protocolVersion = e.serverProtocolVersion;
                     try {
                         controlConnection.connect();
                     } catch (UnsupportedProtocolVersionException e1) {
-                        throw new DriverException("cannot reconnect because server does not support version "+e.versionUnsupported+" but responded with version "+e.serverProtocolVersion+
-                            ": "+e.address+' ' +e.getMessage());
+                        throw new DriverInternalError("Cannot connect to node with it's own version, this makes no sense", e);
                     }
                 }
 
@@ -1250,10 +1249,10 @@ public class Cluster implements Closeable {
                  : closeFuture.get(); // We raced, it's ok, return the future that was actually set
         }
 
-        void logUnsupportedVersionProtocol(Host host) {
-            logger.warn("Detected added or restarted Cassandra host {} but ignoring it since it does not support the version 2 of the native "
-                      + "protocol which is currently in use. If you want to force the use of the version 1 of the native protocol, use "
-                      + "Cluster.Builder#usingProtocolVersion() when creating the Cluster instance.", host);
+        void logUnsupportedVersionProtocol(Host host, ProtocolVersion version) {
+            logger.warn("Detected added or restarted Cassandra host {} but ignoring it since it does not support the version {} of the native "
+                      + "protocol which is currently in use. If you want to force the use of a particular version of the native protocol, use "
+                      + "Cluster.Builder#usingProtocolVersion() when creating the Cluster instance.", host, version);
         }
 
         public ListenableFuture<?> triggerOnUp(final Host host) {
@@ -1284,8 +1283,8 @@ public class Cluster implements Closeable {
             if (host.state == Host.State.UP)
                 return;
 
-            if (connectionFactory.protocolVersion >= 2 && !supportsProtocolV2(host)) {
-                logUnsupportedVersionProtocol(host);
+            if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
+                logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
                 return;
             }
 
@@ -1302,7 +1301,7 @@ public class Cluster implements Closeable {
                 Thread.currentThread().interrupt();
                 // Don't propagate because we don't want to prevent other listener to run
             } catch (UnsupportedProtocolVersionException e) {
-                logUnsupportedVersionProtocol(host);
+                logUnsupportedVersionProtocol(host, e.versionUnsupported);
                 return;
             }
 
@@ -1531,8 +1530,8 @@ public class Cluster implements Closeable {
 
             logger.info("New Cassandra host {} added", host);
 
-            if (connectionFactory.protocolVersion >= 2 && !supportsProtocolV2(host)) {
-                logUnsupportedVersionProtocol(host);
+            if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
+                logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
                 return;
             }
 
@@ -1559,7 +1558,7 @@ public class Cluster implements Closeable {
                 Thread.currentThread().interrupt();
                 // Don't propagate because we don't want to prevent other listener to run
             } catch (UnsupportedProtocolVersionException e) {
-                logUnsupportedVersionProtocol(host);
+                logUnsupportedVersionProtocol(host, e.versionUnsupported);
                 return;
             }
 
@@ -1648,10 +1647,6 @@ public class Cluster implements Closeable {
                 }
             }
             return isDown;
-        }
-
-        private boolean supportsProtocolV2(Host newHost) {
-            return newHost.getCassandraVersion() == null || newHost.getCassandraVersion().getMajor() >= 2;
         }
 
         public void removeHost(Host host, boolean isInitialConnection) {

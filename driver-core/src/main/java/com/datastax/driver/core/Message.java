@@ -144,7 +144,7 @@ abstract class Message {
             }
 
             public static Type fromOpcode(int opcode) {
-                if (opcode < 0 || opcode >= opcodeIdx.length || opcodeIdx[opcode] == null)
+                if (opcode < 0 || opcode >= opcodeIdx.length)
                     throw new DriverInternalError(String.format("Unknown response opcode %d", opcode));
                 Type t = opcodeIdx[opcode];
                 if (t == null)

@@ -414,15 +414,8 @@ class Connection {
         public final AuthProvider authProvider;
         private volatile boolean isShutdown;
 
-        volatile int protocolVersion;
+        volatile ProtocolVersion protocolVersion;
 
-        Factory(Cluster.Manager manager, Configuration configuration) {
-            this.defaultHandler = manager;
-            this.manager = manager;
-            this.configuration = configuration;
-            this.authProvider = configuration.getProtocolOptions().getAuthProvider();
-            this.protocolVersion = configuration.getProtocolOptions().initialProtocolVersion;
-        }
 
         public int getPort() {
             return configuration.getProtocolOptions().getPort();
