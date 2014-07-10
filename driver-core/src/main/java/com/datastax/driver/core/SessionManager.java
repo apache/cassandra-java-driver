@@ -51,6 +51,7 @@ class SessionManager extends AbstractSession {
     private final Striped<Lock> poolCreationLocks = Striped.lazyWeakLock(5);
 
     private volatile boolean isInit;
+    private volatile boolean isClosing;
 
     // Package protected, only Cluster should construct that.
     SessionManager(Cluster cluster) {
@@ -99,6 +100,9 @@ class SessionManager extends AbstractSession {
         CloseFuture future = closeFuture.get();
         if (future != null)
             return future;
+
+        isClosing = true;
+        cluster.manager.removeSession(this);
 
         List<CloseFuture> futures = new ArrayList<CloseFuture>(pools.size());
         for (HostConnectionPool pool : pools.values())
@@ -192,13 +196,22 @@ class SessionManager extends AbstractSession {
             public Boolean call() {
                 while (true) {
                     try {
-                        HostConnectionPool previous = pools.put(host, new HostConnectionPool(host, distance, SessionManager.this));
+                        if (isClosing)
+                            return true;
+
+                        HostConnectionPool newPool = new HostConnectionPool(host, distance, SessionManager.this);
+                        HostConnectionPool previous = pools.put(host, newPool);
                         if (previous == null) {
                             logger.debug("Added connection pool for {}", host);
                         } else {
                             logger.debug("Renewed connection pool for {}", host);
                             previous.closeAsync();
                         }
+
+                        // If we raced with a session shutdown, ensure that the pool will be closed.
+                        if (isClosing)
+                            newPool.closeAsync();
+
                         return true;
                     } catch (Exception e) {
                         logger.error("Error creating pool to " + host, e);
@@ -215,6 +228,9 @@ class SessionManager extends AbstractSession {
     // ConcurrentMap only for that since it's the duplicate HostConnectionPool creation we
     // want to avoid
     private boolean replacePool(Host host, HostDistance distance, HostConnectionPool condition) throws ConnectionException, UnsupportedProtocolVersionException {
+        if (isClosing)
+            return false;
+
         Lock l = poolCreationLocks.get(host);
         l.lock();
         try {
@@ -222,7 +238,13 @@ class SessionManager extends AbstractSession {
             if (previous != condition)
                 return false;
 
-            pools.put(host, new HostConnectionPool(host, distance, this));
+            HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
+            pools.put(host, newPool);
+
+            // If we raced with a session shutdown, ensure that the pool will be closed.
+            if (isClosing)
+                newPool.closeAsync();
+
             return true;
         } finally {
             l.unlock();
