@@ -9,6 +9,7 @@ CHANGELOG
 - [bug] Throws NPE when passed null for a contact point (JAVA-291)
 - [bug] Avoid LoadBalancingPolicy onDown+onUp at startup (JAVA-315)
 - [bug] Avoid classloader leak in Tomcat (JAVA-343)
+- [bug] Avoid deadlock in onAdd/onUp (JAVA-387)
 
 
 2.0.3:
