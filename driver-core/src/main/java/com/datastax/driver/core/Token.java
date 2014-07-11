@@ -235,28 +235,14 @@ abstract class Token implements Comparable<Token> {
 
         public static final Factory FACTORY = new Factory() {
 
-            private final ThreadLocal<MessageDigest> md5Digests = new ThreadLocal<MessageDigest>() {
-                @Override
-                protected MessageDigest initialValue() {
-                    try {
-                        return MessageDigest.getInstance("MD5");
-                    } catch (NoSuchAlgorithmException e) {
-                        throw new RuntimeException("MD5 doesn't seem to be available on this JVM", e);
-                    }
-                }
-
-                @Override
-                public MessageDigest get() {
-                    MessageDigest digest = super.get();
-                    digest.reset();
-                    return digest;
-                }
-            };
-
             private BigInteger md5(ByteBuffer data) {
-                MessageDigest digest = md5Digests.get();
-                digest.update(data.duplicate());
-                return new BigInteger(digest.digest()).abs();
+                try {
+                    MessageDigest digest = MessageDigest.getInstance("MD5");
+                    digest.update(data.duplicate());
+                    return new BigInteger(digest.digest()).abs();
+                } catch (NoSuchAlgorithmException e) {
+                    throw new RuntimeException("MD5 doesn't seem to be available on this JVM", e);
+                }
             }
 
             @Override
