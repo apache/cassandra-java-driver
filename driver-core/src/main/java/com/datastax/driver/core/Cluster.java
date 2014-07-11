@@ -1330,11 +1330,6 @@ public class Cluster implements Closeable {
 
                     for (Host.StateListener listener : listeners)
                         listener.onUp(host);
-
-                    // Now, check if there isn't pools to create/remove following the addition.
-                    // We do that now only so that it's not called before we've set the node up.
-                    for (SessionManager s : sessions)
-                        s.updateCreatedPools(blockingExecutor);
                 }
 
                 public void onFailure(Throwable t) {
@@ -1345,6 +1340,11 @@ public class Cluster implements Closeable {
             });
 
             f.get();
+
+            // Now, check if there isn't pools to create/remove following the addition.
+            // We do that now only so that it's not called before we've set the node up.
+            for (SessionManager s : sessions)
+                s.updateCreatedPools(blockingExecutor);
         }
 
         public ListenableFuture<?> triggerOnDown(final Host host) {
@@ -1577,11 +1577,6 @@ public class Cluster implements Closeable {
 
                     for (Host.StateListener listener : listeners)
                         listener.onAdd(host);
-
-                    // Now, check if there isn't pools to create/remove following the addition.
-                    // We do that now only so that it's not called before we've set the node up.
-                    for (SessionManager s : sessions)
-                        s.updateCreatedPools(blockingExecutor);
                 }
 
                 public void onFailure(Throwable t) {
@@ -1592,6 +1587,11 @@ public class Cluster implements Closeable {
             });
 
             f.get();
+
+            // Now, check if there isn't pools to create/remove following the addition.
+            // We do that now only so that it's not called before we've set the node up.
+            for (SessionManager s : sessions)
+                s.updateCreatedPools(blockingExecutor);
         }
 
         public ListenableFuture<?> triggerOnRemove(final Host host) {
