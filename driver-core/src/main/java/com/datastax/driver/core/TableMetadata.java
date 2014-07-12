@@ -493,6 +493,7 @@ public class TableMetadata {
         private static final String SPECULATIVE_RETRY        = "speculative_retry";
         private static final String INDEX_INTERVAL           = "index_interval";
 
+        private static final boolean DEFAULT_REPLICATE_ON_WRITE = true;
         private static final double DEFAULT_BF_FP_CHANCE = 0.01;
         private static final boolean DEFAULT_POPULATE_CACHE_ON_FLUSH = false;
         private static final int DEFAULT_MEMTABLE_FLUSH_PERIOD = 0;
@@ -519,23 +520,28 @@ public class TableMetadata {
 
         Options(Row row, boolean isCompactStorage, VersionNumber version) {
             this.isCompactStorage = isCompactStorage;
-            this.comment = row.isNull(COMMENT) ? "" : row.getString(COMMENT);
+            this.comment = isNullOrAbsent(row, COMMENT) ? "" : row.getString(COMMENT);
             this.readRepair = row.getDouble(READ_REPAIR);
             this.localReadRepair = row.getDouble(LOCAL_READ_REPAIR);
-            this.replicateOnWrite = (version.getMajor() > 2 || (version.getMajor() == 2 && version.getMinor() >= 1)) || row.isNull(REPLICATE_ON_WRITE) ? true : row.getBool(REPLICATE_ON_WRITE);
+            this.replicateOnWrite = (version.getMajor() > 2 || (version.getMajor() == 2 && version.getMinor() >= 1)) || isNullOrAbsent(row, REPLICATE_ON_WRITE) ? DEFAULT_REPLICATE_ON_WRITE : row.getBool(REPLICATE_ON_WRITE);
             this.gcGrace = row.getInt(GC_GRACE);
-            this.bfFpChance = row.isNull(BF_FP_CHANCE) ? DEFAULT_BF_FP_CHANCE : row.getDouble(BF_FP_CHANCE);
+            this.bfFpChance = isNullOrAbsent(row, BF_FP_CHANCE) ? DEFAULT_BF_FP_CHANCE : row.getDouble(BF_FP_CHANCE);
             this.caching = row.getString(CACHING);
-            this.populateCacheOnFlush = row.isNull(POPULATE_CACHE_ON_FLUSH) ? DEFAULT_POPULATE_CACHE_ON_FLUSH : row.getBool(POPULATE_CACHE_ON_FLUSH);
-            this.memtableFlushPeriodMs = version.getMajor() < 2 || row.isNull(MEMTABLE_FLUSH_PERIOD_MS) ? DEFAULT_MEMTABLE_FLUSH_PERIOD : row.getInt(MEMTABLE_FLUSH_PERIOD_MS);
-            this.defaultTTL = version.getMajor() < 2 || row.isNull(DEFAULT_TTL) ? DEFAULT_DEFAULT_TTL : row.getInt(DEFAULT_TTL);
-            this.speculativeRetry = version.getMajor() < 2 || row.isNull(SPECULATIVE_RETRY) ? DEFAULT_SPECULATIVE_RETRY : row.getString(SPECULATIVE_RETRY);
-            this.indexInterval = version.getMajor() < 2 || row.isNull(INDEX_INTERVAL) ? DEFAULT_INDEX_INTERVAL : row.getInt(INDEX_INTERVAL);
+            this.populateCacheOnFlush = isNullOrAbsent(row, POPULATE_CACHE_ON_FLUSH) ? DEFAULT_POPULATE_CACHE_ON_FLUSH : row.getBool(POPULATE_CACHE_ON_FLUSH);
+            this.memtableFlushPeriodMs = version.getMajor() < 2 || isNullOrAbsent(row, MEMTABLE_FLUSH_PERIOD_MS) ? DEFAULT_MEMTABLE_FLUSH_PERIOD : row.getInt(MEMTABLE_FLUSH_PERIOD_MS);
+            this.defaultTTL = version.getMajor() < 2 || isNullOrAbsent(row, DEFAULT_TTL) ? DEFAULT_DEFAULT_TTL : row.getInt(DEFAULT_TTL);
+            this.speculativeRetry = version.getMajor() < 2 || isNullOrAbsent(row, SPECULATIVE_RETRY) ? DEFAULT_SPECULATIVE_RETRY : row.getString(SPECULATIVE_RETRY);
+            this.indexInterval = version.getMajor() < 2 || isNullOrAbsent(row, INDEX_INTERVAL) ? DEFAULT_INDEX_INTERVAL : row.getInt(INDEX_INTERVAL);
 
             this.compaction.put("class", row.getString(COMPACTION_CLASS));
             this.compaction.putAll(SimpleJSONParser.parseStringMap(row.getString(COMPACTION_OPTIONS)));
 
             this.compression.putAll(SimpleJSONParser.parseStringMap(row.getString(COMPRESSION_PARAMS)));
+        }
+
+        private static boolean isNullOrAbsent(Row row, String name) {
+            return row.getColumnDefinitions().getIndexOf(name) < 0
+                   || row.isNull(name);
         }
 
         /**
