@@ -136,11 +136,13 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         Session.State state = session.getState();
         Host host = state.getConnectedHosts().iterator().next();
 
+        String hostAddress = String.format("/%s1", CCMBridge.IP_PREFIX);
+
         assertEquals(state.getConnectedHosts().size(), 1);
-        assertEquals(host.getAddress().toString(), "/127.0.1.1");
+        assertEquals(host.getAddress().toString(), hostAddress);
         assertEquals(host.getDatacenter(), "datacenter1");
         assertEquals(host.getRack(), "rack1");
-        assertEquals(host.getSocketAddress().toString(), "/127.0.1.1:9042");
+        assertEquals(host.getSocketAddress().toString(), hostAddress + ":9042");
 
         assertEquals(state.getOpenConnections(host), 2);
         assertEquals(state.getInFlightQueries(host), 0);
