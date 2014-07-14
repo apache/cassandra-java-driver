@@ -23,11 +23,12 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
 
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Statement;
+
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.testng.Assert.*;
 
 public class QueryBuilderTest {
 
@@ -631,25 +632,6 @@ public class QueryBuilderTest {
     public void truncateTest() throws Exception {
         assertEquals(truncate("foo").toString(), "TRUNCATE foo;");
         assertEquals(truncate("foo", quote("Bar")).toString(), "TRUNCATE foo.\"Bar\";");
-    }
-
-    @Test(groups = "unit")
-    public void compoundWherClauseTest() throws Exception {
-        String query;
-        Statement select;
-
-        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)>('a',2);";
-        select = select().all().from("foo").where(eq("k", 4)).and(gt(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
-        assertEquals(select.toString(), query);
-
-        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)>=('a',2) AND (c1,c2)<('b',0);";
-        select = select().all().from("foo").where(eq("k", 4)).and(gte(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)))
-                                                             .and(lt(Arrays.asList("c1", "c2"), Arrays.<Object>asList("b", 0)));
-        assertEquals(select.toString(), query);
-
-        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)<=('a',2);";
-        select = select().all().from("foo").where(eq("k", 4)).and(lte(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
-        assertEquals(select.toString(), query);
     }
 
     @Test(groups = "unit")
