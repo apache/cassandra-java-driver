@@ -89,7 +89,7 @@ class AnnotationParser {
 
         for (Field field : udtClass.getDeclaredFields()) {
             validateAnnotations(field, "UDT",
-                                com.datastax.driver.mapping.annotations.Field.class, Transient.class);
+                                com.datastax.driver.mapping.annotations.Field.class, Enumerated.class, Transient.class);
 
             if (field.getAnnotation(Transient.class) != null)
                 continue;
