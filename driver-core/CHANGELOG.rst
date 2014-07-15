@@ -1,6 +1,22 @@
 CHANGELOG
 =========
 
+2.1.0-beta1:
+------------
+
+- [new] Support for User Defined Types and tuples
+- [new] Simple object mapper
+
+Merged from 2.0 branch:
+
+- [improvement] Better handling of dead connections (JAVA-204)
+- [bug] Fix potential NPE in ControlConnection (JAVA-373)
+- [bug] Throws NPE when passed null for a contact point (JAVA-291)
+- [bug] Avoid LoadBalancingPolicy onDown+onUp at startup (JAVA-315)
+- [bug] Avoid classloader leak in Tomcat (JAVA-343)
+- [bug] Avoid deadlock in onAdd/onUp (JAVA-387)
+- [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
+
 2.0.4:
 ------
 
