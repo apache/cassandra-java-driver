@@ -234,7 +234,6 @@ class Connection {
             logger.debug("Defuncting connection to " + address, e);
         isDefunct = true;
 
-        // If we're initializing the connection, we know there is not handlers yet
         ConnectionException ce = e instanceof ConnectionException
                                ? (ConnectionException)e
                                : new ConnectionException(address, "Connection problem", e);
@@ -247,10 +246,11 @@ class Connection {
             notifyOwnerWhenDefunct(isDown);
         }
 
-        if (!isInitialized)
-            dispatcher.errorOutAllHandler(ce);
+        // Force the connection to close to make sure the future completes. Otherwise force() might never get called and
+        // threads will wait on the future forever.
+        // (this also errors out pending handlers)
+        closeAsync().force();
 
-        closeAsync();
         return e;
     }
 
