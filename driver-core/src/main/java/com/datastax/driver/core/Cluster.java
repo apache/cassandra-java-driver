@@ -1199,6 +1199,10 @@ public class Cluster implements Closeable {
             return session;
         }
 
+        boolean removeSession(Session session) {
+            return sessions.remove(session);
+        }
+
         void reportLatency(Host host, long latencyNanos) {
             for (LatencyTracker tracker : trackers) {
                 tracker.update(host, latencyNanos);

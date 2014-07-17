@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+2.1.0-rc1:
+----------
+
+Merged from 2.0 branch:
+
+- [bug] Ensure defunct connections are completely closed (JAVA-394)
+- [bug] Fix memory and resource leak on closed Sessions (JAVA-342, JAVA-390)
+
+
 2.1.0-beta1:
 ------------
 
@@ -17,6 +26,7 @@ Merged from 2.0 branch:
 - [bug] Avoid deadlock in onAdd/onUp (JAVA-387)
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
 
+
 2.0.4:
 ------
 
@@ -27,6 +37,8 @@ Merged from 2.0 branch:
 - [bug] Avoid classloader leak in Tomcat (JAVA-343)
 - [bug] Avoid deadlock in onAdd/onUp (JAVA-387)
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
+- [bug] Ensure defunct connections are completely closed (JAVA-394)
+- [bug] Fix memory and resource leak on closed Sessions (JAVA-342, JAVA-390)
 
 
 2.0.3:
