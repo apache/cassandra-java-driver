@@ -63,6 +63,10 @@ public class Cluster implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
 
+    private static final int NEW_NODE_DELAY_SECONDS = SystemProperties.getInt("com.datastax.driver.NEW_NODE_DELAY_SECONDS", 1);
+    private static final int NON_BLOCKING_EXECUTOR_SIZE = SystemProperties.getInt("com.datastax.driver.NON_BLOCKING_EXECUTOR_SIZE",
+                                                                                  Runtime.getRuntime().availableProcessors());
+
     // Some per-JVM number that allows to generate unique cluster names when
     // multiple Cluster instance are created in the same JVM.
     private static final AtomicInteger CLUSTER_ID = new AtomicInteger(0);
@@ -1112,7 +1116,7 @@ public class Cluster implements Closeable {
             this.configuration = configuration;
             this.configuration.register(this);
 
-            this.executor = makeExecutor(Runtime.getRuntime().availableProcessors(), "Cassandra Java Driver worker-%d");
+            this.executor = makeExecutor(NON_BLOCKING_EXECUTOR_SIZE, "Cassandra Java Driver worker-%d");
             this.blockingExecutor = makeExecutor(2, "Cassandra Java Driver blocking tasks worker-%d");
 
             this.reaper = new ConnectionReaper();
@@ -1792,7 +1796,7 @@ public class Cluster implements Closeable {
                         // Before refreshing the schema, wait for schema agreement so
                         // that querying a table just after having created it don't fail.
                         if (!ControlConnection.waitForSchemaAgreement(connection, Cluster.Manager.this))
-                            logger.warn("No schema agreement from live replicas after {} ms. The schema may not be up to date on some nodes.", ControlConnection.MAX_SCHEMA_AGREEMENT_WAIT_MS);
+                            logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", ControlConnection.MAX_SCHEMA_AGREEMENT_WAIT_SECONDS);
                         ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this, false);
                     } catch (Exception e) {
                         logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
@@ -1828,9 +1832,9 @@ public class Cluster implements Closeable {
                             final Host newHost = metadata.add(tpAddr);
                             if (newHost != null) {
                                 // Cassandra tends to send notifications for new/up nodes a bit early (it is triggered once
-                                // gossip is up, but that is before the client-side server is up), so we add a somewhat random
-                                // 1 second delay (otherwise the connection will likely fail and have to be retry which is
-                                // wasteful). This probably should be fixed C* side, after which we'll be able to remove this.
+                                // gossip is up, but that is before the client-side server is up), so we add a delay
+                                // (otherwise the connection will likely fail and have to be retry which is wasteful). This
+                                // probably should be fixed C* side, after which we'll be able to remove this.
                                 scheduledTasksExecutor.schedule(new ExceptionCatchingRunnable() {
                                     @Override
                                     public void runMayThrow() throws InterruptedException, ExecutionException {
@@ -1842,7 +1846,7 @@ public class Cluster implements Closeable {
                                             logger.debug("Not enough info for {}, ignoring host", newHost);
                                         }
                                     }
-                                }, 1, TimeUnit.SECONDS);
+                                }, NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
                             }
                             break;
                         case REMOVED_NODE:
@@ -1884,7 +1888,7 @@ public class Cluster implements Closeable {
                                             logger.debug("Not enough info for {}, ignoring host", h);
                                         }
                                     }
-                                }, 1, TimeUnit.SECONDS);
+                                }, NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
                             } else {
                                 executor.submit(new ExceptionCatchingRunnable() {
                                     @Override
