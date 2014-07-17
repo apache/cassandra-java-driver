@@ -145,7 +145,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         Session session = cluster.connect();
         assertEquals(cluster.manager.sessions.size(), 1);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 5);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 3);
 
         // ensure sessions.size() returns to 0 with only 1 active connection
         session.close();
@@ -162,7 +162,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
                 session = cluster.connect();
                 assertEquals(cluster.manager.sessions.size(), 1);
-                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 5);
+                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 3);
                 session.close();
 
                 // give the driver time to close sessions
@@ -214,7 +214,12 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             thisSession.close();
             assertEquals(cluster.manager.sessions.size(), 0);
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
         } finally {
+            cassandraCluster.decommissionNode(2);
+            assertEquals(cluster.manager.sessions.size(), 0);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
             cluster.close();
         }
 
