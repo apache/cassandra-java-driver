@@ -131,6 +131,13 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
+    /**
+     * Check for session memory leaks by creating and closing 10,000 connections.
+     * Each time a session is created and closed we check the number of sessions the
+     * cluster.manager is holding onto as well as the number of open connections.
+     *
+     * @throws Exception
+     */
     @Test(groups = "long")
     public void sessionMemoryLeakTest() throws Exception {
         // Checking for JAVA-342
@@ -157,9 +164,11 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         try {
             for (int i = 0; i < 10000; ++i) {
+                // ensure 0 sessions with a single control connection
                 assertEquals(cluster.manager.sessions.size(), 0);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
 
+                // ensure a new session gets registered and control connections are established
                 session = cluster.connect();
                 assertEquals(cluster.manager.sessions.size(), 1);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 3);
@@ -206,6 +215,8 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             assertEquals(cluster.manager.sessions.size(), 0);
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
 
+            // ensure a new session gets registered and control connections are established
+            // an additional 2 control connections should be seen for node2
             thisSession = cluster.connect();
             assertEquals(cluster.manager.sessions.size(), 1);
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 5);
@@ -216,7 +227,9 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
 
         } finally {
+            // ensure we decommission node2 for the rest of the tests
             cassandraCluster.decommissionNode(2);
+
             assertEquals(cluster.manager.sessions.size(), 0);
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
 
