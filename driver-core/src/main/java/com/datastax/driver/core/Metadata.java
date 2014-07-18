@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -258,6 +257,31 @@ public class Metadata {
             return hosts == null ? Collections.<Host>emptySet() : hosts;
         }
     }
+
+	/**
+	 * Returns the set of hosts that are replica for a given tokem.
+	 * <p>
+	 * Note that this method is a best effort method. Consumers should not rely
+	 * too heavily on the result of this method not being stale (or even empty).
+	 *
+	 * @param keyspace the name of the keyspace to get replicas for.
+	 * @param token the token for which to find the set of
+	 * replica.
+	 * @return the (immutable) set of replicas for {@code token} as know
+	 * by the driver. No strong guarantee is provided on the stalelessness of
+	 * this information. It is also not guarantee that the returned set won't
+	 * be empty (which is then some form of staleness).
+	 */
+	public Set<Host> getTokenReplicas(String keyspace, String token) {
+		keyspace = handleId(keyspace);
+		TokenMap current = tokenMap;
+		if (current == null) {
+			return Collections.emptySet();
+		} else {
+			Set<Host> hosts = current.getReplicas(keyspace, current.factory.fromString(token));
+			return hosts == null ? Collections.<Host>emptySet() : hosts;
+		}
+	}
 
     /**
      * The Cassandra name for the cluster connect to.
