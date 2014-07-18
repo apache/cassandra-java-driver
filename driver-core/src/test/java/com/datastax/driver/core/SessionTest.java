@@ -131,7 +131,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @Test(groups = "short")
+    @Test(groups = "long")
     public void sessionMemoryLeakTest() throws Exception {
         // Checking for JAVA-342
 
