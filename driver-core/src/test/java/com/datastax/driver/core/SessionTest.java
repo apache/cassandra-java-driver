@@ -130,4 +130,98 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             cluster.getConfiguration().getProtocolOptions().setCompression(ProtocolOptions.Compression.NONE);
         }
     }
+
+    @Test(groups = "long")
+    public void sessionMemoryLeakTest() throws Exception {
+        // Checking for JAVA-342
+
+        // give the driver time to close other sessions in this class
+        Thread.sleep(10);
+
+        // create a new cluster object and ensure 0 sessions and connections
+        Cluster cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1').build();
+        assertEquals(cluster.manager.sessions.size(), 0);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 0);
+
+        Session session = cluster.connect();
+        assertEquals(cluster.manager.sessions.size(), 1);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 3);
+
+        // ensure sessions.size() returns to 0 with only 1 active connection
+        session.close();
+        assertEquals(cluster.manager.sessions.size(), 0);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+        // give the driver time to close sessions
+        Thread.sleep(10);
+
+        try {
+            for (int i = 0; i < 10000; ++i) {
+                assertEquals(cluster.manager.sessions.size(), 0);
+                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+                session = cluster.connect();
+                assertEquals(cluster.manager.sessions.size(), 1);
+                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 3);
+                session.close();
+
+                // give the driver time to close sessions
+                Thread.sleep(10);
+
+                // ensure sessions.size() always returns to 0 with only 1 active connection
+                assertEquals(cluster.manager.sessions.size(), 0);
+                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+            }
+        } finally {
+            cluster.close();
+        }
+    }
+
+    @Test(groups = "short")
+    public void connectionLeakTest() throws Exception {
+        // Checking for JAVA-342
+
+        // give the driver time to close other sessions in this class
+        Thread.sleep(10);
+
+        // create a new cluster object and ensure 0 sessions and connections
+        Cluster cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1').build();
+        assertEquals(cluster.manager.sessions.size(), 0);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 0);
+
+        Session session = cluster.connect();
+        assertEquals(cluster.manager.sessions.size(), 1);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 3);
+
+        // ensure sessions.size() returns to 0 with only 1 active connection
+        session.close();
+        assertEquals(cluster.manager.sessions.size(), 0);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+        try {
+            Session thisSession;
+
+            // ensure bootstrapping a node does not create additional connections
+            cassandraCluster.bootstrapNode(2);
+            assertEquals(cluster.manager.sessions.size(), 0);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+            thisSession = cluster.connect();
+            assertEquals(cluster.manager.sessions.size(), 1);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 5);
+
+            // ensure bootstrapping a node does not create additional connections that won't get cleaned up
+            thisSession.close();
+            assertEquals(cluster.manager.sessions.size(), 0);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+        } finally {
+            cassandraCluster.decommissionNode(2);
+            assertEquals(cluster.manager.sessions.size(), 0);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+            cluster.close();
+        }
+
+    }
 }
