@@ -185,20 +185,20 @@ public abstract class DataType {
                 String keyspace = CBUtil.readString(buffer);
                 String type = CBUtil.readString(buffer);
                 int nFields = buffer.readShort() & 0xffff;
-                List<UDTDefinition.Field> fields = new ArrayList<UDTDefinition.Field>(nFields);
+                List<UserType.Field> fields = new ArrayList<UserType.Field>(nFields);
                 for (int i = 0; i < nFields; i++) {
                     String fieldName = CBUtil.readString(buffer);
                     DataType fieldType = decode(buffer);
-                    fields.add(new UDTDefinition.Field(fieldName, fieldType));
+                    fields.add(new UserType.Field(fieldName, fieldType));
                 }
-                return userType(new UDTDefinition(keyspace, type, fields));
+                return new UserType(keyspace, type, fields);
             case TUPLE:
                 nFields = buffer.readShort() & 0xffff;
                 List<DataType> types = new ArrayList<DataType>(nFields);
                 for (int i = 0; i < nFields; i++) {
                     types.add(decode(buffer));
                 }
-                return tupleType(types);
+                return new TupleType(types);
             default:
                 return primitiveTypeMap.get(name);
         }
