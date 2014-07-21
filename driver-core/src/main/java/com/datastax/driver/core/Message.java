@@ -83,10 +83,18 @@ abstract class Message {
                 this.coderV3 = coderV3;
             }
 
-            public Coder<?> coder(int version)
+            public Coder<?> coder(ProtocolVersion version)
             {
-                assert version == 1 || version == 2 || version == 3 : "Unsupported protocol version, we shouldn't have arrived here";
-                return version == 3 ? coderV3 : (version == 1 ? coderV1 : coderV2);
+                switch (version) {
+                    case V1:
+                        return coderV1;
+                    case V2:
+                        return coderV2;
+                    case V3:
+                        return coderV3;
+                    default:
+                        throw version.unsupported();
+                }
             }
         }
 
@@ -152,10 +160,18 @@ abstract class Message {
                 return t;
             }
 
-            public Decoder<?> decoder(int version)
+            public Decoder<?> decoder(ProtocolVersion version)
             {
-                assert version == 1 || version == 2 || version == 3 : "Unsupported protocol version, we shouldn't have arrived here";
-                return version == 3 ? decoderV3 : (version == 2 ? decoderV2 : decoderV1);
+                switch (version) {
+                    case V1:
+                        return decoderV1;
+                    case V2:
+                        return decoderV2;
+                    case V3:
+                        return decoderV3;
+                    default:
+                        throw version.unsupported();
+                }
             }
         }
 
@@ -192,9 +208,9 @@ abstract class Message {
 
     public static class ProtocolEncoder extends OneToOneEncoder {
 
-        private final int protocolVersion;
+        private final ProtocolVersion protocolVersion;
 
-        public ProtocolEncoder(int version) {
+        public ProtocolEncoder(ProtocolVersion version) {
             this.protocolVersion = version;
         }
 

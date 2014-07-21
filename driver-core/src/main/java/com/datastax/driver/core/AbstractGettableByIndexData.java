@@ -15,14 +15,9 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 abstract class AbstractGettableByIndexData implements GettableByIndexData {
 
-    protected final int protocolVersion;
+    protected final ProtocolVersion protocolVersion;
 
-    protected AbstractGettableByIndexData(int protocolVersion) {
-        // TODO: reenable once NEWEST_SUPPORTED_PROTOCOL_VERSION is bumped to 3
-        //if (protocolVersion == 0 || protocolVersion > ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION)
-        //    throw new IllegalArgumentException(String.format("Unsupported protocol version %d; valid values must be between 1 and %d or negative (for auto-detect).",
-        //                                                     protocolVersion,
-        //                                                     ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION));
+    protected AbstractGettableByIndexData(ProtocolVersion protocolVersion) {
         this.protocolVersion = protocolVersion;
     }
 
@@ -347,7 +342,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
             return null;
 
         // UDT always use the protocol V3 to encode values
-        return (UDTValue)type.codec(3).deserialize(value);
+        return (UDTValue)type.codec(ProtocolVersion.V3).deserialize(value);
     }
 
     /**
@@ -365,6 +360,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
             return null;
 
         // tuples always use the protocol V3 to encode values
-        return (TupleValue)type.codec(3).deserialize(value);
+        return (TupleValue)type.codec(ProtocolVersion.V3).deserialize(value);
     }
 }

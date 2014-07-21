@@ -40,14 +40,14 @@ abstract class ArrayBackedResultSet implements ResultSet {
     private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque<List<ByteBuffer>>(0);
 
     protected final ColumnDefinitions metadata;
-    protected final int protocolVersion;
+    protected final ProtocolVersion protocolVersion;
 
-    private ArrayBackedResultSet(ColumnDefinitions metadata, int protocolVersion) {
+    private ArrayBackedResultSet(ColumnDefinitions metadata, ProtocolVersion protocolVersion) {
         this.metadata = metadata;
         this.protocolVersion = protocolVersion;
     }
 
-    static ArrayBackedResultSet fromMessage(Responses.Result msg, SessionManager session, int protocolVersion, ExecutionInfo info, Statement statement) {
+    static ArrayBackedResultSet fromMessage(Responses.Result msg, SessionManager session, ProtocolVersion protocolVersion, ExecutionInfo info, Statement statement) {
         info = update(info, msg, session);
 
         switch (msg.kind) {
@@ -90,7 +90,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
     private static ArrayBackedResultSet empty(ExecutionInfo info) {
         // We could pass the protocol version but we know we won't need it so passing a bogus value (-1)
-        return new SinglePage(ColumnDefinitions.EMPTY, -1, EMPTY_QUEUE, info);
+        return new SinglePage(ColumnDefinitions.EMPTY, null, EMPTY_QUEUE, info);
     }
 
     public ColumnDefinitions getColumnDefinitions() {
@@ -144,7 +144,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final ExecutionInfo info;
 
         private SinglePage(ColumnDefinitions metadata,
-                           int protocolVersion,
+                           ProtocolVersion protocolVersion,
                            Queue<List<ByteBuffer>> rows,
                            ExecutionInfo info) {
             super(metadata, protocolVersion);
@@ -207,7 +207,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final Statement statement;
 
         private MultiPage(ColumnDefinitions metadata,
-                          int protocolVersion,
+                          ProtocolVersion protocolVersion,
                           Queue<List<ByteBuffer>> rows,
                           ExecutionInfo info,
                           ByteBuffer pagingState,

@@ -87,7 +87,7 @@ public class SimpleStatement extends RegularStatement {
         this.values = values;
     }
 
-    private static ByteBuffer[] convert(Object[] values, int protocolVersion) {
+    private static ByteBuffer[] convert(Object[] values, ProtocolVersion protocolVersion) {
         ByteBuffer[] serializedValues = new ByteBuffer[values.length];
         for (int i = 0; i < values.length; i++) {
             try {
@@ -111,7 +111,7 @@ public class SimpleStatement extends RegularStatement {
     }
 
     @Override
-    public ByteBuffer[] getValues(int protocolVersion) {
+    public ByteBuffer[] getValues(ProtocolVersion protocolVersion) {
         return values == null ? null : convert(values, protocolVersion);
     }
 

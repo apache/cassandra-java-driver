@@ -357,10 +357,10 @@ class SessionManager extends AbstractSession {
     }
 
     Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState) {
-        int protoVersion = cluster.manager.protocolVersion();
+        ProtocolVersion protoVersion = cluster.manager.protocolVersion();
         int fetchSize = statement.getFetchSize();
 
-        if (protoVersion == 1) {
+        if (protoVersion == ProtocolVersion.V1) {
             assert pagingState == null;
             // We don't let the user change the fetchSize globally if the proto v1 is used, so we just need to
             // check for the case of a per-statement override
@@ -381,12 +381,12 @@ class SessionManager extends AbstractSession {
             // It saddens me that we special case for the query builder here, but for now this is simpler.
             // We could provide a general API in RegularStatement instead at some point but it's unclear what's
             // the cleanest way to do that is right now (and it's probably not really that useful anyway).
-            if (protoVersion == 1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
+            if (protoVersion == ProtocolVersion.V1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
                 ((com.datastax.driver.core.querybuilder.BuiltStatement)rs).setForceNoValues(true);
 
             ByteBuffer[] rawValues = rs.getValues(protoVersion);
 
-            if (protoVersion == 1 && rawValues != null)
+            if (protoVersion == ProtocolVersion.V1 && rawValues != null)
                 throw new UnsupportedFeatureException("Binary values are not supported");
 
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
@@ -395,14 +395,14 @@ class SessionManager extends AbstractSession {
             return new Requests.Query(qString, options);
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
-            boolean skipMetadata = protoVersion != 1 && bs.statement.getPreparedId().resultSetMetadata != null;
+            boolean skipMetadata = protoVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.wrapper.values), skipMetadata, fetchSize, pagingState, scl);
             return new Requests.Execute(bs.statement.getPreparedId().id, options);
         } else {
             assert statement instanceof BatchStatement : statement;
             assert pagingState == null;
 
-            if (protoVersion == 1)
+            if (protoVersion == ProtocolVersion.V1)
                 throw new UnsupportedFeatureException("Protocol level batching is not supported");
 
             BatchStatement bs = (BatchStatement)statement;

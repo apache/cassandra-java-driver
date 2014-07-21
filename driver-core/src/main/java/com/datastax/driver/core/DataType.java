@@ -204,7 +204,7 @@ public abstract class DataType {
         }
     }
 
-    abstract TypeCodec<Object> codec(int protocolVersion);
+    abstract TypeCodec<Object> codec(ProtocolVersion protocolVersion);
 
     /**
      * Returns the ASCII type.
@@ -458,7 +458,7 @@ public abstract class DataType {
      */
     public Object parse(String value) {
         // We don't care about the protocol version for parsing
-        return value == null ? null : codec(-1).parse(value);
+        return value == null ? null : codec(ProtocolVersion.NEWEST_SUPPORTED).parse(value);
     }
 
     /**
@@ -473,7 +473,7 @@ public abstract class DataType {
      */
     public String format(Object value) {
         // We don't care about the protocol version for formatting
-        return value == null ? null : codec(-1).format(value);
+        return value == null ? null : codec(ProtocolVersion.NEWEST_SUPPORTED).format(value);
     }
 
     /**
@@ -525,7 +525,7 @@ public abstract class DataType {
      * @throws InvalidTypeException if {@code value} is not a valid object
      * for this {@code DataType}.
      */
-    public ByteBuffer serialize(Object value, int protocolVersion) {
+    public ByteBuffer serialize(Object value, ProtocolVersion protocolVersion) {
         Class<?> providedClass = value.getClass();
         Class<?> expectedClass = asJavaClass();
         if (!expectedClass.isAssignableFrom(providedClass))
@@ -560,7 +560,7 @@ public abstract class DataType {
      * @throws InvalidTypeException if {@code bytes} is not a valid
      * encoding of an object of this {@code DataType}.
      */
-    public Object deserialize(ByteBuffer bytes, int protocolVersion) {
+    public Object deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) {
         return codec(protocolVersion).deserialize(bytes);
     }
 
@@ -585,7 +585,7 @@ public abstract class DataType {
      * corresponding to a CQL3 type, i.e. is not a Class that could be returned
      * by {@link DataType#asJavaClass}.
      */
-    public static ByteBuffer serializeValue(Object value, int protocolVersion) {
+    public static ByteBuffer serializeValue(Object value, ProtocolVersion protocolVersion) {
         if (value == null)
             return null;
 
@@ -609,7 +609,7 @@ public abstract class DataType {
         }
 
         @Override
-        TypeCodec<Object> codec(int protocolVersion) {
+        TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
             return TypeCodec.createFor(name);
         }
 
@@ -643,7 +643,7 @@ public abstract class DataType {
 
         @SuppressWarnings("unchecked")
         @Override
-        TypeCodec<Object> codec(int protocolVersion) {
+        TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
             switch (name)
             {
                 case LIST: return (TypeCodec)TypeCodec.listOf(typeArguments.get(0), protocolVersion);
@@ -692,7 +692,7 @@ public abstract class DataType {
 
         @SuppressWarnings("unchecked")
         @Override
-        TypeCodec<Object> codec(int protocolVersion) {
+        TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
             return (TypeCodec)TypeCodec.BytesCodec.instance;
         }
 

@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.utils.Bytes;
 
 // Static utilities private to the query builder
@@ -71,7 +72,7 @@ abstract class Utils {
         return true;
     }
 
-    static ByteBuffer[] convert(List<Object> values, int protocolVersion) {
+    static ByteBuffer[] convert(List<Object> values, ProtocolVersion protocolVersion) {
         ByteBuffer[] serializedValues = new ByteBuffer[values.size()];
         for (int i = 0; i < values.size(); i++) {
             try {

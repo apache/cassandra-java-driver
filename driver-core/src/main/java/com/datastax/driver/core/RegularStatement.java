@@ -56,7 +56,7 @@ public abstract class RegularStatement extends Statement {
      *
      * @see SimpleStatement#SimpleStatement(String, Object...)
      */
-    public abstract ByteBuffer[] getValues(int protocolVersion);
+    public abstract ByteBuffer[] getValues(ProtocolVersion protocolVersion);
 
     /**
      * Whether or not this statement has values, that is if {@code getValues}

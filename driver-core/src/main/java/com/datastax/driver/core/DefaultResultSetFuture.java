@@ -34,11 +34,11 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
     private static final Logger logger = LoggerFactory.getLogger(ResultSetFuture.class);
 
     private final SessionManager session;
-    private final int protocolVersion;
+    private final ProtocolVersion protocolVersion;
     private final Message.Request request;
     private volatile RequestHandler handler;
 
-    DefaultResultSetFuture(SessionManager session, int protocolVersion, Message.Request request) {
+    DefaultResultSetFuture(SessionManager session, ProtocolVersion protocolVersion, Message.Request request) {
         this.session = session;
         this.protocolVersion = protocolVersion;
         this.request = request;

@@ -448,9 +448,9 @@ class Responses {
                                 // everything to get it when this method is only ever call for debugging.
                                 // So trying v3 and falling back to v2, which is ugly but good enough for now.
                                 try {
-                                    sb.append(metadata.columns.getType(i).deserialize(v, 3));
+                                    sb.append(metadata.columns.getType(i).deserialize(v, ProtocolVersion.V3));
                                 } catch (IllegalArgumentException e) {
-                                    sb.append(metadata.columns.getType(i).deserialize(v, 2));
+                                    sb.append(metadata.columns.getType(i).deserialize(v, ProtocolVersion.V2));
                                 }
                             }
                         }

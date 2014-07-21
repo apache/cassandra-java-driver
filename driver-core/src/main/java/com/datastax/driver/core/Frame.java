@@ -80,11 +80,11 @@ class Frame {
         // version first byte is the "direction" of the frame (request or response)
         version = version & 0x7F;
 
-        Header header = new Header(version, flags, streamId, opcode);
+        Header header = new Header(ProtocolVersion.fromInt(version), flags, streamId, opcode);
         return new Frame(header, fullFrame);
     }
 
-    public static Frame create(int version, int opcode, int streamId, EnumSet<Header.Flag> flags, ChannelBuffer body) {
+    public static Frame create(ProtocolVersion version, int opcode, int streamId, EnumSet<Header.Flag> flags, ChannelBuffer body) {
         Header header = new Header(version, flags, streamId, opcode);
         return new Frame(header, body);
     }
@@ -94,16 +94,16 @@ class Frame {
         public static final int LENGTH_V1 = 8;
         public static final int LENGTH_V3 = 9;
 
-        public final int version;
+        public final ProtocolVersion version;
         public final EnumSet<Flag> flags;
         public final int streamId;
         public final int opcode;
 
-        private Header(int version, int flags, int streamId, int opcode) {
+        private Header(ProtocolVersion version, int flags, int streamId, int opcode) {
             this(version, Flag.deserialize(flags), streamId, opcode);
         }
 
-        private Header(int version, EnumSet<Flag> flags, int streamId, int opcode) {
+        private Header(ProtocolVersion version, EnumSet<Flag> flags, int streamId, int opcode) {
             this.version = version;
             this.flags = flags;
             this.streamId = streamId;
@@ -220,18 +220,42 @@ class Frame {
             assert msg instanceof Frame : "Expecting frame, got " + msg;
 
             Frame frame = (Frame)msg;
+            ProtocolVersion protocolVersion = frame.header.version;
 
-            ChannelBuffer header = ChannelBuffers.buffer(frame.header.version >= 3 ? Header.LENGTH_V3 : Header.LENGTH_V1);
+            ChannelBuffer header = ChannelBuffers.buffer(headerLengthFor(protocolVersion));
             // We don't bother with the direction, we only send requests.
-            header.writeByte(frame.header.version);
+            header.writeByte(frame.header.version.toInt());
             header.writeByte(Header.Flag.serialize(frame.header.flags));
-            if (frame.header.version >= 3)
-                header.writeShort(frame.header.streamId);
-            else
-                header.writeByte(frame.header.streamId);
+            writeStreamId(frame.header.streamId, header, protocolVersion);
             header.writeByte(frame.header.opcode);
             header.writeInt(frame.body.readableBytes());
             return ChannelBuffers.wrappedBuffer(header, frame.body);
+        }
+
+        private static int headerLengthFor(ProtocolVersion version) {
+            switch (version) {
+                case V1:
+                case V2:
+                    return Header.LENGTH_V1;
+                case V3:
+                    return Header.LENGTH_V3;
+                default:
+                    throw version.unsupported();
+            }
+        }
+
+        private void writeStreamId(int streamId, ChannelBuffer header, ProtocolVersion protocolVersion) {
+            switch (protocolVersion) {
+                case V1:
+                case V2:
+                    header.writeByte(streamId);
+                    break;
+                case V3:
+                    header.writeShort(streamId);
+                    break;
+                default:
+                    throw protocolVersion.unsupported();
+            }
         }
     }
 

@@ -202,11 +202,11 @@ public class DataTypeTest {
 
     @Test(groups = "unit")
     public void serializeDeserializeTest() {
-        for (int v = 1; v <= ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION; v++)
+        for (ProtocolVersion v : ProtocolVersion.values())
             serializeDeserializeTest(v);
     }
 
-    public void serializeDeserializeTest(int version) {
+    public void serializeDeserializeTest(ProtocolVersion version) {
 
         for (DataType dt : DataType.allPrimitiveTypes()) {
             if (exclude(dt))
@@ -230,11 +230,11 @@ public class DataTypeTest {
 
     @Test(groups = "unit")
     public void serializeDeserializeCollectionsTest() {
-        for (int v = 1; v <= ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION; v++)
+        for (ProtocolVersion v : ProtocolVersion.values())
             serializeDeserializeCollectionsTest(v);
     }
 
-    public void serializeDeserializeCollectionsTest(int version) {
+    public void serializeDeserializeCollectionsTest(ProtocolVersion version) {
 
         List<String> l = Arrays.asList("foo", "bar");
 

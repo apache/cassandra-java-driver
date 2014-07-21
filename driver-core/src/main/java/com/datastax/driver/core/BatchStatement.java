@@ -79,7 +79,7 @@ public class BatchStatement extends Statement {
         this.batchType = batchType;
     }
 
-    IdAndValues getIdAndValues(int protocolVersion) {
+    IdAndValues getIdAndValues(ProtocolVersion protocolVersion) {
         IdAndValues idAndVals = new IdAndValues(statements.size());
         for (Statement statement : statements) {
             if (statement instanceof RegularStatement) {

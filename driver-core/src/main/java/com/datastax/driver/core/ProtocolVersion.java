@@ -15,17 +15,56 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.DriverInternalError;
+
 /**
  * Versions of the native protocol supported by the driver.
  */
 public enum ProtocolVersion {
 
+    // NB: order of the constants matters
+    V1("1.2.0"),
+    V2("2.0.0"),
+    V3("2.1.0-rc1"),
+    ;
+
     public static ProtocolVersion NEWEST_SUPPORTED = V3;
 
-    V1, V2, V3;
+    private final VersionNumber minCassandraVersion;
+
+    private ProtocolVersion(String minCassandraVersion) {
+        this.minCassandraVersion = VersionNumber.parse(minCassandraVersion);
+    }
 
     // We might want to expose it publicly?
-    boolean isSupportedBy(Host h) {
-            return newHost.getCassandraVersion() == null || newHost.getCassandraVersion().getMajor() >= 2;
+    boolean isSupportedBy(Host host) {
+        return host.getCassandraVersion() == null ||
+               isSupportedBy(host.getCassandraVersion());
+    }
+
+    VersionNumber minCassandraVersion() {
+        return minCassandraVersion;
+    }
+
+    private boolean isSupportedBy(VersionNumber cassandraVersion) {
+        return minCassandraVersion.compareTo(cassandraVersion) <= 0;
+    }
+
+    DriverInternalError unsupported() {
+        return new DriverInternalError("Unsupported protocol version " + this);
+    }
+
+    int toInt() {
+        return ordinal() + 1;
+    }
+
+    public static ProtocolVersion fromInt(int i) {
+        ProtocolVersion[] versions = values();
+        int ordinal = i - 1;
+
+        if (ordinal < 0 || ordinal >= versions.length)
+            throw new DriverInternalError(String.format("Cannot deduce protocol version from %d (highest supported version is %s)",
+                                                        i, versions[versions.length - 1]));
+        return versions[i - 1];
     }
 }

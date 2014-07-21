@@ -32,17 +32,17 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     // Ugly, we coould probably clean that: it is currently needed however because we sometimes
     // want wrapped to be 'this' (UDTValue), and sometimes some other object (in BoundStatement).
     @SuppressWarnings("unchecked")
-    protected AbstractData(int protocolVersion, int size) {
+    protected AbstractData(ProtocolVersion protocolVersion, int size) {
         super(protocolVersion);
         this.wrapped = (T)this;
         this.values = new ByteBuffer[size];
     }
 
-    protected AbstractData(int protocolVersion, T wrapped, int size) {
+    protected AbstractData(ProtocolVersion protocolVersion, T wrapped, int size) {
         this(protocolVersion, wrapped, new ByteBuffer[size]);
     }
 
-    protected AbstractData(int protocolVersion, T wrapped, ByteBuffer[] values) {
+    protected AbstractData(ProtocolVersion protocolVersion, T wrapped, ByteBuffer[] values) {
         super(protocolVersion);
         this.wrapped = wrapped;
         this.values = values;
@@ -362,7 +362,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             return setValue(i, null);
 
         // UDT always use the V3 protocol version to encode values
-        setValue(i, type.codec(3).serialize(v));
+        setValue(i, type.codec(ProtocolVersion.V3).serialize(v));
         return wrapped;
     }
 
@@ -382,7 +382,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             return setValue(i, null);
 
         // Tuples always user the V3 protocol version to encode values
-        setValue(i, type.codec(3).serialize(v));
+        setValue(i, type.codec(ProtocolVersion.V3).serialize(v));
         return wrapped;
     }
 

@@ -87,7 +87,7 @@ class Connection {
 
         ClientBootstrap bootstrap = factory.newBootstrap();
         ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
-        int protocolVersion = factory.protocolVersion < 0 ? ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION : factory.protocolVersion;
+        ProtocolVersion protocolVersion = factory.protocolVersion == null ? ProtocolVersion.NEWEST_SUPPORTED : factory.protocolVersion;
         bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
 
         ChannelFuture future = bootstrap.connect(address);
@@ -122,7 +122,7 @@ class Connection {
         return " (" + msg + ')';
     }
 
-    private void initializeTransport(int version) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+    private void initializeTransport(ProtocolVersion version) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
         try {
             ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
             Message.Response response = write(new Requests.Startup(compression)).get();
@@ -133,20 +133,25 @@ class Connection {
                     Responses.Error error = (Responses.Error)response;
                     // Testing for a specific string is a tad fragile but well, we don't have much choice
                     if (error.code == ExceptionCode.PROTOCOL_ERROR && error.message.contains("Invalid or unsupported protocol version"))
-                        throw unsupportedProtocolVersionException(version, error.serverProtocolVersion);
+                        throw unsupportedProtocolVersionException(version, ProtocolVersion.fromInt(error.serverProtocolVersion));
                     throw defunct(new TransportException(address, String.format("Error initializing connection: %s", error.message)));
                 case AUTHENTICATE:
                     Authenticator authenticator = factory.authProvider.newAuthenticator(address);
-                    if (version == 1)
-                    {
-                        if (authenticator instanceof ProtocolV1Authenticator)
-                            authenticateV1(authenticator);
-                        else
-                            // DSE 3.x always uses SASL authentication backported from protocol v2
+                    switch (version) {
+                        case V1:
+                            if (authenticator instanceof ProtocolV1Authenticator)
+                                authenticateV1(authenticator);
+                            else
+                                // DSE 3.x always uses SASL authentication backported from protocol v2
+                                authenticateV2(authenticator);
+                            break;
+                        case V2:
+                        case V3:
                             authenticateV2(authenticator);
+                            break;
+                        default:
+                            throw defunct(version.unsupported());
                     }
-                    else
-                        authenticateV2(authenticator);
                     break;
                 default:
                     throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type)));
@@ -158,7 +163,7 @@ class Connection {
         }
     }
 
-    private UnsupportedProtocolVersionException unsupportedProtocolVersionException(int triedVersion, int serverProtocolVersion) {
+    private UnsupportedProtocolVersionException unsupportedProtocolVersionException(ProtocolVersion triedVersion, ProtocolVersion serverProtocolVersion) {
         logger.debug("Got unsupported protocol version error from {} for version {} server supports version {}", address, triedVersion, serverProtocolVersion);
         UnsupportedProtocolVersionException exc = new UnsupportedProtocolVersionException(address, triedVersion, serverProtocolVersion);
         defunct(new TransportException(address, "Cannot initialize transport", exc));
@@ -416,6 +421,13 @@ class Connection {
 
         volatile ProtocolVersion protocolVersion;
 
+        Factory(Cluster.Manager manager, Configuration configuration) {
+            this.defaultHandler = manager;
+            this.manager = manager;
+            this.configuration = configuration;
+            this.authProvider = configuration.getProtocolOptions().getAuthProvider();
+            this.protocolVersion = configuration.getProtocolOptions().initialProtocolVersion;
+        }
 
         public int getPort() {
             return configuration.getProtocolOptions().getPort();
@@ -767,17 +779,17 @@ class Connection {
     private static class PipelineFactory implements ChannelPipelineFactory {
         // Stateless handlers
         private static final Message.ProtocolDecoder messageDecoder = new Message.ProtocolDecoder();
-        private static final Message.ProtocolEncoder messageEncoderV1 = new Message.ProtocolEncoder(1);
-        private static final Message.ProtocolEncoder messageEncoderV2 = new Message.ProtocolEncoder(2);
-        private static final Message.ProtocolEncoder messageEncoderV3 = new Message.ProtocolEncoder(3);
+        private static final Message.ProtocolEncoder messageEncoderV1 = new Message.ProtocolEncoder(ProtocolVersion.V1);
+        private static final Message.ProtocolEncoder messageEncoderV2 = new Message.ProtocolEncoder(ProtocolVersion.V2);
+        private static final Message.ProtocolEncoder messageEncoderV3 = new Message.ProtocolEncoder(ProtocolVersion.V3);
         private static final Frame.Encoder frameEncoder = new Frame.Encoder();
 
-        private final int protocolVersion;
+        private final ProtocolVersion protocolVersion;
         private final Connection connection;
         private final FrameCompressor compressor;
         private final SSLOptions sslOptions;
 
-        public PipelineFactory(Connection connection, int protocolVersion, FrameCompressor compressor, SSLOptions sslOptions) {
+        public PipelineFactory(Connection connection, ProtocolVersion protocolVersion, FrameCompressor compressor, SSLOptions sslOptions) {
             this.connection = connection;
             this.protocolVersion = protocolVersion;
             this.compressor = compressor;
@@ -808,11 +820,25 @@ class Connection {
             }
 
             pipeline.addLast("messageDecoder", messageDecoder);
-            pipeline.addLast("messageEncoder", protocolVersion == 3 ? messageEncoderV3 : (protocolVersion == 1 ? messageEncoderV1 : messageEncoderV2));
+
+            pipeline.addLast("messageEncoder", messageEncoderFor(protocolVersion));
 
             pipeline.addLast("dispatcher", connection.dispatcher);
 
             return pipeline;
+        }
+
+        private Message.ProtocolEncoder messageEncoderFor(ProtocolVersion version) {
+            switch (version) {
+                case V1:
+                    return messageEncoderV1;
+                case V2:
+                    return messageEncoderV2;
+                case V3:
+                    return messageEncoderV3;
+                default:
+                    throw new DriverInternalError("Unsupported protocol version " + protocolVersion);
+            }
         }
     }
 }

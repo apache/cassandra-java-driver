@@ -26,14 +26,14 @@ class UnsupportedProtocolVersionException extends Exception {
     private static final long serialVersionUID = 0;
 
     public final InetSocketAddress address;
-    public final int versionUnsupported;
-    public final int serverProtocolVersion;
+    public final ProtocolVersion unsupportedVersion;
+    public final ProtocolVersion serverVersion;
 
-    public UnsupportedProtocolVersionException(InetSocketAddress address, int versionUnsupported, int serverProtocolVersion)
+    public UnsupportedProtocolVersionException(InetSocketAddress address, ProtocolVersion unsupportedVersion, ProtocolVersion serverVersion)
     {
-        super(String.format("[%s] Host %s does not support protocol version %d but %d", address, address, versionUnsupported, serverProtocolVersion));
+        super(String.format("[%s] Host %s does not support protocol version %s but %s", address, address, unsupportedVersion, serverVersion));
         this.address = address;
-        this.versionUnsupported = versionUnsupported;
-        this.serverProtocolVersion = serverProtocolVersion;
+        this.unsupportedVersion = unsupportedVersion;
+        this.serverVersion = serverVersion;
     }
 }

@@ -148,7 +148,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
 
         String withOpts = withOptions;
         // With C* 2.0 we'll have a few additional options
-        if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() > 1) {
+        if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != ProtocolVersion.V1) {
             // Strip the last ';'
             withOpts = withOpts.substring(0, withOpts.length() - 1) + '\n';
             withOpts += "   AND default_time_to_live = 0\n"

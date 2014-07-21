@@ -12,7 +12,7 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
 
     final ByteBuffer[] values;
 
-    protected AbstractAddressableByIndexData(int protocolVersion, int size) {
+    protected AbstractAddressableByIndexData(ProtocolVersion protocolVersion, int size) {
         super(protocolVersion);
         this.values = new ByteBuffer[size];
     }
@@ -178,7 +178,7 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
             return setValue(i, null);
 
         // UDT always use the V3 protocol version to encode values
-        return setValue(i, type.codec(3).serialize(v));
+        return setValue(i, type.codec(ProtocolVersion.V3).serialize(v));
     }
 
     public T setTupleValue(int i, TupleValue v) {
@@ -190,7 +190,7 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
             return setValue(i, null);
 
         // Tuples always user the V3 protocol version to encode values
-        return setValue(i, type.codec(3).serialize(v));
+        return setValue(i, type.codec(ProtocolVersion.V3).serialize(v));
     }
 
     @Override

@@ -35,7 +35,7 @@ public class TupleType extends DataType {
 
     @SuppressWarnings("unchecked")
     @Override
-    TypeCodec<Object> codec(int protocolVersion) {
+    TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
         return (TypeCodec)TypeCodec.tupleOf(this);
     }
 
@@ -93,7 +93,7 @@ public class TupleType extends DataType {
 
         TupleValue t = newValue();
         for (int i = 0; i < values.length; i++)
-            t.setValue(i, values[i] == null ? null : types.get(i).serialize(values[i], 3));
+            t.setValue(i, values[i] == null ? null : types.get(i).serialize(values[i], ProtocolVersion.V3));
         return t;
     }
 
