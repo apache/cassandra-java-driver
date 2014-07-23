@@ -23,10 +23,10 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
 
-import com.datastax.driver.core.exceptions.InvalidTypeException;
 import static com.datastax.driver.core.DataTypeTest.exclude;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 
 /**
@@ -103,7 +103,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
     /**
      * Generates the sample data that will be used in testing
      */
-    private static HashMap<DataType, Object> getSampleData() {
+    protected static HashMap<DataType, Object> getSampleData() {
         HashMap<DataType, Object> sampleData = new HashMap<DataType, Object>();
 
         for (DataType dataType : DATA_TYPE_PRIMITIVES) {

@@ -1,12 +1,11 @@
 package com.datastax.driver.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 
 import com.google.common.base.Joiner;
 import org.testng.annotations.Test;
 
+import static com.datastax.driver.core.DataTypeIntegrationTest.getSampleData;
 import static com.datastax.driver.core.TestUtils.versionCheck;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -181,6 +180,80 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 // read tuple
                 TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i)).one().getTupleValue(String.format("v_%s", i));
                 assertEquals(r, createdTuple);
+            }
+
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
+
+    /**
+     * Ensure tuple subtypes are appropriately handled.
+     * Original code found in python-driver:integration.standard.test_types.py:test_tuple_subtypes
+     *
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void tupleSubtypesTest() throws Exception {
+
+        // hold onto constants
+        ArrayList<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>();
+        for (DataType dt : DataType.allPrimitiveTypes()) {
+            // skip counter types since counters are not allowed inside tuples
+            if (dt == DataType.counter())
+                continue;
+
+            DATA_TYPE_PRIMITIVES.add(dt);
+        }
+        HashMap<DataType, Object> SAMPLE_DATA = getSampleData();
+
+        try {
+            session.execute("CREATE KEYSPACE test_tuple_subtypes " +
+                            "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE test_tuple_subtypes");
+
+            // programmatically create the table with a tuple of all datatypes
+            session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, v tuple<%s>)", Joiner.on(',').join(DATA_TYPE_PRIMITIVES)));
+
+            // insert tuples into same key using different columns
+            // and verify the results
+            int i = 1;
+            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+                // create tuples to be written and ensure they match with the expected response
+                // responses have trailing None values for every element that has not been written
+                ArrayList<DataType> dataTypes = new ArrayList<DataType>();
+                ArrayList<DataType> completeDataTypes = new ArrayList<DataType>();
+                ArrayList<Object> createdValues = new ArrayList<Object>();
+                ArrayList<Object> completeValues = new ArrayList<Object>();
+
+                // create written portion of the arrays
+                for (int j = 0; j < i; ++j) {
+                    dataTypes.add(DATA_TYPE_PRIMITIVES.get(j));
+                    completeDataTypes.add(DATA_TYPE_PRIMITIVES.get(j));
+                    createdValues.add(SAMPLE_DATA.get(DATA_TYPE_PRIMITIVES.get(j)));
+                    completeValues.add(SAMPLE_DATA.get(DATA_TYPE_PRIMITIVES.get(j)));
+                }
+
+                // complete portion of the arrays needed for trailing nulls
+                for (int j = 0; j < DATA_TYPE_PRIMITIVES.size() - i; ++j) {
+                    completeDataTypes.add(DATA_TYPE_PRIMITIVES.get(i + j));
+                    completeValues.add(null);
+                }
+
+                // actually create the tuples
+                TupleType t = new TupleType(dataTypes);
+                TupleType t2 = new TupleType(completeDataTypes);
+                TupleValue createdTuple = t.newValue(createdValues.toArray());
+                TupleValue completeTuple = t2.newValue(completeValues.toArray());
+
+                // write tuple
+                session.execute(String.format("INSERT INTO mytable (k, v) VALUES (%s, ?)", i), createdTuple);
+
+                // read tuple
+                TupleValue r = session.execute("SELECT v FROM mytable WHERE k=?", i).one().getTupleValue("v");
+                assertEquals(r.toString(), completeTuple.toString());
+                ++i;
             }
 
         } catch (Exception e) {
