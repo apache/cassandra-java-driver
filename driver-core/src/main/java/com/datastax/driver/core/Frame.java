@@ -66,22 +66,32 @@ class Frame {
     private static Frame create(ChannelBuffer fullFrame) {
         assert fullFrame.readableBytes() >= 1 : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
 
-        int version = fullFrame.readByte();
-        version = version & 0x7F;
-        int hdrLen = version >= 3 ? Header.LENGTH_V3 : Header.LENGTH_V1;
+        int versionBytes = fullFrame.readByte();
+        // version first byte is the "direction" of the frame (request or response)
+        ProtocolVersion version = ProtocolVersion.fromInt(versionBytes & 0x7F);
+        int hdrLen = Header.lengthFor(version);
         assert fullFrame.readableBytes() >= (hdrLen-1) : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
 
         int flags = fullFrame.readByte();
-        int streamId = hdrLen == 9 ? fullFrame.readShort() : fullFrame.readByte();
+        int streamId = readStreamid(fullFrame, version);
         int opcode = fullFrame.readByte();
         int length = fullFrame.readInt();
         assert length == fullFrame.readableBytes();
 
-        // version first byte is the "direction" of the frame (request or response)
-        version = version & 0x7F;
-
-        Header header = new Header(ProtocolVersion.fromInt(version), flags, streamId, opcode);
+        Header header = new Header(version, flags, streamId, opcode);
         return new Frame(header, fullFrame);
+    }
+
+    private static int readStreamid(ChannelBuffer fullFrame, ProtocolVersion version) {
+        switch (version) {
+            case V1:
+            case V2:
+                return fullFrame.readByte();
+            case V3:
+                return fullFrame.readShort();
+            default:
+                throw version.unsupported();
+        }
     }
 
     public static Frame create(ProtocolVersion version, int opcode, int streamId, EnumSet<Header.Flag> flags, ChannelBuffer body) {
@@ -90,9 +100,6 @@ class Frame {
     }
 
     public static class Header {
-
-        public static final int LENGTH_V1 = 8;
-        public static final int LENGTH_V3 = 9;
 
         public final ProtocolVersion version;
         public final EnumSet<Flag> flags;
@@ -108,6 +115,18 @@ class Frame {
             this.flags = flags;
             this.streamId = streamId;
             this.opcode = opcode;
+        }
+
+        public static int lengthFor(ProtocolVersion version) {
+            switch (version) {
+                case V1:
+                case V2:
+                    return 8;
+                case V3:
+                    return 9;
+                default:
+                    throw version.unsupported();
+            }
         }
 
         public static enum Flag
@@ -222,7 +241,7 @@ class Frame {
             Frame frame = (Frame)msg;
             ProtocolVersion protocolVersion = frame.header.version;
 
-            ChannelBuffer header = ChannelBuffers.buffer(headerLengthFor(protocolVersion));
+            ChannelBuffer header = ChannelBuffers.buffer(Header.lengthFor(protocolVersion));
             // We don't bother with the direction, we only send requests.
             header.writeByte(frame.header.version.toInt());
             header.writeByte(Header.Flag.serialize(frame.header.flags));
@@ -230,18 +249,6 @@ class Frame {
             header.writeByte(frame.header.opcode);
             header.writeInt(frame.body.readableBytes());
             return ChannelBuffers.wrappedBuffer(header, frame.body);
-        }
-
-        private static int headerLengthFor(ProtocolVersion version) {
-            switch (version) {
-                case V1:
-                case V2:
-                    return Header.LENGTH_V1;
-                case V3:
-                    return Header.LENGTH_V3;
-                default:
-                    throw version.unsupported();
-            }
         }
 
         private void writeStreamId(int streamId, ChannelBuffer header, ProtocolVersion protocolVersion) {
