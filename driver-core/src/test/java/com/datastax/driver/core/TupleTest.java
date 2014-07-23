@@ -97,18 +97,38 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 fail();
             } catch (IllegalArgumentException e) {}
 
+            // test incomplete tuples with new TupleType
+            TupleType t1 = TupleType.of(DataType.ascii(), DataType.cint());
+            TupleValue partial = t1.newValue("bar", 456);
+            TupleValue partionResult = t.newValue("bar", 456, null);
+            session.execute("INSERT INTO mytable (a, b) VALUES (0, ?)", partial);
+            r = session.execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
+            assertEquals(r, partionResult);
+
             // test single value tuples
             try {
                 TupleValue subpartial = t.newValue("zoo");
                 fail();
             } catch (IllegalArgumentException e) {}
 
+            // test single value tuples with new TupleType
+            TupleType t2 = TupleType.of(DataType.ascii());
+            TupleValue subpartial = t2.newValue("zoo");
+            TupleValue subpartialResult = t.newValue("zoo", null, null);
+            session.execute("INSERT INTO mytable (a, b) VALUES (0, ?)", subpartial);
+            r = session.execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
+            assertEquals(r, subpartialResult);
+
             // test prepared statements
             PreparedStatement prepared = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
             session.execute(prepared.bind(3, complete));
+            session.execute(prepared.bind(4, partial));
+            session.execute(prepared.bind(5, subpartial));
 
             prepared = session.prepare("SELECT b FROM mytable WHERE a=?");
             assertEquals(session.execute(prepared.bind(3)).one().getTupleValue("b"), complete);
+            assertEquals(session.execute(prepared.bind(4)).one().getTupleValue("b"), partionResult);
+            assertEquals(session.execute(prepared.bind(5)).one().getTupleValue("b"), subpartialResult);
 
         } catch (Exception e) {
             errorOut();
