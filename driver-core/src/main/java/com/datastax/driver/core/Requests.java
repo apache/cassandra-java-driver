@@ -35,11 +35,11 @@ class Requests {
         public static final String COMPRESSION_OPTION = "COMPRESSION";
 
         public static final Message.Coder<Startup> coder = new Message.Coder<Startup>() {
-            public void encode(Startup msg, ChannelBuffer dest) {
+            public void encode(Startup msg, ChannelBuffer dest, ProtocolVersion version) {
                 CBUtil.writeStringMap(msg.options, dest);
             }
 
-            public int encodedSize(Startup msg) {
+            public int encodedSize(Startup msg, ProtocolVersion version) {
                 return CBUtil.sizeOfStringMap(msg.options);
             }
         };
@@ -67,11 +67,13 @@ class Requests {
 
         public static final Message.Coder<Credentials> coder = new Message.Coder<Credentials>() {
 
-            public void encode(Credentials msg, ChannelBuffer dest) {
+            public void encode(Credentials msg, ChannelBuffer dest, ProtocolVersion version) {
+                assert version == ProtocolVersion.V1;
                 CBUtil.writeStringMap(msg.credentials, dest);
             }
 
-            public int encodedSize(Credentials msg) {
+            public int encodedSize(Credentials msg, ProtocolVersion version) {
+                assert version == ProtocolVersion.V1;
                 return CBUtil.sizeOfStringMap(msg.credentials);
             }
         };
@@ -88,9 +90,9 @@ class Requests {
 
         public static final Message.Coder<Options> coder = new Message.Coder<Options>()
         {
-            public void encode(Options msg, ChannelBuffer dest) {}
+            public void encode(Options msg, ChannelBuffer dest, ProtocolVersion version) {}
 
-            public int encodedSize(Options msg) {
+            public int encodedSize(Options msg, ProtocolVersion version) {
                 return 0;
             }
         };
@@ -107,39 +109,15 @@ class Requests {
 
     public static class Query extends Message.Request {
 
-        public static final Message.Coder<Query> coderV1 = new Message.Coder<Query>() {
-            public void encode(Query msg, ChannelBuffer dest) {
+        public static final Message.Coder<Query> coder = new Message.Coder<Query>() {
+            public void encode(Query msg, ChannelBuffer dest, ProtocolVersion version) {
                 CBUtil.writeLongString(msg.query, dest);
-                CBUtil.writeConsistencyLevel(msg.options.consistency, dest);
+                msg.options.encode(dest, version);
             }
 
-            public int encodedSize(Query msg) {
+            public int encodedSize(Query msg, ProtocolVersion version) {
                 return CBUtil.sizeOfLongString(msg.query)
-                       +CBUtil.sizeOfConsistencyLevel(msg.options.consistency);
-            }
-        };
-
-        public static final Message.Coder<Query> coderV2 = new Message.Coder<Query>() {
-            public void encode(Query msg, ChannelBuffer dest) {
-                CBUtil.writeLongString(msg.query, dest);
-                msg.options.encodeV2(dest);
-            }
-
-            public int encodedSize(Query msg) {
-                return CBUtil.sizeOfLongString(msg.query)
-                     + msg.options.encodedSizeV2();
-            }
-        };
-
-        public static final Message.Coder<Query> coderV3 = new Message.Coder<Query>() {
-            public void encode(Query msg, ChannelBuffer dest) {
-                CBUtil.writeLongString(msg.query, dest);
-                msg.options.encodeV3(dest);
-            }
-
-            public int encodedSize(Query msg) {
-                return CBUtil.sizeOfLongString(msg.query)
-                    + msg.options.encodedSizeV3();
+                       + msg.options.encodedSize(version);
             }
         };
 
@@ -164,41 +142,15 @@ class Requests {
 
     public static class Execute extends Message.Request {
 
-        public static final Message.Coder<Execute> coderV1 = new Message.Coder<Execute>() {
-            public void encode(Execute msg, ChannelBuffer dest) {
+        public static final Message.Coder<Execute> coder = new Message.Coder<Execute>() {
+            public void encode(Execute msg, ChannelBuffer dest, ProtocolVersion version) {
                 CBUtil.writeBytes(msg.statementId.bytes, dest);
-                CBUtil.writeValueList(msg.options.values, dest);
-                CBUtil.writeConsistencyLevel(msg.options.consistency, dest);
+                msg.options.encode(dest, version);
             }
 
-            public int encodedSize(Execute msg) {
+            public int encodedSize(Execute msg, ProtocolVersion version) {
                 return CBUtil.sizeOfBytes(msg.statementId.bytes)
-                     + CBUtil.sizeOfValueList(msg.options.values)
-                     + CBUtil.sizeOfConsistencyLevel(msg.options.consistency);
-            }
-        };
-
-        public static final Message.Coder<Execute> coderV2 = new Message.Coder<Execute>() {
-            public void encode(Execute msg, ChannelBuffer dest) {
-                CBUtil.writeBytes(msg.statementId.bytes, dest);
-                msg.options.encodeV2(dest);
-            }
-
-            public int encodedSize(Execute msg) {
-                return CBUtil.sizeOfBytes(msg.statementId.bytes)
-                     + msg.options.encodedSizeV2();
-            }
-        };
-
-        public static final Message.Coder<Execute> coderV3 = new Message.Coder<Execute>() {
-            public void encode(Execute msg, ChannelBuffer dest) {
-                CBUtil.writeBytes(msg.statementId.bytes, dest);
-                msg.options.encodeV3(dest);
-            }
-
-            public int encodedSize(Execute msg) {
-                return CBUtil.sizeOfBytes(msg.statementId.bytes)
-                     + msg.options.encodedSizeV3();
+                     + msg.options.encodedSize(version);
             }
         };
 
@@ -294,66 +246,57 @@ class Requests {
                 flags.add(Flag.DEFAULT_TIMESTAMP);
         }
 
-        public void encodeV2(ChannelBuffer dest) {
-            CBUtil.writeConsistencyLevel(consistency, dest);
-
-            dest.writeByte((byte)Flag.serialize(flags));
-
-            if (flags.contains(Flag.VALUES))
-                CBUtil.writeValueList(values, dest);
-            if (flags.contains(Flag.PAGE_SIZE))
-                dest.writeInt(pageSize);
-            if (flags.contains(Flag.PAGING_STATE))
-                CBUtil.writeValue(pagingState, dest);
-            if (flags.contains(Flag.SERIAL_CONSISTENCY))
-                CBUtil.writeConsistencyLevel(serialConsistency, dest);
+        public void encode(ChannelBuffer dest, ProtocolVersion version) {
+            switch (version) {
+                case V1:
+                    if (flags.contains(Flag.VALUES))
+                        CBUtil.writeValueList(values, dest);
+                    CBUtil.writeConsistencyLevel(consistency, dest);
+                    break;
+                case V2:
+                case V3:
+                    CBUtil.writeConsistencyLevel(consistency, dest);
+                    dest.writeByte((byte)Flag.serialize(flags));
+                    if (flags.contains(Flag.VALUES))
+                        CBUtil.writeValueList(values, dest);
+                    if (flags.contains(Flag.PAGE_SIZE))
+                        dest.writeInt(pageSize);
+                    if (flags.contains(Flag.PAGING_STATE))
+                        CBUtil.writeValue(pagingState, dest);
+                    if (flags.contains(Flag.SERIAL_CONSISTENCY))
+                        CBUtil.writeConsistencyLevel(serialConsistency, dest);
+                    if (version == ProtocolVersion.V3 && flags.contains(Flag.DEFAULT_TIMESTAMP))
+                        dest.writeLong(defaultTimestamp);
+                    break;
+                default:
+                    throw version.unsupported();
+            }
         }
 
-        public int encodedSizeV2() {
-                int size = CBUtil.sizeOfConsistencyLevel(consistency) + 1;
-
-                if (flags.contains(Flag.VALUES))
-                    size += CBUtil.sizeOfValueList(values);
-                if (flags.contains(Flag.PAGE_SIZE))
-                    size += 4;
-                if (flags.contains(Flag.PAGING_STATE))
-                    size += CBUtil.sizeOfValue(pagingState);
-                if (flags.contains(Flag.SERIAL_CONSISTENCY))
-                    size += CBUtil.sizeOfConsistencyLevel(serialConsistency);
-                return size;
-        }
-
-        public void encodeV3(ChannelBuffer dest) {
-            CBUtil.writeConsistencyLevel(consistency, dest);
-
-            dest.writeByte((byte)Flag.serialize(flags));
-
-            if (flags.contains(Flag.VALUES))
-                CBUtil.writeValueList(values, dest);
-            if (flags.contains(Flag.PAGE_SIZE))
-                dest.writeInt(pageSize);
-            if (flags.contains(Flag.PAGING_STATE))
-                CBUtil.writeValue(pagingState, dest);
-            if (flags.contains(Flag.SERIAL_CONSISTENCY))
-                CBUtil.writeConsistencyLevel(serialConsistency, dest);
-            if (flags.contains(Flag.DEFAULT_TIMESTAMP))
-                dest.writeLong(defaultTimestamp);
-        }
-
-        public int encodedSizeV3() {
-            int size = CBUtil.sizeOfConsistencyLevel(consistency) + 1;
-
-            if (flags.contains(Flag.VALUES))
-                size += CBUtil.sizeOfValueList(values);
-            if (flags.contains(Flag.PAGE_SIZE))
-                size += 4;
-            if (flags.contains(Flag.PAGING_STATE))
-                size += CBUtil.sizeOfValue(pagingState);
-            if (flags.contains(Flag.SERIAL_CONSISTENCY))
-                size += CBUtil.sizeOfConsistencyLevel(serialConsistency);
-            if (flags.contains(Flag.DEFAULT_TIMESTAMP))
-                size += 4;
-            return size;
+        public int encodedSize(ProtocolVersion version) {
+            switch (version) {
+                case V1:
+                    return CBUtil.sizeOfValueList(values)
+                           + CBUtil.sizeOfConsistencyLevel(consistency);
+                case V2:
+                case V3:
+                    int size = 0;
+                    size += CBUtil.sizeOfConsistencyLevel(consistency);
+                    size += 1; // flags
+                    if (flags.contains(Flag.VALUES))
+                        size += CBUtil.sizeOfValueList(values);
+                    if (flags.contains(Flag.PAGE_SIZE))
+                        size += 4;
+                    if (flags.contains(Flag.PAGING_STATE))
+                        size += CBUtil.sizeOfValue(pagingState);
+                    if (flags.contains(Flag.SERIAL_CONSISTENCY))
+                        size += CBUtil.sizeOfConsistencyLevel(serialConsistency);
+                    if (version == ProtocolVersion.V3 && flags.contains(Flag.DEFAULT_TIMESTAMP))
+                        size += 4;
+                    return size;
+                default:
+                    throw version.unsupported();
+            }
         }
 
         @Override
@@ -364,96 +307,75 @@ class Requests {
 
     public static class Batch extends Message.Request {
 
-        public static final Message.Coder<Batch> coderV2 = new Message.Coder<Batch>() {
-            public void encode(Batch msg, ChannelBuffer dest) {
-                int queries = msg.queryOrIdList.size();
-                assert queries <= 0xFFFF;
+        public static final Message.Coder<Batch> coder = new Message.Coder<Batch>() {
+            public void encode(Batch msg, ChannelBuffer dest, ProtocolVersion version) {
+                switch (version) {
+                    case V2:
+                    case V3:
+                        int queries = msg.queryOrIdList.size();
+                        assert queries <= 0xFFFF;
 
-                dest.writeByte(fromType(msg.type));
-                dest.writeShort(queries);
+                        dest.writeByte(fromType(msg.type));
+                        dest.writeShort(queries);
 
-                for (int i = 0; i < queries; i++) {
-                    Object q = msg.queryOrIdList.get(i);
-                    dest.writeByte((byte)(q instanceof String ? 0 : 1));
-                    if (q instanceof String)
-                        CBUtil.writeLongString((String)q, dest);
-                    else
-                        CBUtil.writeBytes(((MD5Digest)q).bytes, dest);
+                        for (int i = 0; i < queries; i++) {
+                            Object q = msg.queryOrIdList.get(i);
+                            dest.writeByte((byte)(q instanceof String ? 0 : 1));
+                            if (q instanceof String)
+                                CBUtil.writeLongString((String)q, dest);
+                            else
+                                CBUtil.writeBytes(((MD5Digest)q).bytes, dest);
 
-                    CBUtil.writeValueList(msg.values.get(i), dest);
-                }
+                            CBUtil.writeValueList(msg.values.get(i), dest);
+                        }
 
-                CBUtil.writeConsistencyLevel(msg.consistency, dest);
-            }
+                        CBUtil.writeConsistencyLevel(msg.consistency, dest);
 
-            public int encodedSize(Batch msg) {
-                int size = 3; // type + nb queries
-                for (int i = 0; i < msg.queryOrIdList.size(); i++) {
-                    Object q = msg.queryOrIdList.get(i);
-                    size += 1 + (q instanceof String
-                            ? CBUtil.sizeOfLongString((String)q)
-                            : CBUtil.sizeOfBytes(((MD5Digest)q).bytes));
-
-                    size += CBUtil.sizeOfValueList(msg.values.get(i));
-                }
-                size += CBUtil.sizeOfConsistencyLevel(msg.consistency);
-                return size;
-            }
-
-            private byte fromType(BatchStatement.Type type) {
-                switch (type) {
-                    case LOGGED:   return 0;
-                    case UNLOGGED: return 1;
-                    case COUNTER:  return 2;
-                    default:       throw new AssertionError();
+                        if (version == ProtocolVersion.V3) {
+                            int flags = 0;
+                            if (msg.serialConsistency != null)
+                                flags |= 0x10;
+                            if (msg.defaultTimestamp != 0L)
+                                flags |= 0x20;
+                            dest.writeByte(flags);
+                            if (msg.serialConsistency != null)
+                                CBUtil.writeConsistencyLevel(msg.serialConsistency, dest);
+                            if (msg.defaultTimestamp != 0L)
+                                dest.writeLong(msg.defaultTimestamp);
+                        }
+                        break;
+                    case V1:
+                    default:
+                        throw version.unsupported();
                 }
             }
-        };
 
-        public static final Message.Coder<Batch> coderV3 = new Message.Coder<Batch>() {
-            public void encode(Batch msg, ChannelBuffer dest) {
-                int queries = msg.queryOrIdList.size();
-                assert queries <= 0xFFFF;
+            public int encodedSize(Batch msg, ProtocolVersion version) {
+                switch (version) {
+                    case V2:
+                    case V3:
+                        int size = 3; // type + nb queries
+                        for (int i = 0; i < msg.queryOrIdList.size(); i++) {
+                            Object q = msg.queryOrIdList.get(i);
+                            size += 1 + (q instanceof String
+                                            ? CBUtil.sizeOfLongString((String)q)
+                                                : CBUtil.sizeOfBytes(((MD5Digest)q).bytes));
 
-                dest.writeByte(fromType(msg.type));
-                dest.writeShort(queries);
-
-                for (int i = 0; i < queries; i++) {
-                    Object q = msg.queryOrIdList.get(i);
-                    dest.writeByte((byte)(q instanceof String ? 0 : 1));
-                    if (q instanceof String)
-                        CBUtil.writeLongString((String)q, dest);
-                    else
-                        CBUtil.writeBytes(((MD5Digest)q).bytes, dest);
-
-                    CBUtil.writeValueList(msg.values.get(i), dest);
+                            size += CBUtil.sizeOfValueList(msg.values.get(i));
+                        }
+                        if (version == ProtocolVersion.V3) {
+                            size += 1;
+                            if (msg.serialConsistency != null)
+                                size += CBUtil.sizeOfConsistencyLevel(msg.consistency);
+                            if (msg.defaultTimestamp != 0L)
+                                size += 4;
+                        }
+                        size += CBUtil.sizeOfConsistencyLevel(msg.consistency);
+                        return size;
+                    case V1:
+                    default:
+                        throw version.unsupported();
                 }
-
-                CBUtil.writeConsistencyLevel(msg.consistency, dest);
-
-                int flags = 0;
-                if (msg.serialConsistency != null)  flags |= 0x10;
-                if (msg.defaultTimestamp != 0L)     flags |= 0x20;
-                dest.writeByte(flags);
-                if (msg.serialConsistency != null)  CBUtil.writeConsistencyLevel(msg.serialConsistency, dest);
-                if (msg.defaultTimestamp != 0L)     dest.writeLong(msg.defaultTimestamp);
-            }
-
-            public int encodedSize(Batch msg) {
-                int size = 3; // type + nb queries
-                for (int i = 0; i < msg.queryOrIdList.size(); i++) {
-                    Object q = msg.queryOrIdList.get(i);
-                    size += 1 + (q instanceof String
-                        ? CBUtil.sizeOfLongString((String)q)
-                        : CBUtil.sizeOfBytes(((MD5Digest)q).bytes));
-
-                    size += CBUtil.sizeOfValueList(msg.values.get(i));
-                }
-                size += CBUtil.sizeOfConsistencyLevel(msg.consistency);
-                size += 1;
-                if (msg.serialConsistency != null)  size += CBUtil.sizeOfConsistencyLevel(msg.consistency);
-                if (msg.defaultTimestamp != 0L)     size += 4;
-                return size;
             }
 
             private byte fromType(BatchStatement.Type type) {
@@ -505,11 +427,11 @@ class Requests {
 
         public static final Message.Coder<Prepare> coder = new Message.Coder<Prepare>() {
 
-            public void encode(Prepare msg, ChannelBuffer dest) {
+            public void encode(Prepare msg, ChannelBuffer dest, ProtocolVersion version) {
                 CBUtil.writeLongString(msg.query, dest);
             }
 
-            public int encodedSize(Prepare msg) {
+            public int encodedSize(Prepare msg, ProtocolVersion version) {
                 return CBUtil.sizeOfLongString(msg.query);
             }
         };
@@ -530,13 +452,13 @@ class Requests {
     public static class Register extends Message.Request {
 
         public static final Message.Coder<Register> coder = new Message.Coder<Register>() {
-            public void encode(Register msg, ChannelBuffer dest) {
+            public void encode(Register msg, ChannelBuffer dest, ProtocolVersion version) {
                 dest.writeShort(msg.eventTypes.size());
                 for (ProtocolEvent.Type type : msg.eventTypes)
                     CBUtil.writeEnumValue(type, dest);
             }
 
-            public int encodedSize(Register msg) {
+            public int encodedSize(Register msg, ProtocolVersion version) {
                 int size = 2;
                 for (ProtocolEvent.Type type : msg.eventTypes)
                     size += CBUtil.sizeOfEnumValue(type);
@@ -561,11 +483,11 @@ class Requests {
 
         public static final Message.Coder<AuthResponse> coder = new Message.Coder<AuthResponse>() {
 
-            public void encode(AuthResponse response, ChannelBuffer dest) {
+            public void encode(AuthResponse response, ChannelBuffer dest, ProtocolVersion version) {
                 CBUtil.writeValue(response.token, dest);
             }
 
-            public int encodedSize(AuthResponse response) {
+            public int encodedSize(AuthResponse response, ProtocolVersion version) {
                 return CBUtil.sizeOfValue(response.token);
             }
         };

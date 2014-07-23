@@ -133,7 +133,7 @@ class Connection {
                     Responses.Error error = (Responses.Error)response;
                     // Testing for a specific string is a tad fragile but well, we don't have much choice
                     if (error.code == ExceptionCode.PROTOCOL_ERROR && error.message.contains("Invalid or unsupported protocol version"))
-                        throw unsupportedProtocolVersionException(version, ProtocolVersion.fromInt(error.serverProtocolVersion));
+                        throw unsupportedProtocolVersionException(version, error.serverProtocolVersion);
                     throw defunct(new TransportException(address, String.format("Error initializing connection: %s", error.message)));
                 case AUTHENTICATE:
                     Authenticator authenticator = factory.authProvider.newAuthenticator(address);

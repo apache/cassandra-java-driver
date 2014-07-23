@@ -81,6 +81,11 @@ abstract class TypeCodec<T> {
         private static final PrimitiveCollectionCodecs primitiveCollectionCodecsV3 = new PrimitiveCollectionCodecs(ProtocolVersion.V3);
 
         static PrimitiveCollectionCodecs forVersion(ProtocolVersion version) {
+            // This happens during protocol negociation, when the version is not known yet.
+            // Use the smallest supported version, which is enough for what we need to do at this stage.
+            if (version == null)
+                version = ProtocolVersion.V1;
+
             switch (version) {
                 case V1:
                 case V2:

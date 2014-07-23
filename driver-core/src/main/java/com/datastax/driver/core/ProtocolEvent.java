@@ -29,26 +29,14 @@ class ProtocolEvent {
         this.type = type;
     }
 
-    public static ProtocolEvent deserializeV1(ChannelBuffer cb) {
+    public static ProtocolEvent deserialize(ChannelBuffer cb, ProtocolVersion version) {
         switch (CBUtil.readEnumValue(Type.class, cb)) {
             case TOPOLOGY_CHANGE:
                 return TopologyChange.deserializeEvent(cb);
             case STATUS_CHANGE:
                 return StatusChange.deserializeEvent(cb);
             case SCHEMA_CHANGE:
-                return SchemaChange.deserializeEventV1(cb);
-        }
-        throw new AssertionError();
-    }
-
-    public static ProtocolEvent deserializeV3(ChannelBuffer cb) {
-        switch (CBUtil.readEnumValue(Type.class, cb)) {
-            case TOPOLOGY_CHANGE:
-                return TopologyChange.deserializeEvent(cb);
-            case STATUS_CHANGE:
-                return StatusChange.deserializeEvent(cb);
-            case SCHEMA_CHANGE:
-                return SchemaChange.deserializeEventV3(cb);
+                return SchemaChange.deserializeEvent(cb, version);
         }
         throw new AssertionError();
     }
@@ -123,30 +111,32 @@ class ProtocolEvent {
         }
 
         // Assumes the type has already been deserialized
-        private static SchemaChange deserializeEventV1(ChannelBuffer cb) {
-            Change change = CBUtil.readEnumValue(Change.class, cb);
-            String keyspace = CBUtil.readString(cb);
-            String table = CBUtil.readString(cb);
-            return new SchemaChange(change, table.isEmpty() ? Target.KEYSPACE : Target.TABLE, keyspace, table);
-        }
-        // Assumes the type has already been deserialized
-        private static SchemaChange deserializeEventV3(ChannelBuffer cb) {
-            Change change = CBUtil.readEnumValue(Change.class, cb);
-            Target target = CBUtil.readEnumValue(Target.class, cb);
-            String keyspace = CBUtil.readString(cb);
-            String name = "";
-            switch (target) {
-                case TABLE:
-                case TYPE:
+        private static SchemaChange deserializeEvent(ChannelBuffer cb, ProtocolVersion version) {
+            Change change;
+            Target target;
+            String keyspace, name;
+            switch (version) {
+                case V1:
+                case V2:
+                    change = CBUtil.readEnumValue(Change.class, cb);
+                    keyspace = CBUtil.readString(cb);
                     name = CBUtil.readString(cb);
-                    break;
+                    target = name.isEmpty() ? Target.KEYSPACE : Target.TABLE;
+                    return new SchemaChange(change, target, keyspace, name);
+                case V3:
+                    change = CBUtil.readEnumValue(Change.class, cb);
+                    target = CBUtil.readEnumValue(Target.class, cb);
+                    keyspace = CBUtil.readString(cb);
+                    name = (target == Target.KEYSPACE) ? "" : CBUtil.readString(cb);
+                    return new SchemaChange(change, target, keyspace, name);
+                default:
+                    throw version.unsupported();
             }
-            return new SchemaChange(change, target, keyspace, name);
         }
 
         @Override
         public String toString() {
-            return change.toString() + ' ' + target + ' ' +keyspace + (name.isEmpty() ? "" : '.' + name);
+            return change.toString() + ' ' + target + ' ' + keyspace + (name.isEmpty() ? "" : '.' + name);
         }
     }
 
