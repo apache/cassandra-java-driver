@@ -1,10 +1,15 @@
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
-import static org.testng.Assert.assertEquals;
+import com.google.common.base.Joiner;
 import org.testng.annotations.Test;
+
 import static com.datastax.driver.core.TestUtils.versionCheck;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -59,6 +64,105 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
             v2 = session.execute(sel.bind(k)).one().getTupleValue("v");
 
             assertEquals(v2, v);
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
+
+    /**
+     * Basic test of tuple functionality.
+     * Original code found in python-driver:integration.standard.test_types.py:test_tuple_type
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void tupleTypeTest() throws Exception {
+        try {
+            session.execute("CREATE KEYSPACE test_tuple_type " +
+                            "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE test_tuple_type");
+            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b tuple<ascii, int, boolean>)");
+
+            TupleType t = TupleType.of(DataType.ascii(), DataType.cint(), DataType.cboolean());
+
+            // test non-prepared statement
+            TupleValue complete = t.newValue("foo", 123, true);
+            session.execute("INSERT INTO mytable (a, b) VALUES (0, ?)", complete);
+            TupleValue r = session.execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
+            assertEquals(r, complete);
+
+            // test incomplete tuples
+            try {
+                TupleValue partial = t.newValue("bar", 456);
+                fail();
+            } catch (IllegalArgumentException e) {}
+
+            // test single value tuples
+            try {
+                TupleValue subpartial = t.newValue("zoo");
+                fail();
+            } catch (IllegalArgumentException e) {}
+
+            // test prepared statements
+            PreparedStatement prepared = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+            session.execute(prepared.bind(3, complete));
+
+            prepared = session.prepare("SELECT b FROM mytable WHERE a=?");
+            assertEquals(session.execute(prepared.bind(3)).one().getTupleValue("b"), complete);
+
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
+
+    /**
+     * Test tuple types of lengths of 1, 2, 3, and 384 to ensure edge cases work
+     * as expected.
+     * Original code found in python-driver:integration.standard.test_types.py:test_tuple_type_varying_lengths
+     *
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void tupleTestTypeVaryingLengths() throws Exception {
+        try {
+            session.execute("CREATE KEYSPACE test_tuple_type_varying_lengths " +
+                            "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE test_tuple_type_varying_lengths");
+
+            // programmatically create the table with tuples of said sizes
+            int[] lengths = {1, 2, 3, 384};
+            ArrayList<String> valueSchema = new ArrayList<String>();
+            for (int i : lengths) {
+                ArrayList<String> ints = new ArrayList<String>();
+                for (int j = 0; j < i; ++j) {
+                    ints.add("int");
+                }
+                valueSchema.add(String.format(" v_%d tuple<%s>", i, Joiner.on(',').join(ints)));
+            }
+            session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, %s)", Joiner.on(',').join(valueSchema)));
+
+            // insert tuples into same key using different columns
+            // and verify the results
+            for (int i : lengths) {
+                // create tuple
+                ArrayList<DataType> dataTypes = new ArrayList<DataType>();
+                ArrayList<Integer> values = new ArrayList<Integer>();
+                for (int j = 0; j < i; ++j) {
+                    dataTypes.add(DataType.cint());
+                    values.add(j);
+                }
+                TupleType t = new TupleType(dataTypes);
+                TupleValue createdTuple = t.newValue(values.toArray());
+
+                // write tuple
+                session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
+
+                // read tuple
+                TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i)).one().getTupleValue(String.format("v_%s", i));
+                assertEquals(r, createdTuple);
+            }
+
         } catch (Exception e) {
             errorOut();
             throw e;
