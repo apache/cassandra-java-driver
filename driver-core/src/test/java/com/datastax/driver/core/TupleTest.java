@@ -6,6 +6,7 @@ import com.google.common.base.Joiner;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.DataTypeIntegrationTest.getSampleData;
+import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
 import static com.datastax.driver.core.TestUtils.versionCheck;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -42,6 +43,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void simpleWriteReadTest() throws Exception {
         try {
+            session.execute("USE " + SIMPLE_KEYSPACE);
             PreparedStatement ins = session.prepare("INSERT INTO t(k, v) VALUES (?, ?)");
             PreparedStatement sel = session.prepare("SELECT * FROM t WHERE k=?");
 
