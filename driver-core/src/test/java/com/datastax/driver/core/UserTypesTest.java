@@ -77,7 +77,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     /**
      * Test for inserting various types of DATA_TYPE_PRIMITIVES into UDT's.
-     * Original code found in python-driver:integration.standard.test_types.py:test_udts
+     * Original code found in python-driver:integration.standard.test_udts.py:test_primitive_datatypes
      * @throws Exception
      */
     @Test(groups = "short")
@@ -108,49 +108,49 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
                 Datatype datatype = DATA_TYPE_PRIMITIVES.get(i);
                 switch (dataType.getName()) {
                     case ASCII:
-                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case BIGINT:
-                        alldatatypes.setLong(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setLong(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case BLOB:
-                        alldatatypes.setBytes(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setBytes(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case BOOLEAN:
-                        alldatatypes.setBool(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setBool(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case DECIMAL:
-                        alldatatypes.setDecimal(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setDecimal(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case DOUBLE:
-                        alldatatypes.setDouble(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setDouble(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case FLOAT:
-                        alldatatypes.setFloat(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setFloat(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case INET:
-                        alldatatypes.setInet(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setInet(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case INT:
-                        alldatatypes.setInt(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setInt(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case TEXT:
-                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case TIMESTAMP:
-                        alldatatypes.setDate(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setDate(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case TIMEUUID:
-                        alldatatypes.setUUID(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setUUID(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case UUID:
-                        alldatatypes.setUUID(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setUUID(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case VARCHAR:
-                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                     case VARINT:
-                        alldatatypes.setVarint(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        alldatatypes.setVarint(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
                         break;
                 }
             }
@@ -166,6 +166,104 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
             assertEquals(row.getInt("a"), 0);
             assertEquals(row.getUDTValue("alldatatypes"), alldatatypes);
+
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
+
+    /**
+     * Test for inserting various types of DATA_TYPE_NON_PRIMITIVE into UDT's
+     * Original code found in python-driver:integration.standard.test_udts.py:test_nonprimitive_datatypes
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void testNonPrimitiveDatatypes() throws Exception {
+        try {
+            // create keyspace
+            session.execute("CREATE KEYSPACE test_nonprimitive_datatypes " +
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE test_nonprimitive_datatypes");
+
+//            // create UDT
+//            List<String> alpha_type_list = new ArrayList<String>();
+//            int startIndex = (int) 'a';
+//            for (int i = 0; i < DATA_TYPE_PRIMITIVES.length(); i++) {
+//                alpha_type_list.add(String.format("%s %s", Character.toString((char) startIndex + i),
+//                        DATA_TYPE_PRIMITIVES.get(i).getName()));
+//            }
+//
+//            session.execute(String.format("CREATE TYPE alldatatypes (%s)", Joiner.on(',').join(alpha_type_list)));
+//            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b alldatatypes)");
+//
+//            // insert UDT data
+//            UserType alldatatypesDef = cluster.getMetadata().getKeyspace("test_nonprimitive_datatypes").getUserType("alldatatypes");
+//            UDTValue alldatatypes = alldatatypesDef.newValue();
+//
+//            int startIndex = (int) 'a';
+//            for (int i = 0; i < DATA_TYPE_PRIMITIVES.length(); i++) {
+//                Datatype datatype = DATA_TYPE_PRIMITIVES.get(i);
+//                switch (dataType.getName()) {
+//                    case ASCII:
+//                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case BIGINT:
+//                        alldatatypes.setLong(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case BLOB:
+//                        alldatatypes.setBytes(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case BOOLEAN:
+//                        alldatatypes.setBool(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case DECIMAL:
+//                        alldatatypes.setDecimal(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case DOUBLE:
+//                        alldatatypes.setDouble(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case FLOAT:
+//                        alldatatypes.setFloat(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case INET:
+//                        alldatatypes.setInet(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case INT:
+//                        alldatatypes.setInt(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case TEXT:
+//                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case TIMESTAMP:
+//                        alldatatypes.setDate(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case TIMEUUID:
+//                        alldatatypes.setUUID(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case UUID:
+//                        alldatatypes.setUUID(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case VARCHAR:
+//                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                    case VARINT:
+//                        alldatatypes.setVarint(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+//                        break;
+//                }
+//            }
+//
+//            PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+//            session.execute(ins.bind(0, alldatatypes));
+//
+//            // retrieve and verify data
+//            Rows rows = session.execute("SELECT * FROM mytable")
+//            assertEquals(1, rows.length);
+//
+//            Row row = rows.one();
+//
+//            assertEquals(row.getInt("a"), 0);
+//            assertEquals(row.getUDTValue("alldatatypes"), alldatatypes);
 
         } catch (Exception e) {
             errorOut();

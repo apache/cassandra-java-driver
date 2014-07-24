@@ -169,6 +169,19 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         return sampleData;
     }
 
+    private static Object getCollectionSample(DataType collectionType, DataType dataType) {
+        if(collectionType.Name == LIST)
+            return new ArrayList<DataType>().add(SAMPLE_DATA.get(dataType)).add(SAMPLE_DATA.get(dataType))
+        else if(collectionType.Name == SET)
+            return new Set<DataType>().add(SAMPLE_DATA.get(dataType))
+        else if(collectionType.Name == MAP)
+            if(dataType.getName() == BLOB)
+                return new HashMap<DataType, DataType>().put(SAMPLE_DATA.get(new DataType(ASCII)), SAMPLE_DATA.get(dataType));
+            else
+                return new HashMap<DataType, DataType>().put(SAMPLE_DATA.get(dataType), SAMPLE_DATA.get(dataType));
+//        else if(collectionType.Name == TUPLE)
+    }
+
     /**
      * Generates the sample collections that will be used in testing
      */ private static HashMap<DataType, Object> getSampleCollections() {
