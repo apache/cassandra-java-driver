@@ -308,10 +308,6 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
             for (DataType datatype : DATA_TYPE_PRIMITIVES) {
                 DataType dataType1 = datatype;
                 DataType dataType2 = datatype;
-                if (datatype == DataType.blob()) {
-                    // unhashable type: 'bytearray'
-                    dataType1 = DataType.ascii();
-                }
                 values.add(String.format("v_%s tuple<map<%s, %s>>", values.size(), dataType1, dataType2));
             }
 
@@ -371,10 +367,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 ArrayList<Object> createdValues = new ArrayList<Object>();
 
                 HashMap<Object, Object> hm = new HashMap<Object, Object>();
-                if (datatype == DataType.blob())
-                    hm.put(SAMPLE_DATA.get(DataType.ascii()), SAMPLE_DATA.get(datatype));
-                else
-                    hm.put(SAMPLE_DATA.get(datatype), SAMPLE_DATA.get(datatype));
+                hm.put(SAMPLE_DATA.get(datatype), SAMPLE_DATA.get(datatype));
 
                 dataTypes.add(DataType.list(datatype));
                 createdValues.add(hm);
