@@ -166,10 +166,11 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(ins.bind(0, alldatatypes));
 
             // retrieve and verify data
-            ResultSet rows = session.execute("SELECT * FROM mytable");
-            assertEquals(1, rows.all().size());
+            ResultSet rs = session.execute("SELECT * FROM mytable");
+            List<Row> rows = rs.all();
+            assertEquals(1, rows.size());
 
-            Row row = rows.one();
+            Row row = rows.get(0);
 
             assertEquals(row.getInt("a"), 0);
             assertEquals(row.getUDTValue("alldatatypes"), alldatatypes);
@@ -245,10 +246,11 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(ins.bind(0, alldatatypes));
 
             // retrieve and verify data
-            ResultSet rows = session.execute("SELECT * FROM mytable");
-            assertEquals(1, rows.all().size());
+            ResultSet rs = session.execute("SELECT * FROM mytable");
+            List<Row> rows = rs.all();
+            assertEquals(1, rows.size());
 
-            Row row = rows.one();
+            Row row = rows.get(0);
 
             assertEquals(row.getInt("a"), 0);
             assertEquals(row.getUDTValue("alldatatypes"), alldatatypes);

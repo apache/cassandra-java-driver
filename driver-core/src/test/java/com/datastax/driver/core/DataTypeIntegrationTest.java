@@ -181,9 +181,6 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         else if(collectionType == DataType.Name.SET)
             return ImmutableSet.of(SAMPLE_DATA.get(dataType));
         else if(collectionType == DataType.Name.MAP)
-            if(dataType.getName() == DataType.Name.BLOB)
-                return new HashMap<Object, Object>().put(SAMPLE_DATA.get(DataType.ascii()), SAMPLE_DATA.get(dataType));
-            else
                 return new HashMap<Object, Object>().put(SAMPLE_DATA.get(dataType), SAMPLE_DATA.get(dataType));
         else if(collectionType == DataType.Name.TUPLE) {
             TupleType t = TupleType.of(dataType, dataType);
