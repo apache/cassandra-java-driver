@@ -16,6 +16,10 @@
 package com.datastax.driver.core;
 
 import java.lang.Exception;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.google.common.collect.ImmutableSet;
@@ -29,8 +33,9 @@ import static com.datastax.driver.core.TestUtils.versionCheck;
 
 public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
-    private final static Set<DataType> DATA_TYPE_PRIMITIVES = DataType.allPrimitiveTypes();
-    private final static Set<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES = EnumSet.of(DataType.Name.MAP, DataType.Name.SET, DataType.Name.LIST);
+    private final static List<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes());
+    private final static List<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES =
+            new ArrayList<DataType.Name>(EnumSet.of(DataType.Name.LIST, DataType.Name.SET, DataType.Name.MAP, DataType.Name.TUPLE));
 
     private final static HashMap<DataType, Object> SAMPLE_DATA = DataTypeIntegrationTest.getSampleData();
     private final static HashMap<DataType, Object> SAMPLE_COLLECTIONS = DataTypeIntegrationTest.getSampleCollections();
@@ -46,34 +51,34 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
         return Arrays.asList(type1, type2, table);
     }
-//
-//    @Test(groups = "short")
-//    public void simpleWriteReadTest() throws Exception {
-//        int userId = 0;
-//
-//        try {
-//            PreparedStatement ins = session.prepare("INSERT INTO user(id, addr) VALUES (?, ?)");
-//            PreparedStatement sel = session.prepare("SELECT * FROM user WHERE id=?");
-//
-//            UserType addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
-//            UserType phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
-//
-//            UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
-//            UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
-//
-//            UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP"), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
-//
-//            session.execute(ins.bind(userId, addr));
-//
-//            Row r = session.execute(sel.bind(userId)).one();
-//
-//            assertEquals(r.getInt("id"), 0);
-//            assertEquals(r.getUDTValue("addr"), addr);
-//        } catch (Exception e) {
-//            errorOut();
-//            throw e;
-//        }
-//    }
+
+    @Test(groups = "short")
+    public void simpleWriteReadTest() throws Exception {
+        int userId = 0;
+
+        try {
+            PreparedStatement ins = session.prepare("INSERT INTO user(id, addr) VALUES (?, ?)");
+            PreparedStatement sel = session.prepare("SELECT * FROM user WHERE id=?");
+
+            UserType addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
+            UserType phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+
+            UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
+            UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
+
+            UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP"), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
+
+            session.execute(ins.bind(userId, addr));
+
+            Row r = session.execute(sel.bind(userId)).one();
+
+            assertEquals(r.getInt("id"), 0);
+            assertEquals(r.getUDTValue("addr"), addr);
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
 
     /**
      * Test for inserting various types of DATA_TYPE_PRIMITIVES into UDT's.
@@ -91,8 +96,8 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             // create UDT
             List<String> alpha_type_list = new ArrayList<String>();
             int startIndex = (int) 'a';
-            for (int i = 0; i < DATA_TYPE_PRIMITIVES.length(); i++) {
-                alpha_type_list.add(String.format("%s %s", Character.toString((char) startIndex + i),
+            for (int i = 0; i < DATA_TYPE_PRIMITIVES.size(); i++) {
+                alpha_type_list.add(String.format("%s %s", Character.toString((char) (startIndex + i)),
                         DATA_TYPE_PRIMITIVES.get(i).getName()));
             }
 
@@ -103,54 +108,56 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             UserType alldatatypesDef = cluster.getMetadata().getKeyspace("testPrimitiveDatatypes").getUserType("alldatatypes");
             UDTValue alldatatypes = alldatatypesDef.newValue();
 
-            int startIndex = (int) 'a';
-            for (int i = 0; i < DATA_TYPE_PRIMITIVES.length(); i++) {
-                Datatype datatype = DATA_TYPE_PRIMITIVES.get(i);
+            for (int i = 0; i < DATA_TYPE_PRIMITIVES.size(); i++) {
+                DataType dataType = DATA_TYPE_PRIMITIVES.get(i);
+                String index = Character.toString((char) (startIndex + i));
+                Object sampleData = SAMPLE_DATA.get(dataType);
+
                 switch (dataType.getName()) {
                     case ASCII:
-                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setString(index, (String) sampleData);
                         break;
                     case BIGINT:
-                        alldatatypes.setLong(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setLong(index, ((Long) sampleData).longValue());
                         break;
                     case BLOB:
-                        alldatatypes.setBytes(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setBytes(index, (ByteBuffer) sampleData);
                         break;
                     case BOOLEAN:
-                        alldatatypes.setBool(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setBool(index, ((Boolean) sampleData).booleanValue());
                         break;
                     case DECIMAL:
-                        alldatatypes.setDecimal(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setDecimal(index, (BigDecimal) sampleData);
                         break;
                     case DOUBLE:
-                        alldatatypes.setDouble(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setDouble(index, ((Double) sampleData).doubleValue());
                         break;
                     case FLOAT:
-                        alldatatypes.setFloat(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setFloat(index, ((Float) sampleData).floatValue());
                         break;
                     case INET:
-                        alldatatypes.setInet(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setInet(index, (InetAddress) sampleData);
                         break;
                     case INT:
-                        alldatatypes.setInt(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setInt(index, ((Integer) sampleData).intValue());
                         break;
                     case TEXT:
-                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setString(index, (String) sampleData);
                         break;
                     case TIMESTAMP:
-                        alldatatypes.setDate(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setDate(index, ((Date) sampleData));
                         break;
                     case TIMEUUID:
-                        alldatatypes.setUUID(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setUUID(index, (UUID) sampleData);
                         break;
                     case UUID:
-                        alldatatypes.setUUID(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setUUID(index, (UUID) sampleData);
                         break;
                     case VARCHAR:
-                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setString(index, (String) sampleData);
                         break;
                     case VARINT:
-                        alldatatypes.setVarint(Character.toString((char) startIndex + i), SAMPLE_DATA.get(datatype));
+                        alldatatypes.setVarint(index, (BigInteger) sampleData);
                         break;
                 }
             }
@@ -159,8 +166,8 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(ins.bind(0, alldatatypes));
 
             // retrieve and verify data
-            Rows rows = session.execute("SELECT * FROM mytable");
-            assertEquals(1, rows.length);
+            ResultSet rows = session.execute("SELECT * FROM mytable");
+            assertEquals(1, rows.all().size());
 
             Row row = rows.one();
 
@@ -189,17 +196,17 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             // create UDT
             List<String> alpha_type_list = new ArrayList<String>();
             int startIndex = (int) 'a';
-            for (int i = 0; i < DATA_TYPE_PRIMITIVES.length(); i++)
-                for (int j = 0; i < DATA_TYPE_NON_PRIMITIVE_NAMES.length(); j++) {
+            for (int i = 0; i < DATA_TYPE_PRIMITIVES.size(); i++)
+                for (int j = 0; i < DATA_TYPE_NON_PRIMITIVE_NAMES.size(); j++) {
                     String typeString;
-                    if(DATA_TYPE_NON_PRIMITIVE_NAMES.get(i) == MAP) {
-                        typeString = (String.format("%s_%s %s<%s, %s>", Character.toString((char) startIndex + i),
-                                Character.toString((char) startIndex + j), DATA_TYPE_NON_PRIMITIVE_NAMES.get(i),
+                    if(DATA_TYPE_NON_PRIMITIVE_NAMES.get(i) == DataType.Name.MAP) {
+                        typeString = (String.format("%s_%s %s<%s, %s>", Character.toString((char) (startIndex + i)),
+                                Character.toString((char) (startIndex + j)), DATA_TYPE_NON_PRIMITIVE_NAMES.get(i),
                                 DATA_TYPE_PRIMITIVES.get(j).getName(), DATA_TYPE_PRIMITIVES.get(j).getName()));
                     }
                     else {
-                        typeString = (String.format("%s_%s %s<%s>", Character.toString((char) startIndex + i),
-                                Character.toString((char) startIndex + j), DATA_TYPE_NON_PRIMITIVE_NAMES.get(i),
+                        typeString = (String.format("%s_%s %s<%s>", Character.toString((char) (startIndex + i)),
+                                Character.toString((char) (startIndex + j)), DATA_TYPE_NON_PRIMITIVE_NAMES.get(i),
                                 DATA_TYPE_PRIMITIVES.get(j).getName()));
                     }
                     alpha_type_list.add(typeString);
@@ -212,27 +219,25 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             UserType alldatatypesDef = cluster.getMetadata().getKeyspace("test_nonprimitive_datatypes").getUserType("alldatatypes");
             UDTValue alldatatypes = alldatatypesDef.newValue();
 
-            int startIndex = (int) 'a';
-            for (int i = 0; i < DATA_TYPE_NON_PRIMITIVE_NAMES.length(); i++)
-                for (int j = 0; i < DATA_TYPE_PRIMITIVES.length(); j++) {
-                    Datatype.Name name = DATA_TYPE_NON_PRIMITIVE_NAMES.get(i);
-                    Datatype datatype = DATA_TYPE_PRIMITIVES.get(j);
+            for (int i = 0; i < DATA_TYPE_NON_PRIMITIVE_NAMES.size(); i++)
+                for (int j = 0; i < DATA_TYPE_PRIMITIVES.size(); j++) {
+                    DataType.Name name = DATA_TYPE_NON_PRIMITIVE_NAMES.get(i);
+                    DataType dataType = DATA_TYPE_PRIMITIVES.get(j);
+
+                    String index = Character.toString((char) (startIndex + i)) + "_" + Character.toString((char) (startIndex + j));
+                    Object sample = DataTypeIntegrationTest.getCollectionSample(name, dataType);
                     switch(name) {
                         case LIST:
-                            alldatatypes.setList(Character.toString((char) startIndex + i) + "_" +
-                                    Character.toString((char) startIndex + j), getCollectionSample(name, datatype));
+                            alldatatypes.setList(index, (ArrayList<DataType>) sample);
                             break;
                         case SET:
-                            alldatatypes.setSet(Character.toString((char) startIndex + i) + "_" +
-                                    Character.toString((char) startIndex + j), getCollectionSample(name, datatype));
+                            alldatatypes.setSet(index, (Set<DataType>) sample);
                             break;
                         case MAP:
-                            alldatatypes.setMap(Character.toString((char) startIndex + i) + "_" +
-                                    Character.toString((char) startIndex + j), getCollectionSample(name, datatype));
+                            alldatatypes.setMap(index, (HashMap<DataType, DataType>)sample);
                             break;
                         case TUPLE:
-                            alldatatypes.setTupleValue(Character.toString((char) startIndex + i) + "_" +
-                                    Character.toString((char) startIndex + j), getCollectionSample(name, datatype));
+                            alldatatypes.setTupleValue(index, (TupleValue) sample);
                     }
                 }
 
@@ -240,8 +245,8 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(ins.bind(0, alldatatypes));
 
             // retrieve and verify data
-            Rows rows = session.execute("SELECT * FROM mytable");
-            assertEquals(1, rows.length);
+            ResultSet rows = session.execute("SELECT * FROM mytable");
+            assertEquals(1, rows.all().size());
 
             Row row = rows.one();
 
