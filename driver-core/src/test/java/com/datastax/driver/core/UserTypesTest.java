@@ -81,6 +81,59 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     /**
+     * Test for ensuring extra-lengthy udts are handled correctly.
+     * Original code found in python-driver:integration.standard.test_udts.py:test_udt_sizes
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void udtSizesTest() throws Exception {
+        int MAX_TEST_LENGTH = 1024;
+
+        try {
+            // create keyspace
+            session.execute("CREATE KEYSPACE test_udt_sizes " +
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE test_udt_sizes");
+
+            // create the seed udt
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < MAX_TEST_LENGTH; ++i) {
+                sb.append(String.format("v_%s int", i));
+
+                if (i + 1 < MAX_TEST_LENGTH)
+                    sb.append(",");
+            }
+            session.execute(String.format("CREATE TYPE lengthy_udt (%s)", sb.toString()));
+
+            // create a table with multiple sizes of udts
+            session.execute("CREATE TABLE mytable (k int PRIMARY KEY, v lengthy_udt)");
+
+            // hold onto the UserType for future use
+            UserType udtDef = cluster.getMetadata().getKeyspace("test_udt_sizes").getUserType("lengthy_udt");
+
+            // verify inserts and reads
+            for (int i : Arrays.asList(0, 1, 2, 3, MAX_TEST_LENGTH)) {
+                // create udt
+                UDTValue createdUDT = udtDef.newValue();
+                for (int j = 0; j < i; ++j) {
+                    createdUDT.setInt(j, j);
+                }
+
+                // write udt
+                session.execute("INSERT INTO mytable (k, v) VALUES (0, ?)", createdUDT);
+
+                // verify udt was written and read correctly
+                UDTValue r = session.execute("SELECT v FROM mytable WHERE k=0")
+                        .one().getUDTValue("v");
+                assertEquals(r.toString(), createdUDT.toString());
+            }
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
+
+    /**
      * Test for inserting various types of DATA_TYPE_PRIMITIVES into UDT's.
      * Original code found in python-driver:integration.standard.test_udts.py:test_primitive_datatypes
      * @throws Exception
