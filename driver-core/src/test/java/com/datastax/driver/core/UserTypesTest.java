@@ -15,9 +15,11 @@
  */
 package com.datastax.driver.core;
 
+import java.lang.Exception;
 import java.util.*;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.base.Joiner;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
@@ -26,6 +28,12 @@ import static com.datastax.driver.core.Metadata.quote;
 import static com.datastax.driver.core.TestUtils.versionCheck;
 
 public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
+
+    private final static Set<DataType> DATA_TYPE_PRIMITIVES = DataType.allPrimitiveTypes();
+    private final static Set<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES = EnumSet.of(DataType.Name.MAP, DataType.Name.SET, DataType.Name.LIST);
+
+    private final static HashMap<DataType, Object> SAMPLE_DATA = DataTypeIntegrationTest.getSampleData();
+    private final static HashMap<DataType, Object> SAMPLE_COLLECTIONS = DataTypeIntegrationTest.getSampleCollections();
 
     @Override
     protected Collection<String> getTableDefinitions() {
@@ -38,29 +46,127 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
         return Arrays.asList(type1, type2, table);
     }
+//
+//    @Test(groups = "short")
+//    public void simpleWriteReadTest() throws Exception {
+//        int userId = 0;
+//
+//        try {
+//            PreparedStatement ins = session.prepare("INSERT INTO user(id, addr) VALUES (?, ?)");
+//            PreparedStatement sel = session.prepare("SELECT * FROM user WHERE id=?");
+//
+//            UserType addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
+//            UserType phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+//
+//            UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
+//            UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
+//
+//            UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP"), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
+//
+//            session.execute(ins.bind(userId, addr));
+//
+//            Row r = session.execute(sel.bind(userId)).one();
+//
+//            assertEquals(r.getInt("id"), 0);
+//            assertEquals(r.getUDTValue("addr"), addr);
+//        } catch (Exception e) {
+//            errorOut();
+//            throw e;
+//        }
+//    }
 
+    /**
+     * Test for inserting various types of DATA_TYPE_PRIMITIVES into UDT's.
+     * Original code found in python-driver:integration.standard.test_types.py:test_udts
+     * @throws Exception
+     */
     @Test(groups = "short")
-    public void simpleWriteReadTest() throws Exception {
-        int userId = 0;
-
+    public void testPrimitiveDatatypes() throws Exception {
         try {
-            PreparedStatement ins = session.prepare("INSERT INTO user(id, addr) VALUES (?, ?)");
-            PreparedStatement sel = session.prepare("SELECT * FROM user WHERE id=?");
+            // create keyspace
+            session.execute("CREATE KEYSPACE testPrimitiveDatatypes " +
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE testPrimitiveDatatypes");
 
-            UserType addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
-            UserType phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+            // create UDT
+            List<String> alpha_type_list = new ArrayList<String>();
+            int startIndex = (int) 'a';
+            for (int i = 0; i < DATA_TYPE_PRIMITIVES.length(); i++) {
+                alpha_type_list.add(String.format("%s %s", Character.toString((char) startIndex + i),
+                        DATA_TYPE_PRIMITIVES.get(i).getName()));
+            }
 
-            UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
-            UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
+            session.execute(String.format("CREATE TYPE alldatatypes (%s)", Joiner.on(',').join(alpha_type_list)));
+            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b alldatatypes)");
 
-            UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP"), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
+            // insert UDT data
+            UserType alldatatypesDef = cluster.getMetadata().getKeyspace("testPrimitiveDatatypes").getUserType("alldatatypes");
+            UDTValue alldatatypes = alldatatypesDef.newValue();
 
-            session.execute(ins.bind(userId, addr));
+            int startIndex = (int) 'a';
+            for (int i = 0; i < DATA_TYPE_PRIMITIVES.length(); i++) {
+                Datatype datatype = DATA_TYPE_PRIMITIVES.get(i);
+                switch (dataType.getName()) {
+                    case ASCII:
+                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case BIGINT:
+                        alldatatypes.setLong(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case BLOB:
+                        alldatatypes.setBytes(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case BOOLEAN:
+                        alldatatypes.setBool(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case DECIMAL:
+                        alldatatypes.setDecimal(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case DOUBLE:
+                        alldatatypes.setDouble(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case FLOAT:
+                        alldatatypes.setFloat(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case INET:
+                        alldatatypes.setInet(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case INT:
+                        alldatatypes.setInt(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case TEXT:
+                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case TIMESTAMP:
+                        alldatatypes.setDate(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case TIMEUUID:
+                        alldatatypes.setUUID(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case UUID:
+                        alldatatypes.setUUID(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case VARCHAR:
+                        alldatatypes.setString(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                    case VARINT:
+                        alldatatypes.setVarint(Character.toString((char) startIndex + i), SAMPLE_DATA[datatype]);
+                        break;
+                }
+            }
 
-            Row r = session.execute(sel.bind(userId)).one();
+            PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+            session.execute(ins.bind(0, alldatatypes));
 
-            assertEquals(r.getInt("id"), 0);
-            assertEquals(r.getUDTValue("addr"), addr);
+            // retrieve and verify data
+            Rows rows = session.execute("SELECT * FROM mytable")
+            assertEquals(1, rows.length);
+
+            Row row = rows.one();
+
+            assertEquals(row.getInt("a"), 0);
+            assertEquals(row.getUDTValue("alldatatypes"), alldatatypes);
+
         } catch (Exception e) {
             errorOut();
             throw e;
