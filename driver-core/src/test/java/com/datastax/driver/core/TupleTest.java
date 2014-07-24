@@ -261,4 +261,137 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
             throw e;
         }
     }
+
+    /**
+     * Ensure tuple subtypes are appropriately handled for maps, sets, and lists.
+     * Original code found in python-driver:integration.standard.test_types.py:test_tuple_non_primitive_subtypes
+     *
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void tupleNonPrimitiveSubTypesTest() throws Exception {
+
+        // hold onto constants
+        ArrayList<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>();
+        for (DataType dt : DataType.allPrimitiveTypes()) {
+            // skip counter types since counters are not allowed inside tuples
+            if (dt == DataType.counter())
+                continue;
+
+            DATA_TYPE_PRIMITIVES.add(dt);
+        }
+        ArrayList<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES = new ArrayList<DataType.Name>(Arrays.asList(DataType.Name.MAP,
+                                                                                                            DataType.Name.SET,
+                                                                                                            DataType.Name.LIST));
+        HashMap<DataType, Object> SAMPLE_DATA = getSampleData();
+
+        try {
+            session.execute("CREATE KEYSPACE test_tuple_non_primitive_subtypes " +
+                            "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE test_tuple_non_primitive_subtypes");
+
+            ArrayList<String> values = new ArrayList<String>();
+
+            //create list values
+            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+                values.add(String.format("v_%s tuple<list<%s>>", values.size(), datatype));
+            }
+
+            // create set values
+            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+                values.add(String.format("v_%s tuple<set<%s>>", values.size(), datatype));
+            }
+
+            // create map values
+            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+                DataType dataType1 = datatype;
+                DataType dataType2 = datatype;
+                if (datatype == DataType.blob()) {
+                    // unhashable type: 'bytearray'
+                    dataType1 = DataType.ascii();
+                }
+                values.add(String.format("v_%s tuple<map<%s, %s>>", values.size(), dataType1, dataType2));
+            }
+
+            // create table
+            session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, %s)", Joiner.on(',').join(values)));
+
+
+            int i = 1;
+            // test tuple<list<datatype>>
+            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+                // create tuple
+                ArrayList<DataType> dataTypes = new ArrayList<DataType>();
+                ArrayList<Object> createdValues = new ArrayList<Object>();
+
+                dataTypes.add(DataType.list(datatype));
+                createdValues.add(Arrays.asList(SAMPLE_DATA.get(datatype)));
+
+                TupleType t = new TupleType(dataTypes);
+                TupleValue createdTuple = t.newValue(createdValues.toArray());
+
+                // write tuple
+                session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
+
+                // read tuple
+                TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
+                        .one().getTupleValue(String.format("v_%s", i));
+                assertEquals(r.toString(), createdTuple.toString());
+                ++i;
+            }
+
+            // test tuple<set<datatype>>
+            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+                // create tuple
+                ArrayList<DataType> dataTypes = new ArrayList<DataType>();
+                ArrayList<Object> createdValues = new ArrayList<Object>();
+
+                dataTypes.add(DataType.list(datatype));
+                createdValues.add(new HashSet<Object>(Arrays.asList(SAMPLE_DATA.get(datatype))));
+
+                TupleType t = new TupleType(dataTypes);
+                TupleValue createdTuple = t.newValue(createdValues.toArray());
+
+                // write tuple
+                session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
+
+                // read tuple
+                TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
+                        .one().getTupleValue(String.format("v_%s", i));
+                assertEquals(r.toString(), createdTuple.toString());
+                ++i;
+            }
+
+            // test tuple<map<datatype, datatype>>
+            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+                // create tuple
+                ArrayList<DataType> dataTypes = new ArrayList<DataType>();
+                ArrayList<Object> createdValues = new ArrayList<Object>();
+
+                HashMap<Object, Object> hm = new HashMap<Object, Object>();
+                if (datatype == DataType.blob())
+                    hm.put(SAMPLE_DATA.get(DataType.ascii()), SAMPLE_DATA.get(datatype));
+                else
+                    hm.put(SAMPLE_DATA.get(datatype), SAMPLE_DATA.get(datatype));
+
+                dataTypes.add(DataType.list(datatype));
+                createdValues.add(hm);
+
+                TupleType t = new TupleType(dataTypes);
+                TupleValue createdTuple = t.newValue(createdValues.toArray());
+
+                // write tuple
+                session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
+
+                // read tuple
+                TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
+                        .one().getTupleValue(String.format("v_%s", i));
+                assertEquals(r.toString(), createdTuple.toString());
+                ++i;
+            }
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
 }
