@@ -394,4 +394,87 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
             throw e;
         }
     }
+
+    /**
+     * Helper method for creating nested tuple schema
+     * @param depth
+     * @return
+     */
+    private String nestedTuplesSchemaHelper(int depth) {
+        if (depth == 0)
+            return "int";
+        else
+            return String.format("tuple<%s>", nestedTuplesSchemaHelper(depth - 1));
+    }
+
+    /**
+     * Helper method for creating nested tuples
+     * @param depth
+     * @return
+     */
+    private TupleValue nestedTuplesCreatorHelper(int depth) {
+        if (depth == 1) {
+            TupleType baseTuple = TupleType.of(DataType.cint());
+            return baseTuple.newValue(303);
+        } else {
+            TupleValue innerTuple = nestedTuplesCreatorHelper(depth - 1);
+            TupleType t = TupleType.of(innerTuple.getType());
+            return t.newValue(innerTuple);
+        }
+    }
+
+    /**
+     * Ensure nested are appropriately handled.
+     * Original code found in python-driver:integration.standard.test_types.py:test_nested_tuples
+     *
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void nestedTuplesTest() throws Exception {
+
+        // hold onto constants
+        ArrayList<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>();
+        for (DataType dt : DataType.allPrimitiveTypes()) {
+            // skip counter types since counters are not allowed inside tuples
+            if (dt == DataType.counter())
+                continue;
+
+            DATA_TYPE_PRIMITIVES.add(dt);
+        }
+        HashMap<DataType, Object> SAMPLE_DATA = getSampleData();
+
+        try {
+            session.execute("CREATE KEYSPACE test_nested_tuples " +
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE test_nested_tuples");
+
+            // create a table with multiple sizes of nested tuples
+            session.execute(String.format("CREATE TABLE mytable (" +
+                            "k int PRIMARY KEY, " +
+                            "v_1 %s, " +
+                            "v_2 %s, " +
+                            "v_3 %s, " +
+                            "v_128 %s)", nestedTuplesSchemaHelper(1),
+                                         nestedTuplesSchemaHelper(2),
+                                         nestedTuplesSchemaHelper(3),
+                                         nestedTuplesSchemaHelper(128)));
+
+            for (int i : Arrays.asList(1, 2, 3, 128)) {
+                // create tuple
+                TupleValue createdTuple = nestedTuplesCreatorHelper(i);
+
+                // write tuple
+                session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (?, ?)", i), i, createdTuple);
+
+                // verify tuple was written and read correctly
+                TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=?", i), i)
+                        .one().getTupleValue(String.format("v_%s", i));
+                assertEquals(r.toString(), createdTuple.toString());
+
+            }
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
 }
