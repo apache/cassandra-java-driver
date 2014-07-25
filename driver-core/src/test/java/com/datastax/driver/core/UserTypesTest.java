@@ -15,9 +15,15 @@
  */
 package com.datastax.driver.core;
 
+import java.lang.Exception;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.base.Joiner;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
@@ -26,6 +32,12 @@ import static com.datastax.driver.core.Metadata.quote;
 import static com.datastax.driver.core.TestUtils.versionCheck;
 
 public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
+
+    private final static List<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes());
+    private final static List<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES =
+            new ArrayList<DataType.Name>(EnumSet.of(DataType.Name.LIST, DataType.Name.SET, DataType.Name.MAP, DataType.Name.TUPLE));
+
+    private final static HashMap<DataType, Object> SAMPLE_DATA = DataTypeIntegrationTest.getSampleData();
 
     @Override
     protected Collection<String> getTableDefinitions() {
@@ -66,4 +78,189 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             throw e;
         }
     }
+
+    /**
+     * Test for inserting various types of DATA_TYPE_PRIMITIVES into UDT's.
+     * Original code found in python-driver:integration.standard.test_udts.py:test_primitive_datatypes
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void testPrimitiveDatatypes() throws Exception {
+        try {
+            // create keyspace
+            session.execute("CREATE KEYSPACE testPrimitiveDatatypes " +
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE testPrimitiveDatatypes");
+
+            // create UDT
+            List<String> alpha_type_list = new ArrayList<String>();
+            int startIndex = (int) 'a';
+            for (int i = 0; i < DATA_TYPE_PRIMITIVES.size(); i++) {
+                alpha_type_list.add(String.format("%s %s", Character.toString((char) (startIndex + i)),
+                        DATA_TYPE_PRIMITIVES.get(i).getName()));
+            }
+
+            session.execute(String.format("CREATE TYPE alldatatypes (%s)", Joiner.on(',').join(alpha_type_list)));
+            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b alldatatypes)");
+
+            // insert UDT data
+            UserType alldatatypesDef = cluster.getMetadata().getKeyspace("testPrimitiveDatatypes").getUserType("alldatatypes");
+            UDTValue alldatatypes = alldatatypesDef.newValue();
+
+            for (int i = 0; i < DATA_TYPE_PRIMITIVES.size(); i++) {
+                DataType dataType = DATA_TYPE_PRIMITIVES.get(i);
+                String index = Character.toString((char) (startIndex + i));
+                Object sampleData = SAMPLE_DATA.get(dataType);
+
+                switch (dataType.getName()) {
+                    case ASCII:
+                        alldatatypes.setString(index, (String) sampleData);
+                        break;
+                    case BIGINT:
+                        alldatatypes.setLong(index, ((Long) sampleData).longValue());
+                        break;
+                    case BLOB:
+                        alldatatypes.setBytes(index, (ByteBuffer) sampleData);
+                        break;
+                    case BOOLEAN:
+                        alldatatypes.setBool(index, ((Boolean) sampleData).booleanValue());
+                        break;
+                    case DECIMAL:
+                        alldatatypes.setDecimal(index, (BigDecimal) sampleData);
+                        break;
+                    case DOUBLE:
+                        alldatatypes.setDouble(index, ((Double) sampleData).doubleValue());
+                        break;
+                    case FLOAT:
+                        alldatatypes.setFloat(index, ((Float) sampleData).floatValue());
+                        break;
+                    case INET:
+                        alldatatypes.setInet(index, (InetAddress) sampleData);
+                        break;
+                    case INT:
+                        alldatatypes.setInt(index, ((Integer) sampleData).intValue());
+                        break;
+                    case TEXT:
+                        alldatatypes.setString(index, (String) sampleData);
+                        break;
+                    case TIMESTAMP:
+                        alldatatypes.setDate(index, ((Date) sampleData));
+                        break;
+                    case TIMEUUID:
+                        alldatatypes.setUUID(index, (UUID) sampleData);
+                        break;
+                    case UUID:
+                        alldatatypes.setUUID(index, (UUID) sampleData);
+                        break;
+                    case VARCHAR:
+                        alldatatypes.setString(index, (String) sampleData);
+                        break;
+                    case VARINT:
+                        alldatatypes.setVarint(index, (BigInteger) sampleData);
+                        break;
+                }
+            }
+
+            PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+            session.execute(ins.bind(0, alldatatypes));
+
+            // retrieve and verify data
+            ResultSet rs = session.execute("SELECT * FROM mytable");
+            List<Row> rows = rs.all();
+            assertEquals(1, rows.size());
+
+            Row row = rows.get(0);
+
+            assertEquals(row.getInt("a"), 0);
+            assertEquals(row.getUDTValue("b"), alldatatypes);
+
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
+
+    /**
+     * Test for inserting various types of DATA_TYPE_NON_PRIMITIVE into UDT's
+     * Original code found in python-driver:integration.standard.test_udts.py:test_nonprimitive_datatypes
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void testNonPrimitiveDatatypes() throws Exception {
+        try {
+            // create keyspace
+            session.execute("CREATE KEYSPACE test_nonprimitive_datatypes " +
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE test_nonprimitive_datatypes");
+
+            // counters are not allowed inside collections
+            DATA_TYPE_PRIMITIVES.remove(DataType.counter());
+
+            // create UDT
+            List<String> alpha_type_list = new ArrayList<String>();
+            int startIndex = (int) 'a';
+            for (int i = 0; i < DATA_TYPE_NON_PRIMITIVE_NAMES.size(); i++)
+                for (int j = 0; j < DATA_TYPE_PRIMITIVES.size(); j++) {
+                    String typeString;
+                    if(DATA_TYPE_NON_PRIMITIVE_NAMES.get(i) == DataType.Name.MAP) {
+                        typeString = (String.format("%s_%s %s<%s, %s>", Character.toString((char) (startIndex + i)),
+                                Character.toString((char) (startIndex + j)), DATA_TYPE_NON_PRIMITIVE_NAMES.get(i),
+                                DATA_TYPE_PRIMITIVES.get(j).getName(), DATA_TYPE_PRIMITIVES.get(j).getName()));
+                    }
+                    else {
+                        typeString = (String.format("%s_%s %s<%s>", Character.toString((char) (startIndex + i)),
+                                Character.toString((char) (startIndex + j)), DATA_TYPE_NON_PRIMITIVE_NAMES.get(i),
+                                DATA_TYPE_PRIMITIVES.get(j).getName()));
+                    }
+                    alpha_type_list.add(typeString);
+                }
+
+            session.execute(String.format("CREATE TYPE alldatatypes (%s)", Joiner.on(',').join(alpha_type_list)));
+            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b alldatatypes)");
+
+            // insert UDT data
+            UserType alldatatypesDef = cluster.getMetadata().getKeyspace("test_nonprimitive_datatypes").getUserType("alldatatypes");
+            UDTValue alldatatypes = alldatatypesDef.newValue();
+
+            for (int i = 0; i < DATA_TYPE_NON_PRIMITIVE_NAMES.size(); i++)
+                for (int j = 0; j < DATA_TYPE_PRIMITIVES.size(); j++) {
+                    DataType.Name name = DATA_TYPE_NON_PRIMITIVE_NAMES.get(i);
+                    DataType dataType = DATA_TYPE_PRIMITIVES.get(j);
+
+                    String index = Character.toString((char) (startIndex + i)) + "_" + Character.toString((char) (startIndex + j));
+                    Object sample = DataTypeIntegrationTest.getCollectionSample(name, dataType);
+                    switch(name) {
+                        case LIST:
+                            alldatatypes.setList(index, (ArrayList<DataType>) sample);
+                            break;
+                        case SET:
+                            alldatatypes.setSet(index, (Set<DataType>) sample);
+                            break;
+                        case MAP:
+                            alldatatypes.setMap(index, (HashMap<DataType, DataType>) sample);
+                            break;
+                        case TUPLE:
+                            alldatatypes.setTupleValue(index, (TupleValue) sample);
+                    }
+                }
+
+            PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+            session.execute(ins.bind(0, alldatatypes));
+
+            // retrieve and verify data
+            ResultSet rs = session.execute("SELECT * FROM mytable");
+            List<Row> rows = rs.all();
+            assertEquals(1, rows.size());
+
+            Row row = rows.get(0);
+
+            assertEquals(row.getInt("a"), 0);
+            assertEquals(row.getUDTValue("b"), alldatatypes);
+
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
+
 }
