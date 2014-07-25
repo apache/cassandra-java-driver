@@ -38,7 +38,6 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             new ArrayList<DataType.Name>(EnumSet.of(DataType.Name.LIST, DataType.Name.SET, DataType.Name.MAP, DataType.Name.TUPLE));
 
     private final static HashMap<DataType, Object> SAMPLE_DATA = DataTypeIntegrationTest.getSampleData();
-    private final static HashMap<DataType, Object> SAMPLE_COLLECTIONS = DataTypeIntegrationTest.getSampleCollections();
 
     @Override
     protected Collection<String> getTableDefinitions() {
@@ -254,6 +253,72 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
             assertEquals(row.getInt("a"), 0);
             assertEquals(row.getUDTValue("alldatatypes"), alldatatypes);
+
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
+
+    /**
+     * Test for ensuring nested UDT's are handled correctly.
+     * Original code found in python-driver:integration.standard.test_udts.py:test_nested_registered_udts
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void udtNestedTest() throws Exception {
+        final int MAX_NESTING_DEPTH = 4;
+
+        try {
+            // create keyspace
+            session.execute("CREATE KEYSPACE udtNestedTest " +
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE udtNestedTest");
+
+            // create UDT
+            session.execute("CREATE TYPE depth_0 (age int, name text)");
+
+            for (int i = 1; i <= MAX_NESTING_DEPTH; i++) {
+                session.execute(String.format("CREATE TYPE depth_%s (value depth_%s)", String.valueOf(i), String.valueOf(i-1)));
+            }
+
+            session.execute(String.format("CREATE TABLE mytable (a int PRIMARY KEY, b depth_0, c depth_1, d depth_2, e depth_3," +
+                    "f depth_%s)", MAX_NESTING_DEPTH));
+
+            // insert UDT data
+            UserType depthZeroDef = cluster.getMetadata().getKeyspace("udtNestedTest").getUserType("depth_0");
+            UDTValue depthZero = depthZeroDef.newValue().setInt("age", 42).setString("name", "Bob");
+
+            UserType depthOneDef = cluster.getMetadata().getKeyspace("udtNestedTest").getUserType("depth_1");
+            UDTValue depthOne = depthOneDef.newValue().setUDTValue("value", depthZero);
+
+            UserType depthTwoDef = cluster.getMetadata().getKeyspace("udtNestedTest").getUserType("depth_2");
+            UDTValue depthTwo = depthTwoDef.newValue().setUDTValue("value", depthOne);
+
+            UserType depthThreeDef = cluster.getMetadata().getKeyspace("udtNestedTest").getUserType("depth_3");
+            UDTValue depthThree = depthThreeDef.newValue().setUDTValue("value", depthTwo);
+
+            UserType depthFourDef = cluster.getMetadata().getKeyspace("udtNestedTest").getUserType("depth_4");
+            UDTValue depthFour = depthFourDef.newValue().setUDTValue("value", depthThree);
+
+            PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b, c, d, e, f) VALUES (?, ?, ?, ?, ?, ?)");
+            session.execute(ins.bind(0, depthZero, depthOne, depthTwo, depthThree, depthFour));
+
+            // retrieve and verify data
+            ResultSet rs = session.execute("SELECT * FROM mytable");
+            List<Row> rows = rs.all();
+            assertEquals(1, rows.size());
+
+            Row row = rows.get(0);
+            System.out.println(rows);
+            System.out.println(row);
+
+            assertEquals(row.getInt("a"), 0);
+            assertEquals(row.getUDTValue("depthZero"), depthZero);
+            assertEquals(row.getUDTValue("depthOne"), depthOne);
+            assertEquals(row.getUDTValue("depthTwo"), depthTwo);
+            assertEquals(row.getUDTValue("depthThree"), depthThree);
+            assertEquals(row.getUDTValue("depthFour"), depthFour);
 
         } catch (Exception e) {
             errorOut();
