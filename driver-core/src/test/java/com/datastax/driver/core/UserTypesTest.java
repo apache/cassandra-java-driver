@@ -38,7 +38,6 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             new ArrayList<DataType.Name>(EnumSet.of(DataType.Name.LIST, DataType.Name.SET, DataType.Name.MAP, DataType.Name.TUPLE));
 
     private final static HashMap<DataType, Object> SAMPLE_DATA = DataTypeIntegrationTest.getSampleData();
-    private final static HashMap<DataType, Object> SAMPLE_COLLECTIONS = DataTypeIntegrationTest.getSampleCollections();
 
     @Override
     protected Collection<String> getTableDefinitions() {
