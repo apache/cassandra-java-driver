@@ -22,6 +22,8 @@ import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import com.google.common.collect.ImmutableSet;
+
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.DataTypeTest.exclude;
@@ -169,9 +171,32 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         return sampleData;
     }
 
+    protected static Object getCollectionSample(DataType.Name collectionType, DataType dataType) {
+        if(collectionType == DataType.Name.LIST) {
+            List<Object> theList = new ArrayList<Object>();
+            theList.add(SAMPLE_DATA.get(dataType));
+            theList.add(SAMPLE_DATA.get(dataType));
+            return theList;
+        }
+        else if(collectionType == DataType.Name.SET)
+            return ImmutableSet.of(SAMPLE_DATA.get(dataType));
+        else if(collectionType == DataType.Name.MAP)
+            if(dataType.getName() == DataType.Name.BLOB)
+                return new HashMap<Object, Object>().put(SAMPLE_DATA.get(DataType.ascii()), SAMPLE_DATA.get(dataType));
+            else
+                return new HashMap<Object, Object>().put(SAMPLE_DATA.get(dataType), SAMPLE_DATA.get(dataType));
+        else if(collectionType == DataType.Name.TUPLE) {
+            TupleType t = TupleType.of(dataType, dataType);
+            return t.newValue(SAMPLE_DATA.get(dataType), SAMPLE_DATA.get(dataType));
+        }
+        else
+            throw new IllegalArgumentException("Missing handling of non-primitive type" + collectionType);
+    }
+
     /**
      * Generates the sample collections that will be used in testing
-     */ private static HashMap<DataType, Object> getSampleCollections() {
+     */
+    protected static HashMap<DataType, Object> getSampleCollections() {
         HashMap<DataType, Object> sampleCollections = new HashMap<DataType, Object>();
         HashMap<DataType, Object> setAndListCollection;
         HashMap<DataType, HashMap<DataType, Object>> mapCollection;
