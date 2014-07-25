@@ -172,7 +172,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             Row row = rows.get(0);
 
             assertEquals(row.getInt("a"), 0);
-            assertEquals(row.getUDTValue("alldatatypes"), alldatatypes);
+            assertEquals(row.getUDTValue("b"), alldatatypes);
 
         } catch (Exception e) {
             errorOut();
@@ -193,11 +193,14 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
                     "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
             session.execute("USE test_nonprimitive_datatypes");
 
+            // counters are not allowed inside collections
+            DATA_TYPE_PRIMITIVES.remove(DataType.counter());
+
             // create UDT
             List<String> alpha_type_list = new ArrayList<String>();
             int startIndex = (int) 'a';
-            for (int i = 0; i < DATA_TYPE_PRIMITIVES.size(); i++)
-                for (int j = 0; i < DATA_TYPE_NON_PRIMITIVE_NAMES.size(); j++) {
+            for (int i = 0; i < DATA_TYPE_NON_PRIMITIVE_NAMES.size(); i++)
+                for (int j = 0; j < DATA_TYPE_PRIMITIVES.size(); j++) {
                     String typeString;
                     if(DATA_TYPE_NON_PRIMITIVE_NAMES.get(i) == DataType.Name.MAP) {
                         typeString = (String.format("%s_%s %s<%s, %s>", Character.toString((char) (startIndex + i)),
@@ -220,7 +223,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             UDTValue alldatatypes = alldatatypesDef.newValue();
 
             for (int i = 0; i < DATA_TYPE_NON_PRIMITIVE_NAMES.size(); i++)
-                for (int j = 0; i < DATA_TYPE_PRIMITIVES.size(); j++) {
+                for (int j = 0; j < DATA_TYPE_PRIMITIVES.size(); j++) {
                     DataType.Name name = DATA_TYPE_NON_PRIMITIVE_NAMES.get(i);
                     DataType dataType = DATA_TYPE_PRIMITIVES.get(j);
 
@@ -234,7 +237,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
                             alldatatypes.setSet(index, (Set<DataType>) sample);
                             break;
                         case MAP:
-                            alldatatypes.setMap(index, (HashMap<DataType, DataType>)sample);
+                            alldatatypes.setMap(index, (HashMap<DataType, DataType>) sample);
                             break;
                         case TUPLE:
                             alldatatypes.setTupleValue(index, (TupleValue) sample);
@@ -252,7 +255,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             Row row = rows.get(0);
 
             assertEquals(row.getInt("a"), 0);
-            assertEquals(row.getUDTValue("alldatatypes"), alldatatypes);
+            assertEquals(row.getUDTValue("b"), alldatatypes);
 
         } catch (Exception e) {
             errorOut();
@@ -314,11 +317,11 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             System.out.println(row);
 
             assertEquals(row.getInt("a"), 0);
-            assertEquals(row.getUDTValue("depthZero"), depthZero);
-            assertEquals(row.getUDTValue("depthOne"), depthOne);
-            assertEquals(row.getUDTValue("depthTwo"), depthTwo);
-            assertEquals(row.getUDTValue("depthThree"), depthThree);
-            assertEquals(row.getUDTValue("depthFour"), depthFour);
+            assertEquals(row.getUDTValue("b"), depthZero);
+            assertEquals(row.getUDTValue("c"), depthOne);
+            assertEquals(row.getUDTValue("d"), depthTwo);
+            assertEquals(row.getUDTValue("e"), depthThree);
+            assertEquals(row.getUDTValue("f"), depthFour);
 
         } catch (Exception e) {
             errorOut();
