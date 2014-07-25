@@ -447,11 +447,11 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             Row row = rows.get(0);
 
             assertEquals(row.getInt("a"), 0);
-            assertEquals(row.getUDTValue("depthZero"), depthZero);
-            assertEquals(row.getUDTValue("depthOne"), depthOne);
-            assertEquals(row.getUDTValue("depthTwo"), depthTwo);
-            assertEquals(row.getUDTValue("depthThree"), depthThree);
-            assertEquals(row.getUDTValue("depthFour"), depthFour);
+            assertEquals(row.getUDTValue("b"), depthZero);
+            assertEquals(row.getUDTValue("c"), depthOne);
+            assertEquals(row.getUDTValue("d"), depthTwo);
+            assertEquals(row.getUDTValue("e"), depthThree);
+            assertEquals(row.getUDTValue("f"), depthFour);
 
         } catch (Exception e) {
             errorOut();
