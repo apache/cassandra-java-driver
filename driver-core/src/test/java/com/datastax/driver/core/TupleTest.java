@@ -254,6 +254,8 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
                 // read tuple
                 TupleValue r = session.execute("SELECT v FROM mytable WHERE k=?", i).one().getTupleValue("v");
+
+                // FIXME: remove .toString() JAVA-402
                 assertEquals(r.toString(), completeTuple.toString());
                 ++i;
             }
@@ -334,6 +336,8 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 // read tuple
                 TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
                         .one().getTupleValue(String.format("v_%s", i));
+
+                // FIXME: remove .toString() JAVA-402
                 assertEquals(r.toString(), createdTuple.toString());
                 ++i;
             }
@@ -356,6 +360,8 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 // read tuple
                 TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
                         .one().getTupleValue(String.format("v_%s", i));
+
+                // FIXME: remove .toString() JAVA-402
                 assertEquals(r.toString(), createdTuple.toString());
                 ++i;
             }
@@ -381,6 +387,8 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 // read tuple
                 TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
                         .one().getTupleValue(String.format("v_%s", i));
+
+                // FIXME: remove .toString() JAVA-402
                 assertEquals(r.toString(), createdTuple.toString());
                 ++i;
             }
@@ -464,6 +472,8 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 // verify tuple was written and read correctly
                 TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=?", i), i)
                         .one().getTupleValue(String.format("v_%s", i));
+
+                // FIXME: remove .toString() JAVA-402
                 assertEquals(r.toString(), createdTuple.toString());
 
             }
