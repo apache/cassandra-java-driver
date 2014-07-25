@@ -30,6 +30,7 @@ import static org.testng.Assert.assertEquals;
 
 import static com.datastax.driver.core.Metadata.quote;
 import static com.datastax.driver.core.TestUtils.versionCheck;
+import static org.testng.Assert.assertNotEquals;
 
 public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -52,11 +53,17 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
         return Arrays.asList(type1, type2, table);
     }
 
+    /**
+     * Basic write read test to ensure UDTs are stored and retrieved correctly.
+     *
+     * @throws Exception
+     */
     @Test(groups = "short")
     public void simpleWriteReadTest() throws Exception {
         int userId = 0;
 
         try {
+            session.execute("USE ks");
             PreparedStatement ins = session.prepare("INSERT INTO user(id, addr) VALUES (?, ?)");
             PreparedStatement sel = session.prepare("SELECT * FROM user WHERE id=?");
 
@@ -74,6 +81,78 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
             assertEquals(r.getInt("id"), 0);
             assertEquals(r.getUDTValue("addr"), addr);
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
+
+    /**
+     * Run simpleWriteReadTest with unprepared requests.
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void simpleUnpreparedWriteReadTest() throws Exception {
+        int userId = 1;
+
+        try {
+            session.execute("USE ks");
+            UserType addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
+            UserType phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+
+            UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
+            UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
+
+            UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP"), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
+
+            session.execute("INSERT INTO user(id, addr) VALUES (?, ?)", userId, addr);
+
+            Row r = session.execute("SELECT * FROM user WHERE id=?", userId).one();
+
+            assertEquals(r.getInt("id"), 1);
+            assertEquals(r.getUDTValue("addr"), addr);
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
+
+    /**
+     * Run simpleWriteReadTest with unprepared requests.
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void nonExistingTypesTest() throws Exception {
+        try {
+            session.execute("USE ks");
+
+            UserType addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address1");
+            UserType phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone1");
+            assertEquals(addrDef, null);
+            assertEquals(phoneDef, null);
+
+            addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
+            phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+            assertNotEquals(addrDef, null);
+            assertNotEquals(phoneDef, null);
+
+            // create keyspace
+            session.execute("CREATE KEYSPACE nonExistingTypesTest " +
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE nonExistingTypesTest");
+
+            addrDef = cluster.getMetadata().getKeyspace("nonExistingTypesTest").getUserType("address");
+            phoneDef = cluster.getMetadata().getKeyspace("nonExistingTypesTest").getUserType("phone");
+            assertEquals(addrDef, null);
+            assertEquals(phoneDef, null);
+
+            session.execute("USE ks");
+
+            addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
+            phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+            assertNotEquals(addrDef, null);
+            assertNotEquals(phoneDef, null);
+
         } catch (Exception e) {
             errorOut();
             throw e;
