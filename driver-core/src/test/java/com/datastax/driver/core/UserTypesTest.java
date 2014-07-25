@@ -313,8 +313,6 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             assertEquals(1, rows.size());
 
             Row row = rows.get(0);
-            System.out.println(rows);
-            System.out.println(row);
 
             assertEquals(row.getInt("a"), 0);
             assertEquals(row.getUDTValue("b"), depthZero);
