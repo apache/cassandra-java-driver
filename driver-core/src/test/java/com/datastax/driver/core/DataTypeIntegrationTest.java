@@ -183,8 +183,8 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         else if(collectionType == DataType.Name.MAP)
                 return new HashMap<Object, Object>().put(SAMPLE_DATA.get(dataType), SAMPLE_DATA.get(dataType));
         else if(collectionType == DataType.Name.TUPLE) {
-            TupleType t = TupleType.of(dataType, dataType);
-            return t.newValue(SAMPLE_DATA.get(dataType), SAMPLE_DATA.get(dataType));
+            TupleType t = TupleType.of(dataType);
+            return t.newValue(SAMPLE_DATA.get(dataType));
         }
         else
             throw new IllegalArgumentException("Missing handling of non-primitive type" + collectionType);
