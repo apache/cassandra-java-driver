@@ -29,7 +29,6 @@ import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
@@ -407,7 +406,8 @@ class SessionManager extends AbstractSession {
 
             BatchStatement bs = (BatchStatement)statement;
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protoVersion);
-            return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl, bs.getSerialConsistencyLevel(), 0L);
+            Requests.BatchProtocolOptions options = new Requests.BatchProtocolOptions(cl, scl, 0L);
+            return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, options);
         }
     }
 

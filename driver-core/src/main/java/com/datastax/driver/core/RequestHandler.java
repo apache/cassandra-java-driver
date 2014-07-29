@@ -199,7 +199,7 @@ class RequestHandler implements Connection.ResponseCallback {
         switch (request.type) {
             case QUERY:   return ((Requests.Query)request).options.consistency;
             case EXECUTE: return ((Requests.Execute)request).options.consistency;
-            case BATCH:   return ((Requests.Batch)request).consistency;
+            case BATCH:   return ((Requests.Batch)request).options.consistency;
             default:      return null;
         }
     }
@@ -208,6 +208,7 @@ class RequestHandler implements Connection.ResponseCallback {
         switch (request.type) {
             case QUERY:   return ((Requests.Query)request).options.serialConsistency;
             case EXECUTE: return ((Requests.Execute)request).options.serialConsistency;
+            case BATCH:   return ((Requests.Batch)request).options.serialConsistency;
             default:      return null;
         }
     }
