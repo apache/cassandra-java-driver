@@ -349,7 +349,11 @@ class SessionManager extends AbstractSession {
             consistency = configuration().getQueryOptions().getConsistencyLevel();
 
         ConsistencyLevel serialConsistency = statement.getSerialConsistencyLevel();
-        if (serialConsistency == null)
+        ProtocolVersion version = cluster.manager.protocolVersion();
+        if (version.compareTo(ProtocolVersion.V3) < 0 && statement instanceof BatchStatement) {
+            if (serialConsistency != null)
+                throw new UnsupportedFeatureException(version, "Serial consistency on batch statements is not supported");
+        } else if (serialConsistency == null)
             serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
 
         return makeRequestMessage(statement, consistency, serialConsistency, pagingState);
@@ -366,7 +370,7 @@ class SessionManager extends AbstractSession {
             if (fetchSize <= 0)
                 fetchSize = -1;
             else if (fetchSize != Integer.MAX_VALUE)
-                throw new UnsupportedFeatureException("Paging is not supported");
+                throw new UnsupportedFeatureException(protoVersion, "Paging is not supported");
         } else if (fetchSize <= 0) {
             fetchSize = configuration().getQueryOptions().getFetchSize();
         }
@@ -386,7 +390,7 @@ class SessionManager extends AbstractSession {
             ByteBuffer[] rawValues = rs.getValues(protoVersion);
 
             if (protoVersion == ProtocolVersion.V1 && rawValues != null)
-                throw new UnsupportedFeatureException("Binary values are not supported");
+                throw new UnsupportedFeatureException(protoVersion, "Binary values are not supported");
 
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
             String qString = rs.getQueryString();
@@ -402,7 +406,7 @@ class SessionManager extends AbstractSession {
             assert pagingState == null;
 
             if (protoVersion == ProtocolVersion.V1)
-                throw new UnsupportedFeatureException("Protocol level batching is not supported");
+                throw new UnsupportedFeatureException(protoVersion, "Protocol level batching is not supported");
 
             BatchStatement bs = (BatchStatement)statement;
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protoVersion);

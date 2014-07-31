@@ -124,7 +124,7 @@ public class QueryOptions {
 
         ProtocolVersion version = manager == null ? null : manager.protocolVersion();
         if (fetchSize != Integer.MAX_VALUE && version == ProtocolVersion.V1)
-            throw new UnsupportedFeatureException("Paging is not supported");
+            throw new UnsupportedFeatureException(version, "Paging is not supported");
 
         this.fetchSize = fetchSize;
         return this;
