@@ -615,7 +615,9 @@ public abstract class DataType {
 
         @Override
         public final int hashCode() {
-            return name.hashCode();
+            return (name == Name.TEXT)
+                ? Name.VARCHAR.hashCode()
+                : name.hashCode();
         }
 
         @Override
@@ -623,7 +625,10 @@ public abstract class DataType {
             if(!(o instanceof DataType.Native))
                 return false;
 
-            return name == ((DataType.Native)o).name;
+            Native that = (DataType.Native)o;
+            return name == that.name ||
+                   name == Name.VARCHAR && that.name == Name.TEXT ||
+                   name == Name.TEXT && that.name == Name.VARCHAR;
         }
 
         @Override
