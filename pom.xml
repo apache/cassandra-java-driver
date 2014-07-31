@@ -100,6 +100,8 @@
         <configuration>
           <!-- I can haz math in my javadoc (see http://zverovich.net/2012/01/14/beautiful-math-in-javadoc.html) -->
           <additionalparam>-header '&lt;script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"&gt;&lt;/script&gt;'</additionalparam>
+          <aggregate>true</aggregate>
+          <excludePackageNames>com.datastax.driver.stress</excludePackageNames>
         </configuration>
         <executions>
           <execution>
