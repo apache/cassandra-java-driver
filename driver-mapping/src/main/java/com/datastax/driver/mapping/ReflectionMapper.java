@@ -138,7 +138,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         public Object getValue(T entity) {
             @SuppressWarnings("unchecked")
             U udtEntity = (U) super.getValue(entity);
-            return udtMapper.toUDTValue(udtEntity);
+            return udtMapper.toUDT(udtEntity);
         }
 
         @Override

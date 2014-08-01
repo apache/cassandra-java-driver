@@ -173,7 +173,7 @@ class MethodMapper {
         void setValue(BoundStatement boundStatement, Object arg, int protocolVersion) {
             @SuppressWarnings("unchecked")
             V entity = (V) arg;
-            super.setValue(boundStatement, udtMapper.toUDTValue(entity), protocolVersion);
+            super.setValue(boundStatement, udtMapper.toUDT(entity), protocolVersion);
         }
     }
 
