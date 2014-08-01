@@ -458,4 +458,58 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             throw e;
         }
     }
+
+    /**
+     * Test for inserting null values into UDT's
+     * Original code found in python-driver:integration.standard.test_udts.py:test_udts_with_nulls
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void testUdtsWithNulls() throws Exception {
+        try {
+            // create keyspace
+            session.execute("CREATE KEYSPACE testUdtsWithNulls " +
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE testUdtsWithNulls");
+
+            // create UDT
+            session.execute("CREATE TYPE user (a text, b int, c uuid, d blob)");
+            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b user)");
+
+            // insert UDT data
+            UserType userTypeDef = cluster.getMetadata().getKeyspace("testUdtsWithNulls").getUserType("user");
+            UDTValue userType = userTypeDef.newValue().setString("a", null).setInt("b", 0).setUUID("c", null).setBytes("d", null);
+
+            PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+            session.execute(ins.bind(0, userType));
+
+            // retrieve and verify data
+            ResultSet rs = session.execute("SELECT * FROM mytable");
+            List<Row> rows = rs.all();
+            assertEquals(1, rows.size());
+
+            Row row = rows.get(0);
+
+            assertEquals(row.getInt("a"), 0);
+            assertEquals(row.getUDTValue("b"), userType);
+
+            // test empty strings
+            userType = userTypeDef.newValue().setString("a", "").setInt("b", 0).setUUID("c", null).setBytes("d", ByteBuffer.allocate(0));
+            session.execute(ins.bind(0, userType));
+
+            // retrieve and verify data
+            rs = session.execute("SELECT * FROM mytable");
+            rows = rs.all();
+            assertEquals(1, rows.size());
+
+            row = rows.get(0);
+
+            assertEquals(row.getInt("a"), 0);
+            assertEquals(row.getUDTValue("b"), userType);
+
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
 }
