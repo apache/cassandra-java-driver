@@ -1,6 +1,7 @@
 package com.datastax.driver.core;
 
 import java.util.*;
+import java.nio.ByteBuffer;
 
 import com.google.common.base.Joiner;
 import org.testng.annotations.Test;
@@ -477,6 +478,65 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 assertEquals(r.toString(), createdTuple.toString());
 
             }
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
+
+    /**
+     * Test for inserting null Tuple values into UDT's
+     * Original code found in python-driver:integration.standard.test_types.py:test_tuples_with_nulls
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void testTuplesWithNulls() throws Exception {
+        try {
+            // create keyspace
+            session.execute("CREATE KEYSPACE testTuplesWithNulls " +
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE testTuplesWithNulls");
+
+            // create UDT
+            session.execute("CREATE TYPE user (a text, b tuple<text, int, uuid, blob>)");
+            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b user)");
+
+            // insert UDT data
+            UserType userTypeDef = cluster.getMetadata().getKeyspace("testTuplesWithNulls").getUserType("user");
+            UDTValue userType = userTypeDef.newValue();
+
+            TupleType t = TupleType.of(DataType.text(), DataType.cint(), DataType.uuid(), DataType.blob());
+            TupleValue v = t.newValue(null, null, null, null);
+            userType.setTupleValue("b", v);
+
+            PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+            session.execute(ins.bind(0, userType));
+
+            // retrieve and verify data
+            ResultSet rs = session.execute("SELECT * FROM mytable");
+            List<Row> rows = rs.all();
+            assertEquals(1, rows.size());
+
+            Row row = rows.get(0);
+
+            assertEquals(row.getInt("a"), 0);
+            assertEquals(row.getUDTValue("b"), userType);
+
+            // test empty strings
+            v = t.newValue("", null, null, ByteBuffer.allocate(0));
+            userType.setTupleValue("b", v);
+            session.execute(ins.bind(0, userType));
+
+            // retrieve and verify data
+            rs = session.execute("SELECT * FROM mytable");
+            rows = rs.all();
+            assertEquals(1, rows.size());
+
+            row = rows.get(0);
+
+            assertEquals(row.getInt("a"), 0);
+            assertEquals(row.getUDTValue("b"), userType);
+
         } catch (Exception e) {
             errorOut();
             throw e;
