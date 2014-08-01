@@ -24,7 +24,7 @@ class AnnotationParser {
 
     private static final Comparator<Field> fieldComparator = new Comparator<Field>() {
         public int compare(Field f1, Field f2) {
-            return position(f2) - position(f1);
+            return position(f1) - position(f2);
         }
     };
 
