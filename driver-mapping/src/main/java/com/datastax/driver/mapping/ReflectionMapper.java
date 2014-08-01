@@ -303,7 +303,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         if (Collection.class.isAssignableFrom(klass))
             throw new IllegalArgumentException(String.format("Cannot map non-parametrized collection type %s for field %s; Please use a concrete type parameter", klass.getName(), f.getName()));
 
-        throw new IllegalArgumentException(String.format("Cannot map unknow class %s for field %s", klass.getName(), f));
+        throw new IllegalArgumentException(String.format("Cannot map unknown class %s for field %s", klass.getName(), f));
     }
 
     private static class ReflectionFactory implements Factory {
