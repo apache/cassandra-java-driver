@@ -32,6 +32,7 @@
     <module>driver-mapping</module>
     <module>driver-examples</module>
     <module>driver-dse</module>
+    <module>driver-dist</module>
   </modules>
 
   <properties>
@@ -100,8 +101,6 @@
         <configuration>
           <!-- I can haz math in my javadoc (see http://zverovich.net/2012/01/14/beautiful-math-in-javadoc.html) -->
           <additionalparam>-header '&lt;script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"&gt;&lt;/script&gt;'</additionalparam>
-          <aggregate>true</aggregate>
-          <excludePackageNames>com.datastax.driver.stress</excludePackageNames>
         </configuration>
         <executions>
           <execution>
@@ -110,16 +109,19 @@
               <goal>jar</goal>
             </goals>
           </execution>
+          <execution>
+            <id>aggregate-javadoc</id>
+            <inherited>false</inherited>
+            <phase>package</phase>
+            <goals>
+              <goal>aggregate-jar</goal>
+            </goals>
+            <configuration>
+              <aggregate>true</aggregate>
+              <excludePackageNames>com.datastax.driver.stress</excludePackageNames>
+            </configuration>
+          </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.4</version>
-        <configuration>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
-        </configuration>
       </plugin>
     </plugins>
   </build>
