@@ -24,7 +24,7 @@ class AnnotationParser {
 
     private static final Comparator<Field> fieldComparator = new Comparator<Field>() {
         public int compare(Field f1, Field f2) {
-            return position(f2) - position(f1);
+            return position(f1) - position(f2);
         }
     };
 
@@ -121,11 +121,11 @@ class AnnotationParser {
 
     private static void validateOrder(List<Field> fields, String annotation) {
         for (int i = 0; i < fields.size(); i++) {
-            int pos = position(fields.get(i));
-            if (pos < i)
-                throw new IllegalArgumentException("Missing ordering value " + i + " for " + annotation + " annotation");
-            else if (pos > i)
-                throw new IllegalArgumentException("Duplicate ordering value " + i + " for " + annotation + " annotation");
+            Field field = fields.get(i);
+            int pos = position(field);
+            if (pos != i)
+                throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of column %s, was expecting %d",
+                                                                 pos, annotation, field.getName(), i));
         }
     }
 
