@@ -4,6 +4,8 @@ CHANGELOG
 2.1.0:
 ------
 
+- [bug] ClusteringColumn annotation not working with specified ordering (JAVA-408)
+
 Merged from 2.0 branch:
 
 - [bug] Release connections on ResultSetFuture#cancel (JAVA-407)
