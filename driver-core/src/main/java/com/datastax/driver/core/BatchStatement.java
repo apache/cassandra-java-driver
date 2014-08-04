@@ -104,8 +104,13 @@ public class BatchStatement extends Statement {
      * Note that {@code statement} can be any {@code Statement}. It is allowed to mix
      * {@code RegularStatement} and {@code BoundStatement} in the same
      * {@code BatchStatement} in particular. Adding another {@code BatchStatement}
-     * is also allowed for convenient and is equivalent to adding all the {@code Statement}
+     * is also allowed for convenience and is equivalent to adding all the {@code Statement}
      * contained in that other {@code BatchStatement}.
+     * <p>
+     * When adding a {@code BoundStatement}, all of its values must be set, otherwise an
+     * {@code IllegalStateException} will be thrown when submitting the batch statement.
+     * See {@link BoundStatement} for more details, in particular how to handle {@code null}
+     * values.
      * <p>
      * Please note that the options of the added Statement (all those defined directly by the
      * {@link Statement} class: consistency level, fetch size, tracing, ...) will be ignored
@@ -209,6 +214,12 @@ public class BatchStatement extends Statement {
                 return keyspace;
         }
         return null;
+    }
+
+    void ensureAllSet() {
+        for (Statement statement : statements)
+            if (statement instanceof BoundStatement)
+                ((BoundStatement) statement).ensureAllSet();
     }
 
     static class IdAndValues {
