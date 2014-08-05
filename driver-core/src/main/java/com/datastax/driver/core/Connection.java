@@ -754,6 +754,8 @@ class Connection {
             // were, a new request could reuse that ID but get the answer to the request we just gave up on instead
             // of its own answer, and we would have no way to detect that.
             connection.dispatcher.removeHandler(streamId, false);
+            if (connection instanceof PooledConnection)
+                ((PooledConnection)connection).release();
         }
 
         private TimerTask onTimeoutTask() {

@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+2.0.5:
+------
+
+- [bug] Release connections on ResultSetFuture#cancel (JAVA-407)
+
+
 2.0.4:
 ------
 
