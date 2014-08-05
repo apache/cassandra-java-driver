@@ -193,6 +193,10 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         return setValue(i, type.codec(3).serialize(v));
     }
 
+    public T setToNull(int i) {
+        return setValue(i, null);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof AbstractAddressableByIndexData))

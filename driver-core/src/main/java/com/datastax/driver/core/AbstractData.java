@@ -394,6 +394,19 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     @Override
+    public T setToNull(int i) {
+        return setValue(i, null);
+    }
+
+    @Override
+    public T setToNull(String name) {
+        int[] indexes = getAllIndexesOf(name);
+        for (int i = 0; i < indexes.length; i++)
+            setToNull(indexes[i]);
+        return wrapped;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (!(o instanceof AbstractData))
             return false;

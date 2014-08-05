@@ -259,4 +259,15 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * do not correspond to the ones of {@code v}.
      */
     public T setTupleValue(int i, TupleValue v);
+
+    /**
+     * Sets the {@code i}th value to {@code null}.
+     * <p>
+     * This is mainly intended for CQL types which map to native Java types.
+     *
+     * @param i the index of the value to set.
+     * @return this object.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    public T setToNull(int i);
 }

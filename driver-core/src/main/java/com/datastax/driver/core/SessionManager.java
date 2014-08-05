@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -30,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
@@ -417,6 +415,7 @@ class SessionManager extends AbstractSession {
             return new Requests.Query(qString, options);
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
+            bs.ensureAllSet();
             boolean skipMetadata = protoVersion != 1 && bs.statement.getPreparedId().resultSetMetadata != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.wrapper.values), skipMetadata, fetchSize, pagingState, scl);
             return new Requests.Execute(bs.statement.getPreparedId().id, options);
@@ -428,6 +427,7 @@ class SessionManager extends AbstractSession {
                 throw new UnsupportedFeatureException("Protocol level batching is not supported");
 
             BatchStatement bs = (BatchStatement)statement;
+            bs.ensureAllSet();
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protoVersion);
             return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl);
         }

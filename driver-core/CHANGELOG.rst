@@ -5,6 +5,7 @@ CHANGELOG
 ------
 
 - [bug] ClusteringColumn annotation not working with specified ordering (JAVA-408)
+- [improvement] Fail BoundStatement if null values are not set explicitly (JAVA-410)
 
 Merged from 2.0 branch:
 

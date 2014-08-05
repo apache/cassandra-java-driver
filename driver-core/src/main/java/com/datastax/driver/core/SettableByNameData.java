@@ -306,4 +306,16 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * the ones of {@code v}.
      */
     public T setTupleValue(String name, TupleValue v);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to {@code null}.
+     * <p>
+     * This is mainly intended for CQL types which map to native Java types.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @return this object.
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     */
+    public T setToNull(String name);
 }
