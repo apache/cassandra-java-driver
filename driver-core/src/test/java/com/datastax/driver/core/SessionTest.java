@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
@@ -45,7 +46,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
     public void executeTest() throws Exception {
         // Simple calls to all versions of the execute/executeAsync methods
         String key = "execute_test";
-        ResultSet rs = session.execute(String.format(TestUtils.INSERT_FORMAT, TABLE1, key, "foo", 42, 24.03f));
+        ResultSet rs = session.execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE1, key, "foo", 42, 24.03f));
         assertTrue(rs.isExhausted());
 
         // execute
@@ -62,7 +63,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         // Simple calls to all versions of the execute/executeAsync methods for prepared statements
         // Note: the goal is only to exercice the Session methods, PreparedStatementTest have better prepared statement tests.
         String key = "execute_prepared_test";
-        ResultSet rs = session.execute(String.format(TestUtils.INSERT_FORMAT, TABLE2, key, "foo", 42, 24.03f));
+        ResultSet rs = session.execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE2, key, "foo", 42, 24.03f));
         assertTrue(rs.isExhausted());
 
         PreparedStatement p = session.prepare(String.format(TestUtils.SELECT_ALL_FORMAT + " WHERE k = ?", TABLE2));
@@ -113,7 +114,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
             // Simple calls to all versions of the execute/executeAsync methods
             String key = "execute_compressed_test";
-            ResultSet rs = compressedSession.execute(String.format(TestUtils.INSERT_FORMAT, TABLE3, key, "foo", 42, 24.03f));
+            ResultSet rs = compressedSession.execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE3, key, "foo", 42, 24.03f));
             assertTrue(rs.isExhausted());
 
             String SELECT_ALL = String.format(TestUtils.SELECT_ALL_FORMAT + " WHERE k = '%s'", TABLE3, key);
@@ -149,6 +150,13 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(state.getSession(), session);
     }
 
+    /**
+     * Check for session memory leaks by creating and closing 10,000 connections.
+     * Each time a session is created and closed we check the number of sessions the
+     * cluster.manager is holding onto as well as the number of open connections.
+     *
+     * @throws Exception
+     */
     @Test(groups = "long")
     public void sessionMemoryLeakTest() throws Exception {
         // Checking for JAVA-342
@@ -175,9 +183,11 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         try {
             for (int i = 0; i < 10000; ++i) {
+                // ensure 0 sessions with a single control connection
                 assertEquals(cluster.manager.sessions.size(), 0);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
 
+                // ensure a new session gets registered and control connections are established
                 session = cluster.connect();
                 assertEquals(cluster.manager.sessions.size(), 1);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 3);
@@ -224,6 +234,8 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             assertEquals(cluster.manager.sessions.size(), 0);
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
 
+            // ensure a new session gets registered and control connections are established
+            // an additional 2 control connections should be seen for node2
             thisSession = cluster.connect();
             assertEquals(cluster.manager.sessions.size(), 1);
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 5);
@@ -234,7 +246,9 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
 
         } finally {
+            // ensure we decommission node2 for the rest of the tests
             cassandraCluster.decommissionNode(2);
+
             assertEquals(cluster.manager.sessions.size(), 0);
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
 

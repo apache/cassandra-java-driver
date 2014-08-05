@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+2.1.0:
+------
+
+Merged from 2.0 branch:
+
+- [bug] Release connections on ResultSetFuture#cancel (JAVA-407)
+
+
 2.1.0-rc1:
 ----------
 
