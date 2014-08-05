@@ -120,11 +120,13 @@ public class CCMBridge {
     public void stop(int n) {
         logger.info("Stopping: " + IP_PREFIX + n);
         execute("ccm node%d stop", n);
+        execute("ccm node%d updateconf num_tokens:1", n);
     }
 
     public void forceStop(int n) {
         logger.info("Force stopping: " + IP_PREFIX + n);
         execute("ccm node%d stop --not-gently", n);
+        execute("ccm node%d updateconf num_tokens:1", n);
     }
 
     public void remove() {
