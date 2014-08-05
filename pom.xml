@@ -77,7 +77,7 @@
           <execution>
             <id>attach-sources</id>
             <goals>
-              <goal>jar</goal>
+              <goal>jar-no-fork</goal>
             </goals>
           </execution>
         </executions>
@@ -102,26 +102,6 @@
           <!-- I can haz math in my javadoc (see http://zverovich.net/2012/01/14/beautiful-math-in-javadoc.html) -->
           <additionalparam>-header '&lt;script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"&gt;&lt;/script&gt;'</additionalparam>
         </configuration>
-        <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>aggregate-javadoc</id>
-            <inherited>false</inherited>
-            <phase>package</phase>
-            <goals>
-              <goal>aggregate-jar</goal>
-            </goals>
-            <configuration>
-              <aggregate>true</aggregate>
-              <excludePackageNames>com.datastax.driver.stress</excludePackageNames>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

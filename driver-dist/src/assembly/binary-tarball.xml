@@ -28,7 +28,7 @@
   </moduleSets>
   <fileSets>
     <fileSet>
-      <directory>../target/apidocs</directory>
+      <directory>target/apidocs</directory>
       <outputDirectory>apidocs</outputDirectory>
     </fileSet>
     <fileSet>

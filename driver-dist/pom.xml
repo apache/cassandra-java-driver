@@ -21,7 +21,10 @@
     <version>2.1.0-rc2-SNAPSHOT</version>
   </parent>
   <artifactId>cassandra-driver-dist</artifactId>
-  <packaging>pom</packaging>
+
+  <!-- Should be pom but Javadoc generation requires a "classpath-capable" package -->
+  <packaging>jar</packaging>
+
   <name>DataStax Java Driver for Apache Cassandra - Binary distribution</name>
 
   <!-- These dependencies are only here to ensure proper build order -->
@@ -48,6 +51,22 @@
   <build>
     <finalName>cassandra-java-driver-${project.version}</finalName>
     <plugins>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9.1</version>
+        <executions>
+          <execution>
+            <id>dependencies-javadoc</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <includeDependencySources>true</includeDependencySources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>2.4</version>
