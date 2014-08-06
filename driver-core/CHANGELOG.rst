@@ -27,7 +27,7 @@ Merged from 2.0 branch:
 - [new] Support for User Defined Types and tuples
 - [new] Simple object mapper
 
-Merged from 2.0 branch:
+Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 
 - [improvement] Better handling of dead connections (JAVA-204)
 - [bug] Fix potential NPE in ControlConnection (JAVA-373)
