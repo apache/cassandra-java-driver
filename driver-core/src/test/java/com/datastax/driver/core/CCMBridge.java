@@ -101,10 +101,12 @@ public class CCMBridge {
 
     public void stop() {
         execute("ccm stop");
+        execute("ccm updateconf num_tokens:1");
     }
 
     public void forceStop() {
         execute("ccm stop --not-gently");
+        execute("ccm updateconf num_tokens:1");
     }
 
     public void start(int n) {
