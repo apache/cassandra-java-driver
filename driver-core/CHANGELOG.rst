@@ -10,6 +10,8 @@ CHANGELOG
 Merged from 2.0 branch:
 
 - [bug] Release connections on ResultSetFuture#cancel (JAVA-407)
+- [bug] Fix handling of SimpleStatement with values in query builder
+  batches (JAVA-393)
 
 
 2.1.0-rc1:
