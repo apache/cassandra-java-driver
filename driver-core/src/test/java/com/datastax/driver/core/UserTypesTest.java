@@ -117,7 +117,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     /**
-     * Run simpleWriteReadTest with unprepared requests.
+     * Test for ensuring udts are defined in a particular keyspace.
      * @throws Exception
      */
     @Test(groups = "short")
@@ -505,6 +505,61 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             row = rows.get(0);
 
             assertEquals(row.getInt("a"), 0);
+            assertEquals(row.getUDTValue("b"), userType);
+
+        } catch (Exception e) {
+            errorOut();
+            throw e;
+        }
+    }
+
+    /**
+     * Test for inserting null values into collections of UDT's
+     * @throws Exception
+     */
+    @Test(groups = "short")
+    public void testUdtsWithCollectionNulls() throws Exception {
+        try {
+            // create keyspace
+            session.execute("CREATE KEYSPACE testUdtsWithCollectionNulls " +
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+            session.execute("USE testUdtsWithCollectionNulls");
+
+            // create UDT
+            session.execute("CREATE TYPE user (a List<text>, b Set<text>, c Map<text, text>, d Tuple<text>)");
+            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b user)");
+
+            // insert null UDT data
+            PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) " +
+                    "VALUES (0, { a: ?, b: ?, c: ?, d: ? })");
+            session.execute(ins.bind().setList(0, null).setSet(1, null).setMap(2, null).setTupleValue(3, null));
+
+            // retrieve and verify data
+            ResultSet rs = session.execute("SELECT * FROM mytable");
+            List<Row> rows = rs.all();
+            assertEquals(1, rows.size());
+
+            Row row = rows.get(0);
+            assertEquals(row.getInt("a"), 0);
+
+            UserType userTypeDef = cluster.getMetadata().getKeyspace("testUdtsWithCollectionNulls").getUserType("user");
+            UDTValue userType = userTypeDef.newValue().setList("a", null).setSet("b", null).setMap("c", null).setTupleValue("d", null);
+            assertEquals(row.getUDTValue("b"), userType);
+
+            // test missing UDT args
+            ins = session.prepare("INSERT INTO mytable (a, b) " +
+                    "VALUES (1, { a: ? })");
+            session.execute(ins.bind().setList(0, new ArrayList<Object>()));
+
+            // retrieve and verify data
+            rs = session.execute("SELECT * FROM mytable");
+            rows = rs.all();
+            assertEquals(2, rows.size());
+
+            row = rows.get(0);
+            assertEquals(row.getInt("a"), 1);
+
+            userType = userTypeDef.newValue().setList(0, new ArrayList<Object>());
             assertEquals(row.getUDTValue("b"), userType);
 
         } catch (Exception e) {
