@@ -281,10 +281,10 @@ class SessionManager extends AbstractSession {
         });
     }
 
-    ListenableFuture<?> removePool(Host host) {
+    CloseFuture removePool(Host host) {
         final HostConnectionPool pool = pools.remove(host);
         return pool == null
-             ? Futures.immediateFuture(null)
+             ? CloseFuture.immediateFuture()
              : pool.closeAsync();
     }
 
@@ -339,7 +339,7 @@ class SessionManager extends AbstractSession {
     void onDown(Host host) throws InterruptedException, ExecutionException {
         // Note that with well behaved balancing policy (that ignore dead nodes), the removePool call is not necessary
         // since updateCreatedPools should take care of it. But better protect against non well behaving policies.
-        removePool(host).get();
+        removePool(host).force().get();
         updateCreatedPools(MoreExecutors.sameThreadExecutor());
     }
 

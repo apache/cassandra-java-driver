@@ -45,7 +45,7 @@ class PooledConnection extends Connection {
             return;
 
         if (hostIsDown) {
-            pool.closeAsync();
+            pool.closeAsync().force();
         } else {
             pool.replace(this);
         }

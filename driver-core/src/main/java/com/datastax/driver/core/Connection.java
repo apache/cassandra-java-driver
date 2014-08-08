@@ -628,9 +628,11 @@ class Connection {
         public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) {
             // If we've closed the channel client side then we don't really want to defunct the connection, but
             // if there is remaining thread waiting on us, we still want to wake them up
-            if (!isInitialized || isClosed())
+            if (!isInitialized || isClosed()) {
                 errorOutAllHandler(new TransportException(address, "Channel has been closed"));
-            else
+                // we still want to force so that the future completes
+                Connection.this.closeAsync().force();
+            } else
                 defunct(new TransportException(address, "Channel has been closed"));
         }
     }
