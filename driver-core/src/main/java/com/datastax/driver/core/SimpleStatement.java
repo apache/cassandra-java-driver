@@ -115,6 +115,16 @@ public class SimpleStatement extends RegularStatement {
         return values == null ? null : convert(values, protocolVersion);
     }
 
+    /**
+     * The number of values for this statement, that is the size of the array
+     * that will be returned by {@code getValues}.
+     *
+     * @return the number of values.
+     */
+    public int valuesCount() {
+        return values == null ? 0 : values.length;
+    }
+
     @Override
     public boolean hasValues() {
         return values != null && values.length > 0;
