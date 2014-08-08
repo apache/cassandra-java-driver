@@ -7,6 +7,7 @@ CHANGELOG
 - [bug] Release connections on ResultSetFuture#cancel (JAVA-407)
 - [bug] Fix handling of SimpleStatement with values in query builder
   batches (JAVA-393)
+- [bug] Ensure pool is properly closed in onDown (JAVA-417)
 
 
 2.0.4:
