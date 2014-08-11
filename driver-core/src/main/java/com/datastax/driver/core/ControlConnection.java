@@ -229,8 +229,10 @@ class ControlConnection implements Host.StateListener {
             refreshNodeListAndTokenMap(connection, cluster, isInitialConnection);
 
             // Note that refreshing the schema will trigger refreshNodeListAndTokenMap since table == null
+            // We want that because the token map was not properly initialized by the first call above, since it requires the list of keyspaces
+            // to be loaded.
             logger.debug("[Control connection] Refreshing schema");
-            refreshSchema(connection, null, null, cluster, isInitialConnection, true);
+            refreshSchema(connection, null, null, cluster, isInitialConnection);
             return connection;
         } catch (BusyConnectionException e) {
             connection.closeAsync().get();
@@ -248,7 +250,7 @@ class ControlConnection implements Host.StateListener {
             // At startup, when we add the initial nodes, this will be null, which is ok
             if (c == null)
                 return;
-            refreshSchema(c, keyspace, table, cluster, false, false);
+            refreshSchema(c, keyspace, table, cluster, false);
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing schema ({})", e.getMessage());
             signalError();
@@ -263,7 +265,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    static void refreshSchema(Connection connection, String keyspace, String table, Cluster.Manager cluster, boolean isInitialConnection, boolean dontReloadNodeInfo) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    static void refreshSchema(Connection connection, String keyspace, String table, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         Host host = cluster.metadata.getHost(connection.address);
         // Neither host, nor it's version should be null. But instead of dying if there is a race or something, we can kind of try to infer
         // a Cassandra version from the protocol version (this is not full proof, we can have the protocol 1 against C* 2.0+, but it's worth
@@ -312,7 +314,7 @@ class ControlConnection implements Host.StateListener {
 
         // If the table is null, we either rebuild all from scratch or have an updated keyspace. In both case, rebuild the token map
         // since some replication on some keyspace may have changed
-        if (table == null && !dontReloadNodeInfo)
+        if (table == null)
             refreshNodeListAndTokenMap(connection, cluster, false);
     }
 

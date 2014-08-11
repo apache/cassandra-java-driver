@@ -14,6 +14,7 @@ Merged from 2.0 branch:
 - [bug] Fix handling of SimpleStatement with values in query builder
   batches (JAVA-393)
 - [bug] Ensure pool is properly closed in onDown (JAVA-417)
+- [bug] Fix tokenMap initialization at startup (JAVA-415)
 
 
 2.1.0-rc1:
