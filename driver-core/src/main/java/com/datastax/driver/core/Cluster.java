@@ -1772,7 +1772,7 @@ public class Cluster implements Closeable {
                         // that querying a table just after having created it don't fail.
                         if (!ControlConnection.waitForSchemaAgreement(connection, Cluster.Manager.this))
                             logger.warn("No schema agreement from live replicas after {} ms. The schema may not be up to date on some nodes.", ControlConnection.MAX_SCHEMA_AGREEMENT_WAIT_MS);
-                        ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this, false, false);
+                        ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this, false);
                     } catch (Exception e) {
                         logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
                         submitSchemaRefresh(keyspace, table);
