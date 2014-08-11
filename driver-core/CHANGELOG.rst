@@ -6,6 +6,7 @@ CHANGELOG
 
 - [bug] ClusteringColumn annotation not working with specified ordering (JAVA-408)
 - [improvement] Fail BoundStatement if null values are not set explicitly (JAVA-410)
+- [bug] Handle UDT and tuples in BuiltStatement.toString (JAVA-416)
 
 Merged from 2.0 branch:
 
