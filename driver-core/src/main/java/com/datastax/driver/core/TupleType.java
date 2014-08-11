@@ -19,6 +19,8 @@ import java.util.*;
 
 import com.google.common.collect.ImmutableList;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
 /**
  * A tuple type.
  * <p>

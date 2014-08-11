@@ -9,6 +9,8 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Table;
 
+import com.datastax.driver.mapping.annotations.UDT;
+
 /**
  * Mapping manager from which to obtain entity mappers.
  */

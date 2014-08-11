@@ -26,6 +26,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.policies.ReconnectionPolicy;
+
 /**
  * A Cassandra node.
  *
@@ -248,12 +250,12 @@ public class Host {
          * {@link ReconnectionPolicy} in place.
          * <p>
          * When this event is triggered, it is possible to call the host
-         * {@link getInitialReconnectionAttemptFuture} method to wait until the
+         * {@link #getInitialReconnectionAttemptFuture} method to wait until the
          * initial and immediate reconnection attempt succeed or fail.
          * <p>
          * Note that some StateListener may ignore that event. If a node that
          * that is suspected down turns out to be truly down (that is, the driver
-         * cannot successfully connect to it right away), then {@link onDown} will
+         * cannot successfully connect to it right away), then {@link #onDown} will
          * be called.
          */
         public void onSuspected(Host host);
