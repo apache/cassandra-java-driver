@@ -227,7 +227,7 @@ class SessionManager extends AbstractSession {
     // want to avoid
     private boolean replacePool(Host host, HostDistance distance, HostConnectionPool condition) throws ConnectionException, UnsupportedProtocolVersionException {
         if (isClosing)
-            return false;
+            return true;
 
         Lock l = poolCreationLocks.get(host);
         l.lock();
