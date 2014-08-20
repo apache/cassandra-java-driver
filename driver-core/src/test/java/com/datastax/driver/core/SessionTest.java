@@ -19,10 +19,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.*;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /**
  * Simple test of the Sessions methods against a one node cluster.
@@ -252,6 +254,59 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             assertEquals(cluster.manager.sessions.size(), 0);
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
 
+            cluster.close();
+        }
+    }
+
+    /**
+     * Checks for deadlocks when a session shutdown races with the initialization of the cluster (JAVA-418).
+     */
+    @Test(groups = "short")
+    public void closeDuringClusterInitTest() throws InterruptedException {
+        for (int i = 0; i < 500; i++) {
+
+            // Use our own cluster and session (not the ones provided by the parent class) because we want an uninitialized cluster
+            // (note the use of newSession below)
+            final Cluster cluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "1").build();
+            final Session session = cluster.newSession();
+
+            // Spawn two threads to simulate the race
+            ExecutorService executor = Executors.newFixedThreadPool(2);
+            final CountDownLatch startLatch = new CountDownLatch(1);
+
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        startLatch.await();
+                        cluster.init();
+                    } catch (InterruptedException e) {
+                        fail("unexpected interruption", e);
+                    }
+                }
+            });
+
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        startLatch.await();
+                        TimeUnit.MILLISECONDS.sleep(10);
+                        session.close();
+                    } catch (InterruptedException e) {
+                        fail("unexpected interruption", e);
+                    }
+                }
+            });
+
+            // Start the threads
+            startLatch.countDown();
+
+            executor.shutdown();
+            boolean normalShutdown = executor.awaitTermination(500, TimeUnit.MILLISECONDS);
+            assertTrue(normalShutdown);
+
+            // The deadlock occurred here before JAVA-418
             cluster.close();
         }
     }

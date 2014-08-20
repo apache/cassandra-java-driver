@@ -558,16 +558,16 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             query(c, 12, ConsistencyLevel.TWO);
 
             assertQueried(CCMBridge.IP_PREFIX + '1', 0);
-            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
-            assertQueried(CCMBridge.IP_PREFIX + '3', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
             assertQueried(CCMBridge.IP_PREFIX + '4', 0);
             assertQueried(CCMBridge.IP_PREFIX + '5', 0);
             assertQueried(CCMBridge.IP_PREFIX + '6', 0);
 
             resetCoordinators();
-            logger.info("Stopping node 2...");
-            stopAndWait(c, 2);
-            logger.info("Node 2 stopped.");
+            logger.info("Stopping node 3...");
+            stopAndWait(c, 3);
+            logger.info("Node 3 stopped.");
 
             List<ConsistencyLevel> acceptedList = Arrays.asList(
                                                     ConsistencyLevel.ANY,
@@ -657,8 +657,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             assertQueried(CCMBridge.IP_PREFIX + '1', 0);
             assertQueried(CCMBridge.IP_PREFIX + '2', 0);
             assertQueried(CCMBridge.IP_PREFIX + '3', 0);
-            assertQueried(CCMBridge.IP_PREFIX + '4', 12);
-            assertQueried(CCMBridge.IP_PREFIX + '5', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '4', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '5', 12);
             assertQueried(CCMBridge.IP_PREFIX + '6', 0);
 
             resetCoordinators();
