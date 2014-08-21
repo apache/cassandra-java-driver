@@ -41,6 +41,8 @@ CHANGELOG
   (JAVA-368)
 - [bug] Signal connection failure sooner to avoid missing them
   (JAVA-367)
+- [bug] Throw UnsupportedOperationException for protocol batch
+  setSerialCL (JAVA-377)
 
 Merged from 1.0 branch:
 
