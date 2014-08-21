@@ -127,7 +127,7 @@ public class WhiteListPolicy implements LoadBalancingPolicy {
 
     @Override
     public void onSuspected(Host host) {
-        if (whiteList.contains(host.getAddress()))
+        if (whiteList.contains(host.getSocketAddress()))
             childPolicy.onSuspected(host);
     }
 
