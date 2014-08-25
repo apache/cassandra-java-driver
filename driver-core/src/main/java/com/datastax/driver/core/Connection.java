@@ -582,6 +582,9 @@ class Connection {
 
             if (releaseStreamId)
                 streamIdHandler.release(streamId);
+
+            if (isClosed() && pending.isEmpty())
+                closeFuture.get().force();
         }
 
         @Override
