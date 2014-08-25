@@ -29,6 +29,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.*;
 
 import org.slf4j.Logger;
@@ -1091,6 +1092,8 @@ public class Cluster implements Closeable {
         // An executor for tasks that might block some time, like creating new connection, but are generally not too critical.
         final ListeningExecutorService blockingExecutor;
 
+        final ConnectionReaper reaper;
+
         final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
         // All the queries that have been prepared (we keep them so we can re-prepared them when a node fail or a
@@ -1111,6 +1114,8 @@ public class Cluster implements Closeable {
 
             this.executor = makeExecutor(Runtime.getRuntime().availableProcessors(), "Cassandra Java Driver worker-%d");
             this.blockingExecutor = makeExecutor(2, "Cassandra Java Driver blocking tasks worker-%d");
+
+            this.reaper = new ConnectionReaper();
 
             this.metadata = new Metadata(this);
             this.contactPoints = contactPoints;
@@ -1980,6 +1985,8 @@ public class Cluster implements Closeable {
                             // connectionFactory at the very last
                             connectionFactory.shutdown();
 
+                            reaper.shutdown();
+
                             set(null);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
@@ -1988,6 +1995,58 @@ public class Cluster implements Closeable {
                     }
                 }).start();
             }
+        }
+    }
+
+    /**
+     * Periodically ensures that closed connections are properly terminated once they have no more pending requests.
+     *
+     * This is normally done when the connection errors out, or when the last request is processed; this class acts as
+     * a last-effort protection since unterminated connections can lead to deadlocks.
+     */
+    static class ConnectionReaper {
+        private static final int INTERVAL_MS = 5000;
+
+        private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, threadFactory("Reaper-%d"));
+        private final Set<Connection> connections = Sets.newConcurrentHashSet();
+
+        private volatile boolean shutdown;
+
+        private final Runnable reaperTask = new Runnable() {
+            @Override
+            public void run() {
+                reapConnections();
+                executor.schedule(this, INTERVAL_MS, TimeUnit.MILLISECONDS);
+            }
+
+            private final void reapConnections() {
+                Iterator<Connection> iterator = connections.iterator();
+                while (iterator.hasNext()) {
+                    Connection connection = iterator.next();
+                    boolean terminated = connection.terminate(false);
+                    if (terminated)
+                        iterator.remove();
+                }
+            }
+        };
+
+        ConnectionReaper() {
+            executor.schedule(reaperTask, INTERVAL_MS, TimeUnit.MILLISECONDS);
+        }
+
+        void register(Connection connection) {
+            if (shutdown) {
+                // This should not happen since the reaper is shut down after all sessions.
+                logger.warn("Connection registered after reaper shutdown: {}", connection);
+                connection.terminate(true);
+            } else {
+                connections.add(connection);
+            }
+        }
+
+        void shutdown() {
+            shutdown = true;
+            executor.shutdown();
         }
     }
 }
