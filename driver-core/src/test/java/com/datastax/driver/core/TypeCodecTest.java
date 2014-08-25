@@ -15,6 +15,12 @@
  */
 package com.datastax.driver.core;
 
+import java.util.Collections;
+import java.util.List;
+
+import org.testng.collections.Lists;
+
+import com.google.common.base.Strings;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -46,5 +52,21 @@ public class TypeCodecTest {
     public void testCustomValueMap() throws Exception {
         TypeCodec mapType = TypeCodec.mapOf(text(), CUSTOM_FOO);
         Assert.assertNotNull(mapType);
+    }
+
+    @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
+    public void collectionTooLargeTest() throws Exception {
+        TypeCodec<List<Integer>> listType = TypeCodec.listOf(DataType.cint());
+        List<Integer> list = Collections.nCopies(65536, 1);
+
+        listType.serialize(list);
+    }
+
+    @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
+    public void collectionElementTooLargeTest() throws Exception {
+        TypeCodec<List<String>> listType = TypeCodec.listOf(DataType.text());
+        List<String> list = Lists.newArrayList(Strings.repeat("a", 65536));
+
+        listType.serialize(list);
     }
 }
