@@ -1188,7 +1188,8 @@ public class Cluster implements Closeable {
 
         InetSocketAddress translateAddress(InetAddress address) {
             InetSocketAddress sa = new InetSocketAddress(address, connectionFactory.getPort());
-            return configuration.getPolicies().getAddressTranslater().translate(sa);
+            InetSocketAddress translated = configuration.getPolicies().getAddressTranslater().translate(sa);
+            return translated == null ? sa : translated;
         }
 
         private Session newSession() {
