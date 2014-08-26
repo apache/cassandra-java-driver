@@ -7,7 +7,7 @@ the Cassandra Query Language version 3 (CQL3) and Cassandra's binary protocol.
 - JIRA: https://datastax-oss.atlassian.net/browse/JAVA
 - MAILING LIST: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
 - IRC: #datastax-drivers on `irc.freenode.net <http://freenode.net>`_
-- TWITTER: Follow the latest news about DataStax Drivers - `@mfiguiere <http://twitter.com/mfiguiere>`_ 
+- TWITTER: Follow the latest news about DataStax Drivers - `@olim7t <http://twitter.com/olim7t>`_, `@mfiguiere <http://twitter.com/mfiguiere>`_ 
 - DOCS: http://www.datastax.com/documentation/developer/java-driver/2.0/index.html
 - API: http://www.datastax.com/drivers/java/2.0
 
@@ -36,7 +36,7 @@ it in your application using the following Maven dependency::
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>2.0.4</version>
+      <version>2.0.5</version>
     </dependency>
 
 Compatibility
