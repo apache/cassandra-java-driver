@@ -242,18 +242,18 @@ class HostConnectionPool {
             return;
         }
 
+        if (connection.isDefunct()) {
+            // As part of making it defunct, we have already replaced it or
+            // closed the pool.
+            return;
+        }
+
         int inFlight = connection.inFlight.decrementAndGet();
 
-        // If the connection is defunct, we have already replaced it or closed
-        // the pool as part of marking it.
-        if (!connection.isDefunct()) {
-
-            if (trash.contains(connection) && inFlight == 0) {
-                if (trash.remove(connection))
-                    close(connection);
-                return;
-            }
-
+        if (trash.contains(connection)) {
+            if (inFlight == 0 && trash.remove(connection))
+                close(connection);
+        } else {
             if (connections.size() > options().getCoreConnectionsPerHost(hostDistance) && inFlight <= options().getMinSimultaneousRequestsPerConnectionThreshold(hostDistance)) {
                 trashConnection(connection);
             } else if (connection.maxAvailableStreams() < MIN_AVAILABLE_STREAMS) {
@@ -267,23 +267,35 @@ class HostConnectionPool {
     // Trash the connection and create a new one, but we don't call trashConnection
     // directly because we want to make sure the connection is always trashed.
     private void replaceConnection(PooledConnection connection) {
-        open.decrementAndGet();
+        if (connection.markForTrash.compareAndSet(false, true))
+            open.decrementAndGet();
         maybeSpawnNewConnection();
         doTrashConnection(connection);
     }
 
     private boolean trashConnection(PooledConnection connection) {
-        // First, make sure we don't go below core connections
-        for(;;) {
-            int opened = open.get();
-            if (opened <= options().getCoreConnectionsPerHost(hostDistance))
-                return false;
+        if (connection.markForTrash.compareAndSet(false, true)) {
+            // First, make sure we don't go below core connections
+            for (;;) {
+                int opened = open.get();
+                if (opened <= options().getCoreConnectionsPerHost(hostDistance)) {
+                    connection.markForTrash.set(false);
+                    return false;
+                }
 
-            if (open.compareAndSet(opened, opened - 1))
-                break;
+                if (open.compareAndSet(opened, opened - 1))
+                    break;
+            }
+
+            doTrashConnection(connection);
         }
-
-        doTrashConnection(connection);
+        // If compareAndSet failed, it means we raced and another thread will execute doTrashConnection.
+        // If the connection needs to be closed (inFlight == 0), we don't need to do it here because the other thread will necessarily do
+        // it:
+        // - the current thread decremented inFlight in returnConnection
+        // - we know it did it before the connection was trashed, because otherwise it would have entered `if (trash.contains(connection))`
+        //   in returnConnection and not arrived here.
+        // - so the other thread will see the up-to-date value of inFlight and take appropriate action.
         return true;
     }
 
@@ -352,7 +364,9 @@ class HostConnectionPool {
         manager.blockingExecutor().submit(newConnectionTask);
     }
 
-    void replace(final Connection connection) {
+    void replaceDefunctConnection(final PooledConnection connection) {
+        if (connection.markForTrash.compareAndSet(false, true))
+            open.decrementAndGet();
         connections.remove(connection);
         connection.closeAsync();
         manager.blockingExecutor().submit(new Runnable() {
@@ -394,11 +408,12 @@ class HostConnectionPool {
     private List<CloseFuture> discardAvailableConnections() {
 
         List<CloseFuture> futures = new ArrayList<CloseFuture>(connections.size());
-        for (Connection connection : connections) {
+        for (final PooledConnection connection : connections) {
             CloseFuture future = connection.closeAsync();
             future.addListener(new Runnable() {
                 public void run() {
-                    open.decrementAndGet();
+                    if (connection.markForTrash.compareAndSet(false, true))
+                        open.decrementAndGet();
                 }
             }, MoreExecutors.sameThreadExecutor());
             futures.add(future);
