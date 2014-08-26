@@ -1481,19 +1481,22 @@ public class Cluster implements Closeable {
                     // TODO: this is a bit wasteful, we should consider passing it to onAdd/onUp so
                     // we use it for the first HostConnectionPool created
                     connection.closeAsync();
-                    logger.debug("Successful reconnection to {}, setting host UP", host);
                     // Make sure we have up-to-date infos on that host before adding it (so we typically
                     // catch that an upgraded node uses a new cassandra version).
-                    controlConnection.refreshNodeInfo(host);
-                    try {
-                        if (isHostAddition)
-                            onAdd(host);
-                        else
-                            onUp(host);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    } catch (Exception e) {
-                        logger.error("Unexpected error while setting node up", e);
+                    if (controlConnection.refreshNodeInfo(host)) {
+                        logger.debug("Successful reconnection to {}, setting host UP", host);
+                        try {
+                            if (isHostAddition)
+                                onAdd(host);
+                            else
+                                onUp(host);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        } catch (Exception e) {
+                            logger.error("Unexpected error while setting node up", e);
+                        }
+                    } else {
+                        logger.debug("Not enough info for {}, ignoring host", host);
                     }
                 }
 
@@ -1816,8 +1819,11 @@ public class Cluster implements Closeable {
                                     public void runMayThrow() throws InterruptedException, ExecutionException {
                                         // Make sure we have up-to-date infos on that host before adding it (so we typically
                                         // catch that an upgraded node uses a new cassandra version).
-                                        controlConnection.refreshNodeInfo(newHost);
-                                        onAdd(newHost);
+                                        if (controlConnection.refreshNodeInfo(newHost)) {
+                                            onAdd(newHost);
+                                        } else {
+                                            logger.debug("Not enough info for {}, ignoring host", newHost);
+                                        }
                                     }
                                 }, 1, TimeUnit.SECONDS);
                             }
@@ -1855,8 +1861,11 @@ public class Cluster implements Closeable {
                                     public void runMayThrow() throws InterruptedException, ExecutionException {
                                         // Make sure we have up-to-date infos on that host before adding it (so we typically
                                         // catch that an upgraded node uses a new cassandra version).
-                                        controlConnection.refreshNodeInfo(h);
-                                        onAdd(h);
+                                        if (controlConnection.refreshNodeInfo(h)) {
+                                            onAdd(h);
+                                        } else {
+                                            logger.debug("Not enough info for {}, ignoring host", h);
+                                        }
                                     }
                                 }, 1, TimeUnit.SECONDS);
                             } else {
@@ -1865,8 +1874,11 @@ public class Cluster implements Closeable {
                                     public void runMayThrow() throws InterruptedException, ExecutionException {
                                         // Make sure we have up-to-date infos on that host before adding it (so we typically
                                         // catch that an upgraded node uses a new cassandra version).
-                                        controlConnection.refreshNodeInfo(hostUp);
-                                        onUp(hostUp);
+                                        if (controlConnection.refreshNodeInfo(hostUp)) {
+                                            onUp(hostUp);
+                                        } else {
+                                            logger.debug("Not enough info for {}, ignoring host", hostUp);
+                                        }
                                     }
                                 });
                             }
