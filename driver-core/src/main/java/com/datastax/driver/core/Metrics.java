@@ -18,6 +18,8 @@ package com.datastax.driver.core;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.codahale.metrics.Counter;
+
 import com.codahale.metrics.*;
 
 /**
@@ -114,16 +116,16 @@ public class Metrics {
     }
 
     /**
-     * Returns an object regrouping metrics related to the errors encountered.
+     * Returns an object grouping metrics related to the errors encountered.
      *
-     * @return an object regrouping metrics related to the errors encountered.
+     * @return an object grouping metrics related to the errors encountered.
      */
     public Errors getErrorMetrics() {
         return errors;
     }
 
     /**
-     * Returns the number of Cassandra hosts currently known by the driver (that is 
+     * Returns the number of Cassandra hosts currently known by the driver (that is
      * whether they are currently considered up or down).
      *
      * @return the number of Cassandra hosts currently known by the driver.
@@ -170,7 +172,13 @@ public class Metrics {
         private final Counter otherErrors = registry.counter("other-errors");
 
         private final Counter retries = registry.counter("retries");
+        private final Counter retriesOnWriteTimeout = registry.counter("retries-on-write-timeout");
+        private final Counter retriesOnReadTimeout = registry.counter("retries-on-read-timeout");
+        private final Counter retriesOnUnavailable = registry.counter("retries-on-unavailable");
         private final Counter ignores = registry.counter("ignores");
+        private final Counter ignoresOnWriteTimeout = registry.counter("ignores-on-write-timeout");
+        private final Counter ignoresOnReadTimeout = registry.counter("ignores-on-read-timeout");
+        private final Counter ignoresOnUnavailable = registry.counter("ignores-on-unavailable");
 
         /**
          * Returns the number of connection to Cassandra nodes errors.
@@ -211,7 +219,7 @@ public class Metrics {
 
         /**
          * Returns the number of requests that returned an unavailable exception
-         * (independently of the final decision taken by the 
+         * (independently of the final decision taken by the
          * {@link com.datastax.driver.core.policies.RetryPolicy}).
          *
          * @return the number of unavailable exceptions.
@@ -235,11 +243,50 @@ public class Metrics {
          * Returns the number of times a request was retried due to the
          * {@link com.datastax.driver.core.policies.RetryPolicy}.
          *
-         * @return the number of times a requests was retried due to the 
+         * @return the number of times a requests was retried due to the
          * {@link com.datastax.driver.core.policies.RetryPolicy}.
          */
         public Counter getRetries() {
             return retries;
+        }
+
+        /**
+         * Returns the number of times a request was retried due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * read timed out.
+         *
+         * @return the number of times a requests was retried due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * read timed out.
+         */
+        public Counter getRetriesOnReadTimeout() {
+            return retriesOnReadTimeout;
+        }
+
+        /**
+         * Returns the number of times a request was retried due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * write timed out.
+         *
+         * @return the number of times a requests was retried due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * write timed out.
+         */
+        public Counter getRetriesOnWriteTimeout() {
+            return retriesOnWriteTimeout;
+        }
+
+        /**
+         * Returns the number of times a request was retried due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
+         * unavailable exception.
+         *
+         * @return the number of times a requests was retried due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
+         * unavailable exception.
+         */
+        public Counter getRetriesOnUnavailable() {
+            return retriesOnUnavailable;
         }
 
         /**
@@ -252,6 +299,45 @@ public class Metrics {
          */
         public Counter getIgnores() {
             return ignores;
+        }
+
+        /**
+         * Returns the number of times a request was ignored due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * read timed out.
+         *
+         * @return the number of times a requests was ignored due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * read timed out.
+         */
+        public Counter getIgnoresOnReadTimeout() {
+            return ignoresOnReadTimeout;
+        }
+
+        /**
+         * Returns the number of times a request was ignored due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * write timed out.
+         *
+         * @return the number of times a requests was ignored due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * write timed out.
+         */
+        public Counter getIgnoresOnWriteTimeout() {
+            return ignoresOnWriteTimeout;
+        }
+
+        /**
+         * Returns the number of times a request was ignored due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
+         * unavailable exception.
+         *
+         * @return the number of times a requests was ignored due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
+         * unavailable exception.
+         */
+        public Counter getIgnoresOnUnavailable() {
+            return ignoresOnUnavailable;
         }
     }
 }

@@ -15,9 +15,11 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+
 import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -227,16 +229,23 @@ public class CCMBridge {
 
         protected abstract Collection<String> getTableDefinitions();
 
+        // Give individual tests a chance to customize the cluster configuration
+        protected Cluster.Builder configure(Cluster.Builder builder) {
+            return builder;
+        }
+
         public void errorOut() {
             erroredOut = true;
         }
 
-        public static void createCluster() {
+        public void createCluster() {
             erroredOut = false;
             schemaCreated = false;
             cassandraCluster = CCMBridge.create("test", 1);
             try {
-                cluster = Cluster.builder().addContactPoints(IP_PREFIX + '1').build();
+                Builder builder = Cluster.builder();
+                builder = configure(builder);
+                cluster = builder.addContactPoints(IP_PREFIX + '1').build();
                 session = cluster.connect();
             } catch (NoHostAvailableException e) {
                 erroredOut = true;
