@@ -1252,6 +1252,12 @@ public class Cluster implements Closeable {
                       + "Cluster.Builder#usingProtocolVersion() when creating the Cluster instance.", host);
         }
 
+        void logClusterNameMismatch(Host host, String expectedClusterName, String actualClusterName) {
+            logger.warn("Detected added or restarted Cassandra host {} but ignoring it since its cluster name '{}' does not match the one "
+                        + "currently known ({})",
+                        host, actualClusterName, expectedClusterName);
+        }
+
         public ListenableFuture<?> triggerOnUp(final Host host) {
             return executor.submit(new ExceptionCatchingRunnable() {
                 @Override
@@ -1299,6 +1305,9 @@ public class Cluster implements Closeable {
                 // Don't propagate because we don't want to prevent other listener to run
             } catch (UnsupportedProtocolVersionException e) {
                 logUnsupportedVersionProtocol(host);
+                return;
+            } catch (ClusterNameMismatchException e) {
+                logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
                 return;
             }
 
@@ -1472,7 +1481,7 @@ public class Cluster implements Closeable {
             logger.debug("{} is down, scheduling connection retries", host);
             new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
 
-                protected Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+                protected Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
                     return connectionFactory.open(host);
                 }
 
@@ -1507,7 +1516,7 @@ public class Cluster implements Closeable {
                 }
 
                 protected boolean onUnknownException(Exception e, long nextDelayMs) {
-                    logger.error(String.format("Unknown error during control connection reconnection, scheduling retry in %d milliseconds", nextDelayMs), e);
+                    logger.error(String.format("Unknown error during reconnection to %s, scheduling retry in %d milliseconds", host, nextDelayMs), e);
                     return true;
                 }
 
@@ -1559,6 +1568,9 @@ public class Cluster implements Closeable {
                 // Don't propagate because we don't want to prevent other listener to run
             } catch (UnsupportedProtocolVersionException e) {
                 logUnsupportedVersionProtocol(host);
+                return;
+            } catch (ClusterNameMismatchException e) {
+                logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
                 return;
             }
 
@@ -1687,7 +1699,7 @@ public class Cluster implements Closeable {
             return stmt;
         }
 
-        private void prepareAllQueries(Host host) throws InterruptedException, UnsupportedProtocolVersionException {
+        private void prepareAllQueries(Host host) throws InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
             if (preparedQueries.isEmpty())
                 return;
 

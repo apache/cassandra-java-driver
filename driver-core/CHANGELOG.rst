@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+2.0.6:
+------
+
+- [bug] Check cluster name when connecting to a new node (JAVA-397)
+
 2.0.5:
 ------
 

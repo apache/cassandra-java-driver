@@ -80,7 +80,7 @@ class Connection {
      * @throws ConnectionException if the connection attempts fails or is
      * refused by the server.
      */
-    protected Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+    protected Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         this.address = address;
         this.factory = factory;
         this.name = name;
@@ -108,7 +108,7 @@ class Connection {
         }
 
         logger.trace("[{}] Connection opened successfully", name);
-        initializeTransport(protocolVersion);
+        initializeTransport(protocolVersion, factory.manager.metadata.clusterName);
         logger.debug("[{}] Transport initialized and ready", name);
         isInitialized = true;
     }
@@ -122,7 +122,7 @@ class Connection {
         return " (" + msg + ')';
     }
 
-    private void initializeTransport(int version) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+    private void initializeTransport(int version, String clusterName) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         try {
             ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
             Message.Response response = write(new Requests.Startup(compression)).get();
@@ -151,6 +151,8 @@ class Connection {
                 default:
                     throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type)));
             }
+
+            checkClusterName(clusterName);
         } catch (BusyConnectionException e) {
             throw defunct(new DriverInternalError("Newly created connection should not be busy"));
         } catch (ExecutionException e) {
@@ -219,6 +221,22 @@ class Connection {
             default:
                 throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to authentication message", authResponse.type)));
         }
+    }
+
+    // Due to C* gossip bugs, system.peers may report nodes that are gone from the cluster.
+    // If these nodes have been recommissionned to another cluster and are up, nothing prevents the driver from connecting
+    // to them. So we check that the cluster the node thinks it belongs to is our cluster (JAVA-397).
+    private void checkClusterName(String expected) throws ClusterNameMismatchException, ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+        // At initialization, the cluster is not known yet
+        if (expected == null)
+            return;
+
+        DefaultResultSetFuture future = new DefaultResultSetFuture(null,new Requests.Query("select cluster_name from system.local"));
+        write(future);
+        Row row = future.get().one();
+        String actual = row.getString("cluster_name");
+        if (!expected.equals(actual))
+            throw new ClusterNameMismatchException(address, actual, expected);
     }
 
     public boolean isDefunct() {
@@ -435,7 +453,7 @@ class Connection {
          *
          * @throws ConnectionException if connection attempt fails.
          */
-        public Connection open(Host host) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+        public Connection open(Host host) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
             InetSocketAddress address = host.getSocketAddress();
 
             if (isShutdown)
@@ -448,7 +466,7 @@ class Connection {
         /**
          * Same as open, but associate the created connection to the provided connection pool.
          */
-        public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+        public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
             InetSocketAddress address = pool.host.getSocketAddress();
 
             if (isShutdown)

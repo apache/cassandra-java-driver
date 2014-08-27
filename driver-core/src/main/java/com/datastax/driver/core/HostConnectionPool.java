@@ -64,7 +64,7 @@ class HostConnectionPool {
 
     private final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
-    public HostConnectionPool(Host host, HostDistance hostDistance, SessionManager manager) throws ConnectionException, UnsupportedProtocolVersionException {
+    public HostConnectionPool(Host host, HostDistance hostDistance, SessionManager manager) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         assert hostDistance != HostDistance.IGNORED;
         this.host = host;
         this.hostDistance = hostDistance;
@@ -335,6 +335,10 @@ class HostConnectionPool {
             // This shouldn't happen since we shouldn't have been able to connect in the first place
             open.decrementAndGet();
             logger.error("UnsupportedProtocolVersionException error while creating additional connection (error is: {})", e.getMessage());
+            return false;
+        } catch (ClusterNameMismatchException e) {
+            open.decrementAndGet();
+            logger.error("ClusterNameMismatchException error while creating additional connection (error is: {})", e.getMessage());
             return false;
         }
     }

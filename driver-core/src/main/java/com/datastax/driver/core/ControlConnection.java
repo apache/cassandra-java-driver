@@ -179,7 +179,10 @@ class ControlConnection implements Host.StateListener {
                     if (cluster.protocolVersion() < 1)
                         throw e;
                     logger.debug("Ignoring host {}: {}", host, e.getMessage());
-                    errors = logError(host, e.getCause(), errors, iter);
+                    errors = logError(host, e, errors, iter);
+                } catch (ClusterNameMismatchException e) {
+                    logger.debug("Ignoring host {}: {}", host, e.getMessage());
+                    errors = logError(host, e, errors, iter);
                 }
             }
         } catch (InterruptedException e) {
@@ -211,7 +214,7 @@ class ControlConnection implements Host.StateListener {
         return errors;
     }
 
-    private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException {
+    private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         Connection connection = cluster.connectionFactory.open(host);
 
         try {

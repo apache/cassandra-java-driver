@@ -24,7 +24,7 @@ class PooledConnection extends Connection {
 
     private final HostConnectionPool pool;
 
-    PooledConnection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+    PooledConnection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         super(name, address, factory);
         this.pool = pool;
     }
