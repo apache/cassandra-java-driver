@@ -6,6 +6,11 @@ CHANGELOG
 
 - [bug] Check cluster name when connecting to a new node (JAVA-397)
 - [bug] Add missing CAS delete support in QueryBuilder (JAVA-326)
+- [bug] Add collection and data length checks during serialization (JAVA-363)
+- [improvement] Surface number of retries in metrics (JAVA-329)
+- [bug] Do not use a host when no rpc_address found for it (JAVA-428)
+- [improvement] Add ResultSet.wasApplied() for conditional queries (JAVA-358)
+- [bug] Fix negative HostConnectionPool open count (JAVA-349)
 
 2.0.5:
 ------
@@ -48,7 +53,7 @@ CHANGELOG
 - [bug] Signal connection failure sooner to avoid missing them
   (JAVA-367)
 - [bug] Throw UnsupportedOperationException for protocol batch
-  setSerialCL (JAVA-377)
+  setSerialCL (JAVA-337)
 
 Merged from 1.0 branch:
 
