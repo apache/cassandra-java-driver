@@ -185,4 +185,32 @@ public interface ResultSet extends Iterable<Row> {
      * @return a list of the execution info for all the queries made for this ResultSet.
      */
     public List<ExecutionInfo> getAllExecutionInfo();
+
+    /**
+     * If the query that produced this ResultSet was a conditional update,
+     * return whether it was successfully applied.
+     * <p>
+     * This is equivalent to calling:
+     *
+     * <pre>
+     * rs.one().getBool("[applied]");
+     * </pre>
+     *
+     * <p>
+     * For consistency, this method always returns {@code true} for
+     * non-conditional queries (although there is no reason to call the method
+     * in that case).
+     *
+     * <p>
+     * Note that, for versions of Cassandra strictly lower than 2.0.9 and 2.1.0-rc2,
+     * a server-side bug (CASSANDRA-7337) causes this method to always return
+     * {@code true} for batches containing conditional queries.
+     * </p>
+     *
+     * @return if the query was a conditional update, whether it was applied.
+     * {@code true} for other types of queries.
+     *
+     * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-7337">CASSANDRA-7337</a>
+     */
+    public boolean wasApplied();
 }
