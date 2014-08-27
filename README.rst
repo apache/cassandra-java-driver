@@ -68,7 +68,7 @@ Upgrading from previous versions
 If you are upgrading from the 2.0.x branch of the driver, be sure to have a look at
 the `upgrade guide <https://github.com/datastax/java-driver/blob/2.1/driver-core/Upgrade_guide_to_2.1.rst>`_.
 
-If you are upgrading from the 1.x branch, follow the `upgrade guide to 2.0<https://github.com/datastax/java-driver/blob/2.0/driver-core/Upgrade_guide_to_2.0.rst>`_,
+If you are upgrading from the 1.x branch, follow the `upgrade guide to 2.0 <https://github.com/datastax/java-driver/blob/2.0/driver-core/Upgrade_guide_to_2.0.rst>`_,
 and then the above document.
 
 
