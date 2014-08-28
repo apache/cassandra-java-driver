@@ -72,6 +72,8 @@ class Connection {
 
     private final AtomicReference<ConnectionCloseFuture> closeFuture = new AtomicReference<ConnectionCloseFuture>();
 
+    private final Object terminationLock = new Object();
+
     /**
      * Create a new connection to a Cassandra node.
      *
@@ -392,6 +394,17 @@ class Connection {
         return closeFuture.get() != null;
     }
 
+    /**
+     * Closes the connection: no new writes will be accepted after this method has returned.
+     *
+     * However, a closed connection might still have ongoing queries awaiting for their result.
+     * When all these ongoing queries have completed, the underlying channel will be closed; we
+     * refer to this final state as "terminated".
+     *
+     * @return a future that will complete once the connection has terminated.
+     *
+     * @see #terminate(boolean, boolean)
+     */
     public CloseFuture closeAsync() {
 
         ConnectionCloseFuture future = new ConnectionCloseFuture();
@@ -402,30 +415,36 @@ class Connection {
 
         logger.debug("[{}] closing connection", name);
 
-        // New writes will be refused now that the future is setup.
-        // We must now wait on the last ongoing queries to return, which will in turn trigger
-        // the closing of the channel. However, if there no ongoing query, signal now.
-        if (dispatcher.pending.isEmpty())
-            future.force();
-        else
+        boolean terminated = terminate(false, false);
+        if (!terminated)
             factory.reaper.register(this);
         return future;
     }
 
-    boolean terminate(boolean evenIfPending) {
+    /**
+     * @return whether the connection has actually terminated
+     */
+    boolean terminate(boolean evenIfPending, boolean logWarnings) {
         assert isClosed();
         ConnectionCloseFuture future = closeFuture.get();
 
         if (future.isDone()) {
             logger.debug("{} has already terminated", this);
             return true;
-        } else if (evenIfPending || dispatcher.pending.isEmpty()) {
-            logger.warn("Forcing termination of {}. This should not happen and is likely a bug, please report.", this);
-            future.force();
-            return true;
         } else {
-            logger.debug("Not terminating {}: there are still pending requests", this);
-            return false;
+            // This method is used both by normal code and by ConnectionReaper. Since the latter is a bug detection
+            // mechanism and logs warnings when it runs, we synchronize to avoid false warnings if they race.
+            synchronized (terminationLock) {
+                if (evenIfPending || dispatcher.pending.isEmpty()) {
+                    if (logWarnings)
+                        logger.warn("Forcing termination of {}. This should not happen and is likely a bug, please report.", this);
+                    future.force();
+                    return true;
+                } else {
+                    logger.debug("Not terminating {}: there are still pending requests", this);
+                    return false;
+                }
+            }
         }
     }
 
@@ -583,8 +602,8 @@ class Connection {
             if (releaseStreamId)
                 streamIdHandler.release(streamId);
 
-            if (isClosed() && pending.isEmpty())
-                closeFuture.get().force();
+            if (isClosed())
+                terminate(false, false);
         }
 
         @Override
@@ -625,10 +644,10 @@ class Connection {
                 handler.cancelTimeout();
                 handler.callback.onSet(Connection.this, response, System.nanoTime() - handler.startTime);
 
-                // If we happen to be closed and we're the last outstanding request, we need to signal the close future
+                // If we happen to be closed and we're the last outstanding request, we need to terminate the connection
                 // (note: this is racy as the signaling can be called more than once, but that's not a problem)
-                if (isClosed() && pending.isEmpty())
-                    closeFuture.get().force();
+                if (isClosed())
+                    terminate(false, false);
             }
         }
 

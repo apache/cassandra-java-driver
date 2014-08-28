@@ -2002,10 +2002,11 @@ public class Cluster implements Closeable {
      * Periodically ensures that closed connections are properly terminated once they have no more pending requests.
      *
      * This is normally done when the connection errors out, or when the last request is processed; this class acts as
-     * a last-effort protection since unterminated connections can lead to deadlocks.
+     * a last-effort protection since unterminated connections can lead to deadlocks. If it terminates a connection,
+     * this indicates a bug; warnings are logged so that this can be reported.
      */
     static class ConnectionReaper {
-        private static final int INTERVAL_MS = 5000;
+        private static final int INTERVAL_MS = 15000;
 
         private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, threadFactory("Reaper-%d"));
         private final Set<Connection> connections = Sets.newConcurrentHashSet();
@@ -2016,14 +2017,15 @@ public class Cluster implements Closeable {
             @Override
             public void run() {
                 reapConnections();
-                executor.schedule(this, INTERVAL_MS, TimeUnit.MILLISECONDS);
+                if (!executor.isShutdown())
+                    executor.schedule(this, INTERVAL_MS, TimeUnit.MILLISECONDS);
             }
 
             private final void reapConnections() {
                 Iterator<Connection> iterator = connections.iterator();
                 while (iterator.hasNext()) {
                     Connection connection = iterator.next();
-                    boolean terminated = connection.terminate(false);
+                    boolean terminated = connection.terminate(false, true);
                     if (terminated)
                         iterator.remove();
                 }
@@ -2038,7 +2040,7 @@ public class Cluster implements Closeable {
             if (shutdown) {
                 // This should not happen since the reaper is shut down after all sessions.
                 logger.warn("Connection registered after reaper shutdown: {}", connection);
-                connection.terminate(true);
+                connection.terminate(true, true);
             } else {
                 connections.add(connection);
             }
@@ -2047,6 +2049,9 @@ public class Cluster implements Closeable {
         void shutdown() {
             shutdown = true;
             executor.shutdown();
+            // Run the task one last time if a call to register raced with the two lines above (i.e.
+            // saw shutdown as false but added its connection after the last task in the executor ran).
+            reaperTask.run();
         }
     }
 }
