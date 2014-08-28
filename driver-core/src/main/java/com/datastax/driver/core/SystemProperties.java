@@ -19,7 +19,7 @@ class SystemProperties {
         }
         try {
             int value = Integer.parseInt(stringValue);
-            logger.debug("{} is defined, using value {}", key, value);
+            logger.warn("{} is defined, using value {}", key, value);
             return value;
         } catch (NumberFormatException e) {
             logger.warn("{} is defined but could not parse value {}, using default value {}", key, stringValue, defaultValue);
