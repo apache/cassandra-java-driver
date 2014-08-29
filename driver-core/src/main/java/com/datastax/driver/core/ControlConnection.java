@@ -411,8 +411,15 @@ class ControlConnection implements Host.StateListener {
         logger.debug("[Control connection] Refreshing node info on {}", host);
         Row row = fetchNodeInfo(host, c);
         if (row == null) {
-            logger.error("No row found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
-            return false;
+            if (c.isDefunct()) {
+                logger.debug("Control connection is down, could not refresh node info");
+                // Keep going with what we currently know about the node, otherwise we will ignore all nodes
+                // until the control connection is back up (which leads to a catch-22 if there is only one)
+                return true;
+            } else {
+                logger.error("No row found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
+                return false;
+            }
         } else if (row.getInet("rpc_address") == null) {
             logger.error("No rpc_address found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
             return false;
