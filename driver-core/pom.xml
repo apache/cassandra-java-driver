@@ -94,6 +94,7 @@
               <systemPropertyVariables>
                 <cassandra.version>${cassandra.version}</cassandra.version>
                 <ipprefix>${ipprefix}</ipprefix>
+                <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
               </systemPropertyVariables>
               <!--May be needed for debugging-->
               <!--<forkMode>never</forkMode>-->
