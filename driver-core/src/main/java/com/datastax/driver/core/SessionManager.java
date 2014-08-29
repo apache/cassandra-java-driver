@@ -225,7 +225,7 @@ class SessionManager extends AbstractSession {
     // maybeAddPool don't end up creating 2 HostConnectionPool. We can't rely on the pools
     // ConcurrentMap only for that since it's the duplicate HostConnectionPool creation we
     // want to avoid
-    private boolean replacePool(Host host, HostDistance distance, HostConnectionPool condition) throws ConnectionException, UnsupportedProtocolVersionException {
+    private boolean replacePool(Host host, HostDistance distance, HostConnectionPool condition) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         if (isClosing)
             return true;
 

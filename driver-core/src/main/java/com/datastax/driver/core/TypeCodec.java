@@ -215,9 +215,16 @@ abstract class TypeCodec<T> {
     }
 
     private static ByteBuffer pack(List<ByteBuffer> buffers, int elements, int version) {
+        if (elements > 65535)
+            throw new IllegalArgumentException("Native protocol version 2 supports up to 65535 elements in any collection - but collection contains " + elements + " elements");
+
         int size = 0;
-        for (ByteBuffer bb : buffers)
-            size += sizeOfValue(bb, version);
+        for (ByteBuffer bb : buffers) {
+            int elemSize = sizeOfValue(bb, version);
+            if (elemSize > 65535)
+                throw new IllegalArgumentException("Native protocol version 2 supports only elements with size up to 65535 bytes - but element size is " + elemSize + " bytes");
+            size += elemSize;
+        }
 
         ByteBuffer result = ByteBuffer.allocate(sizeOfCollectionSize(elements, version) + size);
         writeCollectionSize(result, elements, version);

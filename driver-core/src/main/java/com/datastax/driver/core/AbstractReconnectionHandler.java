@@ -45,7 +45,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
         this.currentAttempt = currentAttempt;
     }
 
-    protected abstract Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException;
+    protected abstract Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException;
     protected abstract void onReconnection(Connection connection);
 
     protected boolean onConnectionException(ConnectionException e, long nextDelayMs) { return true; }
@@ -54,6 +54,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
     // Retrying on authentication or unsupported protocol version error is unlikely to work
     protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) { return false; }
     protected boolean onUnsupportedProtocolVersionException(UnsupportedProtocolVersionException e, long nextDelayMs) { return false; }
+    protected boolean onClusterNameMismatchException(ClusterNameMismatchException e, long nextDelayMs) { return false; }
 
     public void start() {
         long firstDelay = schedule.nextDelayMs();
@@ -113,6 +114,15 @@ abstract class AbstractReconnectionHandler implements Runnable {
             logger.error(e.getMessage());
             long nextDelay = schedule.nextDelayMs();
             if (onUnsupportedProtocolVersionException(e, nextDelay)) {
+                reschedule(nextDelay);
+            } else {
+                logger.error("Retry against {} have been suspended. It won't be retried unless the node is restarted.", e.address);
+                currentAttempt.compareAndSet(localFuture, null);
+            }
+        } catch (ClusterNameMismatchException e) {
+            logger.error(e.getMessage());
+            long nextDelay = schedule.nextDelayMs();
+            if (onClusterNameMismatchException(e, nextDelay)) {
                 reschedule(nextDelay);
             } else {
                 logger.error("Retry against {} have been suspended. It won't be retried unless the node is restarted.", e.address);

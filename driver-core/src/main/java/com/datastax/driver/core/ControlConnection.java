@@ -36,8 +36,8 @@ class ControlConnection implements Host.StateListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ControlConnection.class);
 
-    // TODO: we might want to make that configurable
-    static final long MAX_SCHEMA_AGREEMENT_WAIT_MS = 10000;
+    // TODO: we might want to expose that through the API
+    static final int MAX_SCHEMA_AGREEMENT_WAIT_SECONDS = SystemProperties.getInt("com.datastax.driver.MAX_SCHEMA_AGREEMENT_WAIT_SECONDS", 10);
 
     private static final InetAddress bindAllAddress;
     static
@@ -180,7 +180,10 @@ class ControlConnection implements Host.StateListener {
                     if (cluster.protocolVersion() < 1)
                         throw e;
                     logger.debug("Ignoring host {}: {}", host, e.getMessage());
-                    errors = logError(host, e.getCause(), errors, iter);
+                    errors = logError(host, e, errors, iter);
+                } catch (ClusterNameMismatchException e) {
+                    logger.debug("Ignoring host {}: {}", host, e.getMessage());
+                    errors = logError(host, e, errors, iter);
                 }
             }
         } catch (InterruptedException e) {
@@ -212,7 +215,7 @@ class ControlConnection implements Host.StateListener {
         return errors;
     }
 
-    private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException {
+    private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         Connection connection = cluster.connectionFactory.open(host);
 
         try {
@@ -226,7 +229,7 @@ class ControlConnection implements Host.StateListener {
 
             // We need to refresh the node list first so we know about the cassandra version of
             // the node we're connecting to.
-            refreshNodeListAndTokenMap(connection, cluster, isInitialConnection);
+            refreshNodeListAndTokenMap(connection, cluster, isInitialConnection, true);
 
             // Note that refreshing the schema will trigger refreshNodeListAndTokenMap since table == null
             // We want that because the token map was not properly initialized by the first call above, since it requires the list of keyspaces
@@ -315,7 +318,7 @@ class ControlConnection implements Host.StateListener {
         // If the table is null, we either rebuild all from scratch or have an updated keyspace. In both case, rebuild the token map
         // since some replication on some keyspace may have changed
         if (table == null)
-            refreshNodeListAndTokenMap(connection, cluster, false);
+            refreshNodeListAndTokenMap(connection, cluster, false, false);
     }
 
     public void refreshNodeListAndTokenMap() {
@@ -326,7 +329,7 @@ class ControlConnection implements Host.StateListener {
 
         logger.debug("[Control connection] Refreshing node list and token map");
         try {
-            refreshNodeListAndTokenMap(c, cluster, false);
+            refreshNodeListAndTokenMap(c, cluster, false, true);
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing node list and token map ({})", e.getMessage());
             signalError();
@@ -344,7 +347,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    private static InetSocketAddress addressToUseForPeerHost(Row peersRow, InetSocketAddress connectedHost, Cluster.Manager cluster) {
+    private static InetSocketAddress addressToUseForPeerHost(Row peersRow, InetSocketAddress connectedHost, Cluster.Manager cluster, boolean logMissingRpcAddresses) {
         InetAddress peer = peersRow.getInet("peer");
         InetAddress addr = peersRow.getInet("rpc_address");
 
@@ -354,8 +357,9 @@ class ControlConnection implements Host.StateListener {
             logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connectedHost);
             return null;
         } else if (addr == null) {
-            logger.error("No rpc_address found for host {} in {}'s peers system table. That should not happen but using address {} instead", peer, connectedHost, peer);
-            addr = peer;
+            if (logMissingRpcAddresses)
+                logger.error("No rpc_address found for host {} in {}'s peers system table. {} will be ignored.", peer, connectedHost, peer);
+            return null;
         } else if (addr.equals(bindAllAddress)) {
             logger.warn("Found host with 0.0.0.0 as rpc_address, using listen_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.", peer);
             addr = peer;
@@ -378,7 +382,7 @@ class ControlConnection implements Host.StateListener {
             DefaultResultSetFuture future = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
             c.write(future);
             for (Row row : future.get()) {
-                InetSocketAddress addr = addressToUseForPeerHost(row, c.address, cluster);
+                InetSocketAddress addr = addressToUseForPeerHost(row, c.address, cluster, true);
                 if (addr != null && addr.equals(host.getSocketAddress()))
                     return row;
             }
@@ -400,22 +404,35 @@ class ControlConnection implements Host.StateListener {
         return null;
     }
 
-    public void refreshNodeInfo(Host host) {
+    /**
+     * @return whether we have enough information to bring the node back up
+     */
+    public boolean refreshNodeInfo(Host host) {
 
         Connection c = connectionRef.get();
         // At startup, when we add the initial nodes, this will be null, which is ok
         if (c == null)
-            return;
+            return true;
 
         logger.debug("[Control connection] Refreshing node info on {}", host);
         Row row = fetchNodeInfo(host, c);
-        // It's possible our peers selection returns nothing, but that's fine, this method is best effort really.
         if (row == null) {
-            logger.debug("[control connection] Asked to refresh node info for {} but host not found in {} system table (this can happen)", host.getSocketAddress(), c.address);
-            return;
+            if (c.isDefunct()) {
+                logger.debug("Control connection is down, could not refresh node info");
+                // Keep going with what we currently know about the node, otherwise we will ignore all nodes
+                // until the control connection is back up (which leads to a catch-22 if there is only one)
+                return true;
+            } else {
+                logger.error("No row found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
+                return false;
+            }
+        } else if (row.getInet("rpc_address") == null) {
+            logger.error("No rpc_address found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
+            return false;
         }
 
         updateInfo(host, row, cluster);
+        return true;
     }
 
     // row can come either from the 'local' table or the 'peers' one
@@ -446,7 +463,7 @@ class ControlConnection implements Host.StateListener {
             cluster.loadBalancingPolicy().onAdd(host);
     }
 
-    private static void refreshNodeListAndTokenMap(Connection connection, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    private static void refreshNodeListAndTokenMap(Connection connection, Cluster.Manager cluster, boolean isInitialConnection, boolean logMissingRpcAddresses) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         logger.debug("[Control connection] Refreshing node list and token map");
 
         // Make sure we're up to date on nodes and tokens
@@ -491,7 +508,7 @@ class ControlConnection implements Host.StateListener {
         List<Set<String>> allTokens = new ArrayList<Set<String>>();
 
         for (Row row : peersFuture.get()) {
-            InetSocketAddress addr = addressToUseForPeerHost(row, connection.address, cluster);
+            InetSocketAddress addr = addressToUseForPeerHost(row, connection.address, cluster, logMissingRpcAddresses);
             if (addr == null)
                 continue;
 
@@ -537,7 +554,7 @@ class ControlConnection implements Host.StateListener {
 
         long start = System.nanoTime();
         long elapsed = 0;
-        while (elapsed < MAX_SCHEMA_AGREEMENT_WAIT_MS) {
+        while (elapsed < MAX_SCHEMA_AGREEMENT_WAIT_SECONDS * 1000) {
 
             DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_PEERS));
             DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_LOCAL));
@@ -552,7 +569,7 @@ class ControlConnection implements Host.StateListener {
 
             for (Row row : peersFuture.get()) {
 
-                InetSocketAddress addr = addressToUseForPeerHost(row, connection.address, cluster);
+                InetSocketAddress addr = addressToUseForPeerHost(row, connection.address, cluster, true);
                 if (addr == null || row.isNull("schema_version"))
                     continue;
 
