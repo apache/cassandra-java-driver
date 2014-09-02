@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ public class WhiteListPolicy implements LoadBalancingPolicy {
 
     @Override
     public void onSuspected(Host host) {
-        if (whiteList.contains(host.getAddress()))
+        if (whiteList.contains(host.getSocketAddress()))
             childPolicy.onSuspected(host);
     }
 

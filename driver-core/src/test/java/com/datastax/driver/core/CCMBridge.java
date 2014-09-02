@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+
 import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,8 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
@@ -70,18 +74,25 @@ public class CCMBridge {
     }
 
     public static CCMBridge create(String name) {
+        // This leads to a confusing CCM error message so check explicitly:
+        checkArgument(!"current".equals(name.toLowerCase()),
+                      "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
         bridge.execute("ccm create %s -b -i %s %s", name, IP_PREFIX, CASSANDRA_VERSION);
         return bridge;
     }
 
     public static CCMBridge create(String name, int nbNodes) {
+        checkArgument(!"current".equals(name.toLowerCase()),
+                        "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
         bridge.execute("ccm create %s -n %d -s -i %s -b %s", name, nbNodes, IP_PREFIX, CASSANDRA_VERSION);
         return bridge;
     }
 
     public static CCMBridge create(String name, int nbNodesDC1, int nbNodesDC2) {
+        checkArgument(!"current".equals(name.toLowerCase()),
+                        "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
         bridge.execute("ccm create %s -n %d:%d -s -i %s -b %s", name, nbNodesDC1, nbNodesDC2, IP_PREFIX, CASSANDRA_VERSION);
         return bridge;
@@ -226,16 +237,23 @@ public class CCMBridge {
 
         protected abstract Collection<String> getTableDefinitions();
 
+        // Give individual tests a chance to customize the cluster configuration
+        protected Cluster.Builder configure(Cluster.Builder builder) {
+            return builder;
+        }
+
         public void errorOut() {
             erroredOut = true;
         }
 
-        public static void createCluster() {
+        public void createCluster() {
             erroredOut = false;
             schemaCreated = false;
             cassandraCluster = CCMBridge.create("test", 1);
             try {
-                cluster = Cluster.builder().addContactPoints(IP_PREFIX + '1').build();
+                Builder builder = Cluster.builder();
+                builder = configure(builder);
+                cluster = builder.addContactPoints(IP_PREFIX + '1').build();
                 session = cluster.connect();
             } catch (NoHostAvailableException e) {
                 erroredOut = true;
@@ -318,6 +336,10 @@ public class CCMBridge {
                 throw new IllegalArgumentException();
 
             return new CCMCluster(CCMBridge.create("test", nbNodesDC1, nbNodesDC2), builder, nbNodesDC1 + nbNodesDC2);
+        }
+
+        public static CCMCluster create(CCMBridge cassandraCluster, Cluster.Builder builder, int totalNodes) {
+            return new CCMCluster(cassandraCluster, builder, totalNodes);
         }
 
         private CCMCluster(CCMBridge cassandraCluster, Cluster.Builder builder, int totalNodes) {

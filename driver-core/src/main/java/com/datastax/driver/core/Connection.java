@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -72,6 +72,8 @@ class Connection {
 
     private final AtomicReference<ConnectionCloseFuture> closeFuture = new AtomicReference<ConnectionCloseFuture>();
 
+    private final Object terminationLock = new Object();
+
     /**
      * Create a new connection to a Cassandra node.
      *
@@ -80,7 +82,7 @@ class Connection {
      * @throws ConnectionException if the connection attempts fails or is
      * refused by the server.
      */
-    protected Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+    protected Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         this.address = address;
         this.factory = factory;
         this.name = name;
@@ -108,7 +110,7 @@ class Connection {
         }
 
         logger.trace("[{}] Connection opened successfully", name);
-        initializeTransport(protocolVersion);
+        initializeTransport(protocolVersion, factory.manager.metadata.clusterName);
         logger.debug("[{}] Transport initialized and ready", name);
         isInitialized = true;
     }
@@ -122,7 +124,7 @@ class Connection {
         return " (" + msg + ')';
     }
 
-    private void initializeTransport(ProtocolVersion version) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+    private void initializeTransport(ProtocolVersion version, String clusterName) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         try {
             ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
             Message.Response response = write(new Requests.Startup(compression)).get();
@@ -156,6 +158,8 @@ class Connection {
                 default:
                     throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type)));
             }
+
+            checkClusterName(version, clusterName);
         } catch (BusyConnectionException e) {
             throw defunct(new DriverInternalError("Newly created connection should not be busy"));
         } catch (ExecutionException e) {
@@ -226,6 +230,22 @@ class Connection {
         }
     }
 
+    // Due to C* gossip bugs, system.peers may report nodes that are gone from the cluster.
+    // If these nodes have been recommissionned to another cluster and are up, nothing prevents the driver from connecting
+    // to them. So we check that the cluster the node thinks it belongs to is our cluster (JAVA-397).
+    private void checkClusterName(ProtocolVersion version, String expected) throws ClusterNameMismatchException, ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+        // At initialization, the cluster is not known yet
+        if (expected == null)
+            return;
+
+        DefaultResultSetFuture future = new DefaultResultSetFuture(null, version, new Requests.Query("select cluster_name from system.local"));
+        write(future);
+        Row row = future.get().one();
+        String actual = row.getString("cluster_name");
+        if (!expected.equals(actual))
+            throw new ClusterNameMismatchException(address, actual, expected);
+    }
+
     public boolean isDefunct() {
         return isDefunct;
     }
@@ -239,7 +259,6 @@ class Connection {
             logger.debug("Defuncting connection to " + address, e);
         isDefunct = true;
 
-        // If we're initializing the connection, we know there is not handlers yet
         ConnectionException ce = e instanceof ConnectionException
                                ? (ConnectionException)e
                                : new ConnectionException(address, "Connection problem", e);
@@ -252,10 +271,11 @@ class Connection {
             notifyOwnerWhenDefunct(isDown);
         }
 
-        if (!isInitialized)
-            dispatcher.errorOutAllHandler(ce);
+        // Force the connection to close to make sure the future completes. Otherwise force() might never get called and
+        // threads will wait on the future forever.
+        // (this also errors out pending handlers)
+        closeAsync().force();
 
-        closeAsync();
         return e;
     }
 
@@ -379,6 +399,17 @@ class Connection {
         return closeFuture.get() != null;
     }
 
+    /**
+     * Closes the connection: no new writes will be accepted after this method has returned.
+     *
+     * However, a closed connection might still have ongoing queries awaiting for their result.
+     * When all these ongoing queries have completed, the underlying channel will be closed; we
+     * refer to this final state as "terminated".
+     *
+     * @return a future that will complete once the connection has terminated.
+     *
+     * @see #terminate(boolean, boolean)
+     */
     public CloseFuture closeAsync() {
 
         ConnectionCloseFuture future = new ConnectionCloseFuture();
@@ -389,12 +420,37 @@ class Connection {
 
         logger.debug("[{}] closing connection", name);
 
-        // New writes will be refused now that the future is setup.
-        // We must now wait on the last ongoing queries to return, which will in turn trigger
-        // the closing of the channel. However, if there no ongoing query, signal now.
-        if (dispatcher.pending.isEmpty())
-            future.force();
+        boolean terminated = terminate(false, false);
+        if (!terminated)
+            factory.reaper.register(this);
         return future;
+    }
+
+    /**
+     * @return whether the connection has actually terminated
+     */
+    boolean terminate(boolean evenIfPending, boolean logWarnings) {
+        assert isClosed();
+        ConnectionCloseFuture future = closeFuture.get();
+
+        if (future.isDone()) {
+            logger.debug("{} has already terminated", this);
+            return true;
+        } else {
+            // This method is used both by normal code and by ConnectionReaper. Since the latter is a bug detection
+            // mechanism and logs warnings when it runs, we synchronize to avoid false warnings if they race.
+            synchronized (terminationLock) {
+                if (evenIfPending || dispatcher.pending.isEmpty()) {
+                    if (logWarnings)
+                        logger.warn("Forcing termination of {}. This should not happen and is likely a bug, please report.", this);
+                    future.force();
+                    return true;
+                } else {
+                    logger.debug("Not terminating {}: there are still pending requests", this);
+                    return false;
+                }
+            }
+        }
     }
 
     @Override
@@ -414,6 +470,7 @@ class Connection {
         private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
         public final DefaultResponseHandler defaultHandler;
         final Cluster.Manager manager;
+        final Cluster.ConnectionReaper reaper;
         public final Configuration configuration;
 
         public final AuthProvider authProvider;
@@ -424,6 +481,7 @@ class Connection {
         Factory(Cluster.Manager manager, Configuration configuration) {
             this.defaultHandler = manager;
             this.manager = manager;
+            this.reaper = manager.reaper;
             this.configuration = configuration;
             this.authProvider = configuration.getProtocolOptions().getAuthProvider();
             this.protocolVersion = configuration.getProtocolOptions().initialProtocolVersion;
@@ -440,7 +498,7 @@ class Connection {
          *
          * @throws ConnectionException if connection attempt fails.
          */
-        public Connection open(Host host) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+        public Connection open(Host host) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
             InetSocketAddress address = host.getSocketAddress();
 
             if (isShutdown)
@@ -453,7 +511,7 @@ class Connection {
         /**
          * Same as open, but associate the created connection to the provided connection pool.
          */
-        public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+        public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
             InetSocketAddress address = pool.host.getSocketAddress();
 
             if (isShutdown)
@@ -548,6 +606,9 @@ class Connection {
 
             if (releaseStreamId)
                 streamIdHandler.release(streamId);
+
+            if (isClosed())
+                terminate(false, false);
         }
 
         @Override
@@ -588,10 +649,10 @@ class Connection {
                 handler.cancelTimeout();
                 handler.callback.onSet(Connection.this, response, System.nanoTime() - handler.startTime);
 
-                // If we happen to be closed and we're the last outstanding request, we need to signal the close future
+                // If we happen to be closed and we're the last outstanding request, we need to terminate the connection
                 // (note: this is racy as the signaling can be called more than once, but that's not a problem)
-                if (isClosed() && pending.isEmpty())
-                    closeFuture.get().force();
+                if (isClosed())
+                    terminate(false, false);
             }
         }
 
@@ -633,9 +694,11 @@ class Connection {
         public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) {
             // If we've closed the channel client side then we don't really want to defunct the connection, but
             // if there is remaining thread waiting on us, we still want to wake them up
-            if (!isInitialized || isClosed())
+            if (!isInitialized || isClosed()) {
                 errorOutAllHandler(new TransportException(address, "Channel has been closed"));
-            else
+                // we still want to force so that the future completes
+                Connection.this.closeAsync().force();
+            } else
                 defunct(new TransportException(address, "Channel has been closed"));
         }
     }
@@ -759,6 +822,8 @@ class Connection {
             // were, a new request could reuse that ID but get the answer to the request we just gave up on instead
             // of its own answer, and we would have no way to detect that.
             connection.dispatcher.removeHandler(streamId, false);
+            if (connection instanceof PooledConnection)
+                ((PooledConnection)connection).release();
         }
 
         private TimerTask onTimeoutTask() {

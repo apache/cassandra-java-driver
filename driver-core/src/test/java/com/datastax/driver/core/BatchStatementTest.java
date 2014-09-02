@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -100,8 +100,6 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             assertTrue(!r.isNull("[applied]"));
             assertEquals(r.getBool("[applied]"), false);
 
-            session.execute("DELETE FROM test WHERE k='key1'");
-
         } catch (UnsupportedFeatureException e) {
             // This is expected when testing the protocol v1
             if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != ProtocolVersion.V1)
@@ -109,6 +107,8 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         } catch (Throwable t) {
             errorOut();
             throw t;
+        } finally {
+            session.execute("DELETE FROM test WHERE k='key1'");
         }
     }
 }

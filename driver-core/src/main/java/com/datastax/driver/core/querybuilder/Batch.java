@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.datastax.driver.core.RegularStatement;
+import com.datastax.driver.core.SimpleStatement;
 
 /**
  * A built BATCH statement.
@@ -31,6 +32,9 @@ public class Batch extends BuiltStatement {
     private final boolean logged;
     private final Options usings;
     private ByteBuffer routingKey;
+
+    // Only used when we add at last one statement that is not a BuiltStatement subclass
+    private int nonBuiltStatementValues;
 
     Batch(RegularStatement[] statements, boolean logged) {
         super((String)null);
@@ -70,12 +74,9 @@ public class Batch extends BuiltStatement {
                 if (!str.trim().endsWith(";"))
                     builder.append(';');
 
-                // For !BuiltStatement, we know that variables == null since we explicitely set 'hasBindMarkers' below
-                if ((stmt instanceof BuiltStatement) && variables != null) {
-                    List<Object> vals = ((BuiltStatement)stmt).getRawValues();
-                    if (vals != null)
-                        variables.addAll(vals);
-                }
+                // Note that we force hasBindMarkers if there is any non-BuiltStatement, so we know
+                // that we can only get there with variables == null
+                assert variables == null;
             }
         }
         builder.append("APPLY BATCH;");
@@ -102,10 +103,16 @@ public class Batch extends BuiltStatement {
         this.statements.add(statement);
 
         if (statement instanceof BuiltStatement)
-            this.hasBindMarkers = ((BuiltStatement)statement).hasBindMarkers;
+        {
+            this.hasBindMarkers |= ((BuiltStatement)statement).hasBindMarkers;
+        }
         else
-            // For non-BuiltStatement, we cannot know if it includes a bind makers. So we assume it does.
+        {
+            // For non-BuiltStatement, we cannot know if it includes a bind makers and we assume it does. In practice,
+            // this means we will always serialize values as strings when there is non-BuiltStatement
             this.hasBindMarkers = true;
+            this.nonBuiltStatementValues += ((SimpleStatement)statement).valuesCount();
+        }
 
         checkForBindMarkers(null);
 
@@ -113,6 +120,30 @@ public class Batch extends BuiltStatement {
             routingKey = statement.getRoutingKey();
 
         return this;
+    }
+
+    @Override
+    public ByteBuffer[] getValues(int protocolVersion) {
+        // If there is some non-BuiltStatement inside the batch with values, we shouldn't
+        // use super.getValues() since it will ignore the values of said non-BuiltStatement.
+        // If that's the case, we just collects all those values (and we know
+        // super.getValues() == null in that case since we've explicitely set this.hasBindMarker
+        // to true). Otherwise, we simply call super.getValues().
+        if (nonBuiltStatementValues == 0)
+            return super.getValues(protocolVersion);
+
+        ByteBuffer[] values = new ByteBuffer[nonBuiltStatementValues];
+        int i = 0;
+        for (RegularStatement statement : statements)
+        {
+            if (statement instanceof BuiltStatement)
+                continue;
+
+            ByteBuffer[] statementValues = statement.getValues(protocolVersion);
+            System.arraycopy(statementValues, 0, values, i, statementValues.length);
+            i += statementValues.length;
+        }
+        return values;
     }
 
     /**

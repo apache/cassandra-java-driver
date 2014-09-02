@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
 
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.TupleValue;
+import com.datastax.driver.core.UDTValue;
 import com.datastax.driver.core.utils.Bytes;
 
 // Static utilities private to the query builder
@@ -100,6 +102,12 @@ abstract class Utils {
             return sb;
 
         if (appendValueIfCollection(value, sb))
+            return sb;
+
+        if (appendValueIfUdt(value, sb))
+            return sb;
+
+        if (appendValueIfTuple(value, sb))
             return sb;
 
         appendStringIfValid(value, sb);
@@ -228,6 +236,24 @@ abstract class Utils {
         }
         sb.append('}');
         return sb;
+    }
+
+    private static boolean appendValueIfUdt(Object value, StringBuilder sb) {
+        if (value instanceof UDTValue) {
+            sb.append(((UDTValue)value).toString());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean appendValueIfTuple(Object value, StringBuilder sb) {
+        if (value instanceof TupleValue) {
+            sb.append(((TupleValue)value).toString());
+            return true;
+        } else {
+            return false;
+        }
     }
 
     static boolean containsBindMarker(Object value) {

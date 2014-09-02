@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ abstract class TypeCodec<T> {
 
     // Somehow those don't seem to get properly initialized if they're not here. The reason
     // escape me right now so let's just leave it here for now
-    public static final StringCodec utf8Instance = new StringCodec(true);
-    public static final StringCodec asciiInstance = new StringCodec(false);
+    public static final StringCodec utf8Instance = new StringCodec(Charset.forName("UTF-8"));
+    public static final StringCodec asciiInstance = new StringCodec(Charset.forName("US-ASCII"));
 
     private static final Map<DataType.Name, TypeCodec<?>> primitiveCodecs = new EnumMap<DataType.Name, TypeCodec<?>>(DataType.Name.class);
     static {
@@ -231,8 +231,10 @@ abstract class TypeCodec<T> {
 
     private static ByteBuffer pack(List<ByteBuffer> buffers, int elements, ProtocolVersion version) {
         int size = 0;
-        for (ByteBuffer bb : buffers)
-            size += sizeOfValue(bb, version);
+        for (ByteBuffer bb : buffers) {
+            int elemSize = sizeOfValue(bb, version);
+            size += elemSize;
+        }
 
         ByteBuffer result = ByteBuffer.allocate(sizeOfCollectionSize(elements, version) + size);
         writeCollectionSize(result, elements, version);
@@ -245,6 +247,8 @@ abstract class TypeCodec<T> {
         switch (version) {
             case V1:
             case V2:
+                if (elements > 65535)
+                    throw new IllegalArgumentException("Native protocol version 2 supports up to 65535 elements in any collection - but collection contains " + elements + " elements");
                 output.putShort((short)elements);
                 break;
             case V3:
@@ -332,7 +336,10 @@ abstract class TypeCodec<T> {
         switch (version) {
             case V1:
             case V2:
-                return 2 + value.remaining();
+                int elemSize = value.remaining();
+                if (elemSize > 65535)
+                    throw new IllegalArgumentException("Native protocol version 2 supports only elements with size up to 65535 bytes - but element size is " + elemSize + " bytes");
+                return 2 + elemSize;
             case V3:
                 return value == null ? 4 : 4 + value.remaining();
             default:
@@ -342,39 +349,10 @@ abstract class TypeCodec<T> {
 
     static class StringCodec extends TypeCodec<String> {
 
-        private static final Charset utf8Charset = Charset.forName("UTF-8");
-        private static final Charset asciiCharset = Charset.forName("US-ASCII");
+        private final Charset charset;
 
-        // We don't want to recreate the decoders/encoders every time and they're not threadSafe.
-        private static final ThreadLocal<CharsetDecoder> utf8Decoders = new ThreadLocal<CharsetDecoder>() {
-            @Override
-            protected CharsetDecoder initialValue() {
-                return utf8Charset.newDecoder();
-            }
-        };
-        private static final ThreadLocal<CharsetDecoder> asciiDecoders = new ThreadLocal<CharsetDecoder>() {
-            @Override
-            protected CharsetDecoder initialValue() {
-                return asciiCharset.newDecoder();
-            }
-        };
-        private static final ThreadLocal<CharsetEncoder> utf8Encoders = new ThreadLocal<CharsetEncoder>() {
-            @Override
-            protected CharsetEncoder initialValue() {
-                return utf8Charset.newEncoder();
-            }
-        };
-        private static final ThreadLocal<CharsetEncoder> asciiEncoders = new ThreadLocal<CharsetEncoder>() {
-            @Override
-            protected CharsetEncoder initialValue() {
-                return asciiCharset.newEncoder();
-            }
-        };
-
-        private final boolean isUTF8;
-
-        private StringCodec(boolean isUTF8) {
-            this.isUTF8 = isUTF8;
+        private StringCodec(Charset charset) {
+            this.charset = charset;
         }
 
         @Override
@@ -424,22 +402,12 @@ abstract class TypeCodec<T> {
 
         @Override
         public ByteBuffer serialize(String value) {
-            try {
-                CharsetEncoder encoder = isUTF8 ? utf8Encoders.get() : asciiEncoders.get();
-                return encoder.encode(CharBuffer.wrap(value));
-            } catch (CharacterCodingException e) {
-                throw new InvalidTypeException("Invalid " + (isUTF8 ? "UTF-8" : "ASCII") + " string");
-            }
+            return ByteBuffer.wrap(value.getBytes(charset));
         }
 
         @Override
         public String deserialize(ByteBuffer bytes) {
-            try {
-                CharsetDecoder decoder = isUTF8 ? utf8Decoders.get() : asciiDecoders.get();
-                return decoder.decode(bytes.duplicate()).toString();
-            } catch (CharacterCodingException e) {
-                throw new InvalidTypeException("Invalid " + (isUTF8 ? "UTF-8" : "ASCII") + " bytes");
-            }
+            return new String(Bytes.getArray(bytes), charset);
         }
     }
 

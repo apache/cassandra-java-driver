@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.ReadTimeoutException;
 import com.datastax.driver.core.exceptions.UnavailableException;
 import com.datastax.driver.core.exceptions.WriteTimeoutException;
-import com.datastax.driver.core.policies.RetryPolicy;
+import com.datastax.driver.core.policies.*;
+import com.datastax.driver.core.policies.RetryPolicy.RetryDecision;
+import com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type;
 
 /**
  * Handles a request to cassandra, dealing with host failover and retries on
@@ -278,6 +280,13 @@ class RequestHandler implements Connection.ResponseCallback {
                                                               rte.getReceivedAcknowledgements(),
                                                               rte.wasDataRetrieved(),
                                                               queryRetries);
+
+                            if (metricsEnabled()) {
+                                if (retry.getType() == Type.RETRY)
+                                    metrics().getErrorMetrics().getRetriesOnReadTimeout().inc();
+                                if (retry.getType() == Type.IGNORE)
+                                    metrics().getErrorMetrics().getIgnoresOnReadTimeout().inc();
+                            }
                             break;
                         case WRITE_TIMEOUT:
                             assert err.infos instanceof WriteTimeoutException;
@@ -291,6 +300,13 @@ class RequestHandler implements Connection.ResponseCallback {
                                                                wte.getRequiredAcknowledgements(),
                                                                wte.getReceivedAcknowledgements(),
                                                                queryRetries);
+
+                            if (metricsEnabled()) {
+                                if (retry.getType() == Type.RETRY)
+                                    metrics().getErrorMetrics().getRetriesOnWriteTimeout().inc();
+                                if (retry.getType() == Type.IGNORE)
+                                    metrics().getErrorMetrics().getIgnoresOnWriteTimeout().inc();
+                            }
                             break;
                         case UNAVAILABLE:
                             assert err.infos instanceof UnavailableException;
@@ -303,6 +319,13 @@ class RequestHandler implements Connection.ResponseCallback {
                                                               ue.getRequiredReplicas(),
                                                               ue.getAliveReplicas(),
                                                               queryRetries);
+
+                            if (metricsEnabled()) {
+                                if (retry.getType() == Type.RETRY)
+                                    metrics().getErrorMetrics().getRetriesOnUnavailable().inc();
+                                if (retry.getType() == Type.IGNORE)
+                                    metrics().getErrorMetrics().getIgnoresOnUnavailable().inc();
+                            }
                             break;
                         case OVERLOADED:
                             // Try another node

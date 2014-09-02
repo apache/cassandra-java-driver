@@ -1,3 +1,18 @@
+/*
+ *      Copyright (C) 2012-2014 DataStax Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package com.datastax.driver.mapping;
 
 import java.lang.annotation.Annotation;
@@ -24,16 +39,14 @@ class AnnotationParser {
 
     private static final Comparator<Field> fieldComparator = new Comparator<Field>() {
         public int compare(Field f1, Field f2) {
-            return position(f2) - position(f1);
+            return position(f1) - position(f2);
         }
     };
 
     private AnnotationParser() {}
 
     public static <T> EntityMapper<T> parseEntity(Class<T> entityClass, EntityMapper.Factory factory, MappingManager mappingManager) {
-        Table table = entityClass.getAnnotation(Table.class);
-        if (table == null)
-            throw new IllegalArgumentException("@Table annotation was not found on class " + entityClass.getName());
+        Table table = getTypeAnnotation(Table.class, entityClass);
 
         String ksName = table.caseSensitiveKeyspace() ? table.keyspace() : table.keyspace().toLowerCase();
         String tableName = table.caseSensitiveTable() ? table.name() : table.name().toLowerCase();
@@ -48,6 +61,9 @@ class AnnotationParser {
         List<Field> rgs = new ArrayList<Field>();
 
         for (Field field : entityClass.getDeclaredFields()) {
+            validateAnnotations(field, "entity",
+                                Column.class, ClusteringColumn.class, Enumerated.class, PartitionKey.class, Transient.class);
+
             if (field.getAnnotation(Transient.class) != null)
                 continue;
 
@@ -77,9 +93,7 @@ class AnnotationParser {
     }
 
     public static <T> EntityMapper<T> parseUDT(Class<T> udtClass, EntityMapper.Factory factory, MappingManager mappingManager) {
-        UDT udt = udtClass.getAnnotation(UDT.class);
-        if (udt == null)
-            throw new IllegalArgumentException(String.format("@%s annotation was not found on class %s", UDT.class.getSimpleName(), udtClass.getName()));
+        UDT udt = getTypeAnnotation(UDT.class, udtClass);
 
         String ksName = udt.caseSensitiveKeyspace() ? udt.keyspace() : udt.keyspace().toLowerCase();
         String udtName = udt.caseSensitiveType() ? udt.name() : udt.name().toLowerCase();
@@ -89,6 +103,9 @@ class AnnotationParser {
         List<Field> columns = new ArrayList<Field>();
 
         for (Field field : udtClass.getDeclaredFields()) {
+            validateAnnotations(field, "UDT",
+                                com.datastax.driver.mapping.annotations.Field.class, Enumerated.class, Transient.class);
+
             if (field.getAnnotation(Transient.class) != null)
                 continue;
 
@@ -119,11 +136,11 @@ class AnnotationParser {
 
     private static void validateOrder(List<Field> fields, String annotation) {
         for (int i = 0; i < fields.size(); i++) {
-            int pos = position(fields.get(i));
-            if (pos < i)
-                throw new IllegalArgumentException("Missing ordering value " + i + " for " + annotation + " annotation");
-            else if (pos > i)
-                throw new IllegalArgumentException("Duplicate ordering value " + i + " for " + annotation + " annotation");
+            Field field = fields.get(i);
+            int pos = position(field);
+            if (pos != i)
+                throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of column %s, was expecting %d",
+                                                                 pos, annotation, field.getName(), i));
         }
     }
 
@@ -176,9 +193,7 @@ class AnnotationParser {
         if (!accClass.isInterface())
             throw new IllegalArgumentException("@Accessor annotation is only allowed on interfaces");
 
-        Accessor acc = accClass.getAnnotation(Accessor.class);
-        if (acc == null)
-            throw new IllegalArgumentException("@Accessor annotation was not found on interface " + accClass.getName());
+        getTypeAnnotation(Accessor.class, accClass);
 
         List<MethodMapper> methods = new ArrayList<MethodMapper>();
         for (Method m : accClass.getDeclaredMethods()) {
@@ -269,5 +284,54 @@ class AnnotationParser {
         } else {
             throw new IllegalArgumentException(String.format("Cannot map class %s for parameter %s of %s.%s", paramType, paramName, className, methodName));
         }
+    }
+
+    private static <T extends Annotation> T getTypeAnnotation(Class<T> annotation, Class<?> annotatedClass) {
+        T instance = annotatedClass.getAnnotation(annotation);
+        if (instance == null)
+            throw new IllegalArgumentException(String.format("@%s annotation was not found on type %s",
+                                                             annotation.getSimpleName(), annotatedClass.getName()));
+
+        // Check that no other mapping annotations are present
+        validateAnnotations(annotatedClass, annotation);
+
+        return instance;
+    }
+
+    private static void validateAnnotations(Class<?> clazz, Class<? extends Annotation> allowed) {
+        @SuppressWarnings("unchecked")
+        Class<? extends Annotation> invalid = validateAnnotations(clazz.getAnnotations(), allowed);
+        if (invalid != null)
+            throw new IllegalArgumentException(String.format("Cannot have both @%s and @%s on type %s",
+                                                             allowed.getSimpleName(), invalid.getSimpleName(),
+                                                             clazz.getName()));
+    }
+
+    private static void validateAnnotations(Field field, String classDescription, Class<? extends Annotation>... allowed) {
+        Class<? extends Annotation> invalid = validateAnnotations(field.getAnnotations(), allowed);
+        if (invalid != null)
+            throw new IllegalArgumentException(String.format("Annotation @%s is not allowed on field %s of %s %s",
+                                                             invalid.getSimpleName(),
+                                                             field.getName(), classDescription,
+                                                             field.getDeclaringClass().getName()));
+    }
+
+    private static final Package MAPPING_PACKAGE = Table.class.getPackage();
+
+    // Returns the offending annotation if there is one
+    private static Class<? extends Annotation> validateAnnotations(Annotation[] annotations, Class<? extends Annotation>... allowed) {
+        for (Annotation annotation : annotations) {
+            Class<? extends Annotation> actual = annotation.annotationType();
+            if (actual.getPackage().equals(MAPPING_PACKAGE) && !contains(allowed, actual))
+                return actual;
+        }
+        return null;
+    }
+
+    private static boolean contains(Object[] array, Object target) {
+        for (Object element : array)
+            if (element.equals(target))
+                return true;
+        return false;
     }
 }

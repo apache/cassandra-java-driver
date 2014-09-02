@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -29,7 +28,6 @@ import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
@@ -50,6 +48,7 @@ class SessionManager extends AbstractSession {
     private final Striped<Lock> poolCreationLocks = Striped.lazyWeakLock(5);
 
     private volatile boolean isInit;
+    private volatile boolean isClosing;
 
     // Package protected, only Cluster should construct that.
     SessionManager(Cluster cluster) {
@@ -98,6 +97,9 @@ class SessionManager extends AbstractSession {
         CloseFuture future = closeFuture.get();
         if (future != null)
             return future;
+
+        isClosing = true;
+        cluster.manager.removeSession(this);
 
         List<CloseFuture> futures = new ArrayList<CloseFuture>(pools.size());
         for (HostConnectionPool pool : pools.values())
@@ -191,13 +193,22 @@ class SessionManager extends AbstractSession {
             public Boolean call() {
                 while (true) {
                     try {
-                        HostConnectionPool previous = pools.put(host, new HostConnectionPool(host, distance, SessionManager.this));
+                        if (isClosing)
+                            return true;
+
+                        HostConnectionPool newPool = new HostConnectionPool(host, distance, SessionManager.this);
+                        HostConnectionPool previous = pools.put(host, newPool);
                         if (previous == null) {
                             logger.debug("Added connection pool for {}", host);
                         } else {
                             logger.debug("Renewed connection pool for {}", host);
                             previous.closeAsync();
                         }
+
+                        // If we raced with a session shutdown, ensure that the pool will be closed.
+                        if (isClosing)
+                            newPool.closeAsync();
+
                         return true;
                     } catch (Exception e) {
                         logger.error("Error creating pool to " + host, e);
@@ -213,7 +224,10 @@ class SessionManager extends AbstractSession {
     // maybeAddPool don't end up creating 2 HostConnectionPool. We can't rely on the pools
     // ConcurrentMap only for that since it's the duplicate HostConnectionPool creation we
     // want to avoid
-    private boolean replacePool(Host host, HostDistance distance, HostConnectionPool condition) throws ConnectionException, UnsupportedProtocolVersionException {
+    private boolean replacePool(Host host, HostDistance distance, HostConnectionPool condition) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+        if (isClosing)
+            return true;
+
         Lock l = poolCreationLocks.get(host);
         l.lock();
         try {
@@ -221,7 +235,13 @@ class SessionManager extends AbstractSession {
             if (previous != condition)
                 return false;
 
-            pools.put(host, new HostConnectionPool(host, distance, this));
+            HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
+            pools.put(host, newPool);
+
+            // If we raced with a session shutdown, ensure that the pool will be closed.
+            if (isClosing)
+                newPool.closeAsync();
+
             return true;
         } finally {
             l.unlock();
@@ -260,10 +280,10 @@ class SessionManager extends AbstractSession {
         });
     }
 
-    ListenableFuture<?> removePool(Host host) {
+    CloseFuture removePool(Host host) {
         final HostConnectionPool pool = pools.remove(host);
         return pool == null
-             ? Futures.immediateFuture(null)
+             ? CloseFuture.immediateFuture()
              : pool.closeAsync();
     }
 
@@ -318,7 +338,7 @@ class SessionManager extends AbstractSession {
     void onDown(Host host) throws InterruptedException, ExecutionException {
         // Note that with well behaved balancing policy (that ignore dead nodes), the removePool call is not necessary
         // since updateCreatedPools should take care of it. But better protect against non well behaving policies.
-        removePool(host).get();
+        removePool(host).force().get();
         updateCreatedPools(MoreExecutors.sameThreadExecutor());
     }
 
@@ -398,6 +418,7 @@ class SessionManager extends AbstractSession {
             return new Requests.Query(qString, options);
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
+            bs.ensureAllSet();
             boolean skipMetadata = protoVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.wrapper.values), skipMetadata, fetchSize, pagingState, scl);
             return new Requests.Execute(bs.statement.getPreparedId().id, options);
@@ -409,6 +430,7 @@ class SessionManager extends AbstractSession {
                 throw new UnsupportedFeatureException(protoVersion, "Protocol level batching is not supported");
 
             BatchStatement bs = (BatchStatement)statement;
+            bs.ensureAllSet();
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protoVersion);
             Requests.BatchProtocolOptions options = new Requests.BatchProtocolOptions(cl, scl, 0L);
             return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, options);

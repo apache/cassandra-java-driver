@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -36,9 +36,13 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * variables have the same name, setting that name will set <b>all</b> the
  * variables for that name.
  * <p>
- * Any variable that hasn't been specifically set will be considered {@code null}.
+ * All the variables of the statement must be bound. If you don't explicitly
+ * set a value for a variable, an {@code IllegalStateException} will be
+ * thrown when submitting the statement. If you want to set a variable to
+ * {@code null}, use {@link #setToNull(int) setToNull}.
  */
 public class BoundStatement extends Statement implements SettableData<BoundStatement>, GettableData {
+    private static final ByteBuffer UNSET = ByteBuffer.allocate(0);
 
     final PreparedStatement statement;
 
@@ -54,6 +58,9 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     public BoundStatement(PreparedStatement statement) {
         this.statement = statement;
         this.wrapper = new DataWrapper(this, statement.getVariables().size());
+        for (int i = 0; i < wrapper.values.length; i++) {
+            wrapper.values[i] = UNSET;
+        }
 
         if (statement.getConsistencyLevel() != null)
             this.setConsistencyLevel(statement.getConsistencyLevel());
@@ -75,30 +82,30 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     }
 
     /**
-     * Returns whether the {@code i}th variable has been bound to a non null value.
+     * Returns whether the {@code i}th variable has been bound.
      *
      * @param i the index of the variable to check.
-     * @return whether the {@code i}th variable has been bound to a non null value.
+     * @return whether the {@code i}th variable has been bound.
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      */
     public boolean isSet(int i) {
-        return wrapper.isNull(i);
+        return wrapper.getValue(i) != UNSET;
     }
 
     /**
      * Returns whether the first occurrence of variable {@code name} has been
-     * bound to a non-null value.
+     * bound.
      *
      * @param name the name of the variable to check.
      * @return whether the first occurrence of variable {@code name} has been
-     * bound to a non-null value.
+     * bound.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
     public boolean isSet(String name) {
-        return wrapper.isNull(name);
+        return wrapper.getValue(wrapper.getIndexOf(name)) != UNSET;
     }
 
     /**
@@ -892,6 +899,33 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     }
 
     /**
+     * Sets the {@code i}th value to {@code null}.
+     * <p>
+     * This is mainly intended for CQL types which map to native Java types.
+     *
+     * @param i the index of the value to set.
+     * @return this object.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    public BoundStatement setToNull(int i) {
+        return wrapper.setToNull(i);
+    }
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to {@code null}.
+     * <p>
+     * This is mainly intended for CQL types which map to native Java types.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @return this object.
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     */
+    public BoundStatement setToNull(String name) {
+        return wrapper.setToNull(name);
+    }
+
+    /**
      * {@inheritDoc}
      */
     public boolean isNull(int i) {
@@ -1173,6 +1207,16 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
         protected String getName(int i) {
             return wrapped.statement.getVariables().getName(i);
+        }
+    }
+
+    void ensureAllSet() {
+        int index = 0;
+        for (ByteBuffer value : wrapper.values) {
+             if (value == BoundStatement.UNSET)
+                throw new IllegalStateException("Unset value at index " + index + ". "
+                                                + "If you want this value to be null, please set it to null explicitly.");
+             index += 1;
         }
     }
 }

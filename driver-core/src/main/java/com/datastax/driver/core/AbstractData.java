@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -390,6 +390,19 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         int[] indexes = getAllIndexesOf(name);
         for (int i = 0; i < indexes.length; i++)
             setTupleValue(indexes[i], v);
+        return wrapped;
+    }
+
+    @Override
+    public T setToNull(int i) {
+        return setValue(i, null);
+    }
+
+    @Override
+    public T setToNull(String name) {
+        int[] indexes = getAllIndexesOf(name);
+        for (int i = 0; i < indexes.length; i++)
+            setToNull(indexes[i]);
         return wrapped;
     }
 

@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -113,6 +113,16 @@ public class SimpleStatement extends RegularStatement {
     @Override
     public ByteBuffer[] getValues(ProtocolVersion protocolVersion) {
         return values == null ? null : convert(values, protocolVersion);
+    }
+
+    /**
+     * The number of values for this statement, that is the size of the array
+     * that will be returned by {@code getValues}.
+     *
+     * @return the number of values.
+     */
+    public int valuesCount() {
+        return values == null ? 0 : values.length;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
 
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.ReadTimeoutException;
@@ -28,9 +32,14 @@ import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
+
 import static com.datastax.driver.core.TestUtils.stopAndWait;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class ConsistencyTest extends AbstractPoliciesTest {
+
+    private static final Logger logger = LoggerFactory.getLogger(CCMBridge.class);
 
     @Test(groups = "long")
     public void testRFOneTokenAware() throws Throwable {
@@ -549,14 +558,16 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             query(c, 12, ConsistencyLevel.TWO);
 
             assertQueried(CCMBridge.IP_PREFIX + '1', 0);
-            assertQueried(CCMBridge.IP_PREFIX + '2', 0);
-            assertQueried(CCMBridge.IP_PREFIX + '3', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '2', 12);
+            assertQueried(CCMBridge.IP_PREFIX + '3', 0);
             assertQueried(CCMBridge.IP_PREFIX + '4', 0);
             assertQueried(CCMBridge.IP_PREFIX + '5', 0);
             assertQueried(CCMBridge.IP_PREFIX + '6', 0);
 
             resetCoordinators();
-            stopAndWait(c, 2);
+            logger.info("Stopping node 3...");
+            stopAndWait(c, 3);
+            logger.info("Node 3 stopped.");
 
             List<ConsistencyLevel> acceptedList = Arrays.asList(
                                                     ConsistencyLevel.ANY,
@@ -573,6 +584,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
 
             // Test successful writes
             for (ConsistencyLevel cl : acceptedList) {
+                logger.info("Test successful init(): " + cl);
                 try {
                     init(c, 12, cl);
                 } catch (Exception e) {
@@ -582,6 +594,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
 
             // Test successful reads
             for (ConsistencyLevel cl : acceptedList) {
+                logger.info("Test successful query(): " + cl);
                 try {
                     query(c, 12, cl);
                 } catch (InvalidQueryException e) {
@@ -594,6 +607,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
 
             // Test writes which should fail
             for (ConsistencyLevel cl : failList) {
+                logger.info("Test failure init(): " + cl);
                 try {
                     init(c, 12, cl);
                     fail(String.format("Test passed at CL.%s.", cl));
@@ -608,6 +622,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
 
             // Test reads which should fail
             for (ConsistencyLevel cl : failList) {
+                logger.info("Test failure query(): " + cl);
                 try {
                     query(c, 12, cl);
                     fail(String.format("Test passed at CL.%s.", cl));
@@ -642,8 +657,8 @@ public class ConsistencyTest extends AbstractPoliciesTest {
             assertQueried(CCMBridge.IP_PREFIX + '1', 0);
             assertQueried(CCMBridge.IP_PREFIX + '2', 0);
             assertQueried(CCMBridge.IP_PREFIX + '3', 0);
-            assertQueried(CCMBridge.IP_PREFIX + '4', 12);
-            assertQueried(CCMBridge.IP_PREFIX + '5', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '4', 0);
+            assertQueried(CCMBridge.IP_PREFIX + '5', 12);
             assertQueried(CCMBridge.IP_PREFIX + '6', 0);
 
             resetCoordinators();

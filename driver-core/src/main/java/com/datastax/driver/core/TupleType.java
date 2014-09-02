@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.datastax.driver.core;
 import java.util.*;
 
 import com.google.common.collect.ImmutableList;
+
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * A tuple type.

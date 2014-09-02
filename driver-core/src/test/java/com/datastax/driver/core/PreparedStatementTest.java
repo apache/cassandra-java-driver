@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.datastax.driver.core;
 
 import java.util.*;
+
+import static org.testng.Assert.assertFalse;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
@@ -408,5 +410,21 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != ProtocolVersion.V1)
                 throw e;
         }
+    }
+
+    @Test(groups = "short", expectedExceptions = { IllegalStateException.class })
+    public void unboundVariableInBoundStatementTest() {
+        PreparedStatement ps = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+        BoundStatement bs = ps.bind("k");
+        assertFalse(bs.isSet("i"));
+        session.execute(bs);
+    }
+
+    @Test(groups = "short", expectedExceptions = { IllegalStateException.class })
+    public void unboundVariableInBatchStatementTest() {
+        PreparedStatement ps = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+        BatchStatement batch = new BatchStatement();
+        batch.add(ps.bind("k"));
+        session.execute(batch);
     }
 }

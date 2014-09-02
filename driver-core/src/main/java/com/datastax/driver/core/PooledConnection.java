@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A connection that is associated to a pool.
@@ -24,7 +25,10 @@ class PooledConnection extends Connection {
 
     private final HostConnectionPool pool;
 
-    PooledConnection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException {
+    /** Used in {@link HostConnectionPool} to handle races between two threads trying to trash the same connection */
+    final AtomicBoolean markForTrash = new AtomicBoolean();
+
+    PooledConnection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         super(name, address, factory);
         this.pool = pool;
     }
@@ -45,9 +49,9 @@ class PooledConnection extends Connection {
             return;
 
         if (hostIsDown) {
-            pool.closeAsync();
+            pool.closeAsync().force();
         } else {
-            pool.replace(this);
+            pool.replaceDefunctConnection(this);
         }
     }
 }

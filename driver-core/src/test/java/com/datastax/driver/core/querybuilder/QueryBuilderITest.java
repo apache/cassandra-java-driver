@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -205,4 +205,28 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(delete.toString(), query);
     }
 
+    @Test(groups = "short")
+    public void conditionalDeletesTest() throws Exception {        
+        session.execute("INSERT INTO ks.test_int (k, a, b) VALUES (1, 1, 1)");
+        
+        Statement delete;
+        Row row;
+        delete = delete().from(TestUtils.SIMPLE_KEYSPACE, TABLE_INT).where(eq("k", 2)).ifExists();
+        row = session.execute(delete).one();
+        assertFalse(row.getBool("[applied]"));
+        
+        delete = delete().from(TestUtils.SIMPLE_KEYSPACE, TABLE_INT).where(eq("k", 1)).ifExists();
+        row = session.execute(delete).one();
+        assertTrue(row.getBool("[applied]"));
+
+        session.execute("INSERT INTO ks.test_int (k, a, b) VALUES (1, 1, 1)");
+
+        delete = delete().from(TestUtils.SIMPLE_KEYSPACE, TABLE_INT).where(eq("k", 1)).onlyIf(eq("a", 1)).and(eq("b", 2));
+        row = session.execute(delete).one();
+        assertFalse(row.getBool("[applied]"));
+        
+        delete = delete().from(TestUtils.SIMPLE_KEYSPACE, TABLE_INT).where(eq("k", 1)).onlyIf(eq("a", 1)).and(eq("b", 1));
+        row = session.execute(delete).one();
+        assertTrue(row.getBool("[applied]"));
+    }
 }

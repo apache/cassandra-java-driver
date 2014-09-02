@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -18,10 +18,13 @@ package com.datastax.driver.core;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.*;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /**
  * Simple test of the Sessions methods against a one node cluster.
@@ -45,7 +48,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
     public void executeTest() throws Exception {
         // Simple calls to all versions of the execute/executeAsync methods
         String key = "execute_test";
-        ResultSet rs = session.execute(String.format(TestUtils.INSERT_FORMAT, TABLE1, key, "foo", 42, 24.03f));
+        ResultSet rs = session.execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE1, key, "foo", 42, 24.03f));
         assertTrue(rs.isExhausted());
 
         // execute
@@ -62,7 +65,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         // Simple calls to all versions of the execute/executeAsync methods for prepared statements
         // Note: the goal is only to exercice the Session methods, PreparedStatementTest have better prepared statement tests.
         String key = "execute_prepared_test";
-        ResultSet rs = session.execute(String.format(TestUtils.INSERT_FORMAT, TABLE2, key, "foo", 42, 24.03f));
+        ResultSet rs = session.execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE2, key, "foo", 42, 24.03f));
         assertTrue(rs.isExhausted());
 
         PreparedStatement p = session.prepare(String.format(TestUtils.SELECT_ALL_FORMAT + " WHERE k = ?", TABLE2));
@@ -113,7 +116,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
             // Simple calls to all versions of the execute/executeAsync methods
             String key = "execute_compressed_test";
-            ResultSet rs = compressedSession.execute(String.format(TestUtils.INSERT_FORMAT, TABLE3, key, "foo", 42, 24.03f));
+            ResultSet rs = compressedSession.execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE3, key, "foo", 42, 24.03f));
             assertTrue(rs.isExhausted());
 
             String SELECT_ALL = String.format(TestUtils.SELECT_ALL_FORMAT + " WHERE k = '%s'", TABLE3, key);
@@ -128,6 +131,183 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         } finally {
             cluster.getConfiguration().getProtocolOptions().setCompression(ProtocolOptions.Compression.NONE);
+        }
+    }
+
+    @Test(groups = "short")
+    public void getStateTest() throws Exception {
+        Session.State state = session.getState();
+        Host host = state.getConnectedHosts().iterator().next();
+
+        String hostAddress = String.format("/%s1", CCMBridge.IP_PREFIX);
+
+        assertEquals(state.getConnectedHosts().size(), 1);
+        assertEquals(host.getAddress().toString(), hostAddress);
+        assertEquals(host.getDatacenter(), "datacenter1");
+        assertEquals(host.getRack(), "rack1");
+        assertEquals(host.getSocketAddress().toString(), hostAddress + ":9042");
+
+        assertEquals(state.getOpenConnections(host), 2);
+        assertEquals(state.getInFlightQueries(host), 0);
+        assertEquals(state.getSession(), session);
+    }
+
+    /**
+     * Check for session memory leaks by creating and closing 10,000 connections.
+     * Each time a session is created and closed we check the number of sessions the
+     * cluster.manager is holding onto as well as the number of open connections.
+     *
+     * @throws Exception
+     */
+    @Test(groups = "long")
+    public void sessionMemoryLeakTest() throws Exception {
+        // Checking for JAVA-342
+
+        // give the driver time to close other sessions in this class
+        Thread.sleep(10);
+
+        // create a new cluster object and ensure 0 sessions and connections
+        Cluster cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1').build();
+        assertEquals(cluster.manager.sessions.size(), 0);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 0);
+
+        Session session = cluster.connect();
+        assertEquals(cluster.manager.sessions.size(), 1);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 3);
+
+        // ensure sessions.size() returns to 0 with only 1 active connection
+        session.close();
+        assertEquals(cluster.manager.sessions.size(), 0);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+        // give the driver time to close sessions
+        Thread.sleep(10);
+
+        try {
+            for (int i = 0; i < 10000; ++i) {
+                // ensure 0 sessions with a single control connection
+                assertEquals(cluster.manager.sessions.size(), 0);
+                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+                // ensure a new session gets registered and control connections are established
+                session = cluster.connect();
+                assertEquals(cluster.manager.sessions.size(), 1);
+                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 3);
+                session.close();
+
+                // give the driver time to close sessions
+                Thread.sleep(10);
+
+                // ensure sessions.size() always returns to 0 with only 1 active connection
+                assertEquals(cluster.manager.sessions.size(), 0);
+                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+            }
+        } finally {
+            cluster.close();
+        }
+    }
+
+    @Test(groups = "short")
+    public void connectionLeakTest() throws Exception {
+        // Checking for JAVA-342
+
+        // give the driver time to close other sessions in this class
+        Thread.sleep(10);
+
+        // create a new cluster object and ensure 0 sessions and connections
+        Cluster cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1').build();
+        assertEquals(cluster.manager.sessions.size(), 0);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 0);
+
+        Session session = cluster.connect();
+        assertEquals(cluster.manager.sessions.size(), 1);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 3);
+
+        // ensure sessions.size() returns to 0 with only 1 active connection
+        session.close();
+        assertEquals(cluster.manager.sessions.size(), 0);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+        try {
+            Session thisSession;
+
+            // ensure bootstrapping a node does not create additional connections
+            cassandraCluster.bootstrapNode(2);
+            assertEquals(cluster.manager.sessions.size(), 0);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+            // ensure a new session gets registered and control connections are established
+            // an additional 2 control connections should be seen for node2
+            thisSession = cluster.connect();
+            assertEquals(cluster.manager.sessions.size(), 1);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 5);
+
+            // ensure bootstrapping a node does not create additional connections that won't get cleaned up
+            thisSession.close();
+            assertEquals(cluster.manager.sessions.size(), 0);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+        } finally {
+            // ensure we decommission node2 for the rest of the tests
+            cassandraCluster.decommissionNode(2);
+
+            assertEquals(cluster.manager.sessions.size(), 0);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+            cluster.close();
+        }
+    }
+
+    /**
+     * Checks for deadlocks when a session shutdown races with the initialization of the cluster (JAVA-418).
+     */
+    @Test(groups = "short")
+    public void closeDuringClusterInitTest() throws InterruptedException {
+        for (int i = 0; i < 500; i++) {
+
+            // Use our own cluster and session (not the ones provided by the parent class) because we want an uninitialized cluster
+            // (note the use of newSession below)
+            final Cluster cluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "1").build();
+            final Session session = cluster.newSession();
+
+            // Spawn two threads to simulate the race
+            ExecutorService executor = Executors.newFixedThreadPool(2);
+            final CountDownLatch startLatch = new CountDownLatch(1);
+
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        startLatch.await();
+                        cluster.init();
+                    } catch (InterruptedException e) {
+                        fail("unexpected interruption", e);
+                    }
+                }
+            });
+
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        startLatch.await();
+                        TimeUnit.MILLISECONDS.sleep(10);
+                        session.close();
+                    } catch (InterruptedException e) {
+                        fail("unexpected interruption", e);
+                    }
+                }
+            });
+
+            // Start the threads
+            startLatch.countDown();
+
+            executor.shutdown();
+            boolean normalShutdown = executor.awaitTermination(500, TimeUnit.MILLISECONDS);
+            assertTrue(normalShutdown);
+
+            // The deadlock occurred here before JAVA-418
+            cluster.close();
         }
     }
 }

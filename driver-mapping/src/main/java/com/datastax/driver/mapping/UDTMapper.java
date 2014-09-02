@@ -1,3 +1,18 @@
+/*
+ *      Copyright (C) 2012-2014 DataStax Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package com.datastax.driver.mapping;
 
 import java.nio.ByteBuffer;
@@ -44,7 +59,7 @@ public class UDTMapper<T> {
      * @throws IllegalArgumentException if the {@code UDTValue} is not of the
      * type indicated in the mapped class's {@code @UDT} annotation.
      */
-    public T map(UDTValue v) {
+    public T fromUDT(UDTValue v) {
         if (!v.getType().equals(userType)) {
             String message = String.format("UDT conversion mismatch: expected type %s, got %s",
                                            userType, v.getType());
@@ -53,11 +68,14 @@ public class UDTMapper<T> {
         return toEntity(v);
     }
 
-    UserType getUserType() {
-        return userType;
-    }
-
-    UDTValue toUDTValue(T entity) {
+    /**
+     * Converts a mapped class to a {@link UDTValue}.
+     *
+     * @param entity an instance of the mapped class.
+     *
+     * @return the corresponding {@code UDTValue}.
+     */
+    public UDTValue toUDT(T entity) {
         UDTValue udtValue = userType.newValue();
         for (ColumnMapper<T> cm : entityMapper.allColumns()) {
             Object value = cm.getValue(entity);
@@ -66,10 +84,14 @@ public class UDTMapper<T> {
         return udtValue;
     }
 
+    UserType getUserType() {
+        return userType;
+    }
+
     List<UDTValue> toUDTValues(List<T> entities) {
         List<UDTValue> udtValues = new ArrayList<UDTValue>(entities.size());
         for (T entity : entities) {
-            UDTValue udtValue = toUDTValue(entity);
+            UDTValue udtValue = toUDT(entity);
             udtValues.add(udtValue);
         }
         return udtValues;
@@ -78,7 +100,7 @@ public class UDTMapper<T> {
     Set<UDTValue> toUDTValues(Set<T> entities) {
         Set<UDTValue> udtValues = Sets.newHashSetWithExpectedSize(entities.size());
         for (T entity : entities) {
-            UDTValue udtValue = toUDTValue(entity);
+            UDTValue udtValue = toUDT(entity);
             udtValues.add(udtValue);
         }
         return udtValues;
@@ -95,8 +117,8 @@ public class UDTMapper<T> {
         assert keyMapper != null || valueMapper != null;
         Map<Object, Object> udtValues = Maps.newHashMapWithExpectedSize(entities.size());
         for (Entry<K, V> entry : entities.entrySet()) {
-            Object key = (keyMapper == null) ? entry.getKey() : keyMapper.toUDTValue(entry.getKey());
-            Object value = (valueMapper == null) ? entry.getValue() : valueMapper.toUDTValue(entry.getValue());
+            Object key = (keyMapper == null) ? entry.getKey() : keyMapper.toUDT(entry.getKey());
+            Object value = (valueMapper == null) ? entry.getValue() : valueMapper.toUDT(entry.getValue());
             udtValues.put(key, value);
         }
         return udtValues;

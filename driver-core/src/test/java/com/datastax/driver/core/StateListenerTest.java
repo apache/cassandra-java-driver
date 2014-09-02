@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import static com.datastax.driver.core.TestUtils.*;
  */
 public class StateListenerTest {
 
-    @Test(groups = "long")
+    @Test(groups = "short")
     public void listenerTest() throws Throwable {
 
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, Cluster.builder());

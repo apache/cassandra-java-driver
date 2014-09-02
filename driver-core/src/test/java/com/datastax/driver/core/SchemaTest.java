@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetSocketAddress;
 import java.util.*;
 
 import org.testng.annotations.Test;
@@ -147,13 +148,30 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
         TableMetadata metadata = cluster.getMetadata().getKeyspace(TestUtils.SIMPLE_KEYSPACE).getTable("with_options");
 
         String withOpts = withOptions;
-        // With C* 2.0 we'll have a few additional options
-        if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != ProtocolVersion.V1) {
+        VersionNumber version = cluster.getMetadata()
+                                       .getHost(new InetSocketAddress(CCMBridge.IP_PREFIX + "1", 9042))
+                                       .getCassandraVersion();
+
+        if (version.getMajor() == 2) {
             // Strip the last ';'
             withOpts = withOpts.substring(0, withOpts.length() - 1) + '\n';
+
+            // With C* 2.x we'll have a few additional options
             withOpts += "   AND default_time_to_live = 0\n"
-                     +  "   AND speculative_retry = '99.0PERCENTILE'\n"
-                     +  "   AND index_interval = 128;";
+                      + "   AND speculative_retry = '99.0PERCENTILE'\n";
+
+            if (version.getMinor() == 0) {
+                // With 2.0 we'll have one more options
+                withOpts += "   AND index_interval = 128;";
+            } else {
+                // With 2.1 we have different options, the caching option changes and replicate_on_write disappears
+                withOpts += "   AND min_index_interval = 128\n"
+                          + "   AND max_index_interval = 2048;";
+
+                withOpts = withOpts.replace("caching = 'ALL'",
+                                            "caching = { 'keys' : 'ALL', 'rows_per_partition' : 'ALL' }")
+                                   .replace("   AND replicate_on_write = true\n", "");
+            }
         }
         assertEquals(metadata.exportAsString(), withOpts);
     }
