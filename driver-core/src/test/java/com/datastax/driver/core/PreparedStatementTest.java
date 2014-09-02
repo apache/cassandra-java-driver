@@ -15,7 +15,10 @@
  */
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
 import java.util.*;
+
+import com.google.common.base.Strings;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
@@ -407,5 +410,14 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != 1)
                 throw e;
         }
+    }
+
+    @Test(groups = "short")
+    public void toStringTest() {
+        PreparedStatement ps = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + " (k, v) VALUES (?, ?)");
+        BoundStatement bs = ps.bind("key", Strings.repeat("a", 100));
+        assertEquals(ps.toString(), "PreparedStatement[INSERT INTO test2 (k, v) VALUES (?, ?)]");
+        assertEquals(bs.toString(), "BoundStatement[INSERT INTO test2 (k, v) VALUES (?, ?), "
+                                    + "k = key, v = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...[truncated varchar of 100 characters]]");
     }
 }

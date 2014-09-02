@@ -12,6 +12,7 @@ CHANGELOG
 - [improvement] Add ResultSet.wasApplied() for conditional queries (JAVA-358)
 - [bug] Fix negative HostConnectionPool open count (JAVA-349)
 - [improvement] Log more connection details at trace and debug levels (JAVA-436)
+- [improvement] Override toString for PreparedStatement and BoundStatement (JAVA-115)
 
 2.0.5:
 ------
