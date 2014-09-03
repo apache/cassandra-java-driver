@@ -45,9 +45,9 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
         versionCheck(2.1, 0, "This will only work with Cassandra 2.1.0");
 
         String type1 = "CREATE TYPE phone (alias text, number text)";
-        String type2 = "CREATE TYPE address (street text, \"ZIP\" int, phones set<phone>)";
+        String type2 = "CREATE TYPE address (street text, \"ZIP\" int, phones set<frozen<phone>>)";
 
-        String table = "CREATE TABLE user (id int PRIMARY KEY, addr address)";
+        String table = "CREATE TABLE user (id int PRIMARY KEY, addr frozen<address>)";
 
         return Arrays.asList(type1, type2, table);
     }
@@ -184,7 +184,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(String.format("CREATE TYPE lengthy_udt (%s)", sb.toString()));
 
             // create a table with multiple sizes of udts
-            session.execute("CREATE TABLE mytable (k int PRIMARY KEY, v lengthy_udt)");
+            session.execute("CREATE TABLE mytable (k int PRIMARY KEY, v frozen<lengthy_udt>)");
 
             // hold onto the UserType for future use
             UserType udtDef = cluster.getMetadata().getKeyspace("test_udt_sizes").getUserType("lengthy_udt");
@@ -233,7 +233,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             }
 
             session.execute(String.format("CREATE TYPE alldatatypes (%s)", Joiner.on(',').join(alpha_type_list)));
-            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b alldatatypes)");
+            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<alldatatypes>)");
 
             // insert UDT data
             UserType alldatatypesDef = cluster.getMetadata().getKeyspace("testPrimitiveDatatypes").getUserType("alldatatypes");
@@ -339,6 +339,11 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
                                 Character.toString((char) (startIndex + j)), DATA_TYPE_NON_PRIMITIVE_NAMES.get(i),
                                 DATA_TYPE_PRIMITIVES.get(j).getName(), DATA_TYPE_PRIMITIVES.get(j).getName()));
                     }
+                    else if (DATA_TYPE_NON_PRIMITIVE_NAMES.get(i) == DataType.Name.TUPLE) {
+                        typeString = (String.format("%s_%s frozen<%s<%s>>", Character.toString((char) (startIndex + i)),
+                                                    Character.toString((char) (startIndex + j)), DATA_TYPE_NON_PRIMITIVE_NAMES.get(i),
+                                                    DATA_TYPE_PRIMITIVES.get(j).getName()));
+                    }
                     else {
                         typeString = (String.format("%s_%s %s<%s>", Character.toString((char) (startIndex + i)),
                                 Character.toString((char) (startIndex + j)), DATA_TYPE_NON_PRIMITIVE_NAMES.get(i),
@@ -348,7 +353,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
                 }
 
             session.execute(String.format("CREATE TYPE alldatatypes (%s)", Joiner.on(',').join(alpha_type_list)));
-            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b alldatatypes)");
+            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<alldatatypes>)");
 
             // insert UDT data
             UserType alldatatypesDef = cluster.getMetadata().getKeyspace("test_nonprimitive_datatypes").getUserType("alldatatypes");
@@ -414,11 +419,11 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute("CREATE TYPE depth_0 (age int, name text)");
 
             for (int i = 1; i <= MAX_NESTING_DEPTH; i++) {
-                session.execute(String.format("CREATE TYPE depth_%s (value depth_%s)", String.valueOf(i), String.valueOf(i-1)));
+                session.execute(String.format("CREATE TYPE depth_%s (value frozen<depth_%s>)", String.valueOf(i), String.valueOf(i-1)));
             }
 
-            session.execute(String.format("CREATE TABLE mytable (a int PRIMARY KEY, b depth_0, c depth_1, d depth_2, e depth_3," +
-                    "f depth_%s)", MAX_NESTING_DEPTH));
+            session.execute(String.format("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<depth_0>, c frozen<depth_1>, d frozen<depth_2>, e frozen<depth_3>," +
+                    "f frozen<depth_%s>)", MAX_NESTING_DEPTH));
 
             // insert UDT data
             UserType depthZeroDef = cluster.getMetadata().getKeyspace("udtNestedTest").getUserType("depth_0");
@@ -474,7 +479,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
             // create UDT
             session.execute("CREATE TYPE user (a text, b int, c uuid, d blob)");
-            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b user)");
+            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<user>)");
 
             // insert UDT data
             UserType userTypeDef = cluster.getMetadata().getKeyspace("testUdtsWithNulls").getUserType("user");
@@ -526,8 +531,8 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute("USE testUdtsWithCollectionNulls");
 
             // create UDT
-            session.execute("CREATE TYPE user (a List<text>, b Set<text>, c Map<text, text>, d Tuple<text>)");
-            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b user)");
+            session.execute("CREATE TYPE user (a List<text>, b Set<text>, c Map<text, text>, d frozen<Tuple<text>>)");
+            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<user>)");
 
             // insert null UDT data
             PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) " +
