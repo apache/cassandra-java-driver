@@ -165,6 +165,26 @@ public abstract class DataType {
         this.name = name;
     }
 
+
+    /**
+     * Returns whether this data type is frozen.
+     * <p>
+     * This applies to User Defined Types, tuples and nested collections. Frozen types are serialized as a single value in
+     * Cassandra's storage engine, whereas non-frozen types are stored in a form that allows updates to individual subfields.
+     *
+     * @return whether this data type is frozen.
+     */
+    public boolean isFrozen() {
+        // With Cassandra 2.1.0, this is straightforward; in future versions, "frozenness" will be stored in the database.
+        switch (name) {
+            case UDT:
+            case TUPLE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     static DataType decode(ChannelBuffer buffer) {
         Name name = Name.fromProtocolId(buffer.readUnsignedShort());
         switch (name) {
