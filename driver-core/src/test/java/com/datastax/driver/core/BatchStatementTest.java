@@ -44,6 +44,8 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             batch.add(st.bind("key1", 1));
             batch.add(st.bind("key2", 0));
 
+            assertEquals(3, batch.size());
+
             session.execute(batch);
 
             ResultSet rs = session.execute("SELECT * FROM test");
@@ -89,6 +91,8 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             batch.add(new SimpleStatement("INSERT INTO test (k, v) VALUES (?, ?)", "key1", 0));
             batch.add(st.bind("key1", 1));
             batch.add(st.bind("key1", 2));
+
+            assertEquals(3, batch.size());
 
             ResultSet rs = session.execute(batch);
             Row r = rs.one();

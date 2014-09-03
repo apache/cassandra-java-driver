@@ -172,6 +172,15 @@ public class BatchStatement extends Statement {
     }
 
     /**
+     * Returns the number of elements in this batch.
+     *
+     * @return the number of elements in this batch.
+     */
+    public int size() {
+        return statements.size();
+    }
+
+    /**
      * Throws an {@code UnsupportedOperationException} as setting the serial consistency is
      * currently not supported for protocol batches by Cassandra.
      * <p>
