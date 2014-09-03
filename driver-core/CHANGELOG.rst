@@ -13,6 +13,7 @@ CHANGELOG
 - [bug] Fix negative HostConnectionPool open count (JAVA-349)
 - [improvement] Log more connection details at trace and debug levels (JAVA-436)
 - [bug] Fix cluster shutdown (JAVA-445)
+- [improvement] Expose child policy in chainable load balancing policies (JAVA-439)
 
 2.0.5:
 ------

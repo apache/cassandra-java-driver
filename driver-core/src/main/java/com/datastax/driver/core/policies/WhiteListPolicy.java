@@ -47,7 +47,7 @@ import com.datastax.driver.core.Statement;
  * data-center then you should use DCAwareRoundRobinPolicy and *not* this policy
  * in particular.
  */
-public class WhiteListPolicy implements LoadBalancingPolicy {
+public class WhiteListPolicy implements ChainableLoadBalancingPolicy {
     private final LoadBalancingPolicy childPolicy;
     private final Set<InetSocketAddress> whiteList;
 
@@ -62,6 +62,11 @@ public class WhiteListPolicy implements LoadBalancingPolicy {
     public WhiteListPolicy(LoadBalancingPolicy childPolicy, Collection<InetSocketAddress> whiteList) {
         this.childPolicy = childPolicy;
         this.whiteList = ImmutableSet.copyOf(whiteList);
+    }
+
+    @Override
+    public LoadBalancingPolicy getChildPolicy() {
+        return childPolicy;
     }
 
     /**
