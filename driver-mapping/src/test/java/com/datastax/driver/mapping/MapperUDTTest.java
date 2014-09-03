@@ -17,19 +17,19 @@ package com.datastax.driver.mapping;
 
 import java.util.*;
 
+import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 import org.testng.collections.Lists;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.*;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -54,6 +54,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         private Address mainAddress;
 
         @Column(name = "other_addresses")
+        @FrozenValue
         private Map<String, Address> otherAddresses;
 
         public User() {
