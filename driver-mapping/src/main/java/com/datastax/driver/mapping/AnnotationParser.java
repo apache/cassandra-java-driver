@@ -31,6 +31,7 @@ import com.datastax.driver.mapping.MethodMapper.UDTParamMapper;
 import com.datastax.driver.mapping.MethodMapper.UDTSetParamMapper;
 import com.datastax.driver.mapping.MethodMapper.EnumParamMapper;
 import com.datastax.driver.mapping.annotations.*;
+import com.google.common.base.Strings;
 
 /**
  * Static metods that facilitates parsing class annotations into the corresponding {@link EntityMapper}.
@@ -53,6 +54,10 @@ class AnnotationParser {
 
         ConsistencyLevel writeConsistency = table.writeConsistency().isEmpty() ? null : ConsistencyLevel.valueOf(table.writeConsistency().toUpperCase());
         ConsistencyLevel readConsistency = table.readConsistency().isEmpty() ? null : ConsistencyLevel.valueOf(table.readConsistency().toUpperCase());
+
+        if (Strings.isNullOrEmpty(table.keyspace())) {
+            ksName = mappingManager.getSession().getLoggedKeyspace();
+        }
 
         EntityMapper<T> mapper = factory.create(entityClass, ksName, tableName, writeConsistency, readConsistency);
 
@@ -97,6 +102,10 @@ class AnnotationParser {
 
         String ksName = udt.caseSensitiveKeyspace() ? udt.keyspace() : udt.keyspace().toLowerCase();
         String udtName = udt.caseSensitiveType() ? udt.name() : udt.name().toLowerCase();
+
+        if (Strings.isNullOrEmpty(udt.keyspace())) {
+            ksName = mappingManager.getSession().getLoggedKeyspace();
+        }
 
         EntityMapper<T> mapper = factory.create(udtClass, ksName, udtName, null, null);
 
