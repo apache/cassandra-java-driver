@@ -29,6 +29,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.*;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -37,7 +38,9 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         return Arrays.asList("CREATE TYPE address (street text, city text, zip_code int, phones set<text>)",
                              "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, main_address address, other_addresses map<text,address>)",
                              "CREATE TYPE sub(i int)",
-                             "CREATE TABLE collection_examples (id int PRIMARY KEY, l list<sub>, s set<sub>, m1 map<int,sub>, m2 map<sub,int>, m3 map<sub,sub>)");
+                             "CREATE TABLE collection_examples (id int PRIMARY KEY, l list<sub>, s set<sub>, m1 map<int,sub>, m2 map<sub,int>, m3 map<sub,sub>)",
+                             "CREATE TYPE group_name (name text)",
+                             "CREATE TABLE groups (group_id uuid PRIMARY KEY, name group_name)");
     }
 
     @Table(keyspace = "ks", name = "users",
@@ -364,5 +367,113 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         m.save(c);
 
         assertEquals(m.get(c.getId()), c);
+    }
+
+    @Table(keyspace = "ks", name = "groups")
+    public static class Group {
+
+        @PartitionKey
+        @Column(name = "group_id")
+        private UUID groupId;
+
+        private GroupName name;
+
+        public Group() {}
+
+        public Group(GroupName name) {
+            this.name = name;
+            this.groupId = UUIDs.random();
+        }
+
+        public UUID getGroupId() {
+            return groupId;
+        }
+
+        public void setGroupId(UUID groupId) {
+            this.groupId = groupId;
+        }
+
+        public GroupName getName() {
+            return name;
+        }
+
+        public void setName(GroupName name) {
+            this.name = name;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other == null || other.getClass() != this.getClass())
+                return false;
+
+            Group that = (Group)other;
+            return Objects.equal(groupId, that.groupId)
+                && Objects.equal(name, that.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(groupId, name);
+        }
+    }
+
+    /*
+     * User defined type without a keyspace specified. The mapper will use the session's logged
+     * keyspace when a keyspace is not specified in the @UDT annotation.
+     */
+    @UDT(name = "group_name")
+    public static class GroupName {
+        private String name;
+
+        public GroupName() {
+        }
+
+        public GroupName(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other instanceof GroupName) {
+                GroupName that = (GroupName) other;
+                return this.name == that.name;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(name);
+        }
+    }
+
+    @Test(groups = "short")
+    public void testUDTWithDefaultKeyspace() throws Exception {
+        // Ensure that the test session is logged into the "ks" keyspace.
+        session.execute("USE ks");
+
+        MappingManager manager = new MappingManager(session);
+        Mapper<Group> m = manager.mapper(Group.class);
+        Group group = new Group(new GroupName("testGroup"));
+        UUID groupId = group.getGroupId();
+
+        // Check the save operation.
+        m.save(group);
+
+        // Check the select operation.
+        Group selectedGroup = m.get(groupId);
+        assertEquals(selectedGroup.getGroupId(), groupId);
+
+        // Check the delete operation.
+        m.delete(group);
+        assertNull(m.get(groupId));
     }
 }
