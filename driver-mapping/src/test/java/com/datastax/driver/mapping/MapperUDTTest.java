@@ -51,6 +51,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         private String name;
 
         @Column(name = "main_address")
+        @Frozen
         private Address mainAddress;
 
         @Column(name = "other_addresses")
@@ -269,14 +270,20 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         @PartitionKey
         private int id;
 
+        @FrozenValue
         private List<Sub> l;
 
+        @FrozenValue
         private Set<Sub> s;
 
+        @FrozenValue
         private Map<Integer, Sub> m1;
 
+        @FrozenKey
         private Map<Sub, Integer> m2;
 
+        @FrozenKey
+        @FrozenValue
         private Map<Sub, Sub> m3;
 
         public CollectionExamples() {
