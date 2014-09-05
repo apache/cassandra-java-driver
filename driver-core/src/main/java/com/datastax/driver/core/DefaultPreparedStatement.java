@@ -175,9 +175,4 @@ public class DefaultPreparedStatement implements PreparedStatement{
     public PreparedId getPreparedId() {
         return preparedId;
     }
-
-    @Override
-    public String toString() {
-        return "PreparedStatement[" + query + "]";
-    }
 }

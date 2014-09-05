@@ -21,14 +21,13 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.datastax.driver.core.ColumnDefinitions.Definition;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * A prepared statement with values bound to the bind variables.
  * <p>
  * Once values has been provided for the variables of the {@link PreparedStatement}
- * it has been created from, such BoundStatement can be executed (through
+ * it has been created from, such BoundStatement can be executed (through 
  * {@link Session#execute(Statement)}).
  * <p>
  * The values of a BoundStatement can be set by either index or name. When
@@ -90,7 +89,7 @@ public class BoundStatement extends Statement {
      * bound to a non-null value.
      *
      * @param name the name of the variable to check.
-     * @return whether the first occurrence of variable {@code name} has been
+     * @return whether the first occurrence of variable {@code name} has been 
      * bound to a non-null value.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -990,33 +989,6 @@ public class BoundStatement extends Statement {
         for (int i = 0; i < indexes.length; i++)
             setSet(indexes[i], v);
         return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * Note that this implementation for {@code BoundStatement} is intended for debugging purposes. It deserializes the statement's variables,
-     * which could have a performance impact.
-     */
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder("BoundStatement[");
-        builder.append(statement.getQueryString());
-        int i = 0;
-        for (Definition definition : statement.getVariables()) {
-            builder.append(", ");
-            String name = definition.getName();
-            DataType type = definition.getType();
-            String value = type.codec().deserialize(values[i]).toString();
-            if (value.length() > 50) {
-                value = String.format("%s...[truncated %s of %d characters]",
-                                      value.substring(0, 50), type.getName(), value.length());
-            }
-            builder.append(name + " = " + value);
-            i += 1;
-        }
-        builder.append("]");
-        return builder.toString();
     }
 
     private ColumnDefinitions metadata() {
