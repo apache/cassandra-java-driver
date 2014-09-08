@@ -33,7 +33,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
     protected Collection<String> getTableDefinitions() {
         versionCheck(2.1, 0, "This will only work with Cassandra 2.1.0");
 
-        return Arrays.asList("CREATE TABLE t (k int PRIMARY KEY, v tuple<int, text, float>)");
+        return Arrays.asList("CREATE TABLE t (k int PRIMARY KEY, v frozen<tuple<int, text, float>>)");
     }
 
     @Test(groups = "short")
@@ -98,7 +98,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute("CREATE KEYSPACE test_tuple_type " +
                             "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
             session.execute("USE test_tuple_type");
-            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b tuple<ascii, int, boolean>)");
+            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<tuple<ascii, int, boolean>>)");
 
             TupleType t = TupleType.of(DataType.ascii(), DataType.cint(), DataType.cboolean());
 
@@ -175,7 +175,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 for (int j = 0; j < i; ++j) {
                     ints.add("int");
                 }
-                valueSchema.add(String.format(" v_%d tuple<%s>", i, Joiner.on(',').join(ints)));
+                valueSchema.add(String.format(" v_%d frozen<tuple<%s>>", i, Joiner.on(',').join(ints)));
             }
             session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, %s)", Joiner.on(',').join(valueSchema)));
 
@@ -232,7 +232,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute("USE test_tuple_subtypes");
 
             // programmatically create the table with a tuple of all datatypes
-            session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, v tuple<%s>)", Joiner.on(',').join(DATA_TYPE_PRIMITIVES)));
+            session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, v frozen<tuple<%s>>)", Joiner.on(',').join(DATA_TYPE_PRIMITIVES)));
 
             // insert tuples into same key using different columns
             // and verify the results
@@ -314,19 +314,19 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
             //create list values
             for (DataType datatype : DATA_TYPE_PRIMITIVES) {
-                values.add(String.format("v_%s tuple<list<%s>>", values.size(), datatype));
+                values.add(String.format("v_%s frozen<tuple<list<%s>>>", values.size(), datatype));
             }
 
             // create set values
             for (DataType datatype : DATA_TYPE_PRIMITIVES) {
-                values.add(String.format("v_%s tuple<set<%s>>", values.size(), datatype));
+                values.add(String.format("v_%s frozen<tuple<set<%s>>>", values.size(), datatype));
             }
 
             // create map values
             for (DataType datatype : DATA_TYPE_PRIMITIVES) {
                 DataType dataType1 = datatype;
                 DataType dataType2 = datatype;
-                values.add(String.format("v_%s tuple<map<%s, %s>>", values.size(), dataType1, dataType2));
+                values.add(String.format("v_%s frozen<tuple<map<%s, %s>>>", values.size(), dataType1, dataType2));
             }
 
             // create table
@@ -423,7 +423,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
         if (depth == 0)
             return "int";
         else
-            return String.format("tuple<%s>", nestedTuplesSchemaHelper(depth - 1));
+            return String.format("frozen<tuple<%s>>", nestedTuplesSchemaHelper(depth - 1));
     }
 
     /**
@@ -513,8 +513,8 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute("USE testTuplesWithNulls");
 
             // create UDT
-            session.execute("CREATE TYPE user (a text, b tuple<text, int, uuid, blob>)");
-            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b user)");
+            session.execute("CREATE TYPE user (a text, b frozen<tuple<text, int, uuid, blob>>)");
+            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<user>)");
 
             // insert UDT data
             UserType userTypeDef = cluster.getMetadata().getKeyspace("testTuplesWithNulls").getUserType("user");

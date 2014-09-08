@@ -17,27 +17,27 @@ package com.datastax.driver.mapping;
 
 import java.util.*;
 
+import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 import org.testng.collections.Lists;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.*;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList("CREATE TYPE address (street text, city text, zip_code int, phones set<text>)",
-                             "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, main_address address, other_addresses map<text,address>)",
+                             "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, main_address frozen<address>, other_addresses map<text,frozen<address>>)",
                              "CREATE TYPE sub(i int)",
-                             "CREATE TABLE collection_examples (id int PRIMARY KEY, l list<sub>, s set<sub>, m1 map<int,sub>, m2 map<sub,int>, m3 map<sub,sub>)");
+                             "CREATE TABLE collection_examples (id int PRIMARY KEY, l list<frozen<sub>>, s set<frozen<sub>>, m1 map<int,frozen<sub>>, m2 map<frozen<sub>,int>, m3 map<frozen<sub>,frozen<sub>>)");
     }
 
     @Table(keyspace = "ks", name = "users",
@@ -51,9 +51,11 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         private String name;
 
         @Column(name = "main_address")
+        @Frozen
         private Address mainAddress;
 
         @Column(name = "other_addresses")
+        @FrozenValue
         private Map<String, Address> otherAddresses;
 
         public User() {
@@ -268,14 +270,20 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         @PartitionKey
         private int id;
 
+        @FrozenValue
         private List<Sub> l;
 
+        @FrozenValue
         private Set<Sub> s;
 
+        @FrozenValue
         private Map<Integer, Sub> m1;
 
+        @FrozenKey
         private Map<Sub, Integer> m2;
 
+        @FrozenKey
+        @FrozenValue
         private Map<Sub, Sub> m3;
 
         public CollectionExamples() {
