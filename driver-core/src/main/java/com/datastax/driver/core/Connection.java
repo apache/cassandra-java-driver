@@ -102,16 +102,16 @@ class Connection {
             if (!future.isSuccess())
             {
                 if (logger.isDebugEnabled())
-                    logger.debug(String.format("[%s] Error connecting to %s%s", name, address, extractMessage(future.getCause())));
+                    logger.debug(String.format("%s Error connecting to %s%s", this, address, extractMessage(future.getCause())));
                 throw defunct(new TransportException(address, "Cannot connect", future.getCause()));
             }
         } finally {
             writer.decrementAndGet();
         }
 
-        logger.trace("[{}] Connection opened successfully", name);
+        logger.trace("{} Connection opened successfully", this);
         initializeTransport(protocolVersion, factory.manager.metadata.clusterName);
-        logger.debug("[{}] Transport initialized and ready", name);
+        logger.debug("{} Transport initialized and ready", this);
         isInitialized = true;
     }
 
@@ -194,7 +194,7 @@ class Connection {
     private void waitForAuthCompletion(Message.Response authResponse, Authenticator authenticator) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         switch (authResponse.type) {
             case AUTH_SUCCESS:
-                logger.trace("Authentication complete");
+                logger.trace("{} Authentication complete", this);
                 authenticator.onAuthenticationSuccess(((Responses.AuthSuccess)authResponse).token);
                 break;
             case AUTH_CHALLENGE:
@@ -202,11 +202,11 @@ class Connection {
                 if (responseToServer == null) {
                     // If we generate a null response, then authentication has completed, return without
                     // sending a further response back to the server.
-                    logger.trace("Authentication complete (No response to server)");
+                    logger.trace("{} Authentication complete (No response to server)", this);
                     return;
                 } else {
                     // Otherwise, send the challenge response back to the server
-                    logger.trace("Sending Auth response to challenge");
+                    logger.trace("{} Sending Auth response to challenge", this);
                     waitForAuthCompletion(write(new Requests.AuthResponse(responseToServer)).get(), authenticator);
                 }
                 break;
@@ -289,7 +289,7 @@ class Connection {
             return;
 
         try {
-            logger.trace("[{}] Setting keyspace {}", name, keyspace);
+            logger.trace("{} Setting keyspace {}", this, keyspace);
             long timeout = factory.getConnectTimeoutMillis();
             // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
             Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
@@ -357,7 +357,7 @@ class Connection {
             throw new ConnectionException(address, "Connection has been closed");
         }
 
-        logger.trace("[{}] writing request {}", name, request);
+        logger.trace("{} writing request {}", this, request);
         writer.incrementAndGet();
         channel.write(request).addListener(writeHandler(request, handler));
         return handler;
@@ -371,7 +371,7 @@ class Connection {
                 writer.decrementAndGet();
 
                 if (!writeFuture.isSuccess()) {
-                    logger.debug("[{}] Error writing request {}", name, request);
+                    logger.debug("{} Error writing request {}", Connection.this, request);
                     // Remove this handler from the dispatcher so it don't get notified of the error
                     // twice (we will fail that method already)
                     dispatcher.removeHandler(handler.streamId, true);
@@ -384,7 +384,7 @@ class Connection {
                     }
                     handler.callback.onException(Connection.this, defunct(ce), System.nanoTime() - handler.startTime);
                 } else {
-                    logger.trace("[{}] request sent successfully", name);
+                    logger.trace("{} request sent successfully", Connection.this);
                 }
             }
         };
@@ -413,7 +413,7 @@ class Connection {
             return closeFuture.get();
         }
 
-        logger.debug("[{}] closing connection", name);
+        logger.debug("{} closing connection", this);
 
         boolean terminated = terminate(false, false);
         if (!terminated)
@@ -610,13 +610,13 @@ class Connection {
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
             if (!(e.getMessage() instanceof Message.Response)) {
                 String msg = asDebugString(e.getMessage());
-                logger.error("[{}] Received unexpected message: {}", name, msg);
+                logger.error("{} Received unexpected message: {}", Connection.this, msg);
                 defunct(new TransportException(address, "Unexpected message received: " + msg));
             } else {
                 Message.Response response = (Message.Response)e.getMessage();
                 int streamId = response.getStreamId();
 
-                logger.trace("[{}] received: {}", name, e.getMessage());
+                logger.trace("{} received: {}", Connection.this, e.getMessage());
 
                 if (streamId < 0) {
                     factory.defaultHandler.handle(response);
@@ -637,8 +637,8 @@ class Connection {
                      */
                     streamIdHandler.unmark(streamId);
                     if (logger.isDebugEnabled())
-                        logger.debug("[{}] Response received on stream {} but no handler set anymore (either the request has "
-                                   + "timed out or it was closed due to another error). Received message is {}", name, streamId, asDebugString(response));
+                        logger.debug("{} Response received on stream {} but no handler set anymore (either the request has "
+                                   + "timed out or it was closed due to another error). Received message is {}", Connection.this, streamId, asDebugString(response));
                     return;
                 }
                 handler.cancelTimeout();
@@ -666,7 +666,7 @@ class Connection {
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
             if (logger.isDebugEnabled())
-                logger.debug(String.format("[%s] connection error", name), e.getCause());
+                logger.debug(String.format("%s connection error", Connection.this), e.getCause());
 
             // Ignore exception while writing, this will be handled by write() directly
             if (writer.get() > 0)
