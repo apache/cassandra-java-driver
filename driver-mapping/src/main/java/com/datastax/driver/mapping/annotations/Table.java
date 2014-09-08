@@ -33,7 +33,7 @@ public @interface Table {
      *
      * @return the name of the keyspace.
      */
-    String keyspace();
+    String keyspace() default "";
     /**
      * The name of the table.
      *
