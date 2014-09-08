@@ -127,12 +127,11 @@ class CQLType {
             if (idx >= toParse.length())
                 throw fail("expected type name");
 
-            // TODO check allowed characters in unquoted names
-            if (!isAlpha(idx))
+            if (!isIdentStart(idx))
                 throw fail("illegal character at start of type name");
 
             int i = idx;
-            while (i < toParse.length() && isAlphaNum(i))
+            while (i < toParse.length() && isIdentBody(i))
                 i += 1;
 
             return i;
@@ -143,17 +142,23 @@ class CQLType {
             return c == ' ' || c == '\t' || c == '\n';
         }
 
-        private boolean isAlpha(int i) {
+        private boolean isIdentStart(int i) {
             char c = toParse.charAt(i);
+            return isLetter(c);
+        }
+
+        private boolean isIdentBody(int i) {
+            char c = toParse.charAt(i);
+            return isLetter(c) || isDigit(c) || c == '_';
+        }
+
+        private boolean isLetter(char c) {
             return (c >= 'a' && c <= 'z') ||
                    (c >= 'A' && c <= 'Z');
         }
 
-        private boolean isAlphaNum(int i) {
-            if (isAlpha(i))
-                return true;
-            char c = toParse.charAt(i);
-            return c >= '0' && c <= '9';
+        private boolean isDigit(char c) {
+            return (c >= '0' && c <= '9');
         }
 
         private IllegalArgumentException fail(String cause) {

@@ -4,6 +4,8 @@ CHANGELOG
 2.1.1:
 ------
 
+- [new] Support for new "frozen" keyword (JAVA-441)
+
 Merged from 2.0 branch:
 
 - [bug] Check cluster name when connecting to a new node (JAVA-397)

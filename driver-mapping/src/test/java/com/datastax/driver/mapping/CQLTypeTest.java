@@ -23,13 +23,13 @@ public class CQLTypeTest {
     @Test(groups = "unit")
     public void parseNestedTypeTest() {
         // list
-        CQLType type = CQLType.parse("list<foo>");
+        CQLType type = CQLType.parse("list<foo1>");
         assertEquals(type.name, "list");
         assertFalse(type.frozen);
         assertEquals(type.subTypes.size(), 1);
 
         CQLType subType0 = type.subTypes.get(0);
-        assertEquals(subType0.name, "foo");
+        assertEquals(subType0.name, "foo1");
         assertFalse(subType0.frozen);
         assertNull(subType0.subTypes);
 
@@ -53,8 +53,8 @@ public class CQLTypeTest {
 
     @Test(groups = "unit")
     public void parseSimpleFrozenTypeTest() {
-        CQLType type = CQLType.parse("frozen<foo>");
-        assertEquals(type.name, "foo");
+        CQLType type = CQLType.parse("frozen<foo_1>");
+        assertEquals(type.name, "foo_1");
         assertTrue(type.frozen);
         assertNull(type.subTypes);
     }
