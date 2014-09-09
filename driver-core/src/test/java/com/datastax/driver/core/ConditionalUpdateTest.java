@@ -64,4 +64,49 @@ public class ConditionalUpdateTest extends CCMBridge.PerClassSingleNodeCluster {
 
         assertTrue(rs.wasApplied());
     }
+
+    /**
+     * Test for #JAVA-358 - Directly expose CAS_RESULT_COLUMN.
+     * <p/>
+     * This test makes sure that the boolean flag {@code ResultSet.wasApplied()} is false when we try to insert a row
+     * which already exists.
+     *
+     * @see ResultSet#wasApplied()
+     */
+    @Test(groups = "short")
+    public void insert_if_not_exist_should_support_wasApplied_boolean() {
+        // First, make sure the test table and the row exist
+        session.execute("CREATE TABLE IF NOT EXISTS Java358 (key int primary key, value int)");
+        ResultSet rs;
+        rs = session.execute("INSERT INTO Java358(key, value) VALUES (42, 42) IF NOT EXISTS");
+        assertTrue(rs.wasApplied());
+
+        // Then, make sure the flag reports correctly that we did not create a new row
+        rs = session.execute("INSERT INTO Java358(key, value) VALUES (42, 42) IF NOT EXISTS");
+        assertFalse(rs.wasApplied());
+    }
+
+    /**
+     * Test for #JAVA-358 - Directly expose CAS_RESULT_COLUMN.
+     * <p/>
+     * This test makes sure that the boolean flag {@code ResultSet.wasApplied()} is false when we try to delete a row
+     * which does not exist.
+     *
+     * @see ResultSet#wasApplied()
+     */
+    @Test(groups = "short")
+    public void delete_if_not_exist_should_support_wasApplied_boolean() {
+        // First, make sure the test table and the row exist
+        session.execute("CREATE TABLE IF NOT EXISTS Java358 (key int primary key, value int)");
+        session.execute("INSERT INTO Java358(key, value) VALUES (42, 42)");
+
+        // Then, make sure the flag reports correctly that we did delete the row
+        ResultSet rs;
+        rs = session.execute("DELETE FROM Java358 WHERE KEY=42 IF EXISTS");
+        assertTrue(rs.wasApplied());
+
+        // Finally, make sure the flag reports correctly that we did did not delete an non-existing row
+        rs = session.execute("DELETE FROM Java358 WHERE KEY=42 IF EXISTS");
+        assertFalse(rs.wasApplied());
+    }
 }
