@@ -3,9 +3,8 @@ package com.datastax.driver.mapping;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.testng.util.Strings;
-
 import com.datastax.driver.mapping.annotations.Frozen;
+import com.google.common.base.Strings;
 
 /** A CQL type definition parsed from {@link Frozen#value()}, for example map<text,map<text,frozen<user>>> */
 class CQLType {
