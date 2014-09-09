@@ -17,6 +17,8 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
+import static org.testng.Assert.assertFalse;
+
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -407,5 +409,21 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != 1)
                 throw e;
         }
+    }
+
+    @Test(groups = "short", expectedExceptions = { IllegalStateException.class })
+    public void unboundVariableInBoundStatementTest() {
+        PreparedStatement ps = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+        BoundStatement bs = ps.bind("k");
+        assertFalse(bs.isSet("i"));
+        session.execute(bs);
+    }
+
+    @Test(groups = "short", expectedExceptions = { IllegalStateException.class })
+    public void unboundVariableInBatchStatementTest() {
+        PreparedStatement ps = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+        BatchStatement batch = new BatchStatement();
+        batch.add(ps.bind("k"));
+        session.execute(batch);
     }
 }

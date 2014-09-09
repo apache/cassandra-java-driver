@@ -1,6 +1,65 @@
 CHANGELOG
 =========
 
+2.1.1:
+------
+
+- [new] Support for new "frozen" keyword (JAVA-441)
+
+Merged from 2.0 branch:
+
+- [bug] Check cluster name when connecting to a new node (JAVA-397)
+- [bug] Add missing CAS delete support in QueryBuilder (JAVA-326)
+- [bug] Add collection and data length checks during serialization (JAVA-363)
+- [improvement] Surface number of retries in metrics (JAVA-329)
+- [bug] Do not use a host when no rpc_address found for it (JAVA-428)
+- [improvement] Add ResultSet.wasApplied() for conditional queries (JAVA-358)
+- [bug] Fix negative HostConnectionPool open count (JAVA-349)
+
+
+2.1.0:
+------
+
+- [bug] ClusteringColumn annotation not working with specified ordering (JAVA-408)
+- [improvement] Fail BoundStatement if null values are not set explicitly (JAVA-410)
+- [bug] Handle UDT and tuples in BuiltStatement.toString (JAVA-416)
+
+Merged from 2.0 branch:
+
+- [bug] Release connections on ResultSetFuture#cancel (JAVA-407)
+- [bug] Fix handling of SimpleStatement with values in query builder
+  batches (JAVA-393)
+- [bug] Ensure pool is properly closed in onDown (JAVA-417)
+- [bug] Fix tokenMap initialization at startup (JAVA-415)
+- [bug] Avoid deadlock on close (JAVA-418)
+
+
+2.1.0-rc1:
+----------
+
+Merged from 2.0 branch:
+
+- [bug] Ensure defunct connections are completely closed (JAVA-394)
+- [bug] Fix memory and resource leak on closed Sessions (JAVA-342, JAVA-390)
+
+
+2.1.0-beta1:
+------------
+
+- [new] Support for User Defined Types and tuples
+- [new] Simple object mapper
+
+Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
+
+- [improvement] Better handling of dead connections (JAVA-204)
+- [bug] Fix potential NPE in ControlConnection (JAVA-373)
+- [bug] Throws NPE when passed null for a contact point (JAVA-291)
+- [bug] Avoid LoadBalancingPolicy onDown+onUp at startup (JAVA-315)
+- [bug] Avoid classloader leak in Tomcat (JAVA-343)
+- [bug] Avoid deadlock in onAdd/onUp (JAVA-387)
+- [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
+
+
 2.0.6:
 ------
 
@@ -13,6 +72,7 @@ CHANGELOG
 - [bug] Fix negative HostConnectionPool open count (JAVA-349)
 - [improvement] Log more connection details at trace and debug levels (JAVA-436)
 - [bug] Fix cluster shutdown (JAVA-445)
+
 
 2.0.5:
 ------

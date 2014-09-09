@@ -67,6 +67,11 @@ public class ProtocolOptions {
      */
     public static final int DEFAULT_PORT = 9042;
 
+    /**
+     * The newest version of the protocol that this version of the driver support.
+     */
+    public static final int NEWEST_SUPPORTED_PROTOCOL_VERSION = 2;
+
     private volatile Cluster.Manager manager;
 
     private final int port;
@@ -104,7 +109,8 @@ public class ProtocolOptions {
      * @param port the port to use for the binary protocol.
      * @param protocolVersion the protocol version to use. This can be a negative number, in which case the
      * version uses will be the biggest version supported by the <em>first</em> node the driver connects to.
-     * Otherwise, it must be either 1 or 2 to force using a particular protocol version. See
+     * Otherwise, it must be between 1 and {@code NEWEST_SUPPORTED_PROTOCOL_VERSION} to force using a particular
+     * protocol version. See
      * {@link Cluster.Builder#withProtocolVersion} for more details.
      * @param sslOptions the SSL options to use. Use {@code null} if SSL is not
      * to be used.
@@ -117,8 +123,8 @@ public class ProtocolOptions {
         this.sslOptions = sslOptions;
         this.authProvider = authProvider;
 
-        if (protocolVersion >= 0 && protocolVersion != 1 && protocolVersion != 2)
-            throw new IllegalArgumentException(String.format("Unsupported protocol version %d; valid values are 1, 2 or negative (for auto-detect).", protocolVersion));
+        if (protocolVersion == 0 || protocolVersion > NEWEST_SUPPORTED_PROTOCOL_VERSION)
+            throw new IllegalArgumentException(String.format("Unsupported protocol version %d; valid values must be between 1 and %d or negative (for auto-detect).", protocolVersion, NEWEST_SUPPORTED_PROTOCOL_VERSION));
     }
 
     void register(Cluster.Manager manager) {
@@ -140,8 +146,9 @@ public class ProtocolOptions {
      * @return the protocol version in use. This might return a negative value if a particular
      * version hasn't been forced by the user (using say {Cluster.Builder#withProtocolVersion})
      * <em>and</em> this Cluster instance has not yet connected to any node (but as soon as the
-     * Cluster instance is connected, this is guaranteed to return either 1 or 2). Note that
-     * nodes that do not support this protocol version will be ignored.
+     * Cluster instance is connected, this is guaranteed to return a value between 1 and
+     * {@code NEWEST_SUPPORTED_PROTOCOL_VERSION}). Note that nodes that do not support this protocol
+     * version will be ignored.
      */
     public int getProtocolVersion() {
         return manager.connectionFactory.protocolVersion;

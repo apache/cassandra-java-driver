@@ -111,9 +111,9 @@ public class UUIDsTest {
     }
 
     private static void assertWithin(UUID uuid, UUID lowerBound, UUID upperBound) {
-        ByteBuffer uuidBytes = DataType.uuid().serialize(uuid);
-        ByteBuffer lb = DataType.uuid().serialize(lowerBound);
-        ByteBuffer ub = DataType.uuid().serialize(upperBound);
+        ByteBuffer uuidBytes = DataType.uuid().serialize(uuid, 1);
+        ByteBuffer lb = DataType.uuid().serialize(lowerBound, 1);
+        ByteBuffer ub = DataType.uuid().serialize(upperBound, 1);
         assertTrue(compareTimestampBytes(lb, uuidBytes) <= 0);
         assertTrue(compareTimestampBytes(ub, uuidBytes) >= 0);
     }

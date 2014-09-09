@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 import com.datastax.driver.core.*;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+
 import static org.testng.Assert.*;
 
 public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -34,7 +35,8 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
     @Override
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
-                             "CREATE TABLE dateTest (t timestamp PRIMARY KEY)");
+                             "CREATE TABLE dateTest (t timestamp PRIMARY KEY)",
+                             "CREATE TYPE udt (i int)");
     }
 
     @Test(groups = "short")
@@ -100,5 +102,15 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         Row r2 = rows.get(1);
         assertEquals("batchTest2", r2.getString("k"));
         assertEquals("val2", r2.getString("t"));
+    }
+
+    @Test(groups = "short")
+    public void insertUdtTest() throws Exception {
+        // This should be in QueryBuilderTest#insertTest, but we need a cluster instance to get the UserType
+        UserType udtType = cluster.getMetadata().getKeyspace("ks").getUserType("udt");
+        UDTValue udtValue = udtType.newValue().setInt("i", 2);
+
+        Statement insert = insertInto("udtTest").value("i", 1).value("t", udtValue);
+        assertEquals(insert.toString(), "INSERT INTO udtTest(i,t) VALUES (1,{i:2});");
     }
 }

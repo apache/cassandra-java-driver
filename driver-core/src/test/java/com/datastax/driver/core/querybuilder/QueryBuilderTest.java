@@ -23,11 +23,11 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
 
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.*;
+
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.testng.Assert.*;
 
 public class QueryBuilderTest {
 
@@ -201,6 +201,12 @@ public class QueryBuilderTest {
         query = "INSERT INTO foo(k,x) VALUES (0,1) IF NOT EXISTS;";
         insert = insertInto("foo").value("k", 0).value("x", 1).ifNotExists();
         assertEquals(insert.toString(), query);
+
+        query = "INSERT INTO foo(k,x) VALUES (0,(1));";
+        insert = insertInto("foo").value("k", 0).value("x", TupleType.of(DataType.cint()).newValue(1));
+        assertEquals(insert.toString(), query);
+
+        // UDT: see QueryBuilderExecutionTest
     }
 
     @Test(groups = "unit")

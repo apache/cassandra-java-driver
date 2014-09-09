@@ -650,8 +650,10 @@ public class Cluster implements Closeable {
          * negative value.
          */
         public Builder withProtocolVersion(int version) {
-            if (version >= 0 && version != 1 && version != 2)
-                throw new IllegalArgumentException(String.format("Unsupported protocol version %d; valid values are 1, 2 or negative (for auto-detect).", version));
+            if (protocolVersion == 0 || protocolVersion > ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION)
+                throw new IllegalArgumentException(String.format("Unsupported protocol version %d; valid values must be between 1 and %d or negative (for auto-detect).",
+                                                                 protocolVersion,
+                                                                 ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION));
             this.protocolVersion = version;
             return this;
         }
@@ -1151,7 +1153,7 @@ public class Cluster implements Closeable {
                     try {
                         controlConnection.connect();
                         if (connectionFactory.protocolVersion < 0)
-                            connectionFactory.protocolVersion = 2;
+                            connectionFactory.protocolVersion = ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION;
 
                         // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
                         // rack...) to initialize the load balancing policy

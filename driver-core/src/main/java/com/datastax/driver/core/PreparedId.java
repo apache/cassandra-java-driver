@@ -28,12 +28,14 @@ public class PreparedId
     final ColumnDefinitions resultSetMetadata;
 
     final int[] routingKeyIndexes;
+    final int protocolVersion;
 
-    PreparedId(MD5Digest id, ColumnDefinitions metadata, ColumnDefinitions resultSetMetadata, int[] routingKeyIndexes)
+    PreparedId(MD5Digest id, ColumnDefinitions metadata, ColumnDefinitions resultSetMetadata, int[] routingKeyIndexes, int protocolVersion)
     {
         this.id = id;
         this.metadata = metadata;
         this.resultSetMetadata = resultSetMetadata;
         this.routingKeyIndexes = routingKeyIndexes;
+        this.protocolVersion = protocolVersion;
     }
 }

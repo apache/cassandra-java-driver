@@ -23,7 +23,7 @@ public class InvalidTypeException extends DriverException {
         super(msg);
     }
 
-    private InvalidTypeException(String msg, Throwable cause) {
+    public InvalidTypeException(String msg, Throwable cause) {
         super(msg, cause);
     }
 

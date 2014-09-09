@@ -38,7 +38,7 @@ public class Truncate extends BuiltStatement {
     }
 
     @Override
-    protected StringBuilder buildQueryString(List<ByteBuffer> variables) {
+    protected StringBuilder buildQueryString(List<Object> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("TRUNCATE ");

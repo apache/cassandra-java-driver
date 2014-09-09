@@ -35,7 +35,7 @@ public abstract class Using extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables) {
             sb.append(optionName).append(' ').append(value);
         }
 
@@ -54,7 +54,7 @@ public abstract class Using extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables) {
             sb.append(optionName).append(' ').append(marker);
         }
 

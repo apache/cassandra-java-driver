@@ -420,10 +420,18 @@ class Responses {
                             sb.append(" | null");
                         } else {
                             sb.append(" | ");
-                            if (metadata.columns == null)
+                            if (metadata.columns == null) {
                                 sb.append(Bytes.toHexString(v));
-                            else
-                                sb.append(metadata.columns.getType(i).deserialize(v));
+                            } else {
+                                // We don't have the protocol version available and it's a pain to change
+                                // everything to get it when this method is only ever call for debugging.
+                                // So trying v3 and falling back to v2, which is ugly but good enough for now.
+                                try {
+                                    sb.append(metadata.columns.getType(i).deserialize(v, 3));
+                                } catch (IllegalArgumentException e) {
+                                    sb.append(metadata.columns.getType(i).deserialize(v, 2));
+                                }
+                            }
                         }
                     }
                     sb.append('\n');

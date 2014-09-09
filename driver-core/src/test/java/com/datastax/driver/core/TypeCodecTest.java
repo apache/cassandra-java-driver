@@ -15,12 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.Collections;
 import java.util.List;
 
-import org.testng.collections.Lists;
-
+import com.google.common.collect.Lists;
 import com.google.common.base.Strings;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -32,31 +34,31 @@ public class TypeCodecTest {
 
     @Test(groups = "unit")
     public void testCustomList() throws Exception {
-        TypeCodec<?> listType = TypeCodec.listOf(CUSTOM_FOO);
+        TypeCodec<?> listType = TypeCodec.listOf(CUSTOM_FOO, 2);
         Assert.assertNotNull(listType);
     }
 
     @Test(groups = "unit")
     public void testCustomSet() throws Exception {
-        TypeCodec<?> setType = TypeCodec.setOf(CUSTOM_FOO);
+        TypeCodec<?> setType = TypeCodec.setOf(CUSTOM_FOO, 2);
         Assert.assertNotNull(setType);
     }
 
     @Test(groups = "unit")
     public void testCustomKeyMap() throws Exception {
-        TypeCodec mapType = TypeCodec.mapOf(CUSTOM_FOO, text());
+        TypeCodec<Map<ByteBuffer, String>> mapType = TypeCodec.mapOf(CUSTOM_FOO, text(), 2);
         Assert.assertNotNull(mapType);
     }
 
     @Test(groups = "unit")
     public void testCustomValueMap() throws Exception {
-        TypeCodec mapType = TypeCodec.mapOf(text(), CUSTOM_FOO);
+        TypeCodec<Map<String, ByteBuffer>> mapType = TypeCodec.mapOf(text(), CUSTOM_FOO, 2);
         Assert.assertNotNull(mapType);
     }
 
     @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
     public void collectionTooLargeTest() throws Exception {
-        TypeCodec<List<Integer>> listType = TypeCodec.listOf(DataType.cint());
+        TypeCodec<List<Integer>> listType = TypeCodec.listOf(DataType.cint(), 2);
         List<Integer> list = Collections.nCopies(65536, 1);
 
         listType.serialize(list);
@@ -64,7 +66,7 @@ public class TypeCodecTest {
 
     @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
     public void collectionElementTooLargeTest() throws Exception {
-        TypeCodec<List<String>> listType = TypeCodec.listOf(DataType.text());
+        TypeCodec<List<String>> listType = TypeCodec.listOf(DataType.text(), 2);
         List<String> list = Lists.newArrayList(Strings.repeat("a", 65536));
 
         listType.serialize(list);

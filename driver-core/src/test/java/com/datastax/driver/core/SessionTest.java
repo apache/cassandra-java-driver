@@ -134,6 +134,24 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
+    @Test(groups = "short")
+    public void getStateTest() throws Exception {
+        Session.State state = session.getState();
+        Host host = state.getConnectedHosts().iterator().next();
+
+        String hostAddress = String.format("/%s1", CCMBridge.IP_PREFIX);
+
+        assertEquals(state.getConnectedHosts().size(), 1);
+        assertEquals(host.getAddress().toString(), hostAddress);
+        assertEquals(host.getDatacenter(), "datacenter1");
+        assertEquals(host.getRack(), "rack1");
+        assertEquals(host.getSocketAddress().toString(), hostAddress + ":9042");
+
+        assertEquals(state.getOpenConnections(host), 2);
+        assertEquals(state.getInFlightQueries(host), 0);
+        assertEquals(state.getSession(), session);
+    }
+
     /**
      * Check for session memory leaks by creating and closing 10,000 connections.
      * Each time a session is created and closed we check the number of sessions the

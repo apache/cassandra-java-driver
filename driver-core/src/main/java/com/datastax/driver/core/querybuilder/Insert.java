@@ -46,7 +46,7 @@ public class Insert extends BuiltStatement {
     }
 
     @Override
-    StringBuilder buildQueryString(List<ByteBuffer> variables) {
+    StringBuilder buildQueryString(List<Object> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("INSERT INTO ");

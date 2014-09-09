@@ -29,7 +29,7 @@ public class Ordering extends Utils.Appendeable {
     }
 
     @Override
-    void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+    void appendTo(StringBuilder sb, List<Object> variables) {
         Utils.appendName(name, sb);
         sb.append(isDesc ? " DESC" : " ASC");
     }

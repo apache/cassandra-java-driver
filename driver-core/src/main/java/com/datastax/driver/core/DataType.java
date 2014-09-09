@@ -32,7 +32,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 /**
  * Data types supported by cassandra.
  */
-public class DataType {
+public abstract class DataType {
 
     /**
      * The CQL type name.
@@ -58,6 +58,8 @@ public class DataType {
         LIST      (32, List.class),
         SET       (34, Set.class),
         MAP       (33, Map.class),
+        UDT       (48, UDTValue.class),
+        TUPLE     (49, TupleValue.class),
         CUSTOM    (0,  ByteBuffer.class);
 
         final int protocolId;
@@ -129,6 +131,8 @@ public class DataType {
          *   <tr><td>TEXT          </td><td>String</td></tr>
          *   <tr><td>TIMESTAMP     </td><td>Date</td></tr>
          *   <tr><td>UUID          </td><td>UUID</td></tr>
+         *   <tr><td>UDT           </td><td>UDTValue</td></tr>
+         *   <tr><td>TUPLE         </td><td>TupleValue</td></tr>
          *   <tr><td>VARCHAR       </td><td>String</td></tr>
          *   <tr><td>VARINT        </td><td>BigInteger</td></tr>
          *   <tr><td>TIMEUUID      </td><td>UUID</td></tr>
@@ -146,36 +150,49 @@ public class DataType {
         }
     }
 
-    private final DataType.Name name;
-    private final List<DataType> typeArguments;
-    private final String customClassName;
-    private final TypeCodec<?> codec;
+    protected final DataType.Name name;
 
     private static final Map<Name, DataType> primitiveTypeMap = new EnumMap<Name, DataType>(Name.class);
     static {
         for (Name name : Name.values()) {
-            if (!name.isCollection() && name != Name.CUSTOM)
-                primitiveTypeMap.put(name, new DataType(name, Collections.<DataType>emptyList(), TypeCodec.createFor(name)));
+            if (!name.isCollection() && name != Name.CUSTOM && name != Name.UDT && name != Name.TUPLE)
+                primitiveTypeMap.put(name, new DataType.Native(name));
         }
     }
     private static final Set<DataType> primitiveTypeSet = ImmutableSet.copyOf(primitiveTypeMap.values());
 
-    private DataType(DataType.Name name, List<DataType> typeArguments, TypeCodec<?> codec) {
-        this(name, typeArguments, null, codec);
+    protected DataType(DataType.Name name) {
+        this.name = name;
     }
 
-    private DataType(DataType.Name name, List<DataType> typeArguments, String customClassName, TypeCodec<?> codec) {
-        this.name = name;
-        this.typeArguments = typeArguments;
-        this.customClassName = customClassName;
-        this.codec = codec;
+
+    /**
+     * Returns whether this data type is frozen.
+     * <p>
+     * This applies to User Defined Types, tuples and nested collections. Frozen types are serialized as a single value in
+     * Cassandra's storage engine, whereas non-frozen types are stored in a form that allows updates to individual subfields.
+     *
+     * @return whether this data type is frozen.
+     */
+    public boolean isFrozen() {
+        // With Cassandra 2.1.0, this is straightforward; in future versions, "frozenness" will be stored in the database.
+        switch (name) {
+            case UDT:
+            case TUPLE:
+                return true;
+            default:
+                return false;
+        }
     }
 
     static DataType decode(ChannelBuffer buffer) {
         Name name = Name.fromProtocolId(buffer.readUnsignedShort());
         switch (name) {
             case CUSTOM:
-                return custom(CBUtil.readString(buffer));
+                String className = CBUtil.readString(buffer);
+                return CassandraTypeParser.isUserType(className) || CassandraTypeParser.isTupleType(className)
+                     ? CassandraTypeParser.parseOne(className)
+                     : custom(className);
             case LIST:
                 return list(decode(buffer));
             case SET:
@@ -189,10 +206,7 @@ public class DataType {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    TypeCodec<Object> codec() {
-        return (TypeCodec<Object>)codec;
-    }
+    abstract TypeCodec<Object> codec(int protocolVersion);
 
     /**
      * Returns the ASCII type.
@@ -348,7 +362,7 @@ public class DataType {
         // TODO: for list, sets and maps, we could cache them (may or may not be worth it, but since we
         // don't allow nesting of collections, even pregenerating all the lists/sets like we do for
         // primitives wouldn't be very costly)
-        return new DataType(Name.LIST, ImmutableList.of(elementType), TypeCodec.listOf(elementType));
+        return new DataType.Collection(Name.LIST, ImmutableList.of(elementType));
     }
 
     /**
@@ -358,7 +372,7 @@ public class DataType {
      * @return the type of sets of {@code elementType} elements.
      */
     public static DataType set(DataType elementType) {
-        return new DataType(Name.SET, ImmutableList.of(elementType), TypeCodec.setOf(elementType));
+        return new DataType.Collection(Name.SET, ImmutableList.of(elementType));
     }
 
     /**
@@ -369,7 +383,7 @@ public class DataType {
      * @return the type of map of {@code keyType} to {@code valueType} elements.
      */
     public static DataType map(DataType keyType, DataType valueType) {
-        return new DataType(Name.MAP, ImmutableList.of(keyType, valueType), TypeCodec.mapOf(keyType, valueType));
+        return new DataType.Collection(Name.MAP, ImmutableList.of(keyType, valueType));
     }
 
     /**
@@ -389,7 +403,7 @@ public class DataType {
     public static DataType custom(String typeClassName) {
         if (typeClassName == null)
             throw new NullPointerException();
-        return new DataType(Name.CUSTOM, Collections.<DataType>emptyList(), typeClassName, TypeCodec.createFor(Name.CUSTOM));
+        return new DataType.Custom(Name.CUSTOM, typeClassName);
     }
 
     /**
@@ -419,7 +433,7 @@ public class DataType {
      * @return an immutable list containing the type arguments of this type.
      */
     public List<DataType> getTypeArguments() {
-        return typeArguments;
+        return Collections.<DataType>emptyList();
     }
 
     /**
@@ -429,32 +443,39 @@ public class DataType {
      * {@code null} for any other type.
      */
     public String getCustomTypeClassName() {
-        return customClassName;
+        return null;
     }
 
     /**
-     * Parses a string value for the type this object represent, returning its
-     * Cassandra binary representation.
-     * <p>
-     * Please note that currently, parsing collections is not supported and will
-     * throw an {@code InvalidTypeException}.
+     * Parses a string CQL value for the type this object represent, returning its
+     * value as a Java object.
      *
      * @param value the value to parse.
-     * @return the binary representation of {@code value}.
+     * @return a java object representing {@code value}. If {@code value == null}, then
+     * {@code null} is returned.
      *
-     * @throws InvalidTypeException if {@code value} is not a valid string
+     * @throws InvalidTypeException if {@code value} is not a valid CQL string
      * representation for this type. Please note that values for custom types
      * can never be parsed and will always return this exception.
      */
-    public ByteBuffer parse(String value) {
-        if (name == Name.CUSTOM)
-            throw new InvalidTypeException(String.format("Cannot parse '%s' as value of custom type of class '%s' "
-                                                       + "(values for custom type cannot be parse and must be inputted as bytes directly)", value, customClassName));
+    public Object parse(String value) {
+        // We don't care about the protocol version for parsing
+        return value == null ? null : codec(-1).parse(value);
+    }
 
-        if (name.isCollection())
-            throw new InvalidTypeException(String.format("Cannot parse value as %s, parsing collections is not currently supported", name));
-
-        return codec().serialize(codec.parse(value));
+    /**
+     * Format a Java object as an equivalent CQL value.
+     *
+     * @param value the value to format.
+     * @return a string corresponding to the CQL representation of {@code value}.
+     *
+     * @throws InvalidTypeException if {@code value} does not correspond to
+     * a CQL value (known by the driver). Please note that for custom types this
+     * method will always return this exception.
+     */
+    public String format(Object value) {
+        // We don't care about the protocol version for formatting
+        return value == null ? null : codec(-1).format(value);
     }
 
     /**
@@ -491,25 +512,29 @@ public class DataType {
     }
 
     /**
-     * Serialize a value of this type to bytes.
+     * Serialize a value of this type to bytes, with the given protocol version.
      * <p>
      * The actual format of the resulting bytes will correspond to the
-     * Cassandra encoding for this type.
+     * Cassandra encoding for this type (for the requested protocol version).
      *
      * @param value the value to serialize.
+     * @param protocolVersion the protocol version to use when serializing
+     * {@code bytes}. In most cases, the proper value to provide for this argument
+     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
+     * is the protocol version in use by the driver).
      * @return the value serialized, or {@code null} if {@code value} is null.
      *
      * @throws InvalidTypeException if {@code value} is not a valid object
      * for this {@code DataType}.
      */
-    public ByteBuffer serialize(Object value) {
+    public ByteBuffer serialize(Object value, int protocolVersion) {
         Class<?> providedClass = value.getClass();
         Class<?> expectedClass = asJavaClass();
         if (!expectedClass.isAssignableFrom(providedClass))
             throw new InvalidTypeException(String.format("Invalid value for CQL type %s, expecting %s but %s provided", toString(), expectedClass, providedClass));
 
         try {
-            return codec().serialize(value);
+            return codec(protocolVersion).serialize(value);
         } catch (ClassCastException e) {
             // With collections, the element type has not been checked, so it can throw
             throw new InvalidTypeException("Invalid type for collection element: " + e.getMessage());
@@ -517,12 +542,13 @@ public class DataType {
     }
 
     /**
-     * Deserialize a value of this type from the provided bytes.
-     * <p>
-     * The format of {@code bytes} must correspond to the Cassandra
-     * encoding for this type.
+     * Deserialize a value of this type from the provided bytes using the given protocol version.
      *
      * @param bytes bytes holding the value to deserialize.
+     * @param protocolVersion the protocol version to use when deserializing
+     * {@code bytes}. In most cases, the proper value to provide for this argument
+     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
+     * is the protocol version in use by the driver).
      * @return the deserialized value (of class {@code this.asJavaClass()}).
      * Will return {@code null} if either {@code bytes} is {@code null} or if
      * {@code bytes.remaining() == 0} and this type has no value corresponding
@@ -531,13 +557,13 @@ public class DataType {
      * accept empty byte buffer as valid value of those type, and so we avoid
      * throwing an exception in that case. It is however highly discouraged to
      * store empty byte buffers for types for which it doesn't make sense, so
-     * this implementation can generally be ignored).
+     * this detail can generally be ignored).
      *
      * @throws InvalidTypeException if {@code bytes} is not a valid
      * encoding of an object of this {@code DataType}.
      */
-    public Object deserialize(ByteBuffer bytes) {
-        return codec().deserialize(bytes);
+    public Object deserialize(ByteBuffer bytes, int protocolVersion) {
+        return codec(protocolVersion).deserialize(bytes);
     }
 
     /**
@@ -551,13 +577,17 @@ public class DataType {
      * the {@link #serialize} method instead as it is going to be faster.
      *
      * @param value the value to serialize.
+     * @param protocolVersion the protocol version to use when deserializing
+     * {@code bytes}. In most cases, the proper value to provide for this argument
+     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
+     * is the protocol version in use by the driver).
      * @return the value serialized, or {@code null} if {@code value} is null.
      *
      * @throws IllegalArgumentException if {@code value} is not of a type
      * corresponding to a CQL3 type, i.e. is not a Class that could be returned
      * by {@link DataType#asJavaClass}.
      */
-    public static ByteBuffer serializeValue(Object value) {
+    public static ByteBuffer serializeValue(Object value, int protocolVersion) {
         if (value == null)
             return null;
 
@@ -566,7 +596,7 @@ public class DataType {
             throw new IllegalArgumentException(String.format("Value of type %s does not correspond to any CQL3 type", value.getClass()));
 
         try {
-            return dt.serialize(value);
+            return dt.serialize(value, protocolVersion);
         } catch (InvalidTypeException e) {
             // In theory we couldn't get that if getDataTypeFor does his job correctly,
             // but there is no point in sending an exception that the user won't expect if we're
@@ -575,32 +605,131 @@ public class DataType {
         }
     }
 
-    @Override
-    public final int hashCode() {
-        return Arrays.hashCode(new Object[]{ name, typeArguments, customClassName });
+    private static class Native extends DataType {
+        private Native(DataType.Name name) {
+            super(name);
+        }
+
+        @Override
+        TypeCodec<Object> codec(int protocolVersion) {
+            return TypeCodec.createFor(name);
+        }
+
+        @Override
+        public final int hashCode() {
+            return name.hashCode();
+        }
+
+        @Override
+        public final boolean equals(Object o) {
+            if(!(o instanceof DataType.Native))
+                return false;
+
+            return name == ((DataType.Native)o).name;
+        }
+
+        @Override
+        public String toString() {
+            return name.toString();
+        }
     }
 
-    @Override
-    public final boolean equals(Object o) {
-        if(!(o instanceof DataType))
-            return false;
+    private static class Collection extends DataType {
 
-        DataType d = (DataType)o;
-        return name == d.name && typeArguments.equals(d.typeArguments) && Objects.equal(customClassName, d.customClassName);
-    }
+        private final List<DataType> typeArguments;
 
-    @Override
-    public String toString() {
-        switch (name) {
-            case LIST:
-            case SET:
-                return String.format("%s<%s>", name, typeArguments.get(0));
-            case MAP:
+        private Collection(DataType.Name name, List<DataType> typeArguments) {
+            super(name);
+            this.typeArguments = typeArguments;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        TypeCodec<Object> codec(int protocolVersion) {
+            switch (name)
+            {
+                case LIST: return (TypeCodec)TypeCodec.listOf(typeArguments.get(0), protocolVersion);
+                case SET: return (TypeCodec)TypeCodec.setOf(typeArguments.get(0), protocolVersion);
+                case MAP: return (TypeCodec)TypeCodec.mapOf(typeArguments.get(0), typeArguments.get(1), protocolVersion);
+            }
+            throw new AssertionError();
+        }
+
+        @Override
+        public List<DataType> getTypeArguments() {
+            return typeArguments;
+        }
+
+        @Override
+        public final int hashCode() {
+            return Arrays.hashCode(new Object[]{ name, typeArguments });
+        }
+
+        @Override
+        public final boolean equals(Object o) {
+            if(!(o instanceof DataType.Collection))
+                return false;
+
+            DataType.Collection d = (DataType.Collection)o;
+            return name == d.name && typeArguments.equals(d.typeArguments);
+        }
+
+        @Override
+        public String toString() {
+            if (name == Name.MAP)
                 return String.format("%s<%s, %s>", name, typeArguments.get(0), typeArguments.get(1));
-            case CUSTOM:
-                return String.format("'%s'", customClassName);
-            default:
-                return name.toString();
+            else
+                return String.format("%s<%s>", name, typeArguments.get(0));
+        }
+    }
+
+    private static class Custom extends DataType {
+
+        private final String customClassName;
+
+        private Custom(DataType.Name name, String className) {
+            super(name);
+            this.customClassName = className;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        TypeCodec<Object> codec(int protocolVersion) {
+            return (TypeCodec)TypeCodec.BytesCodec.instance;
+        }
+
+        @Override
+        public String getCustomTypeClassName() {
+            return customClassName;
+        }
+
+        @Override
+        public Object parse(String value) {
+            throw new InvalidTypeException("Cannot parse values of custom types");
+        }
+
+        @Override
+        public String format(Object value) {
+            throw new InvalidTypeException("Cannot format values of custom types");
+        }
+
+        @Override
+        public final int hashCode() {
+            return Arrays.hashCode(new Object[]{ name, customClassName });
+        }
+
+        @Override
+        public final boolean equals(Object o) {
+            if(!(o instanceof DataType.Custom))
+                return false;
+
+            DataType.Custom d = (DataType.Custom)o;
+            return name == d.name && Objects.equal(customClassName, d.customClassName);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("'%s'", customClassName);
         }
     }
 }

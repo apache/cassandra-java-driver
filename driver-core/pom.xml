@@ -18,7 +18,7 @@
   <parent>
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>cassandra-driver-parent</artifactId>
-    <version>2.0.6-SNAPSHOT</version>
+    <version>2.1.1-SNAPSHOT</version>
   </parent>
   <artifactId>cassandra-driver-core</artifactId>
   <packaging>bundle</packaging>
@@ -72,6 +72,81 @@
     </dependency>
 
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+            <phase>test-compile</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <version>2.4.0</version>
+        <executions>
+          <execution>
+            <id>bundle-manifest</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>manifest</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <instructions>
+            <Bundle-SymbolicName>com.datastax.driver.core</Bundle-SymbolicName>
+            <Bundle-Version>${project.version}</Bundle-Version>
+            <_include>-osgi.bnd</_include>
+          </instructions>
+          <supportedProjectTypes>
+            <supportedProjectType>jar</supportedProjectType>
+            <supportedProjectType>bundle</supportedProjectType>
+            <supportedProjectType>pom</supportedProjectType>
+          </supportedProjectTypes>
+        </configuration>
+      </plugin>
+    </plugins>
+    
+    <pluginManagement>
+      <plugins>
+        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <versionRange>[2.2,)</versionRange>
+                    <goals>
+                      <goal>test-jar</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore></ignore>
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 
   <profiles>
     <profile>
@@ -222,6 +297,7 @@
     <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
     <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
     <url>https://github.com/datastax/java-driver</url>
+    <tag>HEAD</tag>
   </scm>
 
   <developers>

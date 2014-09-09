@@ -29,6 +29,15 @@ public abstract class Assignment extends Utils.Appendeable {
         this.name = name;
     }
 
+    /**
+     * The name of the column this assignment applies to.
+     *
+     * @return the name of the column this assignment applies to.
+     */
+    public String getColumnName() {
+        return name;
+    }
+
     static class SetAssignment extends Assignment {
 
         private final Object value;
@@ -39,7 +48,7 @@ public abstract class Assignment extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables) {
             appendName(name, sb);
             sb.append('=');
             appendValue(value, sb, variables);
@@ -68,7 +77,7 @@ public abstract class Assignment extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables) {
             appendName(name, sb).append('=');
             appendName(name, sb).append(isIncr ? "+" : "-");
             appendValue(value, sb, variables);
@@ -90,7 +99,7 @@ public abstract class Assignment extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables) {
             appendName(name, sb).append('=');
             appendValue(value, sb, variables);
             sb.append('+');
@@ -115,7 +124,7 @@ public abstract class Assignment extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables) {
             appendName(name, sb).append('[').append(idx).append("]=");
             appendValue(value, sb, variables);
         }
@@ -138,7 +147,7 @@ public abstract class Assignment extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables) {
             appendName(name, sb).append('=');
             appendName(name, sb).append(isAdd ? "+" : "-");
             appendValue(collection, sb, variables);
@@ -162,7 +171,7 @@ public abstract class Assignment extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables) {
             appendName(name, sb).append('[');
             appendValue(key, sb, variables);
             sb.append("]=");

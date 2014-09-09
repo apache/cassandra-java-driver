@@ -30,7 +30,8 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * or name. When setting them by name, names follow the case insensitivity
  * rules explained in {@link ColumnDefinitions}.
  */
-public interface Row {
+public interface Row extends GettableData {
+    // Note that we re-include all the methods of GettableData just for the sake of better javadoc
 
     /**
      * Returns the columns contained in this Row.
@@ -47,6 +48,7 @@ public interface Row {
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      */
+    @Override
     public boolean isNull(int i);
 
     /**
@@ -58,6 +60,7 @@ public interface Row {
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      */
+    @Override
     public boolean isNull(String name);
 
     /**
@@ -70,6 +73,7 @@ public interface Row {
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type BOOLEAN.
      */
+    @Override
     public boolean getBool(int i);
 
     /**
@@ -83,6 +87,7 @@ public interface Row {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type BOOLEAN.
      */
+    @Override
     public boolean getBool(String name);
 
     /**
@@ -95,6 +100,7 @@ public interface Row {
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type INT.
      */
+    @Override
     public int getInt(int i);
 
     /**
@@ -108,6 +114,7 @@ public interface Row {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type INT.
      */
+    @Override
     public int getInt(String name);
 
     /**
@@ -120,6 +127,7 @@ public interface Row {
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type BIGINT or COUNTER.
      */
+    @Override
     public long getLong(int i);
 
     /**
@@ -133,6 +141,7 @@ public interface Row {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      * @throws InvalidTypeException if column {@code i} is not of type BIGINT or COUNTER.
      */
+    @Override
     public long getLong(String name);
 
     /**
@@ -145,6 +154,7 @@ public interface Row {
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
      */
+    @Override
     public Date getDate(int i);
 
     /**
@@ -158,6 +168,7 @@ public interface Row {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type TIMESTAMP.
      */
+    @Override
     public Date getDate(String name);
 
     /**
@@ -170,6 +181,7 @@ public interface Row {
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type FLOAT.
      */
+    @Override
     public float getFloat(int i);
 
     /**
@@ -183,6 +195,7 @@ public interface Row {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type FLOAT.
      */
+    @Override
     public float getFloat(String name);
 
     /**
@@ -195,6 +208,7 @@ public interface Row {
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type DOUBLE.
      */
+    @Override
     public double getDouble(int i);
 
     /**
@@ -208,6 +222,7 @@ public interface Row {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type DOUBLE.
      */
+    @Override
     public double getDouble(String name);
 
     /**
@@ -224,6 +239,7 @@ public interface Row {
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      */
+    @Override
     public ByteBuffer getBytesUnsafe(int i);
 
     /**
@@ -241,6 +257,7 @@ public interface Row {
      * @throws IllegalArgumentException if {@code name} is not part of the
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      */
+    @Override
     public ByteBuffer getBytesUnsafe(String name);
 
     /**
@@ -256,6 +273,7 @@ public interface Row {
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} type is not of type BLOB.
      */
+    @Override
     public ByteBuffer getBytes(int i);
 
     /**
@@ -272,6 +290,7 @@ public interface Row {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      * @throws InvalidTypeException if column {@code i} type is not of type BLOB.
      */
+    @Override
     public ByteBuffer getBytes(String name);
 
     /**
@@ -285,6 +304,7 @@ public interface Row {
      * @throws InvalidTypeException if column {@code i} type is none of:
      * VARCHAR, TEXT or ASCII.
      */
+    @Override
     public String getString(int i);
 
     /**
@@ -299,6 +319,7 @@ public interface Row {
      * @throws InvalidTypeException if column {@code name} type is none of:
      * VARCHAR, TEXT or ASCII.
      */
+    @Override
     public String getString(String name);
 
     /**
@@ -311,6 +332,7 @@ public interface Row {
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type VARINT.
      */
+    @Override
     public BigInteger getVarint(int i);
 
     /**
@@ -324,6 +346,7 @@ public interface Row {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type VARINT.
      */
+    @Override
     public BigInteger getVarint(String name);
 
     /**
@@ -336,6 +359,7 @@ public interface Row {
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type DECIMAL.
      */
+    @Override
     public BigDecimal getDecimal(int i);
 
     /**
@@ -349,6 +373,7 @@ public interface Row {
      * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
      * @throws InvalidTypeException if column {@code name} is not of type DECIMAL.
      */
+    @Override
     public BigDecimal getDecimal(String name);
 
     /**
@@ -362,6 +387,7 @@ public interface Row {
      * @throws InvalidTypeException if column {@code i} is not of type UUID
      * or TIMEUUID.
      */
+    @Override
     public UUID getUUID(int i);
 
     /**
@@ -376,6 +402,7 @@ public interface Row {
      * @throws InvalidTypeException if column {@code name} is not of type
      * UUID or TIMEUUID.
      */
+    @Override
     public UUID getUUID(String name);
 
     /**
@@ -388,6 +415,7 @@ public interface Row {
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type INET.
      */
+    @Override
     public InetAddress getInet(int i);
 
     /**
@@ -402,6 +430,7 @@ public interface Row {
      * @throws InvalidTypeException if column {@code name} is not of type
      * INET.
      */
+    @Override
     public InetAddress getInet(String name);
 
     /**
@@ -419,6 +448,7 @@ public interface Row {
      * @throws InvalidTypeException if column {@code i} is not a list or if its
      * elements are not of class {@code elementsClass}.
      */
+    @Override
     public <T> List<T> getList(int i, Class<T> elementsClass);
 
     /**
@@ -437,6 +467,7 @@ public interface Row {
      * @throws InvalidTypeException if column {@code name} is not a list or if its
      * elements are not of class {@code elementsClass}.
      */
+    @Override
     public <T> List<T> getList(String name, Class<T> elementsClass);
 
     /**
@@ -454,6 +485,7 @@ public interface Row {
      * @throws InvalidTypeException if column {@code i} is not a set or if its
      * elements are not of class {@code elementsClass}.
      */
+    @Override
     public <T> Set<T> getSet(int i, Class<T> elementsClass);
 
     /**
@@ -472,6 +504,7 @@ public interface Row {
      * @throws InvalidTypeException if column {@code name} is not a set or if its
      * elements are not of class {@code elementsClass}.
      */
+    @Override
     public <T> Set<T> getSet(String name, Class<T> elementsClass);
 
     /**
@@ -493,6 +526,7 @@ public interface Row {
      * keys are not of class {@code keysClass} or if its values are not of
      * class {@code valuesClass}.
      */
+    @Override
     public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass);
 
     /**
@@ -515,5 +549,6 @@ public interface Row {
      * keys are not of class {@code keysClass} or if its values are not of
      * class {@code valuesClass}.
      */
+    @Override
     public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass);
 }

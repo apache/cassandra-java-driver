@@ -42,6 +42,8 @@ class CassandraTypeParser {
     private static final String LIST_TYPE = "org.apache.cassandra.db.marshal.ListType";
     private static final String SET_TYPE = "org.apache.cassandra.db.marshal.SetType";
     private static final String MAP_TYPE = "org.apache.cassandra.db.marshal.MapType";
+    private static final String UDT_TYPE = "org.apache.cassandra.db.marshal.UserType";
+    private static final String TUPLE_TYPE = "org.apache.cassandra.db.marshal.TupleType";
 
     private static ImmutableMap<String, DataType> cassTypeToDataType =
         new ImmutableMap.Builder<String, DataType>()
@@ -77,15 +79,38 @@ class CassandraTypeParser {
         Parser parser = new Parser(className, 0);
         String next = parser.parseNextName();
 
-        if (next.startsWith(LIST_TYPE)) {
-            List<String> params = parser.getTypeParameters();
-            return DataType.list(parseOne(params.get(0)));
-        } else if (next.startsWith(SET_TYPE)) {
-            List<String> params = parser.getTypeParameters();
-            return DataType.set(parseOne(params.get(0)));
-        } else if (next.startsWith(MAP_TYPE)) {
+        if (next.startsWith(LIST_TYPE))
+            return DataType.list(parseOne(parser.getTypeParameters().get(0)));
+
+        if (next.startsWith(SET_TYPE))
+            return DataType.set(parseOne(parser.getTypeParameters().get(0)));
+
+        if (next.startsWith(MAP_TYPE)) {
             List<String> params = parser.getTypeParameters();
             return DataType.map(parseOne(params.get(0)), parseOne(params.get(1)));
+        }
+
+        if (isUserType(next)) {
+            ++parser.idx; // skipping '('
+
+            String keyspace = parser.readOne();
+            parser.skipBlankAndComma();
+            String typeName = TypeCodec.StringCodec.utf8Instance.deserialize(Bytes.fromHexString("0x" + parser.readOne()));
+            parser.skipBlankAndComma();
+            Map<String, String> rawFields = parser.getNameAndTypeParameters();
+            List<UserType.Field> fields = new ArrayList<UserType.Field>(rawFields.size());
+            for (Map.Entry<String, String> entry : rawFields.entrySet())
+                fields.add(new UserType.Field(entry.getKey(), parseOne(entry.getValue())));
+            return new UserType(keyspace, typeName, fields);
+        }
+
+        if (isTupleType(next)) {
+            List<String> rawTypes = parser.getTypeParameters();
+            List<DataType> types = new ArrayList<DataType>(rawTypes.size());
+            for (String rawType : rawTypes) {
+                types.add(parseOne(rawType));
+            }
+            return new TupleType(types);
         }
 
         DataType type = cassTypeToDataType.get(next);
@@ -94,6 +119,14 @@ class CassandraTypeParser {
 
     public static boolean isReversed(String className) {
         return className.startsWith(REVERSED_TYPE);
+    }
+
+    public static boolean isUserType(String className) {
+        return className.startsWith(UDT_TYPE);
+    }
+
+    public static boolean isTupleType(String className) {
+        return className.startsWith(TUPLE_TYPE);
     }
 
     private static boolean isComposite(String className) {
@@ -237,15 +270,21 @@ class CassandraTypeParser {
         }
 
         public Map<String, String> getCollectionsParameters() {
-            Map<String, String> map = new HashMap<String, String>();
-
             if (isEOS())
-                return map;
+                return Collections.<String, String>emptyMap();
 
             if (str.charAt(idx) != '(')
                 throw new IllegalStateException();
 
             ++idx; // skipping '('
+
+            return getNameAndTypeParameters();
+        }
+
+        // Must be at the start of the first parameter to read
+        public Map<String, String> getNameAndTypeParameters() {
+            // The order of the hashmap matters for UDT
+            Map<String, String> map = new LinkedHashMap<String, String>();
 
             while (skipBlankAndComma()) {
                 if (str.charAt(idx) == ')') {
@@ -290,16 +329,12 @@ class CassandraTypeParser {
             return i >= str.length();
         }
 
-        private static boolean isBlank(int c) {
-            return c == ' ' || c == '\t' || c == '\n';
-        }
-
         private void skipBlank() {
             idx = skipBlank(str, idx);
         }
 
         private static int skipBlank(String str, int i) {
-            while (!isEOS(str, i) && isBlank(str.charAt(i)))
+            while (!isEOS(str, i) && ParseUtils.isBlank(str.charAt(i)))
                 ++i;
 
             return i;
@@ -315,7 +350,7 @@ class CassandraTypeParser {
                         return true;
                     else
                         commaFound = true;
-                } else if (!isBlank(c)) {
+                } else if (!ParseUtils.isBlank(c)) {
                     return true;
                 }
                 ++idx;
@@ -323,19 +358,10 @@ class CassandraTypeParser {
             return false;
         }
 
-        /*
-         * [0..9a..bA..B-+._&]
-         */
-        private static boolean isIdentifierChar(int c) {
-            return (c >= '0' && c <= '9')
-                || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-                || c == '-' || c == '+' || c == '.' || c == '_' || c == '&';
-        }
-
         // left idx positioned on the character stopping the read
         public String readNextIdentifier() {
             int i = idx;
-            while (!isEOS() && isIdentifierChar(str.charAt(idx)))
+            while (!isEOS() && ParseUtils.isIdentifierChar(str.charAt(idx)))
                 ++idx;
 
             return str.substring(i, idx);
@@ -344,6 +370,11 @@ class CassandraTypeParser {
         public char readNextChar() {
             skipBlank();
             return str.charAt(idx++);
+        }
+
+        @Override
+        public String toString() {
+            return str.substring(0, idx) + "[" + (idx == str.length() ? "" : str.charAt(idx)) + "]" + str.substring(idx+1);
         }
     }
 }

@@ -15,10 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -37,7 +34,10 @@ public class KeyspaceMetadata {
     private final ReplicationStrategy strategy;
     private final Map<String, String> replication;
 
+    // TODO: I don't think we change those, so there is probably no need for ConcurrentHashMap. Check if
+    // that's the case.
     private final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
+    private final Map<String, UserType> userTypes = new ConcurrentHashMap<String, UserType>();
 
     private KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
         this.name = name;
@@ -46,7 +46,7 @@ public class KeyspaceMetadata {
         this.strategy = ReplicationStrategy.create(replication);
     }
 
-    static KeyspaceMetadata build(Row row) {
+    static KeyspaceMetadata build(Row row, List<Row> udtRows) {
 
         String name = row.getString(KS_NAME);
         boolean durableWrites = row.getBool(DURABLE_WRITES);
@@ -55,7 +55,17 @@ public class KeyspaceMetadata {
         replicationOptions.put("class", row.getString(STRATEGY_CLASS));
         replicationOptions.putAll(SimpleJSONParser.parseStringMap(row.getString(STRATEGY_OPTIONS)));
 
-        return new KeyspaceMetadata(name, durableWrites, replicationOptions);
+        KeyspaceMetadata ksm = new KeyspaceMetadata(name, durableWrites, replicationOptions);
+
+        if (udtRows == null)
+            return ksm;
+
+        for (Row r : udtRows) {
+            UserType def = UserType.build(r);
+            ksm.userTypes.put(def.getTypeName(), def);
+        }
+
+        return ksm;
     }
 
     /**
@@ -90,8 +100,8 @@ public class KeyspaceMetadata {
      * Returns the metadata for a table contained in this keyspace.
      *
      * @param name the name of table to retrieve
-     * @return the metadata for table {@code name} in this keyspace if it
-     * exists, {@code false} otherwise.
+     * @return the metadata for table {@code name} if it exists in this keyspace,
+     * {@code null} otherwise.
      */
     public TableMetadata getTable(String name) {
         return tables.get(Metadata.handleId(name));
@@ -108,12 +118,34 @@ public class KeyspaceMetadata {
     }
 
     /**
+     * Returns the definition for a user defined type (UDT) in this keyspace.
+     *
+     * @param name the name of UDT definition to retrieve
+     * @return the definition for {@code name} if it exists in this keyspace,
+     * {@code null} otherwise.
+     */
+    public UserType getUserType(String name) {
+        return userTypes.get(Metadata.handleId(name));
+    }
+
+    /**
+     * Returns the user types defined in this keyspace.
+     *
+     * @return a collection of the definition for the user types defined in this
+     * keyspace.
+     */
+    public Collection<UserType> getUserTypes() {
+        return Collections.<UserType>unmodifiableCollection(userTypes.values());
+    }
+
+    /**
      * Returns a {@code String} containing CQL queries representing this
-     * keyspace and the table it contains.
-     *
+     * keyspace and the user types and tables it contains.
+     * <p>
      * In other words, this method returns the queries that would allow to
-     * recreate the schema of this keyspace, along with all its table.
-     *
+     * recreate the schema of this keyspace, along with all its user
+     * types/tables.
+     * <p>
      * Note that the returned String is formatted to be human readable (for
      * some definition of human readable at least).
      *
@@ -125,6 +157,9 @@ public class KeyspaceMetadata {
 
         sb.append(asCQLQuery()).append('\n');
 
+        for (UserType udt : userTypes.values())
+            sb.append('\n').append(udt.exportAsString()).append('\n');
+
         for (TableMetadata tm : tables.values())
             sb.append('\n').append(tm.exportAsString()).append('\n');
 
@@ -133,7 +168,7 @@ public class KeyspaceMetadata {
 
     /**
      * Returns a CQL query representing this keyspace.
-     *
+     * <p>
      * This method returns a single 'CREATE KEYSPACE' query with the options
      * corresponding to this keyspace definition.
      *
@@ -153,6 +188,11 @@ public class KeyspaceMetadata {
         sb.append(" } AND DURABLE_WRITES = ").append(durableWrites);
         sb.append(';');
         return sb.toString();
+    }
+
+    @Override
+    public String toString() {
+        return asCQLQuery();
     }
 
     void add(TableMetadata tm) {

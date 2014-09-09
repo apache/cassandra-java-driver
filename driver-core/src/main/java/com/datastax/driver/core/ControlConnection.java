@@ -52,6 +52,7 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_KEYSPACES = "SELECT * FROM system.schema_keyspaces";
     private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
+    private static final String SELECT_USERTYPES = "SELECT * FROM system.schema_usertypes";
 
     private static final String SELECT_PEERS = "SELECT * FROM system.peers";
     private static final String SELECT_LOCAL = "SELECT * FROM system.local WHERE key='local'";
@@ -268,25 +269,6 @@ class ControlConnection implements Host.StateListener {
     }
 
     static void refreshSchema(Connection connection, String keyspace, String table, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
-        // Make sure we're up to date on schema
-        String whereClause = "";
-        if (keyspace != null) {
-            whereClause = " WHERE keyspace_name = '" + keyspace + '\'';
-            if (table != null)
-                whereClause += " AND columnfamily_name = '" + table + '\'';
-        }
-
-        DefaultResultSetFuture ksFuture = table == null
-                                        ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_KEYSPACES + whereClause))
-                                        : null;
-        DefaultResultSetFuture cfFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause));
-        DefaultResultSetFuture colsFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMNS + whereClause));
-
-        if (ksFuture != null)
-            connection.write(ksFuture);
-        connection.write(cfFuture);
-        connection.write(colsFuture);
-
         Host host = cluster.metadata.getHost(connection.address);
         // Neither host, nor it's version should be null. But instead of dying if there is a race or something, we can kind of try to infer
         // a Cassandra version from the protocol version (this is not full proof, we can have the protocol 1 against C* 2.0+, but it's worth
@@ -300,8 +282,32 @@ class ControlConnection implements Host.StateListener {
             cassandraVersion = host.getCassandraVersion();
         }
 
+        // Make sure we're up to date on schema
+        String whereClause = "";
+        if (keyspace != null) {
+            whereClause = " WHERE keyspace_name = '" + keyspace + '\'';
+            if (table != null)
+                whereClause += " AND columnfamily_name = '" + table + '\'';
+        }
+
+        DefaultResultSetFuture ksFuture = table == null
+                                        ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_KEYSPACES + whereClause))
+                                        : null;
+        DefaultResultSetFuture udtFuture = table == null && (cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1))
+                                         ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_USERTYPES + whereClause))
+                                         : null;
+        DefaultResultSetFuture cfFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause));
+        DefaultResultSetFuture colsFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMNS + whereClause));
+
+        if (ksFuture != null)
+            connection.write(ksFuture);
+        if (udtFuture != null)
+            connection.write(udtFuture);
+        connection.write(cfFuture);
+        connection.write(colsFuture);
+
         try {
-            cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), cfFuture.get(), colsFuture.get(), cassandraVersion);
+            cluster.metadata.rebuildSchema(keyspace, table, ksFuture == null ? null : ksFuture.get(), udtFuture == null ? null : udtFuture.get(), cfFuture.get(), colsFuture.get(), cassandraVersion);
         } catch (RuntimeException e) {
             // Failure to parse the schema is definitively wrong so log a full-on error, but this won't generally prevent queries to
             // work and this can happen when new Cassandra versions modify stuff in the schema and the driver hasn't yet be modified.
@@ -366,14 +372,14 @@ class ControlConnection implements Host.StateListener {
             boolean isConnectedHost = c.address.equals(host.getSocketAddress());
             if (isConnectedHost || host.listenAddress != null) {
                 DefaultResultSetFuture future = isConnectedHost
-                    ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL))
-                    : new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.listenAddress.getHostAddress() + '\''));
+                    ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_LOCAL))
+                    : new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.listenAddress.getHostAddress() + '\''));
                 c.write(future);
                 return future.get().one();
             }
 
             // We have to fetch the whole peers table and find the host we're looking for
-            DefaultResultSetFuture future = new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS));
+            DefaultResultSetFuture future = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
             c.write(future);
             for (Row row : future.get()) {
                 InetSocketAddress addr = addressToUseForPeerHost(row, c.address, cluster, true);
@@ -462,8 +468,8 @@ class ControlConnection implements Host.StateListener {
 
         // Make sure we're up to date on nodes and tokens
 
-        DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL));
-        DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS));
+        DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_LOCAL));
+        DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
         connection.write(localFuture);
         connection.write(peersFuture);
 
@@ -550,8 +556,8 @@ class ControlConnection implements Host.StateListener {
         long elapsed = 0;
         while (elapsed < MAX_SCHEMA_AGREEMENT_WAIT_SECONDS * 1000) {
 
-            DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_PEERS));
-            DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_LOCAL));
+            DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_PEERS));
+            DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_LOCAL));
             connection.write(peersFuture);
             connection.write(localFuture);
 

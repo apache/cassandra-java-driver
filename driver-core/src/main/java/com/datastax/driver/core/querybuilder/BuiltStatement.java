@@ -36,7 +36,7 @@ public abstract class BuiltStatement extends RegularStatement {
 
     private boolean dirty;
     private String cache;
-    private ByteBuffer[] values;
+    private List<Object> values;
 
     Boolean isCounterOp;
 
@@ -63,7 +63,6 @@ public abstract class BuiltStatement extends RegularStatement {
         return lowercaseId.matcher(ident).matches() ? ident : Metadata.quote(ident);
     }
 
-
     @Override
     public String getQueryString() {
         maybeRebuildCache();
@@ -80,10 +79,10 @@ public abstract class BuiltStatement extends RegularStatement {
         if (hasBindMarkers || forceNoValues) {
             sb = buildQueryString(null);
         } else {
-            List<ByteBuffer> l = new ArrayList<ByteBuffer>();
-            sb = buildQueryString(l);
-            if (!l.isEmpty())
-                values = l.toArray(new ByteBuffer[l.size()]);
+            values = new ArrayList<Object>();
+            sb = buildQueryString(values);
+            if (values.isEmpty())
+                values = null;
         }
 
         maybeAddSemicolon(sb);
@@ -106,7 +105,7 @@ public abstract class BuiltStatement extends RegularStatement {
         return sb;
     }
 
-    abstract StringBuilder buildQueryString(List<ByteBuffer> variables);
+    abstract StringBuilder buildQueryString(List<Object> variables);
 
     boolean isCounterOp() {
         return isCounterOp == null ? false : isCounterOp;
@@ -135,7 +134,10 @@ public abstract class BuiltStatement extends RegularStatement {
 
         for (int i = 0; i < partitionKey.size(); i++) {
             if (name.equals(partitionKey.get(i).getName()) && Utils.isRawValue(value)) {
-                routingKey[i] = partitionKey.get(i).getType().parse(Utils.toRawString(value));
+                DataType dt = partitionKey.get(i).getType();
+                // We don't really care which protocol version we use, since the only place it matters if for
+                // collections (not inside UDT), and those are not allowed in a partition key anyway, hence the hardcoding.
+                routingKey[i] = dt.serialize(dt.parse(Utils.toRawString(value)), 3);
                 return;
             }
         }
@@ -161,9 +163,15 @@ public abstract class BuiltStatement extends RegularStatement {
     }
 
     @Override
-    public ByteBuffer[] getValues() {
+    public ByteBuffer[] getValues(int protocolVersion) {
         maybeRebuildCache();
-        return values;
+        return values == null ? null : Utils.convert(values, protocolVersion);
+    }
+
+    @Override
+    public boolean hasValues() {
+        maybeRebuildCache();
+        return values != null;
     }
 
     @Override
@@ -172,6 +180,12 @@ public abstract class BuiltStatement extends RegularStatement {
             return getQueryString();
 
         return maybeAddSemicolon(buildQueryString(null)).toString();
+    }
+
+    // Not meant to be public
+    List<Object> getRawValues() {
+        maybeRebuildCache();
+        return values;
     }
 
     /**
@@ -249,7 +263,7 @@ public abstract class BuiltStatement extends RegularStatement {
         }
 
         @Override
-        StringBuilder buildQueryString(List<ByteBuffer> values) {
+        StringBuilder buildQueryString(List<Object> values) {
             return statement.buildQueryString(values);
         }
 
@@ -272,6 +286,11 @@ public abstract class BuiltStatement extends RegularStatement {
         public RegularStatement setForceNoValues(boolean forceNoValues) {
             statement.setForceNoValues(forceNoValues);
             return this;
+        }
+
+        @Override
+        List<Object> getRawValues() {
+            return statement.getRawValues();
         }
 
         @Override
@@ -314,8 +333,13 @@ public abstract class BuiltStatement extends RegularStatement {
         }
 
         @Override
-        public ByteBuffer[] getValues() {
-            return statement.getValues();
+        public ByteBuffer[] getValues(int protocolVersion) {
+            return statement.getValues(protocolVersion);
+        }
+
+        @Override
+        public boolean hasValues() {
+            return statement.hasValues();
         }
 
         @Override
