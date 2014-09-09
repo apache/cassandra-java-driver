@@ -1230,14 +1230,15 @@ public class Cluster implements Closeable {
             logger.debug("Shutting down");
 
             // If we're shutting down, there is no point in waiting on scheduled reconnections, nor on notifications
-            // delivery so we use shutdownNow
+            // delivery or blocking tasks so we use shutdownNow
             reconnectionExecutor.shutdownNow();
             scheduledTasksExecutor.shutdownNow();
+            blockingExecutor.shutdownNow();
 
             // but for the worker executor, we want to let submitted tasks finish unless the shutdown is forced.
             executor.shutdown();
 
-            // We also closes the metrics
+            // We also close the metrics
             if (metrics != null)
                 metrics.shutdown();
 
@@ -1984,6 +1985,7 @@ public class Cluster implements Closeable {
                             reconnectionExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
                             scheduledTasksExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
                             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                            blockingExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
 
                             // Some of the jobs on the executors can be doing query stuff, so close the
                             // connectionFactory at the very last
@@ -2052,9 +2054,8 @@ public class Cluster implements Closeable {
 
         void shutdown() {
             shutdown = true;
-            executor.shutdown();
-            // Run the task one last time if a call to register raced with the two lines above (i.e.
-            // saw shutdown as false but added its connection after the last task in the executor ran).
+            // Force shutdown to avoid waiting for the interval, and run the task manually one last time
+            executor.shutdownNow();
             reaperTask.run();
         }
     }
