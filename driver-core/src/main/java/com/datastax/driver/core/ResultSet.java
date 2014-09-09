@@ -195,17 +195,16 @@ public interface ResultSet extends Iterable<Row> {
      * <pre>
      * rs.one().getBool("[applied]");
      * </pre>
-     *
      * <p>
      * For consistency, this method always returns {@code true} for
      * non-conditional queries (although there is no reason to call the method
-     * in that case).
-     *
+     * in that case). This is also the case for conditional DDL statements
+     * ({@code CREATE KEYSPACE... IF NOT EXISTS}, {@code CREATE TABLE... IF NOT EXISTS}),
+     * for which Cassandra doesn't return an {@code [applied]} column.
      * <p>
      * Note that, for versions of Cassandra strictly lower than 2.0.9 and 2.1.0-rc2,
      * a server-side bug (CASSANDRA-7337) causes this method to always return
      * {@code true} for batches containing conditional queries.
-     * </p>
      *
      * @return if the query was a conditional update, whether it was applied.
      * {@code true} for other types of queries.
