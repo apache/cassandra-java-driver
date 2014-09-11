@@ -15,6 +15,8 @@ Merged from 2.0 branch:
 - [bug] Do not use a host when no rpc_address found for it (JAVA-428)
 - [improvement] Add ResultSet.wasApplied() for conditional queries (JAVA-358)
 - [bug] Fix negative HostConnectionPool open count (JAVA-349)
+- [improvement] Log more connection details at trace and debug levels (JAVA-436)
+- [bug] Fix cluster shutdown (JAVA-445)
 
 
 2.1.0:
