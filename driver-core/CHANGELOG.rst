@@ -71,6 +71,7 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [improvement] Add ResultSet.wasApplied() for conditional queries (JAVA-358)
 - [bug] Fix negative HostConnectionPool open count (JAVA-349)
 - [improvement] Log more connection details at trace and debug levels (JAVA-436)
+- [bug] Fix cluster shutdown (JAVA-445)
 
 
 2.0.5:
