@@ -38,8 +38,16 @@ public class QuorumFallbackRetryPolicy implements RetryPolicy {
     public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
         if (nbRetry == 0 && ConsistencyLevel.LOCAL_QUORUM == cl)
             return RetryDecision.retry(ConsistencyLevel.QUORUM);
-        else if (nbRetry == 1 && ConsistencyLevel.ONE != cl)
-            return RetryDecision.retry(ConsistencyLevel.ONE);
+        else if (nbRetry == 1 && ConsistencyLevel.QUORUM != cl) {
+            if (aliveReplica >= 3)
+                return RetryDecision.retry(ConsistencyLevel.THREE);
+            else if (aliveReplica >= 2)
+                return RetryDecision.retry(ConsistencyLevel.TWO);
+            else if (aliveReplica >= 1)
+                return RetryDecision.retry(ConsistencyLevel.ONE);
+            else
+                return RetryDecision.rethrow();
+        }
         else
             return defaultPolicy.onUnavailable(statement, cl, requiredReplica, aliveReplica, nbRetry);
     }
