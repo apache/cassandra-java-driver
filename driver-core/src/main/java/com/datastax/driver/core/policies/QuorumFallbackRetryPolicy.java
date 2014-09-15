@@ -11,7 +11,7 @@ import com.datastax.driver.core.WriteType;
  * a LOCAL_QUORUM request at QUORUM first, before finally retrying at the highest achievable level.
  */
 public class QuorumFallbackRetryPolicy implements RetryPolicy {
-    private RetryPolicy defaultPolicy = DowngradingConsistencyRetryPolicy.INSTANCE;
+    private DowngradingConsistencyRetryPolicy defaultPolicy = DowngradingConsistencyRetryPolicy.INSTANCE;
     public static final QuorumFallbackRetryPolicy INSTANCE = new QuorumFallbackRetryPolicy();
 
     private QuorumFallbackRetryPolicy() {}
@@ -38,16 +38,8 @@ public class QuorumFallbackRetryPolicy implements RetryPolicy {
     public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
         if (nbRetry == 0 && ConsistencyLevel.LOCAL_QUORUM == cl)
             return RetryDecision.retry(ConsistencyLevel.QUORUM);
-        else if (nbRetry == 1 && ConsistencyLevel.QUORUM != cl) {
-            if (aliveReplica >= 3)
-                return RetryDecision.retry(ConsistencyLevel.THREE);
-            else if (aliveReplica >= 2)
-                return RetryDecision.retry(ConsistencyLevel.TWO);
-            else if (aliveReplica >= 1)
-                return RetryDecision.retry(ConsistencyLevel.ONE);
-            else
-                return RetryDecision.rethrow();
-        }
+        else if (nbRetry == 1 && ConsistencyLevel.QUORUM != cl)
+            return defaultPolicy.maxLikelyToWorkCL(aliveReplica);
         else
             return defaultPolicy.onUnavailable(statement, cl, requiredReplica, aliveReplica, nbRetry);
     }

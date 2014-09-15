@@ -72,7 +72,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
 
     private DowngradingConsistencyRetryPolicy() {}
 
-    private RetryDecision maxLikelyToWorkCL(int knownOk) {
+    RetryDecision maxLikelyToWorkCL(int knownOk) {
         if (knownOk >= 3)
             return RetryDecision.retry(ConsistencyLevel.THREE);
         else if (knownOk >= 2)
