@@ -8,7 +8,7 @@ import com.datastax.driver.core.WriteType;
  * A retry policy that sometimes retry with a lower consistency level than
  * the one initially requested. It follows the same logic as the
  * {@link DowngradingConsistencyRetryPolicy}, except that it will retry
- * a LOCAL_QUORUM request at QUORUM first, before finally falling back to ONE.
+ * a LOCAL_QUORUM request at QUORUM first, before finally retrying at the highest achievable level.
  */
 public class QuorumFallbackRetryPolicy implements RetryPolicy {
     private RetryPolicy defaultPolicy = DowngradingConsistencyRetryPolicy.INSTANCE;
@@ -21,7 +21,7 @@ public class QuorumFallbackRetryPolicy implements RetryPolicy {
      * unavailable exception.
      * <p>
      * This method triggers a maximum of two retries. If the consistency level is
-     * initially set to LOCAL_QUORUM, it will first retry at QUORUM, then at ONE if
+     * initially set to LOCAL_QUORUM, it will first retry at QUORUM, then at the highest achievable level if
      * that fails. All other cases pass through to {@link DowngradingConsistencyRetryPolicy}.
      *
      * @param statement the original query for which the consistency level cannot
