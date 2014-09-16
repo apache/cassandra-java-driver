@@ -140,13 +140,13 @@ abstract class Utils {
             sb.append(value);
             return true;
         } else if (value instanceof InetAddress) {
-            sb.append('\'').append(((InetAddress)value).getHostAddress()).append('\'');
+            sb.append(DataType.inet().format(value));
             return true;
         } else if (value instanceof Date) {
-            sb.append(((Date)value).getTime());
+            sb.append(DataType.timestamp().format(value));
             return true;
         } else if (value instanceof ByteBuffer) {
-            sb.append(Bytes.toHexString((ByteBuffer)value));
+            sb.append(DataType.blob().format(value));
             return true;
         } else if (value instanceof BindMarker) {
             sb.append(value);

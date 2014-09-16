@@ -18,16 +18,15 @@ package com.datastax.driver.core.querybuilder;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.util.Arrays;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.utils.Bytes;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
-import static org.testng.Assert.*;
 
 public class QueryBuilderTest {
 
@@ -104,6 +103,14 @@ public class QueryBuilderTest {
         query = "SELECT * FROM words WHERE w='WA(!:gS)r(UfW';";
         select = select().all().from("words").where(eq("w", "WA(!:gS)r(UfW"));
         assertEquals(select.toString(), query);
+
+        Date date = new Date();
+        date.setTime(1234325);
+        query = "SELECT * FROM foo where d=1234325";
+        select = select().all().from("foo").where(eq("d", date));
+
+        query = "SELECT * FROM foo where b=0xCAFEBABE";
+        select = select().all().from("foo").where(eq("b", Bytes.fromHexString("0xCAFEBABE")));
 
         try {
             select = select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));
@@ -321,11 +328,11 @@ public class QueryBuilderTest {
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid timestamp, must be positive");
         }
-        
+
         query = "DELETE FROM foo.bar WHERE k1='foo' IF EXISTS;";
         delete = delete().from("foo", "bar").where(eq("k1", "foo")).ifExists();
         assertEquals(delete.toString(), query);
-        
+
         query = "DELETE FROM foo.bar WHERE k1='foo' IF a=1 AND b=2;";
         delete = delete().from("foo", "bar").where(eq("k1", "foo")).onlyIf(eq("a", 1)).and(eq("b", 2));
         assertEquals(delete.toString(), query);
