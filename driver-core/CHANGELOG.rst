@@ -10,6 +10,8 @@ CHANGELOG
 - [improvement] Make implicit column names case-insensitive in mapper (JAVA-452)
 - [bug] Fix named bind markers in QueryBuilder (JAVA-433)
 - [bug] Fix handling of BigInteger in object mapper (JAVA-458)
+- [improvement] Throw an exception when DCAwareRoundRobinPolicy is built with
+  an explicit but null or empty local datacenter (JAVA-451).
 
 Merged from 2.0 branch:
 
