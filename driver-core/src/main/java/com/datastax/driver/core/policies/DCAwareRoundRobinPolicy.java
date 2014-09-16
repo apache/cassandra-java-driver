@@ -25,6 +25,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.AbstractIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +87,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
      * and as such will ignore all hosts in remote data-centers.
      */
     public DCAwareRoundRobinPolicy() {
-        this(null);
+        this(null, 0, false, true);
     }
 
     /**
@@ -103,7 +105,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
      * data-center of the first node connected to.
      */
     public DCAwareRoundRobinPolicy(String localDc) {
-        this(localDc, 0);
+        this(localDc, 0, false, false);
     }
 
     /**
@@ -135,7 +137,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
      * connections to them will be maintained).
      */
     public DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc) {
-        this(localDc, usedHostsPerRemoteDc, false);
+        this(localDc, usedHostsPerRemoteDc, false, false);
     }
 
     /**
@@ -168,6 +170,12 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
      * having consitency {@code LOCAL_ONE} and {@code LOCAL_QUORUM}.
      */
     public DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc, boolean allowRemoteDCsForLocalConsistencyLevel) {
+        this(localDc, usedHostsPerRemoteDc, allowRemoteDCsForLocalConsistencyLevel, false);
+    }
+
+    private DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc, boolean allowRemoteDCsForLocalConsistencyLevel, boolean allowEmptyLocalDc) {
+        if (!allowEmptyLocalDc && Strings.isNullOrEmpty(localDc))
+            throw new IllegalArgumentException("Null or empty data center specified for DC-aware policy");
         this.localDc = localDc == null ? UNSET : localDc;
         this.usedHostsPerRemoteDc = usedHostsPerRemoteDc;
         this.dontHopForLocalCL = !allowRemoteDCsForLocalConsistencyLevel;
@@ -180,8 +188,12 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
 
         this.configuration = cluster.getConfiguration();
 
+        ArrayList<String> notInLocalDC = new ArrayList<String>();
+
         for (Host host : hosts) {
             String dc = dc(host);
+
+            if (!dc.equals(localDc)) notInLocalDC.add(String.format("%s (%s)", host.toString(), host.getDatacenter()));
 
             // If the localDC was in "auto-discover" mode and it's the first host for which we have a DC, use it.
             if (localDc == UNSET && dc != UNSET) {
@@ -194,6 +206,11 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
                 perDcLiveHosts.put(dc, new CopyOnWriteArrayList<Host>(Collections.singletonList(host)));
             else
                 prev.addIfAbsent(host);
+        }
+
+        if (notInLocalDC.size() > 0) {
+            String nonLocalHosts = Joiner.on(",").join(notInLocalDC);
+            logger.warn("Some contact points don't match specified local data center. Local DC = {}. Non-conforming contact points: {}", localDc, nonLocalHosts);
         }
     }
 
