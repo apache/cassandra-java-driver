@@ -620,7 +620,7 @@ abstract class TypeCodec<T> {
 
         @Override
         public String format(InetAddress value) {
-            return value.getHostAddress();
+            return "'" + value.getHostAddress() + "'";
         }
 
         @Override

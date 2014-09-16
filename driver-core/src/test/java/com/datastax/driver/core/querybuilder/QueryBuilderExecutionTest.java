@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -36,7 +37,8 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
                              "CREATE TABLE dateTest (t timestamp PRIMARY KEY)",
-                             "CREATE TYPE udt (i int)");
+                             "CREATE TYPE udt (i int, a inet)",
+                             "CREATE TABLE udtTest(k int PRIMARY KEY, t frozen<udt>)");
     }
 
     @Test(groups = "short")
@@ -106,11 +108,19 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
 
     @Test(groups = "short")
     public void insertUdtTest() throws Exception {
-        // This should be in QueryBuilderTest#insertTest, but we need a cluster instance to get the UserType
         UserType udtType = cluster.getMetadata().getKeyspace("ks").getUserType("udt");
-        UDTValue udtValue = udtType.newValue().setInt("i", 2);
+        UDTValue udtValue = udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
 
-        Statement insert = insertInto("udtTest").value("i", 1).value("t", udtValue);
-        assertEquals(insert.toString(), "INSERT INTO udtTest(i,t) VALUES (1,{i:2});");
+        Statement insert = insertInto("udtTest").value("k", 1).value("t", udtValue);
+        assertEquals(insert.toString(), "INSERT INTO udtTest(k,t) VALUES (1,{i:2, a:'127.0.0.1'});");
+
+        session.execute(insert);
+
+        List<Row> rows = session.execute(select().from("udtTest").where(eq("k", 1))).all();
+
+        assertEquals(rows.size(), 1);
+
+        Row r1 = rows.get(0);
+        assertEquals("127.0.0.1", r1.getUDTValue("t").getInet("a").getHostAddress());
     }
 }
