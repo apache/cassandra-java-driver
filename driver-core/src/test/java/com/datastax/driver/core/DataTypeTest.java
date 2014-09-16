@@ -57,7 +57,7 @@ public class DataTypeTest {
             case FLOAT:
                 return new String[]{ "2.39", "-12.0" };
             case INET:
-                return new String[]{ "128.2.12.3" };
+                return new String[]{ "'128.2.12.3'" };
             case INT:
                 return new String[]{ "-2", "42" };
             case TIMEUUID:

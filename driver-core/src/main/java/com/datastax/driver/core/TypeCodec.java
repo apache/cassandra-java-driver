@@ -611,8 +611,11 @@ abstract class TypeCodec<T> {
 
         @Override
         public InetAddress parse(String value) {
+            value = value.trim();
+            if (value.charAt(0) != '\'' || value.charAt(value.length() - 1) != '\'')
+                throw new InvalidTypeException(String.format("inet values must be enclosed in single quotes (\"%s\")", value));
             try {
-                return InetAddress.getByName(value);
+                return InetAddress.getByName(value.substring(1, value.length() - 1));
             } catch (Exception e) {
                 throw new InvalidTypeException(String.format("Cannot parse inet value from \"%s\"", value));
             }
