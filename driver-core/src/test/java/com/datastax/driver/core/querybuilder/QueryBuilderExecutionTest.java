@@ -84,7 +84,11 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         // Just check we correctly avoid values when there is a bind marker
         String query = "INSERT INTO foo(a,b,c,d) VALUES ('foo','bar',?,0);";
         RegularStatement stmt = insertInto("foo").value("a", "foo").value("b", "bar").value("c", bindMarker()).value("d", 0);
-        assertEquals(query, stmt.getQueryString());
+        assertEquals(stmt.getQueryString(), query);
+
+        query = "INSERT INTO foo(a,b,c,d) VALUES ('foo','bar',:c,0);";
+        stmt = insertInto("foo").value("a", "foo").value("b", "bar").value("c", bindMarker("c")).value("d", 0);
+        assertEquals(stmt.getQueryString(), query);
     }
 
     @Test(groups = "short")

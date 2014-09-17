@@ -61,7 +61,7 @@ abstract class Utils {
 
     // Returns null if it's not really serializable (function call, bind markers, ...)
     static boolean isSerializable(Object value) {
-        if (value == QueryBuilder.bindMarker() || value instanceof FCall || value instanceof CName)
+        if (value instanceof BindMarker || value instanceof FCall || value instanceof CName)
             return false;
 
         // We also don't serialize fixed size number types. The reason is that if we do it, we will
@@ -256,7 +256,7 @@ abstract class Utils {
     }
 
     static boolean containsBindMarker(Object value) {
-        if (value == QueryBuilder.bindMarker())
+        if (value instanceof BindMarker)
             return true;
 
         if (!(value instanceof FCall))

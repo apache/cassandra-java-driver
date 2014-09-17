@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.querybuilder.Delete.Where;
 import com.datastax.driver.core.utils.Bytes;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
@@ -335,6 +336,10 @@ public class QueryBuilderTest {
 
         query = "DELETE FROM foo.bar WHERE k1='foo' IF a=1 AND b=2;";
         delete = delete().from("foo", "bar").where(eq("k1", "foo")).onlyIf(eq("a", 1)).and(eq("b", 2));
+        assertEquals(delete.toString(), query);
+
+        query = "DELETE FROM foo WHERE k=:key;";
+        delete = delete().from("foo").where(eq("k", bindMarker("key")));
         assertEquals(delete.toString(), query);
     }
 
