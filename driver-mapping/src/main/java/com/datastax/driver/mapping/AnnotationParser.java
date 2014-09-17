@@ -202,7 +202,7 @@ class AnnotationParser {
             return udtField.caseSensitive() ? udtField.name() : udtField.name().toLowerCase();
         }
 
-        return field.getName();
+        return field.getName().toLowerCase();
     }
 
     public static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, AccessorMapper.Factory factory, MappingManager mappingManager) {

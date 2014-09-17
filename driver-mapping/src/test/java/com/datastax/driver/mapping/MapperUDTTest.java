@@ -36,7 +36,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList("CREATE TYPE address (street text, city text, zip_code int, phones set<text>)",
-                             "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, main_address frozen<address>, other_addresses map<text,frozen<address>>)",
+                             "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, mainaddress frozen<address>, other_addresses map<text,frozen<address>>)",
                              "CREATE TYPE sub(i int)",
                              "CREATE TABLE collection_examples (id int PRIMARY KEY, l list<frozen<sub>>, s set<frozen<sub>>, m1 map<int,frozen<sub>>, m2 map<frozen<sub>,int>, m3 map<frozen<sub>,frozen<sub>>)",
                              "CREATE TYPE group_name (name text)",
@@ -53,7 +53,6 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
         private String name;
 
-        @Column(name = "main_address")
         @Frozen
         private Address mainAddress;
 
