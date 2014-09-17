@@ -24,8 +24,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
@@ -70,6 +71,10 @@ class RequestHandler implements Connection.ResponseCallback {
 
     private final Timer.Context timerContext;
     private final long startTime;
+
+    // Tracks whether there is a retry already in progress
+    private final Lock retryLock = new ReentrantLock();
+    private Future<?> currentRetry; // guarded by retryLock
 
     public RequestHandler(SessionManager manager, Callback callback, Statement statement) {
         this.manager = manager;
@@ -162,24 +167,34 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     private void retry(final boolean retryCurrent, ConsistencyLevel newConsistencyLevel) {
-        final Host h = current;
-        this.retryConsistencyLevel = newConsistencyLevel;
+        try {
+            // We lock to prevent two retries from launching concurrently
+            retryLock.lock();
 
-        // We should not retry on the current thread as this will be an IO thread.
-        manager.executor().execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (retryCurrent) {
-                        if (query(h))
-                            return;
+            if (currentRetry != null && !currentRetry.isDone())
+                return;
+
+            final Host h = current;
+            this.retryConsistencyLevel = newConsistencyLevel;
+
+            // We should not retry on the current thread as this will be an IO thread.
+            currentRetry = manager.executor().submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (retryCurrent) {
+                            if (query(h))
+                                return;
+                        }
+                        sendRequest();
+                    } catch (Exception e) {
+                        setFinalException(null, new DriverInternalError("Unexpected exception while retrying query", e));
                     }
-                    sendRequest();
-                } catch (Exception e) {
-                    setFinalException(null, new DriverInternalError("Unexpected exception while retrying query", e));
                 }
-            }
-        });
+            });
+        } finally {
+            retryLock.unlock();
+        }
     }
 
     public void cancel() {
