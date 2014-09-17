@@ -88,12 +88,14 @@ class AnnotationChecks {
                                                              field.getName(), classDescription,
                                                              field.getDeclaringClass().getName()));
 
-        try {
-            checkFrozenTypes(field);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(String.format("Error while checking frozen types on field %s of %s %s: %s",
-                                                             field.getName(), classDescription,
-                                                             field.getDeclaringClass().getName(), e.getMessage()));
+        if (field.getAnnotation(Transient.class) == null) {
+            try {
+                checkFrozenTypes(field);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException(String.format("Error while checking frozen types on field %s of %s %s: %s",
+                                                                 field.getName(), classDescription,
+                                                                 field.getDeclaringClass().getName(), e.getMessage()));
+            }
         }
     }
 
