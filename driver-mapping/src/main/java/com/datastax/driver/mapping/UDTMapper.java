@@ -89,6 +89,9 @@ public class UDTMapper<T> {
     }
 
     List<UDTValue> toUDTValues(List<T> entities) {
+        if (entities == null)
+            return null;
+
         List<UDTValue> udtValues = new ArrayList<UDTValue>(entities.size());
         for (T entity : entities) {
             UDTValue udtValue = toUDT(entity);
@@ -98,6 +101,9 @@ public class UDTMapper<T> {
     }
 
     Set<UDTValue> toUDTValues(Set<T> entities) {
+        if (entities == null)
+            return null;
+
         Set<UDTValue> udtValues = Sets.newHashSetWithExpectedSize(entities.size());
         for (T entity : entities) {
             UDTValue udtValue = toUDT(entity);
@@ -115,6 +121,9 @@ public class UDTMapper<T> {
      */
     static <K, V> Map<Object, Object> toUDTValues(Map<K, V> entities, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper) {
         assert keyMapper != null || valueMapper != null;
+        if (entities == null)
+            return null;
+
         Map<Object, Object> udtValues = Maps.newHashMapWithExpectedSize(entities.size());
         for (Entry<K, V> entry : entities.entrySet()) {
             Object key = (keyMapper == null) ? entry.getKey() : keyMapper.toUDT(entry.getKey());

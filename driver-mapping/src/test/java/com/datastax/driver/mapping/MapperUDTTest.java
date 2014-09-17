@@ -485,4 +485,17 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         m.delete(group);
         assertNull(m.get(groupId));
     }
+
+    @Test(groups = "short")
+    public void testNullCollection() {
+        Mapper<User> m = new MappingManager(session).mapper(User.class);
+
+        User u1 = new User("Paul", new Address("12 4th Street", "Springfield", 12345, "12341343", "435423245"));
+        u1.setOtherAddresses(null);
+
+        m.save(u1);
+
+        User u2 = m.get(u1.getUserId());
+        assertNull(u2.getOtherAddresses());
+    }
 }
