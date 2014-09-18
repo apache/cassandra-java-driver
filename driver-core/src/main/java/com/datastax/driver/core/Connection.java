@@ -827,7 +827,6 @@ class Connection {
                 @Override
                 public void run(Timeout timeout) {
                     callback.onTimeout(connection, System.nanoTime() - startTime);
-                    cancelHandler();
                 }
             };
         }

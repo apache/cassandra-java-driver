@@ -6,6 +6,7 @@ CHANGELOG
 
 - [bug] Handle null pool in PooledConnection.release (JAVA-449)
 - [bug] Prevent concurrent retries of the same query (JAVA-449)
+- [improvement] Defunct connection on request timeout (JAVA-425)
 
 
 2.0.6:
