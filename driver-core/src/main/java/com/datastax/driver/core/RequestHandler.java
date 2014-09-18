@@ -349,6 +349,16 @@ class RequestHandler implements Connection.ResponseCallback {
                                 metrics().getErrorMetrics().getOthers().inc();
                             retry(false, null);
                             return;
+                        case SERVER_ERROR:
+                            // Defunct connection and try another node
+                            logger.warn("{} replied with server error ({}), trying next host.", connection.address, err.message);
+                            DriverException exception = new DriverException("Host replied with server error: " + err.message);
+                            logError(connection.address, exception);
+                            connection.defunct(exception);
+                            if (metricsEnabled())
+                                metrics().getErrorMetrics().getOthers().inc();
+                            retry(false, null);
+                            return;
                         case IS_BOOTSTRAPPING:
                             // Try another node
                             logger.error("Query sent to {} but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
