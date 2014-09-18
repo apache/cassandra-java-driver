@@ -304,7 +304,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         if (BigDecimal.class.isAssignableFrom(klass))
             return DataType.decimal();
         if (BigInteger.class.isAssignableFrom(klass))
-            return DataType.decimal();
+            return DataType.varint();
 
         if (String.class.isAssignableFrom(klass))
             return DataType.text();
