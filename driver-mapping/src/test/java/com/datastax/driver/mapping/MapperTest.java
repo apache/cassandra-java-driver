@@ -38,8 +38,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // We'll allow to generate those create statement from the annotated entities later, but it's currently
         // a TODO
         return Arrays.asList("CREATE TABLE users (user_id uuid PRIMARY KEY, name text, email text, year int, gender text)",
-                             "CREATE TABLE posts (user_id uuid, post_id timeuuid, title text, content text, device inet, tags set<text>, PRIMARY KEY(user_id, post_id))",
-                             "CREATE TABLE groups (group_id uuid PRIMARY KEY, name text)");
+                             "CREATE TABLE posts (user_id uuid, post_id timeuuid, title text, content text, device inet, tags set<text>, PRIMARY KEY(user_id, post_id))");
     }
 
     /*
@@ -369,79 +368,5 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         userAccessor.updateNameAndGender("Paule", User.Gender.FEMALE, u1.getUserId());
         Mapper<User> userMapper = manager.mapper(User.class);
         assertEquals(userMapper.get(u1.getUserId()).getGender(), User.Gender.FEMALE);
-    }
-
-    /*
-     * An entity that does not specify a keyspace in it's @Table annotation. When a keyspace is
-     * not specified, the mapper uses the session's logged in keyspace.
-     */
-    @Table(name = "groups")
-    public static class Group {
-
-        @PartitionKey
-        @Column(name = "group_id")
-        private UUID groupId;
-
-        private String name;
-
-        public Group() {}
-
-        public Group(String name) {
-            this.name = name;
-            this.groupId = UUIDs.random();
-        }
-
-        public UUID getGroupId() {
-            return groupId;
-        }
-
-        public void setGroupId(UUID groupId) {
-            this.groupId = groupId;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (other == null || other.getClass() != this.getClass())
-                return false;
-
-            Group that = (Group)other;
-            return Objects.equal(groupId, that.groupId)
-                && Objects.equal(name, that.name);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hashCode(groupId, name);
-        }
-    }
-
-    @Test(groups = "short")
-    public void testTableWithDefaultKeyspace() throws Exception {
-        // Ensure that the test session is logged into the "ks" keyspace.
-        session.execute("USE ks");
-
-        MappingManager manager = new MappingManager(session);
-        Mapper<Group> m = manager.mapper(Group.class);
-        Group group = new Group("testGroup");
-        UUID groupId = group.getGroupId();
-
-        // Check the save operation.
-        m.save(group);
-
-        // Check the select operation.
-        Group selectedGroup = m.get(groupId);
-        assertEquals(selectedGroup.getGroupId(), groupId);
-
-        // Check the delete operation.
-        m.delete(group);
-        assertNull(m.get(groupId));
     }
 }
