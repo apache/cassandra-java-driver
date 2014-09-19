@@ -1,6 +1,17 @@
 CHANGELOG
 =========
 
+2.1.2:
+------
+
+- [bug] Fix UDT fields of type inet in QueryBuilder (JAVA-454)
+- [bug] Exclude transient fields from Frozen checks (JAVA-455)
+- [bug] Fix handling of null collections in mapper (JAVA-453)
+- [improvement] Make implicit column names case-insensitive in mapper (JAVA-452)
+- [bug] Fix named bind markers in QueryBuidler (JAVA-433)
+- [bug] Fix handling of BigInteger in object mapper (JAVA-458)
+
+
 2.1.1:
 ------
 
