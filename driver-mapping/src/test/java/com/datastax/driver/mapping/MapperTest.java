@@ -37,15 +37,16 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
     protected Collection<String> getTableDefinitions() {
         // We'll allow to generate those create statement from the annotated entities later, but it's currently
         // a TODO
-        return Arrays.asList("CREATE TABLE users (user_id uuid PRIMARY KEY, name text, email text, year int, gender text)",
+        return Arrays.asList("CREATE TABLE users (user_id uuid PRIMARY KEY, fullname text, email text, year int, gender text)",
                              "CREATE TABLE posts (user_id uuid, post_id timeuuid, title text, content text, device inet, tags set<text>, PRIMARY KEY(user_id, post_id))");
     }
 
     /*
-     * Annotates a simple entity. Not a whole lot to see here, all fields are
-     * mapped by default (but there is a @Transcient to have a field non mapped)
-     * to a C* column that have the same name than the field (but you can use @Column
-     * to specify the actual column name in C* if it's different).
+     * Annotates a simple entity.
+     *
+     * Not a whole lot to see here, all fields are mapped by default to a C* column that have the same name than the
+     * field (but you can use @Column to specify the actual column name in C* if it's different). Note that one of
+     * the columns name uses camel case to make sure this is correctly mapped to the associated lowercase column name.
      *
      * Do note that we support enums (which are mapped to strings by default
      * but you can map them to their ordinal too with some @Enumerated annotation)
@@ -63,7 +64,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         @Column(name = "user_id")
         private UUID userId;
 
-        private String name;
+        private String fullName;
         private String email;
         private int year;
 
@@ -71,9 +72,9 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
         public User() {}
 
-        public User(String name, String email, Gender gender) {
+        public User(String fullName, String email, Gender gender) {
             this.userId = UUIDs.random();
-            this.name = name;
+            this.fullName = fullName;
             this.email = email;
             this.gender = gender;
         }
@@ -86,12 +87,12 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
             this.userId = userId;
         }
 
-        public String getName() {
-            return name;
+        public String getFullName() {
+            return fullName;
         }
 
-        public void setName(String name) {
-            this.name = name;
+        public void setFullName(String fullName) {
+            this.fullName = fullName;
         }
 
         public String getEmail() {
@@ -125,7 +126,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
             User that = (User)other;
             return Objects.equal(userId, that.userId)
-                && Objects.equal(name, that.name)
+                && Objects.equal(fullName, that.fullName)
                 && Objects.equal(email, that.email)
                 && Objects.equal(year, that.year)
                 && Objects.equal(gender, that.gender);
@@ -133,7 +134,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(userId, name, email, year, gender);
+            return Objects.hashCode(userId, fullName, email, year, gender);
         }
     }
 
@@ -283,7 +284,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
     @Accessor
     public interface UserAccessor {
         // Demonstrates use of an enum as an accessor parameter
-        @Query("UPDATE ks.users SET name=?, gender=? WHERE user_id=?")
+        @Query("UPDATE ks.users SET fullName=?, gender=? WHERE user_id=?")
         ResultSet updateNameAndGender(String name, Gender gender, UUID userId);
     }
 
