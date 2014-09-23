@@ -27,7 +27,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * A prepared statement with values bound to the bind variables.
  * <p>
  * Once values has been provided for the variables of the {@link PreparedStatement}
- * it has been created from, such BoundStatement can be executed (through 
+ * it has been created from, such BoundStatement can be executed (through
  * {@link Session#execute(Statement)}).
  * <p>
  * The values of a BoundStatement can be set by either index or name. When
@@ -43,7 +43,7 @@ public class BoundStatement extends Statement {
     final PreparedStatement statement;
     final ByteBuffer[] values;
     private ByteBuffer routingKey;
-    
+
     /**
      * Creates a new {@code BoundStatement} from the provided prepared
      * statement.
@@ -52,7 +52,7 @@ public class BoundStatement extends Statement {
     public BoundStatement(PreparedStatement statement) {
         this.statement = statement;
         this.values = new ByteBuffer[statement.getVariables().size()];
-        
+
         if (statement.getConsistencyLevel() != null)
             this.setConsistencyLevel(statement.getConsistencyLevel());
         if (statement.getSerialConsistencyLevel() != null)
@@ -90,7 +90,7 @@ public class BoundStatement extends Statement {
      * bound to a non-null value.
      *
      * @param name the name of the variable to check.
-     * @return whether the first occurrence of variable {@code name} has been 
+     * @return whether the first occurrence of variable {@code name} has been
      * bound to a non-null value.
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
@@ -199,17 +199,14 @@ public class BoundStatement extends Statement {
     /**
      * Sets the routing key for this bound statement.
      * <p>
-     * While you can provide a fixed routing key for all executions of this bound statement with this method, it is
-     * not mandatory to provide one through this method. This method should only be used if the partition key of the
-     * prepared query is not part of the prepared variables (that is if the partition key is fixed).
-     * <p>
-     * Note that if the partition key is part of the prepared variables, the routing key will be automatically computed
-     * once those variables are bound.
+     * This is useful when the routing key can neither be set on the {@code PreparedStatement} this bound statement
+     * was built from, nor automatically computed from bound variables. In particular, this is the case if the
+     * partition key is composite and only some of its components are bound.
      *
      * @param routingKey the raw (binary) value to use as routing key.
      * @return this {@code BoundStatement} object.
      *
-     * @see Statement#getRoutingKey
+     * @see BoundStatement#getRoutingKey
      */
     public BoundStatement setRoutingKey(ByteBuffer routingKey) {
         this.routingKey = routingKey;
@@ -221,12 +218,11 @@ public class BoundStatement extends Statement {
      * <p>
      * This method will return a non-{@code null} value if either of the following occur:
      * <ul>
-     * <li>All the columns composing the partition key are bound variables of this {@code BoundStatement}. The routing
-     * key will then be built using the values provided for these partition key columns.</li>
-     * <li>The routing key has been set through {@link BoundStatement#setRoutingKey} for the {@code BoundStatement} this
-     * statement has been built from.</li>
+     * <li>The routing key has been set directly through {@link BoundStatement#setRoutingKey}.</li>
      * <li>The routing key has been set through {@link PreparedStatement#setRoutingKey} for the
      * {@code PreparedStatement} this statement has been built from.</li>
+     * <li>All the columns composing the partition key are bound variables of this {@code BoundStatement}. The routing
+     * key will then be built using the values provided for these partition key columns.</li>
      * </ul>
      * Otherwise, {@code null} is returned.
      * <p>

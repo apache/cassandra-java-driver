@@ -90,7 +90,7 @@ public interface PreparedStatement {
     /**
      * Sets the routing key for this prepared statement.
      * <p>
-     * While you can provide a fixed routing key for all executions of this prepared 
+     * While you can provide a fixed routing key for all executions of this prepared
      * statement with this method, it is not mandatory to provide
      * one through this method. This method should only be used
      * if the partition key of the prepared query is not part of the prepared
@@ -98,11 +98,16 @@ public interface PreparedStatement {
      * <p>
      * Note that if the partition key is part of the prepared variables, the
      * routing key will be automatically computed once those variables are bound.
+     * <p>
+     * If the partition key is neither fixed nor part of the prepared variables (e.g.
+     * a composite partition key where only some of the components are bound), the
+     * routing key can also be set on each bound statement.
      *
      * @param routingKey the raw (binary) value to use as routing key.
      * @return this {@code PreparedStatement} object.
      *
      * @see Statement#getRoutingKey
+     * @see BoundStatement#getRoutingKey
      */
     public PreparedStatement setRoutingKey(ByteBuffer routingKey);
 
@@ -130,7 +135,7 @@ public interface PreparedStatement {
     public ByteBuffer getRoutingKey();
 
     /**
-     * Sets a default consistency level for all bound statements 
+     * Sets a default consistency level for all bound statements
      * created from this prepared statement.
      * <p>
      * If no consistency level is set through this method, the bound statement
@@ -154,7 +159,7 @@ public interface PreparedStatement {
     public ConsistencyLevel getConsistencyLevel();
 
     /**
-     * Sets a default serial consistency level for all bound statements 
+     * Sets a default serial consistency level for all bound statements
      * created from this prepared statement.
      * <p>
      * If no serial consistency level is set through this method, the bound statement
