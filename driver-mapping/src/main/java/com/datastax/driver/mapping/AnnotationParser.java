@@ -75,8 +75,8 @@ class AnnotationParser {
                 continue;
             
             AnnotationChecks.validateAnnotations(field, "entity",
-                    Column.class, ClusteringColumn.class, Enumerated.class, Frozen.class, FrozenKey.class,
-                    FrozenValue.class, PartitionKey.class, Transient.class);
+                                                 Column.class, ClusteringColumn.class, Enumerated.class, Frozen.class, FrozenKey.class,
+                                                 FrozenValue.class, PartitionKey.class, Transient.class);
 
             if (field.getAnnotation(Transient.class) != null)
                 continue;
