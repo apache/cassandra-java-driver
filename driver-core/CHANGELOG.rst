@@ -8,8 +8,15 @@ CHANGELOG
 - [bug] Exclude transient fields from Frozen checks (JAVA-455)
 - [bug] Fix handling of null collections in mapper (JAVA-453)
 - [improvement] Make implicit column names case-insensitive in mapper (JAVA-452)
-- [bug] Fix named bind markers in QueryBuidler (JAVA-433)
+- [bug] Fix named bind markers in QueryBuilder (JAVA-433)
 - [bug] Fix handling of BigInteger in object mapper (JAVA-458)
+
+Merged from 2.0 branch:
+
+- [bug] Handle null pool in PooledConnection.release (JAVA-449)
+- [bug] Prevent concurrent retries of the same query (JAVA-449)
+- [improvement] Defunct connection on request timeout (JAVA-425)
+- [improvement] Try next host when we get a SERVER_ERROR (JAVA-426)
 
 
 2.1.1:
@@ -73,6 +80,15 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
 
 
+2.0.7:
+------
+
+- [bug] Handle null pool in PooledConnection.release (JAVA-449)
+- [bug] Prevent concurrent retries of the same query (JAVA-449)
+- [improvement] Defunct connection on request timeout (JAVA-425)
+- [improvement] Try next host when we get a SERVER_ERROR (JAVA-426)
+
+
 2.0.6:
 ------
 
@@ -85,6 +101,8 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] Fix negative HostConnectionPool open count (JAVA-349)
 - [improvement] Log more connection details at trace and debug levels (JAVA-436)
 - [bug] Fix cluster shutdown (JAVA-445)
+- [improvement] Expose child policy in chainable load balancing policies (JAVA-439)
+
 
 
 2.0.5:

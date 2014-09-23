@@ -57,7 +57,7 @@ import com.datastax.driver.core.*;
  *
  * @since 1.0.4
  */
-public class LatencyAwarePolicy implements LoadBalancingPolicy {
+public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
 
     private static final Logger logger = LoggerFactory.getLogger(LatencyAwarePolicy.class);
 
@@ -85,6 +85,11 @@ public class LatencyAwarePolicy implements LoadBalancingPolicy {
         this.minMeasure = minMeasure;
 
         updaterService.scheduleAtFixedRate(new Updater(), updateRate, updateRate, TimeUnit.NANOSECONDS);
+    }
+
+    @Override
+    public LoadBalancingPolicy getChildPolicy() {
+        return childPolicy;
     }
 
     /**

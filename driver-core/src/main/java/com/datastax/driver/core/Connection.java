@@ -680,6 +680,7 @@ class Connection {
             while (iter.hasNext())
             {
                 ResponseHandler handler = iter.next();
+                handler.cancelTimeout();
                 handler.callback.onException(Connection.this, ce, System.nanoTime() - handler.startTime);
                 iter.remove();
             }
@@ -826,7 +827,6 @@ class Connection {
                 @Override
                 public void run(Timeout timeout) {
                     callback.onTimeout(connection, System.nanoTime() - startTime);
-                    cancelHandler();
                 }
             };
         }

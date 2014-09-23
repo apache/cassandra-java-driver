@@ -34,10 +34,16 @@ class PooledConnection extends Connection {
     }
 
     /**
-     * Return the pooled connection to it's pool.
-     * The connection should generally not be reuse after that.
+     * Return the pooled connection to its pool.
+     * The connection should generally not be reused after that.
      */
     public void release() {
+        // This can happen if the query to initialize the transport in the
+        // parent constructor times out. In that case the pool will handle
+        // it itself.
+        if (pool == null)
+            return;
+
         pool.returnConnection(this);
     }
 
