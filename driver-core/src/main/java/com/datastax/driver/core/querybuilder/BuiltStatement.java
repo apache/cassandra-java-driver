@@ -137,7 +137,7 @@ public abstract class BuiltStatement extends RegularStatement {
                 DataType dt = partitionKey.get(i).getType();
                 // We don't really care which protocol version we use, since the only place it matters if for
                 // collections (not inside UDT), and those are not allowed in a partition key anyway, hence the hardcoding.
-                routingKey[i] = dt.serialize(dt.parse(Utils.toRawString(value)), 3);
+                routingKey[i] = dt.serialize(dt.parse(Utils.toRawString(value)), ProtocolVersion.NEWEST_SUPPORTED);
                 return;
             }
         }
@@ -163,7 +163,7 @@ public abstract class BuiltStatement extends RegularStatement {
     }
 
     @Override
-    public ByteBuffer[] getValues(int protocolVersion) {
+    public ByteBuffer[] getValues(ProtocolVersion protocolVersion) {
         maybeRebuildCache();
         return values == null ? null : Utils.convert(values, protocolVersion);
     }
@@ -333,7 +333,7 @@ public abstract class BuiltStatement extends RegularStatement {
         }
 
         @Override
-        public ByteBuffer[] getValues(int protocolVersion) {
+        public ByteBuffer[] getValues(ProtocolVersion protocolVersion) {
             return statement.getValues(protocolVersion);
         }
 

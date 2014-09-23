@@ -15,15 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Options of the Cassandra native binary protocol.
  */
 public class ProtocolOptions {
-
-    private static final Logger logger = LoggerFactory.getLogger(ProtocolOptions.class);
 
     /**
      * Compression supported by the Cassandra binary protocol.
@@ -67,15 +62,10 @@ public class ProtocolOptions {
      */
     public static final int DEFAULT_PORT = 9042;
 
-    /**
-     * The newest version of the protocol that this version of the driver support.
-     */
-    public static final int NEWEST_SUPPORTED_PROTOCOL_VERSION = 2;
-
     private volatile Cluster.Manager manager;
 
     private final int port;
-    final int initialProtocolVersion; // What the user asked us. Will be -1 by default.
+    final ProtocolVersion initialProtocolVersion; // What the user asked us. Will be null by default.
 
     private final SSLOptions sslOptions; // null if no SSL
     private final AuthProvider authProvider;
@@ -99,7 +89,7 @@ public class ProtocolOptions {
      * @param port the port to use for the binary protocol.
      */
     public ProtocolOptions(int port) {
-        this(port, -1, null, AuthProvider.NONE);
+        this(port, null, null, AuthProvider.NONE);
     }
 
     /**
@@ -107,24 +97,19 @@ public class ProtocolOptions {
      * and SSL context.
      *
      * @param port the port to use for the binary protocol.
-     * @param protocolVersion the protocol version to use. This can be a negative number, in which case the
-     * version uses will be the biggest version supported by the <em>first</em> node the driver connects to.
-     * Otherwise, it must be between 1 and {@code NEWEST_SUPPORTED_PROTOCOL_VERSION} to force using a particular
-     * protocol version. See
-     * {@link Cluster.Builder#withProtocolVersion} for more details.
+     * @param protocolVersion the protocol version to use. This can be {@code null}, in which case the
+     * version used will be the biggest version supported by the <em>first</em> node the driver connects to.
+     * See {@link Cluster.Builder#withProtocolVersion} for more details.
      * @param sslOptions the SSL options to use. Use {@code null} if SSL is not
      * to be used.
      * @param authProvider the {@code AuthProvider} to use for authentication against
      * the Cassandra nodes.
      */
-    public ProtocolOptions(int port, int protocolVersion, SSLOptions sslOptions, AuthProvider authProvider) {
+    public ProtocolOptions(int port, ProtocolVersion protocolVersion, SSLOptions sslOptions, AuthProvider authProvider) {
         this.port = port;
         this.initialProtocolVersion = protocolVersion;
         this.sslOptions = sslOptions;
         this.authProvider = authProvider;
-
-        if (protocolVersion == 0 || protocolVersion > NEWEST_SUPPORTED_PROTOCOL_VERSION)
-            throw new IllegalArgumentException(String.format("Unsupported protocol version %d; valid values must be between 1 and %d or negative (for auto-detect).", protocolVersion, NEWEST_SUPPORTED_PROTOCOL_VERSION));
     }
 
     void register(Cluster.Manager manager) {
@@ -143,14 +128,13 @@ public class ProtocolOptions {
     /**
      * The protocol version used by the Cluster instance.
      *
-     * @return the protocol version in use. This might return a negative value if a particular
+     * @return the protocol version in use. This might return {@code null} if a particular
      * version hasn't been forced by the user (using say {Cluster.Builder#withProtocolVersion})
      * <em>and</em> this Cluster instance has not yet connected to any node (but as soon as the
-     * Cluster instance is connected, this is guaranteed to return a value between 1 and
-     * {@code NEWEST_SUPPORTED_PROTOCOL_VERSION}). Note that nodes that do not support this protocol
-     * version will be ignored.
+     * Cluster instance is connected, this is guaranteed to return a non-null value). Note that
+     * nodes that do not support this protocol version will be ignored.
      */
-    public int getProtocolVersion() {
+    public ProtocolVersion getProtocolVersion() {
         return manager.connectionFactory.protocolVersion;
     }
 

@@ -25,6 +25,7 @@ import static org.testng.Assert.assertTrue;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+
 import static com.datastax.driver.core.TestUtils.*;
 
 /**
@@ -406,7 +407,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             assertEquals("bar", all.get(2).getString("v"));
         } catch (UnsupportedFeatureException e) {
             // This is expected when testing the protocol v1
-            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != 1)
+            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != ProtocolVersion.V1)
                 throw e;
         }
     }

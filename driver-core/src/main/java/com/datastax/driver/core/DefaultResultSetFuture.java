@@ -34,11 +34,11 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
     private static final Logger logger = LoggerFactory.getLogger(ResultSetFuture.class);
 
     private final SessionManager session;
-    private final int protocolVersion;
+    private final ProtocolVersion protocolVersion;
     private final Message.Request request;
     private volatile RequestHandler handler;
 
-    DefaultResultSetFuture(SessionManager session, int protocolVersion, Message.Request request) {
+    DefaultResultSetFuture(SessionManager session, ProtocolVersion protocolVersion, Message.Request request) {
         this.session = session;
         this.protocolVersion = protocolVersion;
         this.request = request;
@@ -71,14 +71,14 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                             ResultSet rs = ArrayBackedResultSet.fromMessage(rm, session, protocolVersion, info, statement);
                             switch (scc.change) {
                                 case CREATED:
-                                    if (scc.columnFamily.isEmpty()) {
+                                    if (scc.name.isEmpty()) {
                                         session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, null, null);
                                     } else {
                                         session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, null);
                                     }
                                     break;
                                 case DROPPED:
-                                    if (scc.columnFamily.isEmpty()) {
+                                    if (scc.name.isEmpty()) {
                                         // If that the one keyspace we are logged in, reset to null (it shouldn't really happen but ...)
                                         // Note: Actually, Cassandra doesn't do that so we don't either as this could confuse prepared statements.
                                         // We'll add it back if CASSANDRA-5358 changes that behavior
@@ -90,10 +90,10 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                     }
                                     break;
                                 case UPDATED:
-                                    if (scc.columnFamily.isEmpty()) {
+                                    if (scc.name.isEmpty()) {
                                         session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, null);
                                     } else {
-                                        session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, scc.columnFamily);
+                                        session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, scc.name);
                                     }
                                     break;
                                 default:

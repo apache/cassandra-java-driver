@@ -201,12 +201,30 @@ public abstract class DataType {
                 DataType keys = decode(buffer);
                 DataType values = decode(buffer);
                 return map(keys, values);
+            case UDT:
+                String keyspace = CBUtil.readString(buffer);
+                String type = CBUtil.readString(buffer);
+                int nFields = buffer.readShort() & 0xffff;
+                List<UserType.Field> fields = new ArrayList<UserType.Field>(nFields);
+                for (int i = 0; i < nFields; i++) {
+                    String fieldName = CBUtil.readString(buffer);
+                    DataType fieldType = decode(buffer);
+                    fields.add(new UserType.Field(fieldName, fieldType));
+                }
+                return new UserType(keyspace, type, fields);
+            case TUPLE:
+                nFields = buffer.readShort() & 0xffff;
+                List<DataType> types = new ArrayList<DataType>(nFields);
+                for (int i = 0; i < nFields; i++) {
+                    types.add(decode(buffer));
+                }
+                return new TupleType(types);
             default:
                 return primitiveTypeMap.get(name);
         }
     }
 
-    abstract TypeCodec<Object> codec(int protocolVersion);
+    abstract TypeCodec<Object> codec(ProtocolVersion protocolVersion);
 
     /**
      * Returns the ASCII type.
@@ -460,7 +478,7 @@ public abstract class DataType {
      */
     public Object parse(String value) {
         // We don't care about the protocol version for parsing
-        return value == null ? null : codec(-1).parse(value);
+        return value == null ? null : codec(ProtocolVersion.NEWEST_SUPPORTED).parse(value);
     }
 
     /**
@@ -475,7 +493,7 @@ public abstract class DataType {
      */
     public String format(Object value) {
         // We don't care about the protocol version for formatting
-        return value == null ? null : codec(-1).format(value);
+        return value == null ? null : codec(ProtocolVersion.NEWEST_SUPPORTED).format(value);
     }
 
     /**
@@ -527,7 +545,7 @@ public abstract class DataType {
      * @throws InvalidTypeException if {@code value} is not a valid object
      * for this {@code DataType}.
      */
-    public ByteBuffer serialize(Object value, int protocolVersion) {
+    public ByteBuffer serialize(Object value, ProtocolVersion protocolVersion) {
         Class<?> providedClass = value.getClass();
         Class<?> expectedClass = asJavaClass();
         if (!expectedClass.isAssignableFrom(providedClass))
@@ -562,7 +580,7 @@ public abstract class DataType {
      * @throws InvalidTypeException if {@code bytes} is not a valid
      * encoding of an object of this {@code DataType}.
      */
-    public Object deserialize(ByteBuffer bytes, int protocolVersion) {
+    public Object deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) {
         return codec(protocolVersion).deserialize(bytes);
     }
 
@@ -587,7 +605,7 @@ public abstract class DataType {
      * corresponding to a CQL3 type, i.e. is not a Class that could be returned
      * by {@link DataType#asJavaClass}.
      */
-    public static ByteBuffer serializeValue(Object value, int protocolVersion) {
+    public static ByteBuffer serializeValue(Object value, ProtocolVersion protocolVersion) {
         if (value == null)
             return null;
 
@@ -611,13 +629,15 @@ public abstract class DataType {
         }
 
         @Override
-        TypeCodec<Object> codec(int protocolVersion) {
+        TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
             return TypeCodec.createFor(name);
         }
 
         @Override
         public final int hashCode() {
-            return name.hashCode();
+            return (name == Name.TEXT)
+                ? Name.VARCHAR.hashCode()
+                : name.hashCode();
         }
 
         @Override
@@ -625,7 +645,10 @@ public abstract class DataType {
             if(!(o instanceof DataType.Native))
                 return false;
 
-            return name == ((DataType.Native)o).name;
+            Native that = (DataType.Native)o;
+            return name == that.name ||
+                   name == Name.VARCHAR && that.name == Name.TEXT ||
+                   name == Name.TEXT && that.name == Name.VARCHAR;
         }
 
         @Override
@@ -645,7 +668,7 @@ public abstract class DataType {
 
         @SuppressWarnings("unchecked")
         @Override
-        TypeCodec<Object> codec(int protocolVersion) {
+        TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
             switch (name)
             {
                 case LIST: return (TypeCodec)TypeCodec.listOf(typeArguments.get(0), protocolVersion);
@@ -694,7 +717,7 @@ public abstract class DataType {
 
         @SuppressWarnings("unchecked")
         @Override
-        TypeCodec<Object> codec(int protocolVersion) {
+        TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
             return (TypeCodec)TypeCodec.BytesCodec.instance;
         }
 

@@ -41,17 +41,17 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
     protected final ColumnDefinitions metadata;
 
-    protected final int protocolVersion;
-
     private final boolean wasApplied;
 
-    private ArrayBackedResultSet(ColumnDefinitions metadata, List<ByteBuffer> firstRow, int protocolVersion) {
+    protected final ProtocolVersion protocolVersion;
+
+    private ArrayBackedResultSet(ColumnDefinitions metadata, List<ByteBuffer> firstRow, ProtocolVersion protocolVersion) {
         this.metadata = metadata;
         this.protocolVersion = protocolVersion;
         this.wasApplied = checkWasApplied(firstRow, metadata);
     }
 
-    static ArrayBackedResultSet fromMessage(Responses.Result msg, SessionManager session, int protocolVersion, ExecutionInfo info, Statement statement) {
+    static ArrayBackedResultSet fromMessage(Responses.Result msg, SessionManager session, ProtocolVersion protocolVersion, ExecutionInfo info, Statement statement) {
         info = update(info, msg, session);
 
         switch (msg.kind) {
@@ -94,7 +94,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
     private static ArrayBackedResultSet empty(ExecutionInfo info) {
         // We could pass the protocol version but we know we won't need it so passing a bogus value (-1)
-        return new SinglePage(ColumnDefinitions.EMPTY, -1, EMPTY_QUEUE, info);
+        return new SinglePage(ColumnDefinitions.EMPTY, null, EMPTY_QUEUE, info);
     }
 
     public ColumnDefinitions getColumnDefinitions() {
@@ -153,7 +153,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final ExecutionInfo info;
 
         private SinglePage(ColumnDefinitions metadata,
-                           int protocolVersion,
+                           ProtocolVersion protocolVersion,
                            Queue<List<ByteBuffer>> rows,
                            ExecutionInfo info) {
             super(metadata, rows.peek(), protocolVersion);
@@ -216,7 +216,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final Statement statement;
 
         private MultiPage(ColumnDefinitions metadata,
-                          int protocolVersion,
+                          ProtocolVersion protocolVersion,
                           Queue<List<ByteBuffer>> rows,
                           ExecutionInfo info,
                           ByteBuffer pagingState,

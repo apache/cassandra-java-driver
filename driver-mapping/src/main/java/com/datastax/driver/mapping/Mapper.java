@@ -40,7 +40,7 @@ public class Mapper<T> {
     private static final Logger logger = LoggerFactory.getLogger(EntityMapper.class);
 
     final MappingManager manager;
-    final int protocolVersion;
+    final ProtocolVersion protocolVersion;
     final Class<T> klass;
     final EntityMapper<T> mapper;
     final TableMetadata tableMetadata;

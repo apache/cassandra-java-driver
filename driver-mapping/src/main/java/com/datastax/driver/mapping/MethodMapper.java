@@ -123,7 +123,7 @@ class MethodMapper {
 
         BoundStatement bs = statement.bind();
 
-        int protocolVersion = session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+        ProtocolVersion protocolVersion = session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
         for (int i = 0; i < args.length; i++) {
             paramMappers[i].setValue(bs, args[i], protocolVersion);
         }
@@ -166,7 +166,7 @@ class MethodMapper {
             this.paramIdx = paramIdx;
         }
 
-        void setValue(BoundStatement boundStatement, Object arg, int protocolVersion) {
+        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
             if (arg != null) {
                 if (paramName == null)
                     boundStatement.setBytesUnsafe(paramIdx, DataType.serializeValue(arg, protocolVersion));
@@ -185,7 +185,7 @@ class MethodMapper {
         }
 
         @Override
-        void setValue(BoundStatement boundStatement, Object arg, int protocolVersion) {
+        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
             @SuppressWarnings("unchecked")
             V entity = (V) arg;
             super.setValue(boundStatement, udtMapper.toUDT(entity), protocolVersion);
@@ -201,7 +201,7 @@ class MethodMapper {
         }
 
         @Override
-        void setValue(BoundStatement boundStatement, Object arg, int protocolVersion) {
+        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
             @SuppressWarnings("unchecked")
             List<V> entities = (List<V>) arg;
             super.setValue(boundStatement, valueMapper.toUDTValues(entities), protocolVersion);
@@ -217,7 +217,7 @@ class MethodMapper {
         }
 
         @Override
-        void setValue(BoundStatement boundStatement, Object arg, int protocolVersion) {
+        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
             @SuppressWarnings("unchecked")
             Set<V> entities = (Set<V>) arg;
             super.setValue(boundStatement, valueMapper.toUDTValues(entities), protocolVersion);
@@ -235,7 +235,7 @@ class MethodMapper {
         }
 
         @Override
-        void setValue(BoundStatement boundStatement, Object arg, int protocolVersion) {
+        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
             @SuppressWarnings("unchecked")
             Map<K, V> entities = (Map<K, V>) arg;
             super.setValue(boundStatement, UDTMapper.toUDTValues(entities, keyMapper, valueMapper), protocolVersion);
@@ -252,7 +252,7 @@ class MethodMapper {
         }
 
         @Override
-        void setValue(BoundStatement boundStatement, Object arg, int protocolVersion) {
+        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
             super.setValue(boundStatement, convert(arg), protocolVersion);
         }
 

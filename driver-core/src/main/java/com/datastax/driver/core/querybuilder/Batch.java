@@ -17,9 +17,9 @@ package com.datastax.driver.core.querybuilder;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.SimpleStatement;
 
@@ -123,7 +123,7 @@ public class Batch extends BuiltStatement {
     }
 
     @Override
-    public ByteBuffer[] getValues(int protocolVersion) {
+    public ByteBuffer[] getValues(ProtocolVersion protocolVersion) {
         // If there is some non-BuiltStatement inside the batch with values, we shouldn't
         // use super.getValues() since it will ignore the values of said non-BuiltStatement.
         // If that's the case, we just collects all those values (and we know

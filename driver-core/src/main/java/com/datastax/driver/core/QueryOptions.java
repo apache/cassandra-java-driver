@@ -122,9 +122,9 @@ public class QueryOptions {
         if (fetchSize <= 0)
             throw new IllegalArgumentException("Invalid fetchSize, should be > 0, got " + fetchSize);
 
-        int version = manager == null ? -1 : manager.protocolVersion();
-        if (fetchSize != Integer.MAX_VALUE && version == 1)
-            throw new UnsupportedFeatureException("Paging is not supported");
+        ProtocolVersion version = manager == null ? null : manager.protocolVersion();
+        if (fetchSize != Integer.MAX_VALUE && version == ProtocolVersion.V1)
+            throw new UnsupportedFeatureException(version, "Paging is not supported");
 
         this.fetchSize = fetchSize;
         return this;

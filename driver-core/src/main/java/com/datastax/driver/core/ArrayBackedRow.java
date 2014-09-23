@@ -31,13 +31,13 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
     private final ColumnDefinitions metadata;
     private final List<ByteBuffer> data;
 
-    private ArrayBackedRow(ColumnDefinitions metadata, int protocolVersion, List<ByteBuffer> data) {
+    private ArrayBackedRow(ColumnDefinitions metadata, ProtocolVersion protocolVersion, List<ByteBuffer> data) {
         super(protocolVersion);
         this.metadata = metadata;
         this.data = data;
     }
 
-    static Row fromData(ColumnDefinitions metadata, int protocolVersion, List<ByteBuffer> data) {
+    static Row fromData(ColumnDefinitions metadata, ProtocolVersion protocolVersion, List<ByteBuffer> data) {
         if (data == null)
             return null;
 

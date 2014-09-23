@@ -37,12 +37,12 @@ abstract class Message {
     protected static final Logger logger = LoggerFactory.getLogger(Message.class);
 
     public interface Coder<R extends Request> {
-        public void encode(R request, ChannelBuffer dest);
-        public int encodedSize(R request);
+        public void encode(R request, ChannelBuffer dest, ProtocolVersion version);
+        public int encodedSize(R request, ProtocolVersion version);
     }
 
     public interface Decoder<R extends Response> {
-        public R decode(ChannelBuffer body);
+        public R decode(ChannelBuffer body, ProtocolVersion version);
     }
 
     private volatile int streamId;
@@ -61,30 +61,22 @@ abstract class Message {
     public static abstract class Request extends Message {
 
         public enum Type {
-            STARTUP        (1, Requests.Startup.coder, Requests.Startup.coder),
-            CREDENTIALS    (4, Requests.Credentials.coder, null),
-            OPTIONS        (5, Requests.Options.coder, Requests.Options.coder),
-            QUERY          (7, Requests.Query.coderV1, Requests.Query.coderV2),
-            PREPARE        (9, Requests.Prepare.coder, Requests.Prepare.coder),
-            EXECUTE        (10, Requests.Execute.coderV1, Requests.Execute.coderV2),
-            REGISTER       (11, Requests.Register.coder, Requests.Register.coder),
-            BATCH          (13, null, Requests.Batch.coder),
-            AUTH_RESPONSE  (15, Requests.AuthResponse.coder, Requests.AuthResponse.coder);
+            STARTUP        (1, Requests.Startup.coder),
+            CREDENTIALS    (4, Requests.Credentials.coder),
+            OPTIONS        (5, Requests.Options.coder),
+            QUERY          (7, Requests.Query.coder),
+            PREPARE        (9, Requests.Prepare.coder),
+            EXECUTE        (10, Requests.Execute.coder),
+            REGISTER       (11, Requests.Register.coder),
+            BATCH          (13, Requests.Batch.coder),
+            AUTH_RESPONSE  (15, Requests.AuthResponse.coder);
 
             public final int opcode;
-            private final Coder<?> coderV1;
-            private final Coder<?> coderV2;
+            public final Coder<?> coder;
 
-            private Type(int opcode, Coder<?> coderV1, Coder<?> coderV2) {
+            private Type(int opcode, Coder<?> coder) {
                 this.opcode = opcode;
-                this.coderV1 = coderV1;
-                this.coderV2 = coderV2;
-            }
-
-            public Coder<?> coder(int version)
-            {
-                assert version == 1 || version == 2 : "Unsupported protocol version, we shouldn't have arrived here";
-                return version == 1 ? coderV1 : coderV2;
+                this.coder = coder;
             }
         }
 
@@ -107,18 +99,17 @@ abstract class Message {
     public static abstract class Response extends Message {
 
         public enum Type {
-            ERROR          (0, Responses.Error.decoder, Responses.Error.decoder),
-            READY          (2, Responses.Ready.decoder, Responses.Ready.decoder),
-            AUTHENTICATE   (3, Responses.Authenticate.decoder, Responses.Authenticate.decoder),
-            SUPPORTED      (6, Responses.Supported.decoder, Responses.Supported.decoder),
-            RESULT         (8, Responses.Result.decoderV1, Responses.Result.decoderV2),
-            EVENT          (12, Responses.Event.decoder, Responses.Event.decoder),
-            AUTH_CHALLENGE (14, Responses.AuthChallenge.decoder, Responses.AuthChallenge.decoder),
-            AUTH_SUCCESS   (16, Responses.AuthSuccess.decoder, Responses.AuthSuccess.decoder);
+            ERROR          (0, Responses.Error.decoder),
+            READY          (2, Responses.Ready.decoder),
+            AUTHENTICATE   (3, Responses.Authenticate.decoder),
+            SUPPORTED      (6, Responses.Supported.decoder),
+            RESULT         (8, Responses.Result.decoder),
+            EVENT          (12, Responses.Event.decoder),
+            AUTH_CHALLENGE (14, Responses.AuthChallenge.decoder),
+            AUTH_SUCCESS   (16, Responses.AuthSuccess.decoder);
 
             public final int opcode;
-            private final Decoder<?> decoderV1;
-            private final Decoder<?> decoderV2;
+            public final Decoder<?> decoder;
 
             private static final Type[] opcodeIdx;
             static {
@@ -133,23 +124,18 @@ abstract class Message {
                 }
             }
 
-            private Type(int opcode, Decoder<?> decoderV1, Decoder<?> decoderV2) {
+            private Type(int opcode, Decoder<?> decoder) {
                 this.opcode = opcode;
-                this.decoderV1 = decoderV1;
-                this.decoderV2 = decoderV2;
+                this.decoder = decoder;
             }
 
             public static Type fromOpcode(int opcode) {
+                if (opcode < 0 || opcode >= opcodeIdx.length)
+                    throw new DriverInternalError(String.format("Unknown response opcode %d", opcode));
                 Type t = opcodeIdx[opcode];
                 if (t == null)
                     throw new DriverInternalError(String.format("Unknown response opcode %d", opcode));
                 return t;
-            }
-
-            public Decoder<?> decoder(int version)
-            {
-                assert version == 1 || version == 2 : "Unsupported protocol version, we shouldn't have arrived here";
-                return version == 1 ? decoderV1 : decoderV2;
             }
         }
 
@@ -179,16 +165,16 @@ abstract class Message {
             boolean isTracing = frame.header.flags.contains(Frame.Header.Flag.TRACING);
             UUID tracingId = isTracing ? CBUtil.readUUID(frame.body) : null;
 
-            Response response = Response.Type.fromOpcode(frame.header.opcode).decoder(frame.header.version).decode(frame.body);
+            Response response = Response.Type.fromOpcode(frame.header.opcode).decoder.decode(frame.body, frame.header.version);
             return response.setTracingId(tracingId).setStreamId(frame.header.streamId);
         }
     }
 
     public static class ProtocolEncoder extends OneToOneEncoder {
 
-        private final int protocolVersion;
+        private final ProtocolVersion protocolVersion;
 
-        public ProtocolEncoder(int version) {
+        public ProtocolEncoder(ProtocolVersion version) {
             this.protocolVersion = version;
         }
 
@@ -202,9 +188,9 @@ abstract class Message {
             if (request.isTracingRequested())
                 flags.add(Frame.Header.Flag.TRACING);
 
-            Coder<Request> coder = (Coder<Request>)request.type.coder(protocolVersion);
-            ChannelBuffer body = ChannelBuffers.buffer(coder.encodedSize(request));
-            coder.encode(request, body);
+            Coder<Request> coder = (Coder<Request>)request.type.coder;
+            ChannelBuffer body = ChannelBuffers.buffer(coder.encodedSize(request, protocolVersion));
+            coder.encode(request, body, protocolVersion);
 
             return Frame.create(protocolVersion, request.type.opcode, request.getStreamId(), flags, body);
         }

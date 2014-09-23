@@ -34,31 +34,31 @@ public class TypeCodecTest {
 
     @Test(groups = "unit")
     public void testCustomList() throws Exception {
-        TypeCodec<?> listType = TypeCodec.listOf(CUSTOM_FOO, 2);
+        TypeCodec<?> listType = TypeCodec.listOf(CUSTOM_FOO, ProtocolVersion.V2);
         Assert.assertNotNull(listType);
     }
 
     @Test(groups = "unit")
     public void testCustomSet() throws Exception {
-        TypeCodec<?> setType = TypeCodec.setOf(CUSTOM_FOO, 2);
+        TypeCodec<?> setType = TypeCodec.setOf(CUSTOM_FOO, ProtocolVersion.V2);
         Assert.assertNotNull(setType);
     }
 
     @Test(groups = "unit")
     public void testCustomKeyMap() throws Exception {
-        TypeCodec<Map<ByteBuffer, String>> mapType = TypeCodec.mapOf(CUSTOM_FOO, text(), 2);
+        TypeCodec<Map<ByteBuffer, String>> mapType = TypeCodec.mapOf(CUSTOM_FOO, text(), ProtocolVersion.V2);
         Assert.assertNotNull(mapType);
     }
 
     @Test(groups = "unit")
     public void testCustomValueMap() throws Exception {
-        TypeCodec<Map<String, ByteBuffer>> mapType = TypeCodec.mapOf(text(), CUSTOM_FOO, 2);
+        TypeCodec<Map<String, ByteBuffer>> mapType = TypeCodec.mapOf(text(), CUSTOM_FOO, ProtocolVersion.V2);
         Assert.assertNotNull(mapType);
     }
 
     @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
     public void collectionTooLargeTest() throws Exception {
-        TypeCodec<List<Integer>> listType = TypeCodec.listOf(DataType.cint(), 2);
+        TypeCodec<List<Integer>> listType = TypeCodec.listOf(DataType.cint(), ProtocolVersion.V2);
         List<Integer> list = Collections.nCopies(65536, 1);
 
         listType.serialize(list);
@@ -66,7 +66,7 @@ public class TypeCodecTest {
 
     @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
     public void collectionElementTooLargeTest() throws Exception {
-        TypeCodec<List<String>> listType = TypeCodec.listOf(DataType.text(), 2);
+        TypeCodec<List<String>> listType = TypeCodec.listOf(DataType.text(), ProtocolVersion.V2);
         List<String> list = Lists.newArrayList(Strings.repeat("a", 65536));
 
         listType.serialize(list);

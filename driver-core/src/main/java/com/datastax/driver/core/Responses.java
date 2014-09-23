@@ -22,6 +22,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 
+import com.datastax.driver.core.ProtocolEvent.SchemaChange;
+import com.datastax.driver.core.ProtocolEvent.SchemaChange.Change;
+import com.datastax.driver.core.ProtocolEvent.SchemaChange.Target;
+import com.datastax.driver.core.Responses.Result.Rows.Metadata;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.Bytes;
 
@@ -33,7 +37,7 @@ class Responses {
 
         public static final Message.Decoder<Error> decoder = new Message.Decoder<Error>() {
             @Override
-            public Error decode(ChannelBuffer body) {
+            public Error decode(ChannelBuffer body, ProtocolVersion version) {
                 ExceptionCode code = ExceptionCode.fromValue(body.readInt());
                 String msg = CBUtil.readString(body);
                 Object infos = null;
@@ -66,16 +70,18 @@ class Responses {
                         infos = new AlreadyExistsException(ksName, cfName);
                         break;
                 }
-                return new Error(code, msg, infos);
+                return new Error(version, code, msg, infos);
             }
         };
 
+        public final ProtocolVersion serverProtocolVersion;
         public final ExceptionCode code;
         public final String message;
         public final Object infos; // can be null
 
-        private Error(ExceptionCode code, String message, Object infos) {
+        private Error(ProtocolVersion serverProtocolVersion, ExceptionCode code, String message, Object infos) {
             super(Message.Response.Type.ERROR);
+            this.serverProtocolVersion = serverProtocolVersion;
             this.code = code;
             this.message = message;
             this.infos = infos;
@@ -111,7 +117,7 @@ class Responses {
     public static class Ready extends Message.Response {
 
         public static final Message.Decoder<Ready> decoder = new Message.Decoder<Ready>() {
-            public Ready decode(ChannelBuffer body) {
+            public Ready decode(ChannelBuffer body, ProtocolVersion version) {
                 // TODO: Would it be cool to return a singleton? Check we don't need to
                 // set the streamId or something
                 return new Ready();
@@ -131,7 +137,7 @@ class Responses {
     public static class Authenticate extends Message.Response {
 
         public static final Message.Decoder<Authenticate> decoder = new Message.Decoder<Authenticate>() {
-            public Authenticate decode(ChannelBuffer body) {
+            public Authenticate decode(ChannelBuffer body, ProtocolVersion version) {
                 String authenticator = CBUtil.readString(body);
                 return new Authenticate(authenticator);
             }
@@ -153,7 +159,7 @@ class Responses {
     public static class Supported extends Message.Response {
 
         public static final Message.Decoder<Supported> decoder = new Message.Decoder<Supported>() {
-            public Supported decode(ChannelBuffer body) {
+            public Supported decode(ChannelBuffer body, ProtocolVersion version) {
                 return new Supported(CBUtil.readStringToStringListMap(body));
             }
         };
@@ -188,30 +194,22 @@ class Responses {
 
     public static abstract class Result extends Message.Response {
 
-        public static final Message.Decoder<Result> decoderV1 = new Message.Decoder<Result>() {
-            public Result decode(ChannelBuffer body) {
+        public static final Message.Decoder<Result> decoder = new Message.Decoder<Result>() {
+            public Result decode(ChannelBuffer body, ProtocolVersion version) {
                 Kind kind = Kind.fromId(body.readInt());
-                return kind.subDecoderV1.decode(body);
-            }
-        };
-
-        public static final Message.Decoder<Result> decoderV2 = new Message.Decoder<Result>() {
-            public Result decode(ChannelBuffer body) {
-                Kind kind = Kind.fromId(body.readInt());
-                return kind.subDecoderV2.decode(body);
+                return kind.subDecoder.decode(body, version);
             }
         };
 
         public enum Kind {
-            VOID         (1, Void.subcodec, Void.subcodec),
-            ROWS         (2, Rows.subcodec, Rows.subcodec),
-            SET_KEYSPACE (3, SetKeyspace.subcodec, SetKeyspace.subcodec),
-            PREPARED     (4, Prepared.subcodecV1, Prepared.subcodecV2),
-            SCHEMA_CHANGE(5, SchemaChange.subcodec, SchemaChange.subcodec);
+            VOID         (1, Void.subcodec),
+            ROWS         (2, Rows.subcodec),
+            SET_KEYSPACE (3, SetKeyspace.subcodec),
+            PREPARED     (4, Prepared.subcodec),
+            SCHEMA_CHANGE(5, SchemaChange.subcodec);
 
             private final int id;
-            private final Message.Decoder<Result> subDecoderV1;
-            private final Message.Decoder<Result> subDecoderV2;
+            final Message.Decoder<Result> subDecoder;
 
             private static final Kind[] ids;
             static {
@@ -226,10 +224,9 @@ class Responses {
                 }
             }
 
-            private Kind(int id, Message.Decoder<Result> subDecoderV1, Message.Decoder<Result> subDecoderV2) {
+            private Kind(int id, Message.Decoder<Result> subDecoder) {
                 this.id = id;
-                this.subDecoderV1 = subDecoderV1;
-                this.subDecoderV2 = subDecoderV2;
+                this.subDecoder = subDecoder;
             }
 
             public static Kind fromId(int id) {
@@ -255,7 +252,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body) {
+                public Result decode(ChannelBuffer body, ProtocolVersion version) {
                     return new Void();
                 }
             };
@@ -275,7 +272,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body) {
+                public Result decode(ChannelBuffer body, ProtocolVersion version) {
                     return new SetKeyspace(CBUtil.readString(body));
                 }
             };
@@ -381,7 +378,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body) {
+                public Result decode(ChannelBuffer body, ProtocolVersion version) {
 
                     Metadata metadata = Metadata.decode(body);
 
@@ -427,9 +424,9 @@ class Responses {
                                 // everything to get it when this method is only ever call for debugging.
                                 // So trying v3 and falling back to v2, which is ugly but good enough for now.
                                 try {
-                                    sb.append(metadata.columns.getType(i).deserialize(v, 3));
+                                    sb.append(metadata.columns.getType(i).deserialize(v, ProtocolVersion.V3));
                                 } catch (IllegalArgumentException e) {
-                                    sb.append(metadata.columns.getType(i).deserialize(v, 2));
+                                    sb.append(metadata.columns.getType(i).deserialize(v, ProtocolVersion.V2));
                                 }
                             }
                         }
@@ -443,20 +440,24 @@ class Responses {
 
         public static class Prepared extends Result {
 
-            public static final Message.Decoder<Result> subcodecV1 = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body) {
+            public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+                public Result decode(ChannelBuffer body, ProtocolVersion version) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
                     Rows.Metadata metadata = Rows.Metadata.decode(body);
-                    return new Prepared(id, metadata, Rows.Metadata.EMPTY);
-                }
-            };
-
-            public static final Message.Decoder<Result> subcodecV2 = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body) {
-                    MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
-                    Rows.Metadata metadata = Rows.Metadata.decode(body);
-                    Rows.Metadata resultMetadata = Rows.Metadata.decode(body);
+                    Rows.Metadata resultMetadata = decodeResultMetadata(body, version);
                     return new Prepared(id, metadata, resultMetadata);
+                }
+
+                private Metadata decodeResultMetadata(ChannelBuffer body, ProtocolVersion version) {
+                    switch (version) {
+                        case V1:
+                            return Rows.Metadata.EMPTY;
+                        case V2:
+                        case V3:
+                            return Rows.Metadata.decode(body);
+                        default:
+                            throw version.unsupported();
+                    }
                 }
             };
 
@@ -480,31 +481,63 @@ class Responses {
         public static class SchemaChange extends Result {
 
             public enum Change { CREATED, UPDATED, DROPPED }
+            public enum Target { KEYSPACE, TABLE, TYPE }
 
             public final Change change;
+            public final Target target;
             public final String keyspace;
-            public final String columnFamily;
+            public final String name;
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body)
+                public Result decode(ChannelBuffer body, ProtocolVersion version)
                 {
-                    Change change = CBUtil.readEnumValue(Change.class, body);
-                    String keyspace = CBUtil.readString(body);
-                    String columnFamily = CBUtil.readString(body);
-                    return new SchemaChange(change, keyspace, columnFamily);
+                    // Note: the CREATE KEYSPACE/TABLE/TYPE SCHEMA_CHANGE response is different from the SCHEMA_CHANGE EVENT type
+                    Change change;
+                    Target target;
+                    String keyspace, name;
+                    switch (version) {
+                        case V1:
+                        case V2:
+                            change = CBUtil.readEnumValue(Change.class, body);
+                            keyspace = CBUtil.readString(body);
+                            name = CBUtil.readString(body);
+                            target = name.isEmpty() ? Target.KEYSPACE : Target.TABLE;
+                            return new SchemaChange(change, target, keyspace, name);
+                        case V3:
+                            change = CBUtil.readEnumValue(Change.class, body);
+                            target = CBUtil.readEnumValue(Target.class, body);
+                            keyspace = CBUtil.readString(body);
+                            name = (target == Target.KEYSPACE) ? "" : CBUtil.readString(body);
+                            return new SchemaChange(change, target, keyspace, name);
+                        default:
+                            throw version.unsupported();
+                    }
+                }
+
+                private Target maybeReadTarget(ChannelBuffer body, ProtocolVersion version) {
+                    switch (version) {
+                        case V1:
+                        case V2:
+                            return null;
+                        case V3:
+                            return CBUtil.readEnumValue(Target.class, body);
+                        default:
+                            throw version.unsupported();
+                    }
                 }
             };
 
-            private SchemaChange(Change change, String keyspace, String columnFamily) {
+            private SchemaChange(Change change, Target target, String keyspace, String name) {
                 super(Kind.SCHEMA_CHANGE);
                 this.change = change;
+                this.target = target;
                 this.keyspace = keyspace;
-                this.columnFamily = columnFamily;
+                this.name = name;
             }
 
             @Override
             public String toString() {
-                return "RESULT schema change " + change + " on " + keyspace + (columnFamily.isEmpty() ? "" : '.' + columnFamily);
+                return "RESULT schema change " + change + " on " + target + ' ' + keyspace + (name.isEmpty() ? "" : '.' + name);
             }
         }
     }
@@ -512,8 +545,8 @@ class Responses {
     public static class Event extends Message.Response {
 
         public static final Message.Decoder<Event> decoder = new Message.Decoder<Event>() {
-            public Event decode(ChannelBuffer body) {
-                return new Event(ProtocolEvent.deserialize(body));
+            public Event decode(ChannelBuffer body, ProtocolVersion version) {
+                return new Event(ProtocolEvent.deserialize(body, version));
             }
         };
 
@@ -533,7 +566,7 @@ class Responses {
     public static class AuthChallenge extends Message.Response {
 
         public static final Message.Decoder<AuthChallenge> decoder = new Message.Decoder<AuthChallenge>() {
-            public AuthChallenge decode(ChannelBuffer body) {
+            public AuthChallenge decode(ChannelBuffer body, ProtocolVersion version) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
                     return new AuthChallenge(null);
@@ -555,7 +588,7 @@ class Responses {
     public static class AuthSuccess extends Message.Response {
 
         public static final Message.Decoder<AuthSuccess> decoder = new Message.Decoder<AuthSuccess>() {
-            public AuthSuccess decode(ChannelBuffer body) {
+            public AuthSuccess decode(ChannelBuffer body, ProtocolVersion version) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
                     return new AuthSuccess(null);

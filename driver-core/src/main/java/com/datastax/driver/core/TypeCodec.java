@@ -19,12 +19,9 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.text.ParseException;
-import java.text.ParsePosition;
-import java.text.SimpleDateFormat;
+import java.nio.*;
+import java.nio.charset.*;
+import java.text.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -66,7 +63,7 @@ abstract class TypeCodec<T> {
         public final Map<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>> primitiveMapsCodecs = new EnumMap<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>>(DataType.Name.class);
 
         @SuppressWarnings({"unchecked", "rawtypes"})
-        public PrimitiveCollectionCodecs(int protocolVersion)
+        public PrimitiveCollectionCodecs(ProtocolVersion protocolVersion)
         {
             for (Map.Entry<DataType.Name, TypeCodec<?>> entry : primitiveCodecs.entrySet()) {
                 DataType.Name type = entry.getKey();
@@ -79,10 +76,28 @@ abstract class TypeCodec<T> {
                 primitiveMapsCodecs.put(type, valueMap);
             }
         }
+
+        private static final PrimitiveCollectionCodecs primitiveCollectionCodecsV2 = new PrimitiveCollectionCodecs(ProtocolVersion.V2);
+        private static final PrimitiveCollectionCodecs primitiveCollectionCodecsV3 = new PrimitiveCollectionCodecs(ProtocolVersion.V3);
+
+        static PrimitiveCollectionCodecs forVersion(ProtocolVersion version) {
+            // This happens during protocol negociation, when the version is not known yet.
+            // Use the smallest supported version, which is enough for what we need to do at this stage.
+            if (version == null)
+                version = ProtocolVersion.V1;
+
+            switch (version) {
+                case V1:
+                case V2:
+                    return primitiveCollectionCodecsV2;
+                case V3:
+                    return primitiveCollectionCodecsV3;
+                default:
+                    throw version.unsupported();
+            }
+        }
     }
 
-    private static final PrimitiveCollectionCodecs primitiveCollectionCodecsV2 = new PrimitiveCollectionCodecs(2);
-    private static final PrimitiveCollectionCodecs primitiveCollectionCodecsV3 = new PrimitiveCollectionCodecs(3);
 
     private TypeCodec() {}
 
@@ -99,22 +114,22 @@ abstract class TypeCodec<T> {
     }
 
     @SuppressWarnings("unchecked")
-    static <T> TypeCodec<List<T>> listOf(DataType arg, int protocolVersion) {
-        PrimitiveCollectionCodecs codecs = protocolVersion <= 2 ? primitiveCollectionCodecsV2 : primitiveCollectionCodecsV3;
+    static <T> TypeCodec<List<T>> listOf(DataType arg, ProtocolVersion protocolVersion) {
+        PrimitiveCollectionCodecs codecs = PrimitiveCollectionCodecs.forVersion(protocolVersion);
         TypeCodec<List<?>> codec = codecs.primitiveListsCodecs.get(arg.getName());
         return codec != null ? (TypeCodec)codec : new ListCodec<Object>(arg.codec(protocolVersion), protocolVersion);
     }
 
     @SuppressWarnings("unchecked")
-    static <T> TypeCodec<Set<T>> setOf(DataType arg, int protocolVersion) {
-        PrimitiveCollectionCodecs codecs = protocolVersion <= 2 ? primitiveCollectionCodecsV2 : primitiveCollectionCodecsV3;
+    static <T> TypeCodec<Set<T>> setOf(DataType arg, ProtocolVersion protocolVersion) {
+        PrimitiveCollectionCodecs codecs = PrimitiveCollectionCodecs.forVersion(protocolVersion);
         TypeCodec<Set<?>> codec = codecs.primitiveSetsCodecs.get(arg.getName());
         return codec != null ? (TypeCodec)codec : new SetCodec<Object>(arg.codec(protocolVersion), protocolVersion);
     }
 
     @SuppressWarnings("unchecked")
-    static <K, V> TypeCodec<Map<K, V>> mapOf(DataType keys, DataType values, int protocolVersion) {
-        PrimitiveCollectionCodecs codecs = protocolVersion <= 2 ? primitiveCollectionCodecsV2 : primitiveCollectionCodecsV3;
+    static <K, V> TypeCodec<Map<K, V>> mapOf(DataType keys, DataType values, ProtocolVersion protocolVersion) {
+        PrimitiveCollectionCodecs codecs = PrimitiveCollectionCodecs.forVersion(protocolVersion);
         Map<DataType.Name, TypeCodec<Map<?, ?>>> valueCodecs = codecs.primitiveMapsCodecs.get(keys.getName());
         TypeCodec<Map<?, ?>> codec = valueCodecs == null ? null : valueCodecs.get(values.getName());
         return codec != null ? (TypeCodec)codec : new MapCodec<Object, Object>(keys.codec(protocolVersion), values.codec(protocolVersion), protocolVersion);
@@ -214,15 +229,10 @@ abstract class TypeCodec<T> {
         return null;
     }
 
-    private static ByteBuffer pack(List<ByteBuffer> buffers, int elements, int version) {
-        if (elements > 65535)
-            throw new IllegalArgumentException("Native protocol version 2 supports up to 65535 elements in any collection - but collection contains " + elements + " elements");
-
+    private static ByteBuffer pack(List<ByteBuffer> buffers, int elements, ProtocolVersion version) {
         int size = 0;
         for (ByteBuffer bb : buffers) {
             int elemSize = sizeOfValue(bb, version);
-            if (elemSize > 65535)
-                throw new IllegalArgumentException("Native protocol version 2 supports only elements with size up to 65535 bytes - but element size is " + elemSize + " bytes");
             size += elemSize;
         }
 
@@ -233,11 +243,20 @@ abstract class TypeCodec<T> {
         return (ByteBuffer)result.flip();
     }
 
-    private static void writeCollectionSize(ByteBuffer output, int elements, int version) {
-        if (version >= 3)
-            output.putInt(elements);
-        else
-            output.putShort((short)elements);
+    private static void writeCollectionSize(ByteBuffer output, int elements, ProtocolVersion version) {
+        switch (version) {
+            case V1:
+            case V2:
+                if (elements > 65535)
+                    throw new IllegalArgumentException("Native protocol version 2 supports up to 65535 elements in any collection - but collection contains " + elements + " elements");
+                output.putShort((short)elements);
+                break;
+            case V3:
+                output.putInt(elements);
+                break;
+            default:
+                throw version.unsupported();
+        }
     }
 
     private static int getUnsignedShort(ByteBuffer bb) {
@@ -245,27 +264,48 @@ abstract class TypeCodec<T> {
         return length | (bb.get() & 0xFF);
     }
 
-    private static int readCollectionSize(ByteBuffer input, int version) {
-        return version >= 3 ? input.getInt() : getUnsignedShort(input);
+    private static int readCollectionSize(ByteBuffer input, ProtocolVersion version) {
+        switch (version) {
+            case V1:
+            case V2:
+                return getUnsignedShort(input);
+            case V3:
+                return input.getInt();
+            default:
+                throw version.unsupported();
+        }
     }
 
-    private static int sizeOfCollectionSize(int elements, int version) {
-        return version >= 3 ? 4 : 2;
+    private static int sizeOfCollectionSize(int elements, ProtocolVersion version) {
+        switch (version) {
+            case V1:
+            case V2:
+                return 2;
+            case V3:
+                return 4;
+            default:
+                throw version.unsupported();
+        }
     }
 
-    private static void writeCollectionValue(ByteBuffer output, ByteBuffer value, int version) {
-        if (version >= 3) {
-            if (value == null) {
-                output.putInt(-1);
-                return;
-            }
-
-            output.putInt(value.remaining());
-            output.put(value.duplicate());
-        } else {
-            assert value != null;
-            output.putShort((short)value.remaining());
-            output.put(value.duplicate());
+    private static void writeCollectionValue(ByteBuffer output, ByteBuffer value, ProtocolVersion version) {
+        switch (version) {
+            case V1:
+            case V2:
+                assert value != null;
+                output.putShort((short)value.remaining());
+                output.put(value.duplicate());
+                break;
+            case V3:
+                if (value == null) {
+                    output.putInt(-1);
+                } else {
+                    output.putInt(value.remaining());
+                    output.put(value.duplicate());
+                }
+                break;
+            default:
+                throw version.unsupported();
         }
     }
 
@@ -276,15 +316,35 @@ abstract class TypeCodec<T> {
         return copy;
     }
 
-    private static ByteBuffer readCollectionValue(ByteBuffer input, int version) {
-        int size = version >= 3 ? input.getInt() : getUnsignedShort(input);
+    private static ByteBuffer readCollectionValue(ByteBuffer input, ProtocolVersion version) {
+        int size;
+        switch (version) {
+            case V1:
+            case V2:
+                size = getUnsignedShort(input);
+                break;
+            case V3:
+                size = input.getInt();
+                break;
+            default:
+                throw version.unsupported();
+        }
         return size < 0 ? null : readBytes(input, size);
     }
 
-    private static int sizeOfValue(ByteBuffer value, int version) {
-        return version >= 3
-             ? (value == null ? 4 : 4 + value.remaining())
-             : 2 + value.remaining();
+    private static int sizeOfValue(ByteBuffer value, ProtocolVersion version) {
+        switch (version) {
+            case V1:
+            case V2:
+                int elemSize = value.remaining();
+                if (elemSize > 65535)
+                    throw new IllegalArgumentException("Native protocol version 2 supports only elements with size up to 65535 bytes - but element size is " + elemSize + " bytes");
+                return 2 + elemSize;
+            case V3:
+                return value == null ? 4 : 4 + value.remaining();
+            default:
+                throw version.unsupported();
+        }
     }
 
     static class StringCodec extends TypeCodec<String> {
@@ -858,9 +918,9 @@ abstract class TypeCodec<T> {
     static class ListCodec<T> extends TypeCodec<List<T>> {
 
         private final TypeCodec<T> eltCodec;
-        private final int protocolVersion;
+        private final ProtocolVersion protocolVersion;
 
-        public ListCodec(TypeCodec<T> eltCodec, int protocolVersion) {
+        public ListCodec(TypeCodec<T> eltCodec, ProtocolVersion protocolVersion) {
             this.eltCodec = eltCodec;
             this.protocolVersion = protocolVersion;
         }
@@ -941,9 +1001,9 @@ abstract class TypeCodec<T> {
     static class SetCodec<T> extends TypeCodec<Set<T>> {
 
         private final TypeCodec<T> eltCodec;
-        private final int protocolVersion;
+        private final ProtocolVersion protocolVersion;
 
-        public SetCodec(TypeCodec<T> eltCodec, int protocolVersion) {
+        public SetCodec(TypeCodec<T> eltCodec, ProtocolVersion protocolVersion) {
             this.eltCodec = eltCodec;
             this.protocolVersion = protocolVersion;
         }
@@ -1026,9 +1086,9 @@ abstract class TypeCodec<T> {
 
         private final TypeCodec<K> keyCodec;
         private final TypeCodec<V> valueCodec;
-        private final int protocolVersion;
+        private final ProtocolVersion protocolVersion;
 
-        public MapCodec(TypeCodec<K> keyCodec, TypeCodec<V> valueCodec, int protocolVersion) {
+        public MapCodec(TypeCodec<K> keyCodec, TypeCodec<V> valueCodec, ProtocolVersion protocolVersion) {
             this.keyCodec = keyCodec;
             this.valueCodec = valueCodec;
             this.protocolVersion = protocolVersion;
@@ -1210,7 +1270,7 @@ abstract class TypeCodec<T> {
                 }
 
                 DataType dt = type.getComponentTypes().get(i);
-                v.setBytesUnsafe(i, dt.serialize(dt.parse(value.substring(idx, n)), 3));
+                v.setBytesUnsafe(i, dt.serialize(dt.parse(value.substring(idx, n)), ProtocolVersion.V3));
                 idx = n;
                 i += 1;
 

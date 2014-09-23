@@ -16,13 +16,9 @@
 package com.datastax.driver.mapping;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
-import com.datastax.driver.core.ExecutionInfo;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
+import com.datastax.driver.core.*;
 
 /**
  * A {@code ResultSet} mapped to an entity class.
@@ -31,9 +27,9 @@ public class Result<T> implements Iterable<T> {
 
     private final ResultSet rs;
     private final EntityMapper<T> mapper;
-    private final int protocolVersion;
+    private final ProtocolVersion protocolVersion;
 
-    Result(ResultSet rs, EntityMapper<T> mapper, int protocolVersion) {
+    Result(ResultSet rs, EntityMapper<T> mapper, ProtocolVersion protocolVersion) {
         this.rs = rs;
         this.mapper = mapper;
         this.protocolVersion = protocolVersion;

@@ -23,6 +23,7 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.frame.CorruptedFrameException;
+import org.jboss.netty.handler.codec.frame.FrameDecoder;
 import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 import org.jboss.netty.handler.codec.frame.TooLongFrameException;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
@@ -37,7 +38,7 @@ class Frame {
 
     /**
      * On-wire frame.
-     * Frames are defined as:
+     * Frames for protocol versions 1+2 are defined as:
      *
      *   0         8        16        24        32
      *   +---------+---------+---------+---------+
@@ -45,6 +46,17 @@ class Frame {
      *   +---------+---------+---------+---------+
      *   |                length                 |
      *   +---------+---------+---------+---------+
+     *
+     * Frames for protocol version 3 are defined as:
+     *
+     *   0         8        16        24        32
+     *   +---------+---------+---------+---------+
+     *   | version |  flags  |      stream       |
+     *   +---------+---------+---------+---------+
+     *   | opcode  |      length                 |
+     *   +---------+---------+---------+---------+
+     *   | length  |
+     *   +---------+
      */
     private Frame(Header header, ChannelBuffer body) {
         this.header = header;
@@ -52,45 +64,69 @@ class Frame {
     }
 
     private static Frame create(ChannelBuffer fullFrame) {
-        assert fullFrame.readableBytes() >= Header.LENGTH : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
+        assert fullFrame.readableBytes() >= 1 : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
 
-        int version = fullFrame.readByte();
+        int versionBytes = fullFrame.readByte();
+        // version first byte is the "direction" of the frame (request or response)
+        ProtocolVersion version = ProtocolVersion.fromInt(versionBytes & 0x7F);
+        int hdrLen = Header.lengthFor(version);
+        assert fullFrame.readableBytes() >= (hdrLen-1) : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
+
         int flags = fullFrame.readByte();
-        int streamId = fullFrame.readByte();
+        int streamId = readStreamid(fullFrame, version);
         int opcode = fullFrame.readByte();
         int length = fullFrame.readInt();
         assert length == fullFrame.readableBytes();
-
-        // version first byte is the "direction" of the frame (request or response)
-        version = version & 0x7F;
 
         Header header = new Header(version, flags, streamId, opcode);
         return new Frame(header, fullFrame);
     }
 
-    public static Frame create(int version, int opcode, int streamId, EnumSet<Header.Flag> flags, ChannelBuffer body) {
+    private static int readStreamid(ChannelBuffer fullFrame, ProtocolVersion version) {
+        switch (version) {
+            case V1:
+            case V2:
+                return fullFrame.readByte();
+            case V3:
+                return fullFrame.readShort();
+            default:
+                throw version.unsupported();
+        }
+    }
+
+    public static Frame create(ProtocolVersion version, int opcode, int streamId, EnumSet<Header.Flag> flags, ChannelBuffer body) {
         Header header = new Header(version, flags, streamId, opcode);
         return new Frame(header, body);
     }
 
     public static class Header {
 
-        public static final int LENGTH = 8;
-
-        public final int version;
+        public final ProtocolVersion version;
         public final EnumSet<Flag> flags;
         public final int streamId;
         public final int opcode;
 
-        private Header(int version, int flags, int streamId, int opcode) {
+        private Header(ProtocolVersion version, int flags, int streamId, int opcode) {
             this(version, Flag.deserialize(flags), streamId, opcode);
         }
 
-        private Header(int version, EnumSet<Flag> flags, int streamId, int opcode) {
+        private Header(ProtocolVersion version, EnumSet<Flag> flags, int streamId, int opcode) {
             this.version = version;
             this.flags = flags;
             this.streamId = streamId;
             this.opcode = opcode;
+        }
+
+        public static int lengthFor(ProtocolVersion version) {
+            switch (version) {
+                case V1:
+                case V2:
+                    return 8;
+                case V3:
+                    return 9;
+                default:
+                    throw version.unsupported();
+            }
         }
 
         public static enum Flag
@@ -122,23 +158,66 @@ class Frame {
         return new Frame(header, newBody);
     }
 
-    public static class Decoder extends LengthFieldBasedFrameDecoder {
+    public static final class Decoder extends FrameDecoder {
+        static final DecoderV1 decoderV1 = new DecoderV1();
+        static final DecoderV3 decoderV3 = new DecoderV3();
+
+        @Override protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
+            int version = buffer.getByte(0);
+            // version first bit is the "direction" of the frame (request or response)
+            version = version & 0x7F;
+
+            return version >= 3 ? decoderV3.decode(ctx, channel, buffer) : decoderV1.decode(ctx, channel, buffer);
+        }
+    }
+
+    public static class DecoderV1 extends LengthFieldBasedFrameDecoder {
 
         private static final int MAX_FRAME_LENTH = 256 * 1024 * 1024; // 256 MB
 
-        public Decoder() {
+        public DecoderV1() {
             super(MAX_FRAME_LENTH, 4, 4, 0, 0, true);
         }
 
         @Override
         protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
             try {
-                if (buffer.readableBytes() == 0)
+                if (buffer.readableBytes() < 4)
                     return null;
 
                 // Validate the opcode (this will throw if it's not a response)
-                if (buffer.readableBytes() >= 4)
-                    Message.Response.Type.fromOpcode(buffer.getByte(3));
+                Message.Response.Type.fromOpcode(buffer.getByte(3));
+
+                ChannelBuffer frame = (ChannelBuffer) super.decode(ctx, channel, buffer);
+                if (frame == null) {
+                    return null;
+                }
+
+                return Frame.create(frame);
+            } catch (CorruptedFrameException e) {
+                throw new DriverInternalError(e.getMessage());
+            } catch (TooLongFrameException e) {
+                throw new DriverInternalError(e.getMessage());
+            }
+        }
+    }
+
+    public static class DecoderV3 extends LengthFieldBasedFrameDecoder {
+
+        private static final int MAX_FRAME_LENTH = 256 * 1024 * 1024; // 256 MB
+
+        public DecoderV3() {
+            super(MAX_FRAME_LENTH, 5, 4, 0, 0, true);
+        }
+
+        @Override
+        protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
+            try {
+                if (buffer.readableBytes() < 4)
+                    return null;
+
+                // Validate the opcode (this will throw if it's not a response)
+                Message.Response.Type.fromOpcode(buffer.getByte(4));
 
                 ChannelBuffer frame = (ChannelBuffer) super.decode(ctx, channel, buffer);
                 if (frame == null) {
@@ -160,15 +239,30 @@ class Frame {
             assert msg instanceof Frame : "Expecting frame, got " + msg;
 
             Frame frame = (Frame)msg;
+            ProtocolVersion protocolVersion = frame.header.version;
 
-            ChannelBuffer header = ChannelBuffers.buffer(Frame.Header.LENGTH);
+            ChannelBuffer header = ChannelBuffers.buffer(Header.lengthFor(protocolVersion));
             // We don't bother with the direction, we only send requests.
-            header.writeByte(frame.header.version);
+            header.writeByte(frame.header.version.toInt());
             header.writeByte(Header.Flag.serialize(frame.header.flags));
-            header.writeByte(frame.header.streamId);
+            writeStreamId(frame.header.streamId, header, protocolVersion);
             header.writeByte(frame.header.opcode);
             header.writeInt(frame.body.readableBytes());
             return ChannelBuffers.wrappedBuffer(header, frame.body);
+        }
+
+        private void writeStreamId(int streamId, ChannelBuffer header, ProtocolVersion protocolVersion) {
+            switch (protocolVersion) {
+                case V1:
+                case V2:
+                    header.writeByte(streamId);
+                    break;
+                case V3:
+                    header.writeShort(streamId);
+                    break;
+                default:
+                    throw protocolVersion.unsupported();
+            }
         }
     }
 

@@ -40,7 +40,7 @@ public class DefaultPreparedStatement implements PreparedStatement{
         this.queryKeyspace = queryKeyspace;
     }
 
-    static DefaultPreparedStatement fromMessage(Responses.Result.Prepared msg, Metadata clusterMetadata, int protocolVersion, String query, String queryKeyspace) {
+    static DefaultPreparedStatement fromMessage(Responses.Result.Prepared msg, Metadata clusterMetadata, ProtocolVersion protocolVersion, String query, String queryKeyspace) {
         assert msg.metadata.columns != null;
 
         ColumnDefinitions defs = msg.metadata.columns;

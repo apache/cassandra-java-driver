@@ -74,7 +74,7 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
 
     @SuppressWarnings("unchecked")
     @Override
-    TypeCodec<Object> codec(int protocolVersion) {
+    TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
         return (TypeCodec)TypeCodec.udtOf(this);
     }
 
@@ -272,7 +272,7 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
             }
 
             DataType dt = getFieldType(name);
-            v.setBytesUnsafe(name, dt.serialize(dt.parse(value.substring(idx, n)), 3));
+            v.setBytesUnsafe(name, dt.serialize(dt.parse(value.substring(idx, n)), ProtocolVersion.V3));
             idx = n;
 
             idx = ParseUtils.skipSpaces(value, idx);

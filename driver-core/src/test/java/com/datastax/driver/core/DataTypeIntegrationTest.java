@@ -398,7 +398,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
             rs = session.execute(execute_string);
             assertTrue(rs.isExhausted());
         }
-        assertEquals(SAMPLE_DATA.size(), 15);
+        assertEquals(SAMPLE_DATA.size(), 14);
         assertEquals(PRIMITIVE_INSERT_STATEMENTS.size(), SAMPLE_DATA.size());
     }
 
@@ -417,7 +417,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
             assertEquals(TestUtils.getValue(row, "k", dataType), value);
             assertEquals(TestUtils.getValue(row, "v", dataType), value);
         }
-        assertEquals(SAMPLE_DATA.size(), 15);
+        assertEquals(SAMPLE_DATA.size(), 14);
         assertEquals(PRIMITIVE_SELECT_STATEMENTS.keySet().size(), SAMPLE_DATA.size());
     }
 
@@ -457,7 +457,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
             rs = session.execute(execute_string);
             assertTrue(rs.isExhausted());
         }
-        assertEquals(SAMPLE_COLLECTIONS.size(), 255);
+        assertEquals(SAMPLE_COLLECTIONS.size(), 224);
         assertEquals(COLLECTION_INSERT_STATEMENTS.size(), SAMPLE_COLLECTIONS.size());
     }
 
@@ -496,7 +496,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
                 assertEquals(TestUtils.getValue(row, "v", dataType), expectedValue);
             }
         }
-        assertEquals(SAMPLE_COLLECTIONS.size(), 255);
+        assertEquals(SAMPLE_COLLECTIONS.size(), 224);
         assertEquals(COLLECTION_SELECT_STATEMENTS.keySet().size(), SAMPLE_COLLECTIONS.size());
     }
 

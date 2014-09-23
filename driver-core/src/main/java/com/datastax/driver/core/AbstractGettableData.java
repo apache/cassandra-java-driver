@@ -33,7 +33,7 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
      *
      * @throws IllegalArgumentException if {@code protocolVersion} is not a valid protocol version.
      */
-    protected AbstractGettableData(int protocolVersion) {
+    protected AbstractGettableData(ProtocolVersion protocolVersion) {
         super(protocolVersion);
     }
 

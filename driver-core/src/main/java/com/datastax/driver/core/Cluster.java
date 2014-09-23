@@ -24,6 +24,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.datastax.driver.core.exceptions.DriverException;
 import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -536,7 +537,7 @@ public class Cluster implements Closeable {
         private final List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
         private final List<InetAddress> rawAddresses = new ArrayList<InetAddress>();
         private int port = ProtocolOptions.DEFAULT_PORT;
-        private int protocolVersion = -1;
+        private ProtocolVersion protocolVersion;
         private AuthProvider authProvider = AuthProvider.NONE;
 
         private LoadBalancingPolicy loadBalancingPolicy;
@@ -609,24 +610,32 @@ public class Cluster implements Closeable {
         /**
          * The native protocol version to use.
          * <p>
-         * The driver supports both version 1 and 2 of the native protocol. Version 2
-         * of the protocol has more features and should be preferred, but it is only
-         * supported by Cassandra 2.0 and above, so you will have to use version 1 with
-         * Cassandra 1.2 nodes.
+         * The driver supports versions 1 to 3 of the native protocol. Higher versions
+         * of the protocol have more features and should be preferred, but this also depends
+         * on the Cassandra version:
+         *
+         * <table>
+         *   <caption>Native protocol version to Cassandra version correspondence</caption>
+         *   <tr><th>Protocol version</th><th>Minimum Cassandra version</th></tr>
+         *   <tr><td>1</td><td>1.2</td></tr>
+         *   <tr><td>2</td><td>2.0</td></tr>
+         *   <tr><td>3</td><td>2.1</td></tr>
+         * </table>
          * <p>
          * By default, the driver will "auto-detect" which protocol version it can use
-         * when connecting to the first node. More precisely, it will try the version
-         * 2 first and will fallback to version 1 if it is not supported by that first
-         * node it connects to. Please note that once the version is "auto-detected",
-         * it won't change: if the first node the driver connects to is a Cassandra 1.2
-         * node and auto-detection is used (the default), then the native protocol
-         * version 1 will be use for the lifetime of the Cluster instance.
+         * when connecting to the first node. More precisely, it will try first with
+         * {@value ProtocolVersion.NEWEST_SUPPORTED}, and if not supported fallback to
+         * the highest version supported by the first node it connects to. Please note
+         * that once the version is "auto-detected", it won't change: if the first node
+         * the driver connects to is a Cassandra 1.2 node and auto-detection is used
+         * (the default), then the native protocol version 1 will be use for the lifetime
+         * of the Cluster instance.
          * <p>
          * This method allows to force the use of a particular protocol version. Forcing
          * version 1 is always fine since all Cassandra version (at least all those
-         * supporting the native protocol in the first place) so far supports it. However,
+         * supporting the native protocol in the first place) so far support it. However,
          * please note that a number of features of the driver won't be available if that
-         * version of thr protocol is in use, including result set paging,
+         * version of the protocol is in use, including result set paging,
          * {@link BatchStatement}, executing a non-prepared query with binary values
          * ({@link Session#execute(String, Object...)}), ... (those methods will throw
          * an UnsupportedFeatureException). Using the protocol version 1 should thus
@@ -640,20 +649,15 @@ public class Cluster implements Closeable {
          * want to force a particular version if you have a Cassandra cluster with mixed
          * 1.2/2.0 nodes (i.e. during a Cassandra upgrade).
          *
-         * @param version the native protocol version to use. The versions supported by
-         * this driver are version 1 and 2. Negative values are also supported to trigger
-         * auto-detection (see above) but this is the default (so you don't have to call
-         * this method for that behavior).
+         * @param version the native protocol version to use. {@code null} is also supported
+         * to trigger auto-detection (see above) but this is the default (so you don't have
+         * to call this method for that behavior).
          * @return this Builder.
          *
          * @throws IllegalArgumentException if {@code version} is neither 1, 2 or a
          * negative value.
          */
-        public Builder withProtocolVersion(int version) {
-            if (protocolVersion == 0 || protocolVersion > ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION)
-                throw new IllegalArgumentException(String.format("Unsupported protocol version %d; valid values must be between 1 and %d or negative (for auto-detect).",
-                                                                 protocolVersion,
-                                                                 ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION));
+        public Builder withProtocolVersion(ProtocolVersion version) {
             this.protocolVersion = version;
             return this;
         }
@@ -1145,43 +1149,41 @@ public class Cluster implements Closeable {
                 // We don't want to signal -- call onAdd() -- because nothing is ready
                 // yet (loadbalancing policy, control connection, ...). All we want is
                 // create the Host object so we can initialize the control connection.
-                Host host = metadata.add(address);
+                metadata.add(address);
             }
 
             try {
-                while (true) {
+                try {
+                    controlConnection.connect();
+                    if (connectionFactory.protocolVersion == null)
+                        connectionFactory.protocolVersion = ProtocolVersion.NEWEST_SUPPORTED;
+                } catch (UnsupportedProtocolVersionException e) {
+                    logger.debug("Cannot connect with protocol {}, trying {}", e.unsupportedVersion, e.serverVersion);
+
+                    connectionFactory.protocolVersion = e.serverVersion;
                     try {
                         controlConnection.connect();
-                        if (connectionFactory.protocolVersion < 0)
-                            connectionFactory.protocolVersion = ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION;
-
-                        // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
-                        // rack...) to initialize the load balancing policy
-                        Collection<Host> hosts = metadata.allHosts();
-                        loadBalancingPolicy().init(Cluster.this, hosts);
-
-                        isFullyInit = true;
-
-                        for (Host host : hosts)
-                            triggerOnAdd(host);
-
-                        return;
-                    } catch (UnsupportedProtocolVersionException e) {
-                        assert connectionFactory.protocolVersion < 1;
-                        // For now, all C* version supports the protocol version 1
-                        if (e.versionUnsupported <= 1)
-                            throw new DriverInternalError("Got a node that don't even support the protocol version 1, this makes no sense", e);
-                        logger.debug("{}: retrying with version {}", e.getMessage(), e.versionUnsupported - 1);
-                        connectionFactory.protocolVersion = e.versionUnsupported - 1;
+                    } catch (UnsupportedProtocolVersionException e1) {
+                        throw new DriverInternalError("Cannot connect to node with its own version, this makes no sense", e);
                     }
                 }
+
+                // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
+                // rack...) to initialize the load balancing policy
+                Collection<Host> hosts = metadata.allHosts();
+                loadBalancingPolicy().init(Cluster.this, hosts);
+
+                isFullyInit = true;
+
+                for (Host host : hosts)
+                    triggerOnAdd(host);
             } catch (NoHostAvailableException e) {
                 close();
                 throw e;
             }
         }
 
-        int protocolVersion() {
+        ProtocolVersion protocolVersion() {
             return connectionFactory.protocolVersion;
         }
 
@@ -1258,10 +1260,10 @@ public class Cluster implements Closeable {
                  : closeFuture.get(); // We raced, it's ok, return the future that was actually set
         }
 
-        void logUnsupportedVersionProtocol(Host host) {
-            logger.warn("Detected added or restarted Cassandra host {} but ignoring it since it does not support the version 2 of the native "
-                      + "protocol which is currently in use. If you want to force the use of the version 1 of the native protocol, use "
-                      + "Cluster.Builder#usingProtocolVersion() when creating the Cluster instance.", host);
+        void logUnsupportedVersionProtocol(Host host, ProtocolVersion version) {
+            logger.warn("Detected added or restarted Cassandra host {} but ignoring it since it does not support the version {} of the native "
+                      + "protocol which is currently in use. If you want to force the use of a particular version of the native protocol, use "
+                      + "Cluster.Builder#usingProtocolVersion() when creating the Cluster instance.", host, version);
         }
 
         void logClusterNameMismatch(Host host, String expectedClusterName, String actualClusterName) {
@@ -1298,8 +1300,8 @@ public class Cluster implements Closeable {
             if (host.state == Host.State.UP)
                 return;
 
-            if (connectionFactory.protocolVersion == 2 && !supportsProtocolV2(host)) {
-                logUnsupportedVersionProtocol(host);
+            if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
+                logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
                 return;
             }
 
@@ -1316,7 +1318,7 @@ public class Cluster implements Closeable {
                 Thread.currentThread().interrupt();
                 // Don't propagate because we don't want to prevent other listener to run
             } catch (UnsupportedProtocolVersionException e) {
-                logUnsupportedVersionProtocol(host);
+                logUnsupportedVersionProtocol(host, e.unsupportedVersion);
                 return;
             } catch (ClusterNameMismatchException e) {
                 logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
@@ -1551,8 +1553,8 @@ public class Cluster implements Closeable {
 
             logger.info("New Cassandra host {} added", host);
 
-            if (connectionFactory.protocolVersion == 2 && !supportsProtocolV2(host)) {
-                logUnsupportedVersionProtocol(host);
+            if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
+                logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
                 return;
             }
 
@@ -1579,7 +1581,7 @@ public class Cluster implements Closeable {
                 Thread.currentThread().interrupt();
                 // Don't propagate because we don't want to prevent other listener to run
             } catch (UnsupportedProtocolVersionException e) {
-                logUnsupportedVersionProtocol(host);
+                logUnsupportedVersionProtocol(host, e.unsupportedVersion);
                 return;
             } catch (ClusterNameMismatchException e) {
                 logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
@@ -1671,10 +1673,6 @@ public class Cluster implements Closeable {
                 }
             }
             return isDown;
-        }
-
-        private boolean supportsProtocolV2(Host newHost) {
-            return newHost.getCassandraVersion() == null || newHost.getCassandraVersion().getMajor() >= 2;
         }
 
         public void removeHost(Host host, boolean isInitialConnection) {
@@ -1922,22 +1920,22 @@ public class Cluster implements Closeable {
                     ProtocolEvent.SchemaChange scc = (ProtocolEvent.SchemaChange)event;
                     switch (scc.change) {
                         case CREATED:
-                            if (scc.table.isEmpty())
+                            if (scc.name.isEmpty())
                                 submitSchemaRefresh(null, null);
                             else
                                 submitSchemaRefresh(scc.keyspace, null);
                             break;
                         case DROPPED:
-                            if (scc.table.isEmpty())
+                            if (scc.name.isEmpty())
                                 submitSchemaRefresh(null, null);
                             else
                                 submitSchemaRefresh(scc.keyspace, null);
                             break;
                         case UPDATED:
-                            if (scc.table.isEmpty())
+                            if (scc.name.isEmpty())
                                 submitSchemaRefresh(scc.keyspace, null);
                             else
-                                submitSchemaRefresh(scc.keyspace, scc.table);
+                                submitSchemaRefresh(scc.keyspace, scc.name);
                             break;
                     }
                     break;

@@ -247,7 +247,7 @@ public class Host {
          * the connection was disfunctional but that the node was not really down.
          * If this fails however, this means the node is truly dead, onDown() is
          * called and further reconnection attempts are scheduled according to the
-         * {@link ReconnectionPolicy} in place.
+         * {@link com.datastax.driver.core.policies.ReconnectionPolicy} in place.
          * <p>
          * When this event is triggered, it is possible to call the host
          * {@link #getInitialReconnectionAttemptFuture} method to wait until the

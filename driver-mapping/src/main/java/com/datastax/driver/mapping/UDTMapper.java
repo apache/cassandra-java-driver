@@ -33,7 +33,7 @@ import com.datastax.driver.core.*;
  */
 public class UDTMapper<T> {
     // UDTs are always serialized with the v3 protocol
-    private static final int UDT_PROTOCOL_VERSION = Math.max(ProtocolOptions.NEWEST_SUPPORTED_PROTOCOL_VERSION, 3);
+    private static final ProtocolVersion UDT_PROTOCOL_VERSION = ProtocolVersion.V3;
 
     private final EntityMapper<T> entityMapper;
     private final UserType userType;
