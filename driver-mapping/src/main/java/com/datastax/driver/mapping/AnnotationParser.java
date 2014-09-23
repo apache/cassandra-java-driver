@@ -71,9 +71,12 @@ class AnnotationParser {
         List<Field> rgs = new ArrayList<Field>();
 
         for (Field field : entityClass.getDeclaredFields()) {
+            if(field.isSynthetic())
+                continue;
+            
             AnnotationChecks.validateAnnotations(field, "entity",
-                                                 Column.class, ClusteringColumn.class, Enumerated.class, Frozen.class, FrozenKey.class,
-                                                 FrozenValue.class, PartitionKey.class, Transient.class);
+                    Column.class, ClusteringColumn.class, Enumerated.class, Frozen.class, FrozenKey.class,
+                    FrozenValue.class, PartitionKey.class, Transient.class);
 
             if (field.getAnnotation(Transient.class) != null)
                 continue;
@@ -118,6 +121,9 @@ class AnnotationParser {
         List<Field> columns = new ArrayList<Field>();
 
         for (Field field : udtClass.getDeclaredFields()) {
+            if(field.isSynthetic())
+                continue;
+            
             AnnotationChecks.validateAnnotations(field, "UDT",
                                                  com.datastax.driver.mapping.annotations.Field.class, Frozen.class, FrozenKey.class,
                                                  FrozenValue.class, Enumerated.class, Transient.class);
