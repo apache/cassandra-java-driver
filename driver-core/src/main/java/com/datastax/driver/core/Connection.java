@@ -680,6 +680,7 @@ class Connection {
             while (iter.hasNext())
             {
                 ResponseHandler handler = iter.next();
+                handler.cancelTimeout();
                 handler.callback.onException(Connection.this, ce, System.nanoTime() - handler.startTime);
                 iter.remove();
             }
