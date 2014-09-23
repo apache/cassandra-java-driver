@@ -42,7 +42,8 @@ public class BoundStatement extends Statement {
 
     final PreparedStatement statement;
     final ByteBuffer[] values;
-
+    private ByteBuffer routingKey;
+    
     /**
      * Creates a new {@code BoundStatement} from the provided prepared
      * statement.
@@ -51,7 +52,7 @@ public class BoundStatement extends Statement {
     public BoundStatement(PreparedStatement statement) {
         this.statement = statement;
         this.values = new ByteBuffer[statement.getVariables().size()];
-
+        
         if (statement.getConsistencyLevel() != null)
             this.setConsistencyLevel(statement.getConsistencyLevel());
         if (statement.getSerialConsistencyLevel() != null)
@@ -196,27 +197,55 @@ public class BoundStatement extends Statement {
     }
 
     /**
+     * Sets the routing key for this bound statement.
+     * <p>
+     * While you can provide a fixed routing key for all executions of this bound statement with this method, it is
+     * not mandatory to provide one through this method. This method should only be used if the partition key of the
+     * prepared query is not part of the prepared variables (that is if the partition key is fixed).
+     * <p>
+     * Note that if the partition key is part of the prepared variables, the routing key will be automatically computed
+     * once those variables are bound.
+     *
+     * @param routingKey the raw (binary) value to use as routing key.
+     * @return this {@code BoundStatement} object.
+     *
+     * @see Statement#getRoutingKey
+     */
+    public BoundStatement setRoutingKey(ByteBuffer routingKey) {
+        this.routingKey = routingKey;
+        return this;
+    }
+
+    /**
      * The routing key for this bound query.
      * <p>
      * This method will return a non-{@code null} value if either of the following occur:
      * <ul>
-     *   <li>All the columns composing the partition key are bound
-     *   variables of this {@code BoundStatement}. The routing key will then be
-     *   built using the values provided for these partition key columns.</li>
-     *   <li>The routing key has been set through {@link PreparedStatement#setRoutingKey}
-     *   for the {@code PreparedStatement} this statement has been built from.</li>
+     * <li>All the columns composing the partition key are bound variables of this {@code BoundStatement}. The routing
+     * key will then be built using the values provided for these partition key columns.</li>
+     * <li>The routing key has been set through {@link BoundStatement#setRoutingKey} for the {@code BoundStatement} this
+     * statement has been built from.</li>
+     * <li>The routing key has been set through {@link PreparedStatement#setRoutingKey} for the
+     * {@code PreparedStatement} this statement has been built from.</li>
      * </ul>
      * Otherwise, {@code null} is returned.
      * <p>
-     * Note that if the routing key has been set through {@link PreparedStatement#setRoutingKey},
-     * that latter value takes precedence even if the partition key is part of the bound variables.
+     *
+     * Note that if the routing key has been set through {@link BoundStatement#setRoutingKey}, then that takes
+     * precedence. If the routing key has been set through {@link PreparedStatement#setRoutingKey} then that is used
+     * next. If neither of those are set then it is computed.
      *
      * @return the routing key for this statement or {@code null}.
      */
     @Override
     public ByteBuffer getRoutingKey() {
-        if (statement.getRoutingKey() != null)
+        if (this.routingKey != null) {
+            return this.routingKey;
+        }
+
+        if (statement.getRoutingKey() != null) {
             return statement.getRoutingKey();
+        }
 
         int[] rkIndexes = statement.getPreparedId().routingKeyIndexes;
         if (rkIndexes != null) {
