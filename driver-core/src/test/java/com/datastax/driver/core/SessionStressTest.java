@@ -1,13 +1,18 @@
 package com.datastax.driver.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import java.util.*;
 import java.util.concurrent.*;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
+
+    private static final Logger logger = LoggerFactory.getLogger(SessionStressTest.class);
 
     private ExecutorService executorService;
 
@@ -46,7 +51,7 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
      * This test is linked to JAVA-432.
      */
     @Test(groups = "long")
-    public void sessions_should_not_leak() {
+    public void sessions_should_not_leak_connections() {
         // override inherited field with a new cluster object and ensure 0 sessions and connections
         cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1').build();
 
@@ -69,7 +74,7 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
             int nbOfSessions = 2000;
             int halfOfTheSessions = nbOfSessions / 2;
 
-            for (int iteration = 0; iteration < 2; iteration++) {
+            for (int iteration = 0; iteration < 5; iteration++) {
                 waitFor(openSessionsConcurrently(nbOfSessions));
 
                 // We should see the exact number of opened sessions
@@ -103,6 +108,14 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
                 // Check that we have a clean state
                 assertEquals(cluster.manager.sessions.size(), 0);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+                try {
+                    // On OSX, the TCP connections are released after 15s by default (sysctl -a net.inet.tcp.msl)
+                    logger.debug("Sleeping so that TCP connections are released by the OS");
+                    TimeUnit.SECONDS.sleep(20);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException("Interrupted during test!", e);
+                }
             }
         } finally {
             cluster.close();
@@ -154,11 +167,12 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
                 throw new RuntimeException("Interrupted while waiting for future", e);
             } catch (ExecutionException e) {
                 e.printStackTrace();
+                fail(e.getMessage());
             }
         }
     }
 
-    static class OpenSession implements Callable<Session> {
+    private static class OpenSession implements Callable<Session> {
         private final Cluster cluster;
         private final CountDownLatch startSignal;
 
@@ -174,7 +188,7 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    static class CloseSession implements Callable<CloseFuture> {
+    private static class CloseSession implements Callable<CloseFuture> {
         private final Session session;
         private final CountDownLatch startSignal;
 
