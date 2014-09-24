@@ -28,6 +28,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.common.util.concurrent.Futures;
+
 import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,6 +117,9 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     private boolean query(Host host) {
+        // Reset this because we use it later to detect if a failure occurred before or after the request was sent
+        connectionHandler = null;
+
         currentPool = manager.pools.get(host);
         if (currentPool == null || currentPool.isClosed())
             return false;
@@ -171,7 +176,15 @@ class RequestHandler implements Connection.ResponseCallback {
             // We lock to prevent two retries from launching concurrently
             retryLock.lock();
 
-            if (currentRetry != null && !currentRetry.isDone())
+            // If we have no handler, this means the error that triggered this retry occurred while
+            // sending the query to Cassandra. In that case, the retry might occur synchronously with
+            // the error (see Connection#writeHandler).
+            // But if this error already occurred on a retry, the previous retry is in currentRetry
+            // and is not finished (since it's waiting for this method to complete), but we don't
+            // want to ignore the second retry.
+            boolean isSynchronousRetry = connectionHandler == null;
+
+            if (currentRetry != null && !currentRetry.isDone() && !isSynchronousRetry)
                 return;
 
             final Host h = current;
