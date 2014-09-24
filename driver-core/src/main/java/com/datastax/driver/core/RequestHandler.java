@@ -208,7 +208,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
         Message.Request request = callback.request();
         if (retryConsistencyLevel != null && retryConsistencyLevel != consistencyOf(request))
-            request = manager.makeRequestMessage(statement, retryConsistencyLevel, serialConsistencyOf(request), pagingStateOf(request));
+            request = manager.makeRequestMessage(statement, retryConsistencyLevel, serialConsistencyOf(request), pagingStateOf(request), defaultTimestampOf(request));
         return request;
     }
 
@@ -227,6 +227,15 @@ class RequestHandler implements Connection.ResponseCallback {
             case EXECUTE: return ((Requests.Execute)request).options.serialConsistency;
             case BATCH:   return ((Requests.Batch)request).options.serialConsistency;
             default:      return null;
+        }
+    }
+
+    private long defaultTimestampOf(Message.Request request) {
+        switch (request.type) {
+            case QUERY:   return ((Requests.Query)request).options.defaultTimestamp;
+            case EXECUTE: return ((Requests.Execute)request).options.defaultTimestamp;
+            case BATCH:   return ((Requests.Batch)request).options.defaultTimestamp;
+            default:      return 0;
         }
     }
 

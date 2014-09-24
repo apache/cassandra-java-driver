@@ -544,6 +544,7 @@ public class Cluster implements Closeable {
         private ReconnectionPolicy reconnectionPolicy;
         private RetryPolicy retryPolicy;
         private AddressTranslater addressTranslater;
+        private TimestampGenerator timestampGenerator;
 
         private ProtocolOptions.Compression compression = ProtocolOptions.Compression.NONE;
         private SSLOptions sslOptions = null;
@@ -841,6 +842,27 @@ public class Cluster implements Closeable {
         }
 
         /**
+         * Configures the generator that will produce the client-side timestamp sent
+         * with each query.
+         * <p>
+         * This feature is only available with version {@link ProtocolVersion#V3 V3} or
+         * above of the native protocol. With earlier versions, timestamps are always
+         * generated server-side, and setting a generator through this method will have
+         * no effect.
+         * <p>
+         * If no generator is set through this method, the default
+         * {@link CountingTimestampGenerator} will be used. To force server-side
+         * timestamps with V3 or above, use {@link ServerSideTimestampGenerator}.
+         *
+         * @param timestampGenerator the generator to use.
+         * @return this Builder.
+         */
+        public Builder withTimestampGenerator(TimestampGenerator timestampGenerator) {
+            this.timestampGenerator = timestampGenerator;
+            return this;
+        }
+
+        /**
          * Uses the provided credentials when connecting to Cassandra hosts.
          * <p>
          * This should be used if the Cassandra cluster has been configured to
@@ -1013,7 +1035,8 @@ public class Cluster implements Closeable {
                 loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
                 reconnectionPolicy == null ? Policies.defaultReconnectionPolicy() : reconnectionPolicy,
                 retryPolicy == null ? Policies.defaultRetryPolicy() : retryPolicy,
-                addressTranslater == null ? Policies.defaultAddressTranslater() : addressTranslater
+                addressTranslater == null ? Policies.defaultAddressTranslater() : addressTranslater,
+                timestampGenerator == null ? Policies.defaultTimestampGenerator() : timestampGenerator
             );
             return new Configuration(policies,
                                      new ProtocolOptions(port, protocolVersion, sslOptions, authProvider).setCompression(compression),

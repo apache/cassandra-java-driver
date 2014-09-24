@@ -205,7 +205,8 @@ class Requests {
                                                                                     false,
                                                                                     -1,
                                                                                     null,
-                                                                                    ConsistencyLevel.SERIAL);
+                                                                                    ConsistencyLevel.SERIAL,
+                                                                                    0);
 
         private final EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
         public final ConsistencyLevel consistency;
@@ -221,7 +222,8 @@ class Requests {
                                     boolean skipMetadata,
                                     int pageSize,
                                     ByteBuffer pagingState,
-                                    ConsistencyLevel serialConsistency) {
+                                    ConsistencyLevel serialConsistency,
+                                    long defaultTimestamp) {
 
             this.consistency = consistency;
             this.values = values;
@@ -229,7 +231,7 @@ class Requests {
             this.pageSize = pageSize;
             this.pagingState = pagingState;
             this.serialConsistency = serialConsistency;
-            this.defaultTimestamp = 0L;
+            this.defaultTimestamp = defaultTimestamp;
 
             // Populate flags
             if (!values.isEmpty())
@@ -292,7 +294,7 @@ class Requests {
                     if (flags.contains(QueryFlag.SERIAL_CONSISTENCY))
                         size += CBUtil.sizeOfConsistencyLevel(serialConsistency);
                     if (version == ProtocolVersion.V3 && flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
-                        size += 4;
+                        size += 8;
                     return size;
                 default:
                     throw version.unsupported();
@@ -425,7 +427,7 @@ class Requests {
                     if (flags.contains(QueryFlag.SERIAL_CONSISTENCY))
                         size += CBUtil.sizeOfConsistencyLevel(serialConsistency);
                     if (flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
-                        size += 4;
+                        size += 8;
                     return size;
                 default:
                     throw version.unsupported();

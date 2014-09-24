@@ -42,6 +42,7 @@ public abstract class Statement {
     private volatile ConsistencyLevel serialConsistency;
     private volatile boolean traceQuery;
     private volatile int fetchSize;
+    private volatile long defaultTimestamp;
 
     private volatile RetryPolicy retryPolicy;
 
@@ -150,7 +151,7 @@ public abstract class Statement {
     }
 
     /**
-     * Returns the routing key (in binary raw form) to use for token aware 
+     * Returns the routing key (in binary raw form) to use for token aware
      * routing of this query.
      * <p>
      * The routing key is optional in that implementers are free to
@@ -251,5 +252,44 @@ public abstract class Statement {
      */
     public int getFetchSize() {
         return fetchSize;
+    }
+
+    /**
+     * Sets the default timestamp for this query (in microseconds since the epoch).
+     * <p>
+     * This feature is only available when version {@link ProtocolVersion#V3 V3} or
+     * higher of the native protocol is in use. With earlier versions, calling this
+     * method has no effect.
+     * <p>
+     * The actual timestamp that will be used for this query is, in order of
+     * preference:
+     * <ul>
+     * <li>the timestamp specified directly in the CQL query string (using the
+     * {@code USING TIMESTAMP} syntax);</li>
+     * <li>the timestamp specified through this method, if strictly positive;</li>
+     * <li>the timestamp returned by the {@link TimestampGenerator} currently in use,
+     * if strictly positive.</li>
+     * </ul>
+     * If none of these apply, no timestamp will be sent with the query and Cassandra
+     * will generate a server-side one (similar to the pre-V3 behavior).
+     *
+     * @param defaultTimestamp the default timestamp for this query (must be strictly
+     * positive).
+     * @return this {@code Statement} object.
+     *
+     * @see Cluster.Builder#withTimestampGenerator(TimestampGenerator)
+     */
+    public Statement setDefaultTimestamp(long defaultTimestamp) {
+        this.defaultTimestamp = defaultTimestamp;
+        return this;
+    }
+
+    /**
+     * The default timestamp for this query.
+     *
+     * @return the default timestamp (in microseconds since the epoch).
+     */
+    public long getDefaultTimestamp() {
+        return defaultTimestamp;
     }
 }
