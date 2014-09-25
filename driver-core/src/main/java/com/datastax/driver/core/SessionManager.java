@@ -196,7 +196,7 @@ class SessionManager extends AbstractSession {
                         if (isClosing)
                             return true;
 
-                        HostConnectionPool newPool = new HostConnectionPool(host, distance, SessionManager.this);
+                        HostConnectionPool newPool = new DynamicConnectionPool(host, distance, SessionManager.this);
                         HostConnectionPool previous = pools.put(host, newPool);
                         if (previous == null) {
                             logger.debug("Added connection pool for {}", host);
@@ -235,7 +235,7 @@ class SessionManager extends AbstractSession {
             if (previous != condition)
                 return false;
 
-            HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
+            HostConnectionPool newPool = new DynamicConnectionPool(host, distance, this);
             pools.put(host, newPool);
 
             // If we raced with a session shutdown, ensure that the pool will be closed.
@@ -310,11 +310,11 @@ class SessionManager extends AbstractSession {
                 if (pool == null) {
                     if (dist != HostDistance.IGNORED && h.isUp())
                         poolCreationFutures.add(maybeAddPool(h, executor));
-                } else if (dist != pool.hostDistance) {
+                } else if (dist != pool.hostDistance()) {
                     if (dist == HostDistance.IGNORED) {
                         toRemove.add(h);
                     } else {
-                        pool.hostDistance = dist;
+                        pool.setHostDistance(dist);
                         pool.ensureCoreConnections();
                     }
                 }
@@ -522,10 +522,8 @@ class SessionManager extends AbstractSession {
                     continue;
                 }
 
-                openConnections[i] = p.connections.size();
-                for (Connection c : p.connections) {
-                    inFlightQueries[i] += c.inFlight.get();
-                }
+                openConnections[i] = p.connectionsCount();
+                inFlightQueries[i] = p.inFlightQueriesCount();
                 i++;
             }
         }

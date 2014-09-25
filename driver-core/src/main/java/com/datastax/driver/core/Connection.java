@@ -512,12 +512,12 @@ class Connection {
          * Same as open, but associate the created connection to the provided connection pool.
          */
         public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
-            InetSocketAddress address = pool.host.getSocketAddress();
+            InetSocketAddress address = pool.host().getSocketAddress();
 
             if (isShutdown)
                 throw new ConnectionException(address, "Connection factory is shut down");
 
-            String name = address.toString() + '-' + getIdGenerator(pool.host).getAndIncrement();
+            String name = address.toString() + '-' + getIdGenerator(pool.host()).getAndIncrement();
             return new PooledConnection(name, address, this, pool);
         }
 

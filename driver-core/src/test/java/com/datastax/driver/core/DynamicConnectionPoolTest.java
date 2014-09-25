@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.testng.Assert.fail;
 
-public class HostConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster {
+public class DynamicConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         StringBuilder sb = new StringBuilder("CREATE TABLE Java349 (mykey INT primary key");

@@ -25,7 +25,7 @@ class PooledConnection extends Connection {
 
     private final HostConnectionPool pool;
 
-    /** Used in {@link HostConnectionPool} to handle races between two threads trying to trash the same connection */
+    /** Used in {@link DynamicConnectionPool} to handle races between two threads trying to trash the same connection */
     final AtomicBoolean markForTrash = new AtomicBoolean();
 
     PooledConnection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
