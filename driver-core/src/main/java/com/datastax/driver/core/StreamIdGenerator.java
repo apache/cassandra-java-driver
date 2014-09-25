@@ -19,18 +19,39 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
- * Handle assigning stream id to message.
+ * Manages a set of integer identifiers.
+ * <p>
+ * Clients can borrow an id with {@link #next()}, and return it to the set with {@link #release(int)}.
+ * It is guaranteed that a given id can't be borrowed by two clients at the same time.
+ * This class is thread-safe and non-blocking.
+ * <p>
+ * Implementation notes: we use an atomic long array where each bit represents an id. It is set to 1 if
+ * the id is available, 0 otherwise. When looking for an id, we find a long that has remaining 1's and
+ * pick the rightmost one.
+ * To minimize the average time to find that long, we search the array in a round-robin fashion.
  */
 class StreamIdGenerator {
-
-    static final int MAX_STREAM_PER_CONNECTION = 128;
-
     private static final long MAX_UNSIGNED_LONG = -1L;
 
-    // Stream IDs are one byte long, signed and we only handle positive values
-    // (negative stream IDs are for server side initiated streams). So we have
-    // 128 different stream IDs and two longs are enough.
-    private final AtomicLongArray bits = new AtomicLongArray(2);
+    static StreamIdGenerator newInstance(ProtocolVersion version) {
+        return new StreamIdGenerator(streamIdSizeFor(version));
+    }
+
+    private static int streamIdSizeFor(ProtocolVersion version) {
+        switch (version) {
+            case V1:
+            case V2:
+                return 1;
+            case V3:
+                return 2;
+            default:
+                throw version.unsupported();
+        }
+    }
+
+    private final AtomicLongArray bits;
+    private final int maxIds;
+    private final AtomicInteger offset;
 
     // If a query timeout, we'll stop waiting for it. However in that case, we
     // can't release/reuse the ID because we don't know if the response is lost
@@ -39,29 +60,43 @@ class StreamIdGenerator {
     // how many marks we've put.
     private final AtomicInteger marked = new AtomicInteger(0);
 
-    public StreamIdGenerator() {
-        bits.set(0, MAX_UNSIGNED_LONG);
-        bits.set(1, MAX_UNSIGNED_LONG);
+    private StreamIdGenerator(int streamIdSizeInBytes) {
+        // Stream IDs are signed and we only handle positive values
+        // (negative stream IDs are for server side initiated streams).
+        maxIds = 1 << (streamIdSizeInBytes * 8 - 1);
+
+        // This is true for 1 byte = 128 streams, and therefore for any higher value
+        assert maxIds % 64 == 0;
+
+        // We use one bit in our array of longs to represent each stream ID.
+        bits = new AtomicLongArray(maxIds / 64);
+
+        // Initialize all bits to 1
+        for (int i = 0; i < bits.length(); i++)
+            bits.set(i, MAX_UNSIGNED_LONG);
+
+        offset = new AtomicInteger(bits.length() - 1);
     }
 
     public int next() throws BusyConnectionException {
-        int id = atomicGetAndSetFirstAvailable(0);
-        if (id >= 0)
-            return id;
+        int previousOffset, myOffset;
+        do {
+            previousOffset = offset.get();
+            myOffset = (previousOffset + 1) % bits.length();
+        } while (!offset.compareAndSet(previousOffset, myOffset));
 
-        id = atomicGetAndSetFirstAvailable(1);
-        if (id >= 0)
-            return 64 + id;
+        for (int i = 0; i < bits.length(); i++) {
+            int j = (i + myOffset) % bits.length();
 
+            int id = atomicGetAndSetFirstAvailable(j);
+            if (id >= 0)
+                return id + (64 * j);
+        }
         throw new BusyConnectionException();
     }
 
     public void release(int streamId) {
-        if (streamId < 64) {
-            atomicClear(0, streamId);
-        } else {
-            atomicClear(1, streamId - 64);
-        }
+        atomicClear(streamId / 64, streamId % 64);
     }
 
     public void mark(int streamId) {
@@ -73,11 +108,11 @@ class StreamIdGenerator {
     }
 
     public int maxAvailableStreams() {
-        return MAX_STREAM_PER_CONNECTION - marked.get();
+        return maxIds - marked.get();
     }
 
     // Returns >= 0 if found and set an id, -1 if no bits are available.
-    public int atomicGetAndSetFirstAvailable(int idx) {
+    private int atomicGetAndSetFirstAvailable(int idx) {
         while (true) {
             long l = bits.get(idx);
             if (l == 0)
@@ -90,7 +125,7 @@ class StreamIdGenerator {
         }
     }
 
-    public void atomicClear(int idx, int toClear) {
+    private void atomicClear(int idx, int toClear) {
         while (true) {
             long l = bits.get(idx);
             if (bits.compareAndSet(idx, l, l | mask(toClear)))

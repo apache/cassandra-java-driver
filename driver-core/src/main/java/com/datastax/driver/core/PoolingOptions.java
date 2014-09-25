@@ -51,6 +51,8 @@ public class PoolingOptions {
     private static final int DEFAULT_MAX_POOL_LOCAL = 8;
     private static final int DEFAULT_MAX_POOL_REMOTE = 2;
 
+    private static final int MAX_STREAM_PER_CONNECTION_V2 = 128;
+
     private volatile Cluster.Manager manager;
 
     private final int[] minSimultaneousRequests = new int[]{ DEFAULT_MIN_REQUESTS, DEFAULT_MIN_REQUESTS, 0 };
@@ -227,10 +229,10 @@ public class PoolingOptions {
     }
 
     private static void checkRequestsPerConnectionRange(int value, String description, HostDistance distance) {
-        if (value < 0 || value > StreamIdGenerator.MAX_STREAM_PER_CONNECTION)
+        if (value < 0 || value > MAX_STREAM_PER_CONNECTION_V2)
             throw new IllegalArgumentException(String.format("%s for %s hosts must be in the range (0, %d)",
                                                              description, distance,
-                                                             StreamIdGenerator.MAX_STREAM_PER_CONNECTION));
+                                                             MAX_STREAM_PER_CONNECTION_V2));
     }
 
     private static void checkRequestsPerConnectionOrder(int min, int max, HostDistance distance) {

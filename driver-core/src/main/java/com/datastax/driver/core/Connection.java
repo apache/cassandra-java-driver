@@ -585,7 +585,7 @@ class Connection {
 
     private class Dispatcher extends SimpleChannelUpstreamHandler {
 
-        public final StreamIdGenerator streamIdHandler = new StreamIdGenerator();
+        public final StreamIdGenerator streamIdHandler = StreamIdGenerator.newInstance(factory.protocolVersion);
         private final ConcurrentMap<Integer, ResponseHandler> pending = new ConcurrentHashMap<Integer, ResponseHandler>();
 
         public void add(ResponseHandler handler) {
