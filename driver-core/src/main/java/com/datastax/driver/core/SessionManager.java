@@ -196,7 +196,8 @@ class SessionManager extends AbstractSession {
                         if (isClosing)
                             return true;
 
-                        HostConnectionPool newPool = new DynamicConnectionPool(host, distance, SessionManager.this);
+                        HostConnectionPool newPool = HostConnectionPool.newInstance(host, distance, SessionManager.this,
+                                                                                    cluster.getConfiguration().getProtocolOptions().getProtocolVersion());
                         HostConnectionPool previous = pools.put(host, newPool);
                         if (previous == null) {
                             logger.debug("Added connection pool for {}", host);
@@ -235,7 +236,8 @@ class SessionManager extends AbstractSession {
             if (previous != condition)
                 return false;
 
-            HostConnectionPool newPool = new DynamicConnectionPool(host, distance, this);
+            HostConnectionPool newPool = HostConnectionPool.newInstance(host, distance, SessionManager.this,
+                                                                        cluster.getConfiguration().getProtocolOptions().getProtocolVersion());
             pools.put(host, newPool);
 
             // If we raced with a session shutdown, ensure that the pool will be closed.
@@ -310,11 +312,11 @@ class SessionManager extends AbstractSession {
                 if (pool == null) {
                     if (dist != HostDistance.IGNORED && h.isUp())
                         poolCreationFutures.add(maybeAddPool(h, executor));
-                } else if (dist != pool.hostDistance()) {
+                } else if (dist != pool.hostDistance) {
                     if (dist == HostDistance.IGNORED) {
                         toRemove.add(h);
                     } else {
-                        pool.setHostDistance(dist);
+                        pool.hostDistance = dist;
                         pool.ensureCoreConnections();
                     }
                 }
@@ -522,7 +524,7 @@ class SessionManager extends AbstractSession {
                     continue;
                 }
 
-                openConnections[i] = p.connectionsCount();
+                openConnections[i] = p.opened();
                 inFlightQueries[i] = p.inFlightQueriesCount();
                 i++;
             }

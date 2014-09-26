@@ -1713,6 +1713,9 @@ public class Cluster implements Closeable {
         }
 
         public void ensurePoolsSizing() {
+            if (protocolVersion().compareTo(ProtocolVersion.V3) >= 0)
+                return;
+
             for (SessionManager session : sessions) {
                 for (HostConnectionPool pool : session.pools.values())
                     pool.ensureCoreConnections();

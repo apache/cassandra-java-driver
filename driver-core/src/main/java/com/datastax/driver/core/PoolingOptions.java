@@ -16,7 +16,8 @@
 package com.datastax.driver.core;
 
 /**
- * Options related to connection pooling.
+ * Options related to connection pooling when protocol version
+ * {@link ProtocolVersion#V2} or below is in use.
  * <p>
  * The driver uses connections in an asynchronous manner. Meaning that
  * multiple requests can be submitted on the same connection at the same
@@ -24,7 +25,8 @@ package com.datastax.driver.core;
  * small number of connections to each Cassandra host. These options allow
  * the driver to control how many connections are kept exactly.
  * <p>
- * For each host, the driver keeps a core pool of connections open at all
+ * <b>With {code ProtocolVersion#V2} or below:</b>
+ * for each host, the driver keeps a core pool of connections open at all
  * times determined by calling ({@link #getCoreConnectionsPerHost}).
  * If the use of those connections reaches a configurable threshold
  * ({@link #getMaxSimultaneousRequestsPerConnectionThreshold}),
@@ -37,6 +39,11 @@ package com.datastax.driver.core;
  * Each of these parameters can be separately set for {@code LOCAL} and
  * {@code REMOTE} hosts ({@link HostDistance}). For {@code IGNORED} hosts,
  * the default for all those settings is 0 and cannot be changed.
+ * <p>
+ * <b>With {code ProtocolVersion#V3} or above:</b>
+ * the driver uses a single connection for each {@code LOCAL} or {@code REMOTE}
+ * host (basically because it can submit more requests per connection).
+ * The parameters in this class do not apply, and changing them has no effect.
  */
 public class PoolingOptions {
 

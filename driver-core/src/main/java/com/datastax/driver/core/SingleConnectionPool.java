@@ -16,10 +16,17 @@
 package com.datastax.driver.core;
 
 
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
@@ -28,23 +35,21 @@ import org.slf4j.LoggerFactory;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 
 /**
- * A connection pool with a varying number of connections.
+ * A connection pool with a a single connection.
  *
- * This is used with {@link ProtocolVersion#V2} and lower.
+ * This is used with {@link ProtocolVersion#V3} and higher.
  */
-class DynamicConnectionPool extends HostConnectionPool {
+class SingleConnectionPool extends HostConnectionPool {
 
-    private static final Logger logger = LoggerFactory.getLogger(DynamicConnectionPool.class);
-
-    private static final int MAX_SIMULTANEOUS_CREATION = 1;
+    private static final Logger logger = LoggerFactory.getLogger(SingleConnectionPool.class);
 
     // When a request timeout, we may never release its stream ID. So over time, a given connection
     // may get less an less available streams. When the number of available ones go below the
     // following threshold, we just replace the connection by a new one.
-    private static final int MIN_AVAILABLE_STREAMS = 96;
+    private static final int MIN_AVAILABLE_STREAMS = 32768 * 3 / 4;
 
-    final List<PooledConnection> connections;
-    private final AtomicInteger open;
+    volatile AtomicReference<PooledConnection> connectionRef = new AtomicReference<PooledConnection>();
+    private final AtomicBoolean open = new AtomicBoolean();
     private final Set<Connection> trash = new CopyOnWriteArraySet<Connection>();
 
     private volatile int waiter = 0;
@@ -53,37 +58,30 @@ class DynamicConnectionPool extends HostConnectionPool {
 
     private final Runnable newConnectionTask;
 
-    private final AtomicInteger scheduledForCreation = new AtomicInteger();
+    private final AtomicBoolean scheduledForCreation = new AtomicBoolean();
 
-    public DynamicConnectionPool(Host host, HostDistance hostDistance, SessionManager manager) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+    public SingleConnectionPool(Host host, HostDistance hostDistance, SessionManager manager) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         super(host, hostDistance, manager);
 
         this.newConnectionTask = new Runnable() {
             @Override
             public void run() {
-                addConnectionIfUnderMaximum();
-                scheduledForCreation.decrementAndGet();
+                addConnectionIfNeeded();
+                scheduledForCreation.set(false);
             }
         };
 
         // Create initial core connections
-        List<PooledConnection> l = new ArrayList<PooledConnection>(options().getCoreConnectionsPerHost(hostDistance));
         try {
-            for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
-                l.add(manager.connectionFactory().open(this));
+            connectionRef.set(manager.connectionFactory().open(this));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             // If asked to interrupt, we can skip opening core connections, the pool will still work.
             // But we ignore otherwise cause I'm not sure we can do much better currently.
         }
-        this.connections = new CopyOnWriteArrayList<PooledConnection>(l);
-        this.open = new AtomicInteger(connections.size());
+        this.open.set(true);
 
         logger.trace("Created connection pool to host {}", host);
-    }
-
-    private PoolingOptions options() {
-        return manager.configuration().getPoolingOptions();
     }
 
     @Override
@@ -93,54 +91,26 @@ class DynamicConnectionPool extends HostConnectionPool {
             // That being said, maybe having a specific exception could be cleaner.
             throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
 
-        if (connections.isEmpty()) {
-            for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++) {
-                // We don't respect MAX_SIMULTANEOUS_CREATION here because it's  only to
-                // protect against creating connection in excess of core too quickly
-                scheduledForCreation.incrementAndGet();
+        PooledConnection connection = connectionRef.get();
+        if (connection == null) {
+            if (scheduledForCreation.compareAndSet(false, true))
                 manager.blockingExecutor().submit(newConnectionTask);
-            }
-            PooledConnection c = waitForConnection(timeout, unit);
-            c.setKeyspace(manager.poolsState.keyspace);
-            return c;
-        }
-
-        int minInFlight = Integer.MAX_VALUE;
-        PooledConnection leastBusy = null;
-        for (PooledConnection connection : connections) {
-            int inFlight = connection.inFlight.get();
-            if (inFlight < minInFlight) {
-                minInFlight = inFlight;
-                leastBusy = connection;
-            }
-        }
-
-        if (minInFlight >= options().getMaxSimultaneousRequestsPerConnectionThreshold(hostDistance) && connections.size() < options().getMaxConnectionsPerHost(hostDistance))
-            maybeSpawnNewConnection();
-
-        if (leastBusy == null) {
-            // We could have raced with a shutdown since the last check
-            if (isClosed())
-                throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
-            // This might maybe happen if the number of core connections per host is 0 and a connection was trashed between
-            // the previous check to connections and now. But in that case, the line above will have trigger the creation of
-            // a new connection, so just wait that connection and move on
-            leastBusy = waitForConnection(timeout, unit);
+            connection = waitForConnection(timeout, unit);
         } else {
             while (true) {
-                int inFlight = leastBusy.inFlight.get();
+                int inFlight = connection.inFlight.get();
 
-                if (inFlight >= leastBusy.maxAvailableStreams()) {
-                    leastBusy = waitForConnection(timeout, unit);
+                if (inFlight >= connection.maxAvailableStreams()) {
+                    connection = waitForConnection(timeout, unit);
                     break;
                 }
 
-                if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1))
+                if (connection.inFlight.compareAndSet(inFlight, inFlight + 1))
                     break;
             }
         }
-        leastBusy.setKeyspace(manager.poolsState.keyspace);
-        return leastBusy;
+        connection.setKeyspace(manager.poolsState.keyspace);
+        return connection;
     }
 
     private void awaitAvailableConnection(long timeout, TimeUnit unit) throws InterruptedException {
@@ -195,27 +165,18 @@ class DynamicConnectionPool extends HostConnectionPool {
             if (isClosed())
                 throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
 
-            int minInFlight = Integer.MAX_VALUE;
-            PooledConnection leastBusy = null;
-            for (PooledConnection connection : connections) {
-                int inFlight = connection.inFlight.get();
-                if (inFlight < minInFlight) {
-                    minInFlight = inFlight;
-                    leastBusy = connection;
-                }
-            }
-
-            // If we race with shutdown, leastBusy could be null. In that case we just loop and we'll throw on the next
+            PooledConnection connection = connectionRef.get();
+            // If we race with shutdown, connection could be null. In that case we just loop and we'll throw on the next
             // iteration anyway
-            if (leastBusy != null) {
+            if (connection != null) {
                 while (true) {
-                    int inFlight = leastBusy.inFlight.get();
+                    int inFlight = connection.inFlight.get();
 
-                    if (inFlight >= leastBusy.maxAvailableStreams())
+                    if (inFlight >= connection.maxAvailableStreams())
                         break;
 
-                    if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1))
-                        return leastBusy;
+                    if (connection.inFlight.compareAndSet(inFlight, inFlight + 1))
+                        return connection;
                 }
             }
 
@@ -244,9 +205,7 @@ class DynamicConnectionPool extends HostConnectionPool {
             if (inFlight == 0 && trash.remove(connection))
                 close(connection);
         } else {
-            if (connections.size() > options().getCoreConnectionsPerHost(hostDistance) && inFlight <= options().getMinSimultaneousRequestsPerConnectionThreshold(hostDistance)) {
-                trashConnection(connection);
-            } else if (connection.maxAvailableStreams() < MIN_AVAILABLE_STREAMS) {
+            if (connection.maxAvailableStreams() < MIN_AVAILABLE_STREAMS) {
                 replaceConnection(connection);
             } else {
                 signalAvailableConnection();
@@ -258,101 +217,62 @@ class DynamicConnectionPool extends HostConnectionPool {
     // directly because we want to make sure the connection is always trashed.
     private void replaceConnection(PooledConnection connection) {
         if (connection.markForTrash.compareAndSet(false, true))
-            open.decrementAndGet();
+            open.set(false);
         maybeSpawnNewConnection();
         doTrashConnection(connection);
     }
 
-    private boolean trashConnection(PooledConnection connection) {
-        if (connection.markForTrash.compareAndSet(false, true)) {
-            // First, make sure we don't go below core connections
-            for (;;) {
-                int opened = open.get();
-                if (opened <= options().getCoreConnectionsPerHost(hostDistance)) {
-                    connection.markForTrash.set(false);
-                    return false;
-                }
-
-                if (open.compareAndSet(opened, opened - 1))
-                    break;
-            }
-
-            doTrashConnection(connection);
-        }
-        // If compareAndSet failed, it means we raced and another thread will execute doTrashConnection.
-        // If the connection needs to be closed (inFlight == 0), we don't need to do it here because the other thread will necessarily do
-        // it:
-        // - the current thread decremented inFlight in returnConnection
-        // - we know it did it before the connection was trashed, because otherwise it would have entered `if (trash.contains(connection))`
-        //   in returnConnection and not arrived here.
-        // - so the other thread will see the up-to-date value of inFlight and take appropriate action.
-        return true;
-    }
-
     private void doTrashConnection(PooledConnection connection) {
         trash.add(connection);
-        connections.remove(connection);
+        connectionRef.compareAndSet(connection, null);
 
         if (connection.inFlight.get() == 0 && trash.remove(connection))
             close(connection);
     }
 
-    private boolean addConnectionIfUnderMaximum() {
-
-        // First, make sure we don't cross the allowed limit of open connections
-        for(;;) {
-            int opened = open.get();
-            if (opened >= options().getMaxConnectionsPerHost(hostDistance))
-                return false;
-
-            if (open.compareAndSet(opened, opened + 1))
-                break;
-        }
+    private boolean addConnectionIfNeeded() {
+        if (!open.compareAndSet(false, true))
+            return false;
 
         if (isClosed()) {
-            open.decrementAndGet();
+            open.set(false);
             return false;
         }
 
         // Now really open the connection
         try {
-            connections.add(manager.connectionFactory().open(this));
+            connectionRef.set(manager.connectionFactory().open(this));
             signalAvailableConnection();
             return true;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             // Skip the open but ignore otherwise
-            open.decrementAndGet();
+            open.set(false);
             return false;
         } catch (ConnectionException e) {
-            open.decrementAndGet();
+            open.set(false);
             logger.debug("Connection error to {} while creating additional connection", host);
             return false;
         } catch (AuthenticationException e) {
             // This shouldn't really happen in theory
-            open.decrementAndGet();
+            open.set(false);
             logger.error("Authentication error while creating additional connection (error is: {})", e.getMessage());
             return false;
         } catch (UnsupportedProtocolVersionException e) {
             // This shouldn't happen since we shouldn't have been able to connect in the first place
-            open.decrementAndGet();
+            open.set(false);
             logger.error("UnsupportedProtocolVersionException error while creating additional connection (error is: {})", e.getMessage());
             return false;
         } catch (ClusterNameMismatchException e) {
-            open.decrementAndGet();
+            open.set(false);
             logger.error("ClusterNameMismatchException error while creating additional connection (error is: {})", e.getMessage());
             return false;
         }
     }
 
     private void maybeSpawnNewConnection() {
-        while (true) {
-            int inCreation = scheduledForCreation.get();
-            if (inCreation >= MAX_SIMULTANEOUS_CREATION)
-                return;
-            if (scheduledForCreation.compareAndSet(inCreation, inCreation + 1))
-                break;
-        }
+        if (!scheduledForCreation.compareAndSet(false, true))
+            return;
 
         logger.debug("Creating new connection on busy pool to {}", host);
         manager.blockingExecutor().submit(newConnectionTask);
@@ -361,13 +281,13 @@ class DynamicConnectionPool extends HostConnectionPool {
     @Override
     public void replaceDefunctConnection(final PooledConnection connection) {
         if (connection.markForTrash.compareAndSet(false, true))
-            open.decrementAndGet();
-        connections.remove(connection);
+            open.set(false);
+        connectionRef.compareAndSet(connection, null);
         connection.closeAsync();
         manager.blockingExecutor().submit(new Runnable() {
             @Override
             public void run() {
-                addConnectionIfUnderMaximum();
+                addConnectionIfNeeded();
             }
         });
     }
@@ -380,19 +300,21 @@ class DynamicConnectionPool extends HostConnectionPool {
         // Wake up all threads that wait
         signalAllAvailableConnection();
 
-        CloseFuture future = new CloseFuture.Forwarding(discardAvailableConnections());
+        CloseFuture future = new CloseFuture.Forwarding(discardConnection());
         return future;
     }
 
-    private List<CloseFuture> discardAvailableConnections() {
+    private List<CloseFuture> discardConnection() {
 
-        List<CloseFuture> futures = new ArrayList<CloseFuture>(connections.size());
-        for (final PooledConnection connection : connections) {
+        List<CloseFuture> futures = new ArrayList<CloseFuture>();
+
+        final PooledConnection connection = connectionRef.get();
+        if (connection != null) {
             CloseFuture future = connection.closeAsync();
             future.addListener(new Runnable() {
                 public void run() {
                     if (connection.markForTrash.compareAndSet(false, true))
-                        open.decrementAndGet();
+                        open.set(false);
                 }
             }, MoreExecutors.sameThreadExecutor());
             futures.add(future);
@@ -400,36 +322,24 @@ class DynamicConnectionPool extends HostConnectionPool {
         return futures;
     }
 
-    // This creates connections if we have less than core connections (if we
-    // have more than core, connection will just get trash when we can).
     @Override
     public void ensureCoreConnections() {
         if (isClosed())
             return;
 
-        // Note: this process is a bit racy, but it doesn't matter since we're still guaranteed to not create
-        // more connection than maximum (and if we create more than core connection due to a race but this isn't
-        // justified by the load, the connection in excess will be quickly trashed anyway)
-        int opened = open.get();
-        for (int i = opened; i < options().getCoreConnectionsPerHost(hostDistance); i++) {
-            // We don't respect MAX_SIMULTANEOUS_CREATION here because it's only to
-            // protect against creating connection in excess of core too quickly
-            scheduledForCreation.incrementAndGet();
+        if (open.compareAndSet(false, true) && scheduledForCreation.compareAndSet(false, true)) {
             manager.blockingExecutor().submit(newConnectionTask);
         }
     }
 
     @Override
     public int opened() {
-        return open.get();
+        return open.get() ? 1 : 0;
     }
 
     @Override
     public int inFlightQueriesCount() {
-        int count = 0;
-        for (Connection connection : connections) {
-            count += connection.inFlight.get();
-        }
-        return count;
+        PooledConnection connection = connectionRef.get();
+        return connection == null ? 0 : connection.inFlight.get();
     }
 }

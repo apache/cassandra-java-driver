@@ -47,8 +47,9 @@ public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
             for (Connection connection : p.connections) {
                 assertEquals(connection.inFlight.get(), 0);
             }
-        } else {
-            fail("TODO");
+        } else if (pool instanceof SingleConnectionPool){
+            SingleConnectionPool p = (SingleConnectionPool)pool;
+            assertEquals(p.connectionRef.get().inFlight.get(), 0);
         }
     }
 

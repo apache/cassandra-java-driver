@@ -59,7 +59,7 @@ class Connection {
     private final Channel channel;
     private final Factory factory;
 
-    private final Dispatcher dispatcher = new Dispatcher();
+    private final Dispatcher dispatcher;
 
     // Used by connection pooling to count how many requests are "in flight" on that connection.
     public final AtomicInteger inFlight = new AtomicInteger(0);
@@ -85,6 +85,7 @@ class Connection {
     protected Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         this.address = address;
         this.factory = factory;
+        this.dispatcher = new Dispatcher();
         this.name = name;
 
         ClientBootstrap bootstrap = factory.newBootstrap();
@@ -512,12 +513,12 @@ class Connection {
          * Same as open, but associate the created connection to the provided connection pool.
          */
         public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
-            InetSocketAddress address = pool.host().getSocketAddress();
+            InetSocketAddress address = pool.host.getSocketAddress();
 
             if (isShutdown)
                 throw new ConnectionException(address, "Connection factory is shut down");
 
-            String name = address.toString() + '-' + getIdGenerator(pool.host()).getAndIncrement();
+            String name = address.toString() + '-' + getIdGenerator(pool.host).getAndIncrement();
             return new PooledConnection(name, address, this, pool);
         }
 
@@ -585,8 +586,19 @@ class Connection {
 
     private class Dispatcher extends SimpleChannelUpstreamHandler {
 
-        public final StreamIdGenerator streamIdHandler = StreamIdGenerator.newInstance(factory.protocolVersion);
+        public final StreamIdGenerator streamIdHandler;
         private final ConcurrentMap<Integer, ResponseHandler> pending = new ConcurrentHashMap<Integer, ResponseHandler>();
+
+        Dispatcher() {
+            ProtocolVersion protocolVersion = factory.protocolVersion;
+            if (protocolVersion == null) {
+                // This happens for the first control connection because the protocol version has not been
+                // negociated yet.
+                assert !(Connection.this instanceof PooledConnection);
+                protocolVersion = ProtocolVersion.V2;
+            }
+            streamIdHandler = StreamIdGenerator.newInstance(protocolVersion);
+        }
 
         public void add(ResponseHandler handler) {
             ResponseHandler old = pending.put(handler.streamId, handler);
