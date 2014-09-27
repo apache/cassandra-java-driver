@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+1.0.9:
+------
+
+- [bug] Handle race between query timeout and completion (JAVA-449, JAVA-460, JAVA-471)
+
+
 1.0.8:
 ------
 

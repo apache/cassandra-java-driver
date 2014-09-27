@@ -122,22 +122,23 @@ class DefaultResultSetFuture extends SimpleFuture<ResultSet> implements ResultSe
     }
 
     @Override
-    public void onSet(Connection connection, Message.Response response, long latency) {
+    public void onSet(Connection connection, Message.Response response, long latency, int retryCount) {
         // This is only called for internal calls (i.e, when the callback is not wrapped in ResponseHandler),
         // so don't bother with ExecutionInfo.
         onSet(connection, response, null, latency);
     }
 
     @Override
-    public void onException(Connection connection, Exception exception, long latency) {
+    public void onException(Connection connection, Exception exception, long latency, int retryCount) {
         setException(exception);
     }
 
     @Override
-    public void onTimeout(Connection connection, long latency) {
-        // This is only called for internal calls (i.e, when the callback is not wrapped in ResponseHandler).
+    public boolean onTimeout(Connection connection, long latency, int retryCount) {
+        // This is only called for internal calls (i.e, when the future is not wrapped in RequestHandler).
         // So just set an exception for the final result, which should be handled correctly by said internal call.
-        setException(new ConnectionException(connection.address, "Operation Timeouted"));
+        setException(new ConnectionException(connection.address, "Operation timed out"));
+        return true;
     }
 
     public ResultSet getUninterruptibly() {
@@ -175,6 +176,13 @@ class DefaultResultSetFuture extends SimpleFuture<ResultSet> implements ResultSe
             throw ((DriverException)e.getCause()).copy();
         else
             throw new DriverInternalError("Unexpected exception thrown", e.getCause());
+    }
+
+    @Override
+    public int retryCount() {
+        // This is only called for internal calls (i.e, when the future is not wrapped in RequestHandler).
+        // There is no retry logic in that case, so the value does not really matter.
+        return 0;
     }
 
     static void extractCause(Throwable cause) {

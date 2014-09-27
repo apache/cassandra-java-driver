@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import javax.net.ssl.SSLEngine;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
@@ -310,7 +311,7 @@ class Connection extends org.apache.cassandra.transport.Connection
                     } else {
                         ce = new TransportException(address, "Error writing", writeFuture.getCause());
                     }
-                    handler.callback.onException(Connection.this, defunct(ce), System.nanoTime() - handler.startTime);
+                    handler.callback.onException(Connection.this, defunct(ce), System.nanoTime() - handler.startTime, handler.retryCount);
                 } else {
                     logger.trace("[{}] request sent successfully", name);
                 }
@@ -554,7 +555,7 @@ class Connection extends org.apache.cassandra.transport.Connection
                     return;
                 }
                 handler.cancelTimeout();
-                handler.callback.onSet(Connection.this, response, System.nanoTime() - handler.startTime);
+                handler.callback.onSet(Connection.this, response, System.nanoTime() - handler.startTime, handler.retryCount);
             }
         }
 
@@ -588,7 +589,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             {
                 ResponseHandler handler = iter.next();
                 handler.cancelTimeout();
-                handler.callback.onException(Connection.this, ce, System.nanoTime() - handler.startTime);
+                handler.callback.onException(Connection.this, ce, System.nanoTime() - handler.startTime, handler.retryCount);
                 iter.remove();
             }
         }
@@ -624,18 +625,24 @@ class Connection extends org.apache.cassandra.transport.Connection
         }
 
         @Override
-        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, long latency) {
-            onSet(connection, response, latency);
+        public int retryCount() {
+            // This is ignored, as there is no retry logic in this class
+            return 0;
         }
 
         @Override
-        public void onSet(Connection connection, Message.Response response, long latency) {
+        public void onSet(Connection connection, Message.Response response, ExecutionInfo info, long latency) {
+            onSet(connection, response, latency, 0);
+        }
+
+        @Override
+        public void onSet(Connection connection, Message.Response response, long latency, int retryCount) {
             this.address = connection.address;
             super.set(response);
         }
 
         @Override
-        public void onException(Connection connection, Exception exception, long latency) {
+        public void onException(Connection connection, Exception exception, long latency, int retryCount) {
             // If all nodes are down, we will get a null connection here. This is fine, if we have
             // an exception, consumers shouldn't assume the address is not null.
             if (connection != null)
@@ -644,10 +651,11 @@ class Connection extends org.apache.cassandra.transport.Connection
         }
 
         @Override
-        public void onTimeout(Connection connection, long latency) {
+        public boolean onTimeout(Connection connection, long latency, int retryCount) {
             assert connection != null; // We always timeout on a specific connection, so this shouldn't be null
             this.address = connection.address;
-            super.setException(new ConnectionException(connection.address, "Operation Timeouted"));
+            super.setException(new ConnectionException(connection.address, "Operation timed out"));
+            return true;
         }
 
         public InetAddress getAddress() {
@@ -657,9 +665,10 @@ class Connection extends org.apache.cassandra.transport.Connection
 
     interface ResponseCallback {
         public Message.Request request();
-        public void onSet(Connection connection, Message.Response response, long latency);
-        public void onException(Connection connection, Exception exception, long latency);
-        public void onTimeout(Connection connection, long latency);
+        public int retryCount();
+        public void onSet(Connection connection, Message.Response response, long latency, int retryCount);
+        public void onException(Connection connection, Exception exception, long latency, int retryCount);
+        public boolean onTimeout(Connection connection, long latency, int retryCount);
     }
 
     static class ResponseHandler {
@@ -667,6 +676,7 @@ class Connection extends org.apache.cassandra.transport.Connection
         public final Connection connection;
         public final int streamId;
         public final ResponseCallback callback;
+        public final int retryCount;
 
         private final Timeout timeout;
         private final long startTime;
@@ -675,6 +685,7 @@ class Connection extends org.apache.cassandra.transport.Connection
             this.connection = connection;
             this.streamId = connection.dispatcher.streamIdHandler.next();
             this.callback = callback;
+            this.retryCount = callback.retryCount();
 
             long timeoutMs = connection.factory.getReadTimeoutMillis();
             this.timeout = timeoutMs <= 0 ? null : connection.factory.timer.newTimeout(onTimeoutTask(), timeoutMs, TimeUnit.MILLISECONDS);
@@ -699,8 +710,8 @@ class Connection extends org.apache.cassandra.transport.Connection
             return new TimerTask() {
                 @Override
                 public void run(Timeout timeout) {
-                    callback.onTimeout(connection, System.nanoTime() - startTime);
-                    cancelHandler();
+                    if (callback.onTimeout(connection, System.nanoTime() - startTime, retryCount))
+                        cancelHandler();
                 }
             };
         }
