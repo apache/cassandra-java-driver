@@ -7,6 +7,7 @@ CHANGELOG
 - [bug] Handle null pool in PooledConnection.release (JAVA-449)
 - [improvement] Defunct connection on request timeout (JAVA-425)
 - [improvement] Try next host when we get a SERVER_ERROR (JAVA-426)
+- [bug] Handle race between query timeout and completion (JAVA-449, JAVA-460, JAVA-471)
 
 
 2.0.6:
