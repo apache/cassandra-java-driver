@@ -560,6 +560,22 @@ public abstract class DataType {
     }
 
     /**
+     * @deprecated This method is no longer supported, will be removed, and simply throws {@link UnsupportedOperationException}.
+     */
+    @Deprecated
+    public Object deserialize(ByteBuffer bytes) {
+        throw new UnsupportedOperationException("Method no longer supported; use deserialize(ByteBuffer,ProtocolVersion)");
+    }
+    
+    /**
+     * @deprecated Use {@link #deserialize(ByteBuffer,ProtocolVersion)}.
+     * @see #deserialize(ByteBuffer,ProtocolVersion)
+     */
+    public Object deserialize(ByteBuffer bytes, int protocolVersion) {
+        return deserialize(bytes, ProtocolVersion.fromInt(protocolVersion));
+    }
+    
+    /**
      * Deserialize a value of this type from the provided bytes using the given protocol version.
      *
      * @param bytes bytes holding the value to deserialize.
