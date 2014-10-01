@@ -376,10 +376,17 @@ class SessionManager extends AbstractSession {
         } else if (serialConsistency == null)
             serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
 
-        return makeRequestMessage(statement, consistency, serialConsistency, pagingState);
+        long defaultTimestamp = 0;
+        if (cluster.manager.protocolVersion().compareTo(ProtocolVersion.V3) >= 0) {
+            defaultTimestamp = statement.getDefaultTimestamp();
+            if (defaultTimestamp <= 0)
+                defaultTimestamp = cluster.getConfiguration().getPolicies().getTimestampGenerator().next();
+        }
+
+        return makeRequestMessage(statement, consistency, serialConsistency, pagingState, defaultTimestamp);
     }
 
-    Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState) {
+    Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState, long defaultTimestamp) {
         ProtocolVersion protoVersion = cluster.manager.protocolVersion();
         int fetchSize = statement.getFetchSize();
 
@@ -414,13 +421,15 @@ class SessionManager extends AbstractSession {
 
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
             String qString = rs.getQueryString();
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false, fetchSize, pagingState, scl);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false,
+                                                                                      fetchSize, pagingState, scl, defaultTimestamp);
             return new Requests.Query(qString, options);
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
             bs.ensureAllSet();
             boolean skipMetadata = protoVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.wrapper.values), skipMetadata, fetchSize, pagingState, scl);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.wrapper.values), skipMetadata,
+                                                                                      fetchSize, pagingState, scl, defaultTimestamp);
             return new Requests.Execute(bs.statement.getPreparedId().id, options);
         } else {
             assert statement instanceof BatchStatement : statement;
@@ -432,7 +441,7 @@ class SessionManager extends AbstractSession {
             BatchStatement bs = (BatchStatement)statement;
             bs.ensureAllSet();
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protoVersion);
-            Requests.BatchProtocolOptions options = new Requests.BatchProtocolOptions(cl, scl, 0L);
+            Requests.BatchProtocolOptions options = new Requests.BatchProtocolOptions(cl, scl, defaultTimestamp);
             return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, options);
         }
     }
