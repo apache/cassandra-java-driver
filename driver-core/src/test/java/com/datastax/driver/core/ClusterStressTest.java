@@ -1,16 +1,15 @@
 package com.datastax.driver.core;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.annotations.Test;
+
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
 
 public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final Logger logger = LoggerFactory.getLogger(ClusterStressTest.class);
@@ -31,8 +30,8 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
     public void clusters_should_not_leak_connections() {
         int numberOfClusters = 10;
         for (int i = 0; i < 500; i++) {
-            List<Cluster> clusters = waitFor(createClustersConcurrently(numberOfClusters));
-            waitFor(closeClustersConcurrently(clusters));
+            List<Cluster> clusters = waitForCreates(createClustersConcurrently(numberOfClusters));
+            waitForCloses(closeClustersConcurrently(clusters));
             logger.debug("# {} threads currently running", Thread.getAllStackTraces().keySet().size());
         }
     }
@@ -65,19 +64,60 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
         return closeFutures;
     }
 
-    private <E> List<E> waitFor(List<Future<E>> futures) {
-        List<E> result = new ArrayList<E>(futures.size());
-        for (Future<E> future : futures) {
+    private List<Cluster> waitForCreates(List<Future<Cluster>> futures) {
+        List<Cluster> clusters = new ArrayList<Cluster>(futures.size());
+        // If an error occurs, we will abort the test, but we still want to close all the clusters
+        // that were opened successfully, so we iterate over the whole list no matter what.
+        AssertionError error = null;
+        for (Future<Cluster> future : futures) {
+            try {
+                clusters.add(future.get());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                if (error == null)
+                    error = assertionError("Interrupted while waiting for future creation", e);
+            } catch (ExecutionException e) {
+                if (error == null) {
+                    Throwable cause = e.getCause();
+                    if (cause instanceof AssertionError)
+                        error = (AssertionError)cause;
+                    else
+                        error = assertionError("Error while creating a cluster", cause);
+                }
+            }
+        }
+        if (error != null) {
+            for (Cluster cluster : clusters)
+                cluster.close();
+            throw error;
+        } else
+            return clusters;
+    }
+
+    private List<Void> waitForCloses(List<Future<Void>> futures) {
+        List<Void> result = new ArrayList<Void>(futures.size());
+        AssertionError error = null;
+        for (Future<Void> future : futures) {
             try {
                 result.add(future.get());
             } catch (InterruptedException e) {
-                throw new RuntimeException("Interrupted while waiting for future", e);
+                Thread.currentThread().interrupt();
+                if (error == null)
+                    error = assertionError("Interrupted while waiting for future", e);
             } catch (ExecutionException e) {
-                e.printStackTrace();
-                fail(e.getMessage());
+                if (error == null) {
+                    Throwable cause = e.getCause();
+                    if (cause instanceof AssertionError)
+                        error = (AssertionError)cause;
+                    else
+                        error = assertionError("Error while closing a cluster", cause);
+                }
             }
         }
-        return result;
+        if (error != null)
+            throw error;
+        else
+            return result;
     }
 
     private static class CreateClusterAndCheckConnections implements Callable<Cluster> {
@@ -93,22 +133,36 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
 
             Cluster cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1').build();
 
-            // The cluster has not been initialized yet, therefore the control connection is not opened
-            assertEquals(cluster.manager.sessions.size(), 0);
-            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 0);
+            try {
+                // The cluster has not been initialized yet, therefore the control connection is not opened
+                assertEquals(cluster.manager.sessions.size(), 0);
+                assertEquals((int)cluster.getMetrics().getOpenConnections().getValue(), 0);
 
-            // The first session initializes the cluster and its control connection
-            // This is a local cluster so we also have 2 connections per session
-            Session session = cluster.connect();
-            assertEquals(cluster.manager.sessions.size(), 1);
-            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 3);
+                // The first session initializes the cluster and its control connection
+                Session session = cluster.connect();
+                assertEquals(cluster.manager.sessions.size(), 1);
+                assertEquals((int)cluster.getMetrics().getOpenConnections().getValue(), 1 + numberOfLocalCoreConnections(cluster));
 
-            // Closing the session keeps the control connection opened
-            session.close();
-            assertEquals(cluster.manager.sessions.size(), 0);
-            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+                // Closing the session keeps the control connection opened
+                session.close();
+                assertEquals(cluster.manager.sessions.size(), 0);
+                assertEquals((int)cluster.getMetrics().getOpenConnections().getValue(), 1);
 
-            return cluster;
+                return cluster;
+            } catch (AssertionError e) {
+                // If an assertion fails, close the cluster now, because it's the last time we
+                // have a reference to it.
+                cluster.close();
+                throw e;
+            }
+        }
+
+        private int numberOfLocalCoreConnections(Cluster cluster) {
+            Configuration configuration = cluster.getConfiguration();
+            ProtocolVersion protocolVersion = configuration.getProtocolOptions().getProtocolVersion();
+            return (protocolVersion.compareTo(ProtocolVersion.V3) < 0)
+                ? configuration.getPoolingOptions().getCoreConnectionsPerHost(HostDistance.LOCAL)
+                : 1;
         }
     }
 
@@ -131,5 +185,11 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
 
             return null;
         }
+    }
+
+    private static AssertionError assertionError(String message, Throwable cause) {
+        AssertionError error = new AssertionError(message);
+        error.initCause(cause);
+        return error;
     }
 }
