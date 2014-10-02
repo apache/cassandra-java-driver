@@ -4,14 +4,17 @@ CHANGELOG
 2.1.2:
 ------
 
+- [improvement] Support for native protocol v3 (JAVA-361, JAVA-364, JAVA-467)
 - [bug] Fix UDT fields of type inet in QueryBuilder (JAVA-454)
 - [bug] Exclude transient fields from Frozen checks (JAVA-455)
 - [bug] Fix handling of null collections in mapper (JAVA-453)
 - [improvement] Make implicit column names case-insensitive in mapper (JAVA-452)
 - [bug] Fix named bind markers in QueryBuilder (JAVA-433)
 - [bug] Fix handling of BigInteger in object mapper (JAVA-458)
+- [bug] Ignore synthetic fields in mapper (JAVA-465)
 - [improvement] Throw an exception when DCAwareRoundRobinPolicy is built with
-  an explicit but null or empty local datacenter (JAVA-451).
+  an explicit but null or empty local datacenter (JAVA-451)
+- [improvement] Add backwards-compatible DataType.serialize methods (JAVA-469)
 
 Merged from 2.0 branch:
 
