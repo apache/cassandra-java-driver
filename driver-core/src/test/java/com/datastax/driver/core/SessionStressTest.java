@@ -63,7 +63,8 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
         // This is a local cluster so we also have 2 connections per session
         Session session = cluster.connect();
         assertEquals(cluster.manager.sessions.size(), 1);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 3);
+        int coreConnections = TestUtils.numberOfLocalCoreConnections(cluster);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1 + coreConnections);
 
         // Closing the session keeps the control connection opened
         session.close();
@@ -80,14 +81,16 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
                 // We should see the exact number of opened sessions
                 // Since we have 2 connections per session, we should see 2 * sessions + control connection
                 assertEquals(cluster.manager.sessions.size(), nbOfSessions);
-                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 2 * nbOfSessions + 1);
+                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(),
+                             coreConnections * nbOfSessions + 1);
 
                 // Close half of the sessions asynchronously
                 waitFor(closeSessionsConcurrently(halfOfTheSessions));
 
                 // Check that we have the right number of sessions and connections
                 assertEquals(cluster.manager.sessions.size(), halfOfTheSessions);
-                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), nbOfSessions + 1);
+                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(),
+                             coreConnections * (nbOfSessions / 2) + 1);
 
                 // Close and open the same number of sessions concurrently
                 CountDownLatch startSignal = new CountDownLatch(1);
@@ -100,7 +103,8 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
 
                 // Check that we have the same number of sessions and connections
                 assertEquals(cluster.manager.sessions.size(), halfOfTheSessions);
-                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), nbOfSessions + 1);
+                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(),
+                             coreConnections * (nbOfSessions / 2) + 1);
 
                 // Close the remaining sessions
                 waitFor(closeSessionsConcurrently(halfOfTheSessions));

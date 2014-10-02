@@ -141,7 +141,7 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
                 // The first session initializes the cluster and its control connection
                 Session session = cluster.connect();
                 assertEquals(cluster.manager.sessions.size(), 1);
-                assertEquals((int)cluster.getMetrics().getOpenConnections().getValue(), 1 + numberOfLocalCoreConnections(cluster));
+                assertEquals((int)cluster.getMetrics().getOpenConnections().getValue(), 1 + TestUtils.numberOfLocalCoreConnections(cluster));
 
                 // Closing the session keeps the control connection opened
                 session.close();
@@ -155,14 +155,6 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
                 cluster.close();
                 throw e;
             }
-        }
-
-        private int numberOfLocalCoreConnections(Cluster cluster) {
-            Configuration configuration = cluster.getConfiguration();
-            ProtocolVersion protocolVersion = configuration.getProtocolOptions().getProtocolVersion();
-            return (protocolVersion.compareTo(ProtocolVersion.V3) < 0)
-                ? configuration.getPoolingOptions().getCoreConnectionsPerHost(HostDistance.LOCAL)
-                : 1;
         }
     }
 

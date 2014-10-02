@@ -147,7 +147,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(host.getRack(), "rack1");
         assertEquals(host.getSocketAddress().toString(), hostAddress + ":9042");
 
-        assertEquals(state.getOpenConnections(host), 2);
+        assertEquals(state.getOpenConnections(host), TestUtils.numberOfLocalCoreConnections(cluster));
         assertEquals(state.getInFlightQueries(host), 0);
         assertEquals(state.getSession(), session);
     }
@@ -166,7 +166,9 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         Session session = cluster.connect();
         assertEquals(cluster.manager.sessions.size(), 1);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 3);
+        int coreConnections = TestUtils.numberOfLocalCoreConnections(cluster);
+        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(),
+                     1 + coreConnections);
 
         // ensure sessions.size() returns to 0 with only 1 active connection
         session.close();
@@ -185,7 +187,8 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             // an additional 2 control connections should be seen for node2
             thisSession = cluster.connect();
             assertEquals(cluster.manager.sessions.size(), 1);
-            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 5);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(),
+                         1 + coreConnections * 2);
 
             // ensure bootstrapping a node does not create additional connections that won't get cleaned up
             thisSession.close();
@@ -248,7 +251,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             startLatch.countDown();
 
             executor.shutdown();
-            boolean normalShutdown = executor.awaitTermination(500, TimeUnit.MILLISECONDS);
+            boolean normalShutdown = executor.awaitTermination(1, TimeUnit.SECONDS);
             assertTrue(normalShutdown);
 
             // The deadlock occurred here before JAVA-418
