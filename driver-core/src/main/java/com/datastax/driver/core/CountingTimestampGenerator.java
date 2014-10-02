@@ -25,17 +25,15 @@ import org.slf4j.LoggerFactory;
 public class CountingTimestampGenerator implements TimestampGenerator {
     private static final Logger logger = LoggerFactory.getLogger(CountingTimestampGenerator.class);
 
+    // We're deliberately avoiding an anonymous subclass with initialValue(), because this can introduce
+    // classloader leaks in managed environments like Tomcat
     private final ThreadLocal<Long> last = new ThreadLocal<Long>();
-
-    public CountingTimestampGenerator() {
-        // We're deliberately avoiding an anonymous subclass with initialValue(), because this can introduce
-        // classloader leaks in managed environments like Tomcat
-        last.set(0L);
-    }
 
     @Override
     public long next() {
-        long micros = this.last.get();
+        Long micros = this.last.get();
+        if (micros == null)
+            micros = 0L;
 
         long millis = micros / 1000;
         long counter = micros % 1000;
