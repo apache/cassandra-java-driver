@@ -358,21 +358,27 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
                 // This is only called for internal calls, so don't bother with ExecutionInfo
                 @Override
-                public void onSet(Connection connection, Message.Response response, long latency) {
+                public void onSet(Connection connection, Message.Response response, long latency, int retryCount) {
                     onSet(connection, response, null, null, latency);
                 }
 
                 @Override
-                public void onException(Connection connection, Exception exception, long latency) {
+                public void onException(Connection connection, Exception exception, long latency, int retryCount) {
                     future.setException(exception);
                 }
 
                 @Override
-                public void onTimeout(Connection connection, long latency) {
+                public boolean onTimeout(Connection connection, long latency, int retryCount) {
                     // This won't be called directly since this will be wrapped by RequestHandler.
                     throw new UnsupportedOperationException();
                 }
 
+                @Override
+                public int retryCount() {
+                    // This is only called for internal calls (i.e, when the callback is not wrapped in RequestHandler).
+                    // There is no retry logic in that case, so the value does not really matter.
+                    return 0;
+                }
             }, statement);
 
             return future;

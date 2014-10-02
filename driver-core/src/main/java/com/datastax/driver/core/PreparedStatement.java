@@ -98,11 +98,16 @@ public interface PreparedStatement {
      * <p>
      * Note that if the partition key is part of the prepared variables, the
      * routing key will be automatically computed once those variables are bound.
+     * <p>
+     * If the partition key is neither fixed nor part of the prepared variables (e.g.
+     * a composite partition key where only some of the components are bound), the
+     * routing key can also be set on each bound statement.
      *
      * @param routingKey the raw (binary) value to use as routing key.
      * @return this {@code PreparedStatement} object.
      *
      * @see Statement#getRoutingKey
+     * @see BoundStatement#getRoutingKey
      */
     public PreparedStatement setRoutingKey(ByteBuffer routingKey);
 

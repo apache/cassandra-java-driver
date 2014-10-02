@@ -50,6 +50,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     // we still want to avoid duplicating too much code so we wrap.
     final DataWrapper wrapper;
 
+    private ByteBuffer routingKey;
+
     /**
      * Creates a new {@code BoundStatement} from the provided prepared
      * statement.
@@ -99,7 +101,11 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *
      * @param name the name of the variable to check.
      * @return whether the first occurrence of variable {@code name} has been
+<<<<<<< HEAD
      * bound.
+=======
+     * bound to a non-null value.
+>>>>>>> 2.0
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
@@ -205,27 +211,51 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     }
 
     /**
+     * Sets the routing key for this bound statement.
+     * <p>
+     * This is useful when the routing key can neither be set on the {@code PreparedStatement} this bound statement
+     * was built from, nor automatically computed from bound variables. In particular, this is the case if the
+     * partition key is composite and only some of its components are bound.
+     *
+     * @param routingKey the raw (binary) value to use as routing key.
+     * @return this {@code BoundStatement} object.
+     *
+     * @see BoundStatement#getRoutingKey
+     */
+    public BoundStatement setRoutingKey(ByteBuffer routingKey) {
+        this.routingKey = routingKey;
+        return this;
+    }
+
+    /**
      * The routing key for this bound query.
      * <p>
      * This method will return a non-{@code null} value if either of the following occur:
      * <ul>
-     *   <li>All the columns composing the partition key are bound
-     *   variables of this {@code BoundStatement}. The routing key will then be
-     *   built using the values provided for these partition key columns.</li>
-     *   <li>The routing key has been set through {@link PreparedStatement#setRoutingKey}
-     *   for the {@code PreparedStatement} this statement has been built from.</li>
+     * <li>The routing key has been set directly through {@link BoundStatement#setRoutingKey}.</li>
+     * <li>The routing key has been set through {@link PreparedStatement#setRoutingKey} for the
+     * {@code PreparedStatement} this statement has been built from.</li>
+     * <li>All the columns composing the partition key are bound variables of this {@code BoundStatement}. The routing
+     * key will then be built using the values provided for these partition key columns.</li>
      * </ul>
      * Otherwise, {@code null} is returned.
      * <p>
-     * Note that if the routing key has been set through {@link PreparedStatement#setRoutingKey},
-     * that latter value takes precedence even if the partition key is part of the bound variables.
+     *
+     * Note that if the routing key has been set through {@link BoundStatement#setRoutingKey}, then that takes
+     * precedence. If the routing key has been set through {@link PreparedStatement#setRoutingKey} then that is used
+     * next. If neither of those are set then it is computed.
      *
      * @return the routing key for this statement or {@code null}.
      */
     @Override
     public ByteBuffer getRoutingKey() {
-        if (statement.getRoutingKey() != null)
+        if (this.routingKey != null) {
+            return this.routingKey;
+        }
+
+        if (statement.getRoutingKey() != null) {
             return statement.getRoutingKey();
+        }
 
         int[] rkIndexes = statement.getPreparedId().routingKeyIndexes;
         if (rkIndexes != null) {
