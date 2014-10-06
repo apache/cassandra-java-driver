@@ -654,12 +654,25 @@ public class Cluster implements Closeable {
          * to trigger auto-detection (see above) but this is the default (so you don't have
          * to call this method for that behavior).
          * @return this Builder.
-         *
-         * @throws IllegalArgumentException if {@code version} is neither 1, 2 or a
-         * negative value.
          */
         public Builder withProtocolVersion(ProtocolVersion version) {
             this.protocolVersion = version;
+            return this;
+        }
+
+        /**
+         * The native protocol version to use, as a number.
+         * <p>
+         * This method is provided for backward-compatibility. Whenever possible,
+         *  {@link #withProtocolVersion(ProtocolVersion)} should be preferred.
+         *
+         * @param version the native protocol version as a number.
+         * @return this Builder.
+         * @throws DriverInternalError if the number does not correspond to any known native
+         * protocol version.
+         */
+        public Builder withProtocolVersion(int version) {
+            this.protocolVersion = ProtocolVersion.fromInt(version);
             return this;
         }
 
