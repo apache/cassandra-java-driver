@@ -29,6 +29,8 @@ public class CountingTimestampGenerator implements TimestampGenerator {
     // classloader leaks in managed environments like Tomcat
     private final ThreadLocal<Long> last = new ThreadLocal<Long>();
 
+    Clock clock = new SystemClock();
+
     @Override
     public long next() {
         Long micros = this.last.get();
@@ -38,7 +40,7 @@ public class CountingTimestampGenerator implements TimestampGenerator {
         long millis = micros / 1000;
         long counter = micros % 1000;
 
-        long now = System.currentTimeMillis();
+        long now = clock.currentTime();
         if (millis == now) {
             if (counter == 999)
                 // This should not happen: even if System.currentTimeMillis() does not always have millisecond
