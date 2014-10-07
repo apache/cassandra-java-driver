@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.CountingTimestampGenerator;
+import com.datastax.driver.core.ServerSideTimestampGenerator;
 import com.datastax.driver.core.TimestampGenerator;
 
 /**
@@ -124,13 +124,12 @@ public class Policies {
     /**
      * The default timestamp generator.
      * <p>
-     * This is an instance of {@link CountingTimestampGenerator}.
+     * This is an instance of {@link ServerSideTimestampGenerator}.
      *
      * @return the default timestamp generator.
      */
     public static TimestampGenerator defaultTimestampGenerator() {
-        // Create a new instance each time to avoid sharing between different Cluster instances.
-        return new CountingTimestampGenerator();
+        return ServerSideTimestampGenerator.INSTANCE;
     }
 
     /**

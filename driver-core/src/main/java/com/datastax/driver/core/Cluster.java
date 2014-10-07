@@ -24,7 +24,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.datastax.driver.core.exceptions.DriverException;
 import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -863,9 +862,8 @@ public class Cluster implements Closeable {
          * generated server-side, and setting a generator through this method will have
          * no effect.
          * <p>
-         * If no generator is set through this method, the default
-         * {@link CountingTimestampGenerator} will be used. To force server-side
-         * timestamps with V3 or above, use {@link ServerSideTimestampGenerator}.
+         * If no generator is set through this method, the driver will default to the
+         * legacy server-side behavior by using {@link ServerSideTimestampGenerator}.
          *
          * @param timestampGenerator the generator to use.
          * @return this Builder.
