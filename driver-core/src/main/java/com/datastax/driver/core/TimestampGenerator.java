@@ -18,8 +18,8 @@ package com.datastax.driver.core;
 /**
  * Generates client-side, microsecond-precision query timestamps.
  * <p>
- * Implementations of this class should guarantee that, for a given thread, successive invocations
- * of {@link #next()} will yield strictly incrementing timestamps.
+ * Given that Cassandra uses those timestamps to resolve conflicts, implementations should generate
+ * incrementing timestamps for successive implementations.
  */
 public interface TimestampGenerator {
     /**
