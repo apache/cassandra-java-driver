@@ -16,8 +16,8 @@
 package com.datastax.driver.core;
 
 /**
- * A timestamp generator that always returns 0, in order to let Cassandra assign
- * server-side timestamps.
+ * A timestamp generator that always returns {@link Long#MIN_VALUE}, in order to let Cassandra
+ * assign server-side timestamps.
  */
 public class ServerSideTimestampGenerator implements TimestampGenerator {
     /**
@@ -27,7 +27,7 @@ public class ServerSideTimestampGenerator implements TimestampGenerator {
 
     @Override
     public long next() {
-        return 0;
+        return Long.MIN_VALUE;
     }
 
     private ServerSideTimestampGenerator() {

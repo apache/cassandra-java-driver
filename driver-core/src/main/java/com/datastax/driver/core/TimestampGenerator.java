@@ -25,8 +25,8 @@ public interface TimestampGenerator {
     /**
      * Returns the next timestamp.
      *
-     * @return the next timestamp (in microseconds). If this is 0, it won't be sent by the driver,
-     * letting Cassandra generate a server-side timestamp.
+     * @return the next timestamp (in microseconds). If it equals {@link Long#MIN_VALUE}, it won't be
+     * sent by the driver, letting Cassandra generate a server-side timestamp.
      */
     long next();
 }

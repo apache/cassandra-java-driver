@@ -77,7 +77,7 @@ public class QueryTimestampTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void should_use_server_side_timestamp_if_none_specified() {
-        timestampFromGenerator = 0;
+        timestampFromGenerator = Long.MIN_VALUE;
         long clientTime = System.currentTimeMillis() * 1000;
         String query = "INSERT INTO foo (k, v) VALUES (1, 1)";
         session.execute(query);
@@ -116,7 +116,7 @@ public class QueryTimestampTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void should_apply_server_side_timestamp_only_to_batched_queries_without_timestamp() {
-        timestampFromGenerator = 0;
+        timestampFromGenerator = Long.MIN_VALUE;
         long clientTime = System.currentTimeMillis() * 1000;
         BatchStatement batch = new BatchStatement();
         batch.add(new SimpleStatement("INSERT INTO foo (k, v) VALUES (1, 1)"));

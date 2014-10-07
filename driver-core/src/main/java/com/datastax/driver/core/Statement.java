@@ -42,7 +42,7 @@ public abstract class Statement {
     private volatile ConsistencyLevel serialConsistency;
     private volatile boolean traceQuery;
     private volatile int fetchSize;
-    private volatile long defaultTimestamp;
+    private volatile long defaultTimestamp = Long.MIN_VALUE;
 
     private volatile RetryPolicy retryPolicy;
 
@@ -266,9 +266,10 @@ public abstract class Statement {
      * <ul>
      * <li>the timestamp specified directly in the CQL query string (using the
      * {@code USING TIMESTAMP} syntax);</li>
-     * <li>the timestamp specified through this method, if strictly positive;</li>
+     * <li>the timestamp specified through this method, if different from
+     * {@link Long#MIN_VALUE};</li>
      * <li>the timestamp returned by the {@link TimestampGenerator} currently in use,
-     * if strictly positive.</li>
+     * if different from {@link Long#MIN_VALUE}.</li>
      * </ul>
      * If none of these apply, no timestamp will be sent with the query and Cassandra
      * will generate a server-side one (similar to the pre-V3 behavior).

@@ -206,7 +206,7 @@ class Requests {
                                                                                     -1,
                                                                                     null,
                                                                                     ConsistencyLevel.SERIAL,
-                                                                                    0);
+                                                                                    Long.MIN_VALUE);
 
         private final EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
         public final ConsistencyLevel consistency;
@@ -244,7 +244,7 @@ class Requests {
                 flags.add(QueryFlag.PAGING_STATE);
             if (serialConsistency != ConsistencyLevel.SERIAL)
                 flags.add(QueryFlag.SERIAL_CONSISTENCY);
-            if (defaultTimestamp != 0L)
+            if (defaultTimestamp != Long.MIN_VALUE)
                 flags.add(QueryFlag.DEFAULT_TIMESTAMP);
         }
 
@@ -394,7 +394,7 @@ class Requests {
 
             if (serialConsistency != ConsistencyLevel.SERIAL)
                 flags.add(QueryFlag.SERIAL_CONSISTENCY);
-            if (defaultTimestamp != 0L)
+            if (defaultTimestamp != Long.MIN_VALUE)
                 flags.add(QueryFlag.DEFAULT_TIMESTAMP);
         }
 

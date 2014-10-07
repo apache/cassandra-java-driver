@@ -378,10 +378,10 @@ class SessionManager extends AbstractSession {
         } else if (serialConsistency == null)
             serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
 
-        long defaultTimestamp = 0;
+        long defaultTimestamp = Long.MIN_VALUE;
         if (cluster.manager.protocolVersion().compareTo(ProtocolVersion.V3) >= 0) {
             defaultTimestamp = statement.getDefaultTimestamp();
-            if (defaultTimestamp <= 0)
+            if (defaultTimestamp == Long.MIN_VALUE)
                 defaultTimestamp = cluster.getConfiguration().getPolicies().getTimestampGenerator().next();
         }
 
