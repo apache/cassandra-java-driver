@@ -65,4 +65,28 @@ public class CountingTimestampGeneratorTest {
                 fail("Error in a test thread", cause);
         }
     }
+
+    @Test(groups = "unit")
+    public void should_generate_incrementing_timestamps_on_clock_resync() {
+        CountingTimestampGenerator generator = new CountingTimestampGenerator();
+        generator.clock = new BackInTimeClock();
+
+        long beforeClockResync = generator.next();
+        long afterClockResync = generator.next();
+
+        System.out.println(beforeClockResync);
+        System.out.println(afterClockResync);
+
+        assertTrue(beforeClockResync < afterClockResync, "The generated timestamps are not increasing on block resync");
+    }
+
+    static class BackInTimeClock implements Clock {
+        final long arbitraryTimeStamp = 1412610226270L;
+        int calls;
+
+        @Override
+        public long currentTime() {
+            return arbitraryTimeStamp - calls++;
+        }
+    }
 }
