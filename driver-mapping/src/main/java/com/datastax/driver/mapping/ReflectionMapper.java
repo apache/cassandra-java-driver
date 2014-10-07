@@ -119,9 +119,9 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             Object value = super.getValue(entity);
             switch (enumType) {
                 case STRING:
-                    return value.toString();
+                    return (value == null) ? null : value.toString();
                 case ORDINAL:
-                    return ((Enum)value).ordinal();
+                    return (value == null) ? null : ((Enum)value).ordinal();
             }
             throw new AssertionError();
         }

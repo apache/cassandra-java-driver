@@ -15,6 +15,7 @@ CHANGELOG
 - [improvement] Throw an exception when DCAwareRoundRobinPolicy is built with
   an explicit but null or empty local datacenter (JAVA-451)
 - [improvement] Add backwards-compatible DataType.serialize methods (JAVA-469)
+- [bug] Handle null enum fields in object mapper (JAVA-487)
 
 Merged from 2.0 branch:
 
