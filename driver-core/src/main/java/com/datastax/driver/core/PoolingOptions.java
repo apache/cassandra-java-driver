@@ -55,7 +55,7 @@ public class PoolingOptions {
     private static final int DEFAULT_MAX_POOL_LOCAL = 8;
     private static final int DEFAULT_MAX_POOL_REMOTE = 2;
 
-    private static final int DEFAULT_MAX_REQUESTS_PER_HOST_LOCAL = 8192;
+    private static final int DEFAULT_MAX_REQUESTS_PER_HOST_LOCAL = 1024;
     private static final int DEFAULT_MAX_REQUESTS_PER_HOST_REMOTE = 256;
 
     private volatile Cluster.Manager manager;
