@@ -84,6 +84,10 @@ class SingleConnectionPool extends HostConnectionPool {
         logger.trace("Created connection pool to host {}", host);
     }
 
+    private PoolingOptions options() {
+        return manager.configuration().getPoolingOptions();
+    }
+
     @Override
     public PooledConnection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
         if (isClosed())
@@ -100,7 +104,8 @@ class SingleConnectionPool extends HostConnectionPool {
             while (true) {
                 int inFlight = connection.inFlight.get();
 
-                if (inFlight >= connection.maxAvailableStreams()) {
+                if (inFlight >= Math.min(connection.maxAvailableStreams(),
+                                         options().getMaxSimultaneousRequestsPerHostThreshold(hostDistance))) {
                     connection = waitForConnection(timeout, unit);
                     break;
                 }
@@ -172,7 +177,8 @@ class SingleConnectionPool extends HostConnectionPool {
                 while (true) {
                     int inFlight = connection.inFlight.get();
 
-                    if (inFlight >= connection.maxAvailableStreams())
+                    if (inFlight >= Math.min(connection.maxAvailableStreams(),
+                                             options().getMaxSimultaneousRequestsPerHostThreshold(hostDistance)))
                         break;
 
                     if (connection.inFlight.compareAndSet(inFlight, inFlight + 1))

@@ -31,6 +31,8 @@ import java.util.concurrent.atomic.AtomicLongArray;
  * To minimize the average time to find that long, we search the array in a round-robin fashion.
  */
 class StreamIdGenerator {
+    static final int MAX_STREAM_PER_CONNECTION_V2 = 128;
+    static final int MAX_STREAM_PER_CONNECTION_V3 = 32768;
     private static final long MAX_UNSIGNED_LONG = -1L;
 
     static StreamIdGenerator newInstance(ProtocolVersion version) {
