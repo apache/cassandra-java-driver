@@ -271,8 +271,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 // read tuple
                 TupleValue r = session.execute("SELECT v FROM mytable WHERE k=?", i).one().getTupleValue("v");
 
-                // FIXME: remove .toString() JAVA-402
-                assertEquals(r.toString(), completeTuple.toString());
+                assertEquals(r, completeTuple);
                 ++i;
             }
 
@@ -353,8 +352,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
                         .one().getTupleValue(String.format("v_%s", i));
 
-                // FIXME: remove .toString() JAVA-402
-                assertEquals(r.toString(), createdTuple.toString());
+                assertEquals(r, createdTuple);
                 ++i;
             }
 
@@ -377,8 +375,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
                         .one().getTupleValue(String.format("v_%s", i));
 
-                // FIXME: remove .toString() JAVA-402
-                assertEquals(r.toString(), createdTuple.toString());
+                assertEquals(r, createdTuple);
                 ++i;
             }
 
@@ -404,8 +401,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
                         .one().getTupleValue(String.format("v_%s", i));
 
-                // FIXME: remove .toString() JAVA-402
-                assertEquals(r.toString(), createdTuple.toString());
+                assertEquals(r, createdTuple);
                 ++i;
             }
         } catch (Exception e) {
@@ -489,9 +485,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=?", i), i)
                         .one().getTupleValue(String.format("v_%s", i));
 
-                // FIXME: remove .toString() JAVA-402
-                assertEquals(r.toString(), createdTuple.toString());
-
+                assertEquals(r, createdTuple);
             }
         } catch (Exception e) {
             errorOut();

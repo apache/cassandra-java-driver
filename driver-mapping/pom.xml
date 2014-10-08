@@ -51,7 +51,7 @@
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm-all</artifactId>
-      <version>RELEASE</version>
+      <version>5.0.3</version>
       <scope>test</scope>
     </dependency>
     <!--
