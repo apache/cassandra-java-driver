@@ -63,9 +63,6 @@ public class ThreadLocalMonotonicTimestampGeneratorTest {
         long beforeClockResync = generator.next();
         long afterClockResync = generator.next();
 
-        System.out.println(beforeClockResync);
-        System.out.println(afterClockResync);
-
         assertTrue(beforeClockResync < afterClockResync, "The generated timestamps are not increasing on block resync");
     }
 }
