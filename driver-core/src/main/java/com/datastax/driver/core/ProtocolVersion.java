@@ -32,6 +32,9 @@ public enum ProtocolVersion {
     V3("2.1.0", 3),
     ;
 
+    /**
+     * The most recent protocol version supported by the driver.
+     */
     public static ProtocolVersion NEWEST_SUPPORTED = V3;
 
     private final VersionNumber minCassandraVersion;
@@ -72,10 +75,18 @@ public enum ProtocolVersion {
         INT_TO_VERSION = builder.build();
     }
 
+    /**
+     * Returns the value matching an integer version.
+     *
+     * @param i the version as an integer.
+     * @return the matching enum value.
+     *
+     * @throws IllegalArgumentException if the argument doesn't match any known version.
+     */
     public static ProtocolVersion fromInt(int i) {
         ProtocolVersion version = INT_TO_VERSION.get(i);
         if (version == null)
-            throw new DriverInternalError("No protocol version matching integer version " + i);
+            throw new IllegalArgumentException("No protocol version matching integer version " + i);
         return version;
     }
 }

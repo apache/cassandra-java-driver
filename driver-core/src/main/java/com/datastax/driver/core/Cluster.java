@@ -661,15 +661,16 @@ public class Cluster implements Closeable {
 
         /**
          * The native protocol version to use, as a number.
-         * <p>
-         * This method is provided for backward-compatibility. Whenever possible,
-         *  {@link #withProtocolVersion(ProtocolVersion)} should be preferred.
          *
          * @param version the native protocol version as a number.
          * @return this Builder.
-         * @throws DriverInternalError if the number does not correspond to any known native
-         * protocol version.
+         * @throws IllegalArgumentException if the number does not correspond to any known
+         * native protocol version.
+         *
+         * @deprecated This method is provided for backward compatibility. Use
+         * {@link #withProtocolVersion(ProtocolVersion)} instead.
          */
+        @Deprecated
         public Builder withProtocolVersion(int version) {
             this.protocolVersion = ProtocolVersion.fromInt(version);
             return this;
