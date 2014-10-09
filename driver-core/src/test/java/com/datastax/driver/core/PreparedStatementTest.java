@@ -407,7 +407,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             assertEquals("bar", all.get(2).getString("v"));
         } catch (UnsupportedFeatureException e) {
             // This is expected when testing the protocol v1
-            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != ProtocolVersion.V1)
+            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum() != ProtocolVersion.V1)
                 throw e;
         }
     }

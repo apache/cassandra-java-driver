@@ -59,6 +59,26 @@ public class Policies {
      * @param reconnectionPolicy the reconnection policy to use.
      * @param retryPolicy the retry policy to use.
      * @param addressTranslater the address translater to use.
+     */
+    public Policies(LoadBalancingPolicy loadBalancingPolicy,
+                    ReconnectionPolicy reconnectionPolicy,
+                    RetryPolicy retryPolicy,
+                    AddressTranslater addressTranslater) {
+        // NB: this constructor is provided for backward compatibility with 2.1.0
+        this.loadBalancingPolicy = loadBalancingPolicy;
+        this.reconnectionPolicy = reconnectionPolicy;
+        this.retryPolicy = retryPolicy;
+        this.addressTranslater = addressTranslater;
+        this.timestampGenerator = defaultTimestampGenerator();
+    }
+
+    /**
+     * Creates a new {@code Policies} object using the provided policies.
+     *
+     * @param loadBalancingPolicy the load balancing policy to use.
+     * @param reconnectionPolicy the reconnection policy to use.
+     * @param retryPolicy the retry policy to use.
+     * @param addressTranslater the address translater to use.
      * @param timestampGenerator the timestamp generator to use.
      */
     public Policies(LoadBalancingPolicy loadBalancingPolicy,

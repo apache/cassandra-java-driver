@@ -372,7 +372,7 @@ public abstract class TestUtils {
 
     public static int numberOfLocalCoreConnections(Cluster cluster) {
         Configuration configuration = cluster.getConfiguration();
-        ProtocolVersion protocolVersion = configuration.getProtocolOptions().getProtocolVersion();
+        ProtocolVersion protocolVersion = configuration.getProtocolOptions().getProtocolVersionEnum();
         return (protocolVersion.compareTo(ProtocolVersion.V3) < 0)
             ? configuration.getPoolingOptions().getCoreConnectionsPerHost(HostDistance.LOCAL)
             : 1;

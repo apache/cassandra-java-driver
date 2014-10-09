@@ -133,7 +133,7 @@ class SessionManager extends AbstractSession {
                         switch (rm.kind) {
                             case PREPARED:
                                 Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
-                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), cluster.getConfiguration().getProtocolOptions().getProtocolVersion(), query, poolsState.keyspace);
+                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum(), query, poolsState.keyspace);
                                 stmt = cluster.manager.addPrepared(stmt);
                                 try {
                                     // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
@@ -197,7 +197,7 @@ class SessionManager extends AbstractSession {
                             return true;
 
                         HostConnectionPool newPool = HostConnectionPool.newInstance(host, distance, SessionManager.this,
-                                                                                    cluster.getConfiguration().getProtocolOptions().getProtocolVersion());
+                                                                                    cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum());
                         HostConnectionPool previous = pools.put(host, newPool);
                         if (previous == null) {
                             logger.debug("Added connection pool for {}", host);
@@ -237,7 +237,7 @@ class SessionManager extends AbstractSession {
                 return false;
 
             HostConnectionPool newPool = HostConnectionPool.newInstance(host, distance, SessionManager.this,
-                                                                        cluster.getConfiguration().getProtocolOptions().getProtocolVersion());
+                                                                        cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum());
             pools.put(host, newPool);
 
             // If we raced with a session shutdown, ensure that the pool will be closed.
@@ -493,7 +493,7 @@ class SessionManager extends AbstractSession {
         if (statement.isTracing())
             msg.setTracingRequested();
 
-        DefaultResultSetFuture future = new DefaultResultSetFuture(this, configuration().getProtocolOptions().getProtocolVersion(), msg);
+        DefaultResultSetFuture future = new DefaultResultSetFuture(this, configuration().getProtocolOptions().getProtocolVersionEnum(), msg);
         execute(future, statement);
         return future;
     }

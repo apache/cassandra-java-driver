@@ -108,6 +108,23 @@
           <tagNameFormat>@{project.version}</tagNameFormat>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>clirr-maven-plugin</artifactId>
+        <version>2.6.1</version>
+        <configuration>
+          <comparisonVersion>2.1.0</comparisonVersion>
+          <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
+          <excludes>
+            <!-- Package-private, internal classes -->
+            <exclude>com/datastax/driver/core/Frame$*</exclude>
+            <exclude>com/datastax/driver/core/ProtocolEvent$*</exclude>
+            <exclude>com/datastax/driver/core/Message$*</exclude>
+            <exclude>com/datastax/driver/core/Requests$*</exclude>
+            <exclude>com/datastax/driver/core/Responses$*</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 

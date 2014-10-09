@@ -123,7 +123,7 @@ class MethodMapper {
 
         BoundStatement bs = statement.bind();
 
-        ProtocolVersion protocolVersion = session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+        ProtocolVersion protocolVersion = session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
         for (int i = 0; i < args.length; i++) {
             paramMappers[i].setValue(bs, args[i], protocolVersion);
         }
