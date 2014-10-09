@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +60,8 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
     private final ConcurrentMap<String, CopyOnWriteArrayList<Host>> perDcLiveHosts = new ConcurrentHashMap<String, CopyOnWriteArrayList<Host>>();
     private final AtomicInteger index = new AtomicInteger();
 
-    private volatile String localDc;
+    @VisibleForTesting
+    volatile String localDc;
 
     private final ConcurrentMap<String, CopyOnWriteArrayList<Host>> perDcSuspectedHosts = new ConcurrentHashMap<String, CopyOnWriteArrayList<Host>>();
 
