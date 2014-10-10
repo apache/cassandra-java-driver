@@ -23,6 +23,7 @@ Merged from 2.0 branch:
 - [improvement] Defunct connection on request timeout (JAVA-425)
 - [improvement] Try next host when we get a SERVER_ERROR (JAVA-426)
 - [bug] Handle race between query timeout and completion (JAVA-449, JAVA-460, JAVA-471)
+- [bug] Fix DCAwareRoundRobinPolicy datacenter auto-discovery (JAVA-496)
 
 
 2.1.1:
@@ -93,6 +94,7 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [improvement] Defunct connection on request timeout (JAVA-425)
 - [improvement] Try next host when we get a SERVER_ERROR (JAVA-426)
 - [bug] Handle race between query timeout and completion (JAVA-449, JAVA-460, JAVA-471)
+- [bug] Fix DCAwareRoundRobinPolicy datacenter auto-discovery (JAVA-496)
 
 
 2.0.6:

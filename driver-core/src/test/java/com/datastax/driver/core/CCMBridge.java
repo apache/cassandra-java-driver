@@ -225,6 +225,10 @@ public class CCMBridge {
         }
     }
 
+    public static String ipOfNode(int nodeNumber) {
+        return IP_PREFIX + Integer.toString(nodeNumber);
+    }
+
     // One cluster for the whole test class
     public static abstract class PerClassSingleNodeCluster {
 

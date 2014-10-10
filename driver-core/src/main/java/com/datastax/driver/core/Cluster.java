@@ -1187,6 +1187,13 @@ public class Cluster implements Closeable {
                 metadata.add(address);
             }
 
+            // Make a copy of the hosts - which only contain the contact points at this stage - before we initialize the
+            // control connection. We use a set with guaranteed insertion order, so that the contact points will remain
+            // first, before any other host discovered by the control connection.
+            // This is important if the load balancing policy is the DCAware one, because it needs to see the contact points
+            // first for the local DC detection to work properly.
+            Set<Host> hosts = Sets.newLinkedHashSet(metadata.allHosts());
+
             try {
                 try {
                     controlConnection.connect();
@@ -1203,9 +1210,11 @@ public class Cluster implements Closeable {
                     }
                 }
 
+                // metadata now also contains other hosts discovered by the connection, update our copy
+                hosts.addAll(metadata.allHosts());
+
                 // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
                 // rack...) to initialize the load balancing policy
-                Collection<Host> hosts = metadata.allHosts();
                 loadBalancingPolicy().init(Cluster.this, hosts);
 
                 isFullyInit = true;
