@@ -18,8 +18,6 @@ package com.datastax.driver.core;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.google.common.util.concurrent.Uninterruptibles;
-
 import com.google.common.util.concurrent.AbstractFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,12 +38,19 @@ abstract class AbstractReconnectionHandler implements Runnable {
 
     private final HandlerFuture handlerFuture = new HandlerFuture();
 
+    private final long initialDelayMs;
+
     private volatile boolean isActive;
 
     public AbstractReconnectionHandler(ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<Future<?>> currentAttempt) {
+        this(executor, schedule, currentAttempt, -1);
+    }
+
+    public AbstractReconnectionHandler(ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<Future<?>> currentAttempt, long initialDelayMs) {
         this.executor = executor;
         this.schedule = schedule;
         this.currentAttempt = currentAttempt;
+        this.initialDelayMs = initialDelayMs;
     }
 
     protected abstract Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException;
@@ -60,7 +65,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
     protected boolean onClusterNameMismatchException(ClusterNameMismatchException e, long nextDelayMs) { return false; }
 
     public void start() {
-        long firstDelay = schedule.nextDelayMs();
+        long firstDelay = (initialDelayMs >= 0) ? initialDelayMs : schedule.nextDelayMs();
         logger.debug("First reconnection scheduled in {}ms", firstDelay);
         try {
             handlerFuture.nextTry = executor.schedule(this, firstDelay, TimeUnit.MILLISECONDS);
@@ -91,9 +96,16 @@ abstract class AbstractReconnectionHandler implements Runnable {
             return;
         }
 
-        // Just make sure we don't start the first try too fast, in case we find out we need to cancel ourselves in start()
-        while (!isActive)
-            Uninterruptibles.sleepUninterruptibly(5, TimeUnit.MILLISECONDS);
+        // Just make sure we don't start the first try too fast, in case we find out in start() that we need to cancel ourselves
+        while (!isActive && !Thread.currentThread().isInterrupted()) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(5);
+            } catch (InterruptedException e) {
+                // This can happen at shutdown
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
 
         try {
             onReconnection(tryReconnect());

@@ -83,6 +83,12 @@ class ControlConnection implements Host.StateListener {
         // We don't have to be fancy here. We just set a flag so that we stop trying to reconnect (and thus change the
         // connection used) and shutdown the current one.
         isShutdown = true;
+
+        // Cancel any reconnection attempt in progress
+        Future<?> r = reconnectionAttempt.get();
+        if (r != null)
+            r.cancel(false);
+
         Connection connection = connectionRef.get();
         return connection == null ? CloseFuture.immediateFuture() : connection.closeAsync();
     }
@@ -100,37 +106,7 @@ class ControlConnection implements Host.StateListener {
             setNewConnection(reconnectInternal(queryPlan(), false));
         } catch (NoHostAvailableException e) {
             logger.error("[Control connection] Cannot connect to any host, scheduling retry");
-            new AbstractReconnectionHandler(cluster.reconnectionExecutor, cluster.reconnectionPolicy().newSchedule(), reconnectionAttempt) {
-                @Override
-                protected Connection tryReconnect() throws ConnectionException {
-                    try {
-                        return reconnectInternal(queryPlan(), false);
-                    } catch (NoHostAvailableException e) {
-                        throw new ConnectionException(null, e.getMessage());
-                    } catch (UnsupportedProtocolVersionException e) {
-                        // reconnectInternal only propagate those if we've not decided on the protocol version yet,
-                        // which should only happen on the initial connection and thus in connect() but never here.
-                        throw new AssertionError();
-                    }
-                }
-
-                @Override
-                protected void onReconnection(Connection connection) {
-                    setNewConnection(connection);
-                }
-
-                @Override
-                protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
-                    logger.error("[Control connection] Cannot connect to any host, scheduling retry in {} milliseconds", nextDelayMs);
-                    return true;
-                }
-
-                @Override
-                protected boolean onUnknownException(Exception e, long nextDelayMs) {
-                    logger.error(String.format("[Control connection] Unknown error during reconnection, scheduling retry in %d milliseconds", nextDelayMs), e);
-                    return true;
-                }
-            }.start();
+            backgroundReconnect(-1);
         } catch (UnsupportedProtocolVersionException e) {
             // reconnectInternal only propagate those if we've not decided on the protocol version yet,
             // which should only happen on the initial connection and thus in connect() but never here.
@@ -138,18 +114,60 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
+    /**
+     * @param initialDelayMs if >=0, bypass the schedule and use this for the first call
+     */
+    private void backgroundReconnect(long initialDelayMs) {
+        if (isShutdown)
+            return;
+
+        new AbstractReconnectionHandler(cluster.reconnectionExecutor, cluster.reconnectionPolicy().newSchedule(), reconnectionAttempt, initialDelayMs) {
+            @Override
+            protected Connection tryReconnect() throws ConnectionException {
+                try {
+                    return reconnectInternal(queryPlan(), false);
+                } catch (NoHostAvailableException e) {
+                    throw new ConnectionException(null, e.getMessage());
+                } catch (UnsupportedProtocolVersionException e) {
+                    // reconnectInternal only propagate those if we've not decided on the protocol version yet,
+                    // which should only happen on the initial connection and thus in connect() but never here.
+                    throw new AssertionError();
+                }
+            }
+
+            @Override
+            protected void onReconnection(Connection connection) {
+                setNewConnection(connection);
+            }
+
+            @Override
+            protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
+                logger.error("[Control connection] Cannot connect to any host, scheduling retry in {} milliseconds", nextDelayMs);
+                return true;
+            }
+
+            @Override
+            protected boolean onUnknownException(Exception e, long nextDelayMs) {
+                logger.error(String.format("[Control connection] Unknown error during reconnection, scheduling retry in %d milliseconds", nextDelayMs), e);
+                return true;
+            }
+        }.start();
+    }
+
     private Iterator<Host> queryPlan() {
         return cluster.loadBalancingPolicy().newQueryPlan(null, Statement.DEFAULT);
     }
 
     private void signalError() {
-        // If the connection was marked as defunct, this already reported the
-        // node down, which will trigger a reconnect. Otherwise, just reconnect
-        // manually
         Connection connection = connectionRef.get();
-        if (connection == null || !connection.isDefunct()) {
-            reconnect();
+        if (connection != null && connection.isDefunct()) {
+            // If the connection was marked as defunct, this already reported the
+            // node down, which will trigger a reconnect. Otherwise, just reconnect
+            // manually
+            return;
         }
+        // If the connection is not defunct, or the host has left, just reconnect manually
+        backgroundReconnect(0);
     }
 
     private void setNewConnection(Connection newConnection) {
@@ -601,15 +619,11 @@ class ControlConnection implements Host.StateListener {
         Connection current = connectionRef.get();
         if (logger.isDebugEnabled())
             logger.debug("[Control connection] {} is down, currently connected to {}", host, current == null ? "nobody" : current.address);
-        if (current != null && current.address.equals(host.getSocketAddress()) && reconnectionAttempt.get() == null) {
-            // We might very be on an I/O thread when we reach this so we should not do that on this thread.
-            // Besides, there is no reason to block the onDown method while we try to reconnect.
-            cluster.blockingExecutor.submit(new Runnable() {
-                @Override
-                public void run() {
-                    reconnect();
-                }
-            });
+
+        if (current != null && current.address.equals(host.getSocketAddress())) {
+            // This starts an AbstractReconnectionHandler, which will take care of checking if another reconnection is
+            // already in progress
+            backgroundReconnect(0);
         }
     }
 

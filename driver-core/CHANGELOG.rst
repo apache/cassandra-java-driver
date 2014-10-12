@@ -9,6 +9,7 @@ CHANGELOG
 - [improvement] Try next host when we get a SERVER_ERROR (JAVA-426)
 - [bug] Handle race between query timeout and completion (JAVA-449, JAVA-460, JAVA-471)
 - [bug] Fix DCAwareRoundRobinPolicy datacenter auto-discovery (JAVA-496)
+- [bug] Ensure control connection does not trigger concurrent reconnects (JAVA-497)
 
 
 2.0.6:
