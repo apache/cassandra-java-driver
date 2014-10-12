@@ -138,11 +138,22 @@ abstract class AbstractReconnectionHandler implements Runnable {
     }
 
     private void reschedule(long nextDelay) {
+        // If we got cancelled during the failed reconnection attempt that lead here, don't reschedule
+        if (localFuture.isCancelled()) {
+            currentAttempt.compareAndSet(localFuture, null);
+            return;
+        }
+
         readyForNext = false;
         ScheduledFuture<?> newFuture = executor.schedule(this, nextDelay, TimeUnit.MILLISECONDS);
         assert localFuture != null;
         // If it's not our future the current one, then we've been canceled
         if (!currentAttempt.compareAndSet(localFuture, newFuture)) {
+            newFuture.cancel(false);
+        }
+        // Check one last time is the previous future was cancelled (there is still a race if a client
+        // held on a reference to that future long after retrieving it from the AtomicReference)
+        if (localFuture.isCancelled()) {
             newFuture.cancel(false);
         }
         localFuture = newFuture;

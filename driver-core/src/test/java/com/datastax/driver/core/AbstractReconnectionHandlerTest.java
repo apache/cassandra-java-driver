@@ -1,0 +1,289 @@
+package com.datastax.driver.core;
+
+import java.net.InetSocketAddress;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
+
+import com.google.common.util.concurrent.Runnables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.fail;
+
+import com.datastax.driver.core.AbstractReconnectionHandlerTest.MockReconnectionWork.ReconnectBehavior;
+import com.datastax.driver.core.policies.ReconnectionPolicy.ReconnectionSchedule;
+
+public class AbstractReconnectionHandlerTest {
+    private static final Logger logger = LoggerFactory.getLogger(AbstractReconnectionHandlerTest.class);
+
+    ScheduledExecutorService executor;
+    MockReconnectionSchedule schedule;
+    MockReconnectionWork work;
+    final AtomicReference<ScheduledFuture<?>> future = new AtomicReference<ScheduledFuture<?>>();
+    AbstractReconnectionHandler handler;
+
+    @BeforeMethod(groups = "unit")
+    public void setup() {
+        executor = Executors.newScheduledThreadPool(2);
+        schedule = new MockReconnectionSchedule();
+        work = new MockReconnectionWork();
+        future.set(null);
+        handler = new AbstractReconnectionHandler(executor, schedule, future) {
+            @Override
+            protected Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+                return work.tryReconnect();
+            }
+
+            @Override
+            protected void onReconnection(Connection connection) {
+                work.onReconnection(connection);
+            }
+        };
+    }
+
+    @AfterMethod(groups = "unit")
+    public void tearDown() {
+        if (future.get() != null)
+            future.get().cancel(false);
+        executor.shutdownNow();
+    }
+
+    @Test(groups = "unit")
+    public void should_complete_if_first_reconnection_succeeds() {
+        handler.start();
+
+        assertThat(future.get()).isNotNull();
+        assertThat(future.get().isDone()).isFalse();
+
+        schedule.tick();
+        work.nextReconnect = ReconnectBehavior.SUCCEED;
+        work.tick();
+
+        waitForCompletion();
+
+        assertThat(work.success).isTrue();
+        assertThat(work.tries).isEqualTo(1);
+        assertThat(future.get()).isNull();
+    }
+
+    @Test(groups = "unit")
+    public void should_retry_until_success() {
+        handler.start();
+
+        int simulatedErrors = 10;
+        for (int i = 0; i < simulatedErrors; i++) {
+            schedule.tick();
+            work.nextReconnect = ReconnectBehavior.THROW_EXCEPTION;
+            work.tick();
+            assertThat(work.success).isFalse();
+            assertThat(future.get().isDone()).isFalse();
+        }
+
+        schedule.tick();
+        work.nextReconnect = ReconnectBehavior.SUCCEED;
+        work.tick();
+
+        waitForCompletion();
+
+        assertThat(work.success).isTrue();
+        assertThat(work.tries).isEqualTo(simulatedErrors + 1);
+        assertThat(future.get()).isNull();
+    }
+
+    @Test(groups = "unit")
+    public void should_stop_if_cancelled_between_attempts() {
+        handler.start();
+
+        schedule.delay = 10 * 1000; // give ourselves time to cancel
+        schedule.tick();
+
+        future.get().cancel(false);
+
+        waitForCompletion();
+
+        assertThat(work.success).isFalse();
+        assertThat(work.tries).isEqualTo(0);
+        // This is not a feature but is interesting to take note of (meaning that a non-null future
+        // does not necessarily mean that a handler is running):
+        assertThat(future.get()).isNotNull();
+    }
+
+    @Test(groups = "unit")
+    public void should_complete_if_cancelled_during_successful_reconnect() throws InterruptedException {
+        handler.start();
+
+        schedule.tick();
+        work.nextReconnect = ReconnectBehavior.SUCCEED;
+
+        // short pause to make sure we are in the middle of the handler's run method (it checks
+        // if the future is cancelled at the beginning)
+        TimeUnit.MILLISECONDS.sleep(100);
+        // don't force interruption because that's what the production code does
+        future.get().cancel(false);
+
+        work.tick();
+
+        waitForCompletion();
+
+        assertThat(work.success).isTrue();
+        assertThat(work.tries).isEqualTo(1);
+    }
+
+    @Test(groups = "unit")
+    public void should_stop_if_cancelled_during_failed_reconnect() throws InterruptedException {
+        handler.start();
+
+        schedule.tick();
+        work.nextReconnect = ReconnectBehavior.THROW_EXCEPTION;
+
+        // short pause to make sure we are in the middle of the handler's run method (it checks
+        // if the future is cancelled at the beginning)
+        TimeUnit.MILLISECONDS.sleep(100);
+        // don't force interruption because that's what the production code does
+        future.get().cancel(false);
+
+        work.tick();
+
+        // Need to
+        schedule.tick();
+
+        waitForCompletion();
+
+        assertThat(work.success).isFalse();
+        assertThat(work.tries).isEqualTo(1);
+    }
+
+    /**
+     * This is how the class currently works, but wouldn't it be better to stop and let the other task run?
+     */
+    @Test(groups = "unit")
+    public void should_cancel_previous_task() {
+        // Schedule a dummy task just to have a future
+        ScheduledFuture<?> previousFuture = executor.schedule(Runnables.doNothing(), 1, TimeUnit.HOURS);
+        future.set(previousFuture);
+
+        handler.start();
+
+        assertThat(previousFuture.isCancelled()).isTrue();
+
+        schedule.tick();
+        work.nextReconnect = ReconnectBehavior.SUCCEED;
+        work.tick();
+
+        waitForCompletion();
+    }
+
+    /**
+     * A reconnection schedule that allows manually setting the delay.
+     *
+     * To make testing easier, nextDelay blocks until tick() is called from the main thread.
+     */
+    static class MockReconnectionSchedule implements ReconnectionSchedule {
+        volatile long delay;
+        private final CyclicBarrier barrier = new CyclicBarrier(2);
+
+        // Hack to work around the fact that the first call to nextDelayMs is synchronous
+        private volatile boolean firstDelay = true;
+        private volatile boolean firstTick = true;
+
+        @Override
+        public long nextDelayMs() {
+            if (firstDelay)
+                firstDelay = false;
+            else {
+                logger.debug("in schedule, waiting for tick from main thread");
+                try {
+                    barrier.await(10, TimeUnit.SECONDS);
+                    logger.debug("in schedule, got tick from main thread, proceeding");
+                } catch (Exception e) {
+                    fail("Error while waiting for tick", e);
+                }
+            }
+            logger.debug("in schedule, returning {}", delay);
+            return delay;
+        }
+
+        public void tick() {
+            if (firstTick)
+                firstTick = false;
+            else {
+                logger.debug("send tick to schedule");
+                try {
+                    barrier.await(10, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    fail("Error while sending tick, no thread was waiting", e);
+                }
+                barrier.reset();
+            }
+        }
+    }
+
+    /**
+     * Simulates the work done by the overridable methods of the handler.
+     *
+     * Allows choosing whether the next reconnect will succeed or throw an exception.
+     * To make testing easier, tryReconnect blocks until tick() is called from the main thread.
+     */
+    static class MockReconnectionWork {
+        enum ReconnectBehavior {
+            SUCCEED, THROW_EXCEPTION
+        };
+
+        private final CyclicBarrier barrier = new CyclicBarrier(2);
+
+        volatile ReconnectBehavior nextReconnect;
+
+        volatile int tries = 0;
+        volatile boolean success = false;
+
+        protected Connection tryReconnect() throws ConnectionException {
+            tries += 1;
+            logger.debug("in reconnection work, wait for tick from main thread");
+            try {
+                barrier.await(10, TimeUnit.SECONDS);
+                logger.debug("in reconnection work, got tick from main thread, proceeding");
+            } catch (Exception e) {
+                fail("Error while waiting for tick", e);
+            }
+            switch (nextReconnect) {
+                case SUCCEED:
+                    logger.debug("simulate reconnection success");
+                    return null;
+                case THROW_EXCEPTION:
+                    logger.debug("simulate reconnection error");
+                    throw new ConnectionException(new InetSocketAddress(8888),
+                                                  "Simulated exception from mock reconnection");
+                default:
+                    throw new AssertionError();
+            }
+        }
+
+        public void tick() {
+            logger.debug("send tick to reconnection work");
+            try {
+                barrier.await(10, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                fail("Error while sending tick, no thread was waiting", e);
+            }
+            barrier.reset();
+        }
+
+        protected void onReconnection(Connection connection) {
+            success = true;
+        }
+    }
+
+    private void waitForCompletion() {
+        executor.shutdown();
+        try {
+            boolean shutdown = executor.awaitTermination(10, TimeUnit.SECONDS);
+            if (!shutdown)
+                fail("executor ran for longer than expected");
+        } catch (InterruptedException e) {
+            fail("Interrupted while waiting for executor to shutdown");
+        }
+    }
+}
