@@ -17,7 +17,7 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.collect.ImmutableList;
@@ -47,7 +47,7 @@ public class Host {
     final AtomicReference<ListenableFuture<?>> initialReconnectionAttempt = new AtomicReference<ListenableFuture<?>>(Futures.immediateFuture(null));
 
     // Tracks later reconnection attempts to that host so we avoid adding multiple tasks.
-    final AtomicReference<ScheduledFuture<?>> reconnectionAttempt = new AtomicReference<ScheduledFuture<?>>();
+    final AtomicReference<Future<?>> reconnectionAttempt = new AtomicReference<Future<?>>();
 
     final ExecutionInfo defaultExecutionInfo;
 

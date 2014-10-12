@@ -4,12 +4,14 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.google.common.util.concurrent.Runnables;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.fail;
 
@@ -22,7 +24,7 @@ public class AbstractReconnectionHandlerTest {
     ScheduledExecutorService executor;
     MockReconnectionSchedule schedule;
     MockReconnectionWork work;
-    final AtomicReference<ScheduledFuture<?>> future = new AtomicReference<ScheduledFuture<?>>();
+    final AtomicReference<Future<?>> future = new AtomicReference<Future<?>>();
     AbstractReconnectionHandler handler;
 
     @BeforeMethod(groups = "unit")
@@ -106,9 +108,7 @@ public class AbstractReconnectionHandlerTest {
 
         assertThat(work.success).isFalse();
         assertThat(work.tries).isEqualTo(0);
-        // This is not a feature but is interesting to take note of (meaning that a non-null future
-        // does not necessarily mean that a handler is running):
-        assertThat(future.get()).isNotNull();
+        assertThat(future.get().isCancelled()).isTrue();
     }
 
     @Test(groups = "unit")
@@ -156,24 +156,56 @@ public class AbstractReconnectionHandlerTest {
         assertThat(work.tries).isEqualTo(1);
     }
 
-    /**
-     * This is how the class currently works, but wouldn't it be better to stop and let the other task run?
-     */
     @Test(groups = "unit")
-    public void should_cancel_previous_task() {
-        // Schedule a dummy task just to have a future
-        ScheduledFuture<?> previousFuture = executor.schedule(Runnables.doNothing(), 1, TimeUnit.HOURS);
-        future.set(previousFuture);
+    public void should_yield_to_another_running_handler() {
+        // Set an uncompleted future, representing a running handler
+        future.set(SettableFuture.create());
 
         handler.start();
 
-        assertThat(previousFuture.isCancelled()).isTrue();
+        // Increase the delay to make sure that the first attempt does not start before the check
+        // for cancellation (which would require calling work.tick())
+        schedule.delay = 5000;
+        schedule.tick();
+
+        waitForCompletion();
+
+        assertThat(work.success).isFalse();
+    }
+
+    /**
+     * Note: a handler that succeeds immediately resets the future to null, so there is a very small window of opportunity
+     * for this scenario. Therefore we consider that if we find a completed future, the connection was successfully
+     * re-established a few milliseconds ago, so we don't start another attempt.
+     */
+    @Test(groups = "unit")
+    public void should_yield_to_another_handler_that_just_succeeded() {
+        future.set(Futures.immediateCheckedFuture(null));
+
+        handler.start();
+
+        schedule.tick();
+
+        waitForCompletion();
+
+        assertThat(work.success).isFalse();
+    }
+
+    @Test(groups = "unit")
+    public void should_run_if_another_handler_was_cancelled() {
+        future.set(Futures.immediateCancelledFuture());
+
+        handler.start();
 
         schedule.tick();
         work.nextReconnect = ReconnectBehavior.SUCCEED;
         work.tick();
 
         waitForCompletion();
+
+        assertThat(work.success).isTrue();
+        assertThat(work.tries).isEqualTo(1);
+        assertThat(future.get()).isNull();
     }
 
     /**

@@ -1311,7 +1311,7 @@ public class Cluster implements Closeable {
             }
 
             // If there is a reconnection attempt scheduled for that node, cancel it
-            ScheduledFuture<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
+            Future<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
             if (scheduledAttempt != null) {
                 logger.debug("Cancelling reconnection attempt since node is UP");
                 scheduledAttempt.cancel(false);

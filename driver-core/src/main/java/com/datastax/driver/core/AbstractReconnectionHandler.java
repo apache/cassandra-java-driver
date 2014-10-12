@@ -15,13 +15,12 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.util.concurrent.Uninterruptibles;
+
+import com.google.common.util.concurrent.AbstractFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,12 +33,16 @@ abstract class AbstractReconnectionHandler implements Runnable {
 
     private final ScheduledExecutorService executor;
     private final ReconnectionPolicy.ReconnectionSchedule schedule;
-    private final AtomicReference<ScheduledFuture<?>> currentAttempt;
+    /**
+     * The future that is exposed to clients, representing completion of the current active handler
+     */
+    private final AtomicReference<Future<?>> currentAttempt;
 
-    private volatile boolean readyForNext;
-    private volatile ScheduledFuture<?> localFuture;
+    private final HandlerFuture handlerFuture = new HandlerFuture();
 
-    public AbstractReconnectionHandler(ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<ScheduledFuture<?>> currentAttempt) {
+    private volatile boolean isActive;
+
+    public AbstractReconnectionHandler(ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<Future<?>> currentAttempt) {
         this.executor = executor;
         this.schedule = schedule;
         this.currentAttempt = currentAttempt;
@@ -60,18 +63,21 @@ abstract class AbstractReconnectionHandler implements Runnable {
         long firstDelay = schedule.nextDelayMs();
         logger.debug("First reconnection scheduled in {}ms", firstDelay);
         try {
-            localFuture = executor.schedule(this, firstDelay, TimeUnit.MILLISECONDS);
+            handlerFuture.nextTry = executor.schedule(this, firstDelay, TimeUnit.MILLISECONDS);
 
-            // If there a previous task, cancel it, so only one reconnection handler runs.
             while (true) {
-                ScheduledFuture<?> previous = currentAttempt.get();
-                if (currentAttempt.compareAndSet(previous, localFuture)) {
-                    if (previous != null)
-                        previous.cancel(false);
+                Future<?> previous = currentAttempt.get();
+                if (previous != null && !previous.isCancelled()) {
+                    logger.debug("Found another already active handler, cancelling");
+                    handlerFuture.cancel(false);
+                    return;
+                }
+                if (currentAttempt.compareAndSet(previous, handlerFuture)) {
+                    logger.debug("Becoming the active handler");
                     break;
                 }
             }
-            readyForNext = true;
+            isActive = true;
         } catch (RejectedExecutionException e) {
             // The executor has been shutdown, fair enough, just ignore
             logger.debug("Aborting reconnection handling since the cluster is shutting down");
@@ -80,23 +86,26 @@ abstract class AbstractReconnectionHandler implements Runnable {
 
     @Override
     public void run() {
-        // We shouldn't arrive here if the future is cancelled but better safe than sorry
-        if (localFuture.isCancelled())
+        if (handlerFuture.isCancelled()) {
+            logger.debug("Got cancelled, stopping");
             return;
+        }
 
-        // Don't run before ready, otherwise our cancel business might end up removing all connection attempts.
-        while (!readyForNext)
+        // Just make sure we don't start the first try too fast, in case we find out we need to cancel ourselves in start()
+        while (!isActive)
             Uninterruptibles.sleepUninterruptibly(5, TimeUnit.MILLISECONDS);
 
         try {
             onReconnection(tryReconnect());
-            currentAttempt.compareAndSet(localFuture, null);
+            handlerFuture.markAsDone();
+            currentAttempt.compareAndSet(handlerFuture, null);
+            logger.debug("Reconnection successful, cleared the future");
         } catch (ConnectionException e) {
             long nextDelay = schedule.nextDelayMs();
             if (onConnectionException(e, nextDelay))
                 reschedule(nextDelay);
             else
-                currentAttempt.compareAndSet(localFuture, null);
+                currentAttempt.compareAndSet(handlerFuture, null);
         } catch (AuthenticationException e) {
             logger.error(e.getMessage());
             long nextDelay = schedule.nextDelayMs();
@@ -104,7 +113,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
                 reschedule(nextDelay);
             } else {
                 logger.error("Retry against {} have been suspended. It won't be retried unless the node is restarted.", e.getHost());
-                currentAttempt.compareAndSet(localFuture, null);
+                currentAttempt.compareAndSet(handlerFuture, null);
             }
         } catch (InterruptedException e) {
             // If interrupted, skip this attempt but still skip scheduling reconnections
@@ -117,7 +126,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
                 reschedule(nextDelay);
             } else {
                 logger.error("Retry against {} have been suspended. It won't be retried unless the node is restarted.", e.address);
-                currentAttempt.compareAndSet(localFuture, null);
+                currentAttempt.compareAndSet(handlerFuture, null);
             }
         } catch (ClusterNameMismatchException e) {
             logger.error(e.getMessage());
@@ -126,37 +135,45 @@ abstract class AbstractReconnectionHandler implements Runnable {
                 reschedule(nextDelay);
             } else {
                 logger.error("Retry against {} have been suspended. It won't be retried unless the node is restarted.", e.address);
-                currentAttempt.compareAndSet(localFuture, null);
+                currentAttempt.compareAndSet(handlerFuture, null);
             }
         } catch (Exception e) {
             long nextDelay = schedule.nextDelayMs();
             if (onUnknownException(e, nextDelay))
                 reschedule(nextDelay);
             else
-                currentAttempt.compareAndSet(localFuture, null);
+                currentAttempt.compareAndSet(handlerFuture, null);
         }
     }
 
     private void reschedule(long nextDelay) {
         // If we got cancelled during the failed reconnection attempt that lead here, don't reschedule
-        if (localFuture.isCancelled()) {
-            currentAttempt.compareAndSet(localFuture, null);
+        if (handlerFuture.isCancelled()) {
+            currentAttempt.compareAndSet(handlerFuture, null);
             return;
         }
 
-        readyForNext = false;
-        ScheduledFuture<?> newFuture = executor.schedule(this, nextDelay, TimeUnit.MILLISECONDS);
-        assert localFuture != null;
-        // If it's not our future the current one, then we've been canceled
-        if (!currentAttempt.compareAndSet(localFuture, newFuture)) {
-            newFuture.cancel(false);
+        handlerFuture.nextTry = executor.schedule(this, nextDelay, TimeUnit.MILLISECONDS);
+    }
+
+    // The future that the handler exposes to its clients via currentAttempt
+    private static class HandlerFuture extends AbstractFuture<Void> {
+        // A future representing completion of the next task submitted to the executor
+        volatile ScheduledFuture<?> nextTry;
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            // This is a check-then-act, so we may race with the scheduling of the first try, but in that case
+            // we'll re-check for cancellation when this first try starts running
+            if (nextTry != null) {
+                nextTry.cancel(mayInterruptIfRunning);
+            }
+
+            return super.cancel(mayInterruptIfRunning);
         }
-        // Check one last time is the previous future was cancelled (there is still a race if a client
-        // held on a reference to that future long after retrieving it from the AtomicReference)
-        if (localFuture.isCancelled()) {
-            newFuture.cancel(false);
+
+        void markAsDone() {
+            super.set(null);
         }
-        localFuture = newFuture;
-        readyForNext = true;
     }
 }

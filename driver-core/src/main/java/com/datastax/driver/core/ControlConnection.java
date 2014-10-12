@@ -20,7 +20,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -63,7 +63,7 @@ class ControlConnection implements Host.StateListener {
 
     private final Cluster.Manager cluster;
 
-    private final AtomicReference<ScheduledFuture<?>> reconnectionAttempt = new AtomicReference<ScheduledFuture<?>>();
+    private final AtomicReference<Future<?>> reconnectionAttempt = new AtomicReference<Future<?>>();
 
     private volatile boolean isShutdown;
 
