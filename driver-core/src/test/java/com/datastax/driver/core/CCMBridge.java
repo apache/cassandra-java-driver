@@ -30,9 +30,15 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static org.testng.Assert.fail;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -224,6 +230,68 @@ public class CCMBridge {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Waits for a host to be up by pinging the TCP socket directly, without using the Java driver's API.
+     */
+    public void waitForUp(int node) {
+        try {
+            InetAddress address = InetAddress.getByName(ipOfNode(node));
+            CCMBridge.busyWaitForPort(address, 9042, true);
+        } catch (UnknownHostException e) {
+            fail("Unknown host " + ipOfNode(node) + "( node " + node + " of CCMBridge)");
+        }
+    }
+
+    /**
+     * Waits for a host to be down by pinging the TCP socket directly, without using the Java driver's API.
+     */
+    public void waitForDown(int node) {
+        try {
+            InetAddress address = InetAddress.getByName(ipOfNode(node));
+            CCMBridge.busyWaitForPort(address, 9042, false);
+        } catch (UnknownHostException e) {
+            fail("Unknown host " + ipOfNode(node) + "( node " + node + " of CCMBridge)");
+        }
+    }
+
+    private static void busyWaitForPort(InetAddress address, int port, boolean expectedConnectionState) {
+        long maxAcceptableWaitTime = TimeUnit.SECONDS.toMillis(10);
+        long waitQuantum = TimeUnit.MILLISECONDS.toMillis(500);
+        long waitTimeSoFar = 0;
+        boolean connectionState = !expectedConnectionState;
+
+        while (connectionState != expectedConnectionState && waitTimeSoFar < maxAcceptableWaitTime) {
+            connectionState = CCMBridge.pingPort(address, port);
+            try {
+                Thread.sleep(waitQuantum);
+                waitTimeSoFar += waitQuantum;
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Interrupted while pinging " + address + ":" + port, e);
+            }
+        }
+    }
+
+    private static boolean pingPort(InetAddress address, int port) {
+        logger.debug("Trying {}:{}...", address, port);
+        boolean connectionSuccessful = false;
+        Socket socket = null;
+        try {
+            socket = new Socket(address, port);
+            connectionSuccessful = true;
+            logger.debug("Successfully connected");
+        } catch (IOException e) {
+            logger.debug("Connection failed");
+        } finally {
+            if (socket != null)
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    logger.warn("Error closing socket to " + address);
+                }
+        }
+        return connectionSuccessful;
     }
 
     public static String ipOfNode(int nodeNumber) {
