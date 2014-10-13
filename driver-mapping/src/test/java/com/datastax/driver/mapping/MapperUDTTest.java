@@ -17,12 +17,10 @@ package com.datastax.driver.mapping;
 
 import java.util.*;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
-import org.testng.annotations.Test;
-import org.testng.collections.Lists;
+import org.testng.annotations.BeforeMethod;
 
+import com.google.common.base.Objects;
+import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
@@ -30,6 +28,7 @@ import static org.testng.Assert.assertTrue;
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.utils.UUIDs;
+
 import com.datastax.driver.mapping.annotations.*;
 
 public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -37,6 +36,11 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList("CREATE TYPE address (street text, city text, zip_code int, phones set<text>)",
                              "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, mainaddress frozen<address>, other_addresses map<text,frozen<address>>)");
+    }
+
+    @BeforeMethod(groups = "short")
+    public void clean() {
+        session.execute("TRUNCATE users");
     }
 
     @Table(keyspace = "ks", name = "users",
