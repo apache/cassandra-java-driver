@@ -1251,6 +1251,11 @@ public class Cluster implements Closeable {
             if (metrics != null)
                 metrics.shutdown();
 
+            // And the load balancing policy
+            LoadBalancingPolicy loadBalancingPolicy = loadBalancingPolicy();
+            if (loadBalancingPolicy instanceof CloseableLoadBalancingPolicy)
+                ((CloseableLoadBalancingPolicy)loadBalancingPolicy).close();
+
             // Then we shutdown all connections
             List<CloseFuture> futures = new ArrayList<CloseFuture>(sessions.size() + 1);
             futures.add(controlConnection.closeAsync());

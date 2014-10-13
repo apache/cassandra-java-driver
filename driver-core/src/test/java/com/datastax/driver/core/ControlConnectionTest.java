@@ -1,6 +1,5 @@
 package com.datastax.driver.core;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -9,6 +8,7 @@ import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.Policies;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
@@ -22,9 +22,7 @@ public class ControlConnectionTest {
         // Custom load balancing policy that counts the number of calls to newQueryPlan().
         // Since we don't open any session from our Cluster, only the control connection reattempts are calling this
         // method, therefore the invocation count is equal to the number of attempts.
-        final AtomicInteger reconnectionAttempts = new AtomicInteger();
-        LoadBalancingPolicy loadBalancingPolicy = new QueryPlanCountingPolicy(Policies.defaultLoadBalancingPolicy(),
-                                                                              reconnectionAttempts);
+        QueryPlanCountingPolicy loadBalancingPolicy = new QueryPlanCountingPolicy(Policies.defaultLoadBalancingPolicy());
 
         // Custom reconnection policy with a very large delay (longer than the test duration), to make sure we count
         // only the first reconnection attempt of each reconnection handler.
@@ -60,50 +58,20 @@ public class ControlConnectionTest {
             if (ccm != null)
                 ccm.remove();
         }
-        assertThat(reconnectionAttempts.get()).isEqualTo(1);
+        assertThat(loadBalancingPolicy.counter.get()).isEqualTo(1);
     }
 
-    static class QueryPlanCountingPolicy implements LoadBalancingPolicy {
+    static class QueryPlanCountingPolicy extends DelegatingLoadBalancingPolicy {
 
-        private final LoadBalancingPolicy childPolicy;
-        private final AtomicInteger counter;
+        final AtomicInteger counter = new AtomicInteger();
 
-        public QueryPlanCountingPolicy(LoadBalancingPolicy childPolicy, AtomicInteger counter) {
-            this.childPolicy = childPolicy;
-            this.counter = counter;
+        public QueryPlanCountingPolicy(LoadBalancingPolicy delegate) {
+            super(delegate);
         }
 
         public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement) {
             counter.incrementAndGet();
-            return childPolicy.newQueryPlan(loggedKeyspace, statement);
-        }
-
-        public void init(Cluster cluster, Collection<Host> hosts) {
-            childPolicy.init(cluster, hosts);
-        }
-
-        public HostDistance distance(Host host) {
-            return childPolicy.distance(host);
-        }
-
-        public void onAdd(Host host) {
-            childPolicy.onAdd(host);
-        }
-
-        public void onUp(Host host) {
-            childPolicy.onUp(host);
-        }
-
-        public void onSuspected(Host host) {
-            childPolicy.onSuspected(host);
-        }
-
-        public void onDown(Host host) {
-            childPolicy.onDown(host);
-        }
-
-        public void onRemove(Host host) {
-            childPolicy.onRemove(host);
+            return super.newQueryPlan(loggedKeyspace, statement);
         }
     }
 }

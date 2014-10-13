@@ -11,6 +11,7 @@ CHANGELOG
 - [bug] Fix DCAwareRoundRobinPolicy datacenter auto-discovery (JAVA-496)
 - [bug] Ensure control connection does not trigger concurrent reconnects (JAVA-497)
 - [improvement] Keep trying to reconnect on authentication errors (JAVA-472)
+- [improvement] Expose close method on load balancing policy (JAVA-463)
 
 
 2.0.6:

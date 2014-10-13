@@ -48,7 +48,7 @@ import com.datastax.driver.core.Statement;
  * datacenter this will be inefficient and you will want to use the
  * {@link DCAwareRoundRobinPolicy} load balancing policy instead.
  */
-public class RoundRobinPolicy implements LoadBalancingPolicy {
+public class RoundRobinPolicy implements LoadBalancingPolicy, CloseableLoadBalancingPolicy {
 
     private static final Logger logger = LoggerFactory.getLogger(RoundRobinPolicy.class);
 
@@ -197,5 +197,10 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
     @Override
     public void onRemove(Host host) {
         onDown(host);
+    }
+
+    @Override
+    public void close() {
+        // nothing to do
     }
 }
