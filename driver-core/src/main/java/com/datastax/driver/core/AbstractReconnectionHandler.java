@@ -59,8 +59,11 @@ abstract class AbstractReconnectionHandler implements Runnable {
     protected boolean onConnectionException(ConnectionException e, long nextDelayMs) { return true; }
     protected boolean onUnknownException(Exception e, long nextDelayMs) { return true; }
 
-    // Retrying on authentication or unsupported protocol version error is unlikely to work
-    protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) { return false; }
+    // Retrying on authentication errors makes sense for applications that can update the credentials at runtime, we don't want to force them
+    // to restart.
+    protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) { return true; }
+
+    // Retrying on these errors is unlikely to work
     protected boolean onUnsupportedProtocolVersionException(UnsupportedProtocolVersionException e, long nextDelayMs) { return false; }
     protected boolean onClusterNameMismatchException(ClusterNameMismatchException e, long nextDelayMs) { return false; }
 

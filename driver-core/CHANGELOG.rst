@@ -10,6 +10,7 @@ CHANGELOG
 - [bug] Handle race between query timeout and completion (JAVA-449, JAVA-460, JAVA-471)
 - [bug] Fix DCAwareRoundRobinPolicy datacenter auto-discovery (JAVA-496)
 - [bug] Ensure control connection does not trigger concurrent reconnects (JAVA-497)
+- [improvement] Keep trying to reconnect on authentication errors (JAVA-472)
 
 
 2.0.6:
