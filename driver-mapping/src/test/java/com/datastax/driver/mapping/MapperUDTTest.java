@@ -208,6 +208,16 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    public void should_handle_null_UDT_value() throws Exception {
+        Mapper<User> m = new MappingManager(session).mapper(User.class);
+
+        User u1 = new User("Paul", null);
+        m.save(u1);
+
+        assertNull(m.get(u1.getUserId()).getMainAddress());
+    }
+
+    @Test(groups = "short")
     public void testAccessor() throws Exception {
         MappingManager manager = new MappingManager(session);
 
