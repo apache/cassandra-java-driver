@@ -13,6 +13,7 @@ CHANGELOG
 - [improvement] Keep trying to reconnect on authentication errors (JAVA-472)
 - [improvement] Expose close method on load balancing policy (JAVA-463)
 - [improvement] Allow load balancing policy to trigger refresh for a single host (JAVA-459)
+- [bug] Expose an API to cancel reconnection attempts (JAVA-493)
 
 
 2.0.6:

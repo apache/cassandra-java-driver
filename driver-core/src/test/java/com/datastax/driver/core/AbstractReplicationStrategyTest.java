@@ -39,7 +39,7 @@ public class AbstractReplicationStrategyTest {
         private final String address;
 
         private HostMock(String address) throws UnknownHostException {
-            super(new InetSocketAddress(InetAddress.getByName(address), 9042), new ConvictionPolicy.Simple.Factory());
+            super(new InetSocketAddress(InetAddress.getByName(address), 9042), new ConvictionPolicy.Simple.Factory(), null);
             this.address = address;
         }
 

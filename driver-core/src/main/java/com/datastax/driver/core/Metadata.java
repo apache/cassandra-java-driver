@@ -171,7 +171,7 @@ public class Metadata {
     }
 
     Host add(InetSocketAddress address) {
-        Host newHost = new Host(address, cluster.convictionPolicyFactory);
+        Host newHost = new Host(address, cluster.convictionPolicyFactory, cluster);
         Host previous = hosts.putIfAbsent(address, newHost);
         return previous == null ? newHost : null;
     }

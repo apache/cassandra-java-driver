@@ -41,6 +41,7 @@ public class Host {
     volatile State state;
 
     private final ConvictionPolicy policy;
+    private final Cluster.Manager manager;
 
     // Tracks the first "immediate" reconnection attempt when a node get suspected.
     final AtomicReference<ListenableFuture<?>> initialReconnectionAttempt = new AtomicReference<ListenableFuture<?>>(Futures.immediateFuture(null));
@@ -63,12 +64,13 @@ public class Host {
     // ClusterMetadata keeps one Host object per inet address and we rely on this (more precisely,
     // we rely on the fact that we can use Object equality as a valid equality), so don't use
     // that constructor but ClusterMetadata.getHost instead.
-    Host(InetSocketAddress address, ConvictionPolicy.Factory policy) {
+    Host(InetSocketAddress address, ConvictionPolicy.Factory policy, Cluster.Manager manager) {
         if (address == null || policy == null)
             throw new NullPointerException();
 
         this.address = address;
         this.policy = policy.create(this);
+        this.manager = manager;
         this.defaultExecutionInfo = new ExecutionInfo(ImmutableList.of(this));
         this.state = State.ADDED;
     }
@@ -170,8 +172,47 @@ public class Host {
         return state == State.UP || state == State.SUSPECT;
     }
 
+    /**
+     * Returns a {@code ListenableFuture} representing the completion of the first
+     * reconnection attempt after a node has been suspected.
+     * <p>
+     * This is useful in load balancing policies when there are no more live nodes and
+     * we are trying suspected nodes.
+     *
+     * @return the future.
+     */
     public ListenableFuture<?> getInitialReconnectionAttemptFuture() {
         return initialReconnectionAttempt.get();
+    }
+
+    /**
+     * Returns a {@code ListenableFuture} representing the completion of the reconnection
+     * attempts scheduled after a host is marked {@code DOWN}.
+     * <p>
+     * <b>If the caller cancels this future,</b> the driver will not try to reconnect to
+     * this host until it receives an UP event for it. Note that this could mean never, if
+     * the node was marked down because of a driver-side error (e.g. read timeout) but no
+     * failure was detected by Cassandra. The caller might decide to trigger an explicit
+     * reconnection attempt at a later point with {@link #tryReconnectOnce()}.
+     *
+     * @return the future, or {@code null} if no reconnection attempt was in progress.
+     */
+    public ListenableFuture<?> getReconnectionAttemptFuture() {
+        return reconnectionAttempt.get();
+    }
+
+    /**
+     * Triggers an asynchronous one-time reconnection attempt to this host.
+     * <p>
+     * If reconnection succeeds, the host will be marked {@code UP} and its connection pool(s)
+     * will be initialized (unless the load balancing policy returns {@link HostDistance#IGNORED}
+     * for it). If reconnection fails, no further attempts will be scheduled.
+     * <p>
+     * This method has no effect if the node is already {@code UP}, or if a reconnection attempt
+     * is already in progress.
+     */
+    public void tryReconnectOnce() {
+        this.manager.tryReconnectOnce(this);
     }
 
     @Override

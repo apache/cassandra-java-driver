@@ -97,6 +97,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
     public void run() {
         if (handlerFuture.isCancelled()) {
             logger.debug("Got cancelled, stopping");
+            currentAttempt.compareAndSet(handlerFuture, null);
             return;
         }
 
