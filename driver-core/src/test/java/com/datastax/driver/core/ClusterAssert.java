@@ -16,9 +16,17 @@ public class ClusterAssert extends AbstractAssert<ClusterAssert, Cluster> {
         return this;
     }
 
+    public HostAssert host(int hostNumber) {
+        // TODO at some point this won't work anymore if we have assertions that wait for a node to
+        // join the cluster, e.g. assertThat(cluster).node(3).comesUp().
+        Host host = findHost(actual, hostNumber);
+
+        return new HostAssert(host, actual);
+    }
+
     /** Utility method to find the {@code Host} object corresponding to a node in a cluster. */
-    public static Host findHost(Cluster cluster, int node) {
-        String address = CCMBridge.ipOfNode(node);
+    public static Host findHost(Cluster cluster, int hostNumber) {
+        String address = CCMBridge.ipOfNode(hostNumber);
         for (Host host : cluster.getMetadata().getAllHosts()) {
             if (host.getAddress().getHostAddress().equals(address))
                 return host;

@@ -1967,6 +1967,16 @@ public class Cluster implements Closeable {
                 s.updateCreatedPools(executor);
         }
 
+        void refreshConnectedHost(Host host) {
+            // Deal with the control connection if it was using this host
+            Host ccHost = controlConnection.connectedHost();
+            if (ccHost == null || ccHost.equals(host) && loadBalancingPolicy().distance(ccHost) != HostDistance.LOCAL)
+                controlConnection.reconnect();
+
+            for (SessionManager s : sessions)
+                s.updateCreatedPools(host, executor);
+        }
+
         private class ClusterCloseFuture extends CloseFuture.Forwarding {
 
             ClusterCloseFuture(List<CloseFuture> futures) {

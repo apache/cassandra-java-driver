@@ -14,7 +14,7 @@ import com.datastax.driver.core.Statement;
  * NB: this is currently only used in tests, but could be provided as a convenience in the production code.
  */
 public abstract class DelegatingLoadBalancingPolicy implements ChainableLoadBalancingPolicy, CloseableLoadBalancingPolicy {
-    private final LoadBalancingPolicy delegate;
+    protected final LoadBalancingPolicy delegate;
 
     public DelegatingLoadBalancingPolicy(LoadBalancingPolicy delegate) {
         this.delegate = delegate;

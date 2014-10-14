@@ -12,6 +12,7 @@ CHANGELOG
 - [bug] Ensure control connection does not trigger concurrent reconnects (JAVA-497)
 - [improvement] Keep trying to reconnect on authentication errors (JAVA-472)
 - [improvement] Expose close method on load balancing policy (JAVA-463)
+- [improvement] Allow load balancing policy to trigger refresh for a single host (JAVA-459)
 
 
 2.0.6:

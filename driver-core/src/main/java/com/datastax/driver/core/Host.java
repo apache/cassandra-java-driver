@@ -176,6 +176,15 @@ public class Host {
     }
 
     @Override
+    public boolean equals(Object other) {
+        if (other instanceof Host) {
+            Host that = (Host)other;
+            return this.address.equals(that.address);
+        }
+        return false;
+    }
+
+    @Override
     public int hashCode() {
         return address.hashCode();
     }
