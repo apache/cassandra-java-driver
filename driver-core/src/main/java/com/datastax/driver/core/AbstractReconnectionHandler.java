@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.AbstractFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
     /**
      * The future that is exposed to clients, representing completion of the current active handler
      */
-    private final AtomicReference<Future<?>> currentAttempt;
+    private final AtomicReference<ListenableFuture<?>> currentAttempt;
 
     private final HandlerFuture handlerFuture = new HandlerFuture();
 
@@ -42,11 +43,11 @@ abstract class AbstractReconnectionHandler implements Runnable {
 
     private volatile boolean isActive;
 
-    public AbstractReconnectionHandler(ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<Future<?>> currentAttempt) {
+    public AbstractReconnectionHandler(ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<ListenableFuture<?>> currentAttempt) {
         this(executor, schedule, currentAttempt, -1);
     }
 
-    public AbstractReconnectionHandler(ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<Future<?>> currentAttempt, long initialDelayMs) {
+    public AbstractReconnectionHandler(ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<ListenableFuture<?>> currentAttempt, long initialDelayMs) {
         this.executor = executor;
         this.schedule = schedule;
         this.currentAttempt = currentAttempt;
@@ -74,7 +75,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
             handlerFuture.nextTry = executor.schedule(this, firstDelay, TimeUnit.MILLISECONDS);
 
             while (true) {
-                Future<?> previous = currentAttempt.get();
+                ListenableFuture<?> previous = currentAttempt.get();
                 if (previous != null && !previous.isCancelled()) {
                     logger.debug("Found another already active handler, cancelling");
                     handlerFuture.cancel(false);

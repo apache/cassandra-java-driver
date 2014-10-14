@@ -1,10 +1,14 @@
 package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.*;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +28,7 @@ public class AbstractReconnectionHandlerTest {
     ScheduledExecutorService executor;
     MockReconnectionSchedule schedule;
     MockReconnectionWork work;
-    final AtomicReference<Future<?>> future = new AtomicReference<Future<?>>();
+    final AtomicReference<ListenableFuture<?>> future = new AtomicReference<ListenableFuture<?>>();
     AbstractReconnectionHandler handler;
 
     @BeforeMethod(groups = "unit")

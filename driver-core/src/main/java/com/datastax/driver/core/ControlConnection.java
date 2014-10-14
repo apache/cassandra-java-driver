@@ -20,11 +20,11 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Objects;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +63,7 @@ class ControlConnection implements Host.StateListener {
 
     private final Cluster.Manager cluster;
 
-    private final AtomicReference<Future<?>> reconnectionAttempt = new AtomicReference<Future<?>>();
+    private final AtomicReference<ListenableFuture<?>> reconnectionAttempt = new AtomicReference<ListenableFuture<?>>();
 
     private volatile boolean isShutdown;
 
@@ -85,7 +85,7 @@ class ControlConnection implements Host.StateListener {
         isShutdown = true;
 
         // Cancel any reconnection attempt in progress
-        Future<?> r = reconnectionAttempt.get();
+        ListenableFuture<?> r = reconnectionAttempt.get();
         if (r != null)
             r.cancel(false);
 
