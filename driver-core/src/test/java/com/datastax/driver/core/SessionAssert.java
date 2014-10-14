@@ -12,13 +12,13 @@ public class SessionAssert extends AbstractAssert<SessionAssert, SessionManager>
     }
 
     public SessionAssert hasPoolFor(int hostNumber) {
-        Host host = ClusterAssert.findHost(actual.cluster, hostNumber);
+        Host host = TestUtils.findHost(actual.cluster, hostNumber);
         assertThat(actual.pools.containsKey(host)).isTrue();
         return this;
     }
 
     public SessionAssert hasNoPoolFor(int hostNumber) {
-        Host host = ClusterAssert.findHost(actual.cluster, hostNumber);
+        Host host = TestUtils.findHost(actual.cluster, hostNumber);
         assertThat(actual.pools.containsKey(host)).isFalse();
         return this;
     }

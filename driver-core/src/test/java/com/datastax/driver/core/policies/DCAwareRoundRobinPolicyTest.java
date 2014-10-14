@@ -5,8 +5,8 @@ import static org.testng.Assert.assertEquals;
 
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ClusterAssert;
 import com.datastax.driver.core.Host;
+import com.datastax.driver.core.TestUtils;
 
 public class DCAwareRoundRobinPolicyTest {
 
@@ -29,7 +29,7 @@ public class DCAwareRoundRobinPolicyTest {
             cluster.init();
 
             // Policy's localDC should be the one from the contact point
-            Host host1 = ClusterAssert.findHost(cluster, 1);
+            Host host1 = TestUtils.findHost(cluster, 1);
             assertEquals(policy.localDc, host1.getDatacenter());
 
         } finally {

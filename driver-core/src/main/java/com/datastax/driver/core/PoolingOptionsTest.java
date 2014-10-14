@@ -82,7 +82,7 @@ public class PoolingOptionsTest {
             // This is when refreshConnectedHost should have been invoked, it triggers pool creation when
             // we switch the node from IGNORED to UP:
             Mockito.verify(poolingOptions)
-                   .refreshConnectedHost(ClusterAssert.findHost(cluster, 3));
+                   .refreshConnectedHost(TestUtils.findHost(cluster, 3));
 
         } finally {
             if (cluster != null)
