@@ -14,6 +14,7 @@ CHANGELOG
 - [improvement] Expose close method on load balancing policy (JAVA-463)
 - [improvement] Allow load balancing policy to trigger refresh for a single host (JAVA-459)
 - [bug] Expose an API to cancel reconnection attempts (JAVA-493)
+- [bug] Fix NPE when a connection fails during pool construction (JAVA-503)
 
 
 2.0.6:
