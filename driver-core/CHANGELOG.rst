@@ -15,6 +15,8 @@ CHANGELOG
 - [improvement] Allow load balancing policy to trigger refresh for a single host (JAVA-459)
 - [bug] Expose an API to cancel reconnection attempts (JAVA-493)
 - [bug] Fix NPE when a connection fails during pool construction (JAVA-503)
+- [improvement] Log datacenter name in DCAware policy's init when it is explicitly provided
+  (JAVA-423)
 
 
 2.0.6:

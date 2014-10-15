@@ -175,6 +175,9 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
 
     @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
+        if (localDc != UNSET)
+            logger.info("Using provided data-center name '{}' for DCAwareRoundRobinPolicy", localDc);
+
         this.configuration = cluster.getConfiguration();
 
         for (Host host : hosts) {
