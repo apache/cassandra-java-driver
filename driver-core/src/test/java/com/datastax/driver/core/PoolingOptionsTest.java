@@ -49,7 +49,7 @@ public class PoolingOptionsTest {
                                .isAtDistance(HostDistance.LOCAL);
             // Wait for the node to be up, because apparently on Jenkins it's still only ADDED when we reach this line
             assertThat(cluster).host(2)
-                               .comesUpWithin(20, SECONDS)
+                               .comesUpWithin(120, SECONDS)
                                .isAtDistance(HostDistance.LOCAL);
 
             // Bring host 3 up, its presence should be acknowledged but it should be ignored
