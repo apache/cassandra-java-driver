@@ -1,7 +1,8 @@
 package com.datastax.driver.core;
 
-import org.mockito.Mockito;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.Host.State;
@@ -46,8 +47,9 @@ public class PoolingOptionsTest {
             assertThat(cluster).host(1)
                                .hasState(State.UP)
                                .isAtDistance(HostDistance.LOCAL);
+            // Wait for the node to be up, because apparently on Jenkins it's still only ADDED when we reach this line
             assertThat(cluster).host(2)
-                               .hasState(State.UP)
+                               .comesUpWithin(20, SECONDS)
                                .isAtDistance(HostDistance.LOCAL);
 
             // Bring host 3 up, its presence should be acknowledged but it should be ignored
