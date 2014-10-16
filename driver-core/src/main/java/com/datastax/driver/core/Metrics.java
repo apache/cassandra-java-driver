@@ -18,7 +18,8 @@ package com.datastax.driver.core;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.MetricRegistryListener;
 
 import com.codahale.metrics.*;
 
@@ -82,7 +83,7 @@ public class Metrics {
     /**
      * Returns the registry containing all metrics.
      * <p>
-     * The metrics registry allows you to easily use the reporters that ships
+     * The metrics registry allows you to easily use the reporters that ship
      * with <a href="http://metrics.codahale.com/manual/core/#reporters">Metrics</a>
      * or a custom written one.
      * <p>
@@ -91,6 +92,29 @@ public class Metrics {
      * <pre>
      *     com.codahale.metrics.CsvReporter.forRegistry(metrics.getRegistry()).build(new File("measurements/")).start(1, TimeUnit.SECONDS);
      * </pre>
+     * <p>
+     * If you already have a {@code MetricRegistry} in your application and which to
+     * add the driver's metrics to it, the recommended approach is to use a listener:
+     * <pre>
+     *     // Your existing registry:
+     *     final com.codahale.metrics.MetricRegistry myRegistry = ...
+     *
+     *     cluster.getMetrics().getRegistry().addListener(new com.codahale.metrics.MetricRegistryListener() {
+     *         &#64;Override
+     *         public void onGaugeAdded(String name, Gauge<?> gauge) {
+     *             if (myRegistry.getNames().contains(name)) {
+     *                 // name is already taken, maybe prefix with a namespace
+     *                 ...
+     *             } else {
+     *                 myRegistry.register(name, gauge);
+     *             }
+     *         }
+     *
+     *         ... // Implement other methods in a similar fashion
+     *     });
+     * </pre>
+     * Since reporting is handled by your registry, you'll probably also want to disable
+     * JMX reporting with {@link Cluster.Builder#withoutJMXReporting()}.
      *
      * @return the registry containing all metrics.
      */

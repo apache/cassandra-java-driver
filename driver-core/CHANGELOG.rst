@@ -19,6 +19,7 @@ CHANGELOG
   (JAVA-423)
 - [improvement] Shuffle the replicas in TokenAwarePolicy.newQueryPlan (JAVA-504)
 - [improvement] Make schema agreement wait tuneable (JAVA-507)
+- [improvement] Document how to inject the driver metrics into another registry (JAVA-494)
 
 
 2.0.6:
