@@ -17,6 +17,7 @@ CHANGELOG
 - [bug] Fix NPE when a connection fails during pool construction (JAVA-503)
 - [improvement] Log datacenter name in DCAware policy's init when it is explicitly provided
   (JAVA-423)
+- [improvement] Shuffle the replicas in TokenAwarePolicy.newQueryPlan (JAVA-504)
 
 
 2.0.6:
