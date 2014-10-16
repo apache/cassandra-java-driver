@@ -538,6 +538,7 @@ public class Cluster implements Closeable {
         private final List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
         private final List<InetAddress> rawAddresses = new ArrayList<InetAddress>();
         private int port = ProtocolOptions.DEFAULT_PORT;
+        private int maxSchemaAgreementWaitSeconds = ProtocolOptions.DEFAULT_MAX_SCHEMA_AGREEMENT_WAIT_SECONDS;
         private int protocolVersion = -1;
         private AuthProvider authProvider = AuthProvider.NONE;
 
@@ -605,6 +606,24 @@ public class Cluster implements Closeable {
          */
         public Builder withPort(int port) {
             this.port = port;
+            return this;
+        }
+
+        /**
+         * Sets the maximum time to wait for schema agreement before returning from a DDL query.
+         * <p>
+         * If not set through this method, the default value (10 seconds) will be used.
+         *
+         * @param maxSchemaAgreementWaitSeconds the new value to set.
+         * @return this Builder.
+         *
+         * @throws IllegalStateException if the provided value is zero or less.
+         */
+        public Builder withMaxSchemaAgreementWaitSeconds(int maxSchemaAgreementWaitSeconds) {
+            if (maxSchemaAgreementWaitSeconds <= 0)
+                throw new IllegalArgumentException("Max schema agreement wait must be greater than zero");
+
+            this.maxSchemaAgreementWaitSeconds = maxSchemaAgreementWaitSeconds;
             return this;
         }
 
@@ -1012,7 +1031,7 @@ public class Cluster implements Closeable {
                 addressTranslater == null ? Policies.defaultAddressTranslater() : addressTranslater
             );
             return new Configuration(policies,
-                                     new ProtocolOptions(port, protocolVersion, sslOptions, authProvider).setCompression(compression),
+                                     new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider).setCompression(compression),
                                      poolingOptions == null ? new PoolingOptions() : poolingOptions,
                                      socketOptions == null ? new SocketOptions() : socketOptions,
                                      metricsEnabled ? new MetricsOptions(jmxEnabled) : null,
@@ -1870,7 +1889,7 @@ public class Cluster implements Closeable {
                         // Before refreshing the schema, wait for schema agreement so
                         // that querying a table just after having created it don't fail.
                         if (!ControlConnection.waitForSchemaAgreement(connection, Cluster.Manager.this))
-                            logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", ControlConnection.MAX_SCHEMA_AGREEMENT_WAIT_SECONDS);
+                            logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds());
                         ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this, false);
                     } catch (Exception e) {
                         logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());

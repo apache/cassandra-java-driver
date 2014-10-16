@@ -15,15 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Options of the Cassandra native binary protocol.
  */
 public class ProtocolOptions {
-
-    private static final Logger logger = LoggerFactory.getLogger(ProtocolOptions.class);
 
     /**
      * Compression supported by the Cassandra binary protocol.
@@ -67,10 +62,17 @@ public class ProtocolOptions {
      */
     public static final int DEFAULT_PORT = 9042;
 
+    /**
+     * The default value for {@link #getMaxSchemaAgreementWaitSeconds()}: 10.
+     */
+    public static final int DEFAULT_MAX_SCHEMA_AGREEMENT_WAIT_SECONDS = 10;
+
     private volatile Cluster.Manager manager;
 
     private final int port;
     final int initialProtocolVersion; // What the user asked us. Will be -1 by default.
+
+    private final int maxSchemaAgreementWaitSeconds;
 
     private final SSLOptions sslOptions; // null if no SSL
     private final AuthProvider authProvider;
@@ -94,7 +96,7 @@ public class ProtocolOptions {
      * @param port the port to use for the binary protocol.
      */
     public ProtocolOptions(int port) {
-        this(port, -1, null, AuthProvider.NONE);
+        this(port, -1, DEFAULT_MAX_SCHEMA_AGREEMENT_WAIT_SECONDS, null, AuthProvider.NONE);
     }
 
     /**
@@ -111,9 +113,10 @@ public class ProtocolOptions {
      * @param authProvider the {@code AuthProvider} to use for authentication against
      * the Cassandra nodes.
      */
-    public ProtocolOptions(int port, int protocolVersion, SSLOptions sslOptions, AuthProvider authProvider) {
+    public ProtocolOptions(int port, int protocolVersion, int maxSchemaAgreementWaitSeconds, SSLOptions sslOptions, AuthProvider authProvider) {
         this.port = port;
         this.initialProtocolVersion = protocolVersion;
+        this.maxSchemaAgreementWaitSeconds = maxSchemaAgreementWaitSeconds;
         this.sslOptions = sslOptions;
         this.authProvider = authProvider;
 
@@ -179,6 +182,15 @@ public class ProtocolOptions {
 
         this.compression = compression;
         return this;
+    }
+
+    /**
+     * Returns the maximum time to wait for schema agreement before returning from a DDL query.
+     *
+     * @return the time.
+     */
+    public int getMaxSchemaAgreementWaitSeconds() {
+        return maxSchemaAgreementWaitSeconds;
     }
 
     /**

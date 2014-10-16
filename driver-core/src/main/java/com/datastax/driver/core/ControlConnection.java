@@ -36,9 +36,6 @@ class ControlConnection implements Host.StateListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ControlConnection.class);
 
-    // TODO: we might want to expose that through the API
-    static final int MAX_SCHEMA_AGREEMENT_WAIT_SECONDS = SystemProperties.getInt("com.datastax.driver.MAX_SCHEMA_AGREEMENT_WAIT_SECONDS", 10);
-
     private static final InetAddress bindAllAddress;
     static
     {
@@ -566,7 +563,8 @@ class ControlConnection implements Host.StateListener {
 
         long start = System.nanoTime();
         long elapsed = 0;
-        while (elapsed < MAX_SCHEMA_AGREEMENT_WAIT_SECONDS * 1000) {
+        int maxSchemaAgreementWaitSeconds = cluster.configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds();
+        while (elapsed < maxSchemaAgreementWaitSeconds * 1000) {
 
             DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_PEERS));
             DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_LOCAL));
