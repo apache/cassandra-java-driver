@@ -1,0 +1,8 @@
+#Organize Import Order
+#Sun Oct 19 21:16:33 CEST 2014
+5=\#com.datastax.driver.core
+4=com.datastax.driver.core
+3=\#
+2=
+1=\#java
+0=java
