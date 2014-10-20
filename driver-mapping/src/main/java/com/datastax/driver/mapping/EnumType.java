@@ -19,7 +19,12 @@ package com.datastax.driver.mapping;
  * The types of way to persist a JAVA Enum.
  */
 public enum EnumType {
-    /** Persists enumeration values using their ordinal in the Enum declaration. */
+    /**
+     * Persists enumeration values using their ordinal in the Enum declaration.
+     * <p>
+     * Note that this relies on the order of the values in source code, and will change
+     * if values are added/removed before existing ones.
+     */
     ORDINAL,
     /** Persists enumeration values using the string they have been declared with. */
     STRING
