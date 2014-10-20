@@ -57,6 +57,9 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
            writeConsistency="QUORUM")
     public static class User {
 
+        // Dummy constant to test that static fields are properly ignored
+        public static final int FOO = 1;
+
         public enum Gender { FEMALE, MALE }
 
         @PartitionKey

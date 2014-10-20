@@ -16,14 +16,13 @@
 package com.datastax.driver.mapping;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.*;
 
 import com.google.common.collect.ImmutableSet.Builder;
 import com.google.common.collect.ImmutableSet;
+
 import com.datastax.driver.mapping.annotations.Frozen;
 
 import com.datastax.driver.core.ConsistencyLevel;
@@ -71,7 +70,7 @@ class AnnotationParser {
         List<Field> rgs = new ArrayList<Field>();
 
         for (Field field : entityClass.getDeclaredFields()) {
-            if(field.isSynthetic())
+            if(field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
                 continue;
             
             AnnotationChecks.validateAnnotations(field, "entity",
@@ -121,7 +120,7 @@ class AnnotationParser {
         List<Field> columns = new ArrayList<Field>();
 
         for (Field field : udtClass.getDeclaredFields()) {
-            if(field.isSynthetic())
+            if(field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
                 continue;
             
             AnnotationChecks.validateAnnotations(field, "UDT",

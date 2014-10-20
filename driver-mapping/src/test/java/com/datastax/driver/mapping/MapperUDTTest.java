@@ -121,6 +121,10 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @UDT(keyspace = "ks", name = "address")
     public static class Address {
+
+        // Dummy constant to test that static fields are properly ignored
+        public static final int FOO = 1;
+
         private String street;
 
         private String city;

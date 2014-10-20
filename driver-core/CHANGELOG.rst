@@ -4,6 +4,8 @@ CHANGELOG
 2.1.3:
 ------
 
+- [bug] Ignore static fields in mapper (JAVA-510)
+
 Merged from 2.0 branch:
 
 - [bug] Handle null pool in PooledConnection.release (JAVA-449)
