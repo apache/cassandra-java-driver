@@ -1218,8 +1218,6 @@ public class Cluster implements Closeable {
             try {
                 try {
                     controlConnection.connect();
-                    if (connectionFactory.protocolVersion == null)
-                        connectionFactory.protocolVersion = ProtocolVersion.NEWEST_SUPPORTED;
                 } catch (UnsupportedProtocolVersionException e) {
                     logger.debug("Cannot connect with protocol {}, trying {}", e.unsupportedVersion, e.serverVersion);
 

@@ -233,6 +233,10 @@ class ControlConnection implements Host.StateListener {
     private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         Connection connection = cluster.connectionFactory.open(host);
 
+        // If no protocol version was specified, set the default as soon as a connection succeeds (it's needed to parse UDTs in refreshSchema)
+        if (cluster.connectionFactory.protocolVersion == null)
+            cluster.connectionFactory.protocolVersion = ProtocolVersion.NEWEST_SUPPORTED;
+
         try {
             logger.trace("[Control connection] Registering for events");
             List<ProtocolEvent.Type> evs = Arrays.asList(

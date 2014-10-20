@@ -61,7 +61,43 @@ public class ControlConnectionTest {
         assertThat(loadBalancingPolicy.counter.get()).isEqualTo(1);
     }
 
-    static class QueryPlanCountingPolicy extends DelegatingLoadBalancingPolicy {
+    /**
+     * Test for JAVA-509: UDT definitions were not properly parsed when using the default protocol version.
+     *
+     * This did not appear with other tests because the UDT needs to already exist when the driver initializes.
+     * Therefore we use two different driver instances in this test.
+     */
+    @Test(groups = "short")
+    public void should_parse_UDT_definitions_when_using_default_protocol_version() {
+        TestUtils.versionCheck(2.1, 0, "This will only work with C* 2.1.0");
+
+        CCMBridge ccm = null;
+        Cluster cluster = null;
+
+        try {
+            ccm = CCMBridge.create("test", 1);
+
+            // First driver instance: create UDT
+            cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
+            Session session = cluster.connect();
+            session.execute("create keyspace ks WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
+            session.execute("create type ks.foo (i int)");
+            cluster.close();
+
+            // Second driver instance: read UDT definition
+            cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
+            UserType fooType = cluster.getMetadata().getKeyspace("ks").getUserType("foo");
+
+            assertThat(fooType.getFieldNames()).containsExactly("i");
+        } finally {
+            if (cluster != null)
+                cluster.close();
+            if (ccm != null)
+                ccm.remove();
+        }
+    }
+
+   static class QueryPlanCountingPolicy extends DelegatingLoadBalancingPolicy {
 
         final AtomicInteger counter = new AtomicInteger();
 
