@@ -26,6 +26,16 @@ import org.slf4j.LoggerFactory;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 
+/**
+ * Manages periodic reconnection attempts after a host has been marked down.
+ * <p>
+ * Concurrent attempts are handled via the {@link #currentAttempt} reference passed to the constructor.
+ * For a given reference, only one handler will run at a given time. Additional handlers will cancel
+ * themselves if they fight a previous handler running.
+ * <p>
+ * This class is designed for concurrency, but instances must not be shared: each thread creates and
+ * starts its own private handler, all interactions happen through {@link #currentAttempt}.
+ */
 abstract class AbstractReconnectionHandler implements Runnable {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractReconnectionHandler.class);
@@ -41,7 +51,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
 
     private final long initialDelayMs;
 
-    private volatile boolean isActive;
+    private final CountDownLatch ready = new CountDownLatch(1);
 
     public AbstractReconnectionHandler(ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<ListenableFuture<?>> currentAttempt) {
         this(executor, schedule, currentAttempt, -1);
@@ -79,14 +89,14 @@ abstract class AbstractReconnectionHandler implements Runnable {
                 if (previous != null && !previous.isCancelled()) {
                     logger.debug("Found another already active handler, cancelling");
                     handlerFuture.cancel(false);
-                    return;
+                    break;
                 }
                 if (currentAttempt.compareAndSet(previous, handlerFuture)) {
                     logger.debug("Becoming the active handler");
                     break;
                 }
             }
-            isActive = true;
+            ready.countDown();
         } catch (RejectedExecutionException e) {
             // The executor has been shutdown, fair enough, just ignore
             logger.debug("Aborting reconnection handling since the cluster is shutting down");
@@ -95,21 +105,19 @@ abstract class AbstractReconnectionHandler implements Runnable {
 
     @Override
     public void run() {
+        // Just make sure we don't start the first try too fast, in case we find out in start() that we need to cancel ourselves
+        try {
+            ready.await();
+        } catch (InterruptedException e) {
+            // This can happen at shutdown
+            Thread.currentThread().interrupt();
+            return;
+        }
+
         if (handlerFuture.isCancelled()) {
             logger.debug("Got cancelled, stopping");
             currentAttempt.compareAndSet(handlerFuture, null);
             return;
-        }
-
-        // Just make sure we don't start the first try too fast, in case we find out in start() that we need to cancel ourselves
-        while (!isActive && !Thread.currentThread().isInterrupted()) {
-            try {
-                TimeUnit.MILLISECONDS.sleep(5);
-            } catch (InterruptedException e) {
-                // This can happen at shutdown
-                Thread.currentThread().interrupt();
-                return;
-            }
         }
 
         try {
