@@ -21,6 +21,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.*;
 
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +76,12 @@ class DynamicConnectionPool extends HostConnectionPool {
             Thread.currentThread().interrupt();
             // If asked to interrupt, we can skip opening core connections, the pool will still work.
             // But we ignore otherwise cause I'm not sure we can do much better currently.
+        } catch (RuntimeException e) {
+            // Rethrow but make sure to properly close the connections in our temporary list.
+            for (PooledConnection connection : l) {
+                connection.closeAsync().force();
+            }
+            throw e;
         }
         this.connections = new CopyOnWriteArrayList<PooledConnection>(l);
         this.open = new AtomicInteger(connections.size());
@@ -385,6 +392,9 @@ class DynamicConnectionPool extends HostConnectionPool {
     }
 
     private List<CloseFuture> discardAvailableConnections() {
+        // This can happen if creating the connections in the constructor fails
+        if (connections == null)
+            return Lists.newArrayList(CloseFuture.immediateFuture());
 
         List<CloseFuture> futures = new ArrayList<CloseFuture>(connections.size());
         for (final PooledConnection connection : connections) {

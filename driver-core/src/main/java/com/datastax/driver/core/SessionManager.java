@@ -337,6 +337,29 @@ class SessionManager extends AbstractSession {
         }
     }
 
+    void updateCreatedPools(Host h, ListeningExecutorService executor) {
+        HostDistance dist = loadBalancingPolicy().distance(h);
+        HostConnectionPool pool = pools.get(h);
+
+        try {
+            if (pool == null) {
+                if (dist != HostDistance.IGNORED && h.isUp())
+                    maybeAddPool(h, executor).get();
+            } else if (dist != pool.hostDistance) {
+                if (dist == HostDistance.IGNORED) {
+                    removePool(h).get();
+                } else {
+                    pool.hostDistance = dist;
+                    pool.ensureCoreConnections();
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException e) {
+            logger.error("Unexpected error while refreshing connection pools", e.getCause());
+        }
+    }
+
     void onDown(Host host) throws InterruptedException, ExecutionException {
         // Note that with well behaved balancing policy (that ignore dead nodes), the removePool call is not necessary
         // since updateCreatedPools should take care of it. But better protect against non well behaving policies.

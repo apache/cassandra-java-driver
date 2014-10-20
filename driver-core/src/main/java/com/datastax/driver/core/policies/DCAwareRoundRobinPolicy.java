@@ -53,7 +53,7 @@ import com.datastax.driver.core.Statement;
  * incurs a slight overhead so the {@code LoadBalancingPolicy.RoundRobin}
  * policy could be preferred to this policy in that case.
  */
-public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
+public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLoadBalancingPolicy {
 
     private static final Logger logger = LoggerFactory.getLogger(DCAwareRoundRobinPolicy.class);
 
@@ -183,6 +183,9 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
 
     @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
+        if (localDc != UNSET)
+            logger.info("Using provided data-center name '{}' for DCAwareRoundRobinPolicy", localDc);
+
         this.configuration = cluster.getConfiguration();
 
         ArrayList<String> notInLocalDC = new ArrayList<String>();
@@ -430,5 +433,10 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
     @Override
     public void onRemove(Host host) {
         onDown(host);
+    }
+
+    @Override
+    public void close() {
+        // nothing to do
     }
 }

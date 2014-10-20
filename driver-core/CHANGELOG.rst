@@ -1,6 +1,29 @@
 CHANGELOG
 =========
 
+2.1.3:
+------
+
+Merged from 2.0 branch:
+
+- [bug] Handle null pool in PooledConnection.release (JAVA-449)
+- [improvement] Defunct connection on request timeout (JAVA-425)
+- [improvement] Try next host when we get a SERVER_ERROR (JAVA-426)
+- [bug] Handle race between query timeout and completion (JAVA-449, JAVA-460, JAVA-471)
+- [bug] Fix DCAwareRoundRobinPolicy datacenter auto-discovery (JAVA-496)
+- [bug] Ensure control connection does not trigger concurrent reconnects (JAVA-497)
+- [improvement] Keep trying to reconnect on authentication errors (JAVA-472)
+- [improvement] Expose close method on load balancing policy (JAVA-463)
+- [improvement] Allow load balancing policy to trigger refresh for a single host (JAVA-459)
+- [bug] Expose an API to cancel reconnection attempts (JAVA-493)
+- [bug] Fix NPE when a connection fails during pool construction (JAVA-503)
+- [improvement] Log datacenter name in DCAware policy's init when it is explicitly provided
+  (JAVA-423)
+- [improvement] Shuffle the replicas in TokenAwarePolicy.newQueryPlan (JAVA-504)
+- [improvement] Make schema agreement wait tuneable (JAVA-507)
+- [improvement] Document how to inject the driver metrics into another registry (JAVA-494)
+
+
 2.1.2:
 ------
 
@@ -96,6 +119,17 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [improvement] Try next host when we get a SERVER_ERROR (JAVA-426)
 - [bug] Handle race between query timeout and completion (JAVA-449, JAVA-460, JAVA-471)
 - [bug] Fix DCAwareRoundRobinPolicy datacenter auto-discovery (JAVA-496)
+- [bug] Ensure control connection does not trigger concurrent reconnects (JAVA-497)
+- [improvement] Keep trying to reconnect on authentication errors (JAVA-472)
+- [improvement] Expose close method on load balancing policy (JAVA-463)
+- [improvement] Allow load balancing policy to trigger refresh for a single host (JAVA-459)
+- [bug] Expose an API to cancel reconnection attempts (JAVA-493)
+- [bug] Fix NPE when a connection fails during pool construction (JAVA-503)
+- [improvement] Log datacenter name in DCAware policy's init when it is explicitly provided
+  (JAVA-423)
+- [improvement] Shuffle the replicas in TokenAwarePolicy.newQueryPlan (JAVA-504)
+- [improvement] Make schema agreement wait tuneable (JAVA-507)
+- [improvement] Document how to inject the driver metrics into another registry (JAVA-494)
 
 
 2.0.6:

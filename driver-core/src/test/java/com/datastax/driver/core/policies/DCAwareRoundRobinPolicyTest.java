@@ -1,13 +1,12 @@
 package com.datastax.driver.core.policies;
 
 import org.testng.annotations.Test;
-
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
 
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
+import com.datastax.driver.core.TestUtils;
 
 public class DCAwareRoundRobinPolicyTest {
 
@@ -30,7 +29,7 @@ public class DCAwareRoundRobinPolicyTest {
             cluster.init();
 
             // Policy's localDC should be the one from the contact point
-            Host host1 = findHost(cluster, CCMBridge.ipOfNode(1));
+            Host host1 = TestUtils.findHost(cluster, 1);
             assertEquals(policy.localDc, host1.getDatacenter());
 
         } finally {
@@ -39,14 +38,5 @@ public class DCAwareRoundRobinPolicyTest {
             if (ccm != null)
                 ccm.remove();
         }
-    }
-
-    private static Host findHost(Cluster cluster, String ip) {
-        for (Host host : cluster.getMetadata().getAllHosts()) {
-            if (host.getAddress().getHostAddress().equals(ip))
-                return host;
-        }
-        fail(ip + " not found in cluster metadata");
-        return null;
     }
 }

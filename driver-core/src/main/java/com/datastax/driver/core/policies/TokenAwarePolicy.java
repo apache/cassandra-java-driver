@@ -16,9 +16,9 @@
 package com.datastax.driver.core.policies;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
+
+import com.google.common.collect.Lists;
 
 import com.google.common.collect.AbstractIterator;
 
@@ -46,20 +46,35 @@ import com.datastax.driver.core.*;
  * token aware policy, replicas from remote data centers may only be
  * returned after all the host of the local data center.
  */
-public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
+public class TokenAwarePolicy implements ChainableLoadBalancingPolicy, CloseableLoadBalancingPolicy {
 
     private final LoadBalancingPolicy childPolicy;
+    private final boolean shuffleReplicas;
     private Metadata clusterMetadata;
 
     /**
-     * Creates a new {@code TokenAware} policy that wraps the provided child
-     * load balancing policy.
+     * Creates a new {@code TokenAware} policy.
      *
      * @param childPolicy the load balancing policy to wrap with token
      * awareness.
+     * @param shuffleReplicas whether to shuffle the replicas returned
+     * by {@code getRoutingKey}.
+     */
+    public TokenAwarePolicy(LoadBalancingPolicy childPolicy, boolean shuffleReplicas) {
+        this.childPolicy = childPolicy;
+        this.shuffleReplicas = shuffleReplicas;
+    }
+
+    /**
+     * Creates a new {@code TokenAware} policy with no shuffling of replicas.
+     *
+     * @param childPolicy the load balancing policy to wrap with token
+     * awareness.
+     *
+     * @see #TokenAwarePolicy(LoadBalancingPolicy, boolean)
      */
     public TokenAwarePolicy(LoadBalancingPolicy childPolicy) {
-        this.childPolicy = childPolicy;
+        this(childPolicy, false);
     }
 
     @Override
@@ -110,9 +125,17 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
         if (replicas.isEmpty())
             return childPolicy.newQueryPlan(loggedKeyspace, statement);
 
+        final Iterator<Host> iter;
+        if (shuffleReplicas) {
+            List<Host> l = Lists.newArrayList(replicas);
+            Collections.shuffle(l);
+            iter = l.iterator();
+        } else {
+            iter = replicas.iterator();
+        }
+
         return new AbstractIterator<Host>() {
 
-            private final Iterator<Host> iter = replicas.iterator();
             private Iterator<Host> childIterator;
 
             @Override
@@ -160,5 +183,11 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
     @Override
     public void onRemove(Host host) {
         childPolicy.onRemove(host);
+    }
+
+    @Override
+    public void close() {
+        if (childPolicy instanceof CloseableLoadBalancingPolicy)
+            ((CloseableLoadBalancingPolicy)childPolicy).close();
     }
 }

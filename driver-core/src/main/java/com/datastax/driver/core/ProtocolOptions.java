@@ -63,6 +63,11 @@ public class ProtocolOptions {
     public static final int DEFAULT_PORT = 9042;
 
     /**
+     * The default value for {@link #getMaxSchemaAgreementWaitSeconds()}: 10.
+     */
+    public static final int DEFAULT_MAX_SCHEMA_AGREEMENT_WAIT_SECONDS = 10;
+
+    /**
      * The newest version of the protocol that this version of the driver support.
      *
      * @deprecated This is provided for backward compatibility; use {@link ProtocolVersion#NEWEST_SUPPORTED} instead.
@@ -74,6 +79,8 @@ public class ProtocolOptions {
 
     private final int port;
     final ProtocolVersion initialProtocolVersion; // What the user asked us. Will be null by default.
+
+    private final int maxSchemaAgreementWaitSeconds;
 
     private final SSLOptions sslOptions; // null if no SSL
     private final AuthProvider authProvider;
@@ -97,7 +104,7 @@ public class ProtocolOptions {
      * @param port the port to use for the binary protocol.
      */
     public ProtocolOptions(int port) {
-        this(port, null, null, AuthProvider.NONE);
+        this(port, null, DEFAULT_MAX_SCHEMA_AGREEMENT_WAIT_SECONDS, null, AuthProvider.NONE);
     }
 
     /**
@@ -113,9 +120,10 @@ public class ProtocolOptions {
      * @param authProvider the {@code AuthProvider} to use for authentication against
      * the Cassandra nodes.
      */
-    public ProtocolOptions(int port, ProtocolVersion protocolVersion, SSLOptions sslOptions, AuthProvider authProvider) {
+    public ProtocolOptions(int port, ProtocolVersion protocolVersion, int maxSchemaAgreementWaitSeconds, SSLOptions sslOptions, AuthProvider authProvider) {
         this.port = port;
         this.initialProtocolVersion = protocolVersion;
+        this.maxSchemaAgreementWaitSeconds = maxSchemaAgreementWaitSeconds;
         this.sslOptions = sslOptions;
         this.authProvider = authProvider;
     }
@@ -123,14 +131,11 @@ public class ProtocolOptions {
     /**
      * @throws IllegalArgumentException if {@code protocolVersion} does not correspond to any known version.
      *
-     * @deprecated This is provided for backward compatibility; use {@link #ProtocolOptions(int, ProtocolVersion, SSLOptions, AuthProvider))} instead.
+     * @deprecated This is provided for backward compatibility; use {@link #ProtocolOptions(int, ProtocolVersion, int, SSLOptions, AuthProvider))} instead.
      */
     @Deprecated
     public ProtocolOptions(int port, int protocolVersion, SSLOptions sslOptions, AuthProvider authProvider) {
-        this.port = port;
-        this.initialProtocolVersion = ProtocolVersion.fromInt(protocolVersion);
-        this.sslOptions = sslOptions;
-        this.authProvider = authProvider;
+        this(port, ProtocolVersion.fromInt(protocolVersion), DEFAULT_MAX_SCHEMA_AGREEMENT_WAIT_SECONDS, sslOptions, authProvider);
     }
 
     void register(Cluster.Manager manager) {
@@ -201,6 +206,15 @@ public class ProtocolOptions {
 
         this.compression = compression;
         return this;
+    }
+
+    /**
+     * Returns the maximum time to wait for schema agreement before returning from a DDL query.
+     *
+     * @return the time.
+     */
+    public int getMaxSchemaAgreementWaitSeconds() {
+        return maxSchemaAgreementWaitSeconds;
     }
 
     /**

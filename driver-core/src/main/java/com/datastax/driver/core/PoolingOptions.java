@@ -305,6 +305,17 @@ public class PoolingOptions {
         manager.refreshConnectedHosts();
     }
 
+    /**
+     * Requests the driver to re-evaluate the {@link HostDistance} for a given node.
+     *
+     * @param host the host to refresh.
+     *
+     * @see #refreshConnectedHosts()
+     */
+    public void refreshConnectedHost(Host host) {
+        manager.refreshConnectedHost(host);
+    }
+
     private static void checkRequestsPerConnectionRange(int value, String description, HostDistance distance) {
         if (value < 0 || value > StreamIdGenerator.MAX_STREAM_PER_CONNECTION_V2)
             throw new IllegalArgumentException(String.format("%s for %s hosts must be in the range (0, %d)",

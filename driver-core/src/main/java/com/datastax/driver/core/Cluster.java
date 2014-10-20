@@ -24,6 +24,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -63,7 +64,8 @@ public class Cluster implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
 
-    private static final int NEW_NODE_DELAY_SECONDS = SystemProperties.getInt("com.datastax.driver.NEW_NODE_DELAY_SECONDS", 1);
+    @VisibleForTesting
+    static final int NEW_NODE_DELAY_SECONDS = SystemProperties.getInt("com.datastax.driver.NEW_NODE_DELAY_SECONDS", 1);
     private static final int NON_BLOCKING_EXECUTOR_SIZE = SystemProperties.getInt("com.datastax.driver.NON_BLOCKING_EXECUTOR_SIZE",
                                                                                   Runtime.getRuntime().availableProcessors());
 
@@ -536,6 +538,7 @@ public class Cluster implements Closeable {
         private final List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
         private final List<InetAddress> rawAddresses = new ArrayList<InetAddress>();
         private int port = ProtocolOptions.DEFAULT_PORT;
+        private int maxSchemaAgreementWaitSeconds = ProtocolOptions.DEFAULT_MAX_SCHEMA_AGREEMENT_WAIT_SECONDS;
         private ProtocolVersion protocolVersion;
         private AuthProvider authProvider = AuthProvider.NONE;
 
@@ -604,6 +607,24 @@ public class Cluster implements Closeable {
          */
         public Builder withPort(int port) {
             this.port = port;
+            return this;
+        }
+
+        /**
+         * Sets the maximum time to wait for schema agreement before returning from a DDL query.
+         * <p>
+         * If not set through this method, the default value (10 seconds) will be used.
+         *
+         * @param maxSchemaAgreementWaitSeconds the new value to set.
+         * @return this Builder.
+         *
+         * @throws IllegalStateException if the provided value is zero or less.
+         */
+        public Builder withMaxSchemaAgreementWaitSeconds(int maxSchemaAgreementWaitSeconds) {
+            if (maxSchemaAgreementWaitSeconds <= 0)
+                throw new IllegalArgumentException("Max schema agreement wait must be greater than zero");
+
+            this.maxSchemaAgreementWaitSeconds = maxSchemaAgreementWaitSeconds;
             return this;
         }
 
@@ -1051,7 +1072,7 @@ public class Cluster implements Closeable {
                 timestampGenerator == null ? Policies.defaultTimestampGenerator() : timestampGenerator
             );
             return new Configuration(policies,
-                                     new ProtocolOptions(port, protocolVersion, sslOptions, authProvider).setCompression(compression),
+                                     new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider).setCompression(compression),
                                      poolingOptions == null ? new PoolingOptions() : poolingOptions,
                                      socketOptions == null ? new SocketOptions() : socketOptions,
                                      metricsEnabled ? new MetricsOptions(jmxEnabled) : null,
@@ -1290,6 +1311,11 @@ public class Cluster implements Closeable {
             if (metrics != null)
                 metrics.shutdown();
 
+            // And the load balancing policy
+            LoadBalancingPolicy loadBalancingPolicy = loadBalancingPolicy();
+            if (loadBalancingPolicy instanceof CloseableLoadBalancingPolicy)
+                ((CloseableLoadBalancingPolicy)loadBalancingPolicy).close();
+
             // Then we shutdown all connections
             List<CloseFuture> futures = new ArrayList<CloseFuture>(sessions.size() + 1);
             futures.add(controlConnection.closeAsync());
@@ -1350,7 +1376,7 @@ public class Cluster implements Closeable {
             }
 
             // If there is a reconnection attempt scheduled for that node, cancel it
-            ScheduledFuture<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
+            Future<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
             if (scheduledAttempt != null) {
                 logger.debug("Cancelling reconnection attempt since node is UP");
                 scheduledAttempt.cancel(false);
@@ -1578,6 +1604,63 @@ public class Cluster implements Closeable {
                     return true;
                 }
 
+                protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) {
+                    logger.error(String.format("Authentication error during reconnection to %s, scheduling retry in %d milliseconds", host, nextDelayMs), e);
+                    return true;
+                }
+
+            }.start();
+        }
+
+        public void tryReconnectOnce(final Host host) {
+            if (isClosed() || host.isUp())
+                return;
+
+            logger.debug("Scheduling one-time reconnection to {}", host);
+
+            // Setting an initial delay of 0 to start immediately, and all the exception handlers return false to prevent further attempts
+            new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt, 0) {
+
+                protected Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+                    return connectionFactory.open(host);
+                }
+
+                protected void onReconnection(Connection connection) {
+                    // We don't use that first connection so close it.
+                    // TODO: this is a bit wasteful, we should consider passing it to onAdd/onUp so
+                    // we use it for the first HostConnectionPool created
+                    connection.closeAsync();
+                    // Make sure we have up-to-date infos on that host before adding it (so we typically
+                    // catch that an upgraded node uses a new cassandra version).
+                    if (controlConnection.refreshNodeInfo(host)) {
+                        logger.debug("Successful reconnection to {}, setting host UP", host);
+                        try {
+                            onUp(host);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        } catch (Exception e) {
+                            logger.error("Unexpected error while setting node up", e);
+                        }
+                    } else {
+                        logger.debug("Not enough info for {}, ignoring host", host);
+                    }
+                }
+
+                protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
+                    if (logger.isDebugEnabled())
+                        logger.debug("Failed one-time reconnection to {} ({})", host, e.getMessage());
+                    return false;
+                }
+
+                protected boolean onUnknownException(Exception e, long nextDelayMs) {
+                    logger.error(String.format("Unknown error during one-time reconnection to %s", host), e);
+                    return false;
+                }
+
+                protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) {
+                    logger.error(String.format("Authentication error during one-time reconnection to %s", host), e);
+                    return false;
+                }
             }.start();
         }
 
@@ -1844,7 +1927,7 @@ public class Cluster implements Closeable {
                         // Before refreshing the schema, wait for schema agreement so
                         // that querying a table just after having created it don't fail.
                         if (!ControlConnection.waitForSchemaAgreement(connection, Cluster.Manager.this))
-                            logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", ControlConnection.MAX_SCHEMA_AGREEMENT_WAIT_SECONDS);
+                            logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds());
                         ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this, false);
                     } catch (Exception e) {
                         logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
@@ -1998,6 +2081,16 @@ public class Cluster implements Closeable {
 
             for (SessionManager s : sessions)
                 s.updateCreatedPools(executor);
+        }
+
+        void refreshConnectedHost(Host host) {
+            // Deal with the control connection if it was using this host
+            Host ccHost = controlConnection.connectedHost();
+            if (ccHost == null || ccHost.equals(host) && loadBalancingPolicy().distance(ccHost) != HostDistance.LOCAL)
+                controlConnection.reconnect();
+
+            for (SessionManager s : sessions)
+                s.updateCreatedPools(host, executor);
         }
 
         private class ClusterCloseFuture extends CloseFuture.Forwarding {

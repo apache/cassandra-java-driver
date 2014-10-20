@@ -17,13 +17,14 @@ package com.datastax.driver.core;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Collection;
-import java.util.Iterator;
 
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
+import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 
@@ -52,9 +53,8 @@ public class LoadBalancingPolicyBootstrapTest {
         c.discard();
     }
 
-    static class CountingPolicy implements LoadBalancingPolicy {
+    static class CountingPolicy extends DelegatingLoadBalancingPolicy {
 
-        private final LoadBalancingPolicy delegate;
         int adds;
         int suspecteds;
         int removes;
@@ -64,51 +64,38 @@ public class LoadBalancingPolicyBootstrapTest {
         final StringWriter history = new StringWriter();
         private final PrintWriter out = new PrintWriter(history);
 
-        CountingPolicy(LoadBalancingPolicy delegate) {
-            this.delegate = delegate;
+        public CountingPolicy(LoadBalancingPolicy delegate) {
+            super(delegate);
         }
 
         public void onAdd(Host host) {
             out.printf("add %s%n", host);
             adds++;
-            delegate.onAdd(host);
+            super.onAdd(host);
         }
 
         public void onSuspected(Host host) {
             out.printf("suspect %s%n", host);
             suspecteds++;
-            delegate.onSuspected(host);
+            super.onSuspected(host);
         }
 
         public void onUp(Host host) {
             out.printf("up %s%n", host);
             ups++;
-            delegate.onUp(host);
+            super.onUp(host);
         }
 
         public void onDown(Host host) {
             out.printf("down %s%n", host);
             downs++;
-            delegate.onDown(host);
+            super.onDown(host);
         }
 
         public void onRemove(Host host) {
             out.printf("remove %s%n", host);
             removes++;
-            delegate.onRemove(host);
-        }
-
-        public void init(Cluster cluster, Collection<Host> hosts) {
-            delegate.init(cluster, hosts);
-        }
-
-        public HostDistance distance(Host host) {
-            return delegate.distance(host);
-        }
-
-        @Override
-        public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement) {
-            return delegate.newQueryPlan(loggedKeyspace, statement);
+            super.onRemove(host);
         }
     }
 }

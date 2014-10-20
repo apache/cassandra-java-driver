@@ -21,6 +21,8 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import static org.testng.Assert.fail;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.SkipException;
@@ -368,6 +370,17 @@ public abstract class TestUtils {
         if (major < majorCheck || (major == majorCheck && minor < minorCheck)) {
             throw new SkipException(skipString);
         }
+    }
+
+    /** Utility method to find the {@code Host} object corresponding to a node in a cluster. */
+    public static Host findHost(Cluster cluster, int hostNumber) {
+        String address = CCMBridge.ipOfNode(hostNumber);
+        for (Host host : cluster.getMetadata().getAllHosts()) {
+            if (host.getAddress().getHostAddress().equals(address))
+                return host;
+        }
+        fail(address + " not found in cluster metadata");
+        return null; // never reached
     }
 
     public static int numberOfLocalCoreConnections(Cluster cluster) {
