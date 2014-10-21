@@ -693,5 +693,6 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy, Closeab
     public void close() {
         if (childPolicy instanceof CloseableLoadBalancingPolicy)
             ((CloseableLoadBalancingPolicy)childPolicy).close();
+        updaterService.shutdown();
     }
 }
