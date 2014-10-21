@@ -51,6 +51,8 @@ public class PoolingOptions {
     private static final int DEFAULT_MAX_POOL_LOCAL = 8;
     private static final int DEFAULT_MAX_POOL_REMOTE = 2;
 
+    private static final int DEFAULT_IDLE_TIMEOUT_SECONDS = 120;
+
     private volatile Cluster.Manager manager;
 
     private final int[] minSimultaneousRequests = new int[]{ DEFAULT_MIN_REQUESTS, DEFAULT_MIN_REQUESTS, 0 };
@@ -58,6 +60,8 @@ public class PoolingOptions {
 
     private final int[] coreConnections = new int[] { DEFAULT_CORE_POOL_LOCAL, DEFAULT_CORE_POOL_REMOTE, 0 };
     private final int[] maxConnections = new int[] { DEFAULT_MAX_POOL_LOCAL , DEFAULT_MAX_POOL_REMOTE, 0 };
+
+    private volatile int idleTimeoutSeconds = DEFAULT_IDLE_TIMEOUT_SECONDS;
 
     public PoolingOptions() {}
 
@@ -214,6 +218,33 @@ public class PoolingOptions {
 
         checkConnectionsPerHostOrder(coreConnections[distance.ordinal()], newMaxConnections, distance);
         maxConnections[distance.ordinal()] = newMaxConnections;
+        return this;
+    }
+
+    /**
+     * Returns the timeout before an idle connection is removed.
+     *
+     * @return the timeout.
+     */
+    public int getIdleTimeoutSeconds() {
+        return idleTimeoutSeconds;
+    }
+
+    /**
+     * Sets the timeout before an idle connection is removed.
+     * <p>
+     * The order of magnitude should be a few minutes (the default is 120 seconds). The
+     * timeout that triggers the removal has a granularity of 10 seconds.
+     *
+     * @param idleTimeoutSeconds the new timeout in seconds.
+     * @return this {@code PoolingOptions}.
+     *
+     * @throws IllegalArgumentException if the timeout is negative.
+     */
+    public PoolingOptions setIdleTimeoutSeconds(int idleTimeoutSeconds) {
+        if (idleTimeoutSeconds < 0)
+            throw new IllegalArgumentException("Idle timeout must be positive");
+        this.idleTimeoutSeconds = idleTimeoutSeconds;
         return this;
     }
 

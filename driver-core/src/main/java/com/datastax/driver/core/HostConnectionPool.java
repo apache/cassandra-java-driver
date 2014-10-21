@@ -262,11 +262,20 @@ class HostConnectionPool {
                 close(connection);
         } else {
             if (connections.size() > options().getCoreConnectionsPerHost(hostDistance) && inFlight <= options().getMinSimultaneousRequestsPerConnectionThreshold(hostDistance)) {
-                trashConnection(connection);
+                connection.setTrashTimeIn(options().getIdleTimeoutSeconds());
             } else if (connection.maxAvailableStreams() < MIN_AVAILABLE_STREAMS) {
                 replaceConnection(connection);
             } else {
+                connection.cancelTrashTime();
                 signalAvailableConnection();
+            }
+        }
+    }
+
+    void trashIdleConnections(long now) {
+        for (PooledConnection connection : connections) {
+            if (connection.getTrashTime() < now) {
+                trashConnection(connection);
             }
         }
     }
@@ -287,6 +296,7 @@ class HostConnectionPool {
                 int opened = open.get();
                 if (opened <= options().getCoreConnectionsPerHost(hostDistance)) {
                     connection.markForTrash.set(false);
+                    connection.cancelTrashTime();
                     return false;
                 }
 
@@ -296,13 +306,9 @@ class HostConnectionPool {
 
             doTrashConnection(connection);
         }
-        // If compareAndSet failed, it means we raced and another thread will execute doTrashConnection.
-        // If the connection needs to be closed (inFlight == 0), we don't need to do it here because the other thread will necessarily do
-        // it:
-        // - the current thread decremented inFlight in returnConnection
-        // - we know it did it before the connection was trashed, because otherwise it would have entered `if (trash.contains(connection))`
-        //   in returnConnection and not arrived here.
-        // - so the other thread will see the up-to-date value of inFlight and take appropriate action.
+        // If compareAndSet failed, it means we raced with another thread that will execute doTrashConnection.
+        // Since trashConnection is called from a scheduled task, we're sure that the current thread did not modify
+        // inFlight, so the other thread will take care of closing the connection if necessary (i.e. if inFlight == 0).
         return true;
     }
 

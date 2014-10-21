@@ -20,6 +20,7 @@ CHANGELOG
 - [improvement] Shuffle the replicas in TokenAwarePolicy.newQueryPlan (JAVA-504)
 - [improvement] Make schema agreement wait tuneable (JAVA-507)
 - [improvement] Document how to inject the driver metrics into another registry (JAVA-494)
+- [improvement] Add idle timeout to the connection pool (JAVA-419)
 
 
 2.0.6:
