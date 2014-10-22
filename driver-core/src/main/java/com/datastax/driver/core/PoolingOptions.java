@@ -52,6 +52,7 @@ public class PoolingOptions {
     private static final int DEFAULT_MAX_POOL_REMOTE = 2;
 
     private static final int DEFAULT_IDLE_TIMEOUT_SECONDS = 120;
+    private static final int DEFAULT_POOL_TIMEOUT_MILLIS = 5000;
 
     private volatile Cluster.Manager manager;
 
@@ -62,6 +63,7 @@ public class PoolingOptions {
     private final int[] maxConnections = new int[] { DEFAULT_MAX_POOL_LOCAL , DEFAULT_MAX_POOL_REMOTE, 0 };
 
     private volatile int idleTimeoutSeconds = DEFAULT_IDLE_TIMEOUT_SECONDS;
+    private volatile int poolTimeoutMillis = DEFAULT_POOL_TIMEOUT_MILLIS;
 
     public PoolingOptions() {}
 
@@ -245,6 +247,35 @@ public class PoolingOptions {
         if (idleTimeoutSeconds < 0)
             throw new IllegalArgumentException("Idle timeout must be positive");
         this.idleTimeoutSeconds = idleTimeoutSeconds;
+        return this;
+    }
+
+    /**
+     * Returns the timeout when trying to acquire a connection from a host's pool.
+     *
+     * @return the timeout.
+     */
+    public int getPoolTimeoutMillis() {
+        return poolTimeoutMillis;
+    }
+
+    /**
+     * Sets the timeout when trying to acquire a connection from a host's pool.
+     * <p>
+     * If no connection is available within that time, the driver will try the
+     * next host from the query plan.
+     * <p>
+     * If this option is set to zero, the driver won't wait at all.
+     *
+     * @param poolTimeoutMillis the new value in milliseconds.
+     * @return this {@code PoolingOptions}
+     *
+     * @throws IllegalArgumentException if the timeout is negative.
+     */
+    public PoolingOptions setPoolTimeoutMillis(int poolTimeoutMillis) {
+        if (poolTimeoutMillis < 0)
+            throw new IllegalArgumentException("Pool timeout must be positive");
+        this.poolTimeoutMillis = poolTimeoutMillis;
         return this;
     }
 

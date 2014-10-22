@@ -11,9 +11,12 @@ import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+
 public class HostConnectionPoolTimeoutTest {
     @Test(groups = "long")
-    public void should_wait_for_timeout_before_trashing_connections() throws Exception {
+    public void should_wait_for_idle_timeout_before_trashing_connections() throws Exception {
         CCMBridge ccm = null;
         Cluster cluster = null;
         try {
@@ -95,6 +98,53 @@ public class HostConnectionPoolTimeoutTest {
             assertThat(openConnections.getValue()).isEqualTo(3);
             assertThat(createdConnections.get()).isEqualTo(4);
 
+        } finally {
+            if (cluster != null)
+                cluster.close();
+            if (ccm != null)
+                ccm.remove();
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_timeout_immediately_if_pool_timeout_is_zero() throws Exception {
+        CCMBridge ccm = null;
+        Cluster cluster = null;
+        try {
+            ccm = CCMBridge.create("test", 1);
+            cluster = Cluster.builder()
+                .addContactPoint(CCMBridge.ipOfNode(1))
+                .build();
+
+            cluster.getConfiguration().getPoolingOptions()
+                .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
+                .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
+                .setPoolTimeoutMillis(0);
+
+            Session session = cluster.connect();
+
+            Host host1 = TestUtils.findHost(cluster, 1);
+
+            // Borrow all streams to simulate a busy pool (the timeout doesn't matter here)
+            HostConnectionPool pool = ((SessionManager)session).pools.get(host1);
+            for (int i = 0; i < 128; i++)
+                pool.borrowConnection(1, TimeUnit.SECONDS);
+
+            boolean threw = false;
+            long beforeQuery = System.nanoTime();
+            try {
+                session.execute("select release_version from system.local");
+            } catch (NoHostAvailableException e) {
+                long afterQuery = System.nanoTime();
+                // This is a bit arbitrary, but we can expect that the time to find out there is no available connection
+                // is less than 20 ms
+                assertThat(afterQuery - beforeQuery).isLessThan(20 * 1000 * 1000);
+                Throwable host1Error = e.getErrors().get(host1.getSocketAddress());
+                assertThat(host1Error).isInstanceOf(DriverException.class);
+                assertThat(host1Error.getMessage()).contains("Timeout while trying to acquire available connection");
+                threw = true;
+            }
+            assertThat(threw).isTrue();
         } finally {
             if (cluster != null)
                 cluster.close();

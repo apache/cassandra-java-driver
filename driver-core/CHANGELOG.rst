@@ -25,6 +25,7 @@ CHANGELOG
 - [improvement] Throw an exception when DCAwareRoundRobinPolicy is built with
   an explicit but null or empty local datacenter (JAVA-451).
 - [bug] Fix check for local contact points in DCAware policy's init (JAVA-511)
+- [improvement] Make timeout on saturated pool customizable (JAVA-457)
 
 
 2.0.6:

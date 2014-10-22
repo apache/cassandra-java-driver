@@ -199,6 +199,9 @@ class HostConnectionPool {
     }
 
     private PooledConnection waitForConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
+        if (timeout == 0)
+            throw new TimeoutException();
+
         long start = System.nanoTime();
         long remaining = timeout;
         do {

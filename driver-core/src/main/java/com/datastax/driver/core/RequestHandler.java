@@ -113,9 +113,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
         PooledConnection connection = null;
         try {
-            // Note: this is not perfectly correct to use getConnectTimeoutMillis(), but
-            // until we provide a more fancy to control query timeouts, it's not a bad solution either
-            connection = currentPool.borrowConnection(manager.configuration().getSocketOptions().getConnectTimeoutMillis(), TimeUnit.MILLISECONDS);
+            connection = currentPool.borrowConnection(manager.configuration().getPoolingOptions().getPoolTimeoutMillis(), TimeUnit.MILLISECONDS);
             if (current != null) {
                 if (triedHosts == null)
                     triedHosts = new ArrayList<Host>();
@@ -134,8 +132,7 @@ class RequestHandler implements Connection.ResponseCallback {
             return false;
         } catch (BusyConnectionException e) {
             // The pool shouldn't have give us a busy connection unless we've maxed up the pool, so move on to the next host.
-            if (connection != null)
-                connection.release();
+            connection.release();
             logError(host.getSocketAddress(), e);
             return false;
         } catch (TimeoutException e) {
