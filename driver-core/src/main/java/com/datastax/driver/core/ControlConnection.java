@@ -73,6 +73,7 @@ class ControlConnection implements Host.StateListener {
         if (isShutdown)
             return;
 
+        // NB: at this stage, allHosts() only contains the initial contact points
         setNewConnection(reconnectInternal(cluster.metadata.allHosts().iterator(), true));
     }
 
