@@ -24,7 +24,7 @@ public class HostConnectionPoolTimeoutTest {
 
             // Hijack the auth provider to be notified each time a connection instance is built
             CountingAuthProvider authProvider = new CountingAuthProvider("cassandra", "cassandra");
-            AtomicInteger createdConnections = authProvider.count;
+            AtomicInteger createdConnections = authProvider.newAuthenticatorCount;
 
             cluster = Cluster.builder()
                 .addContactPoint(CCMBridge.ipOfNode(1))
@@ -61,7 +61,7 @@ public class HostConnectionPoolTimeoutTest {
             assertThat(openConnections.getValue()).isEqualTo(3);
             assertThat(createdConnections.get()).isEqualTo(3);
 
-            // Borrow one more time, which should spawn a new connection
+            // Borrow one more stream, which should spawn a new connection
             PooledConnection nonCoreConnection = pool.borrowConnection(1, TimeUnit.SECONDS);
             assertThat(coreConnections).doesNotContain(nonCoreConnection);
             assertThat(openConnections.getValue()).isEqualTo(4);
@@ -85,6 +85,16 @@ public class HostConnectionPoolTimeoutTest {
             assertThat(openConnections.getValue()).isEqualTo(3);
             assertThat(createdConnections.get()).isEqualTo(4);
 
+            // Return all the streams of the core connections, they should not get trashed
+            for (PooledConnection coreConnection : coreConnections)
+                for (int i = 0; i < 128; i++)
+                    pool.returnConnection(coreConnection);
+            assertThat(session.getState().getInFlightQueries(host1)).isEqualTo(0);
+
+            TimeUnit.SECONDS.sleep(idleTimeoutSeconds * 2);
+            assertThat(openConnections.getValue()).isEqualTo(3);
+            assertThat(createdConnections.get()).isEqualTo(4);
+
         } finally {
             if (cluster != null)
                 cluster.close();
@@ -97,14 +107,14 @@ public class HostConnectionPoolTimeoutTest {
      * An auth provider that counts how many authenticators it has returned.
      */
     static class CountingAuthProvider extends PlainTextAuthProvider {
-        final AtomicInteger count = new AtomicInteger();
+        final AtomicInteger newAuthenticatorCount = new AtomicInteger();
 
         public CountingAuthProvider(String username, String password) {
             super(username, password);
         }
 
         @Override public Authenticator newAuthenticator(InetSocketAddress host) {
-            count.incrementAndGet();
+            newAuthenticatorCount.incrementAndGet();
             return super.newAuthenticator(host);
         }
     }
