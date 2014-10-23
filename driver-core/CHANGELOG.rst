@@ -21,6 +21,7 @@ CHANGELOG
 - [improvement] Make schema agreement wait tuneable (JAVA-507)
 - [improvement] Document how to inject the driver metrics into another registry (JAVA-494)
 - [improvement] Add idle timeout to the connection pool (JAVA-419)
+- [bug] LatencyAwarePolicy does not shutdown executor on invocation of close (JAVA-516)
 
 
 2.0.6:
