@@ -24,6 +24,7 @@ CHANGELOG
 - [bug] LatencyAwarePolicy does not shutdown executor on invocation of close (JAVA-516)
 - [improvement] Throw an exception when DCAwareRoundRobinPolicy is built with
   an explicit but null or empty local datacenter (JAVA-451).
+- [bug] Fix check for local contact points in DCAware policy's init (JAVA-511)
 
 
 2.0.6:

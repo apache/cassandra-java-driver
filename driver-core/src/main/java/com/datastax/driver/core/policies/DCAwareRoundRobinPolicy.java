@@ -193,13 +193,13 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
         for (Host host : hosts) {
             String dc = dc(host);
 
-            if (!dc.equals(localDc)) notInLocalDC.add(String.format("%s (%s)", host.toString(), host.getDatacenter()));
-
             // If the localDC was in "auto-discover" mode and it's the first host for which we have a DC, use it.
             if (localDc == UNSET && dc != UNSET) {
                 logger.info("Using data-center name '{}' for DCAwareRoundRobinPolicy (if this is incorrect, please provide the correct datacenter name with DCAwareRoundRobinPolicy constructor)", dc);
                 localDc = dc;
             }
+
+            if (!dc.equals(localDc)) notInLocalDC.add(String.format("%s (%s)", host.toString(), host.getDatacenter()));
 
             CopyOnWriteArrayList<Host> prev = perDcLiveHosts.get(dc);
             if (prev == null)
@@ -210,7 +210,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
 
         if (notInLocalDC.size() > 0) {
             String nonLocalHosts = Joiner.on(",").join(notInLocalDC);
-            logger.warn("Some contact points don't match specified local data center. Local DC = {}. Non-conforming contact points: {}", localDc, nonLocalHosts);
+            logger.warn("Some contact points don't match local data center. Local DC = {}. Non-conforming contact points: {}", localDc, nonLocalHosts);
         }
     }
 

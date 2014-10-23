@@ -1172,27 +1172,25 @@ public class Cluster implements Closeable {
             try {
                 while (true) {
                     try {
-                        // Make a copy of the hosts - which only contain the contact points at this stage - before we initialize the
-                        // control connection. We use a set with guaranteed insertion order, so that the contact points will remain
-                        // first, before any other host discovered by the control connection.
-                        // This is important if the load balancing policy is the DCAware one, because it needs to see the contact points
-                        // first for the local DC detection to work properly.
-                        Set<Host> hosts = Sets.newLinkedHashSet(metadata.allHosts());
+                        // At this stage, metadata.allHosts() only contains the contact points, that's what we want to pass to LBP.init().
+                        // But the control connection will initialize first and discover more hosts, so make a copy.
+                        Set<Host> contactPointHosts = Sets.newHashSet(metadata.allHosts());
 
                         controlConnection.connect();
                         if (connectionFactory.protocolVersion < 0)
                             connectionFactory.protocolVersion = 2;
 
-                        // metadata now also contains other hosts discovered by the connection, update our copy
-                        hosts.addAll(metadata.allHosts());
-
                         // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
                         // rack...) to initialize the load balancing policy
-                        loadBalancingPolicy().init(Cluster.this, hosts);
-
+                        loadBalancingPolicy().init(Cluster.this, contactPointHosts);
+                        // Add the remaining hosts that were discovered by the control connection:
+                        for (Host host : metadata.allHosts()) {
+                            if (!contactPointHosts.contains(host))
+                                loadBalancingPolicy().onAdd(host);
+                        }
                         isFullyInit = true;
 
-                        for (Host host : hosts)
+                        for (Host host : metadata.allHosts())
                             triggerOnAdd(host);
 
                         return;
