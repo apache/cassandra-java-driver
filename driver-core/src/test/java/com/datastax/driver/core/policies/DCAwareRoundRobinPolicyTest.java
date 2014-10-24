@@ -90,7 +90,7 @@ public class DCAwareRoundRobinPolicyTest {
             Host host1 = TestUtils.findHost(cluster, 1);
             Host host2 = TestUtils.findHost(cluster, 2);
 
-            assertThat(policy.initHosts).containsExactly(host1, host2);
+            assertThat(policy.initHosts).containsOnly(host1, host2);
 
             assertThat(logs.get())
                 .contains("Some contact points don't match local data center");
@@ -148,7 +148,7 @@ public class DCAwareRoundRobinPolicyTest {
 
             assertEquals(policy.getLocalDc(), providedLocalDc);
 
-            assertThat(policy.initHosts).containsExactly(host1, host2);
+            assertThat(policy.initHosts).containsOnly(host1, host2);
 
             assertThat(logs.get())
                 .contains("Some contact points don't match local data center");
