@@ -69,7 +69,7 @@ public class PoolingOptionsTest {
 
             // Kill host 2, host 3 should take its place
             ccm.stop(2);
-            TestUtils.waitFor(CCMBridge.ipOfNode(3), cluster);
+            TestUtils.waitFor(CCMBridge.ipOfNode(3), cluster, 120);
 
             assertThat(cluster).host(1)
                                .hasState(State.UP)
