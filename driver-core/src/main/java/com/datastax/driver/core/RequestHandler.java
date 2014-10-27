@@ -57,6 +57,12 @@ class RequestHandler implements Connection.ResponseCallback {
     private volatile HostConnectionPool currentPool;
     private final AtomicReference<QueryState> queryStateRef;
 
+    // This represents the number of times a retry has been triggered by the RetryPolicy (this is different from
+    // queryStateRef.get().retryCount, because some retries don't involve the policy, for example after an
+    // OVERLOADED error).
+    // This is incremented by one writer at a time, so volatile is good enough.
+    private volatile int retriesByPolicy;
+
     private volatile ConsistencyLevel retryConsistencyLevel;
 
     private volatile Map<InetSocketAddress, Throwable> errors;
@@ -282,7 +288,7 @@ class RequestHandler implements Connection.ResponseCallback {
                                                               rte.getRequiredAcknowledgements(),
                                                               rte.getReceivedAcknowledgements(),
                                                               rte.wasDataRetrieved(),
-                                                              retryCount);
+                                                              retriesByPolicy);
 
                             if (metricsEnabled()) {
                                 if (retry.getType() == Type.RETRY)
@@ -302,7 +308,7 @@ class RequestHandler implements Connection.ResponseCallback {
                                                                wte.getWriteType(),
                                                                wte.getRequiredAcknowledgements(),
                                                                wte.getReceivedAcknowledgements(),
-                                                               retryCount);
+                                                               retriesByPolicy);
 
                             if (metricsEnabled()) {
                                 if (retry.getType() == Type.RETRY)
@@ -321,7 +327,7 @@ class RequestHandler implements Connection.ResponseCallback {
                                                               ue.getConsistencyLevel(),
                                                               ue.getRequiredReplicas(),
                                                               ue.getAliveReplicas(),
-                                                              retryCount);
+                                                              retriesByPolicy);
 
                             if (metricsEnabled()) {
                                 if (retry.getType() == Type.RETRY)
@@ -406,8 +412,9 @@ class RequestHandler implements Connection.ResponseCallback {
                     else {
                         switch (retry.getType()) {
                             case RETRY:
+                                ++retriesByPolicy;
                                 if (logger.isDebugEnabled())
-                                    logger.debug("Doing retry {} for query {} at consistency {}", retryCount, statement, retry.getRetryConsistencyLevel());
+                                    logger.debug("Doing retry {} for query {} at consistency {}", retriesByPolicy, statement, retry.getRetryConsistencyLevel());
                                 if (metricsEnabled())
                                     metrics().getErrorMetrics().getRetries().inc();
                                 retry(true, retry.getRetryConsistencyLevel());
