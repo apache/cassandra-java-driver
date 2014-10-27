@@ -160,8 +160,7 @@ class ControlConnection implements Host.StateListener {
         Connection connection = connectionRef.get();
         if (connection != null && connection.isDefunct()) {
             // If the connection was marked as defunct, this already reported the
-            // node down, which will trigger a reconnect. Otherwise, just reconnect
-            // manually
+            // node down, which will trigger a reconnect.
             return;
         }
         // If the connection is not defunct, or the host has left, just reconnect manually

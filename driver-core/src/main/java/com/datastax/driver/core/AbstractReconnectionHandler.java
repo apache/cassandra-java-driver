@@ -31,7 +31,7 @@ import com.datastax.driver.core.policies.ReconnectionPolicy;
  * <p>
  * Concurrent attempts are handled via the {@link #currentAttempt} reference passed to the constructor.
  * For a given reference, only one handler will run at a given time. Additional handlers will cancel
- * themselves if they fight a previous handler running.
+ * themselves if they find a previous handler running.
  * <p>
  * This class is designed for concurrency, but instances must not be shared: each thread creates and
  * starts its own private handler, all interactions happen through {@link #currentAttempt}.
