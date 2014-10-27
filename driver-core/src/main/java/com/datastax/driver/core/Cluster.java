@@ -2130,7 +2130,7 @@ public class Cluster implements Closeable {
         private static final int INTERVAL_MS = 15000;
 
         private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, threadFactory("Reaper-%d"));
-        private final Set<Connection> connections = Sets.newConcurrentHashSet();
+        private final Set<Connection> connections = Sets.newSetFromMap(new ConcurrentHashMap<Connection, Boolean>());
 
         private volatile boolean shutdown;
 
