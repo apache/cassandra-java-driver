@@ -29,7 +29,7 @@ import com.datastax.driver.core.TableMetadata;
  * It is thus advised to do so if a {@link com.datastax.driver.core.policies.TokenAwarePolicy}
  * is in use.
  * <p>
- * The provider builders perform very little validation of the built query.
+ * The provided builders perform very little validation of the built query.
  * There is thus no guarantee that a built query is valid, and it is
  * definitively possible to create invalid queries.
  * <p>
