@@ -93,7 +93,7 @@ public class Metrics {
      *     com.codahale.metrics.CsvReporter.forRegistry(metrics.getRegistry()).build(new File("measurements/")).start(1, TimeUnit.SECONDS);
      * </pre>
      * <p>
-     * If you already have a {@code MetricRegistry} in your application and which to
+     * If you already have a {@code MetricRegistry} in your application and wish to
      * add the driver's metrics to it, the recommended approach is to use a listener:
      * <pre>
      *     // Your existing registry:
