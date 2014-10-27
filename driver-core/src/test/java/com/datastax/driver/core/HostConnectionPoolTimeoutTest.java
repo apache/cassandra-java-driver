@@ -35,6 +35,7 @@ public class HostConnectionPoolTimeoutTest {
                 .build();
 
             PoolingOptions poolingOptions = cluster.getConfiguration().getPoolingOptions();
+            poolingOptions.setMinSimultaneousRequestsPerConnectionThreshold(HostDistance.LOCAL, 1);
             // Set to the max, which makes it slightly easier to reason about when new connections will be created:
             poolingOptions.setMaxSimultaneousRequestsPerConnectionThreshold(HostDistance.LOCAL, 128);
             int idleTimeoutSeconds = 10;
@@ -82,7 +83,16 @@ public class HostConnectionPoolTimeoutTest {
             assertThat(openConnections.getValue()).isEqualTo(4);
             assertThat(createdConnections.get()).isEqualTo(4);
 
-            // If we return and wait long enough, it should eventually get trashed
+            // Borrow two more and return 1 to reach inFlight = 2 (above the min). The connection should not be trashed.
+            assertThat(pool.borrowConnection(1, TimeUnit.SECONDS)).isSameAs(nonCoreConnection2);
+            assertThat(pool.borrowConnection(1, TimeUnit.SECONDS)).isSameAs(nonCoreConnection2);
+            pool.returnConnection(nonCoreConnection2); // (we need to return one because we cancel the timeout on return)
+            TimeUnit.SECONDS.sleep(idleTimeoutSeconds * 2);
+            assertThat(openConnections.getValue()).isEqualTo(4);
+            assertThat(createdConnections.get()).isEqualTo(4);
+
+            // Return everything for the non-core connection and wait long enough, it should eventually get trashed
+            pool.returnConnection(nonCoreConnection);
             pool.returnConnection(nonCoreConnection);
             TimeUnit.SECONDS.sleep(idleTimeoutSeconds * 2);
             assertThat(openConnections.getValue()).isEqualTo(3);
