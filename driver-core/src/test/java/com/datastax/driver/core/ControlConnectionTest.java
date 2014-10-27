@@ -23,6 +23,7 @@ public class ControlConnectionTest {
         // Since we don't open any session from our Cluster, only the control connection reattempts are calling this
         // method, therefore the invocation count is equal to the number of attempts.
         QueryPlanCountingPolicy loadBalancingPolicy = new QueryPlanCountingPolicy(Policies.defaultLoadBalancingPolicy());
+        AtomicInteger reconnectionAttempts = loadBalancingPolicy.counter;
 
         // Custom reconnection policy with a very large delay (longer than the test duration), to make sure we count
         // only the first reconnection attempt of each reconnection handler.
@@ -39,18 +40,23 @@ public class ControlConnectionTest {
         };
 
         try {
-            ccm = CCMBridge.create("test", 1);
+            ccm = CCMBridge.create("test", 2);
+            // We pass only the first host as contact point, so we know the control connection will be on this host
             cluster = Cluster.builder()
-                             .addContactPoint(CCMBridge.ipOfNode(1))
-                             .withReconnectionPolicy(reconnectionPolicy)
-                             .withLoadBalancingPolicy(loadBalancingPolicy)
-                             .build();
+                .addContactPoint(CCMBridge.ipOfNode(1))
+                .withReconnectionPolicy(reconnectionPolicy)
+                .withLoadBalancingPolicy(loadBalancingPolicy)
+                .build();
             cluster.init();
 
+            // Kill the control connection host, there should be exactly one reconnection attempt
             ccm.stop(1);
+            TimeUnit.SECONDS.sleep(1); // Sleep for a while to make sure our final count is not the result of lucky timing
+            assertThat(reconnectionAttempts.get()).isEqualTo(1);
 
-            // Sleep for a while to make sure our final count is not the result of lucky timing
+            ccm.stop(2);
             TimeUnit.SECONDS.sleep(1);
+            assertThat(reconnectionAttempts.get()).isEqualTo(2);
 
         } finally {
             if (cluster != null)
@@ -58,7 +64,6 @@ public class ControlConnectionTest {
             if (ccm != null)
                 ccm.remove();
         }
-        assertThat(loadBalancingPolicy.counter.get()).isEqualTo(1);
     }
 
     static class QueryPlanCountingPolicy extends DelegatingLoadBalancingPolicy {
