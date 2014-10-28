@@ -42,8 +42,8 @@ public class BatchStatement extends Statement {
      */
     public enum Type {
         /**
-         * A logged batch: Cassandra will first the batch to its distributed batch log to
-         * ensure the atomicity of the batch.
+         * A logged batch: Cassandra will first write the batch to its distributed batch log
+         * to ensure the atomicity of the batch.
          */
         LOGGED,
 
