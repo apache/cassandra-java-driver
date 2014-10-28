@@ -200,6 +200,8 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
             } else if (!dc.equals(localDc))
                 notInLocalDC.add(String.format("%s (%s)", host.toString(), dc));
 
+            if (!dc.equals(localDc)) notInLocalDC.add(String.format("%s (%s)", host.toString(), host.getDatacenter()));
+
             CopyOnWriteArrayList<Host> prev = perDcLiveHosts.get(dc);
             if (prev == null)
                 perDcLiveHosts.put(dc, new CopyOnWriteArrayList<Host>(Collections.singletonList(host)));
@@ -209,7 +211,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
 
         if (notInLocalDC.size() > 0) {
             String nonLocalHosts = Joiner.on(",").join(notInLocalDC);
-            logger.warn("Some contact points don't match specified local data center. Local DC = {}. Non-conforming contact points: {}", localDc, nonLocalHosts);
+            logger.warn("Some contact points don't match local data center. Local DC = {}. Non-conforming contact points: {}", localDc, nonLocalHosts);
         }
     }
 

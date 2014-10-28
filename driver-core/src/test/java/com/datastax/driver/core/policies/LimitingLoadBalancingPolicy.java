@@ -1,6 +1,7 @@
 package com.datastax.driver.core.policies;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -25,8 +26,8 @@ import com.datastax.driver.core.Statement;
 public class LimitingLoadBalancingPolicy extends DelegatingLoadBalancingPolicy {
     private final int maxHosts;
     private final int threshold;
-    private final Set<Host> liveHosts = Sets.newConcurrentHashSet();
-    private final Set<Host> chosenHosts = Sets.newConcurrentHashSet();
+    private final Set<Host> liveHosts = Sets.newSetFromMap(new ConcurrentHashMap<Host, Boolean>());
+    private final Set<Host> chosenHosts = Sets.newSetFromMap(new ConcurrentHashMap<Host, Boolean>());
     private final Lock updateLock = new ReentrantLock();
 
     private volatile Cluster cluster;

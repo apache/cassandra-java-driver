@@ -1208,12 +1208,9 @@ public class Cluster implements Closeable {
                 metadata.add(address);
             }
 
-            // Make a copy of the hosts - which only contain the contact points at this stage - before we initialize the
-            // control connection. We use a set with guaranteed insertion order, so that the contact points will remain
-            // first, before any other host discovered by the control connection.
-            // This is important if the load balancing policy is the DCAware one, because it needs to see the contact points
-            // first for the local DC detection to work properly.
-            Set<Host> hosts = Sets.newLinkedHashSet(metadata.allHosts());
+            // At this stage, metadata.allHosts() only contains the contact points, that's what we want to pass to LBP.init().
+            // But the control connection will initialize first and discover more hosts, so make a copy.
+            Set<Host> contactPointHosts = Sets.newHashSet(metadata.allHosts());
 
             try {
                 try {
@@ -1229,21 +1226,25 @@ public class Cluster implements Closeable {
                     }
                 }
 
-                // metadata now also contains other hosts discovered by the connection, update our copy
-                hosts.addAll(metadata.allHosts());
-
                 // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
                 // rack...) to initialize the load balancing policy
-                loadBalancingPolicy().init(Cluster.this, hosts);
-
+                loadBalancingPolicy().init(Cluster.this, contactPointHosts);
+                // Add the remaining hosts that were discovered by the control connection:
+                for (Host host : metadata.allHosts()) {
+                    if (!contactPointHosts.contains(host))
+                        loadBalancingPolicy().onAdd(host);
+                }
                 isFullyInit = true;
 
-                for (Host host : hosts)
+                for (Host host : metadata.allHosts())
                     triggerOnAdd(host);
             } catch (NoHostAvailableException e) {
                 close();
                 throw e;
             }
+
+            if (connectionFactory.protocolVersion.compareTo(ProtocolVersion.V3) < 0)
+                this.scheduledTasksExecutor.scheduleWithFixedDelay(new TrashIdleConnectionsTask(), 10, 10, TimeUnit.SECONDS);
         }
 
         ProtocolVersion protocolVersion() {
@@ -2140,6 +2141,19 @@ public class Cluster implements Closeable {
                 }).start();
             }
         }
+
+        private class TrashIdleConnectionsTask implements Runnable {
+            @Override public void run() {
+                try {
+                    long now = System.currentTimeMillis();
+                    for (SessionManager session : sessions) {
+                        session.trashIdleConnections(now);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Error while trashing idle connections", e);
+                }
+            }
+        }
     }
 
     /**
@@ -2153,7 +2167,7 @@ public class Cluster implements Closeable {
         private static final int INTERVAL_MS = 15000;
 
         private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, threadFactory("Reaper-%d"));
-        private final Set<Connection> connections = Sets.newConcurrentHashSet();
+        private final Set<Connection> connections = Sets.newSetFromMap(new ConcurrentHashMap<Connection, Boolean>());
 
         private volatile boolean shutdown;
 

@@ -156,6 +156,9 @@ class SingleConnectionPool extends HostConnectionPool {
     }
 
     private PooledConnection waitForConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
+        if (timeout == 0)
+            throw new TimeoutException();
+
         long start = System.nanoTime();
         long remaining = timeout;
         do {
@@ -336,6 +339,10 @@ class SingleConnectionPool extends HostConnectionPool {
         if (open.compareAndSet(false, true) && scheduledForCreation.compareAndSet(false, true)) {
             manager.blockingExecutor().submit(newConnectionTask);
         }
+    }
+
+    @Override void trashIdleConnections(long now) {
+        // Nothing to do
     }
 
     @Override

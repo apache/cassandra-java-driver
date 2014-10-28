@@ -58,6 +58,9 @@ public class PoolingOptions {
     private static final int DEFAULT_MAX_REQUESTS_PER_HOST_LOCAL = 1024;
     private static final int DEFAULT_MAX_REQUESTS_PER_HOST_REMOTE = 256;
 
+    private static final int DEFAULT_IDLE_TIMEOUT_SECONDS = 120;
+    private static final int DEFAULT_POOL_TIMEOUT_MILLIS = 5000;
+
     private volatile Cluster.Manager manager;
 
     private final int[] minSimultaneousRequestsPerConnection = new int[]{ DEFAULT_MIN_REQUESTS_PER_CONNECTION, DEFAULT_MIN_REQUESTS_PER_CONNECTION, 0 };
@@ -69,6 +72,9 @@ public class PoolingOptions {
     private volatile int maxSimultaneousRequestsPerHostLocal = DEFAULT_MAX_REQUESTS_PER_HOST_LOCAL;
     private volatile int maxSimultaneousRequestsPerHostRemote = DEFAULT_MAX_REQUESTS_PER_HOST_REMOTE;
 
+
+    private volatile int idleTimeoutSeconds = DEFAULT_IDLE_TIMEOUT_SECONDS;
+    private volatile int poolTimeoutMillis = DEFAULT_POOL_TIMEOUT_MILLIS;
 
     public PoolingOptions() {}
 
@@ -241,6 +247,64 @@ public class PoolingOptions {
 
         checkConnectionsPerHostOrder(coreConnections[distance.ordinal()], newMaxConnections, distance);
         maxConnections[distance.ordinal()] = newMaxConnections;
+        return this;
+    }
+
+    /**
+     * Returns the timeout before an idle connection is removed.
+     *
+     * @return the timeout.
+     */
+    public int getIdleTimeoutSeconds() {
+        return idleTimeoutSeconds;
+    }
+
+    /**
+     * Sets the timeout before an idle connection is removed.
+     * <p>
+     * The order of magnitude should be a few minutes (the default is 120 seconds). The
+     * timeout that triggers the removal has a granularity of 10 seconds.
+     * <p>
+     * This option is only used with {@code ProtocolVersion#V2} or below.
+
+     * @param idleTimeoutSeconds the new timeout in seconds.
+     * @return this {@code PoolingOptions}.
+     *
+     * @throws IllegalArgumentException if the timeout is negative.
+     */
+    public PoolingOptions setIdleTimeoutSeconds(int idleTimeoutSeconds) {
+        if (idleTimeoutSeconds < 0)
+            throw new IllegalArgumentException("Idle timeout must be positive");
+        this.idleTimeoutSeconds = idleTimeoutSeconds;
+        return this;
+    }
+
+    /**
+     * Returns the timeout when trying to acquire a connection from a host's pool.
+     *
+     * @return the timeout.
+     */
+    public int getPoolTimeoutMillis() {
+        return poolTimeoutMillis;
+    }
+
+    /**
+     * Sets the timeout when trying to acquire a connection from a host's pool.
+     * <p>
+     * If no connection is available within that time, the driver will try the
+     * next host from the query plan.
+     * <p>
+     * If this option is set to zero, the driver won't wait at all.
+     *
+     * @param poolTimeoutMillis the new value in milliseconds.
+     * @return this {@code PoolingOptions}
+     *
+     * @throws IllegalArgumentException if the timeout is negative.
+     */
+    public PoolingOptions setPoolTimeoutMillis(int poolTimeoutMillis) {
+        if (poolTimeoutMillis < 0)
+            throw new IllegalArgumentException("Pool timeout must be positive");
+        this.poolTimeoutMillis = poolTimeoutMillis;
         return this;
     }
 

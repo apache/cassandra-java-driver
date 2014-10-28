@@ -1,5 +1,6 @@
 package com.datastax.driver.core;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -32,24 +33,18 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
     }
 
     public HostAssert comesUpWithin(long duration, TimeUnit unit) {
-        final AtomicBoolean notification = new AtomicBoolean();
+        final CountDownLatch upSignal = new CountDownLatch(1);
         StateListener upListener = new StateListenerBase() {
             public void onUp(Host host) {
-                notification.set(true);
-            };
+                upSignal.countDown();
+            }
         };
         cluster.register(upListener);
         try {
-            // Make sure the host did not come up while we were installing the listener
-            if (actual.isUp())
+            // If the host is already up or if we receive the UP signal within given time
+            if (actual.isUp() || upSignal.await(duration, unit)) {
                 return this;
-
-            long maxTime = System.nanoTime() + TimeUnit.NANOSECONDS.convert(duration, unit);
-            do {
-                TimeUnit.SECONDS.sleep(10);
-                if (notification.get())
-                    return this;
-            } while (System.nanoTime() < maxTime);
+            }
         } catch (InterruptedException e) {
             fail("Got interrupted while waiting for host to come up");
         } finally {
@@ -60,24 +55,17 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
     }
 
     public HostAssert goesDownWithin(long duration, TimeUnit unit) {
-        final AtomicBoolean notification = new AtomicBoolean();
+        final CountDownLatch downSignal = new CountDownLatch(1);
         StateListener upListener = new StateListenerBase() {
             public void onDown(Host host) {
-                notification.set(true);
-            };
+                downSignal.countDown();
+            }
         };
         cluster.register(upListener);
         try {
-            // Make sure the host did not go down while we were installing the listener
-            if (actual.state == State.DOWN)
+            // If the host is already down or if we receive the DOWN signal within given time
+            if (actual.state == State.DOWN || downSignal.await(duration, unit))
                 return this;
-
-            long maxTime = System.nanoTime() + TimeUnit.NANOSECONDS.convert(duration, unit);
-            do {
-                TimeUnit.SECONDS.sleep(10);
-                if (notification.get())
-                    return this;
-            } while (System.nanoTime() < maxTime);
         } catch (InterruptedException e) {
             fail("Got interrupted while waiting for host to go down");
         } finally {

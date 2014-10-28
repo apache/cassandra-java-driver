@@ -36,7 +36,11 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>16.0.1</version>
+      <!--
+        We use an old version of Guava to be compatible with Spark 1.1.
+        Check with the spark-cassandra-connector team before upgrading this.
+      -->
+      <version>14.0.1</version>
     </dependency>
 
     <dependency>

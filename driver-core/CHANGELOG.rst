@@ -25,6 +25,13 @@ Merged from 2.0 branch:
 - [improvement] Shuffle the replicas in TokenAwarePolicy.newQueryPlan (JAVA-504)
 - [improvement] Make schema agreement wait tuneable (JAVA-507)
 - [improvement] Document how to inject the driver metrics into another registry (JAVA-494)
+- [improvement] Add idle timeout to the connection pool (JAVA-419)
+- [bug] LatencyAwarePolicy does not shutdown executor on invocation of close (JAVA-516)
+- [improvement] Throw an exception when DCAwareRoundRobinPolicy is built with
+  an explicit but null or empty local datacenter (JAVA-451).
+- [bug] Fix check for local contact points in DCAware policy's init (JAVA-511)
+- [improvement] Make timeout on saturated pool customizable (JAVA-457)
+- [improvement] Downgrade Guava to 14.0.1 (JAVA-521)
 
 
 2.1.2:
@@ -133,6 +140,13 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [improvement] Shuffle the replicas in TokenAwarePolicy.newQueryPlan (JAVA-504)
 - [improvement] Make schema agreement wait tuneable (JAVA-507)
 - [improvement] Document how to inject the driver metrics into another registry (JAVA-494)
+- [improvement] Add idle timeout to the connection pool (JAVA-419)
+- [bug] LatencyAwarePolicy does not shutdown executor on invocation of close (JAVA-516)
+- [improvement] Throw an exception when DCAwareRoundRobinPolicy is built with
+  an explicit but null or empty local datacenter (JAVA-451).
+- [bug] Fix check for local contact points in DCAware policy's init (JAVA-511)
+- [improvement] Make timeout on saturated pool customizable (JAVA-457)
+- [improvement] Downgrade Guava to 14.0.1 (JAVA-521)
 
 
 2.0.6:

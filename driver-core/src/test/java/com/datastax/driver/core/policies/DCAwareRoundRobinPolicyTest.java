@@ -1,42 +1,186 @@
 package com.datastax.driver.core.policies;
 
-import org.testng.annotations.Test;
+import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.testng.annotations.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 
-import com.datastax.driver.core.CCMBridge;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.TestUtils;
+import com.datastax.driver.core.*;
 
 public class DCAwareRoundRobinPolicyTest {
+    MemoryAppender logs;
+    CCMBridge ccm;
+
+    @BeforeClass(groups = "short")
+    public void createCcm() {
+        // Two-DC cluster with one host in each DC
+        ccm = CCMBridge.create("test", 1, 1);
+    }
+
+    @AfterClass(groups = "short")
+    public void deleteCcm() {
+        if (ccm != null)
+            ccm.remove();
+    }
+
+    @BeforeMethod(groups = "short")
+    public void startRecordingLogs() {
+        Logger policyLogger = Logger.getLogger(DCAwareRoundRobinPolicy.class);
+        assertThat(Level.WARN.isGreaterOrEqual(policyLogger.getEffectiveLevel()))
+            .isTrue()
+            .as("Log level must be at least WARN for this test to work");
+
+        logs = new MemoryAppender();
+        policyLogger.addAppender(logs);
+    }
+
+    @AfterMethod(groups = "short")
+    public void stopRecordingLogs() {
+        Logger.getLogger(DCAwareRoundRobinPolicy.class).removeAppender(logs);
+    }
 
     @Test(groups = "short")
-    public void should_pick_local_dc_from_contact_points() {
-        CCMBridge ccm = null;
+    public void should_use_local_dc_from_contact_points_when_not_explicitly_specified() {
         Cluster cluster = null;
-        DCAwareRoundRobinPolicy policy;
+        CountingDCAwarePolicy policy = new CountingDCAwarePolicy();
 
         try {
-            // Create two-DC cluster with one host in each DC
-            ccm = CCMBridge.create("test", 1, 1);
-            policy = new DCAwareRoundRobinPolicy();
-
             // Pass host1 as contact point
             cluster = Cluster.builder()
-                             .addContactPoint(CCMBridge.ipOfNode(1))
-                             .withLoadBalancingPolicy(policy)
-                             .build();
+                .addContactPoint(CCMBridge.ipOfNode(1))
+                .withLoadBalancingPolicy(policy)
+                .build();
             cluster.init();
 
-            // Policy's localDC should be the one from the contact point
             Host host1 = TestUtils.findHost(cluster, 1);
-            assertEquals(policy.localDc, host1.getDatacenter());
+
+            // Policy's localDC should be the one from the contact point
+            assertThat(policy.getLocalDc()).isEqualTo(host1.getDatacenter());
+
+            assertThat(policy.initHosts).containsExactly(host1);
+
+            assertThat(logs.get())
+                .doesNotContain("Some contact points don't match local data center");
 
         } finally {
             if (cluster != null)
                 cluster.close();
-            if (ccm != null)
-                ccm.remove();
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_warn_if_contact_points_have_different_dcs_when_not_explicitly_specified() {
+        Cluster cluster = null;
+        CountingDCAwarePolicy policy = new CountingDCAwarePolicy();
+
+        try {
+            // Pass both hosts as contact points, they have different DCs
+            cluster = Cluster.builder()
+                .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
+                .withLoadBalancingPolicy(policy)
+                .build();
+            cluster.init();
+
+            Host host1 = TestUtils.findHost(cluster, 1);
+            Host host2 = TestUtils.findHost(cluster, 2);
+
+            assertThat(policy.initHosts).containsOnly(host1, host2);
+
+            assertThat(logs.get())
+                .contains("Some contact points don't match local data center");
+
+        } finally {
+            if (cluster != null)
+                cluster.close();
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_use_provided_local_dc_and_not_warn_if_contact_points_match() {
+        Cluster cluster = null;
+        String providedLocalDc = "dc1";
+        CountingDCAwarePolicy policy = new CountingDCAwarePolicy(providedLocalDc);
+
+        try {
+            cluster = Cluster.builder()
+                .addContactPoints(CCMBridge.ipOfNode(1))
+                .withLoadBalancingPolicy(policy)
+                .build();
+            cluster.init();
+
+            Host host1 = TestUtils.findHost(cluster, 1);
+
+            assertEquals(policy.getLocalDc(), providedLocalDc);
+
+            assertThat(policy.initHosts).containsExactly(host1);
+
+            assertThat(logs.get())
+                .doesNotContain("Some contact points don't match local data center");
+
+        } finally {
+            if (cluster != null)
+                cluster.close();
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_use_provided_local_dc_and_warn_if_contact_points_dont_match() {
+        Cluster cluster = null;
+        // Provide non-existent DC to make sure none of the contact points matches
+        String providedLocalDc = "dc3";
+        CountingDCAwarePolicy policy = new CountingDCAwarePolicy(providedLocalDc);
+
+        try {
+            cluster = Cluster.builder()
+                .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
+                .withLoadBalancingPolicy(policy)
+                .build();
+            cluster.init();
+
+            Host host1 = TestUtils.findHost(cluster, 1);
+            Host host2 = TestUtils.findHost(cluster, 2);
+
+            assertEquals(policy.getLocalDc(), providedLocalDc);
+
+            assertThat(policy.initHosts).containsOnly(host1, host2);
+
+            assertThat(logs.get())
+                .contains("Some contact points don't match local data center");
+
+        } finally {
+            if (cluster != null)
+                cluster.close();
+        }
+    }
+
+    /**
+     * Wraps the policy under test to spy the calls to init.
+     */
+    static class CountingDCAwarePolicy extends DelegatingLoadBalancingPolicy {
+        Set<Host> initHosts = new CopyOnWriteArraySet<Host>();
+
+        CountingDCAwarePolicy() {
+            super(new DCAwareRoundRobinPolicy());
+        }
+
+        CountingDCAwarePolicy(String localDc) {
+            super(new DCAwareRoundRobinPolicy(localDc));
+        }
+
+        String getLocalDc() {
+            return ((DCAwareRoundRobinPolicy) delegate).localDc;
+        }
+
+        @Override public void init(Cluster cluster, Collection<Host> hosts) {
+            System.out.println("init " + hosts);
+            initHosts.addAll(hosts);
+            super.init(cluster, hosts);
         }
     }
 }
