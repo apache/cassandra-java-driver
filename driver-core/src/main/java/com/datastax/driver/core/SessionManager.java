@@ -76,6 +76,7 @@ class SessionManager extends AbstractSession {
             }
         }
         isInit = true;
+        updateCreatedPools(executor());
         return this;
     }
 
@@ -297,6 +298,12 @@ class SessionManager extends AbstractSession {
      * have one, and hosts that shouldn't don't.
      */
     void updateCreatedPools(ListeningExecutorService executor) {
+        // Don't run this during initialization, as some hosts may be non-responsive but not yet marked DOWN, and
+        // we would try to create their pool over and over again.
+        // We run it once at the end of init().
+        if (!isInit)
+            return;
+
         try {
             // We do 2 iterations, so that we add missing pools first, and them remove all unecessary pool second.
             // That way, we'll avoid situation where we'll temporarily lose connectivity
