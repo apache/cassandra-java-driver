@@ -101,11 +101,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *
      * @param name the name of the variable to check.
      * @return whether the first occurrence of variable {@code name} has been
-<<<<<<< HEAD
-     * bound.
-=======
      * bound to a non-null value.
->>>>>>> 2.0
      *
      * @throws IllegalArgumentException if {@code name} is not a prepared
      * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
