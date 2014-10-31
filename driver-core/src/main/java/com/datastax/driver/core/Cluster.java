@@ -1289,9 +1289,9 @@ public class Cluster implements Closeable {
 
             // If we're shutting down, there is no point in waiting on scheduled reconnections, nor on notifications
             // delivery or blocking tasks so we use shutdownNow
-            reconnectionExecutor.shutdownNow();
-            scheduledTasksExecutor.shutdownNow();
-            blockingExecutor.shutdownNow();
+            shutdownNow(reconnectionExecutor);
+            shutdownNow(scheduledTasksExecutor);
+            shutdownNow(blockingExecutor);
 
             // but for the worker executor, we want to let submitted tasks finish unless the shutdown is forced.
             executor.shutdown();
@@ -1317,6 +1317,15 @@ public class Cluster implements Closeable {
             return closeFuture.compareAndSet(null, future)
                  ? future
                  : closeFuture.get(); // We raced, it's ok, return the future that was actually set
+        }
+
+        private void shutdownNow(ExecutorService executor) {
+            List<Runnable> pendingTasks = executor.shutdownNow();
+            // If some tasks were submitted to this executor but not yet commenced, make sure the corresponding futures complete
+            for (Runnable pendingTask : pendingTasks) {
+                if (pendingTask instanceof FutureTask<?>)
+                    ((FutureTask<?>)pendingTask).cancel(false);
+            }
         }
 
         void logUnsupportedVersionProtocol(Host host) {
@@ -2096,7 +2105,7 @@ public class Cluster implements Closeable {
             @Override
             public CloseFuture force() {
                 // The only ExecutorService we haven't forced yet is executor
-                executor.shutdownNow();
+                shutdownNow(executor);
                 return super.force();
             }
 
