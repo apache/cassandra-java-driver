@@ -1180,9 +1180,19 @@ public class Cluster implements Closeable {
                         if (connectionFactory.protocolVersion < 0)
                             connectionFactory.protocolVersion = 2;
 
+                        // The control connection can mark hosts down if it failed to connect to them, separate them
+                        Set<Host> downContactPointHosts = Sets.newHashSet();
+                        for (Host host : contactPointHosts)
+                            if (host.state == Host.State.DOWN)
+                                downContactPointHosts.add(host);
+                        contactPointHosts.removeAll(downContactPointHosts);
+
                         // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
                         // rack...) to initialize the load balancing policy
                         loadBalancingPolicy().init(Cluster.this, contactPointHosts);
+                        for (Host host : downContactPointHosts)
+                            loadBalancingPolicy().onDown(host);
+
                         // Add the remaining hosts that were discovered by the control connection:
                         for (Host host : metadata.allHosts()) {
                             if (!contactPointHosts.contains(host))
@@ -1191,7 +1201,7 @@ public class Cluster implements Closeable {
                         isFullyInit = true;
 
                         for (Host host : metadata.allHosts())
-                            triggerOnAdd(host);
+                            if (host.state != Host.State.DOWN) triggerOnAdd(host);
 
                         return;
                     } catch (UnsupportedProtocolVersionException e) {
@@ -1524,6 +1534,10 @@ public class Cluster implements Closeable {
 
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug("{} is down, scheduling connection retries", host);
+            startPeriodicReconnectionAttempt(host, isHostAddition);
+        }
+
+        void startPeriodicReconnectionAttempt(final Host host, final boolean isHostAddition) {
             new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
 
                 protected Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {

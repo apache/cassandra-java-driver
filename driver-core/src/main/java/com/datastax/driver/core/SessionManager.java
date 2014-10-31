@@ -67,7 +67,8 @@ class SessionManager extends AbstractSession {
         // Create pool to initial nodes (and wait for them to be created)
         for (Host host : cluster.getMetadata().allHosts()) {
             try {
-                maybeAddPool(host, executor()).get();
+                if (host.state != Host.State.DOWN)
+                    maybeAddPool(host, executor()).get();
             } catch (ExecutionException e) {
                 // This is not supposed to happen
                 throw new DriverInternalError(e);
