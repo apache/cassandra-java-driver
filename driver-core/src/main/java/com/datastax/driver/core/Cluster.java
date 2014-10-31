@@ -1605,7 +1605,7 @@ public class Cluster implements Closeable {
             }.start();
         }
 
-        public void tryReconnectOnce(final Host host) {
+        void startSingleReconnectionAttempt(final Host host) {
             if (isClosed() || host.isUp())
                 return;
 

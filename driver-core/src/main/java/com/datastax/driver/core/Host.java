@@ -212,7 +212,7 @@ public class Host {
      * is already in progress.
      */
     public void tryReconnectOnce() {
-        this.manager.tryReconnectOnce(this);
+        this.manager.startSingleReconnectionAttempt(this);
     }
 
     @Override
