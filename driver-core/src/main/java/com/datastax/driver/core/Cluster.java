@@ -1190,18 +1190,36 @@ public class Cluster implements Closeable {
                         // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
                         // rack...) to initialize the load balancing policy
                         loadBalancingPolicy().init(Cluster.this, contactPointHosts);
-                        for (Host host : downContactPointHosts)
+                        for (Host host : downContactPointHosts) {
                             loadBalancingPolicy().onDown(host);
+                            for (Host.StateListener listener : listeners)
+                                listener.onDown(host);
+                        }
 
-                        // Add the remaining hosts that were discovered by the control connection:
                         for (Host host : metadata.allHosts()) {
+                            // If the host is down at this stage, it's a contact point that the control connection failed to reach.
+                            // Reconnection attempts are already scheduled, and the LBP and listeners have been notified above.
+                            if (host.state == Host.State.DOWN) continue;
+
+                            // Otherwise, we want to do the equivalent of onAdd(). But since we know for sure that no sessions or prepared
+                            // statements exist at this point, we can skip some of the steps (plus this avoids scheduling concurrent pool
+                            // creations if a session is created right after this method returns).
+                            logger.info("New Cassandra host {} added", host);
+
+                            if (connectionFactory.protocolVersion == 2 && !supportsProtocolV2(host)) {
+                                logUnsupportedVersionProtocol(host);
+                                continue;
+                            }
+
                             if (!contactPointHosts.contains(host))
                                 loadBalancingPolicy().onAdd(host);
+
+                            host.setUp();
+
+                            for (Host.StateListener listener : listeners)
+                                listener.onAdd(host);
                         }
                         isFullyInit = true;
-
-                        for (Host host : metadata.allHosts())
-                            if (host.state != Host.State.DOWN) triggerOnAdd(host);
 
                         return;
                     } catch (UnsupportedProtocolVersionException e) {
