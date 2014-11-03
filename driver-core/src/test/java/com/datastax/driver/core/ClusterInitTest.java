@@ -5,13 +5,19 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
+import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.utils.UUIDs;
 
 import static com.datastax.driver.core.FakeHost.Behavior.THROWING_CONNECT_TIMEOUTS;
@@ -50,20 +56,28 @@ public class ClusterInitTest {
             logger.info("Environment is set up, starting test");
             long start = System.nanoTime();
 
+            // We want to count how many connections were attempted. For that, we rely on the fact that SocketOptions.getKeepAlive is called in Connection.Factory.newBoostrap()
+            // each time we prepare to open a new connection. This is a bit of a hack, but this is what we have.
+            SocketOptions socketOptions = spy(new SocketOptions());
+
+            // Set an enormous delay so that reconnection attempts don't pollute our observations
+            ConstantReconnectionPolicy reconnectionPolicy = new ConstantReconnectionPolicy(3600 * 1000);
+
             cluster = Cluster.builder().addContactPoints(
                 CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2), CCMBridge.ipOfNode(3),
-                CCMBridge.ipOfNode(4), CCMBridge.ipOfNode(5), CCMBridge.ipOfNode(6)
-            ).build();
+                CCMBridge.ipOfNode(4), CCMBridge.ipOfNode(5), CCMBridge.ipOfNode(6))
+                .withSocketOptions(socketOptions)
+                .withReconnectionPolicy(reconnectionPolicy)
+                .build();
             cluster.connect();
 
+            // For information only:
             long initTimeMs = TimeUnit.MILLISECONDS.convert(System.nanoTime() - start, TimeUnit.NANOSECONDS);
-
-            // It's hard to estimate how much time init should take. But at the very least, we should wait at most
-            // once for each of the 5 failing hosts, so 6 times the connect timeout is a reasonable upper bound.
-            int expected = cluster.getConfiguration().getSocketOptions().getConnectTimeoutMillis() * 6;
-
             logger.info("Cluster and session initialized in {} ms", initTimeMs);
-            assertThat(initTimeMs).isLessThan(expected);
+
+            // We have one live host so 3 successful connections (1 control connection and 2 core connections in the pool).
+            // The other 5 hosts are unreachable, we should attempt to connect to each of them only once.
+            verify(socketOptions, times(3 + 5)).getKeepAlive();
         } finally {
             if (cluster != null)
                 cluster.close();
