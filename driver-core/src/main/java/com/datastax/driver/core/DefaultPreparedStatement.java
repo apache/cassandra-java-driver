@@ -52,7 +52,7 @@ public class DefaultPreparedStatement implements PreparedStatement{
         int[] pkIndexes = null;
         KeyspaceMetadata km = clusterMetadata.getKeyspace(Metadata.quote(defs.getKeyspace(0)));
         if (km != null) {
-            TableMetadata tm = km.getTable(defs.getTable(0));
+            TableMetadata tm = km.getTable(Metadata.quote(defs.getTable(0)));
             if (tm != null) {
                 partitionKeyColumns = tm.getPartitionKey();
                 pkIndexes = new int[partitionKeyColumns.size()];

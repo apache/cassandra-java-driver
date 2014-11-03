@@ -412,7 +412,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups="short")
-    public void should_set_routing_key_on_case_insensitive_keyspace() {
+    public void should_set_routing_key_on_case_insensitive_keyspace_and_table() {
         session.execute("CREATE TABLE ks.foo (i int PRIMARY KEY)");
 
         PreparedStatement ps = session.prepare("INSERT INTO ks.foo (i) VALUES (?)");
@@ -421,14 +421,14 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups="short")
-    public void should_set_routing_key_on_case_sensitive_keyspace() {
+    public void should_set_routing_key_on_case_sensitive_keyspace_and_table() {
         session.execute("CREATE KEYSPACE \"Test\" WITH replication = { "
             + "  'class': 'SimpleStrategy',"
             + "  'replication_factor': '1'"
             + "}");
-        session.execute("CREATE TABLE \"Test\".foo (i int PRIMARY KEY)");
+        session.execute("CREATE TABLE \"Test\".\"Foo\" (i int PRIMARY KEY)");
 
-        PreparedStatement ps = session.prepare("INSERT INTO \"Test\".foo (i) VALUES (?)");
+        PreparedStatement ps = session.prepare("INSERT INTO \"Test\".\"Foo\" (i) VALUES (?)");
         BoundStatement bs = ps.bind(1);
         assertThat(bs.getRoutingKey()).isNotNull();
     }
