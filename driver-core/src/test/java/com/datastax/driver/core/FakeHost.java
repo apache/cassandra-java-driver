@@ -49,24 +49,34 @@ public class FakeHost {
         }
 
         @Override public void run() {
+            ServerSocket server = null;
+            Socket client = null;
             try {
                 InetAddress bindAddress = InetAddress.getByName(address);
                 int backlog = (behavior == Behavior.THROWING_CONNECT_TIMEOUTS)
                     ? 1
                     : -1; // default
-                ServerSocket server = new ServerSocket(port, backlog, bindAddress);
+                server = new ServerSocket(port, backlog, bindAddress);
 
                 if (behavior == Behavior.THROWING_CONNECT_TIMEOUTS) {
                     // fill backlog queue
-                    new Socket().connect(server.getLocalSocketAddress());
+                    client = new Socket();
+                    client.connect(server.getLocalSocketAddress());
                 }
-
                 TimeUnit.MINUTES.sleep(10);
                 fail("Mock host wasn't expected to live more than 10 minutes");
             } catch (IOException e) {
                 fail("Unexpected I/O exception", e);
             } catch (InterruptedException e) {
                 // interruption is the expected way to stop this runnable, exit
+                try {
+                    if (client != null)
+                        client.close();
+                    server.close();
+                } catch (IOException e1) {
+                    fail("Unexpected error while closing sockets", e);
+                }
+
             }
         }
     }
