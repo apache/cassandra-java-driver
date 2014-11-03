@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+2.0.8:
+------
+- [bug] Fix token awareness for case-sensitive keyspaces (JAVA-526)
+
+
 2.0.7:
 ------
 
