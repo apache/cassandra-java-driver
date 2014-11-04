@@ -7,6 +7,8 @@ CHANGELOG
 - [bug] Fix token awareness for case-sensitive keyspaces and tables (JAVA-526)
 - [bug] Check maximum number of values passed to SimpleStatement (JAVA-515)
 - [improvement] Expose the driver version through the API (JAVA-532)
+- [improvement] Optimize session initialization when some hosts are not
+  responsive (JAVA-522)
 
 
 2.0.7:
