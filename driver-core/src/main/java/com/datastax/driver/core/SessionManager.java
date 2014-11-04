@@ -425,13 +425,17 @@ class SessionManager extends AbstractSession {
     }
 
     Message.Request makeRequestMessage(Statement statement, ByteBuffer pagingState) {
+        // We need the protocol version, which is only available once the cluster has initialized. Initialize the session to ensure this is the case.
+        // init() locks, so avoid if we know we don't need it.
+        if (!isInit)
+            init();
+        ProtocolVersion version = cluster.manager.protocolVersion();
 
         ConsistencyLevel consistency = statement.getConsistencyLevel();
         if (consistency == null)
             consistency = configuration().getQueryOptions().getConsistencyLevel();
 
         ConsistencyLevel serialConsistency = statement.getSerialConsistencyLevel();
-        ProtocolVersion version = cluster.manager.protocolVersion();
         if (version.compareTo(ProtocolVersion.V3) < 0 && statement instanceof BatchStatement) {
             if (serialConsistency != null)
                 throw new UnsupportedFeatureException(version, "Serial consistency on batch statements is not supported");
