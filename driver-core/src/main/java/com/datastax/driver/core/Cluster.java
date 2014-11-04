@@ -69,6 +69,8 @@ public class Cluster implements Closeable {
     private static final int NON_BLOCKING_EXECUTOR_SIZE = SystemProperties.getInt("com.datastax.driver.NON_BLOCKING_EXECUTOR_SIZE",
                                                                                   Runtime.getRuntime().availableProcessors());
 
+    private static final ResourceBundle driverProperties = ResourceBundle.getBundle("com.datastax.driver.core.Driver");
+
     // Some per-JVM number that allows to generate unique cluster names when
     // multiple Cluster instance are created in the same JVM.
     private static final AtomicInteger CLUSTER_ID = new AtomicInteger(0);
@@ -185,6 +187,18 @@ public class Cluster implements Closeable {
      */
     public static Cluster.Builder builder() {
         return new Cluster.Builder();
+    }
+
+    /**
+     * Returns the current version of the driver.
+     * <p>
+     * This is intended for products that wrap or extend the driver, as a way to check
+     * compatibility if end-users override the driver version in their application.
+     *
+     * @return the version.
+     */
+    public static String getDriverVersion() {
+        return driverProperties.getString("driver.version");
     }
 
     /**
