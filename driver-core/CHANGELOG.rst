@@ -4,6 +4,7 @@ CHANGELOG
 2.0.8:
 ------
 - [bug] Fix token awareness for case-sensitive keyspaces and tables (JAVA-526)
+- [bug] Check maximum number of values passed to SimpleStatement (JAVA-515)
 
 
 2.0.7:
