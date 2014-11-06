@@ -20,7 +20,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.TreeSet;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.google.common.base.Joiner;
 import org.testng.annotations.Test;
+
+import static com.datastax.driver.core.utils.StatementUtils.arrayOf;
+import static com.datastax.driver.core.utils.StatementUtils.listOf;
 import static org.testng.Assert.*;
 
 import com.datastax.driver.core.*;
@@ -228,5 +233,29 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         delete = delete().from(TestUtils.SIMPLE_KEYSPACE, TABLE_INT).where(eq("k", 1)).onlyIf(eq("a", 1)).and(eq("b", 1));
         row = session.execute(delete).one();
         assertTrue(row.getBool("[applied]"));
+    }
+
+    @Test(groups="short")
+    public void simple_queries_with_less_than_65k_parameters_should_be_correct() {
+        session.execute(insertInto(TestUtils.SIMPLE_KEYSPACE, TABLE_TEXT).value("k", "0"));
+
+        int n = 65534;
+        ResultSet resultSet = session.execute(
+                select().from(TestUtils.SIMPLE_KEYSPACE, TABLE_TEXT).where(in("k", arrayOf(n, "0"))));
+        boolean foundResult = false;
+        for (Row row : resultSet) {
+            if (row.getString(0).equals("0")) {
+                foundResult = true;
+            }
+        }
+        if (!foundResult) {
+            fail("The only row of the table should have been found");
+        }
+    }
+
+    @Test(groups="short", expectedExceptions = {InvalidQueryException.class})
+    public void simple_queries_with_more_than_65k_parameters_should_be_invalid() {
+        int n = 100 * 1000;
+        session.execute(select().from(TestUtils.SIMPLE_KEYSPACE, TABLE_TEXT).where(in("k", arrayOf(n, "0"))));
     }
 }

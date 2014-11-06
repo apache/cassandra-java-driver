@@ -18,29 +18,35 @@ package com.datastax.driver.core;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.google.common.base.Joiner;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 
 import static com.datastax.driver.core.TestUtils.versionCheck;
+import static com.datastax.driver.core.utils.StatementUtils.arrayOf;
+import static com.datastax.driver.core.utils.StatementUtils.listOf;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
+    public static final String TEST_TABLE = "test";
+
     @Override
     protected Collection<String> getTableDefinitions() {
-        return Collections.singletonList("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
+        return Collections.singletonList("CREATE TABLE " + TEST_TABLE + " (k text, v int, PRIMARY KEY (k, v))");
     }
 
     @Test(groups = "short")
     public void simpleBatchTest() throws Throwable {
         try {
-            PreparedStatement st = session.prepare("INSERT INTO test (k, v) VALUES (?, ?)");
+            PreparedStatement st = session.prepare("INSERT INTO " + TEST_TABLE + " (k, v) VALUES (?, ?)");
 
             BatchStatement batch = new BatchStatement();
 
-            batch.add(new SimpleStatement("INSERT INTO test (k, v) VALUES (?, ?)", "key1", 0));
+            batch.add(new SimpleStatement("INSERT INTO " + TEST_TABLE + " (k, v) VALUES (?, ?)", "key1", 0));
             batch.add(st.bind("key1", 1));
             batch.add(st.bind("key2", 0));
 
@@ -66,8 +72,8 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
             assertTrue(rs.isExhausted());
 
-            session.execute("DELETE FROM test WHERE k='key1'");
-            session.execute("DELETE FROM test WHERE k='key2'");
+            session.execute("DELETE FROM " + TEST_TABLE + " WHERE k='key1'");
+            session.execute("DELETE FROM " + TEST_TABLE + " WHERE k='key2'");
 
         } catch (UnsupportedFeatureException e) {
             // This is expected when testing the protocol v1
@@ -84,11 +90,11 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         versionCheck(2.0, 9, "This will only work with C* 2.0.9 (CASSANDRA-7337)");
 
         try {
-            PreparedStatement st = session.prepare("INSERT INTO test (k, v) VALUES (?, ?) IF NOT EXISTS");
+            PreparedStatement st = session.prepare("INSERT INTO " + TEST_TABLE + " (k, v) VALUES (?, ?) IF NOT EXISTS");
 
             BatchStatement batch = new BatchStatement();
 
-            batch.add(new SimpleStatement("INSERT INTO test (k, v) VALUES (?, ?)", "key1", 0));
+            batch.add(new SimpleStatement("INSERT INTO " + TEST_TABLE + " (k, v) VALUES (?, ?)", "key1", 0));
             batch.add(st.bind("key1", 1));
             batch.add(st.bind("key1", 2));
 
@@ -104,7 +110,7 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             assertTrue(!r.isNull("[applied]"));
             assertEquals(r.getBool("[applied]"), false);
 
-            session.execute("DELETE FROM test WHERE k='key1'");
+            session.execute("DELETE FROM " + TEST_TABLE + " WHERE k='key1'");
 
         } catch (UnsupportedFeatureException e) {
             // This is expected when testing the protocol v1

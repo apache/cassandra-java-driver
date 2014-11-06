@@ -21,7 +21,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.*;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.google.common.base.Joiner;
 import org.testng.annotations.Test;
+
+import static com.datastax.driver.core.utils.StatementUtils.arrayOf;
+import static com.datastax.driver.core.utils.StatementUtils.listOf;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
@@ -291,5 +296,38 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             // The deadlock occurred here before JAVA-418
             cluster.close();
         }
+    }
+
+    @Test(groups="short")
+    public void simple_statements_with_less_than_65k_parameters_should_be_correct() {
+        session.execute("INSERT INTO " + COUNTER_TABLE + " (k, c) VALUES ('0', 0)");
+
+        int n = 65534;
+        ResultSet resultSet = session.execute("select * from " + COUNTER_TABLE + " "
+                        + "where k in ("
+                        + Joiner.on(',').join(listOf(n, "?"))
+                        + ')',
+                arrayOf(n, "0"));
+        boolean foundResult = false;
+        for (Row row : resultSet) {
+            if (row.getString(0).equals("0")) {
+                foundResult = true;
+            }
+        }
+        if (!foundResult) {
+            fail("The only row of the table should have been found");
+        }
+    }
+
+    @Test(groups="short", expectedExceptions = {InvalidQueryException.class})
+    public void simple_statements_with_more_than_65k_parameters_should_be_invalid() {
+        session.execute("INSERT INTO " + COUNTER_TABLE + " (k, c) VALUES ('0', 0)");
+
+        int n = 100 * 1000;
+        session.execute("select * from " + COUNTER_TABLE + " "
+                        + "where k in ("
+                        + Joiner.on(',').join(listOf(n, "?"))
+                        + ')',
+                arrayOf(n, "0"));
     }
 }

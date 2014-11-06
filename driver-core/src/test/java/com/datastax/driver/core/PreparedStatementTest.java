@@ -17,9 +17,14 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.utils.StatementUtils;
+import com.google.common.base.Joiner;
 import org.testng.annotations.Test;
 
+import static com.datastax.driver.core.utils.StatementUtils.listOf;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -431,5 +436,40 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         PreparedStatement ps = session.prepare("INSERT INTO \"Test\".\"Foo\" (i) VALUES (?)");
         BoundStatement bs = ps.bind(1);
         assertThat(bs.getRoutingKey()).isNotNull();
+    }
+
+    // This test seems to run forever...
+    // Threads dumps taken show that we spend a lot of time parked on
+    // - ArrayBackedResultSet$1::hasNext
+    // - ArrayBackedResultSet$MultiPage::isExhausted
+    // - ArrayBackedResultSet$MultiPage.prepareNextRow
+    // - Uninterruptibles.getUninterruptibly
+    @Test(groups="short")
+    public void prepared_statements_with_less_than_65k_parameters_should_be_accepted() {
+        session.execute("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES ('0', 0)");
+
+        int n = 65535;
+        PreparedStatement ps = session.prepare(
+                "select * from " + SIMPLE_TABLE + " where k in (" + Joiner.on(',').join(listOf(n, "?")) + ')');
+        ResultSet resultSet = session.execute(ps.bind(listOf(n, "0").toArray()));
+        boolean foundResult = false;
+        for (Row row : resultSet) {
+            if (row.getString(0).equals("0")) {
+                foundResult = true;
+            }
+        }
+        if (!foundResult) {
+            fail("The only row of the table should have been found");
+        }
+    }
+
+    @Test(groups="short", expectedExceptions = {InvalidQueryException.class})
+    public void prepared_statements_with_more_than_65k_parameters_should_be_invalid() {
+        session.execute("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES ('0', 0)");
+
+        int n = 100 * 1000;
+        PreparedStatement ps = session.prepare(
+                "select * from " + SIMPLE_TABLE + " where k in (" + Joiner.on(',').join(listOf(n, "?")) + ')');
+        session.execute(ps.bind(listOf(n, "0").toArray()));
     }
 }
