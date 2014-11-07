@@ -127,6 +127,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
         private String street;
 
+        @Field // not strictly required, but we want to check that the annotation works without a name
         private String city;
 
         @Field(name = "zip_code")

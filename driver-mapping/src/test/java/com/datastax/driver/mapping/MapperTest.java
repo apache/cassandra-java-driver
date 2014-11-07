@@ -68,6 +68,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
         private String name;
         private String email;
+        @Column // not strictly required, but we want to check that the annotation works without a name
         private int year;
 
         private Gender gender;

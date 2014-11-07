@@ -210,12 +210,12 @@ class AnnotationParser {
 
     public static String columnName(Field field) {
         Column column = field.getAnnotation(Column.class);
-        if (column != null) {
+        if (column != null && !column.name().isEmpty()) {
             return column.caseSensitive() ? column.name() : column.name().toLowerCase();
         }
 
         com.datastax.driver.mapping.annotations.Field udtField = field.getAnnotation(com.datastax.driver.mapping.annotations.Field.class);
-        if (udtField != null) {
+        if (udtField != null && !udtField.name().isEmpty()) {
             return udtField.caseSensitive() ? udtField.name() : udtField.name().toLowerCase();
         }
 
