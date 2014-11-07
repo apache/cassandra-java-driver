@@ -61,6 +61,12 @@ class AnnotationParser {
 
         if (Strings.isNullOrEmpty(table.keyspace())) {
             ksName = mappingManager.getSession().getLoggedKeyspace();
+            if (Strings.isNullOrEmpty(ksName))
+                throw new IllegalArgumentException(String.format(
+                    "Error creating mapper for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
+                    entityClass.getSimpleName(),
+                    Table.class.getSimpleName()
+                ));
         }
 
         EntityMapper<T> mapper = factory.create(entityClass, ksName, tableName, writeConsistency, readConsistency);
@@ -113,6 +119,12 @@ class AnnotationParser {
 
         if (Strings.isNullOrEmpty(udt.keyspace())) {
             ksName = mappingManager.getSession().getLoggedKeyspace();
+            if (Strings.isNullOrEmpty(ksName))
+                throw new IllegalArgumentException(String.format(
+                    "Error creating UDT mapper for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
+                    udtClass.getSimpleName(),
+                    UDT.class.getSimpleName()
+                ));
         }
 
         EntityMapper<T> mapper = factory.create(udtClass, ksName, udtName, null, null);

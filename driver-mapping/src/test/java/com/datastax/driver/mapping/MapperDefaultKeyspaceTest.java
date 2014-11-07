@@ -17,6 +17,7 @@ package com.datastax.driver.mapping;
 
 import java.util.*;
 
+import com.datastax.driver.core.Session;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import org.testng.annotations.Test;
@@ -218,5 +219,23 @@ public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeClust
         // Check the delete operation.
         m.delete(group);
         assertNull(m.get(groupId));
+    }
+
+    @Test(groups = "short",
+        expectedExceptions = IllegalArgumentException.class,
+        expectedExceptionsMessageRegExp = "Error creating mapper for class Group, the @Table annotation declares no default keyspace, and the session is not currently logged to any keyspace")
+    public void should_throw_a_meaningful_error_message_when_no_default_table_keyspace_and_session_not_logged() {
+        Session session2 = cluster.connect();
+        MappingManager manager = new MappingManager(session2);
+        manager.mapper(Group.class);
+    }
+
+    @Test(groups = "short",
+        expectedExceptions = IllegalArgumentException.class,
+        expectedExceptionsMessageRegExp = "Error creating UDT mapper for class GroupName, the @UDT annotation declares no default keyspace, and the session is not currently logged to any keyspace")
+    public void should_throw_a_meaningful_error_message_when_no_default_udt_keyspace_and_session_not_logged() {
+        Session session2 = cluster.connect();
+        MappingManager manager = new MappingManager(session2);
+        manager.udtMapper(GroupName.class);
     }
 }
