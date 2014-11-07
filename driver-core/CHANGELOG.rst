@@ -6,6 +6,7 @@ CHANGELOG
 
 - [bug] Ignore static fields in mapper (JAVA-510)
 - [bug] Fix UDT parsing at init when using the default protocol version (JAVA-509)
+- [bug] Fix toString, equals and hashCode on accessor proxies (JAVA-495)
 
 Merged from 2.0 branch:
 
