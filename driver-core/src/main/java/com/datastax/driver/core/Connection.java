@@ -31,6 +31,9 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
+import org.jboss.netty.handler.timeout.IdleStateAwareChannelUpstreamHandler;
+import org.jboss.netty.handler.timeout.IdleStateEvent;
+import org.jboss.netty.handler.timeout.IdleStateHandler;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timeout;
 import org.jboss.netty.util.TimerTask;
@@ -88,7 +91,8 @@ class Connection {
             ClientBootstrap bootstrap = factory.newBootstrap();
             ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
             int protocolVersion = factory.protocolVersion == 1 ? 1 : 2;
-            bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
+            bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions(),
+                factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds(), factory.timer));
 
             ChannelFuture future = bootstrap.connect(address);
 
@@ -623,7 +627,7 @@ class Connection {
         }
     }
 
-    private class Dispatcher extends SimpleChannelUpstreamHandler {
+    private class Dispatcher extends IdleStateAwareChannelUpstreamHandler {
 
         public final StreamIdGenerator streamIdHandler = new StreamIdGenerator();
         private final ConcurrentMap<Integer, ResponseHandler> pending = new ConcurrentHashMap<Integer, ResponseHandler>();
@@ -704,6 +708,12 @@ class Connection {
             }
         }
 
+        @Override
+        public void channelIdle(ChannelHandlerContext ctx, IdleStateEvent e) throws Exception {
+            logger.debug("{} was inactive for {} seconds, sending heartbeat", Connection.this, factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds());
+            write(HEARTBEAT_CALLBACK);
+        }
+
         // Make sure we don't print huge responses in debug/error logs.
         private String asDebugString(Object obj) {
             if (obj == null)
@@ -751,6 +761,45 @@ class Connection {
                 defunct(new TransportException(address, "Channel has been closed"));
         }
     }
+
+    private static final ResponseCallback HEARTBEAT_CALLBACK = new ResponseCallback() {
+
+        @Override
+        public Message.Request request() {
+            return new Requests.Options();
+        }
+
+        @Override
+        public int retryCount() {
+            return 0; // no retries here
+        }
+
+        @Override
+        public void onSet(Connection connection, Message.Response response, long latency, int retryCount) {
+            switch (response.type) {
+                case SUPPORTED:
+                    logger.debug("{} heartbeat query succeeded", connection);
+                    break;
+                default:
+                    fail(connection, new ConnectionException(connection.address, "Unexpected heartbeat response: " + response));
+            }
+        }
+
+        @Override
+        public void onException(Connection connection, Exception exception, long latency, int retryCount) {
+            // Nothing to do: the connection is already defunct if we arrive here
+        }
+
+        @Override
+        public boolean onTimeout(Connection connection, long latency, int retryCount) {
+            fail(connection, new ConnectionException(connection.address, "Heartbeat query timed out"));
+            return true;
+        }
+
+        private void fail(Connection connection, Exception e) {
+            connection.defunct(e);
+        }
+    };
 
     private class ConnectionCloseFuture extends CloseFuture {
 
@@ -913,12 +962,14 @@ class Connection {
         private final Connection connection;
         private final FrameCompressor compressor;
         private final SSLOptions sslOptions;
+        private final ChannelHandler idleStateHandler;
 
-        public PipelineFactory(Connection connection, int protocolVersion, FrameCompressor compressor, SSLOptions sslOptions) {
+        public PipelineFactory(Connection connection, int protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds, HashedWheelTimer timer) {
             this.connection = connection;
             this.protocolVersion = protocolVersion;
             this.compressor = compressor;
             this.sslOptions = sslOptions;
+            this.idleStateHandler = new IdleStateHandler(timer, 0, 0, heartBeatIntervalSeconds);
         }
 
         @Override
@@ -946,6 +997,8 @@ class Connection {
 
             pipeline.addLast("messageDecoder", messageDecoder);
             pipeline.addLast("messageEncoder", protocolVersion == 1 ? messageEncoderV1 : messageEncoderV2);
+
+            pipeline.addLast("idleStateHandler", idleStateHandler);
 
             pipeline.addLast("dispatcher", connection.dispatcher);
 

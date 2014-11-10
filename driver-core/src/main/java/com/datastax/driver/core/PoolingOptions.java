@@ -58,6 +58,7 @@ public class PoolingOptions {
     private static final int DEFAULT_MAX_POOL_REMOTE = 2;
 
     private static final int DEFAULT_POOL_TIMEOUT_MILLIS = 5000;
+    private static final int DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30;
 
     private volatile Cluster.Manager manager;
 
@@ -68,6 +69,7 @@ public class PoolingOptions {
     private final int[] maxConnections = new int[] { DEFAULT_MAX_POOL_LOCAL , DEFAULT_MAX_POOL_REMOTE, 0 };
 
     private volatile int poolTimeoutMillis = DEFAULT_POOL_TIMEOUT_MILLIS;
+    private volatile int heartbeatIntervalSeconds = DEFAULT_HEARTBEAT_INTERVAL_SECONDS;
 
     public PoolingOptions() {}
 
@@ -263,6 +265,37 @@ public class PoolingOptions {
         if (poolTimeoutMillis < 0)
             throw new IllegalArgumentException("Pool timeout must be positive");
         this.poolTimeoutMillis = poolTimeoutMillis;
+        return this;
+    }
+
+    /**
+     * Returns the heart beat interval, after which a message is sent on an idle connection to make sure it's still alive.
+     * @return the interval.
+     */
+    public int getHeartbeatIntervalSeconds() {
+        return heartbeatIntervalSeconds;
+    }
+
+    /**
+     * Sets the heart beat interval, after which a message is sent on an idle connection to make sure it's still alive.
+     * <p>
+     * This is an application-level keep-alive, provided for convenience since adjusting the TCP keep-alive might not be
+     * practical in all environments.
+     * <p>
+     * This option should be set higher than {@link SocketOptions#getReadTimeoutMillis()}.
+     * <p>
+     * The default value for this option is 30 seconds.
+     *
+     * @param heartbeatIntervalSeconds the new value in seconds. If set to 0, it will disable the feature.
+     * @return this {@code PoolingOptions}
+     *
+     * @throws IllegalArgumentException if the interval is negative.
+     */
+    public PoolingOptions setHeartbeatIntervalSeconds(int heartbeatIntervalSeconds) {
+        if (poolTimeoutMillis < 0)
+            throw new IllegalArgumentException("Heartbeat interval must be positive");
+
+        this.heartbeatIntervalSeconds = heartbeatIntervalSeconds;
         return this;
     }
 

@@ -14,6 +14,7 @@ import static org.testng.Assert.assertEquals;
 import com.datastax.driver.core.*;
 
 public class DCAwareRoundRobinPolicyTest {
+    Logger policyLogger = Logger.getLogger(DCAwareRoundRobinPolicy.class);
     MemoryAppender logs;
     CCMBridge ccm;
 
@@ -31,18 +32,15 @@ public class DCAwareRoundRobinPolicyTest {
 
     @BeforeMethod(groups = "short")
     public void startRecordingLogs() {
-        Logger policyLogger = Logger.getLogger(DCAwareRoundRobinPolicy.class);
-        assertThat(Level.WARN.isGreaterOrEqual(policyLogger.getEffectiveLevel()))
-            .isTrue()
-            .as("Log level must be at least WARN for this test to work");
-
+        policyLogger.setLevel(Level.WARN);
         logs = new MemoryAppender();
         policyLogger.addAppender(logs);
     }
 
     @AfterMethod(groups = "short")
     public void stopRecordingLogs() {
-        Logger.getLogger(DCAwareRoundRobinPolicy.class).removeAppender(logs);
+        policyLogger.setLevel(null);
+        policyLogger.removeAppender(logs);
     }
 
     @Test(groups = "short")
