@@ -57,6 +57,7 @@
             </goals>
             <configuration>
               <includeDependencySources>true</includeDependencySources>
+              <additionalparam>${javadoc.opts}</additionalparam>
             </configuration>
           </execution>
         </executions>
