@@ -10,3 +10,5 @@ notes
 
 /.idea
 *.iml
+
+/driver-core/dependency-reduced-pom.xml

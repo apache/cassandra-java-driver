@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+2.0.9:
+------
+
+- [improvement] Shade Netty dependency (JAVA-538)
+
+
 2.0.8:
 ------
 
