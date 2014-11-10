@@ -328,9 +328,9 @@ class SessionManager extends AbstractSession {
      * have one, and hosts that shouldn't don't.
      */
     void updateCreatedPools(ListeningExecutorService executor) {
-        // Don't run this during initialization, as some hosts may be non-responsive but not yet marked DOWN, and
-        // we would try to create their pool over and over again.
-        // We run it once at the end of init().
+        // This method does nothing during initialization. Some hosts may be non-responsive but not yet marked DOWN; if
+        // we execute the code below we would try to create their pool over and over again.
+        // It's called explicitly at the end of init(), once isInit has been set to true.
         if (!isInit)
             return;
 
