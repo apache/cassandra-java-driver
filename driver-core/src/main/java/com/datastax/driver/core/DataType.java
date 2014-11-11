@@ -24,7 +24,7 @@ import java.util.*;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
@@ -171,7 +171,7 @@ public class DataType {
         this.codec = codec;
     }
 
-    static DataType decode(ChannelBuffer buffer) {
+    static DataType decode(ByteBuf buffer) {
         Name name = Name.fromProtocolId(buffer.readUnsignedShort());
         switch (name) {
             case CUSTOM:

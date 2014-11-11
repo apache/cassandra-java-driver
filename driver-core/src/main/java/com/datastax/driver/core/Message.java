@@ -16,14 +16,14 @@
 package com.datastax.driver.core;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.UUID;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
-import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToMessageDecoder;
+import io.netty.handler.codec.MessageToMessageEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,12 +37,12 @@ abstract class Message {
     protected static final Logger logger = LoggerFactory.getLogger(Message.class);
 
     public interface Coder<R extends Request> {
-        public void encode(R request, ChannelBuffer dest);
+        public void encode(R request, ByteBuf dest);
         public int encodedSize(R request);
     }
 
     public interface Decoder<R extends Response> {
-        public R decode(ChannelBuffer body);
+        public R decode(ByteBuf body);
     }
 
     private volatile int streamId;
@@ -170,21 +170,22 @@ abstract class Message {
         }
     }
 
-    public static class ProtocolDecoder extends OneToOneDecoder {
+    @ChannelHandler.Sharable
+    public static class ProtocolDecoder extends MessageToMessageDecoder<Frame> {
 
-        public Object decode(ChannelHandlerContext ctx, Channel channel, Object msg) {
-            assert msg instanceof Frame : "Expecting frame, got " + msg;
-
-            Frame frame = (Frame)msg;
+        @Override
+        protected void decode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
             boolean isTracing = frame.header.flags.contains(Frame.Header.Flag.TRACING);
             UUID tracingId = isTracing ? CBUtil.readUUID(frame.body) : null;
 
             Response response = Response.Type.fromOpcode(frame.header.opcode).decoder(frame.header.version).decode(frame.body);
-            return response.setTracingId(tracingId).setStreamId(frame.header.streamId);
+            response.setTracingId(tracingId).setStreamId(frame.header.streamId);
+            out.add(response);
         }
     }
 
-    public static class ProtocolEncoder extends OneToOneEncoder {
+    @ChannelHandler.Sharable
+    public static class ProtocolEncoder extends MessageToMessageEncoder<Request> {
 
         private final int protocolVersion;
 
@@ -192,21 +193,18 @@ abstract class Message {
             this.protocolVersion = version;
         }
 
-        @SuppressWarnings("unchecked")
-        public Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) {
-            assert msg instanceof Request : "Expecting request, got " + msg;
-
-            Request request = (Request)msg;
-
+        @Override
+        protected void encode(ChannelHandlerContext ctx, Request request, List<Object> out) throws Exception {
             EnumSet<Frame.Header.Flag> flags = EnumSet.noneOf(Frame.Header.Flag.class);
             if (request.isTracingRequested())
                 flags.add(Frame.Header.Flag.TRACING);
 
+            @SuppressWarnings("unchecked")
             Coder<Request> coder = (Coder<Request>)request.type.coder(protocolVersion);
-            ChannelBuffer body = ChannelBuffers.buffer(coder.encodedSize(request));
+            ByteBuf body = ctx.alloc().ioBuffer(coder.encodedSize(request));
             coder.encode(request, body);
 
-            return Frame.create(protocolVersion, request.type.opcode, request.getStreamId(), flags, body);
+            out.add(Frame.create(protocolVersion, request.type.opcode, request.getStreamId(), flags, body));
         }
     }
 }

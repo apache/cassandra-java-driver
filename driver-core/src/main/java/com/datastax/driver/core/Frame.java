@@ -15,25 +15,21 @@
  */
 package com.datastax.driver.core;
 
-import java.io.IOException;
 import java.util.EnumSet;
+import java.util.List;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.frame.CorruptedFrameException;
-import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
-import org.jboss.netty.handler.codec.frame.TooLongFrameException;
-import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
-import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.CompositeByteBuf;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.*;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
 class Frame {
 
     public final Header header;
-    public final ChannelBuffer body;
+    public final ByteBuf body;
 
     /**
      * On-wire frame.
@@ -46,12 +42,12 @@ class Frame {
      *   |                length                 |
      *   +---------+---------+---------+---------+
      */
-    private Frame(Header header, ChannelBuffer body) {
+    private Frame(Header header, ByteBuf body) {
         this.header = header;
         this.body = body;
     }
 
-    private static Frame create(ChannelBuffer fullFrame) {
+    private static Frame create(ByteBuf fullFrame) {
         assert fullFrame.readableBytes() >= Header.LENGTH : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
 
         int version = fullFrame.readByte();
@@ -68,7 +64,7 @@ class Frame {
         return new Frame(header, fullFrame);
     }
 
-    public static Frame create(int version, int opcode, int streamId, EnumSet<Header.Flag> flags, ChannelBuffer body) {
+    public static Frame create(int version, int opcode, int streamId, EnumSet<Header.Flag> flags, ByteBuf body) {
         Header header = new Header(version, flags, streamId, opcode);
         return new Frame(header, body);
     }
@@ -118,7 +114,7 @@ class Frame {
         }
     }
 
-    public Frame with(ChannelBuffer newBody) {
+    public Frame with(ByteBuf newBody) {
         return new Frame(header, newBody);
     }
 
@@ -131,7 +127,7 @@ class Frame {
         }
 
         @Override
-        protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
+        protected Object decode(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
             try {
                 if (buffer.readableBytes() == 0)
                     return null;
@@ -140,7 +136,7 @@ class Frame {
                 if (buffer.readableBytes() >= 4)
                     Message.Response.Type.fromOpcode(buffer.getByte(3));
 
-                ChannelBuffer frame = (ChannelBuffer) super.decode(ctx, channel, buffer);
+                ByteBuf frame = (ByteBuf) super.decode(ctx, buffer);
                 if (frame == null) {
                     return null;
                 }
@@ -154,25 +150,27 @@ class Frame {
         }
     }
 
-    public static class Encoder extends OneToOneEncoder {
+    @ChannelHandler.Sharable
+    public static class Encoder extends MessageToMessageEncoder<Frame> {
 
-        public Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws IOException {
-            assert msg instanceof Frame : "Expecting frame, got " + msg;
-
-            Frame frame = (Frame)msg;
-
-            ChannelBuffer header = ChannelBuffers.buffer(Frame.Header.LENGTH);
+        @Override
+        protected void encode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
+            ByteBuf header = ctx.alloc().ioBuffer(Frame.Header.LENGTH);
             // We don't bother with the direction, we only send requests.
             header.writeByte(frame.header.version);
             header.writeByte(Header.Flag.serialize(frame.header.flags));
             header.writeByte(frame.header.streamId);
             header.writeByte(frame.header.opcode);
             header.writeInt(frame.body.readableBytes());
-            return ChannelBuffers.wrappedBuffer(header, frame.body);
+
+            CompositeByteBuf buffer = ctx.alloc().compositeBuffer(2);
+            buffer.addComponents(header, frame.body);
+            buffer.writerIndex(buffer.capacity());
+            out.add(buffer);
         }
     }
 
-    public static class Decompressor extends OneToOneDecoder {
+    public static class Decompressor extends MessageToMessageDecoder<Frame> {
 
         private final FrameCompressor compressor;
 
@@ -181,19 +179,15 @@ class Frame {
             this.compressor = compressor;
         }
 
-        public Object decode(ChannelHandlerContext ctx, Channel channel, Object msg) throws IOException {
-
-            assert msg instanceof Frame : "Expecting frame, got " + msg;
-
-            Frame frame = (Frame)msg;
-
-            return frame.header.flags.contains(Header.Flag.COMPRESSED)
-                 ? compressor.decompress(frame)
-                 : frame;
+        @Override
+        protected void decode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
+            out.add(frame.header.flags.contains(Header.Flag.COMPRESSED)
+                ? compressor.decompress(frame)
+                : frame);
         }
     }
 
-    public static class Compressor extends OneToOneEncoder {
+    public static class Compressor extends MessageToMessageEncoder<Frame> {
 
         private final FrameCompressor compressor;
 
@@ -202,18 +196,15 @@ class Frame {
             this.compressor = compressor;
         }
 
-        public Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws IOException {
-
-            assert msg instanceof Frame : "Expecting frame, got " + msg;
-
-            Frame frame = (Frame)msg;
-
+        @Override
+        protected void encode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
             // Never compress STARTUP messages
-            if (frame.header.opcode == Message.Request.Type.STARTUP.opcode)
-                return frame;
-
-            frame.header.flags.add(Header.Flag.COMPRESSED);
-            return compressor.compress(frame);
+            if (frame.header.opcode == Message.Request.Type.STARTUP.opcode) {
+                out.add(frame);
+            } else {
+                frame.header.flags.add(Header.Flag.COMPRESSED);
+                out.add(compressor.compress(frame));
+            }
         }
     }
 }
