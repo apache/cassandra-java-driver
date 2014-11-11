@@ -15,31 +15,41 @@
  */
 package com.datastax.driver.core;
 
-import javax.net.ssl.SSLEngine;
 import java.net.InetSocketAddress;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.ssl.SslHandler;
-import org.jboss.netty.handler.timeout.IdleStateAwareChannelUpstreamHandler;
-import org.jboss.netty.handler.timeout.IdleStateEvent;
-import org.jboss.netty.handler.timeout.IdleStateHandler;
-import org.jboss.netty.util.HashedWheelTimer;
-import org.jboss.netty.util.Timeout;
-import org.jboss.netty.util.TimerTask;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.*;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timeout;
+import io.netty.util.TimerTask;
+import io.netty.util.concurrent.GlobalEventExecutor;
+import javax.net.ssl.SSLEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static io.netty.handler.timeout.IdleState.ALL_IDLE;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
@@ -55,6 +65,9 @@ class Connection {
 
     private static final Logger logger = LoggerFactory.getLogger(Connection.class);
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+
+    private static final boolean DISABLE_COALESCING = SystemProperties.getBoolean("com.datastax.driver.DISABLE_COALESCING", false);
+    private static final boolean FORCE_NIO = SystemProperties.getBoolean("com.datastax.driver.FORCE_NIO", false);
 
     public final InetSocketAddress address;
     private final String name;
@@ -89,24 +102,26 @@ class Connection {
         this.name = name;
 
         try {
-            ClientBootstrap bootstrap = factory.newBootstrap();
+            Bootstrap bootstrap = factory.newBootstrap();
             ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
             int protocolVersion = factory.protocolVersion == 1 ? 1 : 2;
-            bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions(),
-                factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds(), factory.timer));
+            bootstrap.handler(
+                new Initializer(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions(),
+                    factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds()));
 
             ChannelFuture future = bootstrap.connect(address);
 
             writer.incrementAndGet();
             try {
                 // Wait until the connection attempt succeeds or fails.
-                this.channel = future.awaitUninterruptibly().getChannel();
+                this.channel = future.awaitUninterruptibly().channel();
                 this.factory.allChannels.add(this.channel);
                 if (!future.isSuccess()) {
                     if (logger.isDebugEnabled())
-                        logger.debug(String.format("%s Error connecting to %s%s", this, address, extractMessage(future.getCause())));
-                    throw defunct(new TransportException(address, "Cannot connect", future.getCause()));
+                        logger.debug(String.format("%s Error connecting to %s%s", this, address, extractMessage(future.cause())));
+                    throw defunct(new TransportException(address, "Cannot connect", future.cause()));
                 }
+                channel.closeFuture().addListener(new ChannelCloseListener());
             } finally {
                 writer.decrementAndGet();
             }
@@ -400,8 +415,12 @@ class Connection {
 
         logger.trace("{} writing request {}", this, request);
         writer.incrementAndGet();
-        channel.write(request).addListener(writeHandler(request, handler));
 
+        if (DISABLE_COALESCING) {
+            channel.writeAndFlush(request).addListener(writeHandler(request, handler));
+        } else {
+            flush(new FlushItem(channel, request, writeHandler(request, handler)));
+        }
         if (startTimeout)
             handler.startTimeout();
 
@@ -422,10 +441,10 @@ class Connection {
                     dispatcher.removeHandler(handler, true);
 
                     final ConnectionException ce;
-                    if (writeFuture.getCause() instanceof java.nio.channels.ClosedChannelException) {
+                    if (writeFuture.cause() instanceof java.nio.channels.ClosedChannelException) {
                         ce = new TransportException(address, "Error writing: Closed channel");
                     } else {
-                        ce = new TransportException(address, "Error writing", writeFuture.getCause());
+                        ce = new TransportException(address, "Error writing", writeFuture.cause());
                     }
                     final long latency = System.nanoTime() - handler.startTime;
                     // This handler is executed while holding the writeLock of the channel.
@@ -519,12 +538,33 @@ class Connection {
 
     public static class Factory {
 
-        private final ExecutorService bossExecutor = Executors.newCachedThreadPool();
-        private final ExecutorService workerExecutor = Executors.newCachedThreadPool();
+        private static final Class<? extends EventLoopGroup> EVENT_LOOP_GROUP_CLASS;
+        private static final Class<? extends Channel> CHANNEL_CLASS;
+        static {
+            boolean useEpoll;
+            try {
+                Class.forName("io.netty.channel.epoll.EpollEventLoopGroup");
+                if (FORCE_NIO) {
+                    logger.info("Found Netty's native epoll transport in the classpath, "
+                        + "but NIO was forced through the FORCE_NIO system property");
+                    useEpoll = false;
+                } else {
+                    logger.info("Found Netty's native epoll transport in the classpath, using it");
+                    useEpoll = true;
+                }
+            } catch (ClassNotFoundException e) {
+                logger.info("Did not find Netty's native epoll transport in the classpath, defaulting to NIO");
+                useEpoll = false;
+            }
+            EVENT_LOOP_GROUP_CLASS = useEpoll ? EpollEventLoopGroup.class :  NioEventLoopGroup.class;
+            CHANNEL_CLASS = useEpoll ? EpollSocketChannel.class : NioSocketChannel.class;
+        }
+
         public final HashedWheelTimer timer = new HashedWheelTimer(new ThreadFactoryBuilder().setNameFormat("Timeouter-%d").build());
 
-        private final ChannelFactory channelFactory = new NioClientSocketChannelFactory(bossExecutor, workerExecutor);
-        private final ChannelGroup allChannels = new DefaultChannelGroup();
+        private final EventLoopGroup eventLoopGroup;
+
+        private final ChannelGroup allChannels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
         private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
         public final DefaultResponseHandler defaultHandler;
@@ -544,6 +584,14 @@ class Connection {
             this.configuration = configuration;
             this.authProvider = configuration.getProtocolOptions().getAuthProvider();
             this.protocolVersion = configuration.getProtocolOptions().initialProtocolVersion;
+
+            try {
+                eventLoopGroup = EVENT_LOOP_GROUP_CLASS.newInstance();
+            } catch (Exception e) {
+                throw new AssertionError("Could not create an instance of "
+                    + EVENT_LOOP_GROUP_CLASS.getName()
+                    + ", this should not happen");
+            }
         }
 
         public int getPort() {
@@ -599,30 +647,32 @@ class Connection {
             return configuration.getSocketOptions().getReadTimeoutMillis();
         }
 
-        private ClientBootstrap newBootstrap() {
-            ClientBootstrap b = new ClientBootstrap(channelFactory);
+        private Bootstrap newBootstrap() {
+            Bootstrap b = new Bootstrap();
+            b.group(eventLoopGroup)
+                .channel(CHANNEL_CLASS);
 
             SocketOptions options = configuration.getSocketOptions();
 
-            b.setOption("connectTimeoutMillis", options.getConnectTimeoutMillis());
+            b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, options.getConnectTimeoutMillis());
             Boolean keepAlive = options.getKeepAlive();
             if (keepAlive != null)
-                b.setOption("keepAlive", keepAlive);
+                b.option(ChannelOption.SO_KEEPALIVE, keepAlive);
             Boolean reuseAddress = options.getReuseAddress();
             if (reuseAddress != null)
-                b.setOption("reuseAddress", reuseAddress);
+                b.option(ChannelOption.SO_REUSEADDR, reuseAddress);
             Integer soLinger = options.getSoLinger();
             if (soLinger != null)
-                b.setOption("soLinger", soLinger);
+                b.option(ChannelOption.SO_LINGER, soLinger);
             Boolean tcpNoDelay = options.getTcpNoDelay();
             if (tcpNoDelay != null)
-                b.setOption("tcpNoDelay", tcpNoDelay);
+                b.option(ChannelOption.TCP_NODELAY, tcpNoDelay);
             Integer receiveBufferSize = options.getReceiveBufferSize();
             if (receiveBufferSize != null)
-                b.setOption("receiveBufferSize", receiveBufferSize);
+                b.option(ChannelOption.SO_RCVBUF, receiveBufferSize);
             Integer sendBufferSize = options.getSendBufferSize();
             if (sendBufferSize != null)
-                b.setOption("sendBufferSize", sendBufferSize);
+                b.option(ChannelOption.SO_SNDBUF, sendBufferSize);
 
             return b;
         }
@@ -635,14 +685,98 @@ class Connection {
             // we're not on an I/O thread or anything, so just call await.
             allChannels.close().awaitUninterruptibly();
 
-            // This will call shutdownNow on the boss and worker executor. Since this is called
-            // only once all connection have been individually closed, it's fine.
-            channelFactory.releaseExternalResources();
+            // This will shut down I/O threads. Since this is called only once all connection have
+            // been individually closed, it's fine.
+            eventLoopGroup.shutdownGracefully().syncUninterruptibly();
             timer.stop();
         }
     }
 
-    private class Dispatcher extends IdleStateAwareChannelUpstreamHandler {
+    private static final class Flusher implements Runnable {
+        final EventLoop eventLoop;
+        final Queue<FlushItem> queued = new ConcurrentLinkedQueue<FlushItem>();
+        final AtomicBoolean running = new AtomicBoolean(false);
+        final HashSet<Channel> channels = new HashSet<Channel>();
+        final List<FlushItem> flushed = Lists.newArrayListWithExpectedSize(50);
+        int runsSinceFlush = 0;
+        int runsWithNoWork = 0;
+
+        private Flusher(EventLoop eventLoop) {
+            this.eventLoop = eventLoop;
+        }
+
+        void start() {
+            if (!running.get() && running.compareAndSet(false, true)) {
+                this.eventLoop.execute(this);
+            }
+        }
+
+        @Override
+        public void run() {
+
+            boolean doneWork = false;
+            FlushItem flush;
+            while (null != (flush = queued.poll())) {
+                channels.add(flush.channel);
+                flush.channel.write(flush.request).addListener(flush.listener);
+                flushed.add(flush);
+                doneWork = true;
+            }
+
+            runsSinceFlush++;
+
+            if (!doneWork || runsSinceFlush > 2 || flushed.size() > 50) {
+                for (Channel channel : channels)
+                    channel.flush();
+
+                channels.clear();
+                flushed.clear();
+                runsSinceFlush = 0;
+            }
+
+            if (doneWork) {
+                runsWithNoWork = 0;
+            } else {
+                // either reschedule or cancel
+                if (++runsWithNoWork > 5) {
+                    running.set(false);
+                    if (queued.isEmpty() || !running.compareAndSet(false, true))
+                        return;
+                }
+            }
+
+            eventLoop.schedule(this, 10000, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    private static final ConcurrentMap<EventLoop, Flusher> flusherLookup = new ConcurrentHashMap<EventLoop, Flusher>();
+
+    private static class FlushItem {
+        final Channel channel;
+        final Object request;
+        final ChannelFutureListener listener;
+
+        private FlushItem(Channel channel, Object request, ChannelFutureListener listener) {
+            this.channel = channel;
+            this.request = request;
+            this.listener = listener;
+        }
+    }
+
+    private void flush(FlushItem item) {
+        EventLoop loop = item.channel.eventLoop();
+        Flusher flusher = flusherLookup.get(loop);
+        if (flusher == null) {
+            Flusher alt = flusherLookup.putIfAbsent(loop, flusher = new Flusher(loop));
+            if (alt != null)
+                flusher = alt;
+        }
+
+        flusher.queued.add(item);
+        flusher.start();
+    }
+
+    private class Dispatcher extends SimpleChannelInboundHandler<Message.Response> {
 
         public final StreamIdGenerator streamIdHandler = new StreamIdGenerator();
         private final ConcurrentMap<Integer, ResponseHandler> pending = new ConcurrentHashMap<Integer, ResponseHandler>();
@@ -679,54 +813,49 @@ class Connection {
         }
 
         @Override
-        public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
-            if (!(e.getMessage() instanceof Message.Response)) {
-                String msg = asDebugString(e.getMessage());
-                logger.error("{} Received unexpected message: {}", Connection.this, msg);
-                defunct(new TransportException(address, "Unexpected message received: " + msg));
-            } else {
-                Message.Response response = (Message.Response)e.getMessage();
-                int streamId = response.getStreamId();
+        protected void channelRead0(ChannelHandlerContext ctx, Message.Response response) throws Exception {
+            int streamId = response.getStreamId();
 
-                logger.trace("{} received: {}", Connection.this, e.getMessage());
+            logger.trace("{} received: {}", Connection.this, asDebugString(response));
 
-                if (streamId < 0) {
-                    factory.defaultHandler.handle(response);
-                    return;
-                }
-
-                ResponseHandler handler = pending.remove(streamId);
-                streamIdHandler.release(streamId);
-                if (handler == null) {
-                    /**
-                     * During normal operation, we should not receive responses for which we don't have a handler. There is
-                     * two cases however where this can happen:
-                     *   1) The connection has been defuncted due to some internal error and we've raced between removing the
-                     *      handler and actually closing the connection; since the original error has been logged, we're fine
-                     *      ignoring this completely.
-                     *   2) This request has timed out. In that case, we've already switched to another host (or errored out
-                     *      to the user). So log it for debugging purpose, but it's fine ignoring otherwise.
-                     */
-                    streamIdHandler.unmark(streamId);
-                    if (logger.isDebugEnabled())
-                        logger.debug("{} Response received on stream {} but no handler set anymore (either the request has "
-                                   + "timed out or it was closed due to another error). Received message is {}", Connection.this, streamId, asDebugString(response));
-                    return;
-                }
-                handler.cancelTimeout();
-                handler.callback.onSet(Connection.this, response, System.nanoTime() - handler.startTime, handler.retryCount);
-
-                // If we happen to be closed and we're the last outstanding request, we need to terminate the connection
-                // (note: this is racy as the signaling can be called more than once, but that's not a problem)
-                if (isClosed())
-                    tryTerminate(false);
+            if (streamId < 0) {
+                factory.defaultHandler.handle(response);
+                return;
             }
+
+            ResponseHandler handler = pending.remove(streamId);
+            streamIdHandler.release(streamId);
+            if (handler == null) {
+                /**
+                 * During normal operation, we should not receive responses for which we don't have a handler. There is
+                 * two cases however where this can happen:
+                 *   1) The connection has been defuncted due to some internal error and we've raced between removing the
+                 *      handler and actually closing the connection; since the original error has been logged, we're fine
+                 *      ignoring this completely.
+                 *   2) This request has timed out. In that case, we've already switched to another host (or errored out
+                 *      to the user). So log it for debugging purpose, but it's fine ignoring otherwise.
+                 */
+                streamIdHandler.unmark(streamId);
+                if (logger.isDebugEnabled())
+                    logger.debug("{} Response received on stream {} but no handler set anymore (either the request has "
+                               + "timed out or it was closed due to another error). Received message is {}", Connection.this, streamId, asDebugString(response));
+                return;
+            }
+            handler.cancelTimeout();
+            handler.callback.onSet(Connection.this, response, System.nanoTime() - handler.startTime, handler.retryCount);
+
+            // If we happen to be closed and we're the last outstanding request, we need to terminate the connection
+            // (note: this is racy as the signaling can be called more than once, but that's not a problem)
+            if (isClosed())
+                tryTerminate(false);
         }
 
         @Override
-        public void channelIdle(ChannelHandlerContext ctx, IdleStateEvent e) throws Exception {
-            logger.debug("{} was inactive for {} seconds, sending heartbeat", Connection.this, factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds());
-            write(HEARTBEAT_CALLBACK);
+        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+            if (evt instanceof IdleStateEvent && ((IdleStateEvent)evt).state() == ALL_IDLE) {
+                logger.debug("{} was inactive for {} seconds, sending heartbeat", Connection.this, factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds());
+                write(HEARTBEAT_CALLBACK);
+            }
         }
 
         // Make sure we don't print huge responses in debug/error logs.
@@ -742,15 +871,15 @@ class Connection {
         }
 
         @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
             if (logger.isDebugEnabled())
-                logger.debug(String.format("%s connection error", Connection.this), e.getCause());
+                logger.debug(String.format("%s connection error", Connection.this), cause);
 
             // Ignore exception while writing, this will be handled by write() directly
             if (writer.get() > 0)
                 return;
 
-            defunct(new TransportException(address, String.format("Unexpected exception triggered (%s)", e.getCause()), e.getCause()));
+            defunct(new TransportException(address, String.format("Unexpected exception triggered (%s)", cause), cause));
         }
 
         public void errorOutAllHandler(ConnectionException ce) {
@@ -763,13 +892,15 @@ class Connection {
                 iter.remove();
             }
         }
+    }
 
+    private class ChannelCloseListener implements ChannelFutureListener {
         @Override
-        public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) {
+        public void operationComplete(ChannelFuture future) throws Exception {
             // If we've closed the channel client side then we don't really want to defunct the connection, but
             // if there is remaining thread waiting on us, we still want to wake them up
             if (!isInitialized || isClosed()) {
-                errorOutAllHandler(new TransportException(address, "Channel has been closed"));
+                dispatcher.errorOutAllHandler(new TransportException(address, "Channel has been closed"));
                 // we still want to force so that the future completes
                 Connection.this.closeAsync().force();
             } else
@@ -837,9 +968,9 @@ class Connection {
             future.addListener(new ChannelFutureListener() {
                 public void operationComplete(ChannelFuture future) {
                     factory.allChannels.remove(channel);
-                    if (future.getCause() != null) {
-                        logger.warn("Error closing channel", future.getCause());
-                        ConnectionCloseFuture.this.setException(future.getCause());
+                    if (future.cause() != null) {
+                        logger.warn("Error closing channel", future.cause());
+                        ConnectionCloseFuture.this.setException(future.cause());
                     } else
                         ConnectionCloseFuture.this.set(null);
                 }
@@ -972,7 +1103,7 @@ class Connection {
         public void handle(Message.Response response);
     }
 
-    private static class PipelineFactory implements ChannelPipelineFactory {
+    private static class Initializer extends ChannelInitializer<SocketChannel> {
         // Stateless handlers
         private static final Message.ProtocolDecoder messageDecoder = new Message.ProtocolDecoder();
         private static final Message.ProtocolEncoder messageEncoderV1 = new Message.ProtocolEncoder(1);
@@ -985,28 +1116,27 @@ class Connection {
         private final SSLOptions sslOptions;
         private final ChannelHandler idleStateHandler;
 
-        public PipelineFactory(Connection connection, int protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds, HashedWheelTimer timer) {
+        public Initializer(Connection connection, int protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds) {
             this.connection = connection;
             this.protocolVersion = protocolVersion;
             this.compressor = compressor;
             this.sslOptions = sslOptions;
-            this.idleStateHandler = new IdleStateHandler(timer, 0, 0, heartBeatIntervalSeconds);
+            this.idleStateHandler = new IdleStateHandler(0, 0, heartBeatIntervalSeconds);
         }
 
         @Override
-        public ChannelPipeline getPipeline() throws Exception {
-            ChannelPipeline pipeline = Channels.pipeline();
+        protected void initChannel(SocketChannel channel) throws Exception {
+            ChannelPipeline pipeline = channel.pipeline();
 
             if (sslOptions != null) {
                 SSLEngine engine = sslOptions.context.createSSLEngine();
                 engine.setUseClientMode(true);
                 engine.setEnabledCipherSuites(sslOptions.cipherSuites);
                 SslHandler handler = new SslHandler(engine);
-                handler.setCloseOnSSLException(true);
                 pipeline.addLast("ssl", handler);
             }
 
-            //pipeline.addLast("debug", new LoggingHandler(InternalLogLevel.INFO));
+//            pipeline.addLast("debug", new LoggingHandler(LogLevel.INFO));
 
             pipeline.addLast("frameDecoder", new Frame.Decoder());
             pipeline.addLast("frameEncoder", frameEncoder);
@@ -1022,8 +1152,6 @@ class Connection {
             pipeline.addLast("idleStateHandler", idleStateHandler);
 
             pipeline.addLast("dispatcher", connection.dispatcher);
-
-            return pipeline;
         }
     }
 }

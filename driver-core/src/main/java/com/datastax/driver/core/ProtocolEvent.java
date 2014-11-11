@@ -17,7 +17,7 @@ package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
 
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 class ProtocolEvent {
 
@@ -29,14 +29,14 @@ class ProtocolEvent {
         this.type = type;
     }
 
-    public static ProtocolEvent deserialize(ChannelBuffer cb) {
-        switch (CBUtil.readEnumValue(Type.class, cb)) {
+    public static ProtocolEvent deserialize(ByteBuf bb) {
+        switch (CBUtil.readEnumValue(Type.class, bb)) {
             case TOPOLOGY_CHANGE:
-                return TopologyChange.deserializeEvent(cb);
+                return TopologyChange.deserializeEvent(bb);
             case STATUS_CHANGE:
-                return StatusChange.deserializeEvent(cb);
+                return StatusChange.deserializeEvent(bb);
             case SCHEMA_CHANGE:
-                return SchemaChange.deserializeEvent(cb);
+                return SchemaChange.deserializeEvent(bb);
         }
         throw new AssertionError();
     }
@@ -54,9 +54,9 @@ class ProtocolEvent {
         }
 
         // Assumes the type has already been deserialized
-        private static TopologyChange deserializeEvent(ChannelBuffer cb) {
-            Change change = CBUtil.readEnumValue(Change.class, cb);
-            InetSocketAddress node = CBUtil.readInet(cb);
+        private static TopologyChange deserializeEvent(ByteBuf bb) {
+            Change change = CBUtil.readEnumValue(Change.class, bb);
+            InetSocketAddress node = CBUtil.readInet(bb);
             return new TopologyChange(change, node);
         }
 
@@ -80,9 +80,9 @@ class ProtocolEvent {
         }
 
         // Assumes the type has already been deserialized
-        private static StatusChange deserializeEvent(ChannelBuffer cb) {
-            Status status = CBUtil.readEnumValue(Status.class, cb);
-            InetSocketAddress node = CBUtil.readInet(cb);
+        private static StatusChange deserializeEvent(ByteBuf bb) {
+            Status status = CBUtil.readEnumValue(Status.class, bb);
+            InetSocketAddress node = CBUtil.readInet(bb);
             return new StatusChange(status, node);
         }
 
@@ -108,10 +108,10 @@ class ProtocolEvent {
         }
 
         // Assumes the type has already been deserialized
-        private static SchemaChange deserializeEvent(ChannelBuffer cb) {
-            Change change = CBUtil.readEnumValue(Change.class, cb);
-            String keyspace = CBUtil.readString(cb);
-            String table = CBUtil.readString(cb);
+        private static SchemaChange deserializeEvent(ByteBuf bb) {
+            Change change = CBUtil.readEnumValue(Change.class, bb);
+            String keyspace = CBUtil.readString(bb);
+            String table = CBUtil.readString(bb);
             return new SchemaChange(change, keyspace, table);
         }
 

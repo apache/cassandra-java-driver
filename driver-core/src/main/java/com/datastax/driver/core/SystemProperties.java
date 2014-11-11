@@ -26,4 +26,20 @@ class SystemProperties {
             return defaultValue;
         }
     }
+
+    static boolean getBoolean(String key, boolean defaultValue) {
+        String stringValue = System.getProperty(key);
+        if (stringValue == null) {
+            logger.debug("{} is undefined, using default value {}", key, defaultValue);
+            return defaultValue;
+        }
+        try {
+            boolean value = Boolean.parseBoolean(stringValue);
+            logger.warn("{} is defined, using value {}", key, value);
+            return value;
+        } catch (NumberFormatException e) {
+            logger.warn("{} is defined but could not parse value {}, using default value {}", key, stringValue, defaultValue);
+            return defaultValue;
+        }
+    }
 }

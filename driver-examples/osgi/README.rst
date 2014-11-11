@@ -12,7 +12,7 @@ Usage
 
 To build the bundle and run tests execute the following maven task::
 
-    mvn test -P short
+    mvn integration-test -P short
 
 The short profile needs to be activated since the tests run under
 this group.
