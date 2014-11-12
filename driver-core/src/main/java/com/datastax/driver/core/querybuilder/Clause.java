@@ -74,6 +74,8 @@ public abstract class Clause extends Utils.Appendeable {
 
             if (values == null)
                 throw new IllegalArgumentException("Missing values for IN clause");
+            if (values.size() > 65535)
+                throw new IllegalArgumentException("Too many values for IN clause, the maximum allowed is 65535");
         }
 
         @Override
