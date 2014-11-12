@@ -24,6 +24,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.MessageToMessageEncoder;
+import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -179,7 +180,10 @@ abstract class Message {
             UUID tracingId = isTracing ? CBUtil.readUUID(frame.body) : null;
 
             Response response = Response.Type.fromOpcode(frame.header.opcode).decoder(frame.header.version).decode(frame.body);
+            ReferenceCountUtil.release(frame.body);
+
             response.setTracingId(tracingId).setStreamId(frame.header.streamId);
+
             out.add(response);
         }
     }

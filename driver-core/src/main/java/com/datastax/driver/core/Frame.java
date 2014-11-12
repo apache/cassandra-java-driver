@@ -140,7 +140,8 @@ class Frame {
                 if (frame == null) {
                     return null;
                 }
-
+                // Do not deallocate `frame` just yet, because it is stored as Frame.body and will be used
+                // in Message.ProtocolDecoder (we deallocate it there).
                 return Frame.create(frame);
             } catch (CorruptedFrameException e) {
                 throw new DriverInternalError(e.getMessage());
