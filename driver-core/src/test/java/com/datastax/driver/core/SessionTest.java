@@ -298,12 +298,13 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @Test(groups="short")
+    // This test should be enabled once https://issues.apache.org/jira/browse/CASSANDRA-8285 is fixed
+    @Test(groups="short", enabled = false)
     public void simple_statements_with_less_than_65k_parameters_should_be_correct() {
-        session.execute("INSERT INTO " + COUNTER_TABLE + " (k, c) VALUES ('0', 0)");
+        session.execute("INSERT INTO " + TABLE1 + " (k) VALUES ('0')");
 
         int n = 65534;
-        ResultSet resultSet = session.execute("select * from " + COUNTER_TABLE + " "
+        ResultSet resultSet = session.execute("select * from " + TABLE1 + " "
                         + "where k in ("
                         + Joiner.on(',').join(listOf(n, "?"))
                         + ')',
@@ -321,10 +322,10 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups="short", expectedExceptions = {InvalidQueryException.class})
     public void simple_statements_with_more_than_65k_parameters_should_be_invalid() {
-        session.execute("INSERT INTO " + COUNTER_TABLE + " (k, c) VALUES ('0', 0)");
+        session.execute("INSERT INTO " + TABLE1 + " (k, c) VALUES ('0', 0)");
 
         int n = 100 * 1000;
-        session.execute("select * from " + COUNTER_TABLE + " "
+        session.execute("select * from " + TABLE1 + " "
                         + "where k in ("
                         + Joiner.on(',').join(listOf(n, "?"))
                         + ')',

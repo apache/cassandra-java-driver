@@ -438,13 +438,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(bs.getRoutingKey()).isNotNull();
     }
 
-    // This test seems to run forever...
-    // Threads dumps taken show that we spend a lot of time parked on
-    // - ArrayBackedResultSet$1::hasNext
-    // - ArrayBackedResultSet$MultiPage::isExhausted
-    // - ArrayBackedResultSet$MultiPage.prepareNextRow
-    // - Uninterruptibles.getUninterruptibly
-    @Test(groups="short")
+    // This test should be enabled once https://issues.apache.org/jira/browse/CASSANDRA-8285 is fixed
+    @Test(groups="short", enabled = false)
     public void prepared_statements_with_less_than_65k_parameters_should_be_accepted() {
         session.execute("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES ('0', 0)");
 

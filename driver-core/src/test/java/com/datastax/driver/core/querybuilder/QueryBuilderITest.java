@@ -235,7 +235,8 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         assertTrue(row.getBool("[applied]"));
     }
 
-    @Test(groups="short")
+    // This test should be enabled once https://issues.apache.org/jira/browse/CASSANDRA-8285 is fixed
+    @Test(groups="short", enabled = false)
     public void simple_queries_with_less_than_65k_parameters_should_be_correct() {
         session.execute(insertInto(TestUtils.SIMPLE_KEYSPACE, TABLE_TEXT).value("k", "0"));
 
@@ -253,7 +254,7 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @Test(groups="short", expectedExceptions = {InvalidQueryException.class})
+    @Test(groups="short", expectedExceptions = {IllegalArgumentException.class})
     public void simple_queries_with_more_than_65k_parameters_should_be_invalid() {
         int n = 100 * 1000;
         session.execute(select().from(TestUtils.SIMPLE_KEYSPACE, TABLE_TEXT).where(in("k", arrayOf(n, "0"))));
