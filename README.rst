@@ -10,6 +10,7 @@ the Cassandra Query Language version 3 (CQL3) and Cassandra's binary protocol.
 - TWITTER: Follow the latest news about DataStax Drivers - `@olim7t <http://twitter.com/olim7t>`_, `@mfiguiere <http://twitter.com/mfiguiere>`_ 
 - DOCS: http://www.datastax.com/documentation/developer/java-driver/2.1/index.html
 - API: http://www.datastax.com/drivers/java/2.1
+- CHANGELOG: https://github.com/datastax/java-driver/blob/2.1/driver-core/CHANGELOG.rst
 
 
 The driver architecture is based on layers. At the bottom lies the driver core.

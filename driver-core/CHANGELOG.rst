@@ -34,6 +34,11 @@ Merged from 2.0 branch:
 - [bug] Fix check for local contact points in DCAware policy's init (JAVA-511)
 - [improvement] Make timeout on saturated pool customizable (JAVA-457)
 - [improvement] Downgrade Guava to 14.0.1 (JAVA-521)
+- [bug] Fix token awareness for case-sensitive keyspaces and tables (JAVA-526)
+- [bug] Check maximum number of values passed to SimpleStatement (JAVA-515)
+- [improvement] Expose the driver version through the API (JAVA-532)
+- [improvement] Optimize session initialization when some hosts are not
+  responsive (JAVA-522)
 
 
 2.1.2:
@@ -123,6 +128,16 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
 
 
+2.0.8:
+------
+
+- [bug] Fix token awareness for case-sensitive keyspaces and tables (JAVA-526)
+- [bug] Check maximum number of values passed to SimpleStatement (JAVA-515)
+- [improvement] Expose the driver version through the API (JAVA-532)
+- [improvement] Optimize session initialization when some hosts are not
+  responsive (JAVA-522)
+
+
 2.0.7:
 ------
 
@@ -164,7 +179,6 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [improvement] Log more connection details at trace and debug levels (JAVA-436)
 - [bug] Fix cluster shutdown (JAVA-445)
 - [improvement] Expose child policy in chainable load balancing policies (JAVA-439)
-
 
 
 2.0.5:

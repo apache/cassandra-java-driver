@@ -187,6 +187,12 @@ class ControlConnection implements Host.StateListener {
                     return tryConnect(host, isInitialConnection);
                 } catch (ConnectionException e) {
                     errors = logError(host, e, errors, iter);
+                    if (isInitialConnection) {
+                        // Mark the host down right away so that we don't try it again during the initialization process.
+                        // We don't call cluster.triggerOnDown because it does a bunch of other things we don't want to do here (notify LBP, etc.)
+                        host.setDown();
+                        cluster.startPeriodicReconnectionAttempt(host, true);
+                    }
                 } catch (ExecutionException e) {
                     errors = logError(host, e.getCause(), errors, iter);
                 } catch (UnsupportedProtocolVersionException e) {

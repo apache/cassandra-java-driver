@@ -81,6 +81,10 @@ public abstract class BuiltStatement extends RegularStatement {
         } else {
             values = new ArrayList<Object>();
             sb = buildQueryString(values);
+
+            if (values.size() > 65535)
+                throw new IllegalArgumentException("Too many values for built statement, the maximum allowed is 65535");
+            
             if (values.isEmpty())
                 values = null;
         }
