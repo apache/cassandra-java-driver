@@ -11,11 +11,6 @@ CHANGELOG
 
 Merged from 2.0 branch:
 
-- [bug] Handle null pool in PooledConnection.release (JAVA-449)
-- [improvement] Defunct connection on request timeout (JAVA-425)
-- [improvement] Try next host when we get a SERVER_ERROR (JAVA-426)
-- [bug] Handle race between query timeout and completion (JAVA-449, JAVA-460, JAVA-471)
-- [bug] Fix DCAwareRoundRobinPolicy datacenter auto-discovery (JAVA-496)
 - [bug] Ensure control connection does not trigger concurrent reconnects (JAVA-497)
 - [improvement] Keep trying to reconnect on authentication errors (JAVA-472)
 - [improvement] Expose close method on load balancing policy (JAVA-463)
