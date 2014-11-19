@@ -437,7 +437,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(bs.getRoutingKey()).isNotNull();
     }
 
-    // This test should be enabled once https://issues.apache.org/jira/browse/CASSANDRA-8285 is fixed
+    // This test should be enabled once https://issues.apache.org/jira/browse/CASSANDRA-8276 is fixed
     @Test(groups="short", enabled = false)
     public void prepared_statements_with_less_than_65k_parameters_should_be_accepted() {
         session.execute("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES ('0', 0)");

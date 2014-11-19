@@ -294,7 +294,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    // This test should be enabled once https://issues.apache.org/jira/browse/CASSANDRA-8285 is fixed
+    // This test should be enabled once https://issues.apache.org/jira/browse/CASSANDRA-8276 is fixed
     @Test(groups="short", enabled = false)
     public void simple_statements_with_less_than_65k_parameters_should_be_correct() {
         session.execute("INSERT INTO " + TABLE1 + " (k) VALUES ('0')");
