@@ -26,11 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.MapMaker;
-import com.google.common.collect.SetMultimap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
 
 import org.slf4j.Logger;
@@ -2068,15 +2064,21 @@ public class Cluster implements Closeable {
                     switch (scc.change) {
                         case CREATED:
                             if (scc.table.isEmpty())
-                                submitSchemaRefresh(null, null);
-                            else
                                 submitSchemaRefresh(scc.keyspace, null);
+                            else
+                                submitSchemaRefresh(scc.keyspace, scc.table);
                             break;
                         case DROPPED:
                             if (scc.table.isEmpty())
-                                submitSchemaRefresh(null, null);
-                            else
-                                submitSchemaRefresh(scc.keyspace, null);
+                                manager.metadata.removeKeyspace(scc.keyspace);
+                            else {
+                                KeyspaceMetadata keyspace = manager.metadata.getKeyspace(scc.keyspace);
+                                if (keyspace == null)
+                                    logger.warn("Received a DROPPED notification for {}.{}, but this keyspace is unknown in our metadata",
+                                        scc.keyspace, scc.table);
+                                else
+                                    keyspace.removeTable(scc.table);
+                            }
                             break;
                         case UPDATED:
                             if (scc.table.isEmpty())

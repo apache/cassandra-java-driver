@@ -97,6 +97,10 @@ public class KeyspaceMetadata {
         return tables.get(Metadata.handleId(name));
     }
 
+    void removeTable(String table) {
+        tables.remove(table);
+    }
+
     /**
      * Returns the tables defined in this keyspace.
      *

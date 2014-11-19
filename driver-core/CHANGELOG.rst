@@ -5,6 +5,7 @@ CHANGELOG
 ------
 
 - [improvement] Shade Netty dependency (JAVA-538)
+- [improvement] Target schema refreshes more precisely (JAVA-543)
 
 
 2.0.8:

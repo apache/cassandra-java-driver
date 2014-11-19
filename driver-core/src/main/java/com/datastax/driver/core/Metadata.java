@@ -298,6 +298,11 @@ public class Metadata {
         return keyspaces.get(handleId(keyspace));
     }
 
+    void removeKeyspace(String keyspace) {
+        keyspaces.remove(keyspace);
+        tokenMap.tokenToHosts.remove(keyspace);
+    }
+
     /**
      * Returns a list of all the defined keyspaces.
      *
