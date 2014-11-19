@@ -18,11 +18,10 @@ package com.datastax.driver.core;
 import java.util.*;
 
 import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.utils.StatementUtils;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.core.utils.StatementUtils.listOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.testng.Assert.assertEquals;
@@ -445,8 +444,10 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         int n = 65535;
         PreparedStatement ps = session.prepare(
-                "select * from " + SIMPLE_TABLE + " where k in (" + Joiner.on(',').join(listOf(n, "?")) + ')');
-        ResultSet resultSet = session.execute(ps.bind(listOf(n, "0").toArray()));
+            "select * from " + SIMPLE_TABLE + " where k in (" +
+                Strings.repeat("?,", n - 1) + '?' +
+                ')');
+        ResultSet resultSet = session.execute(ps.bind(Collections.nCopies(n, "0").toArray()));
         boolean foundResult = false;
         for (Row row : resultSet) {
             if (row.getString(0).equals("0")) {
@@ -464,7 +465,9 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         int n = 100 * 1000;
         PreparedStatement ps = session.prepare(
-                "select * from " + SIMPLE_TABLE + " where k in (" + Joiner.on(',').join(listOf(n, "?")) + ')');
-        session.execute(ps.bind(listOf(n, "0").toArray()));
+            "select * from " + SIMPLE_TABLE + " where k in (" +
+                Strings.repeat("?,", n - 1) + '?' +
+                ')');
+        session.execute(ps.bind(Collections.nCopies(n, "0").toArray()));
     }
 }

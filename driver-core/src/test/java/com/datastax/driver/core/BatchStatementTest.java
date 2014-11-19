@@ -18,15 +18,11 @@ package com.datastax.driver.core;
 import java.util.Collection;
 import java.util.Collections;
 
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.google.common.base.Joiner;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 
 import static com.datastax.driver.core.TestUtils.versionCheck;
-import static com.datastax.driver.core.utils.StatementUtils.arrayOf;
-import static com.datastax.driver.core.utils.StatementUtils.listOf;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 

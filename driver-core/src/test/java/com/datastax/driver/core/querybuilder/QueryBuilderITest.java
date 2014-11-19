@@ -18,14 +18,11 @@ package com.datastax.driver.core.querybuilder;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.TreeSet;
 
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.google.common.base.Joiner;
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.core.utils.StatementUtils.arrayOf;
-import static com.datastax.driver.core.utils.StatementUtils.listOf;
 import static org.testng.Assert.*;
 
 import com.datastax.driver.core.*;
@@ -242,7 +239,7 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
 
         int n = 65534;
         ResultSet resultSet = session.execute(
-                select().from(TestUtils.SIMPLE_KEYSPACE, TABLE_TEXT).where(in("k", arrayOf(n, "0"))));
+                select().from(TestUtils.SIMPLE_KEYSPACE, TABLE_TEXT).where(in("k", Collections.nCopies(n, "0").toArray())));
         boolean foundResult = false;
         for (Row row : resultSet) {
             if (row.getString(0).equals("0")) {
@@ -257,6 +254,6 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups="short", expectedExceptions = {IllegalArgumentException.class})
     public void simple_queries_with_more_than_65k_parameters_should_be_invalid() {
         int n = 100 * 1000;
-        session.execute(select().from(TestUtils.SIMPLE_KEYSPACE, TABLE_TEXT).where(in("k", arrayOf(n, "0"))));
+        session.execute(select().from(TestUtils.SIMPLE_KEYSPACE, TABLE_TEXT).where(in("k", Collections.nCopies(n, "0").toArray())));
     }
 }

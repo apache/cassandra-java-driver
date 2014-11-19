@@ -15,18 +15,14 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.*;
 
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.core.utils.StatementUtils.arrayOf;
-import static com.datastax.driver.core.utils.StatementUtils.listOf;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
@@ -306,9 +302,9 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         int n = 65534;
         ResultSet resultSet = session.execute("select * from " + TABLE1 + " "
                         + "where k in ("
-                        + Joiner.on(',').join(listOf(n, "?"))
+                        + Strings.repeat("?,", n - 1) + '?'
                         + ')',
-                arrayOf(n, "0"));
+                Collections.nCopies(n, "0").toArray());
         boolean foundResult = false;
         for (Row row : resultSet) {
             if (row.getString(0).equals("0")) {
@@ -327,8 +323,8 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         int n = 100 * 1000;
         session.execute("select * from " + TABLE1 + " "
                         + "where k in ("
-                        + Joiner.on(',').join(listOf(n, "?"))
+                        + Strings.repeat("?,", n - 1) + '?'
                         + ')',
-                arrayOf(n, "0"));
+                Collections.nCopies(n, "0").toArray());
     }
 }
