@@ -457,7 +457,7 @@ public final class QueryBuilder {
      * @param timestamp the timestamp (in microseconds) to use.
      * @return the corresponding option
      *
-     * @throws IllegalArgumentException if {@code timestamp &gt; 0}.
+     * @throws IllegalArgumentException if {@code timestamp &lt; 0}.
      */
     public static Using timestamp(long timestamp) {
         if (timestamp < 0)
@@ -482,7 +482,7 @@ public final class QueryBuilder {
      * @param ttl the ttl (in seconds) to use.
      * @return the corresponding option
      *
-     * @throws IllegalArgumentException if {@code ttl &gt; 0}.
+     * @throws IllegalArgumentException if {@code ttl &lt; 0}.
      */
     public static Using ttl(int ttl) {
         if (ttl < 0)
