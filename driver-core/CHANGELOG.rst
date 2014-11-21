@@ -4,6 +4,7 @@ CHANGELOG
 2.0.10:
 -------
 
+- [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
 
 2.0.9:
 ------
