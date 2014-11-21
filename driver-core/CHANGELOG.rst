@@ -6,6 +6,7 @@ CHANGELOG
 
 - [improvement] Shade Netty dependency (JAVA-538)
 - [improvement] Target schema refreshes more precisely (JAVA-543)
+- [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
 
 
 2.0.8:
