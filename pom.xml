@@ -38,7 +38,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cassandra.version>2.1.1</cassandra.version>
+    <cassandra.version>2.1.2</cassandra.version>
   </properties>
 
   <dependencies>
