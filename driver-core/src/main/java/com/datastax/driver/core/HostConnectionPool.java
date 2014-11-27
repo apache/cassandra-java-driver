@@ -51,7 +51,7 @@ class HostConnectionPool {
     public volatile HostDistance hostDistance;
     private final SessionManager manager;
 
-    final List<PooledConnection> connections;
+    final List<Connection> connections;
     private final AtomicInteger open;
     private final Set<Connection> trash = new CopyOnWriteArraySet<Connection>();
 
@@ -80,7 +80,7 @@ class HostConnectionPool {
         };
 
         // Create initial core connections
-        List<PooledConnection> l = new ArrayList<PooledConnection>(options().getCoreConnectionsPerHost(hostDistance));
+        List<Connection> l = new ArrayList<Connection>(options().getCoreConnectionsPerHost(hostDistance));
         try {
             for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
                 l.add(manager.connectionFactory().open(this));
@@ -90,12 +90,12 @@ class HostConnectionPool {
             // But we ignore otherwise cause I'm not sure we can do much better currently.
         } catch (RuntimeException e) {
             // Rethrow but make sure to properly close the connections in our temporary list.
-            for (PooledConnection connection : l) {
+            for (Connection connection : l) {
                 connection.closeAsync().force();
             }
             throw e;
         }
-        this.connections = new CopyOnWriteArrayList<PooledConnection>(l);
+        this.connections = new CopyOnWriteArrayList<Connection>(l);
         this.open = new AtomicInteger(connections.size());
 
         logger.trace("Created connection pool to host {}", host);
@@ -105,7 +105,7 @@ class HostConnectionPool {
         return manager.configuration().getPoolingOptions();
     }
 
-    public PooledConnection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
+    public Connection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
         if (isClosed())
             // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
             // That being said, maybe having a specific exception could be cleaner.
@@ -118,14 +118,14 @@ class HostConnectionPool {
                 scheduledForCreation.incrementAndGet();
                 manager.blockingExecutor().submit(newConnectionTask);
             }
-            PooledConnection c = waitForConnection(timeout, unit);
+            Connection c = waitForConnection(timeout, unit);
             c.setKeyspace(manager.poolsState.keyspace);
             return c;
         }
 
         int minInFlight = Integer.MAX_VALUE;
-        PooledConnection leastBusy = null;
-        for (PooledConnection connection : connections) {
+        Connection leastBusy = null;
+        for (Connection connection : connections) {
             int inFlight = connection.inFlight.get();
             if (inFlight < minInFlight) {
                 minInFlight = inFlight;
@@ -198,7 +198,7 @@ class HostConnectionPool {
         }
     }
 
-    private PooledConnection waitForConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
+    private Connection waitForConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
         if (timeout == 0)
             throw new TimeoutException();
 
@@ -217,8 +217,8 @@ class HostConnectionPool {
                 throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
 
             int minInFlight = Integer.MAX_VALUE;
-            PooledConnection leastBusy = null;
-            for (PooledConnection connection : connections) {
+            Connection leastBusy = null;
+            for (Connection connection : connections) {
                 int inFlight = connection.inFlight.get();
                 if (inFlight < minInFlight) {
                     minInFlight = inFlight;
@@ -246,7 +246,7 @@ class HostConnectionPool {
         throw new TimeoutException();
     }
 
-    public void returnConnection(PooledConnection connection) {
+    public void returnConnection(Connection connection) {
         if (isClosed()) {
             close(connection);
             return;
@@ -276,7 +276,7 @@ class HostConnectionPool {
     }
 
     void trashIdleConnections(long now) {
-        for (PooledConnection connection : connections) {
+        for (Connection connection : connections) {
             if (connection.getTrashTime() < now) {
                 trashConnection(connection);
             }
@@ -285,14 +285,14 @@ class HostConnectionPool {
 
     // Trash the connection and create a new one, but we don't call trashConnection
     // directly because we want to make sure the connection is always trashed.
-    private void replaceConnection(PooledConnection connection) {
+    private void replaceConnection(Connection connection) {
         if (connection.markForTrash.compareAndSet(false, true))
             open.decrementAndGet();
         maybeSpawnNewConnection();
         doTrashConnection(connection);
     }
 
-    private boolean trashConnection(PooledConnection connection) {
+    private boolean trashConnection(Connection connection) {
         if (connection.markForTrash.compareAndSet(false, true)) {
             // First, make sure we don't go below core connections
             for (;;) {
@@ -315,7 +315,7 @@ class HostConnectionPool {
         return true;
     }
 
-    private void doTrashConnection(PooledConnection connection) {
+    private void doTrashConnection(Connection connection) {
         trash.add(connection);
         connections.remove(connection);
 
@@ -384,7 +384,7 @@ class HostConnectionPool {
         manager.blockingExecutor().submit(newConnectionTask);
     }
 
-    void replaceDefunctConnection(final PooledConnection connection) {
+    void replaceDefunctConnection(final Connection connection) {
         if (connection.markForTrash.compareAndSet(false, true))
             open.decrementAndGet();
         connections.remove(connection);
@@ -431,7 +431,7 @@ class HostConnectionPool {
             return Lists.newArrayList(CloseFuture.immediateFuture());
 
         List<CloseFuture> futures = new ArrayList<CloseFuture>(connections.size());
-        for (final PooledConnection connection : connections) {
+        for (final Connection connection : connections) {
             CloseFuture future = connection.closeAsync();
             future.addListener(new Runnable() {
                 public void run() {

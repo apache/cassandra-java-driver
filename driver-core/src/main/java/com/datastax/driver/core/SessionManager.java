@@ -510,7 +510,7 @@ class SessionManager extends AbstractSession {
 
             // Let's not wait too long if we can't get a connection. Things
             // will fix themselves once the user tries a query anyway.
-            PooledConnection c = null;
+            Connection c = null;
             try {
                 c = entry.getValue().borrowConnection(200, TimeUnit.MILLISECONDS);
                 c.write(new Requests.Prepare(query)).get();

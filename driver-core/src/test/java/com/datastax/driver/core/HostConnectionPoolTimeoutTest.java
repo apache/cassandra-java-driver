@@ -48,7 +48,7 @@ public class HostConnectionPoolTimeoutTest {
             Host host1 = TestUtils.findHost(cluster, 1);
             HostConnectionPool pool = ((SessionManager)session).pools.get(host1);
 
-            Set<PooledConnection> coreConnections = new HashSet<PooledConnection>();
+            Set<Connection> coreConnections = new HashSet<Connection>();
 
             // Idle pool: 2 core connections + control connection
             assertThat(openConnections.getValue()).isEqualTo(3);
@@ -56,7 +56,7 @@ public class HostConnectionPoolTimeoutTest {
 
             // Max out the two core connections
             for (int i = 0; i < 2 * 128; i++) {
-                PooledConnection connection = pool.borrowConnection(1, TimeUnit.SECONDS);
+                Connection connection = pool.borrowConnection(1, TimeUnit.SECONDS);
                 coreConnections.add(connection);
             }
 
@@ -66,7 +66,7 @@ public class HostConnectionPoolTimeoutTest {
             assertThat(createdConnections.get()).isEqualTo(3);
 
             // Borrow one more stream, which should spawn a new connection
-            PooledConnection nonCoreConnection = pool.borrowConnection(1, TimeUnit.SECONDS);
+            Connection nonCoreConnection = pool.borrowConnection(1, TimeUnit.SECONDS);
             assertThat(coreConnections).doesNotContain(nonCoreConnection);
             assertThat(openConnections.getValue()).isEqualTo(4);
             assertThat(createdConnections.get()).isEqualTo(4);
@@ -78,7 +78,7 @@ public class HostConnectionPoolTimeoutTest {
             assertThat(createdConnections.get()).isEqualTo(4);
 
             // If we borrow again at this point, it should return the same connection
-            PooledConnection nonCoreConnection2 = pool.borrowConnection(1, TimeUnit.SECONDS);
+            Connection nonCoreConnection2 = pool.borrowConnection(1, TimeUnit.SECONDS);
             assertThat(nonCoreConnection2).isSameAs(nonCoreConnection);
             assertThat(openConnections.getValue()).isEqualTo(4);
             assertThat(createdConnections.get()).isEqualTo(4);
@@ -99,7 +99,7 @@ public class HostConnectionPoolTimeoutTest {
             assertThat(createdConnections.get()).isEqualTo(4);
 
             // Return all the streams of the core connections, they should not get trashed
-            for (PooledConnection coreConnection : coreConnections)
+            for (Connection coreConnection : coreConnections)
                 for (int i = 0; i < 128; i++)
                     pool.returnConnection(coreConnection);
             assertThat(session.getState().getInFlightQueries(host1)).isEqualTo(0);
