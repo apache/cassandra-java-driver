@@ -65,7 +65,12 @@ class HostConnectionPool {
 
     private final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
-    public HostConnectionPool(Host host, HostDistance hostDistance, SessionManager manager) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+    /**
+     * @param preExistentConnection an existing connection (from a reconnection attempt) that we want to
+     *                              reuse as part of this pool. Might be null or already used by another
+     *                              pool.
+     */
+    public HostConnectionPool(Host host, HostDistance hostDistance, SessionManager manager, Connection preExistentConnection) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         assert hostDistance != HostDistance.IGNORED;
         this.host = host;
         this.hostDistance = hostDistance;
@@ -82,8 +87,12 @@ class HostConnectionPool {
         // Create initial core connections
         List<Connection> l = new ArrayList<Connection>(options().getCoreConnectionsPerHost(hostDistance));
         try {
-            for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
-                l.add(manager.connectionFactory().open(this));
+            for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++) {
+                if (preExistentConnection != null && preExistentConnection.setPool(this))
+                    l.add(preExistentConnection);
+                else
+                    l.add(manager.connectionFactory().open(this));
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             // If asked to interrupt, we can skip opening core connections, the pool will still work.

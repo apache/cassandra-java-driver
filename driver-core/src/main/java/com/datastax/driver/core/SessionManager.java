@@ -84,7 +84,7 @@ class SessionManager extends AbstractSession {
         List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(hosts.size());
         for (Host host : hosts)
             if (host.state != Host.State.DOWN)
-                futures.add(maybeAddPool(host, executor()));
+                futures.add(maybeAddPool(host, null, executor()));
         ListenableFuture<List<Boolean>> f = Futures.allAsList(futures);
         try {
             f.get();
@@ -100,7 +100,7 @@ class SessionManager extends AbstractSession {
         for (Host host : cluster.getMetadata().allHosts()) {
             try {
                 if (host.state != Host.State.DOWN)
-                    maybeAddPool(host, executor()).get();
+                    maybeAddPool(host, null, executor()).get();
             } catch (ExecutionException e) {
                 // This is not supposed to happen
                 throw new DriverInternalError(e);
@@ -214,7 +214,7 @@ class SessionManager extends AbstractSession {
     }
 
     // Returns whether there was problem creating the pool
-    ListenableFuture<Boolean> forceRenewPool(final Host host, ListeningExecutorService executor) {
+    ListenableFuture<Boolean> forceRenewPool(final Host host, final Connection preExistentConnection, ListeningExecutorService executor) {
         final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
             return Futures.immediateFuture(true);
@@ -227,7 +227,7 @@ class SessionManager extends AbstractSession {
                         if (isClosing)
                             return true;
 
-                        HostConnectionPool newPool = new HostConnectionPool(host, distance, SessionManager.this);
+                        HostConnectionPool newPool = new HostConnectionPool(host, distance, SessionManager.this, preExistentConnection);
                         HostConnectionPool previous = pools.put(host, newPool);
                         if (previous == null) {
                             logger.debug("Added connection pool for {}", host);
@@ -255,7 +255,7 @@ class SessionManager extends AbstractSession {
     // maybeAddPool don't end up creating 2 HostConnectionPool. We can't rely on the pools
     // ConcurrentMap only for that since it's the duplicate HostConnectionPool creation we
     // want to avoid
-    private boolean replacePool(Host host, HostDistance distance, HostConnectionPool condition) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+    private boolean replacePool(Host host, HostDistance distance, HostConnectionPool condition, Connection preExistentConnection) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         if (isClosing)
             return true;
 
@@ -266,7 +266,7 @@ class SessionManager extends AbstractSession {
             if (previous != condition)
                 return false;
 
-            HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
+            HostConnectionPool newPool = new HostConnectionPool(host, distance, this, preExistentConnection);
             pools.put(host, newPool);
 
             // If we raced with a session shutdown, ensure that the pool will be closed.
@@ -280,7 +280,7 @@ class SessionManager extends AbstractSession {
     }
 
     // Returns whether there was problem creating the pool
-    ListenableFuture<Boolean> maybeAddPool(final Host host, ListeningExecutorService executor) {
+    ListenableFuture<Boolean> maybeAddPool(final Host host, final Connection preExistentConnection, ListeningExecutorService executor) {
         final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
             return Futures.immediateFuture(true);
@@ -298,7 +298,7 @@ class SessionManager extends AbstractSession {
                         if (previous != null && !previous.isClosed())
                             return true;
 
-                        if (replacePool(host, distance, previous)) {
+                        if (replacePool(host, distance, previous, preExistentConnection)) {
                             logger.debug("Added connection pool for {}", host);
                             return true;
                         }
@@ -346,7 +346,7 @@ class SessionManager extends AbstractSession {
 
                 if (pool == null) {
                     if (dist != HostDistance.IGNORED && h.isUp())
-                        poolCreationFutures.add(maybeAddPool(h, executor));
+                        poolCreationFutures.add(maybeAddPool(h, null, executor));
                 } else if (dist != pool.hostDistance) {
                     if (dist == HostDistance.IGNORED) {
                         toRemove.add(h);
@@ -379,7 +379,7 @@ class SessionManager extends AbstractSession {
         try {
             if (pool == null) {
                 if (dist != HostDistance.IGNORED && h.isUp())
-                    maybeAddPool(h, executor).get();
+                    maybeAddPool(h, null, executor).get();
             } else if (dist != pool.hostDistance) {
                 if (dist == HostDistance.IGNORED) {
                     removePool(h).get();

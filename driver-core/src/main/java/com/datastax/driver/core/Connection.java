@@ -75,7 +75,7 @@ class Connection {
     private final Object terminationLock = new Object();
 
 
-    private volatile HostConnectionPool pool;
+    private final AtomicReference<HostConnectionPool> poolRef = new AtomicReference<HostConnectionPool>();
 
     /** The instant when the connection should be trashed after being idle for too long */
     private volatile long trashTime = Long.MAX_VALUE;
@@ -131,7 +131,7 @@ class Connection {
      */
     Connection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         this(name, address, factory);
-        this.pool = pool;
+        this.poolRef.set(pool);
     }
 
     private static String extractMessage(Throwable t) {
@@ -301,6 +301,7 @@ class Connection {
     }
 
     protected void notifyOwnerWhenDefunct(boolean hostIsDown) {
+        HostConnectionPool pool = this.poolRef.get();
         if (pool == null)
             return;
 
@@ -425,13 +426,12 @@ class Connection {
     }
 
     boolean hasPool() {
-        return this.pool != null;
+        return this.poolRef.get() != null;
     }
 
-    void setPool(HostConnectionPool pool) {
-        if (hasPool())
-            throw new IllegalStateException("cannot move a connection from one pool to another");
-        this.pool = pool;
+    /** @return whether the connection was already associated with a pool */
+    boolean setPool(HostConnectionPool pool) {
+        return poolRef.compareAndSet(null, pool);
     }
 
     /**
@@ -439,10 +439,9 @@ class Connection {
      * The connection should generally not be reused after that.
      */
     void release() {
-        if (pool == null)
-            return;
-
-        pool.returnConnection(this);
+        HostConnectionPool pool = poolRef.get();
+        if (pool != null)
+            pool.returnConnection(this);
     }
 
     long getTrashTime() {
