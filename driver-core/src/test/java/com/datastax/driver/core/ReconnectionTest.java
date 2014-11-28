@@ -13,7 +13,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

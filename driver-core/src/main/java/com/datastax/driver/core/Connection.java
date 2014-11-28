@@ -84,17 +84,20 @@ class Connection {
     final AtomicBoolean markForTrash = new AtomicBoolean();
 
     /**
-     * Create a new connection to a Cassandra node.
+     * Create a new connection to a Cassandra node and associate it with a pool.
      *
      * The connection is open and initialized by the constructor.
+     *
+     * Note that an existing connection can also be associated to a pool later with {@link #setPool(HostConnectionPool)}
      *
      * @throws ConnectionException if the connection attempts fails or is
      * refused by the server.
      */
-    Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+    Connection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         this.address = address;
         this.factory = factory;
         this.name = name;
+        this.poolRef.set(pool);
 
         ClientBootstrap bootstrap = factory.newBootstrap();
         ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
@@ -126,12 +129,9 @@ class Connection {
 
     /**
      * Create a new connection to a Cassandra node, and associate it to a connection pool.
-     *
-     * Note that an existing connection can also be associated to a pool with {@link #setPool(HostConnectionPool)}
      */
-    Connection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
-        this(name, address, factory);
-        this.poolRef.set(pool);
+    Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+        this(name, address, factory, null);
     }
 
     private static String extractMessage(Throwable t) {
