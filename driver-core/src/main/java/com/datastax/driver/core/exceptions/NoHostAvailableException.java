@@ -15,7 +15,8 @@
  */
 package com.datastax.driver.core.exceptions;
 
-import java.net.InetAddress;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,10 +38,12 @@ public class NoHostAvailableException extends DriverException {
 
     private static final long serialVersionUID = 0;
 
+    private static final int MAX_ERRORS_IN_DEFAULT_MESSAGE = 3;
+
     private final Map<InetSocketAddress, Throwable> errors;
 
     public NoHostAvailableException(Map<InetSocketAddress, Throwable> errors) {
-        super(makeMessage(errors));
+        super(makeMessage(errors, MAX_ERRORS_IN_DEFAULT_MESSAGE, false, false));
         this.errors = errors;
     }
 
@@ -60,28 +63,64 @@ public class NoHostAvailableException extends DriverException {
         return new HashMap<InetSocketAddress, Throwable>(errors);
     }
 
+    /**
+     * Builds a custom message for this exception.
+     *
+     * @param maxErrors the maximum number of errors displayed (useful to limit the size of the message for big clusters). Beyond this limit,
+     *                  host names are still displayed, but not the associated errors. Set to {@code Integer.MAX_VALUE} to display all hosts.
+     * @param formatted whether to format the output (line break between each host).
+     * @param includeStackTraces whether to include the full stacktrace of each host error. Note that this automatically implies
+     *                           {@code formatted}.
+     * @return the message.
+     */
+    public String getCustomMessage(int maxErrors, boolean formatted, boolean includeStackTraces) {
+        if (includeStackTraces)
+            formatted = true;
+        return makeMessage(errors, maxErrors, formatted, includeStackTraces);
+    }
+
     @Override
     public DriverException copy() {
         return new NoHostAvailableException(getMessage(), this, errors);
     }
 
-    private static String makeMessage(Map<InetSocketAddress, Throwable> errors) {
-        // For small cluster, ship the whole error detail in the error message.
-        // This is helpful when debugging on a localhost/test cluster in particular.
+    private static String makeMessage(Map<InetSocketAddress, Throwable> errors, int maxErrorsInMessage, boolean formatted, boolean includeStackTraces) {
         if (errors.size() == 0)
             return "All host(s) tried for query failed (no host was tried)";
 
-        if (errors.size() <= 3) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("All host(s) tried for query failed (tried: ");
-            int n = 0;
-            for (Map.Entry<InetSocketAddress, Throwable> entry : errors.entrySet())
-            {
-                if (n++ > 0) sb.append(", ");
-                sb.append(entry.getKey()).append(" (").append(entry.getValue()).append(')');
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter out = new PrintWriter(stringWriter);
+
+        out.print("All host(s) tried for query failed (tried:");
+        out.print(formatted ? "\n" : " ");
+
+        int n = 0;
+        boolean truncated = false;
+        for (Map.Entry<InetSocketAddress, Throwable> entry : errors.entrySet())
+        {
+            if (n > 0) out.print(formatted ? "\n" : ", ");
+            out.print(entry.getKey());
+            if (n < maxErrorsInMessage) {
+                if (includeStackTraces) {
+                    out.print("\n");
+                    entry.getValue().printStackTrace(out);
+                    out.print("\n");
+                } else {
+                    out.printf(" (%s)", entry.getValue());
+                }
+            } else {
+                truncated = true;
             }
-            return sb.append(')').toString();
+            n += 1;
         }
-        return String.format("All host(s) tried for query failed (tried: %s - use getErrors() for details)", errors.keySet());
+        if (truncated) {
+            out.print(formatted ? "\n" : " ");
+            out.printf("[only showing errors of first %d hosts, use getErrors() for more details]", maxErrorsInMessage);
+        }
+        if (formatted && !includeStackTraces)
+            out.print("\n");
+        out.print(")");
+        out.close();
+        return stringWriter.toString();
     }
 }

@@ -9,6 +9,7 @@ CHANGELOG
 - [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
 - [bug] Don't check rpc_address for control host (JAVA-546)
 - [improvement] Optimize connection use after reconnection (JAVA-505)
+- [improvement] Improve message of NoHostAvailableException (JAVA-409)
 
 
 2.0.8:
