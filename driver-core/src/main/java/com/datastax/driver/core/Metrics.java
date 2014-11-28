@@ -101,7 +101,7 @@ public class Metrics {
      *
      *     cluster.getMetrics().getRegistry().addListener(new com.codahale.metrics.MetricRegistryListener() {
      *         &#64;Override
-     *         public void onGaugeAdded(String name, Gauge<?> gauge) {
+     *         public void onGaugeAdded(String name, Gauge&lt;?&gt; gauge) {
      *             if (myRegistry.getNames().contains(name)) {
      *                 // name is already taken, maybe prefix with a namespace
      *                 ...

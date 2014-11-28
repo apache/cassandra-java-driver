@@ -69,6 +69,8 @@ public class Cluster implements Closeable {
     private static final int NON_BLOCKING_EXECUTOR_SIZE = SystemProperties.getInt("com.datastax.driver.NON_BLOCKING_EXECUTOR_SIZE",
                                                                                   Runtime.getRuntime().availableProcessors());
 
+    private static final ResourceBundle driverProperties = ResourceBundle.getBundle("com.datastax.driver.core.Driver");
+
     // Some per-JVM number that allows to generate unique cluster names when
     // multiple Cluster instance are created in the same JVM.
     private static final AtomicInteger CLUSTER_ID = new AtomicInteger(0);
@@ -185,6 +187,18 @@ public class Cluster implements Closeable {
      */
     public static Cluster.Builder builder() {
         return new Cluster.Builder();
+    }
+
+    /**
+     * Returns the current version of the driver.
+     * <p>
+     * This is intended for products that wrap or extend the driver, as a way to check
+     * compatibility if end-users override the driver version in their application.
+     *
+     * @return the version.
+     */
+    public static String getDriverVersion() {
+        return driverProperties.getString("driver.version");
     }
 
     /**
@@ -1226,18 +1240,46 @@ public class Cluster implements Closeable {
                     }
                 }
 
+                // The control connection can mark hosts down if it failed to connect to them, separate them
+                Set<Host> downContactPointHosts = Sets.newHashSet();
+                for (Host host : contactPointHosts)
+                    if (host.state == Host.State.DOWN)
+                        downContactPointHosts.add(host);
+                contactPointHosts.removeAll(downContactPointHosts);
+
                 // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
                 // rack...) to initialize the load balancing policy
                 loadBalancingPolicy().init(Cluster.this, contactPointHosts);
-                // Add the remaining hosts that were discovered by the control connection:
+                for (Host host : downContactPointHosts) {
+                    loadBalancingPolicy().onDown(host);
+                    for (Host.StateListener listener : listeners)
+                        listener.onDown(host);
+                }
+
                 for (Host host : metadata.allHosts()) {
+                    // If the host is down at this stage, it's a contact point that the control connection failed to reach.
+                    // Reconnection attempts are already scheduled, and the LBP and listeners have been notified above.
+                    if (host.state == Host.State.DOWN) continue;
+
+                    // Otherwise, we want to do the equivalent of onAdd(). But since we know for sure that no sessions or prepared
+                    // statements exist at this point, we can skip some of the steps (plus this avoids scheduling concurrent pool
+                    // creations if a session is created right after this method returns).
+                    logger.info("New Cassandra host {} added", host);
+
+                    if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
+                        logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
+                        return;
+                    }
+                    
                     if (!contactPointHosts.contains(host))
                         loadBalancingPolicy().onAdd(host);
+
+                    host.setUp();
+
+                    for (Host.StateListener listener : listeners)
+                        listener.onAdd(host);
                 }
                 isFullyInit = true;
-
-                for (Host host : metadata.allHosts())
-                    triggerOnAdd(host);
             } catch (NoHostAvailableException e) {
                 close();
                 throw e;
@@ -1299,9 +1341,9 @@ public class Cluster implements Closeable {
 
             // If we're shutting down, there is no point in waiting on scheduled reconnections, nor on notifications
             // delivery or blocking tasks so we use shutdownNow
-            reconnectionExecutor.shutdownNow();
-            scheduledTasksExecutor.shutdownNow();
-            blockingExecutor.shutdownNow();
+            shutdownNow(reconnectionExecutor);
+            shutdownNow(scheduledTasksExecutor);
+            shutdownNow(blockingExecutor);
 
             // but for the worker executor, we want to let submitted tasks finish unless the shutdown is forced.
             executor.shutdown();
@@ -1327,6 +1369,15 @@ public class Cluster implements Closeable {
             return closeFuture.compareAndSet(null, future)
                  ? future
                  : closeFuture.get(); // We raced, it's ok, return the future that was actually set
+        }
+
+        private void shutdownNow(ExecutorService executor) {
+            List<Runnable> pendingTasks = executor.shutdownNow();
+            // If some tasks were submitted to this executor but not yet commenced, make sure the corresponding futures complete
+            for (Runnable pendingTask : pendingTasks) {
+                if (pendingTask instanceof FutureTask<?>)
+                    ((FutureTask<?>)pendingTask).cancel(false);
+            }
         }
 
         void logUnsupportedVersionProtocol(Host host, ProtocolVersion version) {
@@ -1562,6 +1613,10 @@ public class Cluster implements Closeable {
 
             // Note: we basically waste the first successful reconnection, but it's probably not a big deal
             logger.debug("{} is down, scheduling connection retries", host);
+            startPeriodicReconnectionAttempt(host, isHostAddition);
+        }
+
+        void startPeriodicReconnectionAttempt(final Host host, final boolean isHostAddition) {
             new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
 
                 protected Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
@@ -1611,7 +1666,7 @@ public class Cluster implements Closeable {
             }.start();
         }
 
-        public void tryReconnectOnce(final Host host) {
+        void startSingleReconnectionAttempt(final Host host) {
             if (isClosed() || host.isUp())
                 return;
 
@@ -2101,7 +2156,7 @@ public class Cluster implements Closeable {
             @Override
             public CloseFuture force() {
                 // The only ExecutorService we haven't forced yet is executor
-                executor.shutdownNow();
+                shutdownNow(executor);
                 return super.force();
             }
 

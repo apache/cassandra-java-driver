@@ -698,4 +698,24 @@ public class QueryBuilderTest {
         select = select().all().from("foo").where(eq("k", 4)).and(lte(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
         assertEquals(select.toString(), query);
     }
+
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)
+    public void should_fail_if_in_clause_has_too_many_values() {
+        List<Object> values = Collections.<Object>nCopies(65536, "a");
+        select().all().from("foo").where(in("bar", values.toArray()));
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)
+    public void should_fail_if_built_statement_has_too_many_values() {
+        List<Object> values = Collections.<Object>nCopies(65535, "a");
+
+        // If the excessive count results from successive DSL calls, we don't check it on the fly so this statement works:
+        BuiltStatement statement = select().all().from("foo")
+            .where(eq("bar", "a"))
+            .and(in("baz", values.toArray()));
+
+        // But we still want to check it client-side, to fail fast instead of sending a bad query to Cassandra.
+        // getValues() is called on any RegularStatement before we send it (see SessionManager.makeRequestMessage).
+        statement.getValues(ProtocolVersion.V3);
+    }
 }

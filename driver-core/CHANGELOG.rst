@@ -11,11 +11,6 @@ CHANGELOG
 
 Merged from 2.0 branch:
 
-- [bug] Handle null pool in PooledConnection.release (JAVA-449)
-- [improvement] Defunct connection on request timeout (JAVA-425)
-- [improvement] Try next host when we get a SERVER_ERROR (JAVA-426)
-- [bug] Handle race between query timeout and completion (JAVA-449, JAVA-460, JAVA-471)
-- [bug] Fix DCAwareRoundRobinPolicy datacenter auto-discovery (JAVA-496)
 - [bug] Ensure control connection does not trigger concurrent reconnects (JAVA-497)
 - [improvement] Keep trying to reconnect on authentication errors (JAVA-472)
 - [improvement] Expose close method on load balancing policy (JAVA-463)
@@ -34,6 +29,11 @@ Merged from 2.0 branch:
 - [bug] Fix check for local contact points in DCAware policy's init (JAVA-511)
 - [improvement] Make timeout on saturated pool customizable (JAVA-457)
 - [improvement] Downgrade Guava to 14.0.1 (JAVA-521)
+- [bug] Fix token awareness for case-sensitive keyspaces and tables (JAVA-526)
+- [bug] Check maximum number of values passed to SimpleStatement (JAVA-515)
+- [improvement] Expose the driver version through the API (JAVA-532)
+- [improvement] Optimize session initialization when some hosts are not
+  responsive (JAVA-522)
 
 
 2.1.2:
@@ -123,6 +123,16 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
 
 
+2.0.8:
+------
+
+- [bug] Fix token awareness for case-sensitive keyspaces and tables (JAVA-526)
+- [bug] Check maximum number of values passed to SimpleStatement (JAVA-515)
+- [improvement] Expose the driver version through the API (JAVA-532)
+- [improvement] Optimize session initialization when some hosts are not
+  responsive (JAVA-522)
+
+
 2.0.7:
 ------
 
@@ -164,7 +174,6 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [improvement] Log more connection details at trace and debug levels (JAVA-436)
 - [bug] Fix cluster shutdown (JAVA-445)
 - [improvement] Expose child policy in chainable load balancing policies (JAVA-439)
-
 
 
 2.0.5:

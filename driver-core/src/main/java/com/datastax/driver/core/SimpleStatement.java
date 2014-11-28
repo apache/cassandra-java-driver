@@ -83,6 +83,8 @@ public class SimpleStatement extends RegularStatement {
      * by {@link DataType#asJavaClass}.
      */
     public SimpleStatement(String query, Object... values) {
+        if (values.length > 65535)
+            throw new IllegalArgumentException("Too many values, the maximum allowed is 65535");
         this.query = query;
         this.values = values;
     }

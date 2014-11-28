@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collection;
 
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -41,7 +42,8 @@ public class LoadBalancingPolicyBootstrapTest {
 
     @Test(groups = "short")
     public void notificationsTest() throws Exception {
-        assertEquals(policy.adds, 2, "adds\n" + policy.history);
+        assertEquals(policy.inits, 2, "inits\n" + policy.history);
+        assertEquals(policy.adds, 0, "adds\n" + policy.history);
         assertEquals(policy.suspecteds, 0, "suspecteds\n" + policy.history);
         assertEquals(policy.removes, 0, "removes\n" + policy.history);
         assertEquals(policy.ups, 0, "ups\n" + policy.history);
@@ -55,6 +57,7 @@ public class LoadBalancingPolicyBootstrapTest {
 
     static class CountingPolicy extends DelegatingLoadBalancingPolicy {
 
+        int inits;
         int adds;
         int suspecteds;
         int removes;
@@ -66,6 +69,12 @@ public class LoadBalancingPolicyBootstrapTest {
 
         public CountingPolicy(LoadBalancingPolicy delegate) {
             super(delegate);
+        }
+
+        @Override
+        public void init(Cluster cluster, Collection<Host> hosts) {
+            super.init(cluster, hosts);
+            inits += hosts.size();
         }
 
         public void onAdd(Host host) {

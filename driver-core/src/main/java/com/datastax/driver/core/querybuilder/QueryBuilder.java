@@ -29,7 +29,7 @@ import com.datastax.driver.core.TableMetadata;
  * It is thus advised to do so if a {@link com.datastax.driver.core.policies.TokenAwarePolicy}
  * is in use.
  * <p>
- * The provider builders perform very little validation of the built query.
+ * The provided builders perform very little validation of the built query.
  * There is thus no guarantee that a built query is valid, and it is
  * definitively possible to create invalid queries.
  * <p>
@@ -286,6 +286,18 @@ public final class QueryBuilder {
     public static Clause in(String name, Object... values) {
         return new Clause.InClause(name, Arrays.asList(values));
     }
+	
+    /**
+     * Create an "in" where clause stating the provided column must be equal
+     * to one of the provided values.
+     *
+     * @param name the column name
+     * @param values the values
+     * @return the corresponding where clause.
+     */
+	public static Clause in(String name, List<Object> values) {
+		return new Clause.InClause(name, values);
+	}
 
     /**
      * Creates a "lesser than" where clause stating the provided column must be less than
@@ -445,7 +457,7 @@ public final class QueryBuilder {
      * @param timestamp the timestamp (in microseconds) to use.
      * @return the corresponding option
      *
-     * @throws IllegalArgumentException if {@code timestamp &gt; 0}.
+     * @throws IllegalArgumentException if {@code timestamp &lt; 0}.
      */
     public static Using timestamp(long timestamp) {
         if (timestamp < 0)
@@ -470,7 +482,7 @@ public final class QueryBuilder {
      * @param ttl the ttl (in seconds) to use.
      * @return the corresponding option
      *
-     * @throws IllegalArgumentException if {@code ttl &gt; 0}.
+     * @throws IllegalArgumentException if {@code ttl &lt; 0}.
      */
     public static Using ttl(int ttl) {
         if (ttl < 0)

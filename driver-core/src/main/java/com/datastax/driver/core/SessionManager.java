@@ -64,10 +64,43 @@ class SessionManager extends AbstractSession {
         // If we haven't initialized the cluster, do it now
         cluster.init();
 
-        // Create pool to initial nodes (and wait for them to be created)
+        // Create pools to initial nodes (and wait for them to be created)
+        Collection<Host> hosts = cluster.getMetadata().allHosts();
+        if (cluster.manager.sessions.size() == 1) {
+            // We only do it in parallel if this is the first session (meaning that the cluster just initialized).
+            createPoolsInParallel(hosts);
+        } else {
+            // Otherwise, we don't want to fill executor() because this is also where up/down notifications are processed,
+            // it's important that existing sessions get them in a timely manner. So we create the pools one by one:
+            createPoolsSequentially(hosts);
+        }
+
+        isInit = true;
+        updateCreatedPools(executor());
+        return this;
+    }
+
+    private void createPoolsInParallel(Collection<Host> hosts) {
+        List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(hosts.size());
+        for (Host host : hosts)
+            if (host.state != Host.State.DOWN)
+                futures.add(maybeAddPool(host, executor()));
+        ListenableFuture<List<Boolean>> f = Futures.allAsList(futures);
+        try {
+            f.get();
+        } catch (ExecutionException e) {
+            // This is not supposed to happen
+            throw new DriverInternalError(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void createPoolsSequentially(Collection<Host> hosts) {
         for (Host host : cluster.getMetadata().allHosts()) {
             try {
-                maybeAddPool(host, executor()).get();
+                if (host.state != Host.State.DOWN)
+                    maybeAddPool(host, executor()).get();
             } catch (ExecutionException e) {
                 // This is not supposed to happen
                 throw new DriverInternalError(e);
@@ -75,8 +108,6 @@ class SessionManager extends AbstractSession {
                 Thread.currentThread().interrupt();
             }
         }
-        isInit = true;
-        return this;
     }
 
     public String getLoggedKeyspace() {
@@ -299,6 +330,12 @@ class SessionManager extends AbstractSession {
      * have one, and hosts that shouldn't don't.
      */
     void updateCreatedPools(ListeningExecutorService executor) {
+        // This method does nothing during initialization. Some hosts may be non-responsive but not yet marked DOWN; if
+        // we execute the code below we would try to create their pool over and over again.
+        // It's called explicitly at the end of init(), once isInit has been set to true.
+        if (!isInit)
+            return;
+
         try {
             // We do 2 iterations, so that we add missing pools first, and them remove all unecessary pool second.
             // That way, we'll avoid situation where we'll temporarily lose connectivity
@@ -388,13 +425,17 @@ class SessionManager extends AbstractSession {
     }
 
     Message.Request makeRequestMessage(Statement statement, ByteBuffer pagingState) {
+        // We need the protocol version, which is only available once the cluster has initialized. Initialize the session to ensure this is the case.
+        // init() locks, so avoid if we know we don't need it.
+        if (!isInit)
+            init();
+        ProtocolVersion version = cluster.manager.protocolVersion();
 
         ConsistencyLevel consistency = statement.getConsistencyLevel();
         if (consistency == null)
             consistency = configuration().getQueryOptions().getConsistencyLevel();
 
         ConsistencyLevel serialConsistency = statement.getSerialConsistencyLevel();
-        ProtocolVersion version = cluster.manager.protocolVersion();
         if (version.compareTo(ProtocolVersion.V3) < 0 && statement instanceof BatchStatement) {
             if (serialConsistency != null)
                 throw new UnsupportedFeatureException(version, "Serial consistency on batch statements is not supported");
