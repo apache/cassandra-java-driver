@@ -185,6 +185,9 @@ public class BoundStatement extends Statement {
                     }
                     break;
                 default:
+                    if (toSet instanceof Token)
+                        toSet = ((Token)toSet).getValue();
+
                     Class<?> providedClass = toSet.getClass();
                     Class<?> expectedClass = columnType.getName().javaType;
                     if (!expectedClass.isAssignableFrom(providedClass))
@@ -815,6 +818,42 @@ public class BoundStatement extends Statement {
             metadata().checkType(indexes[i], DataType.Name.INET);
             setValue(indexes[i], value);
         }
+        return this;
+    }
+
+    /**
+     * Sets the {@code i}th value to the provided {@link Token}.
+     *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
+     * @return this BoundStatement.
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
+     * @throws InvalidTypeException if column {@code i} is not of the type of the token's value.
+     */
+    public BoundStatement setToken(int i, Token v) {
+        metadata().checkType(i, v.getType().getName());
+        return setValue(i, v.getType().serialize(v.getValue()));
+    }
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided token.
+     *
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, all of them are set.
+     * @param v the value to set.
+     * @return this BoundStatement.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a prepared
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not of the type of the token's value.
+     */
+    public BoundStatement setToken(String name, Token v) {
+        int[] indexes = metadata().getAllIdx(name);
+        for (int i = 0; i < indexes.length; i++)
+            setToken(indexes[i], v);
         return this;
     }
 

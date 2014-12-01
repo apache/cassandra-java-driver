@@ -20,6 +20,7 @@ import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
+import com.google.common.base.Joiner;
 import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,11 +90,11 @@ public class CCMBridge {
         return bridge;
     }
 
-    public static CCMBridge create(String name, int nbNodes) {
+    public static CCMBridge create(String name, int nbNodes, String... options) {
         checkArgument(!"current".equals(name.toLowerCase()),
                         "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
-        bridge.execute("ccm create %s -n %d -s -i %s -b %s", name, nbNodes, IP_PREFIX, CASSANDRA_VERSION);
+        bridge.execute("ccm create %s -n %d -s -i %s -b %s " + Joiner.on(" ").join(options), name, nbNodes, IP_PREFIX, CASSANDRA_VERSION);
         return bridge;
     }
 

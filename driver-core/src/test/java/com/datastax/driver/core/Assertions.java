@@ -11,4 +11,8 @@ public class Assertions extends org.assertj.core.api.Assertions{
     public static SessionAssert assertThat(Session session) {
         return new SessionAssert(session);
     }
+
+    public static TokenRangeAssert assertThat(TokenRange range) {
+        return new TokenRangeAssert(range);
+    }
 }
