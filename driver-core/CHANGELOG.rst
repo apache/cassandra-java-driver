@@ -8,6 +8,7 @@ CHANGELOG
 - [improvement] Target schema refreshes more precisely (JAVA-543)
 - [bug] Don't check rpc_address for control host (JAVA-546)
 - [improvement] Improve message of NoHostAvailableException (JAVA-409)
+- [bug] Rework connection reaper to avoid deadlock (JAVA-556)
 
 
 2.0.8:

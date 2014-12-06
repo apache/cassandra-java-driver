@@ -20,6 +20,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -2182,45 +2183,46 @@ public class Cluster implements Closeable {
      * This is normally done when the connection errors out, or when the last request is processed; this class acts as
      * a last-effort protection since unterminated connections can lead to deadlocks. If it terminates a connection,
      * this indicates a bug; warnings are logged so that this can be reported.
+     *
+     * @see Connection#tryTerminate(boolean)
      */
     static class ConnectionReaper {
         private static final int INTERVAL_MS = 15000;
 
         private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, threadFactory("Reaper-%d"));
-        private final Set<Connection> connections = Sets.newSetFromMap(new ConcurrentHashMap<Connection, Boolean>());
+        private final Map<Connection, Long> connections = new ConcurrentHashMap<Connection, Long>();
 
         private volatile boolean shutdown;
 
         private final Runnable reaperTask = new Runnable() {
             @Override
             public void run() {
-                reapConnections();
-                if (!executor.isShutdown())
-                    executor.schedule(this, INTERVAL_MS, TimeUnit.MILLISECONDS);
-            }
-
-            private final void reapConnections() {
-                Iterator<Connection> iterator = connections.iterator();
+                long now = System.currentTimeMillis();
+                Iterator<Entry<Connection, Long>> iterator = connections.entrySet().iterator();
                 while (iterator.hasNext()) {
-                    Connection connection = iterator.next();
-                    boolean terminated = connection.terminate(false, true);
-                    if (terminated)
-                        iterator.remove();
+                    Entry<Connection, Long> entry = iterator.next();
+                    Connection connection = entry.getKey();
+                    Long terminateTime = entry.getValue();
+                    if (terminateTime <= now) {
+                        boolean terminated = connection.tryTerminate(true);
+                        if (terminated)
+                            iterator.remove();
+                    }
                 }
             }
         };
 
         ConnectionReaper() {
-            executor.schedule(reaperTask, INTERVAL_MS, TimeUnit.MILLISECONDS);
+            executor.scheduleWithFixedDelay(reaperTask, INTERVAL_MS, INTERVAL_MS, TimeUnit.MILLISECONDS);
         }
 
-        void register(Connection connection) {
+        void register(Connection connection, long terminateTime) {
             if (shutdown) {
                 // This should not happen since the reaper is shut down after all sessions.
                 logger.warn("Connection registered after reaper shutdown: {}", connection);
-                connection.terminate(true, true);
+                connection.tryTerminate(true);
             } else {
-                connections.add(connection);
+                connections.put(connection, terminateTime);
             }
         }
 
