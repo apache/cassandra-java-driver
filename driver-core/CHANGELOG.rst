@@ -9,6 +9,8 @@ CHANGELOG
 - [bug] Don't check rpc_address for control host (JAVA-546)
 - [improvement] Improve message of NoHostAvailableException (JAVA-409)
 - [bug] Rework connection reaper to avoid deadlock (JAVA-556)
+- [bug] Avoid deadlock when multiple connections to the same host get write
+  errors (JAVA-557)
 
 
 2.0.8:

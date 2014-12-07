@@ -380,13 +380,24 @@ class Connection {
                     // twice (we will fail that method already)
                     dispatcher.removeHandler(handler.streamId, true);
 
-                    ConnectionException ce;
+                    final ConnectionException ce;
                     if (writeFuture.getCause() instanceof java.nio.channels.ClosedChannelException) {
                         ce = new TransportException(address, "Error writing: Closed channel");
                     } else {
                         ce = new TransportException(address, "Error writing", writeFuture.getCause());
                     }
-                    handler.callback.onException(Connection.this, defunct(ce), System.nanoTime() - handler.startTime, handler.retryCount);
+                    final long latency = System.nanoTime() - handler.startTime;
+                    // This handler is executed while holding the writeLock of the channel.
+                    // defunct might close the pool, which will close all of its connections; closing a connection also
+                    // requires its writeLock.
+                    // Therefore if multiple connections in the same pool get a write error, they could deadlock;
+                    // we run defunct on a separate thread to avoid that.
+                    factory.manager.executor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            handler.callback.onException(Connection.this, defunct(ce), latency, handler.retryCount);
+                        }
+                    });
                 } else {
                     logger.trace("{} request sent successfully", Connection.this);
                 }
