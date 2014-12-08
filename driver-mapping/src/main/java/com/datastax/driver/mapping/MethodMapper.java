@@ -95,7 +95,7 @@ class MethodMapper {
     }
 
     @SuppressWarnings("rawtypes")
-	private void mapType(MappingManager manager, Class<?> fullReturnType, Type type) {
+    private void mapType(MappingManager manager, Class<?> fullReturnType, Type type) {
 
         if (type instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType)type;
@@ -167,9 +167,14 @@ class MethodMapper {
         }
 
         void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
-            if (arg != null) {
-                if (paramName == null)
+            if (paramName == null) {
+                if (arg == null)
+                    boundStatement.setToNull(paramIdx);
+                else
                     boundStatement.setBytesUnsafe(paramIdx, DataType.serializeValue(arg, protocolVersion));
+            } else {
+                if (arg == null)
+                    boundStatement.setToNull(paramName);
                 else
                     boundStatement.setBytesUnsafe(paramName, DataType.serializeValue(arg, protocolVersion));
             }
