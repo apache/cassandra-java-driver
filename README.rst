@@ -1,6 +1,10 @@
 DataStax Java Driver for Apache Cassandra
 =========================================
 
+.. image:: https://travis-ci.org/datastax/java-driver.svg?branch=2.0
+   :target: https://travis-ci.org/datastax/java-driver
+   :alt: Travis Build
+
 A Java client driver for Apache Cassandra. This driver works exclusively with
 the Cassandra Query Language version 3 (CQL3) and Cassandra's binary protocol.
 
