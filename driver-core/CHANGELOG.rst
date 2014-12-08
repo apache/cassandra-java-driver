@@ -4,6 +4,8 @@ CHANGELOG
 2.1.5:
 ------
 
+- Authorize Null parameter in Accessor method (JAVA-575) 
+
 Merged from 2.0 branch:
 
 - [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
