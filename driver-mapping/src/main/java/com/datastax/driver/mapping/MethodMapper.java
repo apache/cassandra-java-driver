@@ -24,7 +24,6 @@ import java.util.Set;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-
 import com.datastax.driver.core.*;
 
 // TODO: we probably should make that an abstract class and move some bit in a "ReflexionMethodMapper"
@@ -167,12 +166,11 @@ class MethodMapper {
         }
 
         void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
-            if (arg != null) {
-                if (paramName == null)
-                    boundStatement.setBytesUnsafe(paramIdx, DataType.serializeValue(arg, protocolVersion));
-                else
-                    boundStatement.setBytesUnsafe(paramName, DataType.serializeValue(arg, protocolVersion));
-            }
+				if (paramName == null) {
+               if (arg == null) boundStatement.setToNull(paramIdx); else boundStatement.setBytesUnsafe(paramIdx, DataType.serializeValue(arg, protocolVersion));
+           } else {
+          	 if (arg == null) boundStatement.setToNull(paramName); else boundStatement.setBytesUnsafe(paramName, DataType.serializeValue(arg, protocolVersion));
+           }
         }
     }
 
