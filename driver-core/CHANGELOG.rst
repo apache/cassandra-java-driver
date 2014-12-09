@@ -6,9 +6,7 @@ CHANGELOG
 
 - [improvement] Shade Netty dependency (JAVA-538)
 - [improvement] Target schema refreshes more precisely (JAVA-543)
-- [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
 - [bug] Don't check rpc_address for control host (JAVA-546)
-- [improvement] Optimize connection use after reconnection (JAVA-505)
 - [improvement] Improve message of NoHostAvailableException (JAVA-409)
 
 

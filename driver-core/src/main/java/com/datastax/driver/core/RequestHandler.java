@@ -117,7 +117,7 @@ class RequestHandler implements Connection.ResponseCallback {
         if (currentPool == null || currentPool.isClosed())
             return false;
 
-        Connection connection = null;
+        PooledConnection connection = null;
         try {
             connection = currentPool.borrowConnection(manager.configuration().getPoolingOptions().getPoolTimeoutMillis(), TimeUnit.MILLISECONDS);
             if (current != null) {
@@ -263,7 +263,8 @@ class RequestHandler implements Connection.ResponseCallback {
 
         Host queriedHost = current;
         try {
-            connection.release();
+            if (connection instanceof PooledConnection)
+                ((PooledConnection)connection).release();
 
             switch (response.type) {
                 case RESULT:
@@ -521,7 +522,8 @@ class RequestHandler implements Connection.ResponseCallback {
 
         Host queriedHost = current;
         try {
-            connection.release();
+            if (connection instanceof PooledConnection)
+                ((PooledConnection)connection).release();
 
             if (exception instanceof ConnectionException) {
                 if (metricsEnabled())

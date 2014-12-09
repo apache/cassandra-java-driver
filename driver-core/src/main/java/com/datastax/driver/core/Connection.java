@@ -19,7 +19,6 @@ import javax.net.ssl.SSLEngine;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -74,30 +73,18 @@ class Connection {
 
     private final Object terminationLock = new Object();
 
-
-    private final AtomicReference<HostConnectionPool> poolRef = new AtomicReference<HostConnectionPool>();
-
-    /** The instant when the connection should be trashed after being idle for too long */
-    private volatile long trashTime = Long.MAX_VALUE;
-
-    /** Used in {@link HostConnectionPool} to handle races between two threads trying to trash the same connection */
-    final AtomicBoolean markForTrash = new AtomicBoolean();
-
     /**
-     * Create a new connection to a Cassandra node and associate it with a pool.
+     * Create a new connection to a Cassandra node.
      *
      * The connection is open and initialized by the constructor.
-     *
-     * Note that an existing connection can also be associated to a pool later with {@link #setPool(HostConnectionPool)}
      *
      * @throws ConnectionException if the connection attempts fails or is
      * refused by the server.
      */
-    Connection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+    protected Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         this.address = address;
         this.factory = factory;
         this.name = name;
-        this.poolRef.set(pool);
 
         ClientBootstrap bootstrap = factory.newBootstrap();
         ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
@@ -125,13 +112,6 @@ class Connection {
         initializeTransport(protocolVersion, factory.manager.metadata.clusterName);
         logger.debug("{} Transport initialized and ready", this);
         isInitialized = true;
-    }
-
-    /**
-     * Create a new connection to a Cassandra node, and associate it to a connection pool.
-     */
-    Connection(String name, InetSocketAddress address, Factory factory) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
-        this(name, address, factory, null);
     }
 
     private static String extractMessage(Throwable t) {
@@ -285,7 +265,7 @@ class Connection {
             // We don't want to signal, because that would invoke triggerOnDown unnecessarily (the host's bad
             // condition is already taken care of by the reattempt in progress)
             boolean isReconnectionAttempt = (host.state == Host.State.DOWN || host.state == Host.State.SUSPECT)
-                                            && (!this.hasPool());
+                                            && !(this instanceof PooledConnection);
             if (!isReconnectionAttempt) {
                 boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded(), isInitialized);
                 notifyOwnerWhenDefunct(isDown);
@@ -301,15 +281,6 @@ class Connection {
     }
 
     protected void notifyOwnerWhenDefunct(boolean hostIsDown) {
-        HostConnectionPool pool = this.poolRef.get();
-        if (pool == null)
-            return;
-
-        if (hostIsDown) {
-            pool.closeAsync().force();
-        } else {
-            pool.replaceDefunctConnection(this);
-        }
     }
 
     public String keyspace() {
@@ -423,37 +394,6 @@ class Connection {
                 }
             }
         };
-    }
-
-    boolean hasPool() {
-        return this.poolRef.get() != null;
-    }
-
-    /** @return whether the connection was already associated with a pool */
-    boolean setPool(HostConnectionPool pool) {
-        return poolRef.compareAndSet(null, pool);
-    }
-
-    /**
-     * If the connection is part of a pool, return it to the pool.
-     * The connection should generally not be reused after that.
-     */
-    void release() {
-        HostConnectionPool pool = poolRef.get();
-        if (pool != null)
-            pool.returnConnection(this);
-    }
-
-    long getTrashTime() {
-        return trashTime;
-    }
-
-    void cancelTrashTime() {
-        trashTime = Long.MAX_VALUE;
-    }
-
-    void setTrashTimeIn(int timeoutSeconds) {
-        trashTime = System.currentTimeMillis() + 1000 * timeoutSeconds;
     }
 
     public boolean isClosed() {
@@ -572,14 +512,14 @@ class Connection {
         /**
          * Same as open, but associate the created connection to the provided connection pool.
          */
-        public Connection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+        public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
             InetSocketAddress address = pool.host.getSocketAddress();
 
             if (isShutdown)
                 throw new ConnectionException(address, "Connection factory is shut down");
 
             String name = address.toString() + '-' + getIdGenerator(pool.host).getAndIncrement();
-            return new Connection(name, address, this, pool);
+            return new PooledConnection(name, address, this, pool);
         }
 
         private AtomicInteger getIdGenerator(Host host) {
@@ -894,7 +834,8 @@ class Connection {
             // were, a new request could reuse that ID but get the answer to the request we just gave up on instead
             // of its own answer, and we would have no way to detect that.
             connection.dispatcher.removeHandler(streamId, false);
-            connection.release();
+            if (connection instanceof PooledConnection)
+                ((PooledConnection)connection).release();
         }
 
         private TimerTask onTimeoutTask() {
