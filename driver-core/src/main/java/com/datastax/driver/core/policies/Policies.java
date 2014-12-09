@@ -71,6 +71,10 @@ public class Policies {
      * <p>
      * The default load balancing policy is {@link DCAwareRoundRobinPolicy} with token
      * awareness (so {@code new TokenAwarePolicy(new DCAwareRoundRobinPolicy())}).
+     * <p>
+     * Note that this policy shuffles the replicas when token awareness is used, see
+     * {@link TokenAwarePolicy#TokenAwarePolicy(LoadBalancingPolicy,boolean)} for an
+     * explanation of the tradeoffs.
      *
      * @return the default load balancing policy.
      */
