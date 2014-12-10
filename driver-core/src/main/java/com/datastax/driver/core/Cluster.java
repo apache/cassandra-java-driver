@@ -20,17 +20,14 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.MapMaker;
-import com.google.common.collect.SetMultimap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
 
 import org.slf4j.Logger;
@@ -1959,18 +1956,18 @@ public class Cluster implements Closeable {
             }
         }
 
-        public void submitSchemaRefresh(final String keyspace, final String table) {
+        public void submitSchemaRefresh(final String keyspace, final String table, final String udt) {
             logger.trace("Submitting schema refresh");
             executor.submit(new ExceptionCatchingRunnable() {
                 @Override
                 public void runMayThrow() throws InterruptedException, ExecutionException {
-                    controlConnection.refreshSchema(keyspace, table);
+                    controlConnection.refreshSchema(keyspace, table, udt);
                 }
             });
         }
 
         // refresh the schema using the provided connection, and notice the future with the provided resultset once done
-        public void refreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final String keyspace, final String table) {
+        public void refreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final String keyspace, final String table, final String udt) {
             if (logger.isDebugEnabled())
                 logger.debug("Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : '.' + table);
 
@@ -1982,10 +1979,10 @@ public class Cluster implements Closeable {
                         // that querying a table just after having created it don't fail.
                         if (!ControlConnection.waitForSchemaAgreement(connection, Cluster.Manager.this))
                             logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds());
-                        ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this, false);
+                        ControlConnection.refreshSchema(connection, keyspace, table, udt, Cluster.Manager.this, false);
                     } catch (Exception e) {
                         logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
-                        submitSchemaRefresh(keyspace, table);
+                        submitSchemaRefresh(keyspace, table, udt);
                     } finally {
                         // Always sets the result
                         future.setResult(rs);
@@ -2104,22 +2101,54 @@ public class Cluster implements Closeable {
                     ProtocolEvent.SchemaChange scc = (ProtocolEvent.SchemaChange)event;
                     switch (scc.change) {
                         case CREATED:
-                            if (scc.name.isEmpty())
-                                submitSchemaRefresh(null, null);
-                            else
-                                submitSchemaRefresh(scc.keyspace, null);
+                            switch (scc.target) {
+                                case KEYSPACE:
+                                    submitSchemaRefresh(scc.keyspace, null, null);
+                                    break;
+                                case TABLE:
+                                    submitSchemaRefresh(scc.keyspace, scc.name, null);
+                                    break;
+                                case TYPE:
+                                    submitSchemaRefresh(scc.keyspace, null, scc.name);
+                                    break;
+                            }
                             break;
                         case DROPPED:
-                            if (scc.name.isEmpty())
-                                submitSchemaRefresh(null, null);
-                            else
-                                submitSchemaRefresh(scc.keyspace, null);
+                            KeyspaceMetadata keyspace;
+                            switch (scc.target) {
+                                case KEYSPACE:
+                                    manager.metadata.removeKeyspace(scc.keyspace);
+                                    break;
+                                case TABLE:
+                                    keyspace = manager.metadata.getKeyspace(scc.keyspace);
+                                    if (keyspace == null)
+                                        logger.warn("Received a DROPPED notification for table {}.{}, but this keyspace is unknown in our metadata",
+                                            scc.keyspace, scc.name);
+                                    else
+                                        keyspace.removeTable(scc.name);
+                                    break;
+                                case TYPE:
+                                    keyspace = manager.metadata.getKeyspace(scc.keyspace);
+                                    if (keyspace == null)
+                                        logger.warn("Received a DROPPED notification for UDT {}.{}, but this keyspace is unknown in our metadata",
+                                            scc.keyspace, scc.name);
+                                    else
+                                        keyspace.removeUserType(scc.name);
+                                    break;
+                            }
                             break;
                         case UPDATED:
-                            if (scc.name.isEmpty())
-                                submitSchemaRefresh(scc.keyspace, null);
-                            else
-                                submitSchemaRefresh(scc.keyspace, scc.name);
+                            switch (scc.target) {
+                                case KEYSPACE:
+                                    submitSchemaRefresh(scc.keyspace, null, null);
+                                    break;
+                                case TABLE:
+                                    submitSchemaRefresh(scc.keyspace, scc.name, null);
+                                    break;
+                                case TYPE:
+                                    submitSchemaRefresh(scc.keyspace, null, scc.name);
+                                    break;
+                            }
                             break;
                     }
                     break;
@@ -2217,45 +2246,46 @@ public class Cluster implements Closeable {
      * This is normally done when the connection errors out, or when the last request is processed; this class acts as
      * a last-effort protection since unterminated connections can lead to deadlocks. If it terminates a connection,
      * this indicates a bug; warnings are logged so that this can be reported.
+     *
+     * @see Connection#tryTerminate(boolean)
      */
     static class ConnectionReaper {
         private static final int INTERVAL_MS = 15000;
 
         private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, threadFactory("Reaper-%d"));
-        private final Set<Connection> connections = Sets.newSetFromMap(new ConcurrentHashMap<Connection, Boolean>());
+        private final Map<Connection, Long> connections = new ConcurrentHashMap<Connection, Long>();
 
         private volatile boolean shutdown;
 
         private final Runnable reaperTask = new Runnable() {
             @Override
             public void run() {
-                reapConnections();
-                if (!executor.isShutdown())
-                    executor.schedule(this, INTERVAL_MS, TimeUnit.MILLISECONDS);
-            }
-
-            private final void reapConnections() {
-                Iterator<Connection> iterator = connections.iterator();
+                long now = System.currentTimeMillis();
+                Iterator<Entry<Connection, Long>> iterator = connections.entrySet().iterator();
                 while (iterator.hasNext()) {
-                    Connection connection = iterator.next();
-                    boolean terminated = connection.terminate(false, true);
-                    if (terminated)
-                        iterator.remove();
+                    Entry<Connection, Long> entry = iterator.next();
+                    Connection connection = entry.getKey();
+                    Long terminateTime = entry.getValue();
+                    if (terminateTime <= now) {
+                        boolean terminated = connection.tryTerminate(true);
+                        if (terminated)
+                            iterator.remove();
+                    }
                 }
             }
         };
 
         ConnectionReaper() {
-            executor.schedule(reaperTask, INTERVAL_MS, TimeUnit.MILLISECONDS);
+            executor.scheduleWithFixedDelay(reaperTask, INTERVAL_MS, INTERVAL_MS, TimeUnit.MILLISECONDS);
         }
 
-        void register(Connection connection) {
+        void register(Connection connection, long terminateTime) {
             if (shutdown) {
                 // This should not happen since the reaper is shut down after all sessions.
                 logger.warn("Connection registered after reaper shutdown: {}", connection);
-                connection.terminate(true, true);
+                connection.tryTerminate(true);
             } else {
-                connections.add(connection);
+                connections.put(connection, terminateTime);
             }
         }
 

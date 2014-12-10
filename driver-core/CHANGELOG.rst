@@ -1,6 +1,21 @@
 CHANGELOG
 =========
 
+2.1.4:
+------
+
+Merged from 2.0 branch:
+
+- [improvement] Shade Netty dependency (JAVA-538)
+- [improvement] Target schema refreshes more precisely (JAVA-543)
+- [bug] Don't check rpc_address for control host (JAVA-546)
+- [improvement] Improve message of NoHostAvailableException (JAVA-409)
+- [bug] Rework connection reaper to avoid deadlock (JAVA-556)
+- [bug] Avoid deadlock when multiple connections to the same host get write
+  errors (JAVA-557)
+- [improvement] Make shuffle=true the default for TokenAwarePolicy (JAVA-504)
+
+
 2.1.3:
 ------
 

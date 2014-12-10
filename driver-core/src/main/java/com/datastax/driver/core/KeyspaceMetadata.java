@@ -60,10 +60,7 @@ public class KeyspaceMetadata {
         if (udtRows == null)
             return ksm;
 
-        for (Row r : udtRows) {
-            UserType def = UserType.build(r);
-            ksm.userTypes.put(def.getTypeName(), def);
-        }
+        ksm.addUserTypes(udtRows);
 
         return ksm;
     }
@@ -107,6 +104,10 @@ public class KeyspaceMetadata {
         return tables.get(Metadata.handleId(name));
     }
 
+    void removeTable(String table) {
+        tables.remove(table);
+    }
+
     /**
      * Returns the tables defined in this keyspace.
      *
@@ -136,6 +137,17 @@ public class KeyspaceMetadata {
      */
     public Collection<UserType> getUserTypes() {
         return Collections.<UserType>unmodifiableCollection(userTypes.values());
+    }
+
+    void addUserTypes(List<Row> udtRows) {
+        for (Row r : udtRows) {
+            UserType def = UserType.build(r);
+            userTypes.put(def.getTypeName(), def);
+        }
+    }
+
+    void removeUserType(String userType) {
+        userTypes.remove(userType);
     }
 
     /**

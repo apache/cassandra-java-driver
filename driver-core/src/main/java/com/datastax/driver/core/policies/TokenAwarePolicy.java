@@ -55,10 +55,15 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy, Closeable
     /**
      * Creates a new {@code TokenAware} policy.
      *
-     * @param childPolicy the load balancing policy to wrap with token
-     * awareness.
-     * @param shuffleReplicas whether to shuffle the replicas returned
-     * by {@code getRoutingKey}.
+     * @param childPolicy the load balancing policy to wrap with token awareness.
+     * @param shuffleReplicas whether to shuffle the replicas returned by {@code getRoutingKey}.
+     *                        Note that setting this parameter to {@code true} might decrease the
+     *                        effectiveness of caching (especially at consistency level ONE), since
+     *                        the same row will be retrieved from any replica (instead of only the
+     *                        "primary" replica without shuffling).
+     *                        On the other hand, shuffling will better distribute writes, and can
+     *                        alleviate hotspots caused by "fat" partitions.
+     *
      */
     public TokenAwarePolicy(LoadBalancingPolicy childPolicy, boolean shuffleReplicas) {
         this.childPolicy = childPolicy;
@@ -66,7 +71,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy, Closeable
     }
 
     /**
-     * Creates a new {@code TokenAware} policy with no shuffling of replicas.
+     * Creates a new {@code TokenAware} policy with shuffling of replicas.
      *
      * @param childPolicy the load balancing policy to wrap with token
      * awareness.
@@ -74,7 +79,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy, Closeable
      * @see #TokenAwarePolicy(LoadBalancingPolicy, boolean)
      */
     public TokenAwarePolicy(LoadBalancingPolicy childPolicy) {
-        this(childPolicy, false);
+        this(childPolicy, true);
     }
 
     @Override

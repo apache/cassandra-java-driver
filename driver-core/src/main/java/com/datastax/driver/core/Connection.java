@@ -71,8 +71,6 @@ class Connection {
 
     private final AtomicReference<ConnectionCloseFuture> closeFuture = new AtomicReference<ConnectionCloseFuture>();
 
-    private final Object terminationLock = new Object();
-
     /**
      * Create a new connection to a Cassandra node.
      *
@@ -388,13 +386,24 @@ class Connection {
                     // twice (we will fail that method already)
                     dispatcher.removeHandler(handler.streamId, true);
 
-                    ConnectionException ce;
+                    final ConnectionException ce;
                     if (writeFuture.getCause() instanceof java.nio.channels.ClosedChannelException) {
                         ce = new TransportException(address, "Error writing: Closed channel");
                     } else {
                         ce = new TransportException(address, "Error writing", writeFuture.getCause());
                     }
-                    handler.callback.onException(Connection.this, defunct(ce), System.nanoTime() - handler.startTime, handler.retryCount);
+                    final long latency = System.nanoTime() - handler.startTime;
+                    // This handler is executed while holding the writeLock of the channel.
+                    // defunct might close the pool, which will close all of its connections; closing a connection also
+                    // requires its writeLock.
+                    // Therefore if multiple connections in the same pool get a write error, they could deadlock;
+                    // we run defunct on a separate thread to avoid that.
+                    factory.manager.executor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            handler.callback.onException(Connection.this, defunct(ce), latency, handler.retryCount);
+                        }
+                    });
                 } else {
                     logger.trace("{} request sent successfully", Connection.this);
                 }
@@ -415,7 +424,7 @@ class Connection {
      *
      * @return a future that will complete once the connection has terminated.
      *
-     * @see #terminate(boolean, boolean)
+     * @see #tryTerminate(boolean)
      */
     public CloseFuture closeAsync() {
 
@@ -427,16 +436,28 @@ class Connection {
 
         logger.debug("{} closing connection", this);
 
-        boolean terminated = terminate(false, false);
-        if (!terminated)
-            factory.reaper.register(this);
+        boolean terminated = tryTerminate(false);
+        if (!terminated) {
+            // The time by which all pending requests should have normally completed (use twice the read timeout for a generous
+            // estimate -- note that this does not cover the eventuality that read timeout is updated dynamically, but we can live
+            // with that).
+            long terminateTime = System.currentTimeMillis() + 2 * factory.getReadTimeoutMillis();
+            factory.reaper.register(this, terminateTime);
+        }
         return future;
     }
 
     /**
-     * @return whether the connection has actually terminated
+     * Tries to terminate a closed connection, i.e. release system resources.
+     *
+     * This is called both by "normal" code and by {@link Cluster.ConnectionReaper}.
+     *
+     * @param force whether to proceed if there are still outstanding requests.
+     * @return whether the connection has actually terminated.
+     *
+     * @see #closeAsync()
      */
-    boolean terminate(boolean evenIfPending, boolean logWarnings) {
+    boolean tryTerminate(boolean force) {
         assert isClosed();
         ConnectionCloseFuture future = closeFuture.get();
 
@@ -444,18 +465,14 @@ class Connection {
             logger.debug("{} has already terminated", this);
             return true;
         } else {
-            // This method is used both by normal code and by ConnectionReaper. Since the latter is a bug detection
-            // mechanism and logs warnings when it runs, we synchronize to avoid false warnings if they race.
-            synchronized (terminationLock) {
-                if (evenIfPending || dispatcher.pending.isEmpty()) {
-                    if (logWarnings)
-                        logger.warn("Forcing termination of {}. This should not happen and is likely a bug, please report.", this);
-                    future.force();
-                    return true;
-                } else {
-                    logger.debug("Not terminating {}: there are still pending requests", this);
-                    return false;
-                }
+            if (force || dispatcher.pending.isEmpty()) {
+                if (force)
+                    logger.warn("Forcing termination of {}. This should not happen and is likely a bug, please report.", this);
+                future.force();
+                return true;
+            } else {
+                logger.debug("Not terminating {}: there are still pending requests", this);
+                return false;
             }
         }
     }
@@ -626,7 +643,7 @@ class Connection {
                 streamIdHandler.release(streamId);
 
             if (isClosed())
-                terminate(false, false);
+                tryTerminate(false);
         }
 
         @Override
@@ -670,7 +687,7 @@ class Connection {
                 // If we happen to be closed and we're the last outstanding request, we need to terminate the connection
                 // (note: this is racy as the signaling can be called more than once, but that's not a problem)
                 if (isClosed())
-                    terminate(false, false);
+                    tryTerminate(false);
             }
         }
 

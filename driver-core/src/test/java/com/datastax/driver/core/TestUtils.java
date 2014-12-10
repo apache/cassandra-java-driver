@@ -316,7 +316,7 @@ public abstract class TestUtils {
         // keep alive kicks in, but that's a fairly long time. So we cheat and trigger a force
         // the detection by forcing a request.
         if (waitForDead || waitForOut)
-            cluster.manager.submitSchemaRefresh(null, null);
+            cluster.manager.submitSchemaRefresh(null, null, null);
 
         InetAddress address;
         try {
