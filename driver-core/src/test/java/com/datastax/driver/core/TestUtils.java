@@ -15,14 +15,18 @@
  */
 package com.datastax.driver.core;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.util.*;
 
 import static org.testng.Assert.fail;
 
+import org.scassandra.Scassandra;
+import org.scassandra.ScassandraFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.SkipException;
@@ -381,5 +385,36 @@ public abstract class TestUtils {
         }
         fail(address + " not found in cluster metadata");
         return null; // never reached
+    }
+
+    /**
+     * @return A Scassandra instance with an arbitrarily chosen binary port from 8042-8142 and admin port from
+     * 8052-8152.
+     */
+    public static Scassandra createScassandraServer() {
+        int binaryPort = findAvailablePort(8042);
+        int adminPort = findAvailablePort(8052);
+        return ScassandraFactory.createServer(binaryPort, adminPort);
+    }
+
+    /**
+     * @param startingWith The first port to try, if unused will keep trying the next port until one is found up to
+     *                     100 subsequent ports.
+     * @return A local port that is currently unused.
+     */
+    public static int findAvailablePort(int startingWith) {
+        IOException last = null;
+        for(int port = startingWith; port < startingWith+100; port++) {
+            try {
+                ServerSocket s = new ServerSocket(port);
+                s.close();
+                return port;
+            } catch (IOException e) {
+                last = e;
+                continue;
+            }
+        }
+        // If for whatever reason a port could not be acquired throw the last encountered exception.
+        throw new RuntimeException("Could not acquire an available port", last);
     }
 }
