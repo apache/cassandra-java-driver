@@ -406,7 +406,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
 
     @Test(groups = "long")
     public void tokenAwareWithRF2Test() throws Throwable {
-        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy(), false));
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
         try {
 
