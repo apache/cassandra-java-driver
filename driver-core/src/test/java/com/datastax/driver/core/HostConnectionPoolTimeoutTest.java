@@ -183,7 +183,7 @@ public class HostConnectionPoolTimeoutTest {
      * with a new one that is never used as no more queries are sent.  Validates that the unused connection is cleaned
      * up after the idle timeout.
      */
-    @Test(groups="short")
+    @Test(groups="long")
     public void should_timeout_unused_connection() throws Exception {
         int idleTimeoutSeconds = 10;
         int requestThreshold = 128;
@@ -256,6 +256,8 @@ public class HostConnectionPoolTimeoutTest {
             for(ResultSetFuture future : toCancel) {
                 future.cancel(true);
             }
+
+            pool.
 
             // Sleep for idleTimeout * 2 seconds to anticipate idle connection cleanup.
             TimeUnit.SECONDS.sleep(idleTimeoutSeconds * 2);
