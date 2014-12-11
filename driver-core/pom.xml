@@ -89,6 +89,13 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.scassandra</groupId>
+      <artifactId>java-client</artifactId>
+      <version>0.4.1</version>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
   <build>
