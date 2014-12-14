@@ -88,8 +88,9 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                         if (keyspace == null)
                                             logger.warn("Received a DROPPED notification for {}.{}, but this keyspace is unknown in our metadata",
                                                 scc.keyspace, scc.columnFamily);
-                                        else
-                                            keyspace.removeTable(scc.columnFamily);
+                                        else {
+                                            session.cluster.manager.metadata.removeTable(scc.keyspace, scc.columnFamily);
+                                        }
                                     }
                                     this.setResult(rs);
                                     break;

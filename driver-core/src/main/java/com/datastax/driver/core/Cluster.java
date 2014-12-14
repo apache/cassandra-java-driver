@@ -1108,12 +1108,12 @@ public class Cluster implements Closeable {
         final List<InetSocketAddress> contactPoints;
         final Set<SessionManager> sessions = new CopyOnWriteArraySet<SessionManager>();
 
-        final Metadata metadata;
+        Metadata metadata;
         final Configuration configuration;
         final Metrics metrics;
 
         final Connection.Factory connectionFactory;
-        final ControlConnection controlConnection;
+        ControlConnection controlConnection;
 
         final ConvictionPolicy.Factory convictionPolicyFactory = new ConvictionPolicy.Simple.Factory();
 
@@ -1942,7 +1942,7 @@ public class Cluster implements Closeable {
                         // that querying a table just after having created it don't fail.
                         if (!ControlConnection.waitForSchemaAgreement(connection, Cluster.Manager.this))
                             logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds());
-                        ControlConnection.refreshSchema(connection, keyspace, table, Cluster.Manager.this, false);
+                        controlConnection.refreshSchema(connection, keyspace, table);
                     } catch (Exception e) {
                         logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
                         submitSchemaRefresh(keyspace, table);
@@ -2077,8 +2077,9 @@ public class Cluster implements Closeable {
                                 if (keyspace == null)
                                     logger.warn("Received a DROPPED notification for {}.{}, but this keyspace is unknown in our metadata",
                                         scc.keyspace, scc.table);
-                                else
-                                    keyspace.removeTable(scc.table);
+                                else {
+                                    manager.metadata.removeTable(scc.keyspace, scc.table);
+                                }
                             }
                             break;
                         case UPDATED:
