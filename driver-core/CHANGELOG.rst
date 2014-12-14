@@ -12,6 +12,8 @@ CHANGELOG
 - [bug] Avoid deadlock when multiple connections to the same host get write
   errors (JAVA-557)
 - [improvement] Make shuffle=true the default for TokenAwarePolicy (JAVA-504)
+- [bug] Fix bug when SUSPECT reconnection succeeds, but one of the pooled
+  connections fails while bringing the node back up (JAVA-577)
 
 
 2.0.8:

@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
@@ -1501,15 +1502,23 @@ public class Cluster implements Closeable {
                 host.initialReconnectionAttempt.set(executor.submit(new ExceptionCatchingRunnable() {
                     @Override
                     public void runMayThrow() throws InterruptedException, ExecutionException {
+                        boolean success;
                         try {
                             // TODO: as for the ReconnectionHandler, we could avoid "wasting" this connection
                             connectionFactory.open(host).closeAsync();
                             // Note that we want to do the pool creation on this thread because we want that
                             // when onUp return, the host is ready for querying
                             onUp(host, MoreExecutors.sameThreadExecutor());
+                            // If one of the connections in onUp failed, it signaled the error and triggerd onDown,
+                            // but onDown aborted because this reconnection attempt was in progress (JAVA-577).
+                            // Test the state now to check than onUp succeeded (we know it's up-to-date since onUp was
+                            // executed synchronously).
+                            success = host.state == Host.State.UP;
                         } catch (Exception e) {
-                            onDown(host, false, true);
+                            success = false;
                         }
+                        if (!success)
+                            onDown(host, false, true);
                     }
                 }));
 
@@ -1531,19 +1540,23 @@ public class Cluster implements Closeable {
             if (isClosed())
                 return;
 
-            // If we're SUSPECT and not the task validating the suspection, then some other task is
+            // If we're SUSPECT and not the task validating the suspicion, then some other task is
             // already checking to verify if the node is really down (or if it's simply that the
             // connections where broken). So just skip this in that case.
-            if (!isSuspectedVerification && host.state == Host.State.SUSPECT)
+            if (!isSuspectedVerification && host.state == Host.State.SUSPECT) {
+                logger.debug("Aborting onDown because a reconnection is running on SUSPECT host {}", host);
                 return;
+            }
 
             // Note: we don't want to skip that method if !host.isUp() because we set isUp
             // late in onUp, and so we can rely on isUp if there is an error during onUp.
             // But if there is a reconnection attempt in progress already, then we know
             // we've already gone through that method since the last successful onUp(), so
             // we're good skipping it.
-            if (host.reconnectionAttempt.get() != null)
+            if (host.reconnectionAttempt.get() != null) {
+                logger.debug("Aborting onDown because a reconnection is running on DOWN host {}", host);
                 return;
+            }
 
             // Remember if we care about this node at all. We must call this before
             // we've signalled the load balancing policy, since most policy will always
