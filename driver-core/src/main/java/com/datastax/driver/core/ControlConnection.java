@@ -407,39 +407,23 @@ class ControlConnection implements Host.StateListener {
         return cluster.translateAddress(addr);
     }
 
-    private Row fetchNodeInfo(Host host, Connection c) {
-        try {
-            boolean isConnectedHost = c.address.equals(host.getSocketAddress());
-            if (isConnectedHost || host.listenAddress != null) {
-                DefaultResultSetFuture future = isConnectedHost
-                    ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_LOCAL))
-                    : new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.listenAddress.getHostAddress() + '\''));
-                c.write(future);
-                return future.get().one();
-            }
-
-            // We have to fetch the whole peers table and find the host we're looking for
-            DefaultResultSetFuture future = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
+    private Row fetchNodeInfo(Host host, Connection c) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+        boolean isConnectedHost = c.address.equals(host.getSocketAddress());
+        if (isConnectedHost || host.listenAddress != null) {
+            DefaultResultSetFuture future = isConnectedHost
+                ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_LOCAL))
+                : new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.listenAddress.getHostAddress() + '\''));
             c.write(future);
-            for (Row row : future.get()) {
-                InetSocketAddress addr = addressToUseForPeerHost(row, c.address, cluster, true);
-                if (addr != null && addr.equals(host.getSocketAddress()))
-                    return row;
-            }
-        } catch (ConnectionException e) {
-            logger.debug("[Control connection] Connection error while refreshing node info ({})", e.getMessage());
-            signalError();
-        } catch (ExecutionException e) {
-            // If we're being shutdown during refresh, this can happen. That's fine so don't scare the user.
-            if (!isShutdown)
-                logger.debug("[Control connection] Unexpected error while refreshing node info", e);
-            signalError();
-        } catch (BusyConnectionException e) {
-            logger.debug("[Control connection] Connection is busy, reconnecting");
-            signalError();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            logger.debug("[Control connection] Interrupted while refreshing node list and token map, skipping it.");
+            return future.get().one();
+        }
+
+        // We have to fetch the whole peers table and find the host we're looking for
+        DefaultResultSetFuture future = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS));
+        c.write(future);
+        for (Row row : future.get()) {
+            InetSocketAddress addr = addressToUseForPeerHost(row, c.address, cluster, true);
+            if (addr != null && addr.equals(host.getSocketAddress()))
+                return row;
         }
         return null;
     }
@@ -455,26 +439,49 @@ class ControlConnection implements Host.StateListener {
             return true;
 
         logger.debug("[Control connection] Refreshing node info on {}", host);
-        Row row = fetchNodeInfo(host, c);
-        if (row == null) {
-            if (c.isDefunct()) {
-                logger.debug("Control connection is down, could not refresh node info");
-                // Keep going with what we currently know about the node, otherwise we will ignore all nodes
-                // until the control connection is back up (which leads to a catch-22 if there is only one)
-                return true;
-            } else {
-                logger.error("No row found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
+        try {
+            Row row = fetchNodeInfo(host, c);
+            if (row == null) {
+                if (c.isDefunct()) {
+                    logger.debug("Control connection is down, could not refresh node info");
+                    // Keep going with what we currently know about the node, otherwise we will ignore all nodes
+                    // until the control connection is back up (which leads to a catch-22 if there is only one)
+                    return true;
+                } else {
+                    logger.error("No row found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
+                    return false;
+                }
+                // Ignore hosts with a null rpc_address, as this is most likely a phantom row in system.peers (JAVA-428).
+                // Don't test this for the control host since we're already connected to it anyway, and we read the info from system.local
+                // which doesn't have an rpc_address column (JAVA-546).
+            } else if (!c.address.equals(host.getSocketAddress()) && row.getInet("rpc_address") == null) {
+                logger.error("No rpc_address found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
                 return false;
             }
-        // Ignore hosts with a null rpc_address, as this is most likely a phantom row in system.peers (JAVA-428).
-        // Don't test this for the control host since we're already connected to it anyway, and we read the info from system.local
-        // which doesn't have an rpc_address column (JAVA-546).
-        } else if (!c.address.equals(host.getSocketAddress()) && row.getInet("rpc_address") == null) {
-            logger.error("No rpc_address found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
-            return false;
-        }
 
-        updateInfo(host, row, cluster);
+            updateInfo(host, row, cluster);
+            return true;
+
+        } catch (ConnectionException e) {
+            logger.debug("[Control connection] Connection error while refreshing node info ({})", e.getMessage());
+            signalError();
+        } catch (ExecutionException e) {
+            // If we're being shutdown during refresh, this can happen. That's fine so don't scare the user.
+            if (!isShutdown)
+                logger.debug("[Control connection] Unexpected error while refreshing node info", e);
+            signalError();
+        } catch (BusyConnectionException e) {
+            logger.debug("[Control connection] Connection is busy, reconnecting");
+            signalError();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.debug("[Control connection] Interrupted while refreshing node info, skipping it.");
+        } catch (Exception e) {
+            logger.debug("[Control connection] Unexpected error while refreshing node info", e);
+            signalError();
+        }
+        // If we got an exception, always return true. Otherwise a faulty control connection would cause
+        // reconnected hosts to be ignored permanently.
         return true;
     }
 

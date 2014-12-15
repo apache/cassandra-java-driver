@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -28,6 +29,8 @@ import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
@@ -560,12 +563,6 @@ class SessionManager extends AbstractSession {
         DefaultResultSetFuture future = new DefaultResultSetFuture(this, configuration().getProtocolOptions().getProtocolVersionEnum(), msg);
         execute(future, statement);
         return future;
-    }
-
-    void trashIdleConnections(long now) {
-        for (HostConnectionPool pool : pools.values()) {
-            pool.trashIdleConnections(now);
-        }
     }
 
     private static class State implements Session.State {

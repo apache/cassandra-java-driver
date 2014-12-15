@@ -14,6 +14,10 @@ Merged from 2.0 branch:
 - [bug] Avoid deadlock when multiple connections to the same host get write
   errors (JAVA-557)
 - [improvement] Make shuffle=true the default for TokenAwarePolicy (JAVA-504)
+- [bug] Fix bug when SUSPECT reconnection succeeds, but one of the pooled
+  connections fails while bringing the node back up (JAVA-577)
+- [bug] Prevent faulty control connection from ignoring reconnecting hosts
+  (JAVA-587)
 
 
 2.1.3:
@@ -167,7 +171,6 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [improvement] Shuffle the replicas in TokenAwarePolicy.newQueryPlan (JAVA-504)
 - [improvement] Make schema agreement wait tuneable (JAVA-507)
 - [improvement] Document how to inject the driver metrics into another registry (JAVA-494)
-- [improvement] Add idle timeout to the connection pool (JAVA-419)
 - [bug] LatencyAwarePolicy does not shutdown executor on invocation of close (JAVA-516)
 - [improvement] Throw an exception when DCAwareRoundRobinPolicy is built with
   an explicit but null or empty local datacenter (JAVA-451).

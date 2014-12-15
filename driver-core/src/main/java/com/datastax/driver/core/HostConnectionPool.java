@@ -59,8 +59,6 @@ abstract class HostConnectionPool {
 
     abstract void replaceDefunctConnection(final PooledConnection connection);
 
-    abstract void trashIdleConnections(long now);
-
     abstract int opened();
 
     abstract int inFlightQueriesCount();

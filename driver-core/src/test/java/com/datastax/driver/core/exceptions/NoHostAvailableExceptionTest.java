@@ -13,54 +13,42 @@ public class NoHostAvailableExceptionTest {
     @Test(groups = "unit")
     public void should_build_default_message_when_less_than_3_errors() {
         NoHostAvailableException e = new NoHostAvailableException(buildMockErrors(3));
-        assertThat(e.getMessage())
-            .isEqualTo("All host(s) tried for query failed (tried: "
-                    + "/127.0.0.1:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 1), "
-                    + "/127.0.0.3:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 3), "
-                    + "/127.0.0.2:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 2)"
-                    + ")"
-            );
+        String message = e.getMessage();
+        assertThat(message).startsWith("All host(s) tried for query failed");
+        assertThat(message).contains( "/127.0.0.1:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 1)");
+        assertThat(message).contains( "/127.0.0.2:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 2)");
+        assertThat(message).contains( "/127.0.0.3:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 3)");
     }
 
     @Test(groups = "unit")
     public void should_build_default_message_when_more_than_3_errors() {
         NoHostAvailableException e = new NoHostAvailableException(buildMockErrors(4));
-        assertThat(e.getMessage())
-            .isEqualTo("All host(s) tried for query failed (tried: "
-                    + "/127.0.0.1:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 1), "
-                    + "/127.0.0.3:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 3), "
-                    + "/127.0.0.2:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 2), "
-                    + "/127.0.0.4:9042 "
-                    + "[only showing errors of first 3 hosts, use getErrors() for more details]"
-                    + ")"
-            );
+        String message = e.getMessage();
+        assertThat(message).startsWith("All host(s) tried for query failed");
+        assertThat(message).contains( "/127.0.0.1:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 1)");
+        assertThat(message).contains( "/127.0.0.2:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 2)");
+        assertThat(message).contains( "/127.0.0.3:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 3)");
+        assertThat(message).contains("only showing errors of first 3 hosts, use getErrors() for more details");
     }
 
     @Test(groups = "unit")
     public void should_build_formatted_message_without_stack_traces() {
         NoHostAvailableException e = new NoHostAvailableException(buildMockErrors(3));
-        assertThat(e.getCustomMessage(3, true, false))
-            .isEqualTo("All host(s) tried for query failed (tried:\n"
-                    + "/127.0.0.1:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 1)\n"
-                    + "/127.0.0.3:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 3)\n"
-                    + "/127.0.0.2:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 2)\n"
-                    + ")"
-            );
+        String message = e.getCustomMessage(3, true, false);
+        assertThat(message).startsWith("All host(s) tried for query failed (tried:\n");
+        assertThat(message).contains( "/127.0.0.1:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 1)\n");
+        assertThat(message).contains( "/127.0.0.2:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 2)\n");
+        assertThat(message).contains( "/127.0.0.3:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 3)\n");
     }
 
     @Test(groups = "unit")
     public void should_build_formatted_message_with_stack_traces() {
         NoHostAvailableException e = new NoHostAvailableException(buildMockErrors(3));
-        assertThat(e.getCustomMessage(3, true, true))
-            .isEqualTo("All host(s) tried for query failed (tried:\n"
-                    + "/127.0.0.1:9042\n"
-                    + "mock stack trace 1\n\n"
-                    + "/127.0.0.3:9042\n"
-                    + "mock stack trace 3\n\n"
-                    + "/127.0.0.2:9042\n"
-                    + "mock stack trace 2\n"
-                    + ")"
-            );
+        String message = e.getCustomMessage(3, true, true);
+        assertThat(message).startsWith("All host(s) tried for query failed (tried:\n");
+        assertThat(message).contains("/127.0.0.1:9042\nmock stack trace 1\n");
+        assertThat(message).contains("/127.0.0.3:9042\nmock stack trace 3\n");
+        assertThat(message).contains("/127.0.0.2:9042\nmock stack trace 2\n");
     }
 
     private static Map<InetSocketAddress, Throwable> buildMockErrors(int count) {

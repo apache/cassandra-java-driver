@@ -265,15 +265,8 @@ class Connection {
         // sure the "suspected" mechanism work as expected
         Host host = factory.manager.metadata.getHost(address);
         if (host != null) {
-            // If we get an error on a host that was already DOWN or SUSPECTED, this is a reconnection attempt.
-            // We don't want to signal, because that would invoke triggerOnDown unnecessarily (the host's bad
-            // condition is already taken care of by the reattempt in progress)
-            boolean isReconnectionAttempt = (host.state == Host.State.DOWN || host.state == Host.State.SUSPECT)
-                                            && !(this instanceof PooledConnection);
-            if (!isReconnectionAttempt) {
-                boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded(), isInitialized);
-                notifyOwnerWhenDefunct(isDown);
-            }
+            boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded(), isInitialized);
+            notifyOwnerWhenDefunct(isDown);
         }
 
         // Force the connection to close to make sure the future completes. Otherwise force() might never get called and

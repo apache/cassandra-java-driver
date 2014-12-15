@@ -341,10 +341,6 @@ class SingleConnectionPool extends HostConnectionPool {
         }
     }
 
-    @Override void trashIdleConnections(long now) {
-        // Nothing to do
-    }
-
     @Override
     public int opened() {
         return open.get() ? 1 : 0;

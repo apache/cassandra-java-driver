@@ -25,10 +25,7 @@ class PooledConnection extends Connection {
 
     private final HostConnectionPool pool;
 
-    /** The instant when the connection should be trashed after being idle for too long */
-    private volatile long trashTime = Long.MAX_VALUE;
-
-    /** Used in {@link DynamicConnectionPool} to handle races between two threads trying to trash the same connection */
+    /** Used in {@link HostConnectionPool} to handle races between two threads trying to trash the same connection */
     final AtomicBoolean markForTrash = new AtomicBoolean();
 
     PooledConnection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
@@ -62,17 +59,5 @@ class PooledConnection extends Connection {
         } else {
             pool.replaceDefunctConnection(this);
         }
-    }
-
-    long getTrashTime() {
-        return trashTime;
-    }
-
-    void cancelTrashTime() {
-        trashTime = Long.MAX_VALUE;
-    }
-
-    void setTrashTimeIn(int timeoutSeconds) {
-        trashTime = System.currentTimeMillis() + 1000 * timeoutSeconds;
     }
 }
