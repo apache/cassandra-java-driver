@@ -63,7 +63,7 @@ public class PoolingOptionsTest {
                                .hasState(State.UP)
                                .isAtDistance(HostDistance.LOCAL);
             assertThat(cluster).host(3)
-                               .hasState(State.ADDED)
+                               .hasState(State.UP)
                                .isAtDistance(HostDistance.IGNORED);
             assertThat(session).hasNoPoolFor(3);
 
