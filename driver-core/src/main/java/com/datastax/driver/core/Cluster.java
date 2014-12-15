@@ -1161,8 +1161,6 @@ public class Cluster implements Closeable {
 
             this.metrics = configuration.getMetricsOptions() == null ? null : new Metrics(this);
             this.listeners = new CopyOnWriteArraySet<Host.StateListener>(listeners);
-
-            this.scheduledTasksExecutor.scheduleWithFixedDelay(new TrashIdleConnectionsTask(), 10, 10, TimeUnit.SECONDS);
         }
 
         // Initialization is not too performance intensive and in practice there shouldn't be contention
@@ -2173,19 +2171,6 @@ public class Cluster implements Closeable {
                         }
                     }
                 }).start();
-            }
-        }
-
-        private class TrashIdleConnectionsTask implements Runnable {
-            @Override public void run() {
-                try {
-                    long now = System.currentTimeMillis();
-                    for (SessionManager session : sessions) {
-                        session.trashIdleConnections(now);
-                    }
-                } catch (Exception e) {
-                    logger.warn("Error while trashing idle connections", e);
-                }
             }
         }
     }
