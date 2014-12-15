@@ -46,11 +46,13 @@ public class LimitingLoadBalancingPolicy extends DelegatingLoadBalancingPolicy {
     @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
         this.cluster = cluster;
-        for (Host host : hosts)
-            if (host.isUp())
-                this.liveHosts.add(host);
-        this.delegate.init(cluster, Collections.<Host>emptyList());
-        updateChosenHosts();
+
+        Iterator<Host> hostIt = hosts.iterator();
+        while(hostIt.hasNext() && chosenHosts.size() <= maxHosts - threshold) {
+            chosenHosts.add(hostIt.next());
+        }
+
+        this.delegate.init(cluster, new ArrayList<Host>(chosenHosts));
     }
 
     private void updateChosenHosts() {
