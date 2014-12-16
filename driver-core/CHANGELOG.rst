@@ -16,6 +16,7 @@ CHANGELOG
   connections fails while bringing the node back up (JAVA-577)
 - [bug] Prevent faulty control connection from ignoring reconnecting hosts
   (JAVA-587)
+- temporarily revert "Add idle timeout to the connection pool" (JAVA-419)
 
 
 2.0.8:
@@ -47,6 +48,7 @@ CHANGELOG
 - [improvement] Shuffle the replicas in TokenAwarePolicy.newQueryPlan (JAVA-504)
 - [improvement] Make schema agreement wait tuneable (JAVA-507)
 - [improvement] Document how to inject the driver metrics into another registry (JAVA-494)
+- [improvement] Add idle timeout to the connection pool (JAVA-419)
 - [bug] LatencyAwarePolicy does not shutdown executor on invocation of close (JAVA-516)
 - [improvement] Throw an exception when DCAwareRoundRobinPolicy is built with
   an explicit but null or empty local datacenter (JAVA-451).
