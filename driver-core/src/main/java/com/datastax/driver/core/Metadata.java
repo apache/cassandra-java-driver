@@ -300,7 +300,8 @@ public class Metadata {
 
     void removeKeyspace(String keyspace) {
         keyspaces.remove(keyspace);
-        tokenMap.tokenToHosts.remove(keyspace);
+        if (tokenMap != null)
+            tokenMap.tokenToHosts.remove(keyspace);
     }
 
     /**
