@@ -259,6 +259,8 @@ class Connection {
         // sure the "suspected" mechanism work as expected
         Host host = factory.manager.metadata.getHost(address);
         if (host != null) {
+            // This will trigger onDown, including when the defunct Connection is part of a reconnection attempt, which is redundant.
+            // This is not too much of a problem since calling onDown on a node that is already down has no effect.
             boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded(), isInitialized);
             notifyOwnerWhenDefunct(isDown);
         }
