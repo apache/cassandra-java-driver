@@ -235,7 +235,8 @@ class ControlConnection implements Host.StateListener {
         return errors;
     }
 
-    private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+    private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException
+    {
         Connection connection = cluster.connectionFactory.open(host);
 
         try {
@@ -258,10 +259,19 @@ class ControlConnection implements Host.StateListener {
             refreshSchema(connection, null, null, cluster, isInitialConnection);
             return connection;
         } catch (BusyConnectionException e) {
-            connection.closeAsync().get();
+            connection.closeAsync().force();
             throw new DriverInternalError("Newly created connection should not be busy");
+        } catch (InterruptedException e) {
+            connection.closeAsync().force();
+            throw e;
+        } catch (ConnectionException e) {
+            connection.closeAsync().force();
+            throw e;
+        } catch (ExecutionException e) {
+            connection.closeAsync().force();
+            throw e;
         } catch (RuntimeException e) {
-            connection.closeAsync().get();
+            connection.closeAsync().force();
             throw e;
         }
     }
