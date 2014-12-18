@@ -84,32 +84,49 @@ class Connection {
         this.factory = factory;
         this.name = name;
 
-        ClientBootstrap bootstrap = factory.newBootstrap();
-        ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
-        int protocolVersion = factory.protocolVersion == 1 ? 1 : 2;
-        bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
-
-        ChannelFuture future = bootstrap.connect(address);
-
-        writer.incrementAndGet();
         try {
-            // Wait until the connection attempt succeeds or fails.
-            this.channel = future.awaitUninterruptibly().getChannel();
-            this.factory.allChannels.add(this.channel);
-            if (!future.isSuccess())
-            {
-                if (logger.isDebugEnabled())
-                    logger.debug(String.format("%s Error connecting to %s%s", this, address, extractMessage(future.getCause())));
-                throw defunct(new TransportException(address, "Cannot connect", future.getCause()));
-            }
-        } finally {
-            writer.decrementAndGet();
-        }
+            ClientBootstrap bootstrap = factory.newBootstrap();
+            ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
+            int protocolVersion = factory.protocolVersion == 1 ? 1 : 2;
+            bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
 
-        logger.trace("{} Connection opened successfully", this);
-        initializeTransport(protocolVersion, factory.manager.metadata.clusterName);
-        logger.debug("{} Transport initialized and ready", this);
-        isInitialized = true;
+            ChannelFuture future = bootstrap.connect(address);
+
+            writer.incrementAndGet();
+            try {
+                // Wait until the connection attempt succeeds or fails.
+                this.channel = future.awaitUninterruptibly().getChannel();
+                this.factory.allChannels.add(this.channel);
+                if (!future.isSuccess()) {
+                    if (logger.isDebugEnabled())
+                        logger.debug(String.format("%s Error connecting to %s%s", this, address, extractMessage(future.getCause())));
+                    throw defunct(new TransportException(address, "Cannot connect", future.getCause()));
+                }
+            } finally {
+                writer.decrementAndGet();
+            }
+
+            logger.trace("{} Connection opened successfully", this);
+            initializeTransport(protocolVersion, factory.manager.metadata.clusterName);
+            logger.debug("{} Transport initialized and ready", this);
+            isInitialized = true;
+
+        } catch (ConnectionException e) {
+            closeAsync().force();
+            throw e;
+        } catch (ClusterNameMismatchException e) {
+            closeAsync().force();
+            throw e;
+        } catch (UnsupportedProtocolVersionException e) {
+            closeAsync().force();
+            throw e;
+        } catch (InterruptedException e) {
+            closeAsync().force();
+            throw e;
+        } catch (RuntimeException e) {
+            closeAsync().force();
+            throw e;
+        }
     }
 
     private static String extractMessage(Throwable t) {
