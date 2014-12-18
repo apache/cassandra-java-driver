@@ -754,9 +754,11 @@ class Connection {
             ChannelFuture future = channel.close();
             future.addListener(new ChannelFutureListener() {
                 public void operationComplete(ChannelFuture future) {
-                    if (future.getCause() != null)
+                    factory.allChannels.remove(channel);
+                    if (future.getCause() != null) {
+                        logger.warn("Error closing channel", future.getCause());
                         ConnectionCloseFuture.this.setException(future.getCause());
-                    else
+                    } else
                         ConnectionCloseFuture.this.set(null);
                 }
             });
