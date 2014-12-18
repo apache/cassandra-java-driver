@@ -372,7 +372,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
             throw new AssertionError(e);
         } catch (TimeoutException e) {
             // Shouldn't really happen but isn't really a huge deal
-            logger.debug("Timeout while waiting only host initial reconnection future", e);
+            logger.debug("Timeout while waiting on initial reconnection future for " + h, e);
         }
     }
 
