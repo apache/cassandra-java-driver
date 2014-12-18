@@ -17,6 +17,8 @@ CHANGELOG
 - [bug] Prevent faulty control connection from ignoring reconnecting hosts
   (JAVA-587)
 - temporarily revert "Add idle timeout to the connection pool" (JAVA-419)
+- [bug] Ensure updateCreatedPools does not add pools for suspected hosts
+  (JAVA-593)
 
 
 2.0.8:
