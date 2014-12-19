@@ -1,0 +1,7 @@
+# Maven2 Repository Locations (you can override these in "build.properties" to point to a local proxy, e.g. Nexus)
+artifact.remoteRepository.central:     http://repo1.maven.org/maven2
+
+# Cassandra database to test with
+cassandra.host=localhost
+cassandra.rpc.port=9170
+

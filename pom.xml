@@ -39,6 +39,7 @@
     <module>driver-examples</module>
     <module>driver-dse</module>
     <module>driver-dist</module>
+	<module>driver-jdbc</module>
   </modules>
 
   <properties>
