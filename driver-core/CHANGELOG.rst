@@ -19,6 +19,8 @@ CHANGELOG
 - temporarily revert "Add idle timeout to the connection pool" (JAVA-419)
 - [bug] Ensure updateCreatedPools does not add pools for suspected hosts
   (JAVA-593)
+- [bug] Ensure state change notifications for a given host are handled serially
+  (JAVA-594)
 
 
 2.0.8:
