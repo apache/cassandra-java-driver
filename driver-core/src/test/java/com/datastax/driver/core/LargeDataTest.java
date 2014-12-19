@@ -129,9 +129,12 @@ public class LargeDataTest {
      * Converts an integer to an string of letters
      * @param i The integer that maps to letter
      * @return
+     *
+     * TODO This doesn't offer protection from generating column names that are reserved keywords.  This does
+     * work with CQL 3.0, but may break in future specifications.  Should fix this to ensure it does not.
      */
     private static String createColumnName(int i) {
-        String[] letters = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"};
+        String[] letters = {"a", "b", "c", "d", "e", "f", "g", "h", "j", "l"};
 
         StringBuilder columnName;
         int currentI;
@@ -176,7 +179,7 @@ public class LargeDataTest {
      * Test a wide row of size 1,000,000
      * @throws Throwable
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void wideRows() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
@@ -199,7 +202,7 @@ public class LargeDataTest {
      * Test a batch that writes a row of size 10,000
      * @throws Throwable
      */
-    @Test(groups = "integration")
+    @Test(groups = "short")
     public void wideBatchRows() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
@@ -222,7 +225,7 @@ public class LargeDataTest {
      * Test a wide row of size 1,000,000 consisting of a ByteBuffer
      * @throws Throwable
      */
-    @Test(groups = "integration")
+    @Test(groups = "long")
     public void wideByteRows() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
@@ -245,7 +248,7 @@ public class LargeDataTest {
      * Test a row with a single extra large text value
      * @throws Throwable
      */
-    @Test(groups = "integration")
+    @Test(groups = "short")
     public void largeText() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
@@ -268,7 +271,7 @@ public class LargeDataTest {
      * Creates a table with 330 columns
      * @throws Throwable
      */
-    @Test(groups = "integration")
+    @Test(groups = "short")
     public void wideTable() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
