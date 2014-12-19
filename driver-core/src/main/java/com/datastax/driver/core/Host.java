@@ -18,7 +18,6 @@ package com.datastax.driver.core;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.collect.ImmutableList;
@@ -42,7 +41,7 @@ public class Host {
     enum State { ADDED, DOWN, SUSPECT, UP }
     volatile State state;
     /** Ensures state change notifications for that host are handled serially */
-    final Lock notificationsLock = new ReentrantLock();
+    final ReentrantLock notificationsLock = new ReentrantLock(true);
 
     private final ConvictionPolicy policy;
     private final Cluster.Manager manager;

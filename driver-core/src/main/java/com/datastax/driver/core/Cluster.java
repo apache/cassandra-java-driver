@@ -74,6 +74,8 @@ public class Cluster implements Closeable {
 
     private static final int DEFAULT_THREAD_KEEP_ALIVE = 30;
 
+    private static final int NOTIF_LOCK_TIMEOUT_SECONDS = 60;
+
     final Manager manager;
 
     /**
@@ -1378,12 +1380,12 @@ public class Cluster implements Closeable {
                 return;
             }
 
+            boolean locked = host.notificationsLock.tryLock(NOTIF_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                logger.warn("Could not acquire notifications lock within {} seconds, ignoring UP notification for {}", NOTIF_LOCK_TIMEOUT_SECONDS, host);
+                return;
+            }
             try {
-                boolean locked = host.notificationsLock.tryLock(10, TimeUnit.SECONDS);
-                if (!locked) {
-                    logger.warn("Could not acquire notifications lock within 10 seconds, ignoring UP notification for {}", host);
-                    return;
-                }
 
                 // We don't want to use the public Host.isUp() as this would make us skip the rest for suspected hosts
                 if (host.state == Host.State.UP)
@@ -1476,7 +1478,7 @@ public class Cluster implements Closeable {
             });
         }
 
-        public void onSuspected(final Host host) {
+        public void onSuspected(final Host host) throws InterruptedException {
             logger.debug("Host {} is Suspected", host);
 
             if (isClosed())
@@ -1490,6 +1492,10 @@ public class Cluster implements Closeable {
                 return;
             }
 
+            // If we've already mark the node down/suspected, ignore this
+            if (host.state == Host.State.SUSPECT || host.reconnectionAttempt.get() != null)
+                return;
+
             // We need to
             //  1) mark the node suspect if no-one has bitten us to it
             //  2) start the reconnection attempt
@@ -1501,15 +1507,14 @@ public class Cluster implements Closeable {
             // once, but we also don't want said threads to return from this method before
             // the loadbalancing policy has been informed (otherwise those threads won't
             // consider the host suspect but simply ignore it). So we lock.
+            boolean locked = host.notificationsLock.tryLock(NOTIF_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                logger.warn("Could not acquire notifications lock within {} seconds, ignoring SUSPECTED notification for {}", NOTIF_LOCK_TIMEOUT_SECONDS, host);
+                return;
+            }
             try {
-                boolean locked = host.notificationsLock.tryLock(10, TimeUnit.SECONDS);
-                if (!locked) {
-                    logger.warn("Could not acquire notifications lock within 10 seconds, ignoring SUSPECTED notification for {}", host);
-                    return;
-                }
-
-                // If we've already mark the node down/suspected, ignore this
-                if (!host.setSuspected() || host.reconnectionAttempt.get() != null)
+                // Again, exit if someone beat us to suspecting the host
+                if (!host.setSuspected()  || host.reconnectionAttempt.get() != null)
                     return;
 
                 // Start the initial initial reconnection attempt
@@ -1545,8 +1550,6 @@ public class Cluster implements Closeable {
                 for (Host.StateListener listener : listeners)
                     listener.onSuspected(host);
 
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
             } finally {
                 host.notificationsLock.unlock();
             }
@@ -1559,12 +1562,12 @@ public class Cluster implements Closeable {
             if (isClosed())
                 return;
 
+            boolean locked = host.notificationsLock.tryLock(NOTIF_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                logger.warn("Could not acquire notifications lock within {} seconds, ignoring DOWN notification for {}", NOTIF_LOCK_TIMEOUT_SECONDS, host);
+                return;
+            }
             try {
-                boolean locked = host.notificationsLock.tryLock(10, TimeUnit.SECONDS);
-                if (!locked) {
-                    logger.warn("Could not acquire notifications lock within 10 seconds, ignoring DOWN notification for {}", host);
-                    return;
-                }
 
                 // If we're SUSPECT and not the task validating the suspicion, then some other task is
                 // already checking to verify if the node is really down (or if it's simply that the
@@ -1740,12 +1743,12 @@ public class Cluster implements Closeable {
                 return;
             }
 
+            boolean locked = host.notificationsLock.tryLock(NOTIF_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                logger.warn("Could not acquire notifications lock within {} seconds, ignoring ADD notification for {}", NOTIF_LOCK_TIMEOUT_SECONDS, host);
+                return;
+            }
             try {
-                boolean locked = host.notificationsLock.tryLock(10, TimeUnit.SECONDS);
-                if (!locked) {
-                    logger.warn("Could not acquire notifications lock within 10 seconds, ignoring ADD notification for {}", host);
-                    return;
-                }
 
                 // Adds to the load balancing first and foremost, as doing so might change the decision
                 // it will make for distance() on that node (not likely but we leave that possibility).
@@ -1835,12 +1838,12 @@ public class Cluster implements Closeable {
             if (isClosed())
                 return;
 
+            boolean locked = host.notificationsLock.tryLock(NOTIF_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                logger.warn("Could not acquire notifications lock within {} seconds, ignoring REMOVE notification for {}", NOTIF_LOCK_TIMEOUT_SECONDS, host);
+                return;
+            }
             try {
-                boolean locked = host.notificationsLock.tryLock(10, TimeUnit.SECONDS);
-                if (!locked) {
-                    logger.warn("Could not acquire notifications lock within 10 seconds, ignoring REMOVE notification for {}", host);
-                    return;
-                }
 
                 host.setDown();
 
@@ -1868,11 +1871,16 @@ public class Cluster implements Closeable {
                 if (isHostAddition || !markSuspected) {
                     triggerOnDown(host, isHostAddition);
                 } else {
-                    // Note that we do want to call onSuspected on the current thread, as the whole point is
-                    // that by the time this method return, the host initialReconnectionAttempt will have been
-                    // set and the load balancing policy informed of the suspection. We know that onSuspected
-                    // does little work (and non blocking one) itself however.
-                    onSuspected(host);
+                    try {
+                        // Note that we do want to call onSuspected on the current thread, as the whole point is
+                        // that by the time this method return, the host initialReconnectionAttempt will have been
+                        // set and the load balancing policy informed of the suspection. We know that onSuspected
+                        // does little work (and non blocking one) itself however.
+                        onSuspected(host);
+                    } catch (InterruptedException e) {
+                        // This is most likely due to shutdown
+                        logger.warn("Interrupted while trying to set host SUSPECT, aborting");
+                    }
                 }
             }
             return isDown;
