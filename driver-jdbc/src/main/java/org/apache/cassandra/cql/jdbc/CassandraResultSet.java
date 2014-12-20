@@ -22,7 +22,6 @@ package org.apache.cassandra.cql.jdbc;
 
 import static org.apache.cassandra.cql.jdbc.Utils.*;
 
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URL;
@@ -32,12 +31,14 @@ import java.sql.*;
 import java.sql.Date;
 import java.util.*;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 /**
  * <p>
@@ -504,7 +505,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         checkIndex(index);
         if(currentRow.getColumnDefinitions().getType(index-1).isCollection()){
 			try {
-				return currentRow.getList(index - 1,Class.forName(currentRow.getColumnDefinitions().getType(index-1).getTypeArguments().get(0).asJavaClass().getCanonicalName()));
+				return Lists.newArrayList(currentRow.getList(index - 1,Class.forName(currentRow.getColumnDefinitions().getType(index-1).getTypeArguments().get(0).asJavaClass().getCanonicalName())));
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -520,7 +521,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         // return currentRow.getList(name,String.class); // TODO: a remplacer par une vraie verification des types de collections
         if(currentRow.getColumnDefinitions().getType(name).isCollection()){
 			try {
-				return currentRow.getList(name,Class.forName(currentRow.getColumnDefinitions().getType(name).getTypeArguments().get(0).asJavaClass().getCanonicalName()));
+				return Lists.newArrayList(currentRow.getList(name,Class.forName(currentRow.getColumnDefinitions().getType(name).getTypeArguments().get(0).asJavaClass().getCanonicalName())));
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -572,13 +573,13 @@ List<DataType>  datatypes=null;
         if(currentRow.getColumnDefinitions().getType(index-1).isCollection()){
         	datatypes = currentRow.getColumnDefinitions().getType(index-1).getTypeArguments();
         	if(currentRow.getColumnDefinitions().getType(index-1).getName().toString().equals("set")){        	
-        		return (Object) currentRow.getSet(index-1,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType());
+        		return (Object) Sets.newLinkedHashSet(currentRow.getSet(index-1,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType()));
         	}
         	if(currentRow.getColumnDefinitions().getType(index-1).getName().toString().equals("list")){        		
-        		return (Object) currentRow.getList(index-1,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType());
+        		return (Object) Lists.newArrayList(currentRow.getList(index-1,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType()));
         	}
         	if(currentRow.getColumnDefinitions().getType(index-1).getName().toString().equals("map")){        		
-        		return (Object) currentRow.getMap(index-1,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType(),TypesMap.getTypeForComparator(datatypes.get(1).toString()).getType());
+        		return (Object) Maps.newHashMap(currentRow.getMap(index-1,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType(),TypesMap.getTypeForComparator(datatypes.get(1).toString()).getType()));
         	}
         	
         }else{
@@ -650,14 +651,14 @@ List<DataType>  datatypes=null;
         if(currentRow.getColumnDefinitions().getType(name).isCollection()){
         	datatypes = currentRow.getColumnDefinitions().getType(name).getTypeArguments();
         	if(currentRow.getColumnDefinitions().getType(name).getName().toString().equals("set")){        	
-        		return (Object) currentRow.getSet(name,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType());
+        		return (Object) Sets.newLinkedHashSet(currentRow.getSet(name,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType()));
         	}
         	if(currentRow.getColumnDefinitions().getType(name).getName().toString().equals("list")){        		
         		
-        		return (Object) currentRow.getList(name,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType());
+        		return (Object) Lists.newArrayList(currentRow.getList(name,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType()));
         	}
         	if(currentRow.getColumnDefinitions().getType(name).getName().toString().equals("map")){        		
-        		return (Object) currentRow.getMap(name,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType(),TypesMap.getTypeForComparator(datatypes.get(1).toString()).getType());
+        		return (Object) Maps.newHashMap(currentRow.getMap(name,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType(),TypesMap.getTypeForComparator(datatypes.get(1).toString()).getType()));
         	}
         	
         }else{
