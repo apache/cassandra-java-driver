@@ -1478,7 +1478,7 @@ public class Cluster implements Closeable {
             });
         }
 
-        public void onSuspected(final Host host) throws InterruptedException {
+        public void onSuspected(final Host host) {
             logger.debug("Host {} is Suspected", host);
 
             if (isClosed())
@@ -1492,10 +1492,6 @@ public class Cluster implements Closeable {
                 return;
             }
 
-            // If we've already mark the node down/suspected, ignore this
-            if (host.state == Host.State.SUSPECT || host.reconnectionAttempt.get() != null)
-                return;
-
             // We need to
             //  1) mark the node suspect if no-one has bitten us to it
             //  2) start the reconnection attempt
@@ -1506,15 +1502,10 @@ public class Cluster implements Closeable {
             // If multiple threads get there, we want to start reconnection attempts only
             // once, but we also don't want said threads to return from this method before
             // the loadbalancing policy has been informed (otherwise those threads won't
-            // consider the host suspect but simply ignore it). So we lock.
-            boolean locked = host.notificationsLock.tryLock(NOTIF_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            if (!locked) {
-                logger.warn("Could not acquire notifications lock within {} seconds, ignoring SUSPECTED notification for {}", NOTIF_LOCK_TIMEOUT_SECONDS, host);
-                return;
-            }
-            try {
-                // Again, exit if someone beat us to suspecting the host
-                if (!host.setSuspected()  || host.reconnectionAttempt.get() != null)
+            // consider the host suspect but simply ignore it). So we synchronize.
+            synchronized (host) {
+                // If we've already marked the node down/suspected, ignore this
+                if (!host.setSuspected() || host.reconnectionAttempt.get() != null)
                     return;
 
                 // Start the initial initial reconnection attempt
@@ -1542,17 +1533,14 @@ public class Cluster implements Closeable {
                 }));
 
                 loadBalancingPolicy().onSuspected(host);
-
-                controlConnection.onSuspected(host);
-                for (SessionManager s : sessions)
-                    s.onSuspected(host);
-
-                for (Host.StateListener listener : listeners)
-                    listener.onSuspected(host);
-
-            } finally {
-                host.notificationsLock.unlock();
             }
+
+            controlConnection.onSuspected(host);
+            for (SessionManager s : sessions)
+                s.onSuspected(host);
+
+            for (Host.StateListener listener : listeners)
+                listener.onSuspected(host);
         }
 
         // Use triggerOnDown unless you're sure you want to run this on the current thread.
@@ -1871,16 +1859,11 @@ public class Cluster implements Closeable {
                 if (isHostAddition || !markSuspected) {
                     triggerOnDown(host, isHostAddition);
                 } else {
-                    try {
-                        // Note that we do want to call onSuspected on the current thread, as the whole point is
-                        // that by the time this method return, the host initialReconnectionAttempt will have been
-                        // set and the load balancing policy informed of the suspection. We know that onSuspected
-                        // does little work (and non blocking one) itself however.
-                        onSuspected(host);
-                    } catch (InterruptedException e) {
-                        // This is most likely due to shutdown
-                        logger.warn("Interrupted while trying to set host SUSPECT, aborting");
-                    }
+                    // Note that we do want to call onSuspected on the current thread, as the whole point is
+                    // that by the time this method return, the host initialReconnectionAttempt will have been
+                    // set and the load balancing policy informed of the suspection. We know that onSuspected
+                    // does little work (and non blocking one) itself however.
+                    onSuspected(host);
                 }
             }
             return isDown;
