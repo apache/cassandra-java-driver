@@ -76,17 +76,30 @@ class DynamicConnectionPool extends HostConnectionPool {
             Thread.currentThread().interrupt();
             // If asked to interrupt, we can skip opening core connections, the pool will still work.
             // But we ignore otherwise cause I'm not sure we can do much better currently.
+        } catch (ConnectionException e) {
+            forceClose(l);
+            throw e;
+        } catch (UnsupportedProtocolVersionException e) {
+            forceClose(l);
+            throw e;
+        } catch (ClusterNameMismatchException e) {
+            forceClose(l);
+            throw e;
         } catch (RuntimeException e) {
-            // Rethrow but make sure to properly close the connections in our temporary list.
-            for (PooledConnection connection : l) {
-                connection.closeAsync().force();
-            }
+            forceClose(l);
             throw e;
         }
         this.connections = new CopyOnWriteArrayList<PooledConnection>(l);
         this.open = new AtomicInteger(connections.size());
 
         logger.trace("Created connection pool to host {}", host);
+    }
+
+    // Clean up if we got an error at construction time but still created part of the core connections
+    private void forceClose(List<PooledConnection> l) {
+        for (PooledConnection connection : l) {
+            connection.closeAsync().force();
+        }
     }
 
     private PoolingOptions options() {

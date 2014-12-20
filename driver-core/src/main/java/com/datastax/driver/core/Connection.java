@@ -85,32 +85,49 @@ class Connection {
         this.dispatcher = new Dispatcher();
         this.name = name;
 
-        ClientBootstrap bootstrap = factory.newBootstrap();
-        ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
-        ProtocolVersion protocolVersion = factory.protocolVersion == null ? ProtocolVersion.NEWEST_SUPPORTED : factory.protocolVersion;
-        bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
-
-        ChannelFuture future = bootstrap.connect(address);
-
-        writer.incrementAndGet();
         try {
-            // Wait until the connection attempt succeeds or fails.
-            this.channel = future.awaitUninterruptibly().getChannel();
-            this.factory.allChannels.add(this.channel);
-            if (!future.isSuccess())
-            {
-                if (logger.isDebugEnabled())
-                    logger.debug(String.format("%s Error connecting to %s%s", this, address, extractMessage(future.getCause())));
-                throw defunct(new TransportException(address, "Cannot connect", future.getCause()));
-            }
-        } finally {
-            writer.decrementAndGet();
-        }
+            ClientBootstrap bootstrap = factory.newBootstrap();
+            ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
+            ProtocolVersion protocolVersion = factory.protocolVersion == null ? ProtocolVersion.NEWEST_SUPPORTED : factory.protocolVersion;
+            bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
 
-        logger.trace("{} Connection opened successfully", this);
-        initializeTransport(protocolVersion, factory.manager.metadata.clusterName);
-        logger.debug("{} Transport initialized and ready", this);
-        isInitialized = true;
+            ChannelFuture future = bootstrap.connect(address);
+
+            writer.incrementAndGet();
+            try {
+                // Wait until the connection attempt succeeds or fails.
+                this.channel = future.awaitUninterruptibly().getChannel();
+                this.factory.allChannels.add(this.channel);
+                if (!future.isSuccess()) {
+                    if (logger.isDebugEnabled())
+                        logger.debug(String.format("%s Error connecting to %s%s", this, address, extractMessage(future.getCause())));
+                    throw defunct(new TransportException(address, "Cannot connect", future.getCause()));
+                }
+            } finally {
+                writer.decrementAndGet();
+            }
+
+            logger.trace("{} Connection opened successfully", this);
+            initializeTransport(protocolVersion, factory.manager.metadata.clusterName);
+            logger.debug("{} Transport initialized and ready", this);
+            isInitialized = true;
+
+        } catch (ConnectionException e) {
+            closeAsync().force();
+            throw e;
+        } catch (ClusterNameMismatchException e) {
+            closeAsync().force();
+            throw e;
+        } catch (UnsupportedProtocolVersionException e) {
+            closeAsync().force();
+            throw e;
+        } catch (InterruptedException e) {
+            closeAsync().force();
+            throw e;
+        } catch (RuntimeException e) {
+            closeAsync().force();
+            throw e;
+        }
     }
 
     private static String extractMessage(Throwable t) {
@@ -265,6 +282,8 @@ class Connection {
         // sure the "suspected" mechanism work as expected
         Host host = factory.manager.metadata.getHost(address);
         if (host != null) {
+            // This will trigger onDown, including when the defunct Connection is part of a reconnection attempt, which is redundant.
+            // This is not too much of a problem since calling onDown on a node that is already down has no effect.
             boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded(), isInitialized);
             notifyOwnerWhenDefunct(isDown);
         }
@@ -752,9 +771,11 @@ class Connection {
             ChannelFuture future = channel.close();
             future.addListener(new ChannelFutureListener() {
                 public void operationComplete(ChannelFuture future) {
-                    if (future.getCause() != null)
+                    factory.allChannels.remove(channel);
+                    if (future.getCause() != null) {
+                        logger.warn("Error closing channel", future.getCause());
                         ConnectionCloseFuture.this.setException(future.getCause());
-                    else
+                    } else
                         ConnectionCloseFuture.this.set(null);
                 }
             });
