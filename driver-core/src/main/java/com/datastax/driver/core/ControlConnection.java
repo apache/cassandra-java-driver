@@ -110,6 +110,9 @@ class ControlConnection implements Host.StateListener {
             // reconnectInternal only propagate those if we've not decided on the protocol version yet,
             // which should only happen on the initial connection and thus in connect() but never here.
             throw new AssertionError();
+        } catch (Exception e) {
+            logger.error("[Control connection] Unknown error during reconnection, scheduling retry", e);
+            backgroundReconnect(-1);
         }
     }
 
@@ -159,9 +162,9 @@ class ControlConnection implements Host.StateListener {
 
     private void signalError() {
         Connection connection = connectionRef.get();
-        if (connection != null && connection.isDefunct()) {
-            // If the connection was marked as defunct, this already reported the
-            // node down, which will trigger a reconnect.
+        if (connection != null && connection.isDefunct() && cluster.metadata.getHost(connection.address) != null) {
+            // If the connection was marked as defunct and the host hadn't left, this already reported the
+            // host down, which will trigger a reconnect.
             return;
         }
         // If the connection is not defunct, or the host has left, just reconnect manually
@@ -691,6 +694,15 @@ class ControlConnection implements Host.StateListener {
 
     @Override
     public void onRemove(Host host) {
+        Connection current = connectionRef.get();
+        if (logger.isDebugEnabled())
+            logger.debug("[Control connection] {} has been removed, currently connected to {}", host, current == null ? "nobody" : current.address);
+
+        // Schedule a reconnection if that was our control host
+        if (current != null && current.address.equals(host.getSocketAddress())) {
+            backgroundReconnect(0);
+        }
+
         refreshNodeListAndTokenMap();
     }
 }
