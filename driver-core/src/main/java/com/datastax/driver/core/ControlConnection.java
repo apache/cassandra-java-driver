@@ -109,6 +109,9 @@ class ControlConnection implements Host.StateListener {
             // reconnectInternal only propagate those if we've not decided on the protocol version yet,
             // which should only happen on the initial connection and thus in connect() but never here.
             throw new AssertionError();
+        } catch (Exception e) {
+            logger.error("[Control connection] Unknown error during reconnection, scheduling retry", e);
+            backgroundReconnect(-1);
         }
     }
 
