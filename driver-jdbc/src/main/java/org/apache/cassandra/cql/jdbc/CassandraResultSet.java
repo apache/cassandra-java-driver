@@ -208,7 +208,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
 
     private final boolean hasMoreRows()
     {
-        return (rowsIterator != null && (rowsIterator.hasNext() || rowNumber==0));
+        return (rowsIterator != null && (rowsIterator.hasNext() || (rowNumber==0 && currentRow!=null)));
     }
 
     private final void populateMetaData()
