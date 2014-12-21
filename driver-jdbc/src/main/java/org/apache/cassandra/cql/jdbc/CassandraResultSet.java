@@ -568,7 +568,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     public Object getObject(int index) throws SQLException
     {
         checkIndex(index);  
-List<DataType>  datatypes=null;
+        List<DataType>  datatypes=null;
         
         if(currentRow.getColumnDefinitions().getType(index-1).isCollection()){
         	datatypes = currentRow.getColumnDefinitions().getType(index-1).getTypeArguments();

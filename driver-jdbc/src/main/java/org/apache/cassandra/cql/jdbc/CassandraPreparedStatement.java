@@ -147,7 +147,7 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         	
         }
 
-        connection = null;
+        //connection = null;
     }
         
 
