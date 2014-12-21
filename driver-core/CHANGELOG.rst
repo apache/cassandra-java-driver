@@ -21,6 +21,8 @@ CHANGELOG
   (JAVA-593)
 - [bug] Ensure state change notifications for a given host are handled serially
   (JAVA-594)
+- [bug] Ensure control connection reconnects when control host is removed
+  (JAVA-597)
 
 
 2.0.8:
