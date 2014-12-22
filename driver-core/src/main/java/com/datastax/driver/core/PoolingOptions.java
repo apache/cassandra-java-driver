@@ -35,6 +35,12 @@ package com.datastax.driver.core;
  * reclaimed if the use of opened connections drops below the
  * configured threshold ({@link #getMinSimultaneousRequestsPerConnectionThreshold}).
  * <p>
+ * Due to known issues with the current {@code ProtocolVersion#V2} pool implementation (see
+ * <a href="https://datastax-oss.atlassian.net/browse/JAVA-419">JAVA-419</a>),
+ * it is <b>strongly recommended</b> to use a fixed-size pool (core connections =
+ * max connections).
+ * The default values respect this (8 for local hosts, 2 for remote hosts).
+ * <p>
  * <b>With {@code ProtocolVersion#V3} or above:</b>
  * the driver uses a single connection for each {@code LOCAL} or {@code REMOTE}
  * host. This connection can handle a larger amount of simultaneous requests,
@@ -49,8 +55,8 @@ public class PoolingOptions {
     private static final int DEFAULT_MIN_REQUESTS_PER_CONNECTION = 25;
     private static final int DEFAULT_MAX_REQUESTS_PER_CONNECTION = 100;
 
-    private static final int DEFAULT_CORE_POOL_LOCAL = 2;
-    private static final int DEFAULT_CORE_POOL_REMOTE = 1;
+    private static final int DEFAULT_CORE_POOL_LOCAL = 8;
+    private static final int DEFAULT_CORE_POOL_REMOTE = 2;
 
     private static final int DEFAULT_MAX_POOL_LOCAL = 8;
     private static final int DEFAULT_MAX_POOL_REMOTE = 2;
@@ -192,6 +198,11 @@ public class PoolingOptions {
      * Sets the core number of connections per host.
      * <p>
      * This option is only used with {@code ProtocolVersion#V2} or below.
+     * <p>
+     * Due to known issues with the current pool implementation (see
+     * <a href="https://datastax-oss.atlassian.net/browse/JAVA-419">JAVA-419</a>),
+     * it is <b>strongly recommended</b> to use a fixed-size pool (core connections =
+     * max connections).
      *
      * @param distance the {@code HostDistance} for which to set this threshold.
      * @param newCoreConnections the value to set
@@ -231,6 +242,11 @@ public class PoolingOptions {
      * Sets the maximum number of connections per host.
      * <p>
      * This option is only used with {@code ProtocolVersion#V2} or below.
+     * <p>
+     * Due to known issues with the current pool implementation (see
+     * <a href="https://datastax-oss.atlassian.net/browse/JAVA-419">JAVA-419</a>),
+     * it is <b>strongly recommended</b> to use a fixed-size pool (core connections =
+     * max connections).
      *
      * @param distance the {@code HostDistance} for which to set this threshold.
      * @param newMaxConnections the value to set

@@ -74,7 +74,7 @@ public class Cluster implements Closeable {
 
     private static final int DEFAULT_THREAD_KEEP_ALIVE = 30;
 
-    private static final int NOTIF_LOCK_TIMEOUT_SECONDS = 60;
+    private static final int NOTIF_LOCK_TIMEOUT_SECONDS = SystemProperties.getInt("com.datastax.driver.NOTIF_LOCK_TIMEOUT_SECONDS", 60);
 
     final Manager manager;
 
