@@ -37,6 +37,12 @@ package com.datastax.driver.core;
  * Each of these parameters can be separately set for {@code LOCAL} and
  * {@code REMOTE} hosts ({@link HostDistance}). For {@code IGNORED} hosts,
  * the default for all those settings is 0 and cannot be changed.
+ * <p>
+ * Due to known issues with the current pool implementation (see
+ * <a href="https://datastax-oss.atlassian.net/browse/JAVA-419">JAVA-419</a>),
+ * it is <b>strongly recommended</b> to use a fixed-size pool (core connections =
+ * max connections).
+ * The default values respect this (8 for local hosts, 2 for remote hosts).
  */
 public class PoolingOptions {
 
@@ -45,8 +51,8 @@ public class PoolingOptions {
     private static final int DEFAULT_MIN_REQUESTS = 25;
     private static final int DEFAULT_MAX_REQUESTS = 100;
 
-    private static final int DEFAULT_CORE_POOL_LOCAL = 2;
-    private static final int DEFAULT_CORE_POOL_REMOTE = 1;
+    private static final int DEFAULT_CORE_POOL_LOCAL = 8;
+    private static final int DEFAULT_CORE_POOL_REMOTE = 2;
 
     private static final int DEFAULT_MAX_POOL_LOCAL = 8;
     private static final int DEFAULT_MAX_POOL_REMOTE = 2;
@@ -169,6 +175,11 @@ public class PoolingOptions {
 
     /**
      * Sets the core number of connections per host.
+     * <p>
+     * Due to known issues with the current pool implementation (see
+     * <a href="https://datastax-oss.atlassian.net/browse/JAVA-419">JAVA-419</a>),
+     * it is <b>strongly recommended</b> to use a fixed-size pool (core connections =
+     * max connections).
      *
      * @param distance the {@code HostDistance} for which to set this threshold.
      * @param newCoreConnections the value to set
@@ -204,6 +215,11 @@ public class PoolingOptions {
 
     /**
      * Sets the maximum number of connections per host.
+     * <p>
+     * Due to known issues with the current pool implementation (see
+     * <a href="https://datastax-oss.atlassian.net/browse/JAVA-419">JAVA-419</a>),
+     * it is <b>strongly recommended</b> to use a fixed-size pool (core connections =
+     * max connections).
      *
      * @param distance the {@code HostDistance} for which to set this threshold.
      * @param newMaxConnections the value to set
