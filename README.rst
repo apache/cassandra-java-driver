@@ -36,7 +36,7 @@ it in your application using the following Maven dependency::
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>2.1.3</version>
+      <version>2.1.4</version>
     </dependency>
 
 Note that the object mapper is published as a separate artifact::
@@ -44,7 +44,7 @@ Note that the object mapper is published as a separate artifact::
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-mapping</artifactId>
-      <version>2.1.2</version>
+      <version>2.1.4</version>
     </dependency>
 
 Compatibility
