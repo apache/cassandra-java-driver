@@ -3,5 +3,5 @@ artifact.remoteRepository.central:     http://repo1.maven.org/maven2
 
 # Cassandra database to test with
 cassandra.host=localhost
-cassandra.rpc.port=9170
+cassandra.rpc.port=9042
 

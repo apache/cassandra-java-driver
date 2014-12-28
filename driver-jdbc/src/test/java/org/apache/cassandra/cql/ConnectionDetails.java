@@ -32,9 +32,9 @@ public final class ConnectionDetails {
         host = p.getProperty("host", "localhost");
         int port;
         try {
-            port = Integer.parseInt(p.getProperty("port", "9160"));
+            port = Integer.parseInt(p.getProperty("port", "9042"));
         } catch (NumberFormatException e) {
-            port = 9160;
+            port = 9042;
         }
         this.port = port;
     }
