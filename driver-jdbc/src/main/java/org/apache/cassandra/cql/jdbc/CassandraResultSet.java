@@ -271,8 +271,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
 
     private final void checkIndex(int index) throws SQLException
     {
-        // 1 <= index <= size()
-    	System.out.println("CheckIndex : " + currentRow);
+        // 1 <= index <= size()    	
         if (index < 1 || index > currentRow.getColumnDefinitions().asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + currentRow.getColumnDefinitions().asList().size());
     	
     }
