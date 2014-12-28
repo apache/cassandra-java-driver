@@ -55,7 +55,7 @@ class Utils
 
     public static final String PROTOCOL = "jdbc:cassandra:";
     public static final String DEFAULT_HOST = "localhost";
-    public static final int DEFAULT_PORT = 9160;
+    public static final int DEFAULT_PORT = 9042;
     public static final com.datastax.driver.core.ConsistencyLevel DEFAULT_CONSISTENCY = com.datastax.driver.core.ConsistencyLevel.ONE;
     
 
@@ -64,6 +64,8 @@ class Utils
     public static final String KEY_PRIMARY_DC = "primarydc";
     public static final String KEY_BACKUP_DC = "backupdc";
     public static final String KEY_CONNECTION_RETRIES = "retries";
+    public static final String KEY_LOADBALANCING_POLICY = "loadbalancing";
+    //public static final String KEY_PRIMARY_DC = "primarydc";
     
     public static final String TAG_DESCRIPTION = "description";
     public static final String TAG_USER = "user";
@@ -76,6 +78,7 @@ class Utils
     public static final String TAG_BUILD_VERSION = "buildVersion";
     public static final String TAG_THRIFT_VERSION = "thriftVersion";
     public static final String TAG_CONSISTENCY_LEVEL = "consistencyLevel";
+    public static final String TAG_LOADBALANCING_POLICY = "loadBalancing";
     
     public static final String TAG_PRIMARY_DC = "primaryDatacenter";
     public static final String TAG_BACKUP_DC = "backupDatacenter";
@@ -227,14 +230,11 @@ class Utils
                 {
                     props.setProperty(TAG_CONNECTION_RETRIES,params.get(KEY_CONNECTION_RETRIES));
                 }
+                if (params.containsKey(KEY_LOADBALANCING_POLICY)){
+                	props.setProperty(TAG_LOADBALANCING_POLICY, params.get(KEY_LOADBALANCING_POLICY));
+                }
+                
 
-//               String[] items = query.split("&");
-//               if (items.length != 1) throw new SQLNonTransientConnectionException(URI_IS_SIMPLE);
-//               
-//               String[] option = query.split("=");
-//               if (!option[0].equalsIgnoreCase("version")) throw new SQLNonTransientConnectionException(NOT_OPTION);
-//               if (option.length!=2) throw new SQLNonTransientConnectionException(NOT_OPTION);
-//               props.setProperty(TAG_CQL_VERSION, option[1]);
             }
         }
 

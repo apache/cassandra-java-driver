@@ -52,7 +52,7 @@ public class UtilsUnitTest
         String consistencyonly = "jdbc:cassandra://localhost/Keyspace1?consistency=QUORUM";
         props = Utils.parseURL(consistencyonly);
         assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        assertEquals("9160", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
         assertEquals("Keyspace1", props.getProperty(Utils.TAG_DATABASE_NAME));
         assertEquals("QUORUM", props.getProperty(Utils.TAG_CONSISTENCY_LEVEL));
         assertNull(props.getProperty(Utils.TAG_CQL_VERSION));
@@ -60,7 +60,7 @@ public class UtilsUnitTest
         String noport = "jdbc:cassandra://localhost/Keyspace1?version=2.0.0";
         props = Utils.parseURL(noport);
         assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        assertEquals("9160", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
         assertEquals("Keyspace1", props.getProperty(Utils.TAG_DATABASE_NAME));
         assertEquals("2.0.0", props.getProperty(Utils.TAG_CQL_VERSION));
         
@@ -84,6 +84,15 @@ public class UtilsUnitTest
         assertEquals("9170", props.getProperty(Utils.TAG_PORT_NUMBER));
         assertNull(props.getProperty(Utils.TAG_DATABASE_NAME));
         assertNull(props.getProperty(Utils.TAG_CQL_VERSION));
+        
+        String withloadbalancingpolicy = "jdbc:cassandra://localhost:9170?loadbalancing=TokenAwarePolicy-DCAwareRoundRobinPolicy&primarydc=DC1";
+        props = Utils.parseURL(withloadbalancingpolicy);
+        assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
+        assertEquals("9170", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertNull(props.getProperty(Utils.TAG_DATABASE_NAME));
+        assertNull(props.getProperty(Utils.TAG_CQL_VERSION));
+        assertEquals("TokenAwarePolicy-DCAwareRoundRobinPolicy", props.getProperty(Utils.TAG_LOADBALANCING_POLICY));
+        assertEquals("DC1", props.getProperty(Utils.TAG_PRIMARY_DC));
     }
   
     @Test

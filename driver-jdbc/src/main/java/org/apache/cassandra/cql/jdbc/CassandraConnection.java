@@ -37,7 +37,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+
+
+
+
+
+
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.Metadata;
@@ -45,6 +52,13 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ProtocolOptions.Compression;
 import com.datastax.driver.core.Session;
 
+
+
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.driver.core.policies.LatencyAwarePolicy;
+import com.datastax.driver.core.policies.Policies;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.TokenAwarePolicy;
 
 import static org.apache.cassandra.cql.jdbc.Utils.*;
 import static org.apache.cassandra.cql.jdbc.CassandraResultSet.*;
@@ -126,19 +140,64 @@ class CassandraConnection extends AbstractConnection implements Connection
             String host = props.getProperty(TAG_SERVER_NAME);           
             int port = Integer.parseInt(props.getProperty(TAG_PORT_NUMBER));            
             currentKeyspace = props.getProperty(TAG_DATABASE_NAME);
-            username = props.getProperty(TAG_USER);
-            String password = props.getProperty(TAG_PASSWORD);
+            username = props.getProperty(TAG_USER,"");
+            String password = props.getProperty(TAG_PASSWORD,"");
             String version = props.getProperty(TAG_CQL_VERSION,DEFAULT_CQL_VERSION);
             String primaryDc = props.getProperty(TAG_PRIMARY_DC,"");
             String backupDc = props.getProperty(TAG_BACKUP_DC,"");
+            String loadBalancingPolicy = props.getProperty(TAG_LOADBALANCING_POLICY,"");
+            
             connectionProps.setProperty(TAG_ACTIVE_CQL_VERSION, version);
             majorCqlVersion = getMajor(version);
             defaultConsistencyLevel = ConsistencyLevel.valueOf(props.getProperty(TAG_CONSISTENCY_LEVEL,ConsistencyLevel.ONE.name()));
             boolean connected=false;            
             int retries=0;            
             
-            cCluster = Cluster.builder()
-			         .addContactPoints(host.split("--")).build();
+            Builder builder = Cluster.builder();
+            builder.addContactPoints(host.split("--")).withPort(port);
+            
+            // Set credentials when applicable
+            if(username.length()>0){
+            	builder.withCredentials(username, password);
+            }
+                        
+            
+            // Set load balancing policy as requested in the url. Policies can be nested using dashes as separator 
+            // for example : TokenAwarePolicy-DCAwareRoundRobinPolicy gives builder.withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy()));           
+            if(loadBalancingPolicy.length()>0){
+            	if(loadBalancingPolicy.startsWith("TokenAwarePolicy")){
+            		if(loadBalancingPolicy.endsWith("DCAwareRoundRobinPolicy")){
+            			if(primaryDc.length()>0){
+            				builder.withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy(primaryDc)));
+            			}else{
+            				builder.withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy()));
+            			}
+            		}else if(loadBalancingPolicy.endsWith("RoundRobinPolicy")){
+            			builder.withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
+            		}else if(loadBalancingPolicy.endsWith("LatencyAwarePolicy")){
+            			// TODO: add all necessary parameters to use LatencyAwarePolicy
+            			builder.withLoadBalancingPolicy(new TokenAwarePolicy(Policies.defaultLoadBalancingPolicy()));
+            		}else{
+            			builder.withLoadBalancingPolicy(new TokenAwarePolicy(Policies.defaultLoadBalancingPolicy()));
+            		}
+            	}else if(loadBalancingPolicy.startsWith("DCAwareRoundRobinPolicy")){            		
+            			if(primaryDc.length()>0){
+            				builder.withLoadBalancingPolicy(new DCAwareRoundRobinPolicy(primaryDc));
+            			}else{
+            				builder.withLoadBalancingPolicy(new DCAwareRoundRobinPolicy());
+            			}            		
+            	}else if(loadBalancingPolicy.startsWith("RoundRobinPolicy")){            		            			
+            				builder.withLoadBalancingPolicy(new RoundRobinPolicy());
+            	}else if(loadBalancingPolicy.startsWith("LatencyAwarePolicy")){
+            		// TODO: add all necessary parameters to use LatencyAwarePolicy
+            		//builder.withLoadBalancingPolicy(new LatencyAwarePolicy(Policies.defaultLoadBalancingPolicy(), timeOfLastFailure, timeOfLastFailure, timeOfLastFailure, timeOfLastFailure, retries));
+        			builder.withLoadBalancingPolicy(Policies.defaultLoadBalancingPolicy());
+            	}else{
+            		builder.withLoadBalancingPolicy(Policies.defaultLoadBalancingPolicy());
+            	}
+            }
+            
+            cCluster = builder.build();
 	    	
 	    	metadata = cCluster.getMetadata();
 			   System.out.printf("Connected to cluster: %s\n", 
@@ -149,6 +208,7 @@ class CassandraConnection extends AbstractConnection implements Connection
 			   }
 			   
 			cSession = cCluster.connect(currentKeyspace);
+			
                                                                   
         }        
         catch (Exception e)
