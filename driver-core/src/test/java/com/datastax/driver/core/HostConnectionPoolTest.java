@@ -1,17 +1,18 @@
 package com.datastax.driver.core;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import com.codahale.metrics.Gauge;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.fail;
 
 public class HostConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -25,6 +26,130 @@ public class HostConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster 
         return Lists.newArrayList(sb.toString());
     }
 
+    @Test(groups = "short")
+    public void fixed_size_pool_should_fill_its_core_connections_and_then_timeout() throws ConnectionException, TimeoutException {
+        HostConnectionPool pool = createPool(2, 2);
+
+        assertThat(pool.connections.size()).isEqualTo(2);
+        List<PooledConnection> coreConnections = Lists.newArrayList(pool.connections);
+
+        for (int i = 0; i < 256; i++) {
+            PooledConnection connection = pool.borrowConnection(100, MILLISECONDS);
+            assertThat(coreConnections).contains(connection);
+        }
+
+        boolean timedOut = false;
+        try {
+            pool.borrowConnection(100, MILLISECONDS);
+        } catch (TimeoutException e) {
+            timedOut = true;
+        }
+        assertThat(timedOut).isTrue();
+    }
+
+    @Test(groups = "short")
+    public void should_add_extra_connection_when_core_full() throws ConnectionException, TimeoutException, InterruptedException {
+        cluster.getConfiguration().getPoolingOptions()
+            .setIdleTimeoutSeconds(20)
+            .setMinSimultaneousRequestsPerConnectionThreshold(HostDistance.LOCAL, 1)
+            .setMaxConnectionsPerHost(HostDistance.LOCAL, 128);
+
+        HostConnectionPool pool = createPool(1, 2);
+        PooledConnection core = pool.connections.get(0);
+
+        // Fill core connection
+        for (int i = 0; i < 128; i++)
+            assertThat(
+                pool.borrowConnection(100, MILLISECONDS)
+            ).isEqualTo(core);
+
+        // Reaching 128 on the core connection should have triggered the creation of an extra one
+        TimeUnit.MILLISECONDS.sleep(100);
+        assertThat(pool.connections).hasSize(2);
+        PooledConnection extra1 = pool.connections.get(1);
+
+        assertThat(
+            pool.borrowConnection(100, MILLISECONDS)
+        ).isEqualTo(extra1);
+
+        // If the extra connection is returned it gets trashed
+        pool.returnConnection(extra1);
+        assertThat(pool.connections).hasSize(1);
+
+        // If the core connection gets returned we can borrow it again
+        pool.returnConnection(core);
+        assertThat(
+            pool.borrowConnection(100, MILLISECONDS)
+        ).isEqualTo(core);
+    }
+
+    @Test(groups = "short")
+    public void should_resurrect_trashed_connection_within_idle_timeout() throws ConnectionException, TimeoutException, InterruptedException {
+        cluster.getConfiguration().getPoolingOptions()
+            .setIdleTimeoutSeconds(20)
+            .setMinSimultaneousRequestsPerConnectionThreshold(HostDistance.LOCAL, 1)
+            .setMaxConnectionsPerHost(HostDistance.LOCAL, 128);
+
+        HostConnectionPool pool = createPool(1, 2);
+        PooledConnection core = pool.connections.get(0);
+
+        for (int i = 0; i < 128; i++)
+            assertThat(pool.borrowConnection(100, MILLISECONDS)).isEqualTo(core);
+
+        TimeUnit.MILLISECONDS.sleep(100);
+        assertThat(pool.connections).hasSize(2);
+        PooledConnection extra1 = pool.connections.get(1);
+
+        assertThat(pool.borrowConnection(100, MILLISECONDS)).isEqualTo(extra1);
+        pool.returnConnection(extra1);
+        assertThat(pool.connections).hasSize(1);
+
+        // extra1 is now in the trash, core still full
+        // Borrowing again should resurrect extra1 from the trash
+        assertThat(
+            pool.borrowConnection(100, MILLISECONDS)
+        ).isEqualTo(extra1);
+        assertThat(pool.connections).hasSize(2);
+    }
+
+    @Test(groups = "long")
+    public void should_not_resurrect_trashed_connection_after_idle_timeout() throws ConnectionException, TimeoutException, InterruptedException {
+        cluster.getConfiguration().getPoolingOptions()
+            .setIdleTimeoutSeconds(20)
+            .setMinSimultaneousRequestsPerConnectionThreshold(HostDistance.LOCAL, 1)
+            .setMaxConnectionsPerHost(HostDistance.LOCAL, 128);
+
+        HostConnectionPool pool = createPool(1, 2);
+        PooledConnection core = pool.connections.get(0);
+
+        for (int i = 0; i < 128; i++)
+            assertThat(pool.borrowConnection(100, MILLISECONDS)).isEqualTo(core);
+
+        TimeUnit.MILLISECONDS.sleep(100);
+        assertThat(pool.connections).hasSize(2);
+        PooledConnection extra1 = pool.connections.get(1);
+
+        assertThat(pool.borrowConnection(100, MILLISECONDS)).isEqualTo(extra1);
+        pool.returnConnection(extra1);
+        assertThat(pool.connections).hasSize(1);
+
+        // Give enough time for extra1 to be cleaned up from the trash:
+        TimeUnit.SECONDS.sleep(30);
+
+        // Next borrow should create another connection
+        PooledConnection extra2 = pool.borrowConnection(100, MILLISECONDS);
+        assertThat(extra2).isNotEqualTo(extra1);
+        assertThat(extra1.isClosed()).isTrue();
+    }
+
+    private HostConnectionPool createPool(int coreConnections, int maxConnections) {
+        cluster.getConfiguration().getPoolingOptions()
+            .setCoreConnectionsPerHost(HostDistance.LOCAL, coreConnections)
+            .setMaxConnectionsPerHost(HostDistance.LOCAL, maxConnections);
+        Session session = cluster.connect();
+        Host host = TestUtils.findHost(cluster, 1);
+        return ((SessionManager)session).pools.get(host);
+    }
 
     /**
      * Test for #JAVA-349 - Negative openConnection count results in broken connection release.
