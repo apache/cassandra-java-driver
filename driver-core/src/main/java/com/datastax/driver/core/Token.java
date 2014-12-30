@@ -25,7 +25,7 @@ import java.security.NoSuchAlgorithmException;
  * Note: we may want to expose this later if people use custom partitioner and want to be able to extend that.
  * This is way premature however.
  */
-abstract class Token implements Comparable<Token> {
+public abstract class Token implements Comparable<Token> {
 
     public static Token.Factory getFactory(String partitionerName) {
         if (partitionerName.endsWith("Murmur3Partitioner"))
@@ -44,7 +44,7 @@ abstract class Token implements Comparable<Token> {
     }
 
     // Murmur3Partitioner tokens
-    static class M3PToken extends Token {
+    public static class M3PToken extends Token {
         private final long value;
 
         public static final Factory FACTORY = new Factory() {
@@ -184,10 +184,15 @@ abstract class Token implements Comparable<Token> {
         public int hashCode() {
             return (int)(value^(value>>>32));
         }
+        
+        @Override
+        public String toString() {
+        	return String.valueOf(value);
+        }
     }
 
     // OPPartitioner tokens
-    static class OPPToken extends Token {
+    public static class OPPToken extends Token {
         private final ByteBuffer value;
 
         public static final Factory FACTORY = new Factory() {
@@ -226,10 +231,15 @@ abstract class Token implements Comparable<Token> {
         public int hashCode() {
             return value.hashCode();
         }
+        
+        @Override
+        public String toString() {
+        	return TypeCodec.StringCodec.utf8Instance.deserialize(value);
+        }
     }
 
     // RandomPartitioner tokens
-    static class RPToken extends Token {
+    public static class RPToken extends Token {
 
         private final BigInteger value;
 
@@ -279,6 +289,11 @@ abstract class Token implements Comparable<Token> {
         @Override
         public int hashCode() {
             return value.hashCode();
+        }
+        
+        @Override
+        public String toString() {
+        	return String.valueOf(value);
         }
     }
 }

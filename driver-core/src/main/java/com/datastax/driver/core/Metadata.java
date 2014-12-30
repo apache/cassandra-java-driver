@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -288,6 +287,20 @@ public class Metadata {
             return hosts == null ? Collections.<Host>emptySet() : hosts;
         }
     }
+    
+    /**
+     * returns an ordered token map for a given keyspace at this very moment. 
+     * This is useful if you want to compute a number of splits for let's 
+     * say Hadoop Map-Reduce jobs.
+     * @param keyspace
+     * @return
+     */
+    public Map<Token, Set<Host>> getTokenMap(String keyspace) {
+    	cluster.controlConnection.refreshNodeListAndTokenMap();
+    	keyspace = handleId(keyspace);
+    	TokenMap current = tokenMap;
+    	return current.tokenToHosts.get(keyspace);
+    }
 
     /**
      * The Cassandra name for the cluster connect to.
@@ -365,10 +378,10 @@ public class Metadata {
         return sb.toString();
     }
 
-    static class TokenMap {
+    public static class TokenMap {
 
         private final Token.Factory factory;
-        private final Map<String, Map<Token, Set<Host>>> tokenToHosts;
+        public final Map<String, Map<Token, Set<Host>>> tokenToHosts;
         private final List<Token> ring;
         final Set<Host> hosts;
 
@@ -380,7 +393,7 @@ public class Metadata {
         }
 
         public static TokenMap build(Token.Factory factory, Map<Host, Collection<String>> allTokens, Collection<KeyspaceMetadata> keyspaces) {
-
+        	
             Set<Host> hosts = allTokens.keySet();
             Map<Token, Host> tokenToPrimary = new HashMap<Token, Host>();
             Set<Token> allSorted = new TreeSet<Token>();
