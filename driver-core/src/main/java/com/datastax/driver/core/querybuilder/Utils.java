@@ -19,14 +19,16 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
-
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TupleValue;
 import com.datastax.driver.core.UDTValue;
-import com.datastax.driver.core.utils.Bytes;
 
 // Static utilities private to the query builder
 abstract class Utils {
@@ -51,7 +53,7 @@ abstract class Utils {
         return sb;
     }
 
-    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<Object> values, List<Object> variables) {
+    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<?> values, List<Object> variables) {
         for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);
