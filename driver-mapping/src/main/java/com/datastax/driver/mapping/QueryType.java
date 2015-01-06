@@ -17,12 +17,11 @@ package com.datastax.driver.mapping;
 
 import java.util.*;
 
+import com.datastax.driver.core.querybuilder.*;
 import com.google.common.base.Objects;
 
 import com.datastax.driver.core.TableMetadata;
-import com.datastax.driver.core.querybuilder.Delete;
-import com.datastax.driver.core.querybuilder.Insert;
-import com.datastax.driver.core.querybuilder.Select;
+
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 class QueryType {
@@ -60,12 +59,16 @@ class QueryType {
         switch (kind) {
             case SAVE:
                 {
-                    Insert insert = table == null
-                                  ? insertInto(mapper.getKeyspace(), mapper.getTable())
-                                  : insertInto(table);
-                    for (ColumnMapper<?> cm : mapper.allColumns())
-                        insert.value(cm.getColumnName(), bindMarker());
-                    return insert.toString();
+                    Update save = table == null
+                            ? update(mapper.getKeyspace(), mapper.getTable())
+                            : update(table);
+                    for (ColumnMapper<?> cm : mapper.regularColumns()) {
+                        Assignment assignment = cm.updatePolicy().preparedAssignment(cm);
+                        save.with(assignment);
+                    }
+                    for (int i = 0; i < mapper.primaryKeySize(); i++)
+                        save.where().and(eq(mapper.getPrimaryKeyColumn(i).getColumnName(), bindMarker()));
+                    return save.toString();
                 }
             case GET:
                 {
