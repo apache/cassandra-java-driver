@@ -81,6 +81,10 @@ abstract class EntityMapper<T> {
         return allColumns;
     }
 
+    public List<ColumnMapper<T>> regularColumns() {
+        return regularColumns;
+    }
+
     interface Factory {
         public <T> EntityMapper<T> create(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency);
         public <T> ColumnMapper<T> createColumnMapper(Class<T> componentClass, Field field, int position, MappingManager mappingManager);

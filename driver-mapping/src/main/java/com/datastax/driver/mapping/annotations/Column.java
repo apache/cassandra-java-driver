@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.mapping.annotations;
 
+import com.datastax.driver.mapping.UpdatePolicy;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -42,6 +44,12 @@ public @interface Column {
      * the field name.
      */
     String name() default "";
+
+    /**
+     * Determines how updates should be applied.
+     * @return true of the column should be appended to on write.
+     */
+    UpdatePolicy updatePolicy() default UpdatePolicy.OVERWRITE;
 
     /**
      * Whether the column name is a case sensitive one.

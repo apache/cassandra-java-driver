@@ -29,6 +29,9 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.*;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+
 /**
  * An object handling the mapping of a particular class.
  * <p>
@@ -122,10 +125,16 @@ public class Mapper<T> {
 
         BoundStatement bs = ps.bind();
         int i = 0;
-        for (ColumnMapper<T> cm : mapper.allColumns()) {
+        for (ColumnMapper<T> cm : mapper.regularColumns()) {
             Object value = cm.getValue(entity);
             bs.setBytesUnsafe(i++, value == null ? null : cm.getDataType().serialize(value, protocolVersion));
         }
+        for (int j = 0; j < mapper.primaryKeySize(); j++) {
+            ColumnMapper<T> primaryKeyColumn = mapper.getPrimaryKeyColumn(j);
+            Object value = primaryKeyColumn.getValue(entity);
+            bs.setBytesUnsafe(i++, value == null ? null : primaryKeyColumn.getDataType().serialize(value, protocolVersion));
+        }
+
 
         if (mapper.writeConsistency != null)
             bs.setConsistencyLevel(mapper.writeConsistency);

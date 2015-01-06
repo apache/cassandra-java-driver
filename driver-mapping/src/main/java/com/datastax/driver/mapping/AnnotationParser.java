@@ -222,6 +222,11 @@ class AnnotationParser {
         return field.getName().toLowerCase();
     }
 
+    public static UpdatePolicy updatePolicy(Field field) {
+        Column appendMarker = field.getAnnotation(Column.class);
+        return appendMarker != null ? appendMarker.updatePolicy() : UpdatePolicy.OVERWRITE;
+    }
+
     public static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, AccessorMapper.Factory factory, MappingManager mappingManager) {
         if (!accClass.isInterface())
             throw new IllegalArgumentException("@Accessor annotation is only allowed on interfaces");

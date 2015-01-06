@@ -33,18 +33,20 @@ abstract class ColumnMapper<T> {
     protected final DataType dataType;
     protected final Kind kind;
     protected final int position;
+    protected final UpdatePolicy updatePolicy;
 
     protected ColumnMapper(Field field, DataType dataType, int position) {
-        this(AnnotationParser.columnName(field), field.getName(), field.getType(), dataType, AnnotationParser.kind(field), position);
+        this(AnnotationParser.columnName(field), field.getName(), field.getType(), dataType, AnnotationParser.kind(field), position, AnnotationParser.updatePolicy(field));
     }
 
-    private ColumnMapper(String columnName, String fieldName, Class<?> javaType, DataType dataType, Kind kind, int position) {
+    private ColumnMapper(String columnName, String fieldName, Class<?> javaType, DataType dataType, Kind kind, int position, UpdatePolicy updatePolicy) {
         this.columnName = columnName;
         this.fieldName = fieldName;
         this.javaType = javaType;
         this.dataType = dataType;
         this.kind = kind;
         this.position = position;
+        this.updatePolicy = updatePolicy;
     }
 
     public abstract Object getValue(T entity);
@@ -58,4 +60,7 @@ abstract class ColumnMapper<T> {
         return dataType;
     }
 
+    public UpdatePolicy updatePolicy() {
+        return updatePolicy;
+    }
 }
