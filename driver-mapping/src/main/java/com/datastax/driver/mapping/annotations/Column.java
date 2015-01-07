@@ -46,8 +46,8 @@ public @interface Column {
     String name() default "";
 
     /**
-     * Determines how updates should be applied.
-     * @return true of the column should be appended to on write.
+     * Determines how updates should be applied to this column.
+     * @return the update policy for this Column
      */
     UpdatePolicy updatePolicy() default UpdatePolicy.OVERWRITE;
 
