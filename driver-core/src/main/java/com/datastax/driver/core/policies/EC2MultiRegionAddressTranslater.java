@@ -65,6 +65,11 @@ public class EC2MultiRegionAddressTranslater implements CloseableAddressTranslat
         }
     }
 
+    @VisibleForTesting
+    EC2MultiRegionAddressTranslater(DirContext ctx) {
+        this.ctx = ctx;
+    }
+
     @Override
     public InetSocketAddress translate(InetSocketAddress socketAddress) {
         InetAddress address = socketAddress.getAddress();
