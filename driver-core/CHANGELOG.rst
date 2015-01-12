@@ -4,6 +4,8 @@ CHANGELOG
 2.0.10:
 -------
 
+- [bug] Fix unwanted LBP notifications when a contact host is down (JAVA-613)
+
 
 2.0.9:
 ------

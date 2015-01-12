@@ -447,7 +447,7 @@ class ControlConnection implements Host.StateListener {
                 return false;
             }
 
-            updateInfo(host, row, cluster);
+            updateInfo(host, row, cluster, false);
             return true;
 
         } catch (ConnectionException e) {
@@ -474,9 +474,9 @@ class ControlConnection implements Host.StateListener {
     }
 
     // row can come either from the 'local' table or the 'peers' one
-    private static void updateInfo(Host host, Row row, Cluster.Manager cluster) {
+    private static void updateInfo(Host host, Row row, Cluster.Manager cluster, boolean isInitialConnection) {
         if (!row.isNull("data_center") || !row.isNull("rack"))
-            updateLocationInfo(host, row.getString("data_center"), row.getString("rack"), cluster);
+            updateLocationInfo(host, row.getString("data_center"), row.getString("rack"), isInitialConnection, cluster);
 
         String version = row.getString("release_version");
         // We don't know if it's a 'local' or a 'peers' row, and only 'peers' rows have the 'peer' field.
@@ -487,17 +487,17 @@ class ControlConnection implements Host.StateListener {
         host.setVersionAndListenAdress(version, listenAddress);
     }
 
-    private static void updateLocationInfo(Host host, String datacenter, String rack, Cluster.Manager cluster) {
+    private static void updateLocationInfo(Host host, String datacenter, String rack, boolean isInitialConnection, Cluster.Manager cluster) {
         if (Objects.equal(host.getDatacenter(), datacenter) && Objects.equal(host.getRack(), rack))
             return;
 
         // If the dc/rack information changes for an existing node, we need to update the load balancing policy.
         // For that, we remove and re-add the node against the policy. Not the most elegant, and assumes
         // that the policy will update correctly, but in practice this should work.
-        if (!host.wasJustAdded())
+        if (!isInitialConnection)
             cluster.loadBalancingPolicy().onDown(host);
         host.setLocationInfo(datacenter, rack);
-        if (!host.wasJustAdded())
+        if (!isInitialConnection)
             cluster.loadBalancingPolicy().onAdd(host);
     }
 
@@ -531,7 +531,7 @@ class ControlConnection implements Host.StateListener {
             if (host == null) {
                 logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
-                updateInfo(host, localRow, cluster);
+                updateInfo(host, localRow, cluster, isInitialConnection);
                 Set<String> tokens = localRow.getSet("tokens", String.class);
                 if (partitioner != null && !tokens.isEmpty())
                     tokenMap.put(host, tokens);
@@ -568,7 +568,7 @@ class ControlConnection implements Host.StateListener {
                 isNew = true;
             }
             if (dcs.get(i) != null || racks.get(i) != null)
-                updateLocationInfo(host, dcs.get(i), racks.get(i), cluster);
+                updateLocationInfo(host, dcs.get(i), racks.get(i), isInitialConnection, cluster);
             if (cassandraVersions.get(i) != null)
                 host.setVersionAndListenAdress(cassandraVersions.get(i), listenAddresses.get(i));
 

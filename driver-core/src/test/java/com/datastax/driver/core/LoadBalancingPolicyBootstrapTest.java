@@ -15,95 +15,154 @@
  */
 package com.datastax.driver.core;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Collection;
+import java.util.List;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 
-public class LoadBalancingPolicyBootstrapTest {
-    CountingPolicy policy;
-    CCMBridge.CCMCluster c;
+import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryPolicy.Action.*;
+import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryPolicy.entry;
 
-    @BeforeClass(groups = "short")
-    private void setup() {
-        policy = new CountingPolicy(new RoundRobinPolicy());
-        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(policy);
-        c = CCMBridge.buildCluster(2, builder);
+public class LoadBalancingPolicyBootstrapTest {
+
+    @Test(groups = "short")
+    public void should_init_policy_with_up_contact_points() throws Exception {
+        HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
+
+        CCMBridge ccm = null;
+        Cluster cluster = null;
+        try {
+            ccm = CCMBridge.create("test", 2);
+            cluster = Cluster.builder()
+                .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
+                .withLoadBalancingPolicy(policy)
+                .build();
+
+            cluster.init();
+
+            assertThat(policy.history).containsExactly(
+                entry(INIT, TestUtils.findHost(cluster, 1)),
+                entry(INIT, TestUtils.findHost(cluster, 2))
+            );
+        } finally {
+            if (cluster != null)
+                cluster.close();
+            if (ccm != null)
+                ccm.remove();
+        }
     }
 
     @Test(groups = "short")
-    public void notificationsTest() throws Exception {
-        assertEquals(policy.inits, 2, "inits\n" + policy.history);
-        assertEquals(policy.adds, 0, "adds\n" + policy.history);
-        assertEquals(policy.suspecteds, 0, "suspecteds\n" + policy.history);
-        assertEquals(policy.removes, 0, "removes\n" + policy.history);
-        assertEquals(policy.ups, 0, "ups\n" + policy.history);
-        assertEquals(policy.downs, 0, "downs\n" + policy.history);
+    public void should_send_down_notifications_after_init_when_contact_points_are_down() throws Exception {
+        HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
+
+        CCMBridge ccm = null;
+        Cluster cluster = null;
+        try {
+            ccm = CCMBridge.create("test", 2);
+            ccm.stop(2);
+            ccm.waitForDown(2);
+
+            cluster = Cluster.builder()
+                .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
+                .withLoadBalancingPolicy(policy)
+                .build();
+
+            cluster.init();
+
+            assertThat(policy.history).containsExactly(
+                entry(INIT, TestUtils.findHost(cluster, 1)),
+                entry(DOWN, TestUtils.findHost(cluster, 2))
+            );
+        } finally {
+            if (cluster != null)
+                cluster.close();
+            if (ccm != null)
+                ccm.remove();
+        }
     }
 
-    @AfterClass(groups = "short")
-    private void tearDown() {
-        c.discard();
-    }
+    static class HistoryPolicy extends DelegatingLoadBalancingPolicy {
+        enum Action {INIT, UP, DOWN, ADD, REMOVE, SUSPECT}
 
-    static class CountingPolicy extends DelegatingLoadBalancingPolicy {
+        static class Entry {
+            final Action action;
+            final Host host;
 
-        int inits;
-        int adds;
-        int suspecteds;
-        int removes;
-        int ups;
-        int downs;
+            public Entry(Action action, Host host) {
+                this.action = action;
+                this.host = host;
+            }
 
-        final StringWriter history = new StringWriter();
-        private final PrintWriter out = new PrintWriter(history);
+            @Override
+            public boolean equals(Object other) {
+                if (other == this)
+                    return true;
+                if (other instanceof Entry) {
+                    Entry that = (Entry)other;
+                    return this.action == that.action && this.host.equals(that.host);
+                }
+                return false;
+            }
 
-        public CountingPolicy(LoadBalancingPolicy delegate) {
+            @Override
+            public int hashCode() {
+                return Objects.hashCode(action, host);
+            }
+
+            @Override public String toString() {
+                return Objects.toStringHelper(this).add("action", action).add("host", host).toString();
+            }
+        }
+
+        static Entry entry(Action action, Host host) {
+            return new Entry(action, host);
+        }
+
+        List<Entry> history = Lists.newArrayList();
+
+        public HistoryPolicy(LoadBalancingPolicy delegate) {
             super(delegate);
         }
 
         @Override
         public void init(Cluster cluster, Collection<Host> hosts) {
             super.init(cluster, hosts);
-            inits += hosts.size();
+            for (Host host : hosts) {
+                history.add(entry(INIT, host));
+            }
         }
 
         public void onAdd(Host host) {
-            out.printf("add %s%n", host);
-            adds++;
+            history.add(entry(ADD, host));
             super.onAdd(host);
         }
 
         public void onSuspected(Host host) {
-            out.printf("suspect %s%n", host);
-            suspecteds++;
+            history.add(entry(SUSPECT, host));
             super.onSuspected(host);
         }
 
         public void onUp(Host host) {
-            out.printf("up %s%n", host);
-            ups++;
+            history.add(entry(UP, host));
             super.onUp(host);
         }
 
         public void onDown(Host host) {
-            out.printf("down %s%n", host);
-            downs++;
+            history.add(entry(DOWN, host));
             super.onDown(host);
         }
 
         public void onRemove(Host host) {
-            out.printf("remove %s%n", host);
-            removes++;
+            history.add(entry(REMOVE, host));
             super.onRemove(host);
         }
     }
