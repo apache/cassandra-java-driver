@@ -9,6 +9,7 @@ CHANGELOG
   streamId was already released and reused (JAVA-632).
 - [bug] Fix issue when newly opened pool fails before we could mark the node UP
   (JAVA-642)
+- [bug] Fix unwanted LBP notifications when a contact host is down (JAVA-613)
 
 
 2.0.9:
