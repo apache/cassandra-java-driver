@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
@@ -1245,4 +1246,17 @@ public class BoundStatement extends Statement implements SettableData<BoundState
              index += 1;
         }
     }
+
+   @Override
+   public String toString() {
+      StringBuilder sb = new StringBuilder("BoundStatement(" + statement.getQueryString() + ",[");
+      for(int i = 0; i < wrapper.values.length; i++) {
+         if(i > 0) {
+            sb.append(",");
+         }
+         sb.append(new String(wrapper.getValue(i).array(), StandardCharsets.UTF_8));
+      }
+      sb.append("])");
+      return sb.toString();
+   }
 }
