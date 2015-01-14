@@ -1247,16 +1247,16 @@ public class BoundStatement extends Statement implements SettableData<BoundState
         }
     }
 
-   @Override
-   public String toString() {
-      StringBuilder sb = new StringBuilder("BoundStatement(" + statement.getQueryString() + ",[");
-      for(int i = 0; i < wrapper.values.length; i++) {
-         if(i > 0) {
-            sb.append(",");
-         }
-         sb.append(new String(wrapper.getValue(i).array(), StandardCharsets.UTF_8));
-      }
-      sb.append("])");
-      return sb.toString();
-   }
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("BoundStatement(" + statement.getQueryString() + ",[");
+        for(int i = 0; i < wrapper.values.length; i++) {
+            if(i > 0) {
+                sb.append(",");
+            }
+            sb.append(new String(wrapper.getValue(i).array(), StandardCharsets.UTF_8));
+        }
+        sb.append("])");
+        return sb.toString();
+    }
 }
