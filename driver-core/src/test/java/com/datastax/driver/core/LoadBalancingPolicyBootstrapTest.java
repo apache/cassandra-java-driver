@@ -73,7 +73,7 @@ public class LoadBalancingPolicyBootstrapTest {
      * but only after {@link LoadBalancingPolicy#init(Cluster, Collection)} has been called.
      *
      * @test_category load_balancing:notification
-     * @expected_result init() is called
+     * @expected_result init() is called with the up host, followed by onDown() for the downed host.
      * @jira_ticket JAVA-613
      * @since 2.0.10, 2.1.5
      */
