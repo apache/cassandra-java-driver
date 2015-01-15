@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
 
@@ -33,6 +34,13 @@ import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryP
 
 public class LoadBalancingPolicyBootstrapTest {
 
+    /**
+     * Ensures that when a cluster is initialized that {@link LoadBalancingPolicy#init(Cluster, Collection)} is called
+     * with each reachable contact point.
+     *
+     * @test_category load_balancing:notification
+     * @expected_result init() is called for each of two contact points.
+     */
     @Test(groups = "short")
     public void should_init_policy_with_up_contact_points() throws Exception {
         HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
@@ -60,6 +68,15 @@ public class LoadBalancingPolicyBootstrapTest {
         }
     }
 
+    /**
+     * Ensures that {@link LoadBalancingPolicy#onDown(Host)} is called for a contact point that goes down,
+     * but only after {@link LoadBalancingPolicy#init(Cluster, Collection)} has been called.
+     *
+     * @test_category load_balancing:notification
+     * @expected_result init() is called
+     * @jira_ticket JAVA-613
+     * @since 2.0.10, 2.1.5
+     */
     @Test(groups = "short")
     public void should_send_down_notifications_after_init_when_contact_points_are_down() throws Exception {
         HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
@@ -67,21 +84,34 @@ public class LoadBalancingPolicyBootstrapTest {
         CCMBridge ccm = null;
         Cluster cluster = null;
         try {
-            ccm = CCMBridge.create("test", 2);
-            ccm.stop(2);
-            ccm.waitForDown(2);
-
             cluster = Cluster.builder()
                 .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
                 .withLoadBalancingPolicy(policy)
                 .build();
 
+            // In order to validate this behavior, we need to stop the first node that would be attempted to be
+            // established as the control connection.  The control connection uses the Cluster metadata hosts and
+            // tries hosts in the order of the hosts iterator.  Therefore this logic is dependent on the internal
+            // behavior of the control connection which is subject to change.
+            Metadata m = new Metadata(cluster.manager);
+            m.add(new InetSocketAddress(CCMBridge.ipOfNode(1), 9042));
+            m.add(new InetSocketAddress(CCMBridge.ipOfNode(2), 9042));
+            String hostName = m.allHosts().iterator().next().getSocketAddress().getHostName();
+            int nodeToStop = hostName.endsWith("2") ? 2 : 1;
+            int activeNode = nodeToStop == 2 ? 1 : 2;
+
+            ccm = CCMBridge.create("test", 2);
+            ccm.stop(nodeToStop);
+            ccm.waitForDown(nodeToStop);
+
             cluster.init();
 
             assertThat(policy.history).containsExactly(
-                entry(INIT, TestUtils.findHost(cluster, 1)),
-                entry(DOWN, TestUtils.findHost(cluster, 2))
+                entry(INIT, TestUtils.findHost(cluster, activeNode)),
+                entry(DOWN, TestUtils.findHost(cluster, nodeToStop))
             );
+
+            cluster.connect();
         } finally {
             if (cluster != null)
                 cluster.close();
