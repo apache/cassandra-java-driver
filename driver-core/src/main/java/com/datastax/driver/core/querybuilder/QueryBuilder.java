@@ -295,7 +295,7 @@ public final class QueryBuilder {
      * @param values the values
      * @return the corresponding where clause.
      */
-	public static Clause in(String name, List<Object> values) {
+	public static Clause in(String name, List<?> values) {
 		return new Clause.InClause(name, values);
 	}
 
@@ -325,7 +325,7 @@ public final class QueryBuilder {
      *
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
-    public static Clause lt(List<String> names, List<Object> values) {
+    public static Clause lt(List<String> names, List<?> values) {
         if (names.size() != values.size())
             throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
 
@@ -358,7 +358,7 @@ public final class QueryBuilder {
      *
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
-    public static Clause lte(List<String> names, List<Object> values) {
+    public static Clause lte(List<String> names, List<?> values) {
         if (names.size() != values.size())
             throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
 
@@ -391,7 +391,7 @@ public final class QueryBuilder {
      *
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
-    public static Clause gt(List<String> names, List<Object> values) {
+    public static Clause gt(List<String> names, List<?> values) {
         if (names.size() != values.size())
             throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
 
@@ -424,7 +424,7 @@ public final class QueryBuilder {
      *
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
-    public static Clause gte(List<String> names, List<Object> values) {
+    public static Clause gte(List<String> names, List<?> values) {
         if (names.size() != values.size())
             throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
 
