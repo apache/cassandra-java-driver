@@ -25,10 +25,14 @@ import static org.apache.cassandra.cql.jdbc.Utils.NO_SERVER;
 import static org.apache.cassandra.cql.jdbc.Utils.NO_UPDATE_COUNT;
 import static org.apache.cassandra.cql.jdbc.Utils.SCHEMA_MISMATCH;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.sql.Blob;
 import java.sql.Date;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
@@ -50,14 +54,18 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.collect.Sets;
 
 class CassandraPreparedStatement extends CassandraStatement implements PreparedStatement
 {
@@ -298,7 +306,14 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         checkNotClosed();
         checkIndex(parameterIndex);
         //bindValues.put(parameterIndex, JdbcInt32.instance.decompose(integer));
-        this.statement.setInt(parameterIndex-1, integer);
+        try{
+        	this.statement.setInt(parameterIndex-1, integer);
+        }catch(InvalidTypeException e){
+    		if(e.getMessage().contains("is of type varint")){
+    			this.statement.setVarint(parameterIndex-1, BigInteger.valueOf((long)integer));
+    		}
+    	}
+        
     }
 
 
@@ -334,11 +349,43 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         setNull(parameterIndex, sqlType);
     }
 
+    
 
     public void setObject(int parameterIndex, Object object) throws SQLException
     {
         // For now all objects are forced to String type
-        setObject(parameterIndex, object, Types.VARCHAR, 0);        
+    	// TODO : change this quickly stupid...
+    	//sdfsdf
+    	System.out.println("type : " + object.getClass().getSimpleName());
+    	int targetType=0;
+    	if(object.getClass().equals(java.lang.Long.class)){
+    		targetType = Types.BIGINT;    		
+    	} else if(object.getClass().equals(java.io.ByteArrayInputStream.class)){
+    		targetType = Types.BINARY;
+    	} else if(object.getClass().equals(java.lang.String.class)){
+    		targetType = Types.VARCHAR;
+    	} else if(object.getClass().equals(java.lang.Boolean.class)){
+    		targetType = Types.BOOLEAN;
+    	}else if(object.getClass().equals(java.math.BigDecimal.class)){
+    		targetType = Types.DECIMAL;
+    	}else if(object.getClass().equals(java.lang.Double.class)){
+    		targetType = Types.DOUBLE;
+    	}else if(object.getClass().equals(java.lang.Float.class)){
+    		targetType = Types.FLOAT;
+    	}else if(object.getClass().equals(java.net.Inet4Address.class)){
+    		targetType = Types.OTHER;
+    	}else if(object.getClass().equals(java.lang.Integer.class)){
+    		targetType = Types.INTEGER;
+    	}else if(object.getClass().equals(java.lang.String.class)){
+    		targetType = Types.VARCHAR;
+    	}else if(object.getClass().equals(java.sql.Timestamp.class)){
+    		targetType = Types.TIMESTAMP;
+    	}else if(object.getClass().equals(java.util.UUID.class)){
+    		targetType = Types.ROWID;
+    	}else{
+    		targetType = Types.OTHER;
+    	}
+        setObject(parameterIndex, object, targetType, 0);        
     }
 
     public void setObject(int parameterIndex, Object object, int targetSqlType) throws SQLException
@@ -350,48 +397,99 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
     {
         checkNotClosed();
         checkIndex(parameterIndex);
+        System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass() + " / Target type = " + targetSqlType);
         //TODO: we must correctly analyze the targetSqlType to choose which setXXXX method to use
-        switch(targetSqlType){
+        switch(targetSqlType){          
         case Types.VARCHAR:
         	this.statement.setString(parameterIndex-1, object.toString());
+        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.BIGINT:
         	this.statement.setLong(parameterIndex-1, Long.parseLong(object.toString()));
+        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
-        case Types.BINARY:
-        	this.statement.setBytes(parameterIndex-1, (ByteBuffer.wrap((byte[])object)));
+        case Types.BINARY:        	
+        	byte[] array = new byte[((java.io.ByteArrayInputStream)object).available()];
+        	try {
+				((java.io.ByteArrayInputStream)object).read(array);
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+        	this.statement.setBytes(parameterIndex-1, (ByteBuffer.wrap((array))));
+        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;        	
-        case Types.BLOB:
-        	this.statement.setBytes(parameterIndex-1, (ByteBuffer.wrap((byte[])object)));
-        	break;     
         case Types.BOOLEAN:
         	this.statement.setBool(parameterIndex-1, (boolean)object);
+        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.CHAR:
         	this.statement.setString(parameterIndex-1, object.toString());
+        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.CLOB:
         	this.statement.setString(parameterIndex-1, object.toString());
+        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;          
         case Types.TIMESTAMP:
         	this.statement.setDate(parameterIndex-1, (Timestamp)object);
+        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
+        	break;
+        case Types.DECIMAL:
+        	this.statement.setDecimal(parameterIndex-1, (BigDecimal)object);
+        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
+        	break;
+        case Types.DOUBLE:
+        	this.statement.setDouble(parameterIndex-1, (Double)object);
+        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
+        	break;
+        case Types.FLOAT:
+        	this.statement.setFloat(parameterIndex-1, (float)object);
+        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
+        	break;
+        case Types.INTEGER:
+        	try{
+        		this.statement.setInt(parameterIndex-1, (int)object);
+        	}catch(InvalidTypeException e){
+        		if(e.getMessage().contains("is of type varint")){
+        			this.statement.setVarint(parameterIndex-1, BigInteger.valueOf(Long.parseLong(object.toString())));
+        		}
+        	}
+        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.DATE:
         	this.statement.setDate(parameterIndex-1, (Date)object);
+        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
+        	break;
+        case Types.ROWID:
+        	this.statement.setUUID(parameterIndex-1, (java.util.UUID)object);
+        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.OTHER:
-            if ( List.class.isAssignableFrom(object.getClass()))
+        	
+        	if(object.getClass().equals(java.util.UUID.class)){
+        		this.statement.setUUID(parameterIndex-1, (java.util.UUID) object);
+        		System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
+        	}
+        	if(object.getClass().equals(java.net.InetAddress.class) || object.getClass().equals(java.net.Inet4Address.class)){
+        		this.statement.setInet(parameterIndex-1, (InetAddress) object);
+        		System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
+        	}
+        	else if ( List.class.isAssignableFrom(object.getClass()))
             {
               this.statement.setList(parameterIndex-1,handleAsList(object.getClass(), object));  
+              System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
             }
             else if ( Set.class.isAssignableFrom(object.getClass()))
             {
             	this.statement.setSet(parameterIndex-1,handleAsSet(object.getClass(), object)); 
+            	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
             }
             else if ( Map.class.isAssignableFrom(object.getClass()))
             {
-            	this.statement.setMap(parameterIndex-1,handleAsMap(object.getClass(), object));                  
-            }
+            	this.statement.setMap(parameterIndex-1,handleAsMap(object.getClass(), object));              
+            	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
+            } 
                     	
         	break;
         }
@@ -416,12 +514,31 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         //bindValues.put(parameterIndex, JdbcInteger.instance.decompose(BigInteger.valueOf(smallint)));
     }
 
+    
 
     public void setString(int parameterIndex, String value) throws SQLException
     {
         checkNotClosed();
         checkIndex(parameterIndex);
-        this.statement.setString(parameterIndex-1, value);
+        try{        	
+        	this.statement.setString(parameterIndex-1, value);
+        }catch(InvalidTypeException e){        	
+       
+        	// Big ugly hack in order to parse string representations of collections
+        	// Yes, I'm ashamed...
+           	if(e.getMessage().contains("is of type set<")){
+        		String itemType = e.getMessage().substring(e.getMessage().indexOf("<")+1, e.getMessage().indexOf(">"));
+        		this.statement.setSet(parameterIndex-1, Utils.parseSet(itemType, value));        		        		
+        		System.out.println("parsed set : " + Utils.parseSet(itemType, value));
+    		}else if(e.getMessage().contains("is of type list<")){
+        		String itemType = e.getMessage().substring(e.getMessage().indexOf("<")+1, e.getMessage().indexOf(">"));
+        		this.statement.setList(parameterIndex-1, Utils.parseList(itemType, value));        	    		
+    		}else if(e.getMessage().contains("is of type map<")){
+        		String[] kvTypes = e.getMessage().substring(e.getMessage().indexOf("<")+1, e.getMessage().indexOf(">")).replace(" ", "").split(",");
+        		this.statement.setMap(parameterIndex-1, Utils.parseMap(kvTypes[0],kvTypes[1], value));
+    		}
+        }
+        
     }
 
 
@@ -521,5 +638,19 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
     {
         return getCollectionElementType(((Map) maybeMap).values());
     }
+
+
+	@Override
+	public void setBlob(int parameterIndex, Blob value) throws SQLException {
+		bindValues.put(parameterIndex,value);
+		
+	}
+
+
+	@Override
+	public void setBlob(int arg0, InputStream arg1) throws SQLException {
+		// TODO Auto-generated method stub
+		
+	}
    
 }

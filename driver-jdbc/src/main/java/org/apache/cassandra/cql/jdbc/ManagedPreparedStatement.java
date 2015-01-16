@@ -2,8 +2,10 @@ package org.apache.cassandra.cql.jdbc;
 
 import static org.apache.cassandra.cql.jdbc.Utils.WAS_CLOSED_CON;
 
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.URL;
+import java.sql.Blob;
 import java.sql.Date;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
@@ -997,5 +999,35 @@ class ManagedPreparedStatement extends AbstractStatement implements PreparedStat
 			pooledCassandraConnection.statementErrorOccurred(preparedStatement, sqlException);
 			throw sqlException;
 		}
+	}
+
+	@Override
+	public void setBlob(int parameterIndex, Blob value) throws SQLException {
+		checkNotClosed();
+		try
+		{
+			preparedStatement.setBlob(parameterIndex, value);
+		}
+		catch (SQLException sqlException)
+		{
+			pooledCassandraConnection.statementErrorOccurred(preparedStatement, sqlException);
+			throw sqlException;
+		}
+		
+	}
+
+	@Override
+	public void setBlob(int parameterIndex, InputStream value) throws SQLException {
+		// checkNotClosed();
+		try
+		{
+			preparedStatement.setBlob(parameterIndex, value);
+		}
+		catch (SQLException sqlException)
+		{
+			pooledCassandraConnection.statementErrorOccurred(preparedStatement, sqlException);
+			throw sqlException;
+		}
+		
 	}
 }

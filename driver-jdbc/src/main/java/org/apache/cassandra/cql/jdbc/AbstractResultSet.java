@@ -60,16 +60,7 @@ abstract class AbstractResultSet
         throw new SQLFeatureNotSupportedException(NOT_SUPPORTED);
     }
 
-    public InputStream getBinaryStream(int arg0) throws SQLException
-    {
-        throw new SQLFeatureNotSupportedException(NOT_SUPPORTED);
-    }
-
-    public InputStream getBinaryStream(String arg0) throws SQLException
-    {
-        throw new SQLFeatureNotSupportedException(NOT_SUPPORTED);
-    }
-
+    
     public Blob getBlob(int arg0) throws SQLException
     {
         throw new SQLFeatureNotSupportedException(NOT_SUPPORTED);

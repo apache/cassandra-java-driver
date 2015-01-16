@@ -23,6 +23,8 @@ package org.apache.cassandra.cql.jdbc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -30,18 +32,25 @@ import java.nio.ByteBuffer;
 import java.sql.SQLException;
 import java.sql.SQLNonTransientConnectionException;
 import java.sql.SQLSyntaxErrorException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.Deflater;
 
+import org.mockito.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 /**
  * A set of static utility methods used by the JDBC Suite, and various default values and error message strings
@@ -371,5 +380,250 @@ class Utils
             }
         }
         return params;
+    }
+    
+    public static LinkedHashSet<?> parseSet(String itemType, String value){
+    	
+    	if(itemType.equals("varchar") || itemType.equals("text") || itemType.equals("ascii")){
+    		LinkedHashSet<String> zeSet = new LinkedHashSet<String>();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			for(String val:values){
+				zeSet.add(val);				
+			}
+			return zeSet;
+			
+		}else if(itemType.equals("bigint")){
+			LinkedHashSet<Long> zeSet = Sets.newLinkedHashSet();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+					zeSet.add(Long.parseLong(val.trim()));        				
+			}        		
+			return zeSet;
+		}else if(itemType.equals("varint")){
+			LinkedHashSet<BigInteger> zeSet = Sets.newLinkedHashSet();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+					zeSet.add(BigInteger.valueOf(Long.parseLong(val.trim())));        				
+			}        		
+			return zeSet;
+		}else if(itemType.equals("decimal")){
+			LinkedHashSet<BigDecimal> zeSet = Sets.newLinkedHashSet();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+					zeSet.add(BigDecimal.valueOf(Double.parseDouble(val.trim())));        				
+			}        		
+			return zeSet;
+		}else if(itemType.equals("double")){
+			LinkedHashSet<Double> zeSet = Sets.newLinkedHashSet();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+					zeSet.add(Double.parseDouble(val.trim()));        				
+			}        		
+			return zeSet;
+		}else if(itemType.equals("float")){
+			LinkedHashSet<Float> zeSet = Sets.newLinkedHashSet();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+					zeSet.add(Float.parseFloat(val.trim()));        				
+			}        		
+			return zeSet;
+		}else if(itemType.equals("boolean")){
+			LinkedHashSet<Boolean> zeSet = Sets.newLinkedHashSet();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+					zeSet.add(Boolean.parseBoolean(val.trim()));        				
+			}        		
+			return zeSet;
+		}else if(itemType.equals("int")){
+			LinkedHashSet<Integer> zeSet = Sets.newLinkedHashSet();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+					zeSet.add(Integer.parseInt(val.trim()));        				
+			}        		
+			return zeSet;
+		}else if(itemType.equals("uuid")){
+			LinkedHashSet<UUID> zeSet = Sets.newLinkedHashSet();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+					zeSet.add(UUID.fromString(val.trim()));        				
+			}        		
+			return zeSet;
+		}else if(itemType.equals("timeuuid")){
+			LinkedHashSet<UUID> zeSet = Sets.newLinkedHashSet();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+					zeSet.add(UUID.fromString(val.trim()));        				
+			}        		
+			return zeSet;
+		}
+    	return null;
+    	
+    }
+    
+    public static ArrayList<?> parseList(String itemType, String value){
+    	
+    	if(itemType.equals("varchar") || itemType.equals("text") || itemType.equals("ascii")){
+    		ArrayList<String> zeList = Lists.newArrayList();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			int i=0;
+			for(String val:values){
+				if(i>0 && val.startsWith(" ")){
+					zeList.add(val.substring(1));
+				}else{
+					zeList.add(val);
+				}
+				i++;
+			}
+			return zeList;
+			
+		}else if(itemType.equals("bigint")){
+			ArrayList<Long> zeList = Lists.newArrayList();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+				zeList.add(Long.parseLong(val.trim()));        				
+			}        		
+			return zeList;
+		}else if(itemType.equals("varint")){
+			ArrayList<BigInteger> zeList = Lists.newArrayList();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+				zeList.add(BigInteger.valueOf(Long.parseLong(val.trim())));        				
+			}        		
+			return zeList;
+		}else if(itemType.equals("decimal")){
+			ArrayList<BigDecimal> zeList = Lists.newArrayList();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+				zeList.add(BigDecimal.valueOf(Double.parseDouble(val.trim())));        				
+			}        		
+			return zeList;
+		}else if(itemType.equals("double")){
+			ArrayList<Double> zeList = Lists.newArrayList();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+				zeList.add(Double.parseDouble(val.trim()));        				
+			}        		
+			return zeList;
+		}else if(itemType.equals("float")){
+			ArrayList<Float> zeList = Lists.newArrayList();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+				zeList.add(Float.parseFloat(val.trim()));        				
+			}        		
+			return zeList;
+		}else if(itemType.equals("boolean")){
+			ArrayList<Boolean> zeList = Lists.newArrayList();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+				zeList.add(Boolean.parseBoolean(val.trim()));        				
+			}        		
+			return zeList;
+		}else if(itemType.equals("int")){
+			ArrayList<Integer> zeList = Lists.newArrayList();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+				zeList.add(Integer.parseInt(val.trim()));        				
+			}        		
+			return zeList;
+		}else if(itemType.equals("uuid")){
+			ArrayList<UUID> zeList = Lists.newArrayList();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+				zeList.add(UUID.fromString(val.trim()));        				
+			}        		
+			return zeList;
+		}else if(itemType.equals("timeuuid")){
+			ArrayList<UUID> zeList = Lists.newArrayList();
+			String[] values = value.replace("[", "").replace("]", "").split(", ");
+			
+			for(String val:values){        				
+				zeList.add(UUID.fromString(val.trim()));        				
+			}        		
+			return zeList;
+		}
+    	return null;
+    	
+    }
+    
+    public static HashMap<?,?> parseMap(String kType, String vType, String value){
+    	//Class<?> kTypeClass = TypesMap.getTypeForComparator(kType).getClass(); 
+    	
+    	Type t = Type.getObjectType(kType);
+    	
+    	Map zeMap = new HashMap();
+    	String[] values = value.replace("{", "").replace("}", "").split(", ");
+    	List keys = Lists.newArrayList();
+    	List vals = Lists.newArrayList();
+    	
+    	for(String val:values){
+    		String[] keyVal = val.split("=");    		
+    		if(kType.equals("bigint")){
+    			keys.add(Long.parseLong(keyVal[0]));
+    		}else if(kType.equals("varint")){    			
+    			keys.add(BigInteger.valueOf(Long.parseLong(keyVal[0])));
+			}else if(kType.equals("decimal")){
+				keys.add(BigDecimal.valueOf(Double.parseDouble(keyVal[0])));			
+			}else if(kType.equals("double")){				
+				keys.add(Double.parseDouble(keyVal[0]));
+			}else if(kType.equals("float")){
+				keys.add(Float.parseFloat(keyVal[0]));			
+			}else if(kType.equals("boolean")){
+				keys.add(Boolean.parseBoolean(keyVal[0]));			
+			}else if(kType.equals("int")){
+				keys.add(Integer.parseInt(keyVal[0]));				
+			}else if(kType.equals("uuid")){
+				keys.add(UUID.fromString(keyVal[0]));				
+			}else if(kType.equals("timeuuid")){
+				keys.add(UUID.fromString(keyVal[0]));
+			}else{
+				keys.add(keyVal[0]);
+			}
+    		
+    		if(vType.equals("bigint")){
+    			vals.add(Long.parseLong(keyVal[1]));
+    		}else if(vType.equals("varint")){    			
+    			vals.add(BigInteger.valueOf(Long.parseLong(keyVal[1])));
+			}else if(vType.equals("decimal")){
+				vals.add(BigDecimal.valueOf(Double.parseDouble(keyVal[1])));			
+			}else if(vType.equals("double")){				
+				vals.add(Double.parseDouble(keyVal[1]));
+			}else if(vType.equals("float")){
+				vals.add(Float.parseFloat(keyVal[1]));			
+			}else if(vType.equals("boolean")){
+				vals.add(Boolean.parseBoolean(keyVal[1]));			
+			}else if(vType.equals("int")){
+				vals.add(Integer.parseInt(keyVal[1]));				
+			}else if(vType.equals("uuid")){
+				vals.add(UUID.fromString(keyVal[1]));				
+			}else if(vType.equals("timeuuid")){
+				vals.add(UUID.fromString(keyVal[1]));
+			}else{
+				vals.add(keyVal[1]);
+			}
+    		
+    		zeMap.put(keys.get(keys.size()-1), vals.get(vals.size()-1));
+    		
+    	}
+    	
+    	
+    	return (HashMap<?, ?>) zeMap;
+    	
     }
 }
