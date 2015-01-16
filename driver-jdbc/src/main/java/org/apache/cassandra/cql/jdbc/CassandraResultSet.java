@@ -22,6 +22,8 @@ package org.apache.cassandra.cql.jdbc;
 
 import static org.apache.cassandra.cql.jdbc.Utils.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URL;
@@ -36,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -536,12 +539,29 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     public long getLong(int index) throws SQLException
     {
         checkIndex(index);
+        try{
+        	return currentRow.getLong(index - 1);
+        }catch(InvalidTypeException e){
+    		if(e.getMessage().contains("is of type varint")){
+    			return currentRow.getVarint(index-1).longValue();
+    		}
+    	}
+        
         return currentRow.getLong(index - 1);
+        
     }
 
     public long getLong(String name) throws SQLException
     {
         checkName(name);
+        try{
+        	return currentRow.getLong(name);
+        }catch(InvalidTypeException e){
+    		if(e.getMessage().contains("is of type varint")){
+    			return currentRow.getVarint(name).longValue();
+    		}
+    	}
+        
         return currentRow.getLong(name);
     }
 
@@ -1240,6 +1260,25 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
 	public RowId getRowId(String columnLabel) throws SQLException {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public InputStream getBinaryStream(int columnIndex) throws SQLException {
+		checkIndex(columnIndex);
+		byte[] bytes = new byte[currentRow.getBytes(columnIndex-1).remaining()];
+		currentRow.getBytes(columnIndex-1).get(bytes, 0, bytes.length);
+
+		return new ByteArrayInputStream(bytes);
+	}
+
+	@Override
+	public InputStream getBinaryStream(String columnLabel) throws SQLException {
+		// TODO Auto-generated method stub
+		checkName(columnLabel);
+		byte[] bytes = new byte[currentRow.getBytes(columnLabel).remaining()];
+		currentRow.getBytes(columnLabel).get(bytes, 0, bytes.length);
+
+		return new ByteArrayInputStream(bytes);
 	}
 
 

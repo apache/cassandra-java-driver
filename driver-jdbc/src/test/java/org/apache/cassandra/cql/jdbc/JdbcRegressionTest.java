@@ -23,6 +23,13 @@ package org.apache.cassandra.cql.jdbc;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.net.InetAddress;
+import java.sql.Blob;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -32,8 +39,15 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.cassandra.cql.ConnectionDetails;
 import org.junit.AfterClass;
@@ -525,6 +539,188 @@ public class JdbcRegressionTest
         ResultSet result = md.getColumns(null, "%", TABLE, "ivalue");
         assertTrue("Make sure we have found an column", result.next());
     }
+
+    @Test
+    public void testIssue80() throws Exception
+    {
+        
+    	System.out.println();
+        System.out.println("Test Issue #80");
+        System.out.println("--------------");
+        
+    	Statement stmt = con.createStatement();
+        java.util.Date now = new java.util.Date();
+        
+        
+        // Create the target Column family with each basic data type available on Cassandra
+                
+        String createCF = "CREATE COLUMNFAMILY t80 (bigint_col bigint PRIMARY KEY, ascii_col ascii , blob_col blob, boolean_col boolean, decimal_col decimal, double_col double, "+
+        										" float_col float, inet_col inet, int_col int, text_col text, timestamp_col timestamp, uuid_col uuid," + 
+        										"timeuuid_col timeuuid, varchar_col varchar, varint_col varint,string_set_col set<text>,string_list_col list<text>, string_map_col map<text,text>);";
+        
+        stmt.execute(createCF);
+        stmt.close();
+        con.close();
+
+        // open it up again to see the new CF
+        con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE));
+        
+        Statement statement = con.createStatement();
+        /*
+         * INSERT INTO test.t80(bigint_col , ascii_col , blob_col , boolean_col , decimal_col , double_col , 
+        										float_col , inet_col , int_col , text_col , timestamp_col , uuid_col , 
+        										timeuuid_col , varchar_col , varint_col )
+        			values(1, 'test', TextAsBlob('test'), true, 5.1, 5.123142 , 
+        										4.2134432 , '192.168.1.1', 1 , 'text' , '2015-01-01 10:10:10' , now() , 
+        										now(), 'test' , 3435 );
+         * 
+         */
+        
+        
+        String insert = "INSERT INTO t80(bigint_col , ascii_col , blob_col , boolean_col , decimal_col , double_col , "
+        				+ "float_col , inet_col , int_col , text_col , timestamp_col , uuid_col , timeuuid_col , varchar_col , varint_col, string_set_col, string_list_col, string_map_col) "
+        			    + " values(?, ?, ?, ?, ?, ? , ?, ? , ? , ?, ? , ? , now(), ? , ?, ?, ?, ? );";
+        
+        
+        
+        
+		
+        PreparedStatement pstatement = con.prepareStatement(insert);
+        
+        
+        pstatement.setObject(1, 1L); // bigint
+        pstatement.setObject(2, "test"); // ascii                             
+        pstatement.setObject(3, new ByteArrayInputStream("test".getBytes("UTF-8"))); // blob
+        pstatement.setObject(4, true); // boolean
+        pstatement.setObject(5, new BigDecimal(5.1));  // decimal
+        pstatement.setObject(6, (double)5.1);  // decimal
+        pstatement.setObject(7, (float)5.1);  // inet
+        InetAddress inet = InetAddress.getLocalHost();
+        pstatement.setObject(8, inet);  // inet
+        pstatement.setObject(9, (int)1);  // int
+        pstatement.setObject(10, "test");  // text
+        pstatement.setObject(11, new Timestamp(now.getTime()));  // text
+        UUID uuid = UUID.randomUUID();
+        pstatement.setObject(12, uuid );  // uuid
+        pstatement.setObject(13, "test");  // varchar
+        pstatement.setObject(14, 1);        
+        HashSet<String> mySet = new HashSet<>();
+        mySet.add("test");
+        mySet.add("test");
+        pstatement.setObject(15, mySet);
+        ArrayList<String> myList = new ArrayList<>();
+        myList.add("test");
+        myList.add("test");
+        pstatement.setObject(16, myList);
+        HashMap<String,String> myMap = new HashMap<>();
+        myMap.put("1","test");
+        myMap.put("2","test");
+        pstatement.setObject(17, myMap);
+        
+        
+        pstatement.execute();
+        
+        pstatement.setLong(1, 2L); // bigint
+        pstatement.setString(2, "test"); // ascii
+        pstatement.setObject(3, new ByteArrayInputStream("test".getBytes("UTF-8"))); // blob
+        pstatement.setBoolean(4, true); // boolean
+        pstatement.setBigDecimal(5, new BigDecimal(5.1));  // decimal
+        pstatement.setDouble(6, (double)5.1);  // decimal
+        pstatement.setFloat(7, (float)5.1);  // inet        
+        pstatement.setObject(8, inet);  // inet
+        pstatement.setInt(9, 1);  // int
+        pstatement.setString(10, "test");  // text
+        pstatement.setTimestamp(11, new Timestamp(now.getTime()));  // text
+        pstatement.setObject(12, uuid );  // uuid
+        pstatement.setString(13, "test");  // varchar
+        pstatement.setInt(14, 1);  // varint */
+        pstatement.setString(15, mySet.toString());
+        pstatement.setString(16, myList.toString());
+        pstatement.setString(17, myMap.toString());
+        
+        pstatement.execute();
+
+        ResultSet result = statement.executeQuery("SELECT * FROM t80 where bigint_col=1;");
+        
+        assertTrue(result.next());
+        assertEquals(1L, result.getLong("bigint_col"));
+        assertEquals("test", result.getString("ascii_col"));
+        byte[] array = new byte[result.getBinaryStream("blob_col").available()];
+    	try {
+    		result.getBinaryStream("blob_col").read(array);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+        assertEquals("test", new String(array, "UTF-8"));
+        assertEquals(true, result.getBoolean("boolean_col"));
+        assertEquals(new BigDecimal(5.1), result.getBigDecimal("decimal_col"));
+        assertEquals((double)5.1, result.getDouble("double_col"),0);
+        assertEquals((float)5.1, result.getFloat("float_col"),0);
+        assertEquals(InetAddress.getLocalHost(), (InetAddress)result.getObject("inet_col"));
+        assertEquals(1, result.getInt("int_col"));
+        assertEquals("test", result.getString("text_col"));        
+        assertEquals(new Timestamp(now.getTime()),result.getTimestamp("timestamp_col"));
+        // 12 - cannot test timeuuid as it is generated by the server
+        assertEquals(uuid,(UUID)result.getObject("uuid_col"));
+        assertEquals("test",result.getString("varchar_col"));
+        assertEquals(1,result.getLong("varint_col"));
+        Set<String> retSet = (Set<String>) result.getObject("string_set_col");
+        assertTrue(retSet instanceof LinkedHashSet);
+        assertEquals(1,retSet.size());
+        List<String> retList = (List<String>) result.getObject("string_list_col");
+        assertTrue(retList instanceof ArrayList);
+        assertEquals(2,retList.size());
+        Map<String,String> retMap = (Map<String,String>) result.getObject("string_map_col");
+        assertTrue(retMap instanceof HashMap);
+        assertEquals(2,retMap.keySet().size());
+        
+        
+        result = statement.executeQuery("SELECT * FROM t80 where bigint_col=2;");
+        
+        
+        assertTrue(result.next());
+        assertEquals(2L, result.getLong("bigint_col"));
+        assertEquals("test", result.getString("ascii_col"));
+        array = new byte[result.getBinaryStream("blob_col").available()];
+    	try {
+    		result.getBinaryStream("blob_col").read(array);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+        assertEquals("test", new String(array, "UTF-8"));
+        assertEquals(true, result.getBoolean("boolean_col"));
+        assertEquals(new BigDecimal(5.1), result.getBigDecimal("decimal_col"));
+        assertEquals((double)5.1, result.getDouble("double_col"),0);
+        assertEquals((float)5.1, result.getFloat("float_col"),0);
+        assertEquals(InetAddress.getLocalHost(), (InetAddress)result.getObject("inet_col"));
+        assertEquals(1, result.getInt("int_col"));
+        assertEquals("test", result.getString("text_col"));        
+        assertEquals(new Timestamp(now.getTime()),result.getTimestamp("timestamp_col"));
+        // 12 - cannot test timeuuid as it is generated by the server
+        assertEquals(uuid,(UUID)result.getObject("uuid_col"));
+        assertEquals("test",result.getString("varchar_col"));
+        assertEquals(1,result.getLong("varint_col"));
+        retSet = (Set<String>) result.getObject("string_set_col");
+        assertTrue(retSet instanceof LinkedHashSet);
+        assertEquals(1,retSet.size()); 
+        retList = (List<String>) result.getObject("string_list_col");
+        assertTrue(retList instanceof ArrayList);
+        assertEquals(2,retList.size()); 
+        retMap = (Map<String,String>) result.getObject("string_map_col");
+        System.out.println("HashMap ??? " + retMap);
+        assertTrue(retMap instanceof HashMap);
+        assertEquals(2,retMap.keySet().size());
+        
+        statement.close();
+        pstatement.close();
+        
+        
+        
+       
+    }
+
     
 
     @Test

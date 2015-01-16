@@ -122,15 +122,6 @@ abstract class AbstractStatement
         throw new SQLFeatureNotSupportedException(NOT_SUPPORTED);
     }
 
-    public void setBlob(int parameterIndex, Blob x) throws SQLException
-    {
-        throw new SQLFeatureNotSupportedException(NOT_SUPPORTED);
-    }
-
-    public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException
-    {
-        throw new SQLFeatureNotSupportedException(NOT_SUPPORTED);
-    }
 
     public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException
     {
