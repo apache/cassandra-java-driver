@@ -21,6 +21,8 @@ import java.util.List;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,6 +35,8 @@ import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryP
 import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryPolicy.entry;
 
 public class LoadBalancingPolicyBootstrapTest {
+
+    private static final Logger logger = LoggerFactory.getLogger(LoadBalancingPolicyBootstrapTest.class);
 
     /**
      * Ensures that when a cluster is initialized that {@link LoadBalancingPolicy#init(Cluster, Collection)} is called
@@ -56,7 +60,7 @@ public class LoadBalancingPolicyBootstrapTest {
 
             cluster.init();
 
-            assertThat(policy.history).containsExactly(
+            assertThat(policy.history).containsOnly(
                 entry(INIT, TestUtils.findHost(cluster, 1)),
                 entry(INIT, TestUtils.findHost(cluster, 2))
             );
@@ -69,8 +73,9 @@ public class LoadBalancingPolicyBootstrapTest {
     }
 
     /**
-     * Ensures that {@link LoadBalancingPolicy#onDown(Host)} is called for a contact point that goes down,
-     * but only after {@link LoadBalancingPolicy#init(Cluster, Collection)} has been called.
+     * Ensures that {@link LoadBalancingPolicy#onDown(Host)} is called for a contact point that couldn't
+     * be reached while initializing the control connection, but only after
+     * {@link LoadBalancingPolicy#init(Cluster, Collection)} has been called.
      *
      * @test_category load_balancing:notification
      * @expected_result init() is called with the up host, followed by onDown() for the downed host.
@@ -79,39 +84,58 @@ public class LoadBalancingPolicyBootstrapTest {
      */
     @Test(groups = "short")
     public void should_send_down_notifications_after_init_when_contact_points_are_down() throws Exception {
-        HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
-
         CCMBridge ccm = null;
         Cluster cluster = null;
         try {
-            cluster = Cluster.builder()
-                .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
-                .withLoadBalancingPolicy(policy)
-                .build();
+            ccm = CCMBridge.create("test", 2);
 
             // In order to validate this behavior, we need to stop the first node that would be attempted to be
-            // established as the control connection.  The control connection uses the Cluster metadata hosts and
-            // tries hosts in the order of the hosts iterator.  Therefore this logic is dependent on the internal
-            // behavior of the control connection which is subject to change.
-            Metadata m = new Metadata(cluster.manager);
-            m.add(new InetSocketAddress(CCMBridge.ipOfNode(1), 9042));
-            m.add(new InetSocketAddress(CCMBridge.ipOfNode(2), 9042));
-            String hostName = m.allHosts().iterator().next().getSocketAddress().getHostName();
-            int nodeToStop = hostName.endsWith("2") ? 2 : 1;
-            int activeNode = nodeToStop == 2 ? 1 : 2;
+            // established as the control connection.
+            // This depends on the internal behavior and will even be made totally random by JAVA-618, therefore
+            // we retry the scenario until we get the desired preconditions.
 
-            ccm = CCMBridge.create("test", 2);
-            ccm.stop(nodeToStop);
-            ccm.waitForDown(nodeToStop);
+            int nodeToStop = 1;
+            int tries = 1, maxTries = 10;
+            for (; tries <= maxTries; tries++) {
+                nodeToStop = (nodeToStop == 1) ? 2 : 1; // switch nodes at each try
+                int activeNode = nodeToStop == 2 ? 1 : 2;
 
-            cluster.init();
+                ccm.stop(nodeToStop);
+                ccm.waitForDown(nodeToStop);
 
-            assertThat(policy.history).containsExactly(
-                entry(INIT, TestUtils.findHost(cluster, activeNode)),
-                entry(DOWN, TestUtils.findHost(cluster, nodeToStop))
-            );
+                HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
+                cluster = Cluster.builder()
+                    .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
+                    .withLoadBalancingPolicy(policy)
+                    .build();
 
-            cluster.connect();
+                cluster.init();
+
+                if (policy.history.contains(entry(DOWN, TestUtils.findHost(cluster, nodeToStop)))) {
+                    // This is the situation we're testing, the control connection tried the stopped node first.
+                    assertThat(policy.history).containsExactly(
+                        entry(INIT, TestUtils.findHost(cluster, activeNode)),
+                        entry(DOWN, TestUtils.findHost(cluster, nodeToStop))
+                    );
+                    break;
+                } else {
+                    assertThat(policy.history).containsOnly(
+                        entry(INIT, TestUtils.findHost(cluster, 1)),
+                        entry(INIT, TestUtils.findHost(cluster, 2))
+                    );
+
+                    logger.info("Could not get first contact point to fail, retrying");
+
+                    cluster.close();
+
+                    ccm.start(nodeToStop);
+                    ccm.waitForUp(nodeToStop);
+                }
+            }
+
+            if (tries == maxTries + 1)
+                logger.warn("Could not get first contact point to fail after {} tries", maxTries);
+
         } finally {
             if (cluster != null)
                 cluster.close();
