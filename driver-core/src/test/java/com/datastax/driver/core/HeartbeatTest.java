@@ -28,6 +28,15 @@ public class HeartbeatTest {
         connectionLogger.removeAppender(logs);
     }
 
+    /**
+     * Ensures that a heartbeat message is sent after the configured heartbeat interval of idle time and succeeds and
+     * continues to be sent as long as the connection remains idle.
+     *
+     * @test_category connection:heartbeat
+     * @expected_result heartbeat is sent after heartbeat interval (3) seconds of idle time.
+     * @jira_ticket JAVA-533
+     * @since 2.0.10, 2.1.5
+     */
     @Test(groups = "long")
     public void should_send_heartbeat_when_connection_is_inactive() throws InterruptedException {
         CCMBridge ccm = null;
@@ -43,14 +52,34 @@ public class HeartbeatTest {
             cluster.init();
 
             for (int i = 0; i < 5; i++) {
-                // Simulate activity
-                cluster.manager.controlConnection.refreshNodeInfo(TestUtils.findHost(cluster, 1));
+                triggerRequestOnControlConnection(cluster);
                 SECONDS.sleep(1);
             }
-            assertThat(logs.get()).doesNotContain("sending heartbeat");
+            assertThat(logs.getNext()).doesNotContain("sending heartbeat");
 
-            SECONDS.sleep(5);
-            assertThat(logs.get())
+            // Ensure heartbeat is sent after no activity.
+            SECONDS.sleep(4);
+            assertThat(logs.getNext())
+                .contains("sending heartbeat")
+                .contains("heartbeat query succeeded");
+
+            // Ensure heartbeat is sent after continued inactivity.
+            SECONDS.sleep(4);
+            assertThat(logs.getNext())
+                .contains("sending heartbeat")
+                .contains("heartbeat query succeeded");
+
+            // Ensure heartbeat is not sent after activity.
+            logs.getNext();
+            for (int i = 0; i < 5; i++) {
+                triggerRequestOnControlConnection(cluster);
+                SECONDS.sleep(1);
+            }
+            assertThat(logs.getNext()).doesNotContain("sending heartbeat");
+
+            // Finally, ensure heartbeat is sent after inactivity.
+            SECONDS.sleep(4);
+            assertThat(logs.getNext())
                 .contains("sending heartbeat")
                 .contains("heartbeat query succeeded");
         } finally {
@@ -59,5 +88,52 @@ public class HeartbeatTest {
             if (ccm != null)
                 ccm.remove();
         }
+    }
+
+    /**
+     * Ensures that a heartbeat message is not sent if the configured heartbeat interval is 0.
+     *
+     * While difficult to prove the absence of evidence, the test will wait up to the default heartbeat interval
+     * (30 seconds + 1) and check to see if the heartbeat was sent.
+     *
+     * @test_category connection:heartbeat
+     * @expected_result heartbeat is not sent after default heartbeat interval (60) seconds of idle time.
+     * @jira_ticket JAVA-533
+     * @since 2.0.10, 2.1.5
+     */
+    @Test(groups = "long")
+    public void should_not_send_heartbeat_when_disabled() throws InterruptedException {
+        CCMBridge ccm = null;
+        Cluster cluster = null;
+        try {
+            ccm = CCMBridge.create("test", 1);
+            cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1))
+                    .withPoolingOptions(new PoolingOptions()
+                            .setHeartbeatIntervalSeconds(0))
+                    .build();
+
+            // Don't create any session, only the control connection will be established
+            cluster.init();
+
+            for (int i = 0; i < 5; i++) {
+                triggerRequestOnControlConnection(cluster);
+                SECONDS.sleep(1);
+            }
+            assertThat(logs.get()).doesNotContain("sending heartbeat");
+
+            // Sleep for a while and ensure no heartbeat is sent.
+            SECONDS.sleep(32);
+            assertThat(logs.get()).doesNotContain("sending heartbeat");
+        } finally {
+            if (cluster != null)
+                cluster.close();
+            if (ccm != null)
+                ccm.remove();
+        }
+    }
+
+    // Simulates activity on the control connection via the internal API
+    private void triggerRequestOnControlConnection(Cluster cluster) {
+        cluster.manager.controlConnection.refreshNodeInfo(TestUtils.findHost(cluster, 1));
     }
 }
