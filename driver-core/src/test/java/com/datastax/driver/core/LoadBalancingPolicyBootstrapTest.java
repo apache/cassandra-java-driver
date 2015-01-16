@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
 
