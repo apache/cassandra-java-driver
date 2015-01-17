@@ -76,9 +76,9 @@ under the License.
 		  <version>2.1.1</version>
 	</dependency>
 	<dependency>
-	    <groupId>org.apache.cassandra</groupId>
-	    <artifactId>cassandra-clientutil</artifactId>
-    <version>2.1.2</version>
+		<groupId>org.apache.cassandra</groupId>
+		<artifactId>cassandra-clientutil</artifactId>
+	<version>2.1.2</version>
 </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -101,6 +101,17 @@ under the License.
   </dependencies>
 
     <build>
+    
+    
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+    
+    
+    
         <testResources>
             <testResource>
                 <directory>src/test/resources</directory>
@@ -111,6 +122,7 @@ under the License.
                 </includes>
             </testResource>
         </testResources>
+
         <pluginManagement>
             <plugins>
 				<plugin>
@@ -248,6 +260,33 @@ under the License.
             </plugins>
         </pluginManagement>
         <plugins>
+        <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <version>2.4.0</version>
+        <!-- <executions>
+          <execution>
+            <id>bundle-manifest</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>manifest</goal>
+            </goals>
+          </execution>
+        </executions> -->
+        <configuration>
+          <instructions>
+            <Bundle-SymbolicName>org.apache.cassandra.cql.jdbc</Bundle-SymbolicName>
+            <Bundle-Version>${project.version}</Bundle-Version>
+            <_include>-osgi.bnd</_include>
+          </instructions>
+          <supportedProjectTypes>
+            <supportedProjectType>jar</supportedProjectType>
+            <supportedProjectType>bundle</supportedProjectType>
+            <supportedProjectType>pom</supportedProjectType>
+          </supportedProjectTypes>
+        </configuration>
+      </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
@@ -293,6 +332,7 @@ under the License.
           <!-- Create a source-release artifact that contains the fully buildable
                project directory source structure. This is the artifact which is
                the official subject of any release vote. -->
+          
           <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
             <executions>
