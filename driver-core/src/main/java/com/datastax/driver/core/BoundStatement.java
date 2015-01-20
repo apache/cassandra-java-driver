@@ -1255,11 +1255,14 @@ public class BoundStatement extends Statement implements SettableData<BoundState
                 sb.append(",");
             }
 
-            if (wrapper.getType(i).getName() == DataType.Name.BLOB) {
+            if (statement.getVariables().getType(i).getName() == DataType.Name.BLOB) {
                 sb.append("<Blob>");
             }
-            else if(wrapper.getType(i).getName() == DataType.Name.CUSTOM) {
+            else if(statement.getVariables().getType(i).getName() == DataType.Name.CUSTOM) {
                 sb.append("<Custom Type>");
+            }
+            else if(wrapper.getValue(i) == null) {
+               sb.append("<null>");
             }
             else {
                 sb.append(new String(wrapper.getValue(i).array(), StandardCharsets.UTF_8));
