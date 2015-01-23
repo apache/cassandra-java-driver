@@ -34,7 +34,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.cassandra.cql.jdbc.utils.Column;
+
+import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.Row;
+import com.google.common.collect.Lists;
 
 public  class MetadataResultSets
 {
@@ -56,17 +60,17 @@ public  class MetadataResultSets
      * 
      * @return {@code Column}
      */
-    private static final Column makeColumn(String name, ByteBuffer value)
+    private static final Row makeColumn(String name, String value)
     {
-      return new Column(bytes(name)).setValue(value).setTimestamp(System.currentTimeMillis());
+      return new MetadataRow().addEntry(name, value);
     }
 
-    private static final CqlRow makeRow(String key, List<Column> columnList)
+    /*private static final CqlRow makeRow(String key, List<Column> columnList)
     {
       return new CqlRow(bytes(key), columnList);
-    }
+    }*/
     
-    private static CqlMetadata makeMetadataAllString(List<String> colNameList)
+/*    private static CqlMetadata makeMetadataAllString(List<String> colNameList)
     {
         Map<ByteBuffer,String> namesMap = new HashMap<ByteBuffer,String>();
         Map<ByteBuffer,String> valuesMap = new HashMap<ByteBuffer,String>();
@@ -79,8 +83,8 @@ public  class MetadataResultSets
         
         return new CqlMetadata(namesMap,valuesMap,Entry.ASCII_TYPE,Entry.UTF8_TYPE);
     }
-
-    private static CqlMetadata makeMetadata(List<Entry> entries)
+*/
+/*    private static CqlMetadata makeMetadata(List<Entry> entries)
     {
         Map<ByteBuffer,String> namesMap = new HashMap<ByteBuffer,String>();
         Map<ByteBuffer,String> valuesMap = new HashMap<ByteBuffer,String>();
@@ -94,8 +98,8 @@ public  class MetadataResultSets
         return new CqlMetadata(namesMap,valuesMap,Entry.ASCII_TYPE,Entry.UTF8_TYPE);
     }
 
-
-    private ResultSet makeCqlResult(Entry[][] rowsOfcolsOfKvps, int position)
+*/
+/*    private ResultSet makeCqlResult(Entry[][] rowsOfcolsOfKvps, int position)
     {
     	ResultSet result = new ResultSet();
         CqlMetadata meta = null;
@@ -159,32 +163,52 @@ public  class MetadataResultSets
     }
  
     
-
+*/
     public  CassandraResultSet makeTableTypes(CassandraStatement statement) throws SQLException
     {
-        final  Entry[][] tableTypes = { { new Entry("TABLE_TYPE",bytes(TABLE_CONSTANT),Entry.ASCII_TYPE)} };
-        
-        // use tableTypes with the key in column number 1 (one based)
-        CqlResult cqlresult =  makeCqlResult(tableTypes, 1);
-        
-        CassandraResultSet result = new CassandraResultSet(statement,cqlresult);
+        final ArrayList<Row> tableTypes = Lists.newArrayList();
+        MetadataRow row = new MetadataRow().addEntry("TABLE_TYPE", TABLE_CONSTANT);
+        tableTypes.add(row);
+        CassandraResultSet result = new CassandraResultSet(statement,new MetadataResultSet().setRows(tableTypes));
         return result;
     }
 
-    public  CassandraResultSet makeCatalogs(CassandraStatement statement) throws SQLException
+   public  CassandraResultSet makeCatalogs(CassandraStatement statement) throws SQLException
     {
-        final Entry[][] catalogs = { { new Entry("TABLE_CAT",bytes(statement.connection.getCatalog()),Entry.ASCII_TYPE)} };
+	   final ArrayList<Row> catalog = Lists.newArrayList();
+        MetadataRow row = new MetadataRow().addEntry("TABLE_CAT", statement.connection.getCatalog());
+        catalog.add(row);
+       
+        CassandraResultSet result = new CassandraResultSet(statement,new MetadataResultSet().setRows(catalog));
+        return result;
+        /* final Entry[][] catalogs = { { new Entry("TABLE_CAT",bytes(statement.connection.getCatalog()),Entry.ASCII_TYPE)} };
 
         // use catalogs with the key in column number 1 (one based)
         CqlResult cqlresult =  makeCqlResult(catalogs, 1);
         
         CassandraResultSet result = new CassandraResultSet(statement,cqlresult);
-        return result;
+        return result; 
+        */
     }
-    
+ 
     public  CassandraResultSet makeSchemas(CassandraStatement statement, String schemaPattern) throws SQLException
     {
-        if ("%".equals(schemaPattern)) schemaPattern = null;
+    	final ArrayList<Row> schemas = Lists.newArrayList();
+    	List<KeyspaceMetadata> keyspaces = statement.connection.getClusterMetadata().getKeyspaces();
+    	
+    	for(KeyspaceMetadata keyspace:keyspaces){
+    		if ("%".equals(schemaPattern)) schemaPattern = null;
+    		if((schemaPattern==null?keyspace.getName():schemaPattern).equals(keyspace.getName())){
+    			MetadataRow row = new MetadataRow().addEntry("TABLE_SCHEM", keyspace.getName()).addEntry("TABLE_CATALOG", statement.connection.getCatalog());
+    			schemas.add(row);
+    		}
+    		
+    	}
+       
+        CassandraResultSet result = new CassandraResultSet(statement,new MetadataResultSet().setRows(schemas));
+        return result;
+    	
+    	/* if ("%".equals(schemaPattern)) schemaPattern = null;
 
         // TABLE_SCHEM String => schema name
         // TABLE_CATALOG String => catalog name (may be null)
@@ -226,8 +250,9 @@ public  class MetadataResultSets
         
         result = new CassandraResultSet(statement,cqlresult);
         return result;
+        */
     }
-    
+    /*
     public CassandraResultSet makeTables(CassandraStatement statement, String schemaPattern, String tableNamePattern) throws SQLException
     {
         //   1.   TABLE_CAT String => table catalog (may be null)
@@ -850,4 +875,9 @@ public  class MetadataResultSets
             this.type = type;
         }        
     }
+	
+	public static ByteBuffer bytes(String s)
+    {
+        return ByteBuffer.wrap(s.getBytes("UTF-8"));
+    }*/
 }

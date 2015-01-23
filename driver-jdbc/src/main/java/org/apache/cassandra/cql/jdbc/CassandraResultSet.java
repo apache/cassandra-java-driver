@@ -192,6 +192,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         // Initialize meta-data from schema
         populateMetaData();
 
+        System.out.println("new resultSet : " + resultSet.all());
         rowsIterator = resultSet.iterator();
 
         // Initialize to column values from the first row
@@ -274,8 +275,10 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
 
     private final void checkIndex(int index) throws SQLException
     {
-        // 1 <= index <= size()    	
-        if (index < 1 || index > currentRow.getColumnDefinitions().asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + currentRow.getColumnDefinitions().asList().size());
+        // 1 <= index <= size()  
+    	if(currentRow.getColumnDefinitions()!=null){
+    		if (index < 1 || index > currentRow.getColumnDefinitions().asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + currentRow.getColumnDefinitions().asList().size());
+    	}
     	
     }
 
@@ -1102,9 +1105,9 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         public int getColumnDisplaySize(int column) throws SQLException
         {
             checkIndex(column);
-            //String stringValue = values.get(column - 1)+"";
-            //return (stringValue == null ? -1 : stringValue.length());
-            return -1;
+            String stringValue = getObject(column).toString();
+            return (stringValue == null ? -1 : stringValue.length());
+            //return -1;
         }
 
         public String getColumnLabel(int column) throws SQLException

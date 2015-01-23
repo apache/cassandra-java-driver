@@ -306,7 +306,7 @@ class CassandraConnection extends AbstractConnection implements Connection
     public String getCatalog() throws SQLException
     {
         checkNotClosed();
-        return cluster;
+        return metadata.getClusterName();
     }
 
     public void setSchema(String schema) throws SQLException
