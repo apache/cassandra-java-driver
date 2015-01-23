@@ -15,7 +15,7 @@ public class ConnectionTest {
 	private static final String HOST = "127.0.0.1";
     private static final int PORT = 9042;
     //private static final String KEYSPACE = "test?primaryDc=DC1";
-    private static final String KEYSPACE = "system";
+    private static final String KEYSPACE = "testks";
     private static final String USER = "";
     private static final String PASSWORD = "";
     private static final String VERSION = "3.0.0";
@@ -33,31 +33,101 @@ public class ConnectionTest {
 				DatabaseMetaData meta = con.getMetaData();
 				//System.out.println(meta.getTableTypes());
 				ResultSet result = meta.getTableTypes();
-				boolean ok =true;
-				int x=0;
-				while(result.next() && ok){
-					x++;
-					try{
-						System.out.println(result.getString(x));
-					}catch(Exception e){
-						ok =false;
+				
+				while(result.next()){
+					boolean ok =true;
+					int x=1;
+					while(ok){
+						try{
+							System.out.println(result.getString(x));
+						}catch(Exception e){
+							ok =false;
+						}
+						x++;
 					}
 					//System.out.println("Size : " + catalogs.getFetchSize());
 				}
 				
-				ok = true;
-				x = 0;
-				
+				System.out.println("meta.getCatalogs()");
 				result = meta.getCatalogs();
-				while(result.next() && ok){
-					x++;
-					try{
-						System.out.println(result.getString(x));
-					}catch(Exception e){
-						ok =false;
+				while(result.next()){
+					boolean ok =true;
+					int x=1;
+					while(ok){
+						try{
+							System.out.println(result.getString(x));
+						}catch(Exception e){
+							ok =false;
+						}
+						x++;
 					}
 					//System.out.println("Size : " + catalogs.getFetchSize());
 				}
+				
+				System.out.println("meta.getSchemas()");
+				result = meta.getSchemas();
+				while(result.next()){
+					boolean ok =true;
+					int x=1;
+					while(ok){
+						try{
+							System.out.println(result.getString(x));
+						}catch(Exception e){
+							ok =false;
+						}
+						x++;
+					}
+					//System.out.println("Size : " + catalogs.getFetchSize());
+				}
+				System.out.println("meta.getSchemas(testks2)");
+				result = meta.getSchemas("Test Cluster","testks2");
+				while(result.next()){
+					boolean ok =true;
+					int x=1;
+					while(ok){
+						try{
+							System.out.println(result.getString(x));
+						}catch(Exception e){
+							ok =false;
+						}
+						x++;
+					}
+					//System.out.println("Size : " + catalogs.getFetchSize());
+				}
+				
+				System.out.println("meta.getTables()");
+				result = meta.getTables(null,null,null,null);
+				while(result.next()){
+					boolean ok =true;
+					int x=1;
+					while(ok){
+						try{
+							System.out.println(result.getString(x));
+						}catch(Exception e){
+							ok =false;
+						}
+						x++;
+					}
+					//System.out.println("Size : " + catalogs.getFetchSize());
+				}
+				
+				System.out.println("meta.getColumns()");
+				result = meta.getColumns(null,null,null,null);
+				while(result.next()){
+					boolean ok =true;
+					int x=1;
+					while(ok){
+						try{
+							System.out.println(result.getString(x));
+						}catch(Exception e){
+							ok =false;
+						}
+						x++;
+					}
+					//System.out.println("Size : " + catalogs.getFetchSize());
+				}
+				
+				
 				
 				/* Statement stmt = con.createStatement();
 				//PreparedStatement prep = con.prepareStatement("SELECT  date_heure_fin , date_heure_debut ,    id_echange, id_etapes , nom_echange ,  etapes_vues ,  status_echange ,  attributs, duree  ,  etapes_attendues, warning, blobAsBigint(timestampAsBlob(date_heure_debut)), blobAsBigint(timestampAsBlob(date_heure_fin))  FROM fluks_dev.echange_ins limit 1");

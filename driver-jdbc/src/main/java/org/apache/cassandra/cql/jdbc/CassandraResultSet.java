@@ -192,7 +192,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         // Initialize meta-data from schema
         populateMetaData();
 
-        System.out.println("new resultSet : " + resultSet.all());
+        
         rowsIterator = resultSet.iterator();
 
         // Initialize to column values from the first row
