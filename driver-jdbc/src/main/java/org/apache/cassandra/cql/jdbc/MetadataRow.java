@@ -91,7 +91,7 @@ public class MetadataRow implements com.datastax.driver.core.Row{
 	@Override
 	public int getInt(int i) {
 		// TODO Auto-generated method stub
-		return 0;
+		return Integer.parseInt(entries.get(i));
 	}
 
 	@Override
@@ -103,7 +103,7 @@ public class MetadataRow implements com.datastax.driver.core.Row{
 	@Override
 	public long getLong(int i) {
 		// TODO Auto-generated method stub
-		return 0;
+		return Long.parseLong(entries.get(i));
 	}
 
 	@Override
@@ -271,41 +271,6 @@ public class MetadataRow implements com.datastax.driver.core.Row{
 		return null;
 	}
 	
-	/*
-	 *
-	 *makeCatalogs(CassandraStatement statement)
-	 *
-	 * // TABLE_CAT String => catalog_name
-	 *
-	 *
-	 *
-	 * makeSchemas(CassandraStatement statement, String schemaPattern) throws SQLException    	
-        
-        if ("%".equals(schemaPattern)) schemaPattern = null;
-
-        // TABLE_SCHEM String => schema name
-        // TABLE_CATALOG String => catalog name (may be null)
-	 * 
-	 * 
-	 *  makeTables(CassandraStatement statement, String schemaPattern, String tableNamePattern)
-    
-        //   1.   TABLE_CAT String => table catalog (may be null)
-        //   2.   TABLE_SCHEM String => table schema (may be null)
-        //   3.   TABLE_NAME String => table name
-        //   4.   TABLE_TYPE String => table type. Typical types are "TABLE", "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
-        //   5.   REMARKS String => explanatory comment on the table
-        //   6.   TYPE_CAT String => the types catalog (may be null)
-        //   7.   TYPE_SCHEM String => the types schema (may be null)
-        //   8.   TYPE_NAME String => type name (may be null)
-        //   9.   SELF_REFERENCING_COL_NAME String => name of the designated "identifier" column of a typed table (may be null)
-        //   10.  REF_GENERATION String => specifies how values in SELF_REFERENCING_COL_NAME are created. Values are "SYSTEM", "USER", "DERIVED". (may be null)
-         *  
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 */
 	
 	public String toString(){
 		StringBuilder builder = new StringBuilder();
