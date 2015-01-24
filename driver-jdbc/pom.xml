@@ -70,11 +70,11 @@ under the License.
   </properties>
 
   <dependencies>
-     <dependency>
-		  <groupId>com.datastax.cassandra</groupId>
-		  <artifactId>cassandra-driver-core</artifactId>
-		  <version>2.1.1</version>
-	</dependency>
+    <dependency>
+        <groupId>com.datastax.cassandra</groupId>
+        <artifactId>cassandra-driver-core</artifactId>
+        <version>${project.parent.version}</version>
+    </dependency>
 	<dependency>
 		<groupId>org.apache.cassandra</groupId>
 		<artifactId>cassandra-clientutil</artifactId>
