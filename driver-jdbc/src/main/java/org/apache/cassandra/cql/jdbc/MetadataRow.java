@@ -13,7 +13,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+
+
+
+
 import com.datastax.driver.core.ColumnDefinitions;
+import com.datastax.driver.core.ColumnDefinitions.Definition;
+import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.TupleValue;
 import com.datastax.driver.core.UDTValue;
 import com.google.common.collect.Lists;
@@ -22,14 +28,22 @@ import com.google.common.collect.Maps;
 public class MetadataRow implements com.datastax.driver.core.Row{
 	
 	private ArrayList<String> entries;
-
+	private HashMap<String,Integer> names;
+	private ColumnDefinitions colDefinitions;
+	private ArrayList<ColumnDefinitions.Definition> definitions;
+	
 	public MetadataRow(){
 		entries = Lists.newArrayList();
+		names = Maps.newHashMap();		
+		definitions = Lists.newArrayList();
+		
+		
 	}
 	
 	public MetadataRow addEntry(String key,String value){
-		//entries.add(key);
+		names.put(key,entries.size());
 		entries.add(value);
+		definitions.add(new Definition("","",key,DataType.text()));
 		return this;
 	}
 	
@@ -61,31 +75,35 @@ public class MetadataRow implements com.datastax.driver.core.Row{
 	@Override
 	public ColumnDefinitions getColumnDefinitions() {
 		// TODO Auto-generated method stub
-		return null;
+		Definition[] definitionArr = new Definition[definitions.size()];
+		definitionArr = definitions.toArray(definitionArr);
+		
+
+		return new ColumnDefinitions(definitionArr);
 	}
 
 	@Override
 	public boolean isNull(int i) {
 		// TODO Auto-generated method stub
-		return false;
+		return entries.get(i)==null;
 	}
 
 	@Override
 	public boolean isNull(String name) {
 		// TODO Auto-generated method stub
-		return false;
+		return isNull(names.get(name));
 	}
 
 	@Override
 	public boolean getBool(int i) {
 		// TODO Auto-generated method stub
-		return false;
+		return Boolean.parseBoolean(entries.get(i));
 	}
 
 	@Override
 	public boolean getBool(String name) {
 		// TODO Auto-generated method stub
-		return false;
+		return getBool(names.get(name));
 	}
 
 	@Override
@@ -95,9 +113,8 @@ public class MetadataRow implements com.datastax.driver.core.Row{
 	}
 
 	@Override
-	public int getInt(String name) {
-		// TODO Auto-generated method stub
-		return 0;
+	public int getInt(String name) {		
+		return getInt(names.get(name));
 	}
 
 	@Override
@@ -109,7 +126,7 @@ public class MetadataRow implements com.datastax.driver.core.Row{
 	@Override
 	public long getLong(String name) {
 		// TODO Auto-generated method stub
-		return 0;
+		return getLong(names.get(name));
 	}
 
 	@Override
@@ -182,7 +199,7 @@ public class MetadataRow implements com.datastax.driver.core.Row{
 	@Override
 	public String getString(String name) {
 		// TODO Auto-generated method stub
-		return null;
+		return getString(names.get(name));
 	}
 
 	@Override

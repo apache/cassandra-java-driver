@@ -420,7 +420,7 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;        	
         case Types.BOOLEAN:
-        	this.statement.setBool(parameterIndex-1, (boolean)object);
+        	this.statement.setBool(parameterIndex-1, (Boolean)object);
         	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.CHAR:
@@ -444,12 +444,12 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.FLOAT:
-        	this.statement.setFloat(parameterIndex-1, (float)object);
+        	this.statement.setFloat(parameterIndex-1, (Float)object);
         	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.INTEGER:
         	try{
-        		this.statement.setInt(parameterIndex-1, (int)object);
+        		this.statement.setInt(parameterIndex-1, (Integer)object);
         	}catch(InvalidTypeException e){
         		if(e.getMessage().contains("is of type varint")){
         			this.statement.setVarint(parameterIndex-1, BigInteger.valueOf(Long.parseLong(object.toString())));

@@ -36,6 +36,7 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
@@ -134,6 +135,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     public static final int DEFAULT_CONCURRENCY = ResultSet.CONCUR_READ_ONLY;
     public static final int DEFAULT_HOLDABILITY = ResultSet.HOLD_CURSORS_OVER_COMMIT;
     private Row currentRow;
+    private ColumnDefinitions colDefinitions;
     //private com.datastax.driver.core.ResultSet datastaxRs;
     /**
      * The rows iterator.
@@ -194,6 +196,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
 
         
         rowsIterator = resultSet.iterator();
+        colDefinitions = resultSet.getColumnDefinitions();
 
         // Initialize to column values from the first row
         // re-Initialize meta-data to column values from the first row (if data exists)
@@ -217,6 +220,8 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
 
     private final void populateMetaData()
     {
+    	
+    	
     	/*
         values.clear();
         indexMap.clear();
@@ -275,9 +280,13 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
 
     private final void checkIndex(int index) throws SQLException
     {
-        // 1 <= index <= size()  
-    	if(currentRow.getColumnDefinitions()!=null){
-    		if (index < 1 || index > currentRow.getColumnDefinitions().asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + currentRow.getColumnDefinitions().asList().size());
+        // 1 <= index <= size()
+    	if(currentRow!=null){
+    		if(currentRow.getColumnDefinitions()!=null){
+    			if (index < 1 || index > currentRow.getColumnDefinitions().asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + currentRow.getColumnDefinitions().asList().size());
+    		}
+    	}else{
+    		if (index < 1 || index > colDefinitions.asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + colDefinitions.asList().size());
     	}
     	
     }
