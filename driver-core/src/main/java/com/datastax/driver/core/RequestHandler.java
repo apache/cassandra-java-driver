@@ -56,6 +56,7 @@ class RequestHandler implements Connection.ResponseCallback {
     private volatile List<Host> triedHosts;
     private volatile HostConnectionPool currentPool;
     private final AtomicReference<QueryState> queryStateRef;
+    private volatile boolean shouldCancelConnectionHandler;
 
     // This represents the number of times a retry has been triggered by the RetryPolicy (this is different from
     // queryStateRef.get().retryCount, because some retries don't involve the policy, for example after an
@@ -67,7 +68,6 @@ class RequestHandler implements Connection.ResponseCallback {
 
     private volatile Map<InetSocketAddress, Throwable> errors;
 
-    private volatile boolean isCanceled;
     private volatile Connection.ResponseHandler connectionHandler;
 
     private final Timer.Context timerContext;
@@ -99,7 +99,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
     public void sendRequest() {
         try {
-            while (queryPlan.hasNext() && !isCanceled) {
+            while (queryPlan.hasNext() && queryStateRef.get() != QueryState.CANCELLED) {
                 Host host = queryPlan.next();
                 logger.trace("Querying node {}", host);
                 if (query(host))
@@ -126,7 +126,7 @@ class RequestHandler implements Connection.ResponseCallback {
                 triedHosts.add(current);
             }
             current = host;
-            connectionHandler = connection.write(this);
+            write(connection, this);
             return true;
         } catch (ConnectionException e) {
             // If we have any problem with the connection, move to the next node.
@@ -154,6 +154,33 @@ class RequestHandler implements Connection.ResponseCallback {
         }
     }
 
+    private void write(Connection connection, Connection.ResponseCallback responseCallback) throws ConnectionException, BusyConnectionException {
+        // Make sure cancel() does not see a stale connectionHandler if it sees the new query state
+        // before connection.write has completed
+        connectionHandler = null;
+
+        // Set query state to "in progress" at next iteration
+        while (true) {
+            QueryState previous = queryStateRef.get();
+            assert !previous.inProgress;
+            if (previous == QueryState.CANCELLED) {
+                return;
+            }
+            if (queryStateRef.compareAndSet(previous, previous.startNext()))
+                break;
+        }
+
+        connectionHandler = connection.write(responseCallback);
+
+        // N.B: onSet/onException could have already been called at this point
+
+        // If cancel was called after we set the state to "in progress", but before connection.write, it might have seen a null connectionHandler.
+        // In this case we need to cancel it now to release the connection (because the next onSet/onException/onTimeout will see the CANCELLED
+        // state and return immediately).
+        if (shouldCancelConnectionHandler)
+            connectionHandler.cancelHandler();
+    }
+
     private void logError(InetSocketAddress address, Throwable exception) {
         logger.debug("Error querying {}, trying next host (error is: {})", address, exception.toString());
         if (errors == null)
@@ -162,8 +189,6 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     private void retry(final boolean retryCurrent, ConsistencyLevel newConsistencyLevel) {
-        queryStateRef.set(queryStateRef.get().startNext());
-
         final Host h = current;
         this.retryConsistencyLevel = newConsistencyLevel;
 
@@ -171,6 +196,8 @@ class RequestHandler implements Connection.ResponseCallback {
         manager.executor().execute(new Runnable() {
             @Override
             public void run() {
+                if (queryStateRef.get() == QueryState.CANCELLED)
+                    return;
                 try {
                     if (retryCurrent) {
                         if (query(h))
@@ -185,9 +212,13 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     public void cancel() {
-        isCanceled = true;
-        if (connectionHandler != null)
-            connectionHandler.cancelHandler();
+        QueryState previous = queryStateRef.getAndSet(QueryState.CANCELLED);
+        if (previous.inProgress) {
+            if (connectionHandler != null)
+                connectionHandler.cancelHandler();
+            else
+                shouldCancelConnectionHandler = true;
+        }
     }
 
     @Override
@@ -388,9 +419,8 @@ class RequestHandler implements Connection.ResponseCallback {
                                 connection.setKeyspace(prepareKeyspace);
                             }
 
-                            queryStateRef.set(queryStateRef.get().startNext());
                             try {
-                                connection.write(prepareAndRetry(toPrepare.getQueryString()));
+                                write(connection, prepareAndRetry(toPrepare.getQueryString()));
                             } finally {
                                 // Always reset the previous keyspace if needed
                                 if (connection.keyspace() == null || !connection.keyspace().equals(currentKeyspace))
@@ -583,10 +613,12 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     // This is used to prevent races between request completion (either success or error) and timeout.
-    // A retry is in progress once we have written the request to the connection and until we get back a response or a timeout.
+    // A retry is in progress once we have written the request to the connection and until we get back a response (see onSet
+    // or onException) or a timeout (see onTimeout).
     // The count increments on each retry.
     static class QueryState {
-        static QueryState INITIAL = new QueryState(0, true);
+        static final QueryState INITIAL = new QueryState(-1, false);
+        static final QueryState CANCELLED = new QueryState(Integer.MIN_VALUE, false);
 
         final int retryCount;
         final boolean inProgress;

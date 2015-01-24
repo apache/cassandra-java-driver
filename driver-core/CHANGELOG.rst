@@ -5,6 +5,8 @@ CHANGELOG
 -------
 
 - [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
+- [bug] Prevent race between cancellation and query completion (JAVA-614)
+
 
 2.0.9:
 ------
