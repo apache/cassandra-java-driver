@@ -4,6 +4,8 @@ CHANGELOG
 2.0.9.1:
 --------
 
+- [bug] Prevent race between cancellation and query completion (JAVA-614)
+
 
 2.0.9:
 ------
