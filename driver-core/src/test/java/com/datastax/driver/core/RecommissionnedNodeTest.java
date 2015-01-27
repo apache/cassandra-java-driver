@@ -6,7 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
+
+import static com.datastax.driver.core.Assertions.*;
+import static com.datastax.driver.core.Host.State.ADDED;
+import static com.datastax.driver.core.Host.State.DOWN;
+import static com.datastax.driver.core.Host.State.UP;
 
 /**
  * Due to C* gossip bugs, system.peers may report nodes that are gone from the cluster.
@@ -20,18 +24,15 @@ public class RecommissionnedNodeTest {
     CCMBridge mainCcm, otherCcm;
     Cluster mainCluster;
 
-    /**
-     * Tests the case when trying to reconnect to the foreign node results from a scheduled reconnection attempt.
-     */
     @Test(groups = "long")
-    public void testReconnectionToRegularNode() throws Exception {
+    public void should_ignore_recommissionned_node_on_reconnection_attempt() throws Exception {
         mainCcm = CCMBridge.create("main", 3);
         // node1 will be our "recommissionned" node, for now we just stop it so that it stays in the peers table.
         mainCcm.stop(1);
         mainCcm.waitForDown(1);
 
         // Now start the driver that will connect to node2 and node3, and consider node1 down
-        Cluster mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2").build();
+        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2").build();
         mainCluster.connect();
         waitForCountUpHosts(mainCluster, 2);
         // From that point, reconnections to node1 have been scheduled.
@@ -43,20 +44,17 @@ public class RecommissionnedNodeTest {
         // Give the driver the time to notice the node is back up and try to connect to it.
         TimeUnit.SECONDS.sleep(32);
 
-        assertEquals(countUpHosts(mainCluster), 2);
+        assertThat(countUpHosts(mainCluster)).isEqualTo(2);
     }
 
-    /**
-     * Tests the case when trying to reconnect to the foreign node results from a scheduled reconnection attempt.
-     */
     @Test(groups = "long")
-    public void testControlConnection() throws Exception {
+    public void should_ignore_recommissionned_node_on_control_connection_reconnect() throws Exception {
         mainCcm = CCMBridge.create("main", 2);
         mainCcm.stop(1);
         mainCcm.waitForDown(1);
 
         // Start the driver, the control connection will be on node2
-        Cluster mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2").build();
+        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2").build();
         mainCluster.connect();
         waitForCountUpHosts(mainCluster, 1);
 
@@ -69,7 +67,34 @@ public class RecommissionnedNodeTest {
         TimeUnit.SECONDS.sleep(32);
 
         // The driver should not try to reconnect the control connection to node1
-        assertFalse(mainCluster.manager.controlConnection.isOpen());
+        assertThat(mainCluster).hasClosedControlConnection();
+    }
+
+    @Test(groups = "long")
+    public void should_ignore_recommissionned_node_on_session_init() throws Exception {
+        // Simulate the bug before starting the cluster
+        mainCcm = CCMBridge.create("main", 2);
+        mainCcm.stop(1);
+        mainCcm.waitForDown(1);
+
+        otherCcm = CCMBridge.create("other", 1);
+        otherCcm.waitForUp(1);
+
+        // Start the driver, it should only connect to node 2
+        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2").build();
+
+        // When we first initialize the Cluster, all hosts are marked UP
+        assertThat(mainCluster).host(2).hasState(UP);
+        assertThat(mainCluster).host(1).hasState(UP);
+
+        // Create a session. This will try to open a pool to node 1 and find out that the cluster name doesn't match.
+        mainCluster.connect();
+
+        // Node 1 should now be DOWN with no reconnection attempt
+        assertThat(mainCluster).host(1)
+            .hasState(DOWN)
+            .isNotReconnectingFromDown()
+            .isNotReconnectingFromSuspected();
     }
 
     @AfterMethod(groups = "long")

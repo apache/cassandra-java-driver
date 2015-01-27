@@ -32,6 +32,19 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
         return this;
     }
 
+    public HostAssert isNotReconnectingFromDown() {
+        assertThat(actual.getReconnectionAttemptFuture() != null && !actual.getReconnectionAttemptFuture().isDone())
+            .isFalse();
+        return this;
+    }
+
+    public HostAssert isNotReconnectingFromSuspected() {
+        assertThat(actual.getInitialReconnectionAttemptFuture() != null && !actual.getInitialReconnectionAttemptFuture().isDone())
+            .isFalse();
+        return this;
+
+    }
+
     public HostAssert comesUpWithin(long duration, TimeUnit unit) {
         final CountDownLatch upSignal = new CountDownLatch(1);
         StateListener upListener = new StateListenerBase() {
