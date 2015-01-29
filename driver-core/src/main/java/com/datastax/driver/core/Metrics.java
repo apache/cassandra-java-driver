@@ -70,6 +70,34 @@ public class Metrics {
         }
     });
 
+    private final Gauge<Integer> executorQueueDepth = registry.register("executor-queue-depth", new Gauge<Integer>() {
+        @Override
+        public Integer getValue() {
+            return manager.executorQueue.size();
+        }
+    });
+
+    private final Gauge<Integer> blockingExecutorQueueDepth = registry.register("blocking-executor-queue-depth", new Gauge<Integer>() {
+        @Override
+        public Integer getValue() {
+            return manager.blockingExecutorQueue.size();
+        }
+    });
+
+    private final Gauge<Integer> reconnectionSchedulerQueueSize= registry.register("reconnection-scheduler-task-count", new Gauge<Integer>() {
+        @Override
+        public Integer getValue() {
+            return manager.reconnectionExecutor.getQueue().size();
+        }
+    });
+
+    private final Gauge<Integer> taskSchedulerQueueSize = registry.register("task-scheduler-task-count", new Gauge<Integer>() {
+        @Override
+        public Integer getValue() {
+            return manager.scheduledTasksExecutor.getQueue().size();
+        }
+    });
+
     Metrics(Cluster.Manager manager) {
         this.manager = manager;
         if (manager.configuration.getMetricsOptions().isJMXReportingEnabled()) {
@@ -175,6 +203,36 @@ public class Metrics {
      */
     public Gauge<Integer> getOpenConnections() {
         return openConnections;
+    }
+
+    /**
+     * @return The number of queued up tasks in the non-blocking executor (Cassandra Java Driver workers).
+     */
+    public Gauge<Integer> getExecutorQueueDepth() {
+        return executorQueueDepth;
+    }
+
+    /**
+     * @return The number of queued up tasks in the blocking executor (Cassandra Java Driver blocking tasks worker).
+     */
+    public Gauge<Integer> getBlockingExecutorQueueDepth() {
+        return blockingExecutorQueueDepth;
+    }
+
+    /**
+     * @return The size of the work queue for the reconnection scheduler (Reconnection).  A queue size > 0 does not
+     * necessarily indicate a backlog as some tasks may not have been scheduled to execute yet.
+     */
+    public Gauge<Integer> getReconnectionSchedulerQueueSize() {
+        return reconnectionSchedulerQueueSize;
+    }
+
+    /**
+     * @return The size of the work queue for the task scheduler (Scheduled Tasks).  A queue size > 0 does not
+     * necessarily indicate a backlog as some tasks may not have been scheduled to execute yet.
+     */
+    public Gauge<Integer> getTaskSchedulerQueueSize() {
+        return taskSchedulerQueueSize;
     }
 
     void shutdown() {
