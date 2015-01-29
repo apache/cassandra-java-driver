@@ -276,9 +276,19 @@ class Connection {
         // sure the "suspected" mechanism work as expected
         Host host = factory.manager.metadata.getHost(address);
         if (host != null) {
+
+            // If the host was reconnecting, and this error happens right after we opened a connection pool, but
+            // before we could mark the node UP, we don't want to go through the SUSPECTED state, because that can
+            // lead to a race condition that leaves the node UP with a closed pool.
+            boolean belongsToReconnectingPool = host.state != Host.State.UP &&
+                this instanceof PooledConnection &&
+                (((PooledConnection)this).pool == null || !((PooledConnection)this).pool.isClosed());
+
+            boolean markSuspected = isInitialized && !belongsToReconnectingPool;
+
             // This will trigger onDown, including when the defunct Connection is part of a reconnection attempt, which is redundant.
             // This is not too much of a problem since calling onDown on a node that is already down has no effect.
-            boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded(), isInitialized);
+            boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded(), markSuspected);
             notifyOwnerWhenDefunct(isDown);
         }
 

@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 class PooledConnection extends Connection {
 
-    private final HostConnectionPool pool;
+    final HostConnectionPool pool;
 
     /** Used in {@link HostConnectionPool} to handle races between two threads trying to trash the same connection */
     final AtomicBoolean markForTrash = new AtomicBoolean();
