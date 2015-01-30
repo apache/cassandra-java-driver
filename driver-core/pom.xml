@@ -89,6 +89,20 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.scassandra</groupId>
+      <artifactId>java-client</artifactId>
+      <!-- N.B. later versions of scassandra require JDK 7 -->
+      <version>0.4.1</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>ch.qos.logback</groupId>
+          <artifactId>logback-classic</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
   </dependencies>
 
   <build>
