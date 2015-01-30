@@ -604,15 +604,15 @@ public class JdbcRegressionTest
         pstatement.setObject(12, uuid );  // uuid
         pstatement.setObject(13, "test");  // varchar
         pstatement.setObject(14, 1);        
-        HashSet<String> mySet = new HashSet<>();
+        HashSet<String> mySet = new HashSet<String>();
         mySet.add("test");
         mySet.add("test");
         pstatement.setObject(15, mySet);
-        ArrayList<String> myList = new ArrayList<>();
+        ArrayList<String> myList = new ArrayList<String>();
         myList.add("test");
         myList.add("test");
         pstatement.setObject(16, myList);
-        HashMap<String,String> myMap = new HashMap<>();
+        HashMap<String,String> myMap = new HashMap<String,String>();
         myMap.put("1","test");
         myMap.put("2","test");
         pstatement.setObject(17, myMap);

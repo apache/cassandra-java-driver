@@ -619,59 +619,45 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         	}
         	
         }else{
-        	switch (currentRow.getColumnDefinitions().getType(index-1).getName().toString()){
-        		case "varchar":
+        	String typeName = currentRow.getColumnDefinitions().getType(index-1).getName().toString();
+        	//switch (currentRow.getColumnDefinitions().getType(index-1).getName().toString()){
+        		if (typeName.equals("varchar")){
         			return (Object) currentRow.getString(index-1);
-        			
-        		case "ascii":
+        		}else if (typeName.equals("ascii")){
         			return (Object) currentRow.getString(index-1);
-        			
-        		case "integer":
+        		}else if (typeName.equals("integer")){
         			return (Object) currentRow.getInt(index-1);
-        			
-        		case "bigint":
+        		}else if (typeName.equals("bigint")){        		
         			return (Object) currentRow.getLong(index-1);
-        			
-        		case "blob":
+        		}else if (typeName.equals("blob")){
         			return (Object) currentRow.getBytes(index-1);
-        			
-        		case "boolean":
+        		}else if (typeName.equals("boolean")){
         			return (Object) currentRow.getBool(index-1);
-        			
-        		case "counter":
+        		}else if (typeName.equals("counter")){
         			return (Object) currentRow.getLong(index-1);
-        			
-        		case "decimal":
+        		}else if (typeName.equals("decimal")){        			
         			return (Object) currentRow.getDecimal(index-1);
-        			
-        		case "double":
+        		}else if (typeName.equals("double")){
         			return (Object) currentRow.getDouble(index-1);
-        			
-        		case "float":
+        		}else if (typeName.equals("float")){
         			return (Object) currentRow.getFloat(index-1);
-        			
-        		case "inet":
+        		}else if (typeName.equals("inet")){
         			return (Object) currentRow.getInet(index-1);
-        			
-        		case "int":
+        		}else if (typeName.equals("int")){
         			return (Object) currentRow.getInt(index-1);
-        			
-        		case "text":
+        		}else if (typeName.equals("text")){
         			return (Object) currentRow.getString(index-1);
-        			
-        		case "timestamp":
+        		}else if (typeName.equals("timestamp")){        			
         	        return (Object) new Timestamp((currentRow.getDate(index-1)).getTime());
-        			
-        		case "uuid":
-        	        return (Object) currentRow.getUUID(index-1);
-        			
-        		case "timeuuid":
-        	        return (Object) currentRow.getUUID(index-1);
-        			
-        		case "varint":
+        		}else if (typeName.equals("uuid")){
+        			return (Object) currentRow.getUUID(index-1);
+        		}else if (typeName.equals("timeuuid")){
+        			return (Object) currentRow.getUUID(index-1);
+        		}else if (typeName.equals("varint")){
         	        return (Object) currentRow.getInt(index-1);
+        		}
         			
-        	}
+        
         }
         	
         		
@@ -698,59 +684,44 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         	}
         	
         }else{
-        	switch (currentRow.getColumnDefinitions().getType(name).getName().toString()){
-        		case "varchar":
+        	String typeName = currentRow.getColumnDefinitions().getType(name).getName().toString();
+        	//switch (currentRow.getColumnDefinitions().getType(index-1).getName().toString()){
+        		if (typeName.equals("varchar")){
         			return (Object) currentRow.getString(name);
-        			
-        		case "ascii":
+        		}else if (typeName.equals("ascii")){
         			return (Object) currentRow.getString(name);
-        			
-        		case "integer":
+        		}else if (typeName.equals("integer")){
         			return (Object) currentRow.getInt(name);
-        			
-        		case "bigint":
+        		}else if (typeName.equals("bigint")){        		
         			return (Object) currentRow.getLong(name);
-        			
-        		case "blob":
+        		}else if (typeName.equals("blob")){
         			return (Object) currentRow.getBytes(name);
-        			
-        		case "boolean":
+        		}else if (typeName.equals("boolean")){
         			return (Object) currentRow.getBool(name);
-        			
-        		case "counter":
+        		}else if (typeName.equals("counter")){
         			return (Object) currentRow.getLong(name);
-        			
-        		case "decimal":
+        		}else if (typeName.equals("decimal")){        			
         			return (Object) currentRow.getDecimal(name);
-        			
-        		case "double":
+        		}else if (typeName.equals("double")){
         			return (Object) currentRow.getDouble(name);
-        			
-        		case "float":
+        		}else if (typeName.equals("float")){
         			return (Object) currentRow.getFloat(name);
-        			
-        		case "inet":
+        		}else if (typeName.equals("inet")){
         			return (Object) currentRow.getInet(name);
-        			
-        		case "int":
+        		}else if (typeName.equals("int")){
         			return (Object) currentRow.getInt(name);
-        			
-        		case "text":
+        		}else if (typeName.equals("text")){
         			return (Object) currentRow.getString(name);
-        			
-        		case "timestamp":
-        	        return (Object) currentRow.getDate(name);
-        			
-        		case "uuid":
-        	        return (Object) currentRow.getUUID(name);
-        			
-        		case "timeuuid":
-        	        return (Object) currentRow.getUUID(name);
-        			
-        		case "varint":
+        		}else if (typeName.equals("timestamp")){        			
+        	        return (Object) new Timestamp((currentRow.getDate(name)).getTime());
+        		}else if (typeName.equals("uuid")){
+        			return (Object) currentRow.getUUID(name);
+        		}else if (typeName.equals("timeuuid")){
+        			return (Object) currentRow.getUUID(name);
+        		}else if (typeName.equals("varint")){
         	        return (Object) currentRow.getInt(name);
-        			
-        	}
+        		}
+        	
         }
         	
         		
