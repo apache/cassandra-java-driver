@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.ColumnDefinitions;
+import com.datastax.driver.core.ColumnDefinitions.Definition;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
@@ -168,6 +169,8 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     private int fetchSize;
 
     private boolean wasNull;
+    
+    private com.datastax.driver.core.ResultSet driverResultSet;
 
     //private CqlMetadata schema;
 
@@ -189,6 +192,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         this.resultSetType = statement.getResultSetType();
         this.fetchDirection = statement.getFetchDirection();
         this.fetchSize = statement.getFetchSize();
+        this.driverResultSet = resultSet;
         //this.schema = resultSet.schema;
 
         // Initialize meta-data from schema
@@ -1102,20 +1106,49 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         public String getColumnClassName(int column) throws SQLException
         {/*
             checkIndex(column);
-            return values.get(column - 1).getValueType().getType().getName();*/        	
-        	return currentRow.getColumnDefinitions().getType(column-1).asJavaClass().getCanonicalName();
+            return values.get(column - 1).getValueType().getType().getName();*/
+        	if(currentRow!=null){
+        		return currentRow.getColumnDefinitions().getType(column-1).asJavaClass().getCanonicalName();
+            }else{
+            	return driverResultSet.getColumnDefinitions().asList().get(column-1).getType().asJavaClass().getCanonicalName();
+            }
+        	
         }
 
         public int getColumnCount() throws SQLException
         {
-            return currentRow.getColumnDefinitions().size();
+        	if(currentRow!=null){
+        		return currentRow.getColumnDefinitions().size();
+        	}else{
+        		return driverResultSet.getColumnDefinitions().size();
+        	}
         }
 
         public int getColumnDisplaySize(int column) throws SQLException
         {
             checkIndex(column);
-            String stringValue = getObject(column).toString();
-            return (stringValue == null ? -1 : stringValue.length());
+            Definition col = null;
+            if(currentRow!=null){
+            	col = currentRow.getColumnDefinitions().asList().get(column-1);
+            }else{
+            	col = driverResultSet.getColumnDefinitions().asList().get(column-1);
+            }
+            try{
+            	
+            	int length = -1;
+	            AbstractJdbcType jtype = TypesMap.getTypeForComparator(col.getType().toString());
+	            if (jtype instanceof JdbcBytes) length = Integer.MAX_VALUE / 2;
+	            if (jtype instanceof JdbcAscii || jtype instanceof JdbcUTF8) length = Integer.MAX_VALUE;
+	            if (jtype instanceof JdbcUUID) length = 36;
+	            if (jtype instanceof JdbcInt32) length = 4;
+	            if (jtype instanceof JdbcLong) length = 8;
+            	// String stringValue = getObject(column).toString();
+            	//return (stringValue == null ? -1 : stringValue.length());
+	            
+	            return length;
+            }catch(Exception e){
+            	return -1;
+            }
             //return -1;
         }
 
@@ -1128,13 +1161,24 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         public String getColumnName(int column) throws SQLException
         {
             checkIndex(column);
-            return currentRow.getColumnDefinitions().getName(column-1);
-            //return values.get(column - 1).getNameString();
+            
+            
+            if(currentRow!=null){
+            	return currentRow.getColumnDefinitions().getName(column-1);
+            }else{
+            	return driverResultSet.getColumnDefinitions().asList().get(column-1).getName();
+            }
         }
 
         public int getColumnType(int column) throws SQLException
         {        	
-        	DataType type = currentRow.getColumnDefinitions().getType(column-1);        	
+        	DataType type = null;        	
+        	if(currentRow!=null){
+        		type = currentRow.getColumnDefinitions().getType(column-1);
+        	}else{
+        		type = driverResultSet.getColumnDefinitions().asList().get(column-1).getType();
+        	}
+        	        	
         	return TypesMap.getTypeForComparator(type.toString()).getJdbcType();
             /*checkIndex(column);
             return values.get(column - 1).getValueType().getJdbcType();*/
@@ -1147,9 +1191,14 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         {
         	
             checkIndex(column);
-        	DataType type = currentRow.getColumnDefinitions().getType(column-1);        	
-        	return type.toString();
-//            return values.get(column - 1).getValueType().getClass().getSimpleName();
+            DataType type = null;
+            if(currentRow!=null){
+            	type = currentRow.getColumnDefinitions().getType(column-1);
+            }else{
+            	type = driverResultSet.getColumnDefinitions().getType(column-1);
+            }
+        	        	
+        	return type.toString();            
         }
 
         public int getPrecision(int column) throws SQLException
