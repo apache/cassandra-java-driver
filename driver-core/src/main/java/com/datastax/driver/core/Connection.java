@@ -276,9 +276,19 @@ class Connection {
         // sure the "suspected" mechanism work as expected
         Host host = factory.manager.metadata.getHost(address);
         if (host != null) {
+
+            // If the host was reconnecting, and this error happens right after we opened a connection pool, but
+            // before we could mark the node UP, we don't want to go through the SUSPECTED state, because that can
+            // lead to a race condition that leaves the node UP with a closed pool.
+            boolean belongsToReconnectingPool = host.state != Host.State.UP &&
+                this instanceof PooledConnection &&
+                (((PooledConnection)this).pool == null || !((PooledConnection)this).pool.isClosed());
+
+            boolean markSuspected = isInitialized && !belongsToReconnectingPool;
+
             // This will trigger onDown, including when the defunct Connection is part of a reconnection attempt, which is redundant.
             // This is not too much of a problem since calling onDown on a node that is already down has no effect.
-            boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded(), isInitialized);
+            boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded(), markSuspected);
             notifyOwnerWhenDefunct(isDown);
         }
 
@@ -364,12 +374,12 @@ class Connection {
          * never leave a handler that won't get an answer or be errored out.
          */
         if (isDefunct) {
-            dispatcher.removeHandler(handler.streamId, true);
+            dispatcher.removeHandler(handler, true);
             throw new ConnectionException(address, "Write attempt on defunct connection");
         }
 
         if (isClosed()) {
-            dispatcher.removeHandler(handler.streamId, true);
+            dispatcher.removeHandler(handler, true);
             throw new ConnectionException(address, "Connection has been closed");
         }
 
@@ -390,7 +400,7 @@ class Connection {
                     logger.debug("{} Error writing request {}", Connection.this, request);
                     // Remove this handler from the dispatcher so it don't get notified of the error
                     // twice (we will fail that method already)
-                    dispatcher.removeHandler(handler.streamId, true);
+                    dispatcher.removeHandler(handler, true);
 
                     final ConnectionException ce;
                     if (writeFuture.getCause() instanceof java.nio.channels.ClosedChannelException) {
@@ -623,19 +633,27 @@ class Connection {
             assert old == null;
         }
 
-        public void removeHandler(int streamId, boolean releaseStreamId) {
+        public void removeHandler(ResponseHandler handler, boolean releaseStreamId) {
 
             // If we don't release the ID, mark first so that we can rely later on the fact that if
             // we receive a response for an ID with no handler, it's that this ID has been marked.
             if (!releaseStreamId)
-                streamIdHandler.mark(streamId);
+                streamIdHandler.mark(handler.streamId);
 
-            ResponseHandler handler = pending.remove(streamId);
-            if (handler != null)
-                handler.cancelTimeout();
+            // If a RequestHandler is cancelled right when the response arrives, this method (called with releaseStreamId=false) will race with messageReceived.
+            // messageReceived could have already released the streamId, which could have already been reused by another request. We must not remove the handler
+            // if it's not ours, because that would cause the other request to hang forever.
+            boolean removed = pending.remove(handler.streamId, handler);
+            if (!removed) {
+                // We raced, so if we marked the streamId above, that was wrong.
+                if (!releaseStreamId)
+                    streamIdHandler.unmark(handler.streamId);
+                return;
+            }
+            handler.cancelTimeout();
 
             if (releaseStreamId)
-                streamIdHandler.release(streamId);
+                streamIdHandler.release(handler.streamId);
 
             if (isClosed())
                 tryTerminate(false);
@@ -864,7 +882,7 @@ class Connection {
             // request and there is no point in holding the handler, but we don't release the streamId. If we
             // were, a new request could reuse that ID but get the answer to the request we just gave up on instead
             // of its own answer, and we would have no way to detect that.
-            connection.dispatcher.removeHandler(streamId, false);
+            connection.dispatcher.removeHandler(this, false);
             if (connection instanceof PooledConnection)
                 ((PooledConnection)connection).release();
         }

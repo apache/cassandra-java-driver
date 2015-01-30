@@ -5,6 +5,12 @@ CHANGELOG
 -------
 
 - [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
+- [bug] Prevent race between cancellation and query completion (JAVA-614)
+- [bug] Prevent cancel and timeout from cancelling unrelated ResponseHandler if
+  streamId was already released and reused (JAVA-632).
+- [bug] Fix issue when newly opened pool fails before we could mark the node UP
+  (JAVA-642)
+
 
 2.0.9:
 ------
