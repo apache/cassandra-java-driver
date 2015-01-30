@@ -170,7 +170,7 @@ class CassandraConnection extends AbstractConnection implements Connection
             			if(primaryDc.length()>0){
             				builder.withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy(primaryDc)));
             			}else{
-            				builder.withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy()));
+            				throw new Exception("A primary DC must be specified with DCAwareRoundRobinPolicy");
             			}
             		}else if(loadBalancingPolicy.endsWith("RoundRobinPolicy")){
             			builder.withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
@@ -184,7 +184,7 @@ class CassandraConnection extends AbstractConnection implements Connection
             			if(primaryDc.length()>0){
             				builder.withLoadBalancingPolicy(new DCAwareRoundRobinPolicy(primaryDc));
             			}else{
-            				builder.withLoadBalancingPolicy(new DCAwareRoundRobinPolicy());
+            				throw new Exception("A primary DC must be specified with DCAwareRoundRobinPolicy");
             			}            		
             	}else if(loadBalancingPolicy.startsWith("RoundRobinPolicy")){            		            			
             				builder.withLoadBalancingPolicy(new RoundRobinPolicy());
