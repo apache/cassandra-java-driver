@@ -231,12 +231,12 @@ class CassandraDatabaseMetaData implements DatabaseMetaData
 
     public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException
     {
-    	/*if (catalog == null || connection.getCatalog().equals(catalog))
+    	if (catalog == null || connection.getCatalog().equals(catalog))
     	{
     		if (schema == null) schema = connection.getSchema(); //limit to current schema if set
 	        ResultSet rs = MetadataResultSets.instance.makeIndexes(statement, schema, table,unique,approximate);
 	        return rs;
-    	}*/
+    	}
         return new CassandraResultSet();
     }
 
@@ -361,10 +361,7 @@ class CassandraDatabaseMetaData implements DatabaseMetaData
     	if (catalog == null || connection.getCatalog().equals(catalog))
     	{
     		if (schema == null) schema = connection.getSchema(); //limit to current schema if set
-    		KeyspaceMetadata ks = this.metadata.getKeyspace(schema);
-    		TableMetadata tableMetadata = ks.getTable(table);
-    		List<ColumnMetadata> pk = tableMetadata.getPrimaryKey();
-	        ResultSet rs = connection.getMetaData().getPrimaryKeys(catalog, schema, table);
+	        ResultSet rs = MetadataResultSets.instance.makePrimaryKeys(statement, schema, table);
 	        return rs;
     	}
         return new CassandraResultSet();
