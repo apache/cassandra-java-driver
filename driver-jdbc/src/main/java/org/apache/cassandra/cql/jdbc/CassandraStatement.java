@@ -60,7 +60,7 @@ class CassandraStatement extends AbstractStatement implements CassandraStatement
 
     protected int fetchDirection = ResultSet.FETCH_FORWARD;
 
-    protected int fetchSize = 0;
+    protected int fetchSize = 100;
 
     protected int maxFieldSize = 0;
 

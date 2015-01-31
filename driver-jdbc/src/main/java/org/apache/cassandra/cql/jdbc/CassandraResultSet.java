@@ -290,7 +290,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     			if (index < 1 || index > currentRow.getColumnDefinitions().asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + currentRow.getColumnDefinitions().asList().size());
     		}
     	}else{
-    		if (index < 1 || index > colDefinitions.asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + colDefinitions.asList().size());
+    		if (index < 1 || index > driverResultSet.getColumnDefinitions().asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + driverResultSet.getColumnDefinitions().asList().size());
     	}
     	
     }
@@ -298,7 +298,12 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     private final void checkName(String name) throws SQLException
     {
         //if (indexMap.get(name) == null) throw new SQLSyntaxErrorException(String.format(VALID_LABELS, name));
-    	if (!currentRow.getColumnDefinitions().contains(name)) throw new SQLSyntaxErrorException(String.format(VALID_LABELS, name));
+    	if(currentRow!=null){
+    		if (!currentRow.getColumnDefinitions().contains(name)) throw new SQLSyntaxErrorException(String.format(VALID_LABELS, name));
+    	}else{    		
+    		if (!driverResultSet.getColumnDefinitions().contains(name)) throw new SQLSyntaxErrorException(String.format(VALID_LABELS, name));
+    	
+    	}
     }
 
     private final void checkNotClosed() throws SQLException
@@ -317,7 +322,9 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     {
         /* indexMap = null;
         values = null; */
-    	this.statement.close();
+    	if(!isClosed()){
+    		this.statement.close();
+    	}
     }
 
     public int findColumn(String name) throws SQLException
@@ -561,6 +568,9 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     		if(e.getMessage().contains("is of type varint")){
     			return currentRow.getVarint(index-1).longValue();
     		}
+    		if(e.getMessage().contains("is of type int")){
+    			return (long)currentRow.getInt(index-1);
+    		}
     	}
         
         return currentRow.getLong(index - 1);
@@ -575,6 +585,9 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         }catch(InvalidTypeException e){
     		if(e.getMessage().contains("is of type varint")){
     			return currentRow.getVarint(name).longValue();
+    		}
+    		if(e.getMessage().contains("is of type int")){
+    			return (long)currentRow.getInt(name);
     		}
     	}
         
@@ -909,7 +922,11 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
 
     public boolean isClosed() throws SQLException
     {
-        return this.statement.isClosed();
+    	if(this.statement==null){
+    		return true;
+    	}else{
+    		return this.statement.isClosed();
+    	}
     	//return values == null;
     }
 
