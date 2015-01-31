@@ -49,6 +49,8 @@ public abstract class TestUtils {
     public static final String INSERT_FORMAT = "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)";
     public static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
 
+    public static final int TEST_BASE_NODE_WAIT = SystemProperties.getInt("com.datastax.driver.TEST_BASE_NODE_WAIT", 60);
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static BoundStatement setBoundValue(BoundStatement bs, String name, DataType type, Object value) {
         switch (type.getName()) {
@@ -267,7 +269,7 @@ public abstract class TestUtils {
     // This is used because there is some delay between when a node has been
     // added through ccm and when it's actually available for querying
     public static void waitFor(String node, Cluster cluster) {
-        waitFor(node, cluster, 60, false, false);
+        waitFor(node, cluster, TEST_BASE_NODE_WAIT, false, false);
     }
 
     public static void waitFor(String node, Cluster cluster, int maxTry) {
@@ -275,11 +277,11 @@ public abstract class TestUtils {
     }
 
     public static void waitForDown(String node, Cluster cluster) {
-        waitFor(node, cluster, 180, true, false);
+        waitFor(node, cluster, TEST_BASE_NODE_WAIT * 3, true, false);
     }
 
     public static void waitForDownWithWait(String node, Cluster cluster, int waitTime) {
-        waitFor(node, cluster, 180, true, false);
+        waitForDown(node, cluster);
 
         // FIXME: Once stop() works, remove this line
         try {
@@ -299,7 +301,7 @@ public abstract class TestUtils {
     }
 
     public static void waitForDecommission(String node, Cluster cluster) {
-        waitFor(node, cluster, 30, true, true);
+        waitFor(node, cluster, TEST_BASE_NODE_WAIT / 2, true, true);
     }
 
     public static void waitForDecommission(String node, Cluster cluster, int maxTry) {
