@@ -165,7 +165,10 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         try
         {
             resetResults();
-            //BoundStatement boundStatement = new BoundStatement(statement);                        
+            //BoundStatement boundStatement = new BoundStatement(statement);     
+            if(this.statement.getFetchSize()==0)
+            		// force paging to avoid timeout and node harm...
+            		this.statement.setFetchSize(100);
             currentResultSet = new CassandraResultSet(this, this.connection.getSession().execute(this.statement));            
                         
             //currentResultSet = this.statement.bind(values); 
