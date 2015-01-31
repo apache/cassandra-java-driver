@@ -289,8 +289,10 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     		if(currentRow.getColumnDefinitions()!=null){
     			if (index < 1 || index > currentRow.getColumnDefinitions().asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + currentRow.getColumnDefinitions().asList().size());
     		}
-    	}else{
-    		if (index < 1 || index > driverResultSet.getColumnDefinitions().asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + driverResultSet.getColumnDefinitions().asList().size());
+    	}else if(driverResultSet!=null){
+    		if(driverResultSet.getColumnDefinitions()!=null){
+    			if (index < 1 || index > driverResultSet.getColumnDefinitions().asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + driverResultSet.getColumnDefinitions().asList().size());
+    		}
     	}
     	
     }
@@ -300,8 +302,10 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         //if (indexMap.get(name) == null) throw new SQLSyntaxErrorException(String.format(VALID_LABELS, name));
     	if(currentRow!=null){
     		if (!currentRow.getColumnDefinitions().contains(name)) throw new SQLSyntaxErrorException(String.format(VALID_LABELS, name));
-    	}else{    		
-    		if (!driverResultSet.getColumnDefinitions().contains(name)) throw new SQLSyntaxErrorException(String.format(VALID_LABELS, name));
+    	}else if(driverResultSet!=null){
+    		if(driverResultSet.getColumnDefinitions()!=null){
+    			if (!driverResultSet.getColumnDefinitions().contains(name)) throw new SQLSyntaxErrorException(String.format(VALID_LABELS, name));
+    		}
     	
     	}
     }
