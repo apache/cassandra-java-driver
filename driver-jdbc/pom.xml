@@ -79,7 +79,7 @@ under the License.
 		<groupId>org.apache.cassandra</groupId>
 		<artifactId>cassandra-clientutil</artifactId>
 	<version>2.1.2</version>
-</dependency>
+	</dependency>	
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -95,6 +95,23 @@ under the License.
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
       <version>1.9.0</version>
+    </dependency>
+    
+     <!-- Compression libraries for the protocol. -->
+    <!-- Each of them is only a mandatory runtime dependency if you want to use the compression it offers -->
+
+    <dependency>
+        <groupId>org.xerial.snappy</groupId>
+        <artifactId>snappy-java</artifactId>
+        <version>1.0.5</version>
+        <optional>true</optional>
+    </dependency>
+
+    <dependency>
+        <groupId>net.jpountz.lz4</groupId>
+        <artifactId>lz4</artifactId>
+        <version>1.2.0</version>
+        <optional>true</optional>
     </dependency>
     
   </dependencies>
@@ -275,7 +292,7 @@ under the License.
         </executions> -->
         <configuration>
           <instructions>
-            <Bundle-SymbolicName>org.apache.cassandra.cql.jdbc</Bundle-SymbolicName>
+            <Bundle-SymbolicName>com.datastax.driver.jdbc</Bundle-SymbolicName>
             <Bundle-Version>${project.version}</Bundle-Version>
             <_include>-osgi.bnd</_include>
           </instructions>
