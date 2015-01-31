@@ -18,7 +18,7 @@
  * under the License.
  * 
  */
-package org.apache.cassandra.cql.jdbc;
+package com.datastax.driver.jdbc;
 
 import static com.datastax.driver.jdbc.Utils.NOT_SUPPORTED;
 import static com.datastax.driver.jdbc.Utils.PROTOCOL;
@@ -35,9 +35,6 @@ import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.datastax.driver.jdbc.CassandraConnection;
-import com.datastax.driver.jdbc.Utils;
 
 /**
  * The Class CassandraDriver.
