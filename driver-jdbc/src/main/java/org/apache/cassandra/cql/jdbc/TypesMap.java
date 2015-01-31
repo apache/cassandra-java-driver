@@ -68,20 +68,17 @@ public class TypesMap
     public static AbstractJdbcType<?> getTypeForComparator(String comparator)
     {
         // If not fully qualified, assume it's the short name for a built-in.
-    	System.out.println("comparator : " + comparator);
         if ((comparator != null) && (!comparator.contains(".")))
         	if(map.containsKey("org.apache.cassandra.db.marshal." + comparator)){
         		return map.get("org.apache.cassandra.db.marshal." + comparator);
-        	}else{
-        		System.out.println("JdbcOther");
-        		return map.get(JdbcOther.instance);
+        	}else{        		
+        		return JdbcOther.instance;
         	}
          
         if(map.containsKey(comparator)){
         	return map.get(comparator);
-        }else{
-        	System.out.println("JdbcOther");
-        	return map.get(JdbcOther.instance);
+        }else{        	
+        	return JdbcOther.instance;
         }
     }
 }

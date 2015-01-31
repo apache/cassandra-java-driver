@@ -56,7 +56,7 @@ import org.junit.Test;
 
 import com.datastax.driver.core.ConsistencyLevel;
 
-public class JdbcRegressionTest
+public class JdbcRegressionUnitTest
 {
     private static final String HOST = System.getProperty("host", ConnectionDetails.getHost());
     private static final int PORT = Integer.parseInt(System.getProperty("port", ConnectionDetails.getPort()+""));
@@ -722,7 +722,6 @@ public class JdbcRegressionTest
     }
 
     
-
     @Test
     public void isValid() throws Exception
     {
