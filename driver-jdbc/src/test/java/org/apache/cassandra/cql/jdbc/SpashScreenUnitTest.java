@@ -31,7 +31,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class SpashScreenTest
+public class SpashScreenUnitTest
 {
     private static final String HOST = System.getProperty("host", ConnectionDetails.getHost());
     private static final int PORT = Integer.parseInt(System.getProperty("port", ConnectionDetails.getPort()+""));

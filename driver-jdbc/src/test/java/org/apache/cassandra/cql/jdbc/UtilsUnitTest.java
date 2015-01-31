@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 public class UtilsUnitTest
 {
-    private static final Logger LOG = LoggerFactory.getLogger(CollectionsTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CollectionsUnitTest.class);
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
@@ -41,10 +41,10 @@ public class UtilsUnitTest
     @Test
     public void testParseURL() throws Exception
     {
-        String happypath = "jdbc:cassandra://localhost:9170/Keyspace1?version=3.0.0&consistency=QUORUM";
+        String happypath = "jdbc:cassandra://localhost:9042/Keyspace1?version=3.0.0&consistency=QUORUM";
         Properties props = Utils.parseURL(happypath);
         assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        assertEquals("9170", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
         assertEquals("Keyspace1", props.getProperty(Utils.TAG_DATABASE_NAME));
         assertEquals("3.0.0", props.getProperty(Utils.TAG_CQL_VERSION));
         assertEquals("QUORUM", props.getProperty(Utils.TAG_CONSISTENCY_LEVEL));
@@ -64,31 +64,31 @@ public class UtilsUnitTest
         assertEquals("Keyspace1", props.getProperty(Utils.TAG_DATABASE_NAME));
         assertEquals("2.0.0", props.getProperty(Utils.TAG_CQL_VERSION));
         
-        String noversion = "jdbc:cassandra://localhost:9170/Keyspace1";
+        String noversion = "jdbc:cassandra://localhost:9042/Keyspace1";
         props = Utils.parseURL(noversion);
         assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        assertEquals("9170", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
         assertEquals("Keyspace1", props.getProperty(Utils.TAG_DATABASE_NAME));
         assertNull(props.getProperty(Utils.TAG_CQL_VERSION));
         
-        String nokeyspaceonly = "jdbc:cassandra://localhost:9170?version=2.0.0";
+        String nokeyspaceonly = "jdbc:cassandra://localhost:9042?version=2.0.0";
         props = Utils.parseURL(nokeyspaceonly);
         assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        assertEquals("9170", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
         assertNull(props.getProperty(Utils.TAG_DATABASE_NAME));
         assertEquals("2.0.0", props.getProperty(Utils.TAG_CQL_VERSION));
         
-        String nokeyspaceorver = "jdbc:cassandra://localhost:9170";
+        String nokeyspaceorver = "jdbc:cassandra://localhost:9042";
         props = Utils.parseURL(nokeyspaceorver);
         assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        assertEquals("9170", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
         assertNull(props.getProperty(Utils.TAG_DATABASE_NAME));
         assertNull(props.getProperty(Utils.TAG_CQL_VERSION));
         
-        String withloadbalancingpolicy = "jdbc:cassandra://localhost:9170?loadbalancing=TokenAwarePolicy-DCAwareRoundRobinPolicy&primarydc=DC1";
+        String withloadbalancingpolicy = "jdbc:cassandra://localhost:9042?loadbalancing=TokenAwarePolicy-DCAwareRoundRobinPolicy&primarydc=DC1";
         props = Utils.parseURL(withloadbalancingpolicy);
         assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        assertEquals("9170", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
         assertNull(props.getProperty(Utils.TAG_DATABASE_NAME));
         assertNull(props.getProperty(Utils.TAG_CQL_VERSION));
         assertEquals("TokenAwarePolicy-DCAwareRoundRobinPolicy", props.getProperty(Utils.TAG_LOADBALANCING_POLICY));
@@ -98,7 +98,7 @@ public class UtilsUnitTest
     @Test
     public void testCreateSubName() throws Exception
     {
-        String happypath = "jdbc:cassandra://localhost:9170/Keyspace1?consistency=QUORUM&version=3.0.0";
+        String happypath = "jdbc:cassandra://localhost:9042/Keyspace1?consistency=QUORUM&version=3.0.0";
         Properties props = Utils.parseURL(happypath);
         
         if (LOG.isDebugEnabled()) LOG.debug("happypath    = '{}'", happypath);

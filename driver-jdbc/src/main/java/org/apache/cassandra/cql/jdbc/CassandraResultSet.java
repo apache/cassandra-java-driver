@@ -1149,10 +1149,8 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         	}else{
         		type = driverResultSet.getColumnDefinitions().asList().get(column-1).getType();
         	}
-        	        	
         	return TypesMap.getTypeForComparator(type.toString()).getJdbcType();
-            /*checkIndex(column);
-            return values.get(column - 1).getValueType().getJdbcType();*/
+            
         }
 
         /**
@@ -1197,10 +1195,10 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
             return statement.connection.getSchema();
         }
 
-        public String getTableName(int column) throws SQLException
+       /* public String getTableName(int column) throws SQLException
         {
             throw new SQLFeatureNotSupportedException();
-        }
+        }*/
 
         public boolean isAutoIncrement(int column) throws SQLException
         {
@@ -1275,6 +1273,17 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         {
             throw new SQLFeatureNotSupportedException(String.format(NO_INTERFACE, iface.getSimpleName()));
         }
+
+		@Override
+		public String getTableName(int column) throws SQLException {
+			String tableName="";
+			if(currentRow!=null){
+            	tableName = currentRow.getColumnDefinitions().getTable(column-1);
+            }else{
+            	tableName = driverResultSet.getColumnDefinitions().getTable(column-1);
+            }
+			return tableName;
+		}
         
         
     }

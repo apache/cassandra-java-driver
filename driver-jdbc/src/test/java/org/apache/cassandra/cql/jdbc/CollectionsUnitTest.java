@@ -50,9 +50,9 @@ import org.slf4j.LoggerFactory;
  * Set
  * 
  */
-public class CollectionsTest
+public class CollectionsUnitTest
 {
-    private static final Logger LOG = LoggerFactory.getLogger(CollectionsTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CollectionsUnitTest.class);
 
 
     private static final String HOST = System.getProperty("host", ConnectionDetails.getHost());

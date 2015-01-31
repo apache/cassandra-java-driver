@@ -122,10 +122,10 @@ class Utils
     protected static final String VALID_LABELS = "name provided was not in the list of valid column labels: %s";
     protected static final String NOT_TRANSLATABLE = "column was stored in %s format which is not translatable to %s";
     protected static final String NOT_BOOLEAN = "string value was neither 'true' nor 'false' :  %s";
-    protected static final String HOST_IN_URL = "Connection url must specify a host, e.g., jdbc:cassandra://localhost:9170/Keyspace1";
+    protected static final String HOST_IN_URL = "Connection url must specify a host, e.g., jdbc:cassandra://localhost:9042/Keyspace1";
     protected static final String HOST_REQUIRED = "a 'host' name is required to build a Connection";
     protected static final String BAD_KEYSPACE = "Keyspace names must be composed of alphanumerics and underscores (parsed: '%s')";
-    protected static final String URI_IS_SIMPLE = "Connection url may only include host, port, and keyspace, consistency and version option, e.g., jdbc:cassandra://localhost:9170/Keyspace1?version=3.0.0&consistency=ONE";
+    protected static final String URI_IS_SIMPLE = "Connection url may only include host, port, and keyspace, consistency and version option, e.g., jdbc:cassandra://localhost:9042/Keyspace1?version=3.0.0&consistency=ONE";
     protected static final String NOT_OPTION = "Connection url only supports the 'version' and 'consistency' options";
     protected static final String FORWARD_ONLY = "Can not position cursor with a type of TYPE_FORWARD_ONLY";
 

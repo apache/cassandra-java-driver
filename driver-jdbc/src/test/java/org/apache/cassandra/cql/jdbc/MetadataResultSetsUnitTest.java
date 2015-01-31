@@ -20,11 +20,28 @@
  */
 package org.apache.cassandra.cql.jdbc;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.net.InetAddress;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import org.apache.cassandra.cql.ConnectionDetails;
 import org.junit.AfterClass;
@@ -32,7 +49,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 
-public class MetadataResultSetsTest
+public class MetadataResultSetsUnitTest
 {
     private static final String HOST = System.getProperty("host", ConnectionDetails.getHost());
     private static final int PORT = Integer.parseInt(System.getProperty("port", ConnectionDetails.getPort()+""));
@@ -231,4 +248,92 @@ public class MetadataResultSetsTest
         System.out.println(toString(result));       
         System.out.println();
     }
+    
+    
+    @Test
+    public void testCollectionsMetadata() throws Exception
+    {
+        
+    	System.out.println();
+        System.out.println("Collections metadata test");
+        System.out.println("--------------");
+        
+    	Statement stmt = con.createStatement();
+        java.util.Date now = new java.util.Date();
+        
+        
+        // Create the target Column family with each basic data type available on Cassandra
+       
+        String createCF = "CREATE TABLE " + KEYSPACE1 + ".collections_metadata(part_key text PRIMARY KEY, set1 set<text>, description text, map2 map<text,int>, list3 list<text>);";
+        
+        stmt.execute(createCF);
+        stmt.close();
+                
+        Statement statement = con.createStatement();
+        String insert = "INSERT INTO " + KEYSPACE1 + ".collections_metadata(part_key, set1, description, map2, list3) VALUES ('part_key',{'val1','val2','val3'},'desc',{'val1':1,'val2':2},['val1','val2']);";
+                
+        ResultSet result = statement.executeQuery(insert);
+        
+        result = statement.executeQuery("select * from " + KEYSPACE1 + ".collections_metadata");
+        
+        
+        assertTrue(result.next());
+        assertEquals(5, result.getMetaData().getColumnCount());
+        for(int i=1;i<=result.getMetaData().getColumnCount();i++){
+        	System.out.println("getColumnName : " + result.getMetaData().getColumnName(i));
+        	System.out.println("getCatalogName : " + result.getMetaData().getCatalogName(i));
+        	System.out.println("getColumnClassName : " + result.getMetaData().getColumnClassName(i));
+        	System.out.println("getColumnDisplaySize : " + result.getMetaData().getColumnDisplaySize(i));
+        	System.out.println("getColumnLabel : " + result.getMetaData().getColumnLabel(i));        
+        	System.out.println("getColumnType : " + result.getMetaData().getColumnType(i));
+        	System.out.println("getColumnTypeName : " + result.getMetaData().getColumnTypeName(i));
+        	System.out.println("getPrecision : " + result.getMetaData().getPrecision(i));
+        	System.out.println("getScale : " + result.getMetaData().getScale(i));
+        	System.out.println("getSchemaName : " + result.getMetaData().getSchemaName(i));
+        	System.out.println("getTableName : " + result.getMetaData().getTableName(i));
+        	System.out.println("==========================");
+        }
+        
+        // columns are apparently ordered alphabetically and not according to the query order
+        assertEquals("part_key", result.getMetaData().getColumnName(1));
+        assertEquals("description", result.getMetaData().getColumnName(2));
+        assertEquals("list3", result.getMetaData().getColumnName(3));
+        assertEquals("map2", result.getMetaData().getColumnName(4));
+        assertEquals("set1", result.getMetaData().getColumnName(5));
+        
+        assertEquals("part_key", result.getMetaData().getColumnLabel(1));
+        assertEquals("description", result.getMetaData().getColumnLabel(2));
+        assertEquals("list3", result.getMetaData().getColumnLabel(3));
+        assertEquals("map2", result.getMetaData().getColumnLabel(4));
+        assertEquals("set1", result.getMetaData().getColumnLabel(5));
+        
+        assertEquals("collections_metadata", result.getMetaData().getTableName(1));
+        assertEquals("collections_metadata", result.getMetaData().getTableName(2));
+        assertEquals("collections_metadata", result.getMetaData().getTableName(3));
+        assertEquals("collections_metadata", result.getMetaData().getTableName(4));
+        assertEquals("collections_metadata", result.getMetaData().getTableName(5));
+        
+        assertEquals("java.lang.String", result.getMetaData().getColumnClassName(1));
+        assertEquals("java.lang.String", result.getMetaData().getColumnClassName(2));
+        assertEquals("java.util.List", result.getMetaData().getColumnClassName(3));
+        assertEquals("java.util.Map", result.getMetaData().getColumnClassName(4));
+        assertEquals("java.util.Set", result.getMetaData().getColumnClassName(5));
+        
+        assertEquals(12, result.getMetaData().getColumnType(1));
+        assertEquals(12, result.getMetaData().getColumnType(2));
+        assertEquals(1111, result.getMetaData().getColumnType(3));
+        assertEquals(1111, result.getMetaData().getColumnType(4));
+        assertEquals(1111, result.getMetaData().getColumnType(5));
+        
+        
+        
+        statement.close();
+        
+        
+        
+        
+       
+    }
+
+    
 }
