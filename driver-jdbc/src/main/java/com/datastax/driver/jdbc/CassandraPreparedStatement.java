@@ -64,7 +64,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 class CassandraPreparedStatement extends CassandraStatement implements PreparedStatement
@@ -79,9 +82,10 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
 
     /** a Map of the current bound values encountered in setXXX methods */
     private Map<Integer, Object> bindValues = new LinkedHashMap<Integer, Object>();
-    
+    private com.datastax.driver.core.PreparedStatement stmt ;
     
     private BoundStatement statement;
+    private ArrayList<BoundStatement> batchStatements;
     //private BoundStatement boundStatement;
     //private CassandraResultSet currentResultSet=null;
     protected ResultSet currentResultSet = null;
@@ -100,15 +104,15 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         int rsHoldability
         ) throws SQLException
     {
-       super(con,cql,rsType,rsConcurrency,rsHoldability);
-       System.out.println("C* statement : " + cql);
+       super(con,cql,rsType,rsConcurrency,rsHoldability);       
+       
        if (LOG.isTraceEnabled()) LOG.trace("CQL: " + this.cql);
        try
        {
-    	   com.datastax.driver.core.PreparedStatement stmt = this.connection.getSession().prepare(cql); 
-    	   this.statement = new BoundStatement(stmt);
-    	   count = cql.length() - cql.replace("?", "").length();
-    	   System.out.println("nb params : " + count);
+    	   stmt = this.connection.getSession().prepare(cql); 
+    	   this.statement = new BoundStatement(stmt);    	   
+    	   batchStatements = Lists.newArrayList();
+    	   count = cql.length() - cql.replace("?", "").length();   	   
        }
        catch (Exception e)
        {
@@ -184,7 +188,30 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
 
     public void addBatch() throws SQLException
     {
-        throw new SQLFeatureNotSupportedException(NOT_SUPPORTED);
+        batchStatements.add(statement);
+        this.statement = new BoundStatement(stmt);
+    }
+    
+    public int[] executeBatch() throws SQLException
+    {
+    	int[] returnCounts= new int[batchStatements.size()];
+    	List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>();
+    	for(BoundStatement q:batchStatements){
+    		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(q);
+    		futures.add(resultSetFuture);
+    	}
+		
+    	int i=0;
+		for (ResultSetFuture future : futures){
+			com.datastax.driver.core.ResultSet rows = future.getUninterruptibly();
+			for(Row row:rows){
+				//do nothing
+			}				
+			returnCounts[i]=0;
+			i++;
+		}
+        
+        return returnCounts;
     }
 
 
@@ -360,7 +387,7 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         // For now all objects are forced to String type
     	// TODO : change this quickly stupid...
     	//sdfsdf
-    	System.out.println("type : " + object.getClass().getSimpleName());
+    	
     	int targetType=0;
     	if(object.getClass().equals(java.lang.Long.class)){
     		targetType = Types.BIGINT;    		
@@ -401,16 +428,14 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
     {
         checkNotClosed();
         checkIndex(parameterIndex);
-        System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass() + " / Target type = " + targetSqlType);
+        
         //TODO: we must correctly analyze the targetSqlType to choose which setXXXX method to use
         switch(targetSqlType){          
         case Types.VARCHAR:
         	this.statement.setString(parameterIndex-1, object.toString());
-        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.BIGINT:
         	this.statement.setLong(parameterIndex-1, Long.parseLong(object.toString()));
-        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.BINARY:        	
         	byte[] array = new byte[((java.io.ByteArrayInputStream)object).available()];
@@ -421,35 +446,27 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
 				e1.printStackTrace();
 			}
         	this.statement.setBytes(parameterIndex-1, (ByteBuffer.wrap((array))));
-        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;        	
         case Types.BOOLEAN:
         	this.statement.setBool(parameterIndex-1, (Boolean)object);
-        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.CHAR:
         	this.statement.setString(parameterIndex-1, object.toString());
-        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.CLOB:
         	this.statement.setString(parameterIndex-1, object.toString());
-        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;          
         case Types.TIMESTAMP:
         	this.statement.setDate(parameterIndex-1, (Timestamp)object);
-        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.DECIMAL:
         	this.statement.setDecimal(parameterIndex-1, (BigDecimal)object);
-        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.DOUBLE:
         	this.statement.setDouble(parameterIndex-1, (Double)object);
-        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.FLOAT:
         	this.statement.setFloat(parameterIndex-1, (Float)object);
-        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.INTEGER:
         	try{
@@ -459,40 +476,32 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         			this.statement.setVarint(parameterIndex-1, BigInteger.valueOf(Long.parseLong(object.toString())));
         		}
         	}
-        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.DATE:
         	this.statement.setDate(parameterIndex-1, (Date)object);
-        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.ROWID:
         	this.statement.setUUID(parameterIndex-1, (java.util.UUID)object);
-        	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	break;
         case Types.OTHER:
         	
         	if(object.getClass().equals(java.util.UUID.class)){
         		this.statement.setUUID(parameterIndex-1, (java.util.UUID) object);
-        		System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	}
         	if(object.getClass().equals(java.net.InetAddress.class) || object.getClass().equals(java.net.Inet4Address.class)){
         		this.statement.setInet(parameterIndex-1, (InetAddress) object);
-        		System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
         	}
         	else if ( List.class.isAssignableFrom(object.getClass()))
             {
               this.statement.setList(parameterIndex-1,handleAsList(object.getClass(), object));  
-              System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
             }
             else if ( Set.class.isAssignableFrom(object.getClass()))
             {
             	this.statement.setSet(parameterIndex-1,handleAsSet(object.getClass(), object)); 
-            	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
             }
             else if ( Map.class.isAssignableFrom(object.getClass()))
             {
             	this.statement.setMap(parameterIndex-1,handleAsMap(object.getClass(), object));              
-            	System.out.println(parameterIndex-1 + " = " + object.toString() + " / " + object.getClass());
             } 
                     	
         	break;
@@ -532,8 +541,7 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         	// Yes, I'm ashamed...
            	if(e.getMessage().contains("is of type set<")){
         		String itemType = e.getMessage().substring(e.getMessage().indexOf("<")+1, e.getMessage().indexOf(">"));
-        		this.statement.setSet(parameterIndex-1, Utils.parseSet(itemType, value));        		        		
-        		System.out.println("parsed set : " + Utils.parseSet(itemType, value));
+        		this.statement.setSet(parameterIndex-1, Utils.parseSet(itemType, value));        		        		        		
     		}else if(e.getMessage().contains("is of type list<")){
         		String itemType = e.getMessage().substring(e.getMessage().indexOf("<")+1, e.getMessage().indexOf(">"));
         		this.statement.setList(parameterIndex-1, Utils.parseList(itemType, value));        	    		

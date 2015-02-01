@@ -41,6 +41,7 @@ import com.datastax.driver.core.ColumnDefinitions.Definition;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -136,6 +137,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     public static final int DEFAULT_CONCURRENCY = ResultSet.CONCUR_READ_ONLY;
     public static final int DEFAULT_HOLDABILITY = ResultSet.HOLD_CURSORS_OVER_COMMIT;
     private Row currentRow;
+    
     private ColumnDefinitions colDefinitions;
     //private com.datastax.driver.core.ResultSet datastaxRs;
     /**
@@ -171,6 +173,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     private boolean wasNull;
     
     private com.datastax.driver.core.ResultSet driverResultSet;
+    private ArrayList<com.datastax.driver.core.ResultSet> severalDriverResultSet;
 
     //private CqlMetadata schema;
 
@@ -184,7 +187,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     }
 
     /**
-     * Instantiates a new cassandra result set from a CqlResult.
+     * Instantiates a new cassandra result set from a com.datastax.driver.core.ResultSet.
      */
     CassandraResultSet(CassandraStatement statement, com.datastax.driver.core.ResultSet resultSet) throws SQLException
     {
@@ -201,6 +204,44 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         
         rowsIterator = resultSet.iterator();
         colDefinitions = resultSet.getColumnDefinitions();
+
+        // Initialize to column values from the first row
+        // re-Initialize meta-data to column values from the first row (if data exists)
+        // NOTE: that the first call to next() will HARMLESSLY re-write these values for the columns
+        // NOTE: the row cursor is not advanced and sits before the first row
+        if (hasMoreRows())
+        {
+            populateColumns();            
+            // reset the iterator back to the beginning.
+            //rowsIterator = resultSet.iterator();
+        }
+
+        meta = new CResultSetMetaData();
+    }
+    
+    /**
+     * Instantiates a new cassandra result set from a CqlResult.
+     */
+    CassandraResultSet(CassandraStatement statement, ArrayList<com.datastax.driver.core.ResultSet> resultSets) throws SQLException
+    {
+        this.statement = statement;
+        this.resultSetType = statement.getResultSetType();
+        this.fetchDirection = statement.getFetchDirection();
+        this.fetchSize = statement.getFetchSize();
+        
+        // We have several result sets, but we will use only the first one for metadata needs
+        this.driverResultSet = resultSets.get(0);
+        //this.schema = resultSet.schema;
+
+        // Initialize meta-data from schema
+        populateMetaData();
+
+        // Now we concatenate iterators of the different result sets into a single one and voilà !! ;) 
+        rowsIterator = this.driverResultSet.iterator();
+        for(int i=1;i<resultSets.size();i++){        	
+        	rowsIterator = Iterators.concat(rowsIterator,resultSets.get(i).iterator());
+        }
+        colDefinitions = driverResultSet.getColumnDefinitions();
 
         // Initialize to column values from the first row
         // re-Initialize meta-data to column values from the first row (if data exists)
@@ -285,7 +326,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     private final void checkIndex(int index) throws SQLException
     {
         // 1 <= index <= size()
-    	//System.out.println("index : " + index);
+
     	if(currentRow!=null){
     		if(currentRow.getColumnDefinitions()!=null){
     			if (index < 1 || index > currentRow.getColumnDefinitions().asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + currentRow.getColumnDefinitions().asList().size());

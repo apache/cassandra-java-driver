@@ -37,10 +37,16 @@ import java.sql.Statement;
 
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Row;
+import com.google.common.collect.Lists;
 
 /**
  * Cassandra statement: implementation class for {@link PreparedStatement}.
@@ -58,6 +64,7 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
      * The cql.
      */
     protected String cql;
+    protected ArrayList<String> batchQueries;
 
     protected int fetchDirection = ResultSet.FETCH_FORWARD;
 
@@ -103,7 +110,8 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
     {
         this.connection = con;
         this.cql = cql;
-        System.out.println("C* statement : " + cql);
+        this.batchQueries = Lists.newArrayList();
+        
         this.consistencyLevel = con.defaultConsistencyLevel;
 
         if (!(resultSetType == ResultSet.TYPE_FORWARD_ONLY
@@ -122,10 +130,10 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
         this.resultSetHoldability = resultSetHoldability;
     }
 
-    public void addBatch(String arg0) throws SQLException
+    public void addBatch(String query) throws SQLException
     {
         checkNotClosed();
-        throw new SQLFeatureNotSupportedException(NO_BATCH);
+        batchQueries.add(query);
     }
 
     protected final void checkNotClosed() throws SQLException
@@ -136,7 +144,7 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
     public void clearBatch() throws SQLException
     {
         checkNotClosed();
-        throw new SQLFeatureNotSupportedException(NO_BATCH);
+        batchQueries = new ArrayList<String>();
     }
 
     public void clearWarnings() throws SQLException
@@ -161,7 +169,26 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
         try
         {
             if (logger.isTraceEnabled()) logger.trace("CQL: "+ cql);
-            currentResultSet = new CassandraResultSet(this, this.connection.getSession().execute(cql));            
+            if(cql.split(";").length>1 && !(cql.toLowerCase().startsWith("begin") && cql.toLowerCase().contains("batch") && cql.toLowerCase().contains("apply"))){
+            	// several statements in the query to execute asynchronously            	
+            	List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>();
+            	ArrayList<com.datastax.driver.core.ResultSet> results = Lists.newArrayList();
+            	for(String cqlQuery:cql.split(";")){            		                	
+                		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(cqlQuery);
+                		futures.add(resultSetFuture);
+                	}
+            		
+                	int i=0;
+            		for (ResultSetFuture future : futures){
+            			com.datastax.driver.core.ResultSet rows = future.getUninterruptibly();            			            							
+            			results.add(rows);            			
+            			i++;
+            		}
+            		currentResultSet = new CassandraResultSet(this, results);
+            	
+            }else{
+            	currentResultSet = new CassandraResultSet(this, this.connection.getSession().execute(cql));
+            }
         }        
         catch (Exception e)
         {        	
@@ -191,7 +218,24 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
 
     public int[] executeBatch() throws SQLException
     {
-        throw new SQLFeatureNotSupportedException(NO_BATCH);
+    	int[] returnCounts= new int[batchQueries.size()];
+    	List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>();
+    	for(String q:batchQueries){
+    		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(q);
+    		futures.add(resultSetFuture);
+    	}
+		
+    	int i=0;
+		for (ResultSetFuture future : futures){
+			com.datastax.driver.core.ResultSet rows = future.getUninterruptibly();
+			for(Row row:rows){
+				//do nothing
+			}				
+			returnCounts[i]=0;
+			i++;
+		}
+        
+        return returnCounts;
     }
 
     public ResultSet executeQuery(String query) throws SQLException
