@@ -724,6 +724,74 @@ public class JdbcRegressionUnitTest
 
     
     @Test
+    public void testIssue102() throws Exception
+    {
+        // null int or long should be... null !
+    	System.out.println();
+        System.out.println("Test Issue #102");
+        System.out.println("--------------");
+        
+    	Statement stmt = con.createStatement();
+        java.util.Date now = new java.util.Date();
+        
+        
+        // Create the target Column family with each basic data type available on Cassandra
+                
+        String createCF = "CREATE COLUMNFAMILY t102 (bigint_col bigint PRIMARY KEY, null_int_col int , null_bigint_col bigint);";
+        
+        stmt.execute(createCF);
+        stmt.close();
+        con.close();
+
+        // open it up again to see the new CF
+        con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE));
+        System.out.println("con.getMetaData().getDatabaseProductName() = " + con.getMetaData().getDatabaseProductName());
+        System.out.println("con.getMetaData().getDriverName() = " + con.getMetaData().getDriverName());
+        Statement statement = con.createStatement();
+        /*
+         * INSERT INTO test.t80(bigint_col , ascii_col , blob_col , boolean_col , decimal_col , double_col , 
+        										float_col , inet_col , int_col , text_col , timestamp_col , uuid_col , 
+        										timeuuid_col , varchar_col , varint_col )
+        			values(1, 'test', TextAsBlob('test'), true, 5.1, 5.123142 , 
+        										4.2134432 , '192.168.1.1', 1 , 'text' , '2015-01-01 10:10:10' , now() , 
+        										now(), 'test' , 3435 );
+         * 
+         */
+        
+        
+        String insert = "INSERT INTO t102(bigint_col) values(?);";
+        
+        
+        
+        
+		
+        PreparedStatement pstatement = con.prepareStatement(insert);
+        
+        
+        pstatement.setObject(1, 1L); // bigint
+                
+        pstatement.execute();
+                
+        ResultSet result = statement.executeQuery("SELECT * FROM t102 where bigint_col=1;");
+        
+        assertTrue(result.next());
+        assertEquals(1L, result.getLong("bigint_col"));
+        System.out.println("null_bigint_col = " +  result.getLong("null_bigint_col"));
+        assertEquals(0L,result.getLong("null_bigint_col"));
+        assertTrue(result.wasNull());
+        assertEquals(0,result.getInt("null_int_col"));
+        assertTrue(result.wasNull());
+        
+        statement.close();
+        pstatement.close();
+        
+        
+        
+       
+    }
+
+    
+    @Test
     public void isValid() throws Exception
     {
 //    	assert con.isValid(3);
