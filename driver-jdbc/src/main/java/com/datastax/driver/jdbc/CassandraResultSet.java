@@ -328,6 +328,8 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         // 1 <= index <= size()
 
     	if(currentRow!=null){
+    		if(currentRow.isNull(index-1))
+            	wasNull=true;
     		if(currentRow.getColumnDefinitions()!=null){
     			if (index < 1 || index > currentRow.getColumnDefinitions().asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + currentRow.getColumnDefinitions().asList().size());
     		}
@@ -341,8 +343,10 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
 
     private final void checkName(String name) throws SQLException
     {
-        //if (indexMap.get(name) == null) throw new SQLSyntaxErrorException(String.format(VALID_LABELS, name));
+        //if (indexMap.get(name) == null) throw new SQLSyntaxErrorException(String.format(VALID_LABELS, name));    	
     	if(currentRow!=null){
+    		if(currentRow.isNull(name))
+            	wasNull=true;
     		if (!currentRow.getColumnDefinitions().contains(name)) throw new SQLSyntaxErrorException(String.format(VALID_LABELS, name));
     	}else if(driverResultSet!=null){
     		if(driverResultSet.getColumnDefinitions()!=null){
@@ -558,11 +562,13 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     {
         checkIndex(index);
         return currentRow.getInt(index-1);
+        
     }
 
     public int getInt(String name) throws SQLException
     {
-        checkName(name);
+    	checkName(name);
+        
         return currentRow.getInt(name);
     }
 
@@ -608,8 +614,11 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     public long getLong(int index) throws SQLException
     {
         checkIndex(index);
-        try{
-        	return currentRow.getLong(index - 1);
+        try{        	
+        	if(currentRow.isNull(index-1))
+            	wasNull=true;            
+            return currentRow.getLong(index - 1);
+            
         }catch(InvalidTypeException e){
     		if(e.getMessage().contains("is of type varint")){
     			return currentRow.getVarint(index-1).longValue();
@@ -627,7 +636,11 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     {
         checkName(name);
         try{
-        	return currentRow.getLong(name);
+        	if(currentRow.isNull(name))
+            	wasNull=true;
+            
+            return currentRow.getLong(name);
+            
         }catch(InvalidTypeException e){
     		if(e.getMessage().contains("is of type varint")){
     			return currentRow.getVarint(name).longValue();
@@ -644,12 +657,15 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     public Map<?, ?> getMap(int index) throws SQLException
     {
         checkIndex(index);
+        if(currentRow.isNull(index-1))
+        	wasNull=true;
         return currentRow.getMap(index-1,String.class,String.class); // TODO: a remplacer par une vraie verification des types de collections
     }
 
     public Map<?, ?> getMap(String name) throws SQLException
     {
         checkName(name);
+        
         return currentRow.getMap(name,String.class,String.class); // TODO: a remplacer par une vraie verification des types de collections
     }
 
