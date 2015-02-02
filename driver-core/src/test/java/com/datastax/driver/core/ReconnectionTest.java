@@ -260,6 +260,7 @@ public class ReconnectionTest {
 
             @Override
             Map<String, String> getCredentials() {
+                count.incrementAndGet();
                 return ImmutableMap.of("username", username,
                                        "password", password);
             }

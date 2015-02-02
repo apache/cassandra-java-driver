@@ -181,6 +181,7 @@ public class LargeDataTest {
      */
     @Test(groups = "long")
     public void wideRows() throws Throwable {
+        TestUtils.versionCheck(2, 0, "< 2.0 is skipped as 1.2 does not handle reading wide rows well.");
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
 
@@ -204,6 +205,7 @@ public class LargeDataTest {
      */
     @Test(groups = "short")
     public void wideBatchRows() throws Throwable {
+        TestUtils.versionCheck(2, 0, "< 2.0 is skipped as 1.2 does not handle large batches well.");
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
 

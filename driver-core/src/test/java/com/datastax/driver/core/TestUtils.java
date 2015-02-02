@@ -183,7 +183,7 @@ public abstract class TestUtils {
                 case FLOAT:
                     return 3.142519f;
                 case INET:
-                    return InetAddress.getByAddress(new byte[]{(byte)127, (byte)0, (byte)0, (byte)1});
+                    return InetAddress.getByAddress(new byte[]{ (byte)127, (byte)0, (byte)0, (byte)1 });
                 case INT:
                     return 24;
                 case TEXT:
@@ -406,7 +406,7 @@ public abstract class TestUtils {
      */
     public static int findAvailablePort(int startingWith) {
         IOException last = null;
-        for(int port = startingWith; port < startingWith+100; port++) {
+        for (int port = startingWith; port < startingWith + 100; port++) {
             try {
                 ServerSocket s = new ServerSocket(port);
                 s.close();
@@ -417,5 +417,19 @@ public abstract class TestUtils {
         }
         // If for whatever reason a port could not be acquired throw the last encountered exception.
         throw new RuntimeException("Could not acquire an available port", last);
+    }
+
+    /**
+     * @return The desired target protocol version based on the 'cassandra.version' System property.
+     */
+    public static int getDesiredProtocolVersion() {
+        String version = System.getProperty("cassandra.version");
+        String[] versionArray = version.split("\\.|-");
+        double major = Double.parseDouble(versionArray[0] + "." + versionArray[1]);
+        if(major < 2.0) {
+            return 1;
+        } else {
+            return 2;
+        }
     }
 }
