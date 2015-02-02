@@ -5,6 +5,8 @@ import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -12,7 +14,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.testng.annotations.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.Host.State;
@@ -33,9 +37,9 @@ public class ReconnectionTest {
             ccm = CCMBridge.create("test", 2);
             int reconnectionDelay = 1000;
             cluster = Cluster.builder()
-                             .addContactPoint(CCMBridge.ipOfNode(1))
-                             .withReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelay))
-                             .build();
+                .addContactPoint(CCMBridge.ipOfNode(1))
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelay))
+                .build();
             cluster.connect();
 
             assertThat(cluster).usesControlHost(1);
@@ -78,11 +82,11 @@ public class ReconnectionTest {
             CountingReconnectionPolicy reconnectionPolicy = new CountingReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMs));
 
             cluster = Cluster.builder()
-                             .addContactPoint(CCMBridge.ipOfNode(1))
-                             // Start with the correct auth so that we can initialize the server
-                             .withAuthProvider(authProvider)
-                             .withReconnectionPolicy(reconnectionPolicy)
-                             .build();
+                .addContactPoint(CCMBridge.ipOfNode(1))
+                    // Start with the correct auth so that we can initialize the server
+                .withAuthProvider(authProvider)
+                .withReconnectionPolicy(reconnectionPolicy)
+                .build();
 
             cluster.init();
             assertThat(cluster).usesControlHost(1);
@@ -128,9 +132,9 @@ public class ReconnectionTest {
         try {
             ccm = CCMBridge.create("test", 2);
             cluster = Cluster.builder()
-                             .addContactPoint(CCMBridge.ipOfNode(1))
-                             .withReconnectionPolicy(reconnectionPolicy)
-                             .build();
+                .addContactPoint(CCMBridge.ipOfNode(1))
+                .withReconnectionPolicy(reconnectionPolicy)
+                .build();
             cluster.connect();
 
             // Stop a node and cancel the reconnection attempts to it
@@ -169,22 +173,25 @@ public class ReconnectionTest {
         try {
             ccm = CCMBridge.create("test", 1);
             cluster = Cluster.builder()
-                             .addContactPoint(CCMBridge.ipOfNode(1))
-                             .withLoadBalancingPolicy(loadBalancingPolicy)
-                             .withReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis))
-                             .build();
+                .addContactPoint(CCMBridge.ipOfNode(1))
+                .withLoadBalancingPolicy(loadBalancingPolicy)
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis))
+                .build();
             cluster.connect();
 
             // Tweak the LBP so that the control connection never reconnects, otherwise
             // it would interfere with the rest of the test (this is a bit of a hack)
             loadBalancingPolicy.returnEmptyQueryPlan = true;
 
-            // Stop the node and cancel the reconnection attempts to it
+            // Stop the node, ignore it and cancel reconnection attempts to it
             ccm.stop(1);
             ccm.waitForDown(1);
             assertThat(cluster).host(1).goesDownWithin(20, SECONDS);
             Host host1 = TestUtils.findHost(cluster, 1);
-            host1.getReconnectionAttemptFuture().cancel(false);
+            loadBalancingPolicy.setDistance(TestUtils.findHost(cluster, 1), HostDistance.IGNORED);
+            ListenableFuture<?> reconnectionAttemptFuture = host1.getReconnectionAttemptFuture();
+            if (reconnectionAttemptFuture != null)
+                reconnectionAttemptFuture.cancel(false);
 
             // Trigger a one-time reconnection attempt (this will fail)
             host1.tryReconnectOnce();
@@ -262,7 +269,7 @@ public class ReconnectionTest {
             Map<String, String> getCredentials() {
                 count.incrementAndGet();
                 return ImmutableMap.of("username", username,
-                                       "password", password);
+                    "password", password);
             }
         }
     }
@@ -299,14 +306,29 @@ public class ReconnectionTest {
     }
 
     /**
-     * A load balancing policy that can be "disabled" by having its query plan return no hosts.
+     * A load balancing policy that:
+     * - can be "disabled" by having its query plan return no hosts.
+     * - can be instructed to return a specific distance for some hosts.
      */
     public static class TogglabePolicy extends DelegatingLoadBalancingPolicy {
 
         volatile boolean returnEmptyQueryPlan;
+        final ConcurrentMap<Host, HostDistance> distances = new ConcurrentHashMap<Host, HostDistance>();
 
         public TogglabePolicy(LoadBalancingPolicy delegate) {
             super(delegate);
+        }
+
+        @Override
+        public HostDistance distance(Host host) {
+            HostDistance distance = distances.get(host);
+            return (distance != null)
+                ? distance
+                : super.distance(host);
+        }
+
+        public void setDistance(Host host, HostDistance distance) {
+            distances.put(host, distance);
         }
 
         @Override
