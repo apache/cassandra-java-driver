@@ -5,6 +5,7 @@ CHANGELOG
 -------
 
 - [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
+- [improvement] Add connection heartbeat (JAVA-533)
 
 Merged from 2.0.9_fixes branch:
 

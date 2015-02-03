@@ -14,6 +14,8 @@ import org.apache.log4j.WriterAppender;
 public class MemoryAppender extends WriterAppender {
     public final StringWriter writer = new StringWriter();
 
+    private int nextLogIdx = 0;
+
     public MemoryAppender() {
         setWriter(writer);
         setLayout(new PatternLayout("%m%n"));
@@ -21,5 +23,14 @@ public class MemoryAppender extends WriterAppender {
 
     public String get() {
         return writer.toString();
+    }
+
+    /**
+     * @return The next set of logs after getNext was last called.  Not thread safe.
+     */
+    public String getNext() {
+        String next = get().substring(nextLogIdx);
+        nextLogIdx += next.length();
+        return next;
     }
 }
