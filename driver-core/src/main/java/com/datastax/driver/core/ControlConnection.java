@@ -386,7 +386,7 @@ class ControlConnection implements Host.StateListener {
             return null;
         } else if (addr == null) {
             if (logMissingRpcAddresses)
-                logger.error("No rpc_address found for host {} in {}'s peers system table. {} will be ignored.", peer, connectedHost, peer);
+                logger.warn("No rpc_address found for host {} in {}'s peers system table. {} will be ignored.", peer, connectedHost, peer);
             return null;
         } else if (addr.equals(bindAllAddress)) {
             logger.warn("Found host with 0.0.0.0 as rpc_address, using listen_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.", peer);
@@ -436,14 +436,14 @@ class ControlConnection implements Host.StateListener {
                     // until the control connection is back up (which leads to a catch-22 if there is only one)
                     return true;
                 } else {
-                    logger.error("No row found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
+                    logger.warn("No row found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
                     return false;
                 }
                 // Ignore hosts with a null rpc_address, as this is most likely a phantom row in system.peers (JAVA-428).
                 // Don't test this for the control host since we're already connected to it anyway, and we read the info from system.local
                 // which doesn't have an rpc_address column (JAVA-546).
             } else if (!c.address.equals(host.getSocketAddress()) && row.getInet("rpc_address") == null) {
-                logger.error("No rpc_address found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
+                logger.warn("No rpc_address found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
                 return false;
             }
 
