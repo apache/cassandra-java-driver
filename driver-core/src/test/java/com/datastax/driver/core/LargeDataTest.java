@@ -23,6 +23,8 @@ import static org.testng.Assert.assertTrue;
 
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Insert;
+import com.datastax.driver.core.utils.CassandraVersion;
+
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
@@ -180,8 +182,8 @@ public class LargeDataTest {
      * @throws Throwable
      */
     @Test(groups = "long")
+    @CassandraVersion(major=2.0, minor=0, description="< 2.0 is skipped as 1.2 does not handle reading wide rows well.")
     public void wideRows() throws Throwable {
-        TestUtils.versionCheck(2, 0, "< 2.0 is skipped as 1.2 does not handle reading wide rows well.");
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
 
@@ -204,8 +206,8 @@ public class LargeDataTest {
      * @throws Throwable
      */
     @Test(groups = "short")
+    @CassandraVersion(major=2.0, minor=0, description="< 2.0 is skipped as 1.2 does not handle large batches well.")
     public void wideBatchRows() throws Throwable {
-        TestUtils.versionCheck(2, 0, "< 2.0 is skipped as 1.2 does not handle large batches well.");
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
 

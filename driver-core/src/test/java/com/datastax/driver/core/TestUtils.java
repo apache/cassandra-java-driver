@@ -374,7 +374,7 @@ public abstract class TestUtils {
         int minor = Integer.parseInt(versionArray[2]);
 
         if (major < majorCheck || (major == majorCheck && minor < minorCheck)) {
-            throw new SkipException(skipString);
+            throw new SkipException("Version >= " + majorCheck + "." + minorCheck + " required.  Description: " + skipString);
         }
     }
 
