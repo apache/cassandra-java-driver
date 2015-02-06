@@ -293,10 +293,8 @@ class RequestHandler implements Connection.ResponseCallback {
         }
 
         Host queriedHost = current;
+        boolean releaseConnection = true;
         try {
-            if (connection instanceof PooledConnection)
-                ((PooledConnection)connection).release();
-
             switch (response.type) {
                 case RESULT:
                     setFinalResult(connection, response);
@@ -420,6 +418,7 @@ class RequestHandler implements Connection.ResponseCallback {
                             }
 
                             try {
+                                releaseConnection = false; // we're reusing it for the prepare call
                                 write(connection, prepareAndRetry(toPrepare.getQueryString()));
                             } finally {
                                 // Always reset the previous keyspace if needed
@@ -467,6 +466,9 @@ class RequestHandler implements Connection.ResponseCallback {
         } catch (Exception e) {
             setFinalException(connection, e);
         } finally {
+            if (releaseConnection && connection instanceof PooledConnection)
+                ((PooledConnection)connection).release();
+
             if (queriedHost != null)
                 manager.cluster.manager.reportLatency(queriedHost, latency);
         }
@@ -494,6 +496,9 @@ class RequestHandler implements Connection.ResponseCallback {
                                  retryCount, queryState, queryStateRef.get());
                     return;
                 }
+
+                if (connection instanceof PooledConnection)
+                    ((PooledConnection)connection).release();
 
                 // TODO should we check the response ?
                 switch (response.type) {
