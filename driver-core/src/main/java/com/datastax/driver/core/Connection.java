@@ -19,6 +19,7 @@ import javax.net.ssl.SSLEngine;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -368,6 +369,10 @@ class Connection {
     }
 
     public ResponseHandler write(ResponseCallback callback) throws ConnectionException, BusyConnectionException {
+        return write(callback, true);
+    }
+
+    public ResponseHandler write(ResponseCallback callback, boolean startTimeout) throws ConnectionException, BusyConnectionException {
 
         Message.Request request = callback.request();
 
@@ -394,6 +399,10 @@ class Connection {
         logger.trace("{} writing request {}", this, request);
         writer.incrementAndGet();
         channel.write(request).addListener(writeHandler(request, handler));
+
+        if (startTimeout)
+            handler.startTimeout();
+
         return handler;
     }
 
@@ -864,8 +873,10 @@ class Connection {
         public final ResponseCallback callback;
         public final int retryCount;
 
-        private final Timeout timeout;
         private final long startTime;
+        private volatile Timeout timeout;
+
+        private final AtomicBoolean isCancelled = new AtomicBoolean();
 
         public ResponseHandler(Connection connection, ResponseCallback callback) throws BusyConnectionException {
             this.connection = connection;
@@ -873,10 +884,12 @@ class Connection {
             this.callback = callback;
             this.retryCount = callback.retryCount();
 
+            this.startTime = System.nanoTime();
+        }
+
+        void startTimeout() {
             long timeoutMs = connection.factory.getReadTimeoutMillis();
             this.timeout = timeoutMs <= 0 ? null : connection.factory.timer.newTimeout(onTimeoutTask(), timeoutMs, TimeUnit.MILLISECONDS);
-
-            this.startTime = System.nanoTime();
         }
 
         void cancelTimeout() {
@@ -885,6 +898,9 @@ class Connection {
         }
 
         public void cancelHandler() {
+            if (!isCancelled.compareAndSet(false, true))
+                return;
+
             // We haven't really received a response: we want to remove the handle because we gave up on that
             // request and there is no point in holding the handler, but we don't release the streamId. If we
             // were, a new request could reuse that ID but get the answer to the request we just gave up on instead
