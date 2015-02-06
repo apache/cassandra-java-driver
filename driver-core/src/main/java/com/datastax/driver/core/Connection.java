@@ -833,7 +833,7 @@ class Connection {
         public boolean onTimeout(Connection connection, long latency, int retryCount) {
             assert connection != null; // We always timeout on a specific connection, so this shouldn't be null
             this.address = connection.address;
-            super.setException(new ConnectionException(connection.address, "Operation timed out"));
+            super.setException(new OperationTimedOutException(connection.address));
             return true;
         }
 
