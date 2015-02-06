@@ -403,31 +403,23 @@ class RequestHandler implements Connection.ResponseCallback {
                                 return;
                             }
 
+                            String currentKeyspace = connection.keyspace();
+                            String prepareKeyspace = toPrepare.getQueryKeyspace();
+                            if (prepareKeyspace != null && (currentKeyspace == null || !currentKeyspace.equals(prepareKeyspace))) {
+                                // This shouldn't happen in normal use, because a user shouldn't try to execute
+                                // a prepared statement with the wrong keyspace set.
+                                // Fail fast (we can't change the keyspace to reprepare, because we're using a pooled connection
+                                // that's shared with other requests).
+                                throw new IllegalStateException(String.format("Statement was prepared on keyspace %s, can't execute it on %s (%s)",
+                                    toPrepare.getQueryKeyspace(), connection.keyspace(), toPrepare.getQueryString()));
+                            }
+
                             logger.info("Query {} is not prepared on {}, preparing before retrying executing. "
                                       + "Seeing this message a few times is fine, but seeing it a lot may be source of performance problems",
                                         toPrepare.getQueryString(), connection.address);
-                            String currentKeyspace = connection.keyspace();
-                            String prepareKeyspace = toPrepare.getQueryKeyspace();
-                            // This shouldn't happen in normal use, because a user shouldn't try to execute
-                            // a prepared statement with the wrong keyspace set. However, if it does, we'd rather
-                            // prepare the query correctly and let the query executing return a meaningful error message
-                            if (prepareKeyspace != null && (currentKeyspace == null || !currentKeyspace.equals(prepareKeyspace)))
-                            {
-                                logger.debug("Setting keyspace for prepared query to {}", prepareKeyspace);
-                                connection.setKeyspace(prepareKeyspace);
-                            }
 
-                            try {
-                                releaseConnection = false; // we're reusing it for the prepare call
-                                write(connection, prepareAndRetry(toPrepare.getQueryString()));
-                            } finally {
-                                // Always reset the previous keyspace if needed
-                                if (connection.keyspace() == null || !connection.keyspace().equals(currentKeyspace))
-                                {
-                                    logger.debug("Setting back keyspace post query preparation to {}", currentKeyspace);
-                                    connection.setKeyspace(currentKeyspace);
-                                }
-                            }
+                            releaseConnection = false; // we're reusing it for the prepare call
+                            write(connection, prepareAndRetry(toPrepare.getQueryString()));
                             // we're done for now, the prepareAndRetry callback will handle the rest
                             return;
                         default:
