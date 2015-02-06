@@ -314,11 +314,12 @@ class Connection {
         if (this.keyspace != null && this.keyspace.equals(keyspace))
             return;
 
+        Future future = null;
         try {
             logger.trace("{} Setting keyspace {}", this, keyspace);
             long timeout = factory.getConnectTimeoutMillis();
             // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
-            Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
+            future = write(new Requests.Query("USE \"" + keyspace + '"'));
             Message.Response response = Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
             switch (response.type) {
                 case RESULT:
@@ -336,9 +337,16 @@ class Connection {
         } catch (ConnectionException e) {
             throw defunct(e);
         } catch (TimeoutException e) {
+            // We've given up waiting on the future, but it's still running. Cancel to make sure that the request timeout logic
+            // (readTimeout) will not kick in, because that would release the connection. This will work since connectTimeout is
+            // generally lower than readTimeout (and if not, we'll get an ExecutionException and defunct below).
+            future.cancel(true);
             logger.warn(String.format("Timeout while setting keyspace on connection to %s. This should not happen but is not critical (it will retried)", address));
+            // Rethrow so that the caller will not try to use the connection, but do not defunct as we don't want to mark down
+            throw new ConnectionException(address, "Timeout while setting keyspace on connection");
         } catch (BusyConnectionException e) {
             logger.warn(String.format("Tried to set the keyspace on busy connection to %s. This should not happen but is not critical (it will retried)", address));
+            throw new ConnectionException(address, "Tried to set the keyspace on busy connection");
         } catch (ExecutionException e) {
             throw defunct(new ConnectionException(address, "Error while setting keyspace", e));
         }
