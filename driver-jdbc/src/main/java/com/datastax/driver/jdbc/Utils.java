@@ -74,6 +74,7 @@ public class Utils
     public static final String KEY_BACKUP_DC = "backupdc";
     public static final String KEY_CONNECTION_RETRIES = "retries";
     public static final String KEY_LOADBALANCING_POLICY = "loadbalancing";
+    public static final String KEY_DEBUG = "debug";
     //public static final String KEY_PRIMARY_DC = "primarydc";
     
     public static final String TAG_DESCRIPTION = "description";
@@ -88,6 +89,7 @@ public class Utils
     public static final String TAG_THRIFT_VERSION = "thriftVersion";
     public static final String TAG_CONSISTENCY_LEVEL = "consistencyLevel";
     public static final String TAG_LOADBALANCING_POLICY = "loadBalancing";
+    public static final String TAG_DEBUG = "debug";
     
     public static final String TAG_PRIMARY_DC = "primaryDatacenter";
     public static final String TAG_BACKUP_DC = "backupDatacenter";
@@ -223,6 +225,10 @@ public class Utils
                 {
                     props.setProperty(TAG_CQL_VERSION,params.get(KEY_VERSION));
                 }                
+                if (params.containsKey(KEY_DEBUG) )
+                {
+                    props.setProperty(TAG_DEBUG,params.get(KEY_DEBUG));
+                }
                 if (params.containsKey(KEY_CONSISTENCY) )
                 {
                     props.setProperty(TAG_CONSISTENCY_LEVEL,params.get(KEY_CONSISTENCY));

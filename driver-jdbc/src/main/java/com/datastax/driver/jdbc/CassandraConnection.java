@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 
 
+
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.ConsistencyLevel;
@@ -116,6 +117,7 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     protected TreeSet<String> hostListBackup;
     int majorCqlVersion;
     private Metadata metadata;
+    public boolean debugMode;
 
 
     
@@ -130,6 +132,7 @@ public class CassandraConnection extends AbstractConnection implements Connectio
      */
     public CassandraConnection(Properties props) throws SQLException
     {    	
+    	debugMode = false;
     	hostListPrimary = new TreeSet<String>();
     	hostListBackup = new TreeSet<String>();
         connectionProps = (Properties)props.clone();
@@ -147,7 +150,8 @@ public class CassandraConnection extends AbstractConnection implements Connectio
             String primaryDc = props.getProperty(TAG_PRIMARY_DC,"");
             String backupDc = props.getProperty(TAG_BACKUP_DC,"");
             String loadBalancingPolicy = props.getProperty(TAG_LOADBALANCING_POLICY,"");
-            
+            debugMode = props.getProperty(TAG_DEBUG,"").equals("true");
+                        
             connectionProps.setProperty(TAG_ACTIVE_CQL_VERSION, version);
             majorCqlVersion = getMajor(version);
             defaultConsistencyLevel = ConsistencyLevel.valueOf(props.getProperty(TAG_CONSISTENCY_LEVEL,ConsistencyLevel.ONE.name()));
@@ -166,35 +170,43 @@ public class CassandraConnection extends AbstractConnection implements Connectio
             // Set load balancing policy as requested in the url. Policies can be nested using dashes as separator 
             // for example : TokenAwarePolicy-DCAwareRoundRobinPolicy gives builder.withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy()));           
             if(loadBalancingPolicy.length()>0){
-            	if(loadBalancingPolicy.startsWith("TokenAwarePolicy")){
-            		if(loadBalancingPolicy.endsWith("DCAwareRoundRobinPolicy")){
+            	if(loadBalancingPolicy.toLowerCase().startsWith("tokenawarepolicy")){
+            		if(loadBalancingPolicy.toLowerCase().endsWith("dcawareroundrobinpolicy")){
             			if(primaryDc.length()>0){
             				builder.withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy(primaryDc)));
+            				logger.info("Setting TokenAwarePolicy with child DCAwareRoundRobinPolicy on DC : " + primaryDc);
             			}else{
-            				throw new Exception("A primary DC must be specified with DCAwareRoundRobinPolicy");
+            				throw new SQLNonTransientConnectionException("A primary DC must be specified with DCAwareRoundRobinPolicy");
             			}
-            		}else if(loadBalancingPolicy.endsWith("RoundRobinPolicy")){
+            		}else if(loadBalancingPolicy.toLowerCase().endsWith("roundrobinpolicy")){
             			builder.withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
-            		}else if(loadBalancingPolicy.endsWith("LatencyAwarePolicy")){
+            			logger.info("Setting TokenAwarePolicy with child RoundRobinPolicy");
+            		}else if(loadBalancingPolicy.toLowerCase().endsWith("latencyawarepolicy")){
             			// TODO: add all necessary parameters to use LatencyAwarePolicy
             			builder.withLoadBalancingPolicy(new TokenAwarePolicy(Policies.defaultLoadBalancingPolicy()));
+            			logger.info("Setting TokenAwarePolicy with child LatencyAwarePolicy");
             		}else{
             			builder.withLoadBalancingPolicy(new TokenAwarePolicy(Policies.defaultLoadBalancingPolicy()));
+            			logger.info("Setting TokenAwarePolicy");
             		}
-            	}else if(loadBalancingPolicy.startsWith("DCAwareRoundRobinPolicy")){            		
+            	}else if(loadBalancingPolicy.toLowerCase().startsWith("dcawareroundrobinpolicy")){            		
             			if(primaryDc.length()>0){
             				builder.withLoadBalancingPolicy(new DCAwareRoundRobinPolicy(primaryDc));
+            				logger.info("Setting DCAwareRoundRobinPolicy on DC : " + primaryDc);
             			}else{
-            				throw new Exception("A primary DC must be specified with DCAwareRoundRobinPolicy");
+            				throw new SQLNonTransientConnectionException("A primary DC must be specified with DCAwareRoundRobinPolicy");
             			}            		
-            	}else if(loadBalancingPolicy.startsWith("RoundRobinPolicy")){            		            			
+            	}else if(loadBalancingPolicy.startsWith("roundrobinpolicy")){            		            			
             				builder.withLoadBalancingPolicy(new RoundRobinPolicy());
-            	}else if(loadBalancingPolicy.startsWith("LatencyAwarePolicy")){
+            				logger.info("Setting RoundRobinPolicy");
+            	}else if(loadBalancingPolicy.startsWith("latencyawarepolicy")){
             		// TODO: add all necessary parameters to use LatencyAwarePolicy
             		//builder.withLoadBalancingPolicy(new LatencyAwarePolicy(Policies.defaultLoadBalancingPolicy(), timeOfLastFailure, timeOfLastFailure, timeOfLastFailure, timeOfLastFailure, retries));
         			builder.withLoadBalancingPolicy(Policies.defaultLoadBalancingPolicy());
+        			logger.info("Setting LatencyAwarePolicy");
             	}else{
             		builder.withLoadBalancingPolicy(Policies.defaultLoadBalancingPolicy());
+            		logger.info("No load balancing policy specified. Using default.");
             	}
             }
             
@@ -266,7 +278,7 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     public void commit() throws SQLException
     {
         checkNotClosed();
-        throw new SQLFeatureNotSupportedException(ALWAYS_AUTOCOMMIT);
+        //throw new SQLFeatureNotSupportedException(ALWAYS_AUTOCOMMIT);
     }
 
     public java.sql.Statement createStatement() throws SQLException
@@ -448,7 +460,7 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     public void setAutoCommit(boolean autoCommit) throws SQLException
     {
         checkNotClosed();
-        if (!autoCommit) throw new SQLFeatureNotSupportedException(ALWAYS_AUTOCOMMIT);
+        //if (!autoCommit) throw new SQLFeatureNotSupportedException(ALWAYS_AUTOCOMMIT);
     }
 
     public void setCatalog(String arg0) throws SQLException

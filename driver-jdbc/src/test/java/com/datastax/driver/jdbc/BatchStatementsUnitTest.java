@@ -31,6 +31,7 @@ public class BatchStatementsUnitTest {
     private static final String CQLV3 = "3.0.0";
 
     private static java.sql.Connection con = null;
+    private static java.sql.Connection con2 = null;
 
     /**
      * @throws java.lang.Exception
@@ -39,9 +40,10 @@ public class BatchStatementsUnitTest {
     public static void setUpBeforeClass() throws Exception
     {
         Class.forName("com.datastax.driver.jdbc.CassandraDriver");
-        String URL = String.format("jdbc:cassandra://%s:%d/%s?version=%s", HOST, PORT, SYSTEM, CQLV3);
+        String URL = String.format("jdbc:cassandra://%s:%d/%s?debug=true&version=%s", HOST, PORT, SYSTEM, CQLV3);
 
         con = DriverManager.getConnection(URL);
+        
 
         if (LOG.isDebugEnabled()) LOG.debug("URL         = '{}'", URL);
 
@@ -80,7 +82,7 @@ public class BatchStatementsUnitTest {
         con.close();
 
         // open it up again to see the new TABLE
-        URL = String.format("jdbc:cassandra://%s:%d/%s?version=%s", HOST, PORT, KEYSPACE, CQLV3);
+        URL = String.format("jdbc:cassandra://%s:%d/%s?debug=true&version=%s", HOST, PORT, KEYSPACE, CQLV3);
         con = DriverManager.getConnection(URL);
         if (LOG.isDebugEnabled()) LOG.debug("URL         = '{}'", URL);
 
@@ -92,7 +94,7 @@ public class BatchStatementsUnitTest {
         String update2 = "UPDATE testcollection SET M = {2.0: true, 4.0: false, 6.0 : true} WHERE k = 1;";
         statement.executeUpdate(update1);
         statement.executeUpdate(update2);
-
+        con2 = DriverManager.getConnection(URL);
 
         if (LOG.isDebugEnabled()) LOG.debug("Unit Test: 'CollectionsTest' initialization complete.\n\n");
     }
@@ -104,6 +106,7 @@ public class BatchStatementsUnitTest {
     public static void tearDownAfterClass() throws Exception
     {
         if (con != null) con.close();
+        if (con2 != null) con2.close();
     }
 
     @Test
@@ -195,7 +198,7 @@ public class BatchStatementsUnitTest {
     {
     	System.out.println("Test: 'testAsyncSelectStatement'\n");
 
-        PreparedStatement statement = con.prepareStatement("INSERT INTO testcollection (k,L) VALUES(?,?)");
+        PreparedStatement statement = con2.prepareStatement("INSERT INTO testcollection (k,L) VALUES(?,?)");
         
         
         for(int i=0;i<10;i++){
@@ -216,7 +219,7 @@ public class BatchStatementsUnitTest {
         	query.append("SELECT * FROM testcollection where k=" + i + ";");
         }
         
-        Statement selectStatement = con.createStatement();
+        Statement selectStatement = con2.createStatement();
         ResultSet result = selectStatement.executeQuery(query.toString());
 
         int nbRow = 0;

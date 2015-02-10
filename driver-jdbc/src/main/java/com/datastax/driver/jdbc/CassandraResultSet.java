@@ -40,6 +40,7 @@ import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.ColumnDefinitions.Definition;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.UDTValue;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
@@ -517,13 +518,30 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     public double getDouble(int index) throws SQLException
     {
         checkIndex(index);
-        return currentRow.getDouble(index-1);
+        
+        try{
+        	if(currentRow.getColumnDefinitions().getType(index-1).getName().toString().equals("float")){
+        		return currentRow.getFloat(index-1);
+        	}else{
+        		return currentRow.getDouble(index-1);
+        	}
+        }catch(InvalidTypeException e){
+    		throw new SQLNonTransientException(e);
+    	}    	
     }
 
     public double getDouble(String name) throws SQLException
     {
         checkName(name);
-        return currentRow.getDouble(name);
+        try{
+        	if(currentRow.getColumnDefinitions().getType(name).getName().toString().equals("float")){
+        		return (double)currentRow.getFloat(name);
+        	}else{
+        		return currentRow.getDouble(name);
+        	}
+        }catch(InvalidTypeException e){    	
+    		throw new SQLNonTransientException(e);
+    	}
     }
 
     
@@ -614,21 +632,21 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     public long getLong(int index) throws SQLException
     {
         checkIndex(index);
-        try{        	
-        	if(currentRow.isNull(index-1))
-            	wasNull=true;            
-            return currentRow.getLong(index - 1);
-            
-        }catch(InvalidTypeException e){
-    		if(e.getMessage().contains("is of type varint")){
-    			return currentRow.getVarint(index-1).longValue();
-    		}
-    		if(e.getMessage().contains("is of type int")){
-    			return (long)currentRow.getInt(index-1);
-    		}
+        try{
+        	if(currentRow.getColumnDefinitions().getType(index-1).getName().toString().equals("int")){
+        		return (long)currentRow.getInt(index-1);
+        	}else if(currentRow.getColumnDefinitions().getType(index-1).getName().toString().equals("varint")){
+        		return currentRow.getVarint(index-1).longValue();
+        	}else{
+        		return currentRow.getLong(index-1);
+        	}
+        }catch(InvalidTypeException e){    	
+    		throw new SQLNonTransientException(e);
     	}
         
-        return currentRow.getLong(index - 1);
+        
+        
+        //return currentRow.getLong(index - 1);
         
     }
 
@@ -636,21 +654,16 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     {
         checkName(name);
         try{
-        	if(currentRow.isNull(name))
-            	wasNull=true;
-            
-            return currentRow.getLong(name);
-            
-        }catch(InvalidTypeException e){
-    		if(e.getMessage().contains("is of type varint")){
-    			return currentRow.getVarint(name).longValue();
-    		}
-    		if(e.getMessage().contains("is of type int")){
-    			return (long)currentRow.getInt(name);
-    		}
+        	if(currentRow.getColumnDefinitions().getType(name).getName().toString().equals("int")){
+        		return (long)currentRow.getInt(name);
+        	}else if(currentRow.getColumnDefinitions().getType(name).getName().toString().equals("varint")){
+        		return currentRow.getVarint(name).longValue();
+        	}else{
+        		return currentRow.getLong(name);
+        	}
+        }catch(InvalidTypeException e){    	
+    		throw new SQLNonTransientException(e);
     	}
-        
-        return currentRow.getLong(name);
     }
 
     
@@ -730,6 +743,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     		}else if (typeName.equals("varint")){
     	        return (Object) currentRow.getInt(index-1);
     		}
+    		
         			
         
         }
