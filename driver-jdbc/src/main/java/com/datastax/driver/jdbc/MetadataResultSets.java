@@ -67,105 +67,6 @@ public  class MetadataResultSets
       return new MetadataRow().addEntry(name, value);
     }
 
-    /*private static final CqlRow makeRow(String key, List<Column> columnList)
-    {
-      return new CqlRow(bytes(key), columnList);
-    }*/
-    
-/*    private static CqlMetadata makeMetadataAllString(List<String> colNameList)
-    {
-        Map<ByteBuffer,String> namesMap = new HashMap<ByteBuffer,String>();
-        Map<ByteBuffer,String> valuesMap = new HashMap<ByteBuffer,String>();
-        
-        for (String name : colNameList)
-        {
-            namesMap.put(bytes(name), Entry.ASCII_TYPE);
-            valuesMap.put(bytes(name), Entry.UTF8_TYPE);
-        }
-        
-        return new CqlMetadata(namesMap,valuesMap,Entry.ASCII_TYPE,Entry.UTF8_TYPE);
-    }
-*/
-/*    private static CqlMetadata makeMetadata(List<Entry> entries)
-    {
-        Map<ByteBuffer,String> namesMap = new HashMap<ByteBuffer,String>();
-        Map<ByteBuffer,String> valuesMap = new HashMap<ByteBuffer,String>();
-        
-        for (Entry entry : entries)
-        {
-            namesMap.put(bytes(entry.name), Entry.ASCII_TYPE);
-            valuesMap.put(bytes(entry.name), entry.type);
-        }
-        
-        return new CqlMetadata(namesMap,valuesMap,Entry.ASCII_TYPE,Entry.UTF8_TYPE);
-    }
-
-*/
-/*    private ResultSet makeCqlResult(Entry[][] rowsOfcolsOfKvps, int position)
-    {
-    	ResultSet result = new ResultSet();
-        CqlMetadata meta = null;
-        CqlRow row = null;
-        Column column = null;
-        List<Column> columnlist = new LinkedList<Column>();
-        List<CqlRow> rowlist = new LinkedList<CqlRow>();
-        List<String> colNamesList = new ArrayList<String>();
-        
-        
-        for (int rowcnt = 0; rowcnt < rowsOfcolsOfKvps.length; rowcnt++ )
-        {
-            colNamesList = new ArrayList<String>();
-            columnlist = new LinkedList<Column>();
-            for (int colcnt = 0; colcnt < rowsOfcolsOfKvps[0].length; colcnt++ )
-            {
-                column = makeColumn(rowsOfcolsOfKvps[rowcnt][colcnt].name,rowsOfcolsOfKvps[rowcnt][colcnt].value);
-                columnlist.add(column);
-                colNamesList.add(rowsOfcolsOfKvps[rowcnt][colcnt].name);
-            }
-            row = makeRow(rowsOfcolsOfKvps[rowcnt][position-1].name,columnlist);
-            rowlist.add(row);
-        }
-        
-        meta = makeMetadataAllString(colNamesList);
-        result.setSchema(meta).setRows(rowlist);
-        return result;
-    }
-    
-    private CqlResult makeCqlResult(List<List<Entry>> rows, int position) throws CharacterCodingException
-    {
-        CqlResult result = new CqlResult(CqlResultType.ROWS);
-        CqlMetadata meta = null;
-        CqlRow row = null;
-        Column column = null;
-        List<Column> columnlist = new LinkedList<Column>();
-        List<CqlRow> rowlist = new LinkedList<CqlRow>();
-        
-        assert(!rows.isEmpty());
-        
-        for (List<Entry> aRow : rows )
-        {
-            columnlist = new LinkedList<Column>();
-            
-            assert (!aRow.isEmpty());
-            
-            // only need to do it once
-            if (meta == null) meta = makeMetadata(aRow);
-            
-            for (Entry entry : aRow )
-            {
-                column = makeColumn(entry.name,entry.value);
-                columnlist.add(column);
-            }
-            row = makeRow(string(columnlist.get(position-1).name),columnlist);
-            rowlist.add(row);
-        }
-        
-        result.setSchema(meta).setRows(rowlist);
-        return result;
-    }
- 
-    
-*/
     public  CassandraResultSet makeTableTypes(CassandraStatement statement) throws SQLException
     {
         final ArrayList<Row> tableTypes = Lists.newArrayList();
@@ -195,6 +96,10 @@ public  class MetadataResultSets
  
     public  CassandraResultSet makeSchemas(CassandraStatement statement, String schemaPattern) throws SQLException
     {
+    	
+    	// TABLE_SCHEM String => schema name
+        // TABLE_CATALOG String => catalog name (may be null)
+    	
     	final ArrayList<Row> schemas = Lists.newArrayList();
     	List<KeyspaceMetadata> keyspaces = statement.connection.getClusterMetadata().getKeyspaces();
     	
@@ -209,50 +114,7 @@ public  class MetadataResultSets
        
         CassandraResultSet result = new CassandraResultSet(statement,new MetadataResultSet().setRows(schemas));
         return result;
-    	
-    	/* if ("%".equals(schemaPattern)) schemaPattern = null;
-
-        // TABLE_SCHEM String => schema name
-        // TABLE_CATALOG String => catalog name (may be null)
-        
-        String query = "SELECT keyspace_name FROM system.schema_keyspaces";
-        if (schemaPattern!=null) query = query + " where keyspace_name = '" + schemaPattern + "'";
-        
-        String catalog = statement.connection.getCatalog();
-        Entry entryCatalog = new Entry("TABLE_CATALOG",bytes(catalog),Entry.ASCII_TYPE);
-        
-        CassandraResultSet result;
-        List<Entry> col;
-        List<List<Entry>> rows = new ArrayList<List<Entry>>();
-        // determine the schemas
-        result = (CassandraResultSet)statement.executeQuery(query);
-        
-        while (result.next())
-        {
-            Entry entrySchema = new Entry("TABLE_SCHEM",bytes(result.getString(1)),Entry.ASCII_TYPE);
-            col = new ArrayList<Entry>();
-            col.add(entrySchema);
-            col.add(entryCatalog);
-            rows.add(col);
-        }
-        
-        // just return the empty result if there were no rows
-        if (rows.isEmpty() )return result;
-
-        // use schemas with the key in column number 2 (one based)
-        CqlResult cqlresult;
-        try
-        {
-            cqlresult = makeCqlResult(rows, 1);
-        }
-        catch (CharacterCodingException e)
-        {
-            throw new SQLTransientException(e);
-        }
-        
-        result = new CassandraResultSet(statement,cqlresult);
-        return result;
-        */
+    	    	
     }
     
     public CassandraResultSet makeTables(CassandraStatement statement, String schemaPattern, String tableNamePattern) throws SQLException
@@ -496,105 +358,7 @@ public  class MetadataResultSets
 	
 
     
-    /*
-	public List<PKInfo> getPrimaryKeys(CassandraStatement statement, String schema, String table) throws SQLException
-	{
-		StringBuilder query = new StringBuilder("SELECT keyspace_name, columnfamily_name, key_aliases, key_validator, column_aliases, comparator FROM system.schema_columnfamilies");
-		
-	    int filterCount = 0;
-	    if (schema != null) filterCount++;
-	    if (table != null) filterCount++;
-	
-	    // check to see if it is qualified
-	    if (filterCount > 0)
-	    {
-	        String expr = "%s = '%s'";
-	        query.append(" WHERE ");
-	        if (schema != null) 
-	        {
-	        	query.append(String.format(expr, "keyspace_name", schema));
-                filterCount--;
-		        if (filterCount > 0) query.append(" AND ");
-	        }
-	        if (table != null) query.append(String.format(expr, "columnfamily_name", table));
-	        query.append(" ALLOW FILTERING");
-	    }
-	    // System.out.println(query.toString());
-	
-	    List<PKInfo> retval = new ArrayList<PKInfo>();
-	    CassandraResultSet result = (CassandraResultSet) statement.executeQuery(query.toString());
-	    if (result.next()) // all is reported back in one json row
-	    {
-	    	String rschema = result.getString(1);
-   	    	String rtable = result.getString(2);
-	        String validator = result.getString(4);
-	        String key_aliases = result.getString(3);
-	        buildPKInfo(retval,rschema,rtable,key_aliases,validator);
-	        
-	        String comparator = result.getString(6);
-	        String column_aliases = result.getString(5);
-	        buildPKInfo(retval,rschema,rtable,column_aliases,comparator);
-	    }
-	    return retval;
-	}
-	
-	private void buildPKInfo(List<PKInfo> retval,String schema, String table,String aliases,String validator)
-	{
-		String[] typeNames = new String[0];
-    	int[] types = new int[0]; 
-        if (validator != null)
-        {
-        	String[] validatorArray = new String[]{validator};
-        	String check = "CompositeType";
-        	int idx = validator.indexOf(check);
-        	if (idx > 0)
-        	{
-        		validator = validator.substring(idx+check.length()+1,validator.length()-1);
-        		validatorArray = validator.split(",");
-        	}
-        	types = new int[validatorArray.length];
-        	typeNames = new String[validatorArray.length];
-        	for (int i = 0; i < validatorArray.length; i++) 
-        	{
-	        	AbstractJdbcType jtype = TypesMap.getTypeForComparator(validatorArray[i]);
-	        	types[i] = (jtype != null ? jtype.getJdbcType() : Types.OTHER);
-
-	            int dotidx = validatorArray[i].lastIndexOf('.');
-	            typeNames[i] = validatorArray[i].substring(dotidx + 1);
-        	}
-        }
-
-        if (aliases != null)
-        {
-        	aliases = aliases.replace("[","");
-        	aliases = aliases.replace("]","");
-        	aliases = aliases.replace("\"","");
-        	if (aliases.trim().length() != 0)
-        	{
-	        	String[] kaArray = aliases.split(",");
-	        	for (int i = 0; i < kaArray.length; i++) 
-	        	{
-	        		PKInfo pki = new PKInfo();
-	        		pki.name = kaArray[i];
-	        		pki.schema = schema;
-	        		pki.table = table;
-	        		pki.type = (i < types.length ? types[i] : Types.OTHER);
-	        		pki.typeName = (i < typeNames.length ? typeNames[i] : "unknown");
-	        		retval.add(pki);
-				}
-        	}
-        }
-	}
-	
-	private class PKInfo
-	{
-		public String typeName;
-		public String schema;
-		public String table;
-		public String name;
-		public int type;
-	}
-	*/
+   
 	
 	public CassandraResultSet makePrimaryKeys(CassandraStatement statement, String schema, String tableName) throws SQLException
 	{
@@ -625,7 +389,7 @@ public  class MetadataResultSets
     		}
     	
     	}
-    	}
+    }
 	
     	
        
@@ -639,79 +403,8 @@ public  class MetadataResultSets
 		//5.KEY_SEQ short => sequence number within primary key( a value of 1 represents the first column of the primary key, a value of 2 would represent the second column within the primary key). 
 		//6.PK_NAME String => primary key name (may be null) 
 
-		/*
-        List<PKInfo> pks = getPrimaryKeys(statement, schema, table);
-		Iterator<PKInfo> it = pks.iterator();
 		
-	    String catalog = statement.connection.getCatalog();
-	    Entry entryCatalog = new Entry("TABLE_CAT", (Object)catalog, Entry.ASCII_TYPE);
-
-	    List<Entry> col;
-	    List<List<Entry>> rows = new ArrayList<List<Entry>>();
-	
-        int seq = 0;
-	    // define the columns
-        while (it.hasNext()) 
-        {
-			PKInfo info = it.next();
-	        Entry entrySchema = new Entry("TABLE_SCHEM", (Object)info.schema, Entry.ASCII_TYPE);
-	        Entry entryTableName = new Entry("TABLE_NAME", (Object)info.table,Entry.ASCII_TYPE);
-	        Entry entryColumnName = new Entry("COLUMN_NAME", (Object)info.name, Entry.ASCII_TYPE);
-	        seq++;
-	        Entry entryKeySeq = new Entry("KEY_SEQ", (Object)seq, Entry.INT32_TYPE);
-	        Entry entryPKName = new Entry("PK_NAME", (Object)null, Entry.ASCII_TYPE);
-	
-	        col = new ArrayList<Entry>();
-	        col.add(entryCatalog);
-	        col.add(entrySchema);
-	        col.add(entryTableName);
-	        col.add(entryColumnName);
-	        col.add(entryKeySeq);
-	        col.add(entryPKName);
-	        rows.add(col);
-	    }
-	
-	    // just return the empty result if there were no rows
-	    if (rows.isEmpty()) return new CassandraResultSet();
-	
-	    // use schemas with the key in column number 2 (one based)
-	    CqlResult cqlresult;
-	    try
-	    {
-	        cqlresult = makeCqlResult(rows, 1);
-	    }
-	    catch (CharacterCodingException e)
-	    {
-	        throw new SQLTransientException(e);
-	    }
-	
-	    return new CassandraResultSet(statement, cqlresult);
-	    */
 	}
 	
-	/*
-
-	private class Entry
-    {
-    	static final String UTF8_TYPE = "UTF8Type";
-        static final String ASCII_TYPE = "AsciiType";
-        static final String INT32_TYPE = "Int32Type";
-        static final String BOOLEAN_TYPE = "BooleanType";
-
-        String name = null;
-        Object value = null;
-        String type = null;
-        
-        private Entry(String name,Object value,String type)
-        {
-            this.name = name;
-            this.value = value;
-            this.type = type;
-        }        
-    }
 	
-	public static ByteBuffer bytes(String s)
-    {
-        return ByteBuffer.wrap(s.getBytes("UTF-8"));
-    }*/
 }

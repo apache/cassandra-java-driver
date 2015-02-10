@@ -46,6 +46,7 @@ import java.sql.SQLNonTransientException;
 import java.sql.SQLRecoverableException;
 import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLTransientConnectionException;
+import java.sql.SQLTransientException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -170,7 +171,7 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         try
         {
             resetResults();
-            //BoundStatement boundStatement = new BoundStatement(statement);     
+            if (this.connection.debugMode) System.out.println("CQL: "+ cql);     
             if(this.statement.getFetchSize()==0)
             		// force paging to avoid timeout and node harm...
             		this.statement.setFetchSize(100);
@@ -195,23 +196,32 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
     public int[] executeBatch() throws SQLException
     {
     	int[] returnCounts= new int[batchStatements.size()];
-    	List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>();
-    	for(BoundStatement q:batchStatements){
-    		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(q);
-    		futures.add(resultSetFuture);
+    	try{	    	
+	    	List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>();
+	    	if (this.connection.debugMode) System.out.println("CQL statements : "+ batchStatements.size());
+	    	for(BoundStatement q:batchStatements){
+	    		if (this.connection.debugMode) System.out.println("CQL: "+ cql);
+	    		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(q);
+	    		futures.add(resultSetFuture);
+	    	}
+			
+	    	int i=0;
+			for (ResultSetFuture future : futures){
+				com.datastax.driver.core.ResultSet rows = future.getUninterruptibly();
+				returnCounts[i]=1;
+				i++;
+			}
+			
+			
+			// empty batch statement list after execution
+			batchStatements = Lists.newArrayList();
+    	}catch(Exception e){
+    		// empty batch statement list after execution even if it failed...
+    		batchStatements = Lists.newArrayList();
+    		throw new SQLTransientException(e);
     	}
-		
-    	int i=0;
-		for (ResultSetFuture future : futures){
-			com.datastax.driver.core.ResultSet rows = future.getUninterruptibly();
-			for(Row row:rows){
-				//do nothing
-			}				
-			returnCounts[i]=0;
-			i++;
-		}
         
-        return returnCounts;
+    	return returnCounts;
     }
 
 

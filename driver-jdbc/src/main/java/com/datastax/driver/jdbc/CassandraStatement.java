@@ -46,7 +46,10 @@ import org.slf4j.LoggerFactory;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.SimpleStatement;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Cassandra statement: implementation class for {@link PreparedStatement}.
@@ -168,26 +171,33 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
     	    	
         try
         {
-            if (logger.isTraceEnabled()) logger.trace("CQL: "+ cql);
+            
             if(cql.split(";").length>1 && !(cql.toLowerCase().startsWith("begin") && cql.toLowerCase().contains("batch") && cql.toLowerCase().contains("apply"))){
             	// several statements in the query to execute asynchronously            	
             	List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>();
             	ArrayList<com.datastax.driver.core.ResultSet> results = Lists.newArrayList();
-            	for(String cqlQuery:cql.split(";")){            		                	
-                		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(cqlQuery);
+            	for(String cqlQuery:cql.split(";")){           
+            			if (logger.isTraceEnabled() || this.connection.debugMode) System.out.println("CQL: "+ cqlQuery);
+            			SimpleStatement stmt = new SimpleStatement(cqlQuery);
+            			stmt.setFetchSize(this.fetchSize);
+                		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(stmt);
                 		futures.add(resultSetFuture);
-                	}
-            		
-                	int i=0;
-            		for (ResultSetFuture future : futures){
-            			com.datastax.driver.core.ResultSet rows = future.getUninterruptibly();            			            							
-            			results.add(rows);            			
-            			i++;
-            		}
-            		currentResultSet = new CassandraResultSet(this, results);
+                }
+            	
+            	
+                
+            	for (ResultSetFuture future : futures){
+            		com.datastax.driver.core.ResultSet rows = future.getUninterruptibly();            	
+            		results.add(rows);            			            	
+            	}
+            	
+            	currentResultSet = new CassandraResultSet(this, results);
             	
             }else{
-            	currentResultSet = new CassandraResultSet(this, this.connection.getSession().execute(cql));
+            	if (logger.isTraceEnabled() || this.connection.debugMode) System.out.println("CQL: "+ cql);
+            	SimpleStatement stmt = new SimpleStatement(cql);
+    			stmt.setFetchSize(this.fetchSize);
+            	currentResultSet = new CassandraResultSet(this, this.connection.getSession().execute(stmt));
             }
         }        
         catch (Exception e)
@@ -220,18 +230,17 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
     {
     	int[] returnCounts= new int[batchQueries.size()];
     	List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>();
+    	if (logger.isTraceEnabled() || this.connection.debugMode) System.out.println("CQL statements: "+ batchQueries.size());
     	for(String q:batchQueries){
+    		if (logger.isTraceEnabled() || this.connection.debugMode) System.out.println("CQL: "+ q);
     		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(q);
     		futures.add(resultSetFuture);
     	}
 		
     	int i=0;
 		for (ResultSetFuture future : futures){
-			com.datastax.driver.core.ResultSet rows = future.getUninterruptibly();
-			for(Row row:rows){
-				//do nothing
-			}				
-			returnCounts[i]=0;
+			com.datastax.driver.core.ResultSet rows = future.getUninterruptibly();						
+			returnCounts[i]=1;
 			i++;
 		}
         
@@ -414,8 +423,7 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
     {
         checkNotClosed();
         if (size < 0) throw new SQLSyntaxErrorException(String.format(BAD_FETCH_SIZE, size));
-        fetchSize = size;
-        this.statement.setFetchSize(fetchSize);
+        fetchSize = size;        
     }
 
     public void setMaxFieldSize(int arg0) throws SQLException

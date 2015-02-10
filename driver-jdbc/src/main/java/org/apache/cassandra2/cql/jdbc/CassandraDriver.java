@@ -18,7 +18,7 @@
  * under the License.
  * 
  */
-package org.apache.cassandra.cql.jdbc;
+package org.apache.cassandra2.cql.jdbc;
 
 import static com.datastax.driver.jdbc.Utils.NOT_SUPPORTED;
 import static com.datastax.driver.jdbc.Utils.PROTOCOL;

@@ -71,7 +71,7 @@ public class JdbcRegressionUnitTest
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
-        Class.forName("org.apache.cassandra.cql.jdbc.CassandraDriver");
+        Class.forName("org.apache.cassandra2.cql.jdbc.CassandraDriver");
         String URL = String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,"system");
         System.out.println("Connection URL = '"+URL +"'");
         
@@ -563,7 +563,7 @@ public class JdbcRegressionUnitTest
         con.close();
 
         // open it up again to see the new CF
-        con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE));
+        con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s?debug=true",HOST,PORT,KEYSPACE));
         System.out.println("con.getMetaData().getDatabaseProductName() = " + con.getMetaData().getDatabaseProductName());
         System.out.println("con.getMetaData().getDriverName() = " + con.getMetaData().getDriverName());
         Statement statement = con.createStatement();
@@ -790,6 +790,56 @@ public class JdbcRegressionUnitTest
        
     }
 
+    @Test
+    public void testGetLongGetDouble() throws Exception
+    {
+        // null int or long should be... null !
+    	System.out.println();
+        System.out.println("Test getLong on int/varint and getDouble on float #102");
+        System.out.println("--------------");
+        
+    	Statement stmt = con.createStatement();
+        java.util.Date now = new java.util.Date();
+        
+        
+        // Create the target Column family with each basic data type available on Cassandra
+                
+        String createCF = "CREATE COLUMNFAMILY getLongGetDouble(bigint_col bigint PRIMARY KEY, int_col int, varint_col varint, float_col float);";
+        
+        stmt.execute(createCF);
+        stmt.close();
+        //con.close();
+
+        // open it up again to see the new CF
+        //con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE));
+        Statement statement = con.createStatement();
+        
+        String insert = "INSERT INTO getLongGetDouble(bigint_col, int_col, varint_col, float_col) values(?,?,?,?);";
+		
+        PreparedStatement pstatement = con.prepareStatement(insert);
+        
+        pstatement.setObject(1, 1L); // bigint
+        pstatement.setInt(2, 1); // bigint
+        pstatement.setInt(3, 1); // bigint
+        pstatement.setFloat(4, (float)1.1); // bigint
+                
+        pstatement.execute();
+                
+        ResultSet result = statement.executeQuery("SELECT * FROM getLongGetDouble where bigint_col=1;");
+        
+        assertTrue(result.next());
+        assertEquals(1L, result.getLong("bigint_col"));        
+        assertEquals(1L,result.getLong("int_col"));
+        assertEquals(1L,result.getLong("varint_col"));
+        assertEquals((double)1.1,result.getDouble("float_col"),0.1);
+        
+        statement.close();
+        pstatement.close();
+        
+        
+        
+       
+    }
     
     @Test
     public void isValid() throws Exception
