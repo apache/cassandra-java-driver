@@ -141,7 +141,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
     public boolean onTimeout(Connection connection, long latency, int retryCount) {
         // This is only called for internal calls (i.e, when the future is not wrapped in RequestHandler).
         // So just set an exception for the final result, which should be handled correctly by said internal call.
-        setException(new ConnectionException(connection.address, "Operation timed out"));
+        setException(new OperationTimedOutException(connection.address));
         return true;
     }
 

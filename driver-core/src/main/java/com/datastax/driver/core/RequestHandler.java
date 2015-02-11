@@ -56,7 +56,6 @@ class RequestHandler implements Connection.ResponseCallback {
     private volatile List<Host> triedHosts;
     private volatile HostConnectionPool currentPool;
     private final AtomicReference<QueryState> queryStateRef;
-    private volatile boolean shouldCancelConnectionHandler;
 
     // This represents the number of times a retry has been triggered by the RetryPolicy (this is different from
     // queryStateRef.get().retryCount, because some retries don't involve the policy, for example after an
@@ -99,7 +98,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
     public void sendRequest() {
         try {
-            while (queryPlan.hasNext() && queryStateRef.get() != QueryState.CANCELLED) {
+            while (queryPlan.hasNext() && !queryStateRef.get().isCancelled()) {
                 Host host = queryPlan.next();
                 logger.trace("Querying node {}", host);
                 if (query(host))
@@ -159,25 +158,30 @@ class RequestHandler implements Connection.ResponseCallback {
         // before connection.write has completed
         connectionHandler = null;
 
-        // Set query state to "in progress" at next iteration
+        // Ensure query state is "in progress" (can be already if connection.write failed on a previous node and we're retrying)
         while (true) {
             QueryState previous = queryStateRef.get();
-            assert !previous.inProgress;
-            if (previous == QueryState.CANCELLED) {
+            if (previous.isCancelled()) {
+                if (connection instanceof PooledConnection)
+                    ((PooledConnection)connection).release();
                 return;
             }
-            if (queryStateRef.compareAndSet(previous, previous.startNext()))
+            if (previous.inProgress || queryStateRef.compareAndSet(previous, previous.startNext()))
                 break;
         }
 
-        connectionHandler = connection.write(responseCallback);
+        connectionHandler = connection.write(responseCallback, false);
+        // Only start the timeout when we're sure connectionHandler is set. This avoids an edge case where onTimeout() was triggered
+        // *before* the call to connection.write had returned.
+        connectionHandler.startTimeout();
 
-        // N.B: onSet/onException could have already been called at this point
+        // Note that we could have already received the response here (so onSet() / onException() would have been called). This is
+        // why we only test for CANCELLED_WHILE_IN_PROGRESS below.
 
-        // If cancel was called after we set the state to "in progress", but before connection.write, it might have seen a null connectionHandler.
-        // In this case we need to cancel it now to release the connection (because the next onSet/onException/onTimeout will see the CANCELLED
-        // state and return immediately).
-        if (shouldCancelConnectionHandler)
+        // If cancel() was called after we set the state to "in progress", but before connection.write had completed, it might have
+        // missed the new value of connectionHandler. So make sure that cancelHandler() gets called here (we might call it twice,
+        // but it knows how to deal with it).
+        if (queryStateRef.get() == QueryState.CANCELLED_WHILE_IN_PROGRESS)
             connectionHandler.cancelHandler();
     }
 
@@ -196,7 +200,7 @@ class RequestHandler implements Connection.ResponseCallback {
         manager.executor().execute(new Runnable() {
             @Override
             public void run() {
-                if (queryStateRef.get() == QueryState.CANCELLED)
+                if (queryStateRef.get().isCancelled())
                     return;
                 try {
                     if (retryCurrent) {
@@ -212,12 +216,21 @@ class RequestHandler implements Connection.ResponseCallback {
     }
 
     public void cancel() {
-        QueryState previous = queryStateRef.getAndSet(QueryState.CANCELLED);
-        if (previous.inProgress) {
-            if (connectionHandler != null)
-                connectionHandler.cancelHandler();
-            else
-                shouldCancelConnectionHandler = true;
+        // Atomically set a special QueryState, that will cause any further operation to abort.
+        // We want to remember whether a request was in progress when we did this, so there are two cancel states.
+        while (true) {
+            QueryState previous = queryStateRef.get();
+            if (previous.isCancelled()) {
+                return;
+            } else if (previous.inProgress && queryStateRef.compareAndSet(previous, QueryState.CANCELLED_WHILE_IN_PROGRESS)) {
+                // The connectionHandler should be non-null, but we might miss the update if we're racing with write().
+                // If it's still null, this will be handled by re-checking queryStateRef at the end of write().
+                if (connectionHandler != null)
+                    connectionHandler.cancelHandler();
+                return;
+            } else if (!previous.inProgress && queryStateRef.compareAndSet(previous, QueryState.CANCELLED_WHILE_COMPLETE)) {
+                return;
+            }
         }
     }
 
@@ -293,10 +306,8 @@ class RequestHandler implements Connection.ResponseCallback {
         }
 
         Host queriedHost = current;
+        boolean releaseConnection = true;
         try {
-            if (connection instanceof PooledConnection)
-                ((PooledConnection)connection).release();
-
             switch (response.type) {
                 case RESULT:
                     setFinalResult(connection, response);
@@ -405,30 +416,23 @@ class RequestHandler implements Connection.ResponseCallback {
                                 return;
                             }
 
+                            String currentKeyspace = connection.keyspace();
+                            String prepareKeyspace = toPrepare.getQueryKeyspace();
+                            if (prepareKeyspace != null && (currentKeyspace == null || !currentKeyspace.equals(prepareKeyspace))) {
+                                // This shouldn't happen in normal use, because a user shouldn't try to execute
+                                // a prepared statement with the wrong keyspace set.
+                                // Fail fast (we can't change the keyspace to reprepare, because we're using a pooled connection
+                                // that's shared with other requests).
+                                throw new IllegalStateException(String.format("Statement was prepared on keyspace %s, can't execute it on %s (%s)",
+                                    toPrepare.getQueryKeyspace(), connection.keyspace(), toPrepare.getQueryString()));
+                            }
+
                             logger.info("Query {} is not prepared on {}, preparing before retrying executing. "
                                       + "Seeing this message a few times is fine, but seeing it a lot may be source of performance problems",
                                         toPrepare.getQueryString(), connection.address);
-                            String currentKeyspace = connection.keyspace();
-                            String prepareKeyspace = toPrepare.getQueryKeyspace();
-                            // This shouldn't happen in normal use, because a user shouldn't try to execute
-                            // a prepared statement with the wrong keyspace set. However, if it does, we'd rather
-                            // prepare the query correctly and let the query executing return a meaningful error message
-                            if (prepareKeyspace != null && (currentKeyspace == null || !currentKeyspace.equals(prepareKeyspace)))
-                            {
-                                logger.debug("Setting keyspace for prepared query to {}", prepareKeyspace);
-                                connection.setKeyspace(prepareKeyspace);
-                            }
 
-                            try {
-                                write(connection, prepareAndRetry(toPrepare.getQueryString()));
-                            } finally {
-                                // Always reset the previous keyspace if needed
-                                if (connection.keyspace() == null || !connection.keyspace().equals(currentKeyspace))
-                                {
-                                    logger.debug("Setting back keyspace post query preparation to {}", currentKeyspace);
-                                    connection.setKeyspace(currentKeyspace);
-                                }
-                            }
+                            releaseConnection = false; // we're reusing it for the prepare call
+                            write(connection, prepareAndRetry(toPrepare.getQueryString()));
                             // we're done for now, the prepareAndRetry callback will handle the rest
                             return;
                         default:
@@ -467,6 +471,9 @@ class RequestHandler implements Connection.ResponseCallback {
         } catch (Exception e) {
             setFinalException(connection, e);
         } finally {
+            if (releaseConnection && connection instanceof PooledConnection)
+                ((PooledConnection)connection).release();
+
             if (queriedHost != null)
                 manager.cluster.manager.reportLatency(queriedHost, latency);
         }
@@ -494,6 +501,9 @@ class RequestHandler implements Connection.ResponseCallback {
                                  retryCount, queryState, queryStateRef.get());
                     return;
                 }
+
+                if (connection instanceof PooledConnection)
+                    ((PooledConnection)connection).release();
 
                 // TODO should we check the response ?
                 switch (response.type) {
@@ -618,7 +628,8 @@ class RequestHandler implements Connection.ResponseCallback {
     // The count increments on each retry.
     static class QueryState {
         static final QueryState INITIAL = new QueryState(-1, false);
-        static final QueryState CANCELLED = new QueryState(Integer.MIN_VALUE, false);
+        static final QueryState CANCELLED_WHILE_IN_PROGRESS = new QueryState(Integer.MIN_VALUE, false);
+        static final QueryState CANCELLED_WHILE_COMPLETE = new QueryState(Integer.MIN_VALUE + 1, false);
 
         final int retryCount;
         final boolean inProgress;
@@ -642,9 +653,13 @@ class RequestHandler implements Connection.ResponseCallback {
             return new QueryState(retryCount + 1, true);
         }
 
+        public boolean isCancelled() {
+            return this == CANCELLED_WHILE_IN_PROGRESS || this == CANCELLED_WHILE_COMPLETE;
+        }
+
         @Override
         public String toString() {
-            return String.format("QueryState(count=%d, inProgress=%s)", retryCount, inProgress);
+            return String.format("QueryState(count=%d, inProgress=%s, cancelled=%s)", retryCount, inProgress, isCancelled());
         }
     }
 }

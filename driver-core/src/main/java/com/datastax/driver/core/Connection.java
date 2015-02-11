@@ -19,6 +19,7 @@ import javax.net.ssl.SSLEngine;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -318,11 +319,12 @@ class Connection {
         if (this.keyspace != null && this.keyspace.equals(keyspace))
             return;
 
+        Future future = null;
         try {
             logger.trace("{} Setting keyspace {}", this, keyspace);
             long timeout = factory.getConnectTimeoutMillis();
             // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
-            Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
+            future = write(new Requests.Query("USE \"" + keyspace + '"'));
             Message.Response response = Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
             switch (response.type) {
                 case RESULT:
@@ -340,9 +342,16 @@ class Connection {
         } catch (ConnectionException e) {
             throw defunct(e);
         } catch (TimeoutException e) {
+            // We've given up waiting on the future, but it's still running. Cancel to make sure that the request timeout logic
+            // (readTimeout) will not kick in, because that would release the connection. This will work since connectTimeout is
+            // generally lower than readTimeout (and if not, we'll get an ExecutionException and defunct below).
+            future.cancel(true);
             logger.warn(String.format("Timeout while setting keyspace on connection to %s. This should not happen but is not critical (it will retried)", address));
+            // Rethrow so that the caller will not try to use the connection, but do not defunct as we don't want to mark down
+            throw new ConnectionException(address, "Timeout while setting keyspace on connection");
         } catch (BusyConnectionException e) {
             logger.warn(String.format("Tried to set the keyspace on busy connection to %s. This should not happen but is not critical (it will retried)", address));
+            throw new ConnectionException(address, "Tried to set the keyspace on busy connection");
         } catch (ExecutionException e) {
             throw defunct(new ConnectionException(address, "Error while setting keyspace", e));
         }
@@ -364,6 +373,10 @@ class Connection {
     }
 
     public ResponseHandler write(ResponseCallback callback) throws ConnectionException, BusyConnectionException {
+        return write(callback, true);
+    }
+
+    public ResponseHandler write(ResponseCallback callback, boolean startTimeout) throws ConnectionException, BusyConnectionException {
 
         Message.Request request = callback.request();
 
@@ -390,6 +403,10 @@ class Connection {
         logger.trace("{} writing request {}", this, request);
         writer.incrementAndGet();
         channel.write(request).addListener(writeHandler(request, handler));
+
+        if (startTimeout)
+            handler.startTimeout();
+
         return handler;
     }
 
@@ -882,8 +899,7 @@ class Connection {
         public boolean onTimeout(Connection connection, long latency, int retryCount) {
             assert connection != null; // We always timeout on a specific connection, so this shouldn't be null
             this.address = connection.address;
-            super.setException(new ConnectionException(connection.address, "Operation timed out"));
-            return true;
+            return super.setException(new OperationTimedOutException(connection.address));
         }
 
         public InetSocketAddress getAddress() {
@@ -906,8 +922,10 @@ class Connection {
         public final ResponseCallback callback;
         public final int retryCount;
 
-        private final Timeout timeout;
         private final long startTime;
+        private volatile Timeout timeout;
+
+        private final AtomicBoolean isCancelled = new AtomicBoolean();
 
         public ResponseHandler(Connection connection, ResponseCallback callback) throws BusyConnectionException {
             this.connection = connection;
@@ -915,10 +933,12 @@ class Connection {
             this.callback = callback;
             this.retryCount = callback.retryCount();
 
+            this.startTime = System.nanoTime();
+        }
+
+        void startTimeout() {
             long timeoutMs = connection.factory.getReadTimeoutMillis();
             this.timeout = timeoutMs <= 0 ? null : connection.factory.timer.newTimeout(onTimeoutTask(), timeoutMs, TimeUnit.MILLISECONDS);
-
-            this.startTime = System.nanoTime();
         }
 
         void cancelTimeout() {
@@ -927,6 +947,9 @@ class Connection {
         }
 
         public void cancelHandler() {
+            if (!isCancelled.compareAndSet(false, true))
+                return;
+
             // We haven't really received a response: we want to remove the handle because we gave up on that
             // request and there is no point in holding the handler, but we don't release the streamId. If we
             // were, a new request could reuse that ID but get the answer to the request we just gave up on instead

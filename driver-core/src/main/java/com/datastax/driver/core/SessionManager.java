@@ -516,6 +516,7 @@ class SessionManager extends AbstractSession {
             // Let's not wait too long if we can't get a connection. Things
             // will fix themselves once the user tries a query anyway.
             PooledConnection c = null;
+            boolean timedOut = false;
             try {
                 c = entry.getValue().borrowConnection(200, TimeUnit.MILLISECONDS);
                 c.write(new Requests.Prepare(query)).get();
@@ -529,8 +530,10 @@ class SessionManager extends AbstractSession {
                 // We shouldn't really get exception while preparing a
                 // query, so log this (but ignore otherwise as it's not a big deal)
                 logger.error(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), e);
+                // If the query timed out, that already released the connection
+                timedOut = e.getCause() instanceof OperationTimedOutException;
             } finally {
-                if (c != null)
+                if (c != null && !timedOut)
                     c.release();
             }
         }
