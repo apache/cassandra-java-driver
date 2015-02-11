@@ -4,6 +4,9 @@ CHANGELOG
 2.0.9.2:
 --------
 
+- [bug] Fix edge cases where a connection was released twice (JAVA-651).
+- [bug] Fix edge cases in query cancellation (JAVA-653).
+
 
 2.0.9.1:
 --------
