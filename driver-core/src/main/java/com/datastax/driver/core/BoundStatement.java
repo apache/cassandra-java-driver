@@ -21,6 +21,8 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.google.common.collect.Lists;
+
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
@@ -37,12 +39,19 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * variables for that name.
  * <p>
  * Any variable that hasn't been specifically set will be considered {@code null}.
+ * <p>
+ * Bound values may also be retrieved using {@code get*()} methods. Note that this
+ * may have a non-negligible impact on performance: internally, values are stored
+ * in serialized form, so they need to be deserialized again. These methods are
+ * provided for debugging purposes.
  */
-public class BoundStatement extends Statement {
+public class BoundStatement extends Statement implements GettableData {
 
     final PreparedStatement statement;
     final ByteBuffer[] values;
     private ByteBuffer routingKey;
+
+    private DataWrapper wrapper;
 
     /**
      * Creates a new {@code BoundStatement} from the provided prepared
@@ -52,6 +61,10 @@ public class BoundStatement extends Statement {
     public BoundStatement(PreparedStatement statement) {
         this.statement = statement;
         this.values = new ByteBuffer[statement.getVariables().size()];
+
+        // We want to reuse code from AbstractGettableData, but this class already extends Statement,
+        // so we emulate a mixin with a delegate.
+        this.wrapper = new DataWrapper(this);
 
         if (statement.getConsistencyLevel() != null)
             this.setConsistencyLevel(statement.getConsistencyLevel());
@@ -1104,6 +1117,186 @@ public class BoundStatement extends Statement {
         return this;
     }
 
+    @Override
+    public boolean isNull(int i) {
+        return wrapper.isNull(i);
+    }
+
+    @Override
+    public boolean isNull(String name) {
+        return wrapper.isNull(name);
+    }
+
+    @Override
+    public boolean getBool(int i) {
+        return wrapper.getBool(i);
+    }
+
+    @Override
+    public boolean getBool(String name) {
+        return wrapper.getBool(name);
+    }
+
+    @Override
+    public int getInt(int i) {
+        return wrapper.getInt(i);
+    }
+
+    @Override
+    public int getInt(String name) {
+        return wrapper.getInt(name);
+    }
+
+    @Override
+    public long getLong(int i) {
+        return wrapper.getLong(i);
+    }
+
+    @Override
+    public long getLong(String name) {
+        return wrapper.getLong(name);
+    }
+
+    @Override
+    public Date getDate(int i) {
+        return wrapper.getDate(i);
+    }
+
+    @Override
+    public Date getDate(String name) {
+        return wrapper.getDate(name);
+    }
+
+    @Override
+    public float getFloat(int i) {
+        return wrapper.getFloat(i);
+    }
+
+    @Override
+    public float getFloat(String name) {
+        return wrapper.getFloat(name);
+    }
+
+    @Override
+    public double getDouble(int i) {
+        return wrapper.getDouble(i);
+    }
+
+    @Override
+    public double getDouble(String name) {
+        return wrapper.getDouble(name);
+    }
+
+    @Override
+    public ByteBuffer getBytesUnsafe(int i) {
+        return wrapper.getBytesUnsafe(i);
+    }
+
+    @Override
+    public ByteBuffer getBytesUnsafe(String name) {
+        return wrapper.getBytesUnsafe(name);
+    }
+
+    @Override
+    public ByteBuffer getBytes(int i) {
+        return wrapper.getBytes(i);
+    }
+
+    @Override
+    public ByteBuffer getBytes(String name) {
+        return wrapper.getBytes(name);
+    }
+
+    @Override
+    public String getString(int i) {
+        return wrapper.getString(i);
+    }
+
+    @Override
+    public String getString(String name) {
+        return wrapper.getString(name);
+    }
+
+    @Override
+    public BigInteger getVarint(int i) {
+        return wrapper.getVarint(i);
+    }
+
+    @Override
+    public BigInteger getVarint(String name) {
+        return wrapper.getVarint(name);
+    }
+
+    @Override
+    public BigDecimal getDecimal(int i) {
+        return wrapper.getDecimal(i);
+    }
+
+    @Override
+    public BigDecimal getDecimal(String name) {
+        return wrapper.getDecimal(name);
+    }
+
+    @Override
+    public UUID getUUID(int i) {
+        return wrapper.getUUID(i);
+    }
+
+    @Override
+    public UUID getUUID(String name) {
+        return wrapper.getUUID(name);
+    }
+
+    @Override
+    public InetAddress getInet(int i) {
+        return wrapper.getInet(i);
+    }
+
+    @Override
+    public InetAddress getInet(String name) {
+        return wrapper.getInet(name);
+    }
+
+    @Override
+    public <T> List<T> getList(int i, Class<T> elementsClass) {
+        return wrapper.getList(i, elementsClass);
+    }
+
+    @Override
+    public <T> List<T> getList(String name, Class<T> elementsClass) {
+        return wrapper.getList(name, elementsClass);
+    }
+
+    @Override
+    public <T> Set<T> getSet(int i, Class<T> elementsClass) {
+        return wrapper.getSet(i, elementsClass);
+    }
+
+    @Override
+    public <T> Set<T> getSet(String name, Class<T> elementsClass) {
+        return wrapper.getSet(name, elementsClass);
+    }
+
+    @Override
+    public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass) {
+        return wrapper.getMap(i, keysClass, valuesClass);
+    }
+
+    @Override
+    public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass) {
+        return wrapper.getMap(name, keysClass, valuesClass);
+    }
+
+    @Override
+    public Object getObject(int i) {
+        return wrapper.getObject(i);
+    }
+
+    @Override
+    public Object getObject(String name) {
+        return wrapper.getObject(name);
+    }
+
     private ColumnDefinitions metadata() {
         return statement.getVariables();
     }
@@ -1111,5 +1304,19 @@ public class BoundStatement extends Statement {
     private BoundStatement setValue(int i, ByteBuffer value) {
         values[i] = value;
         return this;
+    }
+
+    static class DataWrapper extends AbstractGettableData {
+        final ByteBuffer[] values;
+
+        DataWrapper(BoundStatement wrapped) {
+            super(wrapped.metadata());
+            values = wrapped.values;
+        }
+
+        @Override
+        protected ByteBuffer getValue(int i) {
+            return values[i];
+        }
     }
 }
