@@ -28,6 +28,7 @@ CHANGELOG
 - [improvement] Rename threads to indicate that they are for the driver
   (JAVA-583)
 - [new feature] Expose paging state (JAVA-550)
+- [improvement] Slow Query Logger (JAVA-646)
 
 Merged from 2.0.9_fixes branch:
 

@@ -31,12 +31,7 @@ import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.DriverException;
-import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.datastax.driver.core.exceptions.ReadTimeoutException;
-import com.datastax.driver.core.exceptions.UnavailableException;
-import com.datastax.driver.core.exceptions.WriteTimeoutException;
+import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type;
 
@@ -306,7 +301,9 @@ class RequestHandler implements Connection.ResponseCallback {
         }
 
         Host queriedHost = current;
+
         boolean releaseConnection = true;
+        Exception exceptionToReport = null;
         try {
             switch (response.type) {
                 case RESULT:
@@ -314,6 +311,7 @@ class RequestHandler implements Connection.ResponseCallback {
                     break;
                 case ERROR:
                     Responses.Error err = (Responses.Error)response;
+                    exceptionToReport = err.asException(connection.address);
                     RetryPolicy.RetryDecision retry = null;
                     RetryPolicy retryPolicy = statement.getRetryPolicy() == null
                                             ? manager.configuration().getPolicies().getRetryPolicy()
@@ -381,7 +379,8 @@ class RequestHandler implements Connection.ResponseCallback {
                         case OVERLOADED:
                             // Try another node
                             logger.warn("Host {} is overloaded, trying next host.", connection.address);
-                            logError(connection.address, new DriverException("Host overloaded"));
+                            DriverException overloaded = new DriverException("Host overloaded");
+                            logError(connection.address, overloaded);
                             if (metricsEnabled())
                                 metrics().getErrorMetrics().getOthers().inc();
                             retry(false, null);
@@ -399,7 +398,8 @@ class RequestHandler implements Connection.ResponseCallback {
                         case IS_BOOTSTRAPPING:
                             // Try another node
                             logger.error("Query sent to {} but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
-                            logError(connection.address, new DriverException("Host is bootstrapping"));
+                            DriverException bootstrapping = new DriverException("Host is bootstrapping");
+                            logError(connection.address, bootstrapping);
                             if (metricsEnabled())
                                 metrics().getErrorMetrics().getOthers().inc();
                             retry(false, null);
@@ -469,13 +469,13 @@ class RequestHandler implements Connection.ResponseCallback {
                     break;
             }
         } catch (Exception e) {
+            exceptionToReport = e;
             setFinalException(connection, e);
         } finally {
             if (releaseConnection && connection instanceof PooledConnection)
                 ((PooledConnection)connection).release();
-
-            if (queriedHost != null)
-                manager.cluster.manager.reportLatency(queriedHost, latency);
+            if (queriedHost != null && statement != Statement.DEFAULT)
+                manager.cluster.manager.reportLatency(queriedHost, statement, exceptionToReport, latency);
         }
     }
 
@@ -578,8 +578,8 @@ class RequestHandler implements Connection.ResponseCallback {
             // This shouldn't happen, but if it does, we want to signal the callback, not let him hang indefinitively
             setFinalException(null, new DriverInternalError("An unexpected error happened while handling exception " + exception, e));
         } finally {
-            if (queriedHost != null)
-                manager.cluster.manager.reportLatency(queriedHost, latency);
+            if (queriedHost != null && statement != Statement.DEFAULT)
+                manager.cluster.manager.reportLatency(queriedHost, statement, exception, latency);
         }
     }
 
@@ -594,10 +594,9 @@ class RequestHandler implements Connection.ResponseCallback {
         }
 
         Host queriedHost = current;
+        // If a query times out, we consider that the host is unstable, so we defunct
+        // the connection to mark it down.
         try {
-            // If a query times out, we consider that the host is unstable, so we defunct
-            // the connection to mark it down.
-            DriverException timeoutException = new DriverException("Timed out waiting for server response");
             connection.defunct(timeoutException);
 
             logError(connection.address, timeoutException);
@@ -606,8 +605,8 @@ class RequestHandler implements Connection.ResponseCallback {
             // This shouldn't happen, but if it does, we want to signal the callback, not let him hang indefinitively
             setFinalException(null, new DriverInternalError("An unexpected error happened while handling timeout", e));
         } finally {
-            if (queriedHost != null)
-                manager.cluster.manager.reportLatency(queriedHost, latency);
+            if (queriedHost != null && statement != Statement.DEFAULT)
+                manager.cluster.manager.reportLatency(queriedHost, statement, timeoutException, latency);
         }
         return true;
     }

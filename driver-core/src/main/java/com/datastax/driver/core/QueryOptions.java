@@ -23,12 +23,12 @@ import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 public class QueryOptions {
 
     /**
-     * The default consistency level for queries: {@code ConsistencyLevel.ONE}.
+     * The default consistency level for queries: {@link ConsistencyLevel#ONE}.
      */
     public static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.ONE;
 
     /**
-     * The default serial consistency level for conditional updates: {@code ConsistencyLevel.SERIAL}.
+     * The default serial consistency level for conditional updates: {@link ConsistencyLevel#SERIAL}.
      */
     public static final ConsistencyLevel DEFAULT_SERIAL_CONSISTENCY_LEVEL = ConsistencyLevel.SERIAL;
 
@@ -43,8 +43,8 @@ public class QueryOptions {
     private volatile Cluster.Manager manager;
 
     /**
-     * Creates a new {@code QueryOptions} instance using the {@code DEFAULT_CONSISTENCY_LEVEL},
-     * {@code DEFAULT_SERIAL_CONSISTENCY_LEVEL} and {@code DEFAULT_FETCH_SIZE}.
+     * Creates a new {@link QueryOptions} instance using the {@link #DEFAULT_CONSISTENCY_LEVEL},
+     * {@link #DEFAULT_SERIAL_CONSISTENCY_LEVEL} and {@link #DEFAULT_FETCH_SIZE}.
      */
     public QueryOptions() {}
 

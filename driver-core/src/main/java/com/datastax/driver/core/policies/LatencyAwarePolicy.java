@@ -372,7 +372,7 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy, Closeab
         private final ConcurrentMap<Host, HostLatencyTracker> latencies = new ConcurrentHashMap<Host, HostLatencyTracker>();
         private volatile long cachedMin = -1L;
 
-        public void update(Host host, long newLatencyNanos) {
+        public void update(Host host, Statement statement, Exception exception, long newLatencyNanos) {
             HostLatencyTracker hostTracker = latencies.get(host);
             if (hostTracker == null) {
                 hostTracker = new HostLatencyTracker(scale, (30L * minMeasure) / 100L);

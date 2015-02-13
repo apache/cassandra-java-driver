@@ -155,6 +155,12 @@ Other API Changes
     will now need to use Host#isUp and Cluster#register if you were using that
     class.
 
+11. LatencyTracker#update method now has a different signature and takes two new
+    parameters: the statement that has been executed (never null), and the exception
+    thrown while executing the query (or null, if the query executed successfully).
+    Existing implementations of this interface, once upgraded to the new method
+    signature, should continue to work as before.
+
 
 
 
