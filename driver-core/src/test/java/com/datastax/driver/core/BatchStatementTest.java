@@ -20,11 +20,11 @@ import java.util.Collections;
 
 import org.testng.annotations.Test;
 
-import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
-
-import static com.datastax.driver.core.TestUtils.versionCheck;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+import com.datastax.driver.core.utils.CassandraVersion;
 
 public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -80,9 +80,8 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major=2.0, minor=9, description="This will only work with C* 2.0.9 (CASSANDRA-7337)")
     public void casBatchTest() throws Throwable {
-        versionCheck(2.0, 9, "This will only work with C* 2.0.9 (CASSANDRA-7337)");
-
         try {
             PreparedStatement st = session.prepare("INSERT INTO test (k, v) VALUES (?, ?) IF NOT EXISTS");
 

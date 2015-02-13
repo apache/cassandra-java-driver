@@ -18,9 +18,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
+import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.utils.UUIDs;
 
 import static com.datastax.driver.core.FakeHost.Behavior.THROWING_CONNECT_TIMEOUTS;
+
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
 
 public class ClusterInitTest {
     private static final Logger logger = LoggerFactory.getLogger(ClusterInitTest.class);
@@ -68,6 +71,7 @@ public class ClusterInitTest {
                 CCMBridge.ipOfNode(4), CCMBridge.ipOfNode(5), CCMBridge.ipOfNode(6))
                 .withSocketOptions(socketOptions)
                 .withReconnectionPolicy(reconnectionPolicy)
+                .withProtocolVersion(TestUtils.getDesiredProtocolVersion())
                 .build();
             cluster.connect();
 
@@ -75,9 +79,12 @@ public class ClusterInitTest {
             long initTimeMs = TimeUnit.MILLISECONDS.convert(System.nanoTime() - start, TimeUnit.NANOSECONDS);
             logger.info("Cluster and session initialized in {} ms", initTimeMs);
 
-            // We have one live host so 3 successful connections (1 control connection and 2 core connections in the pool).
+            // We have one live host so we expect 1 control connection + core connection count successful connections.
             // The other 5 hosts are unreachable, we should attempt to connect to each of them only once.
-            verify(socketOptions, times(3 + 5)).getKeepAlive();
+            int coreConnections = cluster.getConfiguration()
+                    .getPoolingOptions()
+                    .getCoreConnectionsPerHost(HostDistance.LOCAL);
+            verify(socketOptions, times(1 + coreConnections + 5)).getKeepAlive();
         } finally {
             if (cluster != null)
                 cluster.close();
@@ -97,15 +104,17 @@ public class ClusterInitTest {
             String releaseVersion = session.execute("SELECT release_version FROM local")
                 .one().getString("release_version");
 
-            for (int i = 2; i <= 6; i++)
-                session.execute("INSERT INTO peers (peer, data_center, host_id, rack, release_version, rpc_address, schema_version) " +
-                        "VALUES (?, 'datacenter1', ?, 'rack1', ?, ?, ?)",
-                    InetAddress.getByName(CCMBridge.ipOfNode(i)),
-                    UUIDs.random(),
-                    releaseVersion,
-                    InetAddress.getByName(CCMBridge.ipOfNode(i)),
-                    UUIDs.random()
-                );
+            for (int i = 2; i <= 6; i++) {
+                Insert insertStmt = insertInto("peers")
+                    .value("peer", InetAddress.getByName(CCMBridge.ipOfNode(i)))
+                    .value("data_center", "datacenter1")
+                    .value("host_id", UUIDs.random())
+                    .value("rack", "rack1")
+                    .value("release_version", releaseVersion)
+                    .value("rpc_address", InetAddress.getByName(CCMBridge.ipOfNode(i)))
+                    .value("schema_version", UUIDs.random());
+                session.execute(insertStmt);
+            }
         } catch (Exception e) {
             fail("Error while inserting fake peer rows", e);
         } finally {

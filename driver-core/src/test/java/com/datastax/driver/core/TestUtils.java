@@ -49,6 +49,8 @@ public abstract class TestUtils {
     public static final String INSERT_FORMAT = "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)";
     public static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
 
+    public static final int TEST_BASE_NODE_WAIT = SystemProperties.getInt("com.datastax.driver.TEST_BASE_NODE_WAIT", 60);
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static BoundStatement setBoundValue(BoundStatement bs, String name, DataType type, Object value) {
         switch (type.getName()) {
@@ -181,7 +183,7 @@ public abstract class TestUtils {
                 case FLOAT:
                     return 3.142519f;
                 case INET:
-                    return InetAddress.getByAddress(new byte[]{(byte)127, (byte)0, (byte)0, (byte)1});
+                    return InetAddress.getByAddress(new byte[]{ (byte)127, (byte)0, (byte)0, (byte)1 });
                 case INT:
                     return 24;
                 case TEXT:
@@ -267,7 +269,7 @@ public abstract class TestUtils {
     // This is used because there is some delay between when a node has been
     // added through ccm and when it's actually available for querying
     public static void waitFor(String node, Cluster cluster) {
-        waitFor(node, cluster, 60, false, false);
+        waitFor(node, cluster, TEST_BASE_NODE_WAIT, false, false);
     }
 
     public static void waitFor(String node, Cluster cluster, int maxTry) {
@@ -275,11 +277,11 @@ public abstract class TestUtils {
     }
 
     public static void waitForDown(String node, Cluster cluster) {
-        waitFor(node, cluster, 180, true, false);
+        waitFor(node, cluster, TEST_BASE_NODE_WAIT * 3, true, false);
     }
 
     public static void waitForDownWithWait(String node, Cluster cluster, int waitTime) {
-        waitFor(node, cluster, 180, true, false);
+        waitForDown(node, cluster);
 
         // FIXME: Once stop() works, remove this line
         try {
@@ -299,7 +301,7 @@ public abstract class TestUtils {
     }
 
     public static void waitForDecommission(String node, Cluster cluster) {
-        waitFor(node, cluster, 30, true, true);
+        waitFor(node, cluster, TEST_BASE_NODE_WAIT / 2, true, true);
     }
 
     public static void waitForDecommission(String node, Cluster cluster, int maxTry) {
@@ -372,7 +374,7 @@ public abstract class TestUtils {
         int minor = Integer.parseInt(versionArray[2]);
 
         if (major < majorCheck || (major == majorCheck && minor < minorCheck)) {
-            throw new SkipException(skipString);
+            throw new SkipException("Version >= " + majorCheck + "." + minorCheck + " required.  Description: " + skipString);
         }
     }
 
@@ -404,7 +406,7 @@ public abstract class TestUtils {
      */
     public static int findAvailablePort(int startingWith) {
         IOException last = null;
-        for(int port = startingWith; port < startingWith+100; port++) {
+        for (int port = startingWith; port < startingWith + 100; port++) {
             try {
                 ServerSocket s = new ServerSocket(port);
                 s.close();
@@ -415,5 +417,19 @@ public abstract class TestUtils {
         }
         // If for whatever reason a port could not be acquired throw the last encountered exception.
         throw new RuntimeException("Could not acquire an available port", last);
+    }
+
+    /**
+     * @return The desired target protocol version based on the 'cassandra.version' System property.
+     */
+    public static int getDesiredProtocolVersion() {
+        String version = System.getProperty("cassandra.version");
+        String[] versionArray = version.split("\\.|-");
+        double major = Double.parseDouble(versionArray[0] + "." + versionArray[1]);
+        if(major < 2.0) {
+            return 1;
+        } else {
+            return 2;
+        }
     }
 }
