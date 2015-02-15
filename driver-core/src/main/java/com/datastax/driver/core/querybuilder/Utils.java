@@ -51,7 +51,7 @@ abstract class Utils {
         return sb;
     }
 
-    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<Object> values, List<Object> variables) {
+    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<?> values, List<Object> variables) {
         for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);

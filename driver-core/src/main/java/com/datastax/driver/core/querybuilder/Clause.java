@@ -66,9 +66,9 @@ public abstract class Clause extends Utils.Appendeable {
 
     static class InClause extends AbstractClause {
 
-        private final List<Object> values;
+        private final List<?> values;
 
-        InClause(String name, List<Object> values) {
+        InClause(String name, List<?> values) {
             super(name);
             this.values = values;
 
