@@ -259,7 +259,7 @@ class ControlConnection implements Host.StateListener {
             // We want that because the token map was not properly initialized by the first call above, since it requires the list of keyspaces
             // to be loaded.
             logger.debug("[Control connection] Refreshing schema");
-            refreshSchema(connection, null, null, cluster, isInitialConnection);
+            refreshSchema(connection, null, null);
             return connection;
         } catch (BusyConnectionException e) {
             connection.closeAsync().force();
@@ -286,7 +286,7 @@ class ControlConnection implements Host.StateListener {
             // At startup, when we add the initial nodes, this will be null, which is ok
             if (c == null)
                 return;
-            refreshSchema(c, keyspace, table, cluster, false);
+            refreshSchema(c, keyspace, table);
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing schema ({})", e.getMessage());
             signalError();
@@ -301,7 +301,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    static void refreshSchema(Connection connection, String keyspace, String table, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    void refreshSchema(Connection connection, String keyspace, String table) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         // Make sure we're up to date on schema
         String whereClause = "";
         if (keyspace != null) {

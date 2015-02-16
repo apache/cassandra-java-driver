@@ -335,6 +335,16 @@ public class Metadata {
         return sb.toString();
     }
 
+    /**
+     * Remove a table of a given keyspace metadata.
+     *
+     * @param keyspace the keyspace name, must be an existing keyspace identifier
+     * @param table the name of the table to be removed
+     */
+    public void removeTable(String keyspace, String table) {
+        keyspaces.get(handleId(keyspace)).removeTable(table);
+    }
+
     static class TokenMap {
 
         private final Token.Factory factory;
