@@ -5,6 +5,7 @@ import java.util.List;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.fail;
 
 public class RPTokenFactoryTest {
     Token.Factory factory = Token.RPToken.FACTORY;

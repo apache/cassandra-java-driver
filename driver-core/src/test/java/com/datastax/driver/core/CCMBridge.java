@@ -151,6 +151,11 @@ public class CCMBridge {
         execute("ccm remove");
     }
 
+    public void remove(int n) {
+        logger.info("Removing: " + IP_PREFIX + n);
+        execute("ccm node%d remove", n);
+    }
+
     public void ring() {
         ring(1);
     }

@@ -5,6 +5,7 @@ import java.util.List;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.fail;
 
 public class M3PTokenFactoryTest {
     Token.Factory factory = Token.M3PToken.FACTORY;
@@ -74,4 +75,5 @@ public class M3PTokenFactoryTest {
             factory.fromString("3074457345618258602")
         );
     }
+
 }

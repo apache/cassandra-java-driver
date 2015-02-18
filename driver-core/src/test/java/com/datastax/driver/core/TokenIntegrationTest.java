@@ -1,16 +1,16 @@
 package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import com.beust.jcommander.internal.Sets;
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.WhiteListPolicy;
@@ -39,13 +39,21 @@ public abstract class TokenIntegrationTest {
 
     private final String ccmOptions;
     private final DataType expectedTokenType;
+    private final int numTokens;
+    private final boolean useVnodes;
     CCMBridge ccm;
     Cluster cluster;
     Session session;
 
     public TokenIntegrationTest(String ccmOptions, DataType expectedTokenType) {
-        this.ccmOptions = ccmOptions;
+        this(ccmOptions, expectedTokenType, false);
+    }
+
+    public TokenIntegrationTest(String ccmOptions, DataType expectedTokenType, boolean useVnodes) {
         this.expectedTokenType = expectedTokenType;
+        this.numTokens = useVnodes ? 256 : 1;
+        this.ccmOptions = useVnodes ? ccmOptions + " --vnodes" : ccmOptions;
+        this.useVnodes = useVnodes;
     }
 
     @BeforeClass(groups = "short")
@@ -75,6 +83,17 @@ public abstract class TokenIntegrationTest {
             ccm.remove();
     }
 
+    /**
+     * <p>
+     * Validates that {@link TokenRange}s are exposed via a {@link Cluster}'s {@link Metadata} and they
+     * can be used to query data.
+     * </p>
+     *
+     * @test_category metadata:token
+     * @expected_result token ranges are exposed and usable.
+     * @jira_ticket JAVA-312
+     * @since 2.0.10, 2.1.5
+     */
     @Test(groups = "short")
     public void should_expose_token_ranges() throws Exception {
         Metadata metadata = cluster.getMetadata();
@@ -115,6 +134,31 @@ public abstract class TokenIntegrationTest {
         return rows;
     }
 
+    /**
+     * <p>
+     * Validates that a {@link Token} can be retrieved and parsed by executing 'select token(name)' and
+     * then used to find data matching that token.
+     * </p>
+     *
+     * <p>
+     * This test does the following:
+     *
+     * <ol>
+     *     <li>Retrieve the token for the key with value '1', get it by index, and ensure if is of the expected token type.</li>
+     *     <li>Retrieve the token for the key with value '1', get it by name,  and ensure it matches the token by index.</li>
+     *     <li>Retrieve the token by alias for the key '1', and ensure it matches the token by index.</li>
+     *     <li>Retrieve the token for a case sensitive key.</li>
+     *     <li>Select data by token with a BoundStatement.</li>
+     *     <li>Select data by token using setToken by index.</li>
+     *     <li>Select data by token using setToken by name.</li>
+     *     <li>Select data by token with a SimpleStatement</li>
+     * </ol>
+     *
+     * @test_category token
+     * @expected_result tokens are selectable, properly parsed, and usable as input.
+     * @jira_ticket JAVA-312
+     * @since 2.0.10, 2.1.5
+     */
     @Test(groups = "short")
     public void should_get_token_from_row_and_set_token_in_query() {
         // get by index:
@@ -145,54 +189,96 @@ public abstract class TokenIntegrationTest {
         row = session.execute(pst.bind().setToken(0, token)).one();
         assertThat(row.getInt(0)).isEqualTo(1);
 
+        PreparedStatement pst2 = session.prepare("SELECT * FROM test.foo WHERE token(i) = :myToken");
+        row = session.execute(pst2.bind().setToken("myToken", token)).one();
+        assertThat(row.getInt(0)).isEqualTo(1);
+
         row = session.execute("SELECT * FROM test.foo WHERE token(i) = ?", token).one();
         assertThat(row.getInt(0)).isEqualTo(1);
     }
 
+    /**
+     * <p>
+     * Ensures that an exception is raised when attempting to retrieve a token a non-token column.
+     * </p>
+     *
+     * @test_category token
+     * @expected_result an exception is raised.
+     * @jira_ticket JAVA-312
+     * @since 2.0.10, 2.1.5
+     */
+    @Test(groups = "short", expectedExceptions = InvalidTypeException.class)
+    public void should_raise_exception_when_get_token_on_non_token() {
+        Row row = session.execute("SELECT i FROM test.foo WHERE i = 1").one();
+        row.getToken(0);
+    }
+
+    /**
+     * <p>
+     * Ensures that @{link TokenRange}s are exposed at a per host level, the ranges are complete,
+     * the entire ring is represented, and that ranges do not overlap.
+     * </p>
+     *
+     * <p>
+     * Also ensures that ranges from another replica are present when a Host is a replica for
+     * another node.
+     * </p>
+     *
+     * @test_category metadata:token
+     * @expected_result The entire token range is represented collectively and the ranges do not overlap.
+     * @jira_ticket JAVA-312
+     * @since 2.0.10, 2.1.5
+     */
     @Test(groups = "short")
     public void should_expose_token_ranges_per_host() {
         checkRangesPerHost("test", 1);
         checkRangesPerHost("test2", 2);
+        assertThat(cluster).hasValidTokenRanges();
     }
 
     private void checkRangesPerHost(String keyspace, int replicationFactor) {
-        Set<TokenRange> allRanges = Sets.newHashSet();
+        List<TokenRange> allRangesWithReplicas = Lists.newArrayList();
 
         // Get each host's ranges, the count should match the replication factor
         for (int i = 1; i <= 3; i++) {
             Host host = TestUtils.findHost(cluster, i);
             Set<TokenRange> hostRanges = cluster.getMetadata().getTokenRanges(keyspace, host);
-            assertThat(hostRanges).hasSize(replicationFactor);
-            allRanges.addAll(hostRanges);
+            // Special case: When using vnodes the tokens are not evenly assigned to each replica.
+            if(!useVnodes) {
+                assertThat(hostRanges).hasSize(replicationFactor * numTokens);
+            }
+            allRangesWithReplicas.addAll(hostRanges);
         }
 
+        // Special case check for vnodes to ensure that total number of replicated ranges is correct.
+        assertThat(allRangesWithReplicas).hasSize(3 * numTokens * replicationFactor);
+
         // Once we ignore duplicates, the number of ranges should match the number of nodes.
-        assertThat(allRanges).hasSize(3);
-        Iterator<TokenRange> it = allRanges.iterator();
-        TokenRange range1 = it.next();
-        TokenRange range2 = it.next();
-        TokenRange range3 = it.next();
+        Set<TokenRange> allRanges = new HashSet<TokenRange>(allRangesWithReplicas);
+        assertThat(allRanges).hasSize(3*numTokens);
 
-        // No two ranges should intersect
-        assertThat(range1)
-            .doesNotIntersect(range2)
-            .doesNotIntersect(range3);
-        assertThat(range2)
-            .doesNotIntersect(range3);
-
-        // And the ranges should cover the whole ring
-        TokenRange mergedRange = range1.mergeWith(range2.mergeWith(range3));
-        boolean isFullRing = mergedRange.getStart().equals(mergedRange.getEnd())
-            && !mergedRange.isEmpty();
-        assertThat(isFullRing).isTrue();
+        // And the ranges should cover the whole ring and no ranges intersect.
+        assertThat(cluster).hasValidTokenRanges(keyspace);
     }
 
+    /**
+     * <p>
+     * Ensures that Tokens are exposed for each Host and that the match those in the system tables.
+     * </p>
+     *
+     * <p>
+     * Also validates that tokens are not present for multiple hosts.
+     * </p>
+     *
+     * @test_category metadata:token
+     * @expected_result Tokens are exposed by Host and match those in the system tables.
+     * @jira_ticket JAVA-312
+     * @since 2.0.10, 2.1.5
+     */
     @Test(groups = "short")
     public void should_expose_tokens_per_host() {
         for (Host host : cluster.getMetadata().allHosts()) {
-            // We don't use virtual nodes in this test, so there is only one token
-            assertThat(host.getTokens()).hasSize(1);
-            Token tokenFromMetadata = host.getTokens().iterator().next();
+            assertThat(host.getTokens()).hasSize(numTokens);
 
             // Check against the info in the system tables, which is a bit weak since it's exactly how the metadata is
             // constructed in the first place, but there's not much else we can do.
@@ -201,10 +287,64 @@ public abstract class TokenIntegrationTest {
                 ? session.execute("select tokens from system.local").one()
                 : session.execute("select tokens from system.peers where peer = ?", host.listenAddress).one();
             Set<String> tokenStrings = row.getSet("tokens", String.class);
-            assertThat(tokenStrings).hasSize(1);
-            Token tokenFromSystemTable = tokenFactory().fromString(tokenStrings.iterator().next());
+            assertThat(tokenStrings).hasSize(numTokens);
+            Iterable<Token> tokensFromSystemTable = Iterables.transform(tokenStrings, new Function<String, Token>() {
+                @Override public Token apply(String input) {
+                    return tokenFactory().fromString(input);
+                }
+            });
 
-            assertThat(tokenFromMetadata).isEqualTo(tokenFromSystemTable);
+            assertThat(host.getTokens()).containsOnlyOnce(Iterables.toArray(tokensFromSystemTable, Token.class));
+        }
+    }
+
+    /**
+     * <p>
+     * Ensures that for the {@link TokenRange}s returned by {@link Metadata#getTokenRanges()} that there exists at
+     * most one {@link TokenRange} for which calling {@link TokenRange#isWrappedAround()} returns true and
+     * {@link TokenRange#unwrap()} returns two {@link TokenRange}s.
+     * </p>
+     *
+     * @test_category metadata:token
+     * @expected_result Tokens are exposed by Host and match those in the system tables.
+     * @jira_ticket JAVA-312
+     * @since 2.0.10, 2.1.5
+     */
+    @Test(groups = "short")
+    public void should_only_unwrap_one_range_for_all_ranges() {
+        Set<TokenRange> ranges = cluster.getMetadata().getTokenRanges();
+
+        assertOnlyOneWrapped(ranges);
+
+        Iterable<TokenRange> splitRanges = Iterables.concat(Iterables.transform(ranges,
+            new Function<TokenRange, Iterable<TokenRange>>() {
+                @Override public Iterable<TokenRange> apply(TokenRange input) {
+                    return input.splitEvenly(10);
+                }
+            })
+        );
+
+        assertOnlyOneWrapped(splitRanges);
+    }
+
+    /**
+     * Asserts that given the input {@link TokenRange}s that at most one of them wraps the token ring.
+     * @param ranges Ranges to validate against.
+     */
+    protected void assertOnlyOneWrapped(Iterable<TokenRange> ranges) {
+        TokenRange wrappedRange = null;
+
+        for(TokenRange range : ranges) {
+            if(range.isWrappedAround()) {
+                assertThat(wrappedRange)
+                    .as("Found a wrapped around TokenRange (%s) when one already exists (%s).", range, wrappedRange)
+                    .isNull();
+                wrappedRange = range;
+
+                assertThat(range).unwrapsOverMinToken(tokenFactory());
+            } else {
+                assertThat(range).unwrapsToItself();
+            }
         }
     }
 

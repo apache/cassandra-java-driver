@@ -1,8 +1,13 @@
 package com.datastax.driver.core;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.testng.annotations.Test;
+
+import static org.testng.Assert.fail;
+
+import com.datastax.driver.core.Token.M3PToken;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
@@ -121,6 +126,16 @@ public class TokenRangeTest {
         assertThat(tokenRange(minToken, 5).mergeWith(tokenRange(5, 7))).isEqualTo(tokenRange(minToken, 7));
     }
 
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)
+    public void should_not_merge_with_nonadjacent_and_disjoint_ranges() {
+        tokenRange(0,5).mergeWith(tokenRange(7,14));
+    }
+
+    @Test(groups = "unit")
+    public void should_return_non_empty_range_if_other_range_is_empty() {
+        assertThat(tokenRange(1,5).mergeWith(tokenRange(5,5))).isEqualTo(tokenRange(1,5));
+    }
+
     @Test(groups = "unit")
     public void should_unwrap_to_non_wrapping_ranges() {
         assertThat(tokenRange(9, 3)).unwrapsTo(tokenRange(9, minToken), tokenRange(minToken, 3));
@@ -131,19 +146,67 @@ public class TokenRangeTest {
         assertThat(tokenRange(minToken, minToken)).unwrapsToItself();
     }
 
+    @Test(groups = "unit")
+    public void should_split_evenly() {
+        // Simply exercise splitEvenly, split logic is exercised in TokenFactoryTest implementation for each partitioner.
+        List<TokenRange> splits = tokenRange(3, 9).splitEvenly(3);
+
+        assertThat(splits).hasSize(3);
+        assertThat(splits).containsExactly(tokenRange(3, 5), tokenRange(5, 7), tokenRange(7, 9));
+    }
+
+
+    @Test(groups = "unit")
+    public void should_throw_error_with_less_than_1_splits() {
+        for(int i = -255; i < 1; i++) {
+            try {
+                tokenRange(0, 1).splitEvenly(i);
+                fail("Expected error when providing " + i + " splits.");
+            } catch(IllegalArgumentException e) {
+                // expected.
+            }
+        }
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)
+    public void should_not_split_empty_token_range() {
+        tokenRange(0, 0).splitEvenly(1);
+    }
+
+    @Test(groups = "unit")
+    public void should_create_empty_token_ranges_if_too_many_splits() {
+        TokenRange range = tokenRange(0,10);
+
+        List<TokenRange> ranges = range.splitEvenly(255);
+        assertThat(ranges).hasSize(255);
+
+        for(int i = 0; i < ranges.size(); i++) {
+            TokenRange tr = ranges.get(i);
+            if(i < 10) {
+                assertThat(tr).isEqualTo(tokenRange(i, i+1));
+            } else {
+                assertThat(tr.isEmpty());
+            }
+        }
+    }
+
     private TokenRange tokenRange(long start, long end) {
-        return new TokenRange(factory.newToken(BigInteger.valueOf(start)), factory.newToken(BigInteger.valueOf(end)), factory);
+        return new TokenRange(newM3PToken(start), newM3PToken(end), factory);
     }
 
     private TokenRange tokenRange(Token start, long end) {
-        return new TokenRange(start, factory.newToken(BigInteger.valueOf(end)), factory);
+        return new TokenRange(start, newM3PToken(end), factory);
     }
 
     private TokenRange tokenRange(long start, Token end) {
-        return new TokenRange(factory.newToken(BigInteger.valueOf(start)), end, factory);
+        return new TokenRange(newM3PToken(start), end, factory);
     }
 
     private TokenRange tokenRange(Token start, Token end) {
         return new TokenRange(start, end, factory);
+    }
+
+    private Token newM3PToken(long value) {
+        return factory.fromString(Long.toString(value));
     }
 }
