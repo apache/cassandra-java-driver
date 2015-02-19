@@ -9,6 +9,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.Bytes;
 
 import static com.datastax.driver.core.Assertions.assertThat;
@@ -130,9 +131,15 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @AfterMethod(groups = "short")
     public void cleanup() {
-        session.execute("DROP TABLE IF EXISTS ks.table1");
-        session.execute("DROP TYPE IF EXISTS ks.type1");
-        session.execute("DROP KEYSPACE IF EXISTS ks2");
+        try {
+            session.execute("DROP TABLE IF EXISTS ks.table1");
+        } catch(InvalidQueryException ex) {}
+        try {
+            session.execute("DROP TYPE IF EXISTS ks.type1");
+        } catch(InvalidQueryException ex) {}
+        try {
+            session.execute("DROP KEYSPACE IF EXISTS ks2");
+        } catch(InvalidQueryException ex) {}
     }
 
     @AfterClass(groups = "short")

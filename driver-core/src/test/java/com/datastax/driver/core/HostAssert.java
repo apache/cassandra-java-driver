@@ -35,7 +35,16 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
     public HostAssert comesUpWithin(long duration, TimeUnit unit) {
         final CountDownLatch upSignal = new CountDownLatch(1);
         StateListener upListener = new StateListenerBase() {
+
+            @Override
             public void onUp(Host host) {
+                upSignal.countDown();
+            }
+
+            @Override
+            public void onAdd(Host host) {
+                // Special case, cassandra will sometimes not send an 'UP' topology change event
+                // for a new node, because of this we also listen for add events.
                 upSignal.countDown();
             }
         };

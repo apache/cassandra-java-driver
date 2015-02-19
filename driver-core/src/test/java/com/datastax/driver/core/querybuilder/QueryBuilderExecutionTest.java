@@ -93,8 +93,7 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
 
     @Test(groups = "short")
     public void batchNonBuiltStatementTest() throws Exception {
-
-        SimpleStatement simple = new SimpleStatement("INSERT INTO " + TABLE1 + " (k, t) VALUES (?, ?)", "batchTest1", "val1");
+        SimpleStatement simple = new SimpleStatement("INSERT INTO " + TABLE1 + " (k, t) VALUES ('batchTest1', 'val1')");
         RegularStatement built = insertInto(TABLE1).value("k", "batchTest2").value("t", "val2");
         session.execute(batch().add(simple).add(built));
 

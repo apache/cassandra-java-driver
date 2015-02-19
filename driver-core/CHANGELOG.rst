@@ -4,6 +4,20 @@ CHANGELOG
 2.1.5:
 ------
 
+Merged from 2.0 branch:
+
+- [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
+- [improvement] Add connection heartbeat (JAVA-533)
+- [improvement] Reduce level of logs on missing rpc_address (JAVA-568)
+- [bug] Prevent race between cancellation and query completion (JAVA-614)
+- [bug] Prevent cancel and timeout from cancelling unrelated ResponseHandler if
+  streamId was already released and reused (JAVA-632).
+- [bug] Fix issue when newly opened pool fails before we could mark the node UP
+  (JAVA-642)
+- [bug] Fix unwanted LBP notifications when a contact host is down (JAVA-613)
+- [bug] Fix edge cases where a connection was released twice (JAVA-651).
+- [bug] Fix edge cases in query cancellation (JAVA-653).
+
 
 2.1.4:
 ------
@@ -151,6 +165,24 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] Avoid classloader leak in Tomcat (JAVA-343)
 - [bug] Avoid deadlock in onAdd/onUp (JAVA-387)
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
+
+
+2.0.9.2:
+--------
+
+- [bug] Fix edge cases where a connection was released twice (JAVA-651).
+- [bug] Fix edge cases in query cancellation (JAVA-653).
+
+
+2.0.9.1:
+--------
+
+- [bug] Prevent race between cancellation and query completion (JAVA-614)
+- [bug] Prevent cancel and timeout from cancelling unrelated ResponseHandler if
+  streamId was already released and reused (JAVA-632).
+- [bug] Fix issue when newly opened pool fails before we could mark the node UP
+  (JAVA-642)
+- [bug] Fix unwanted LBP notifications when a contact host is down (JAVA-613)
 
 
 2.0.9:

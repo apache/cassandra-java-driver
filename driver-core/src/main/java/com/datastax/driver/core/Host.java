@@ -207,14 +207,17 @@ public class Host {
     }
 
     /**
-     * Triggers an asynchronous one-time reconnection attempt to this host.
+     * Triggers an asynchronous reconnection attempt to this host.
      * <p>
-     * If reconnection succeeds, the host will be marked {@code UP} and its connection pool(s)
-     * will be initialized (unless the load balancing policy returns {@link HostDistance#IGNORED}
-     * for it). If reconnection fails, no further attempts will be scheduled.
+     * This method is intended for load balancing policies that mark hosts as {@link HostDistance#IGNORED IGNORED},
+     * but still need a way to periodically check these hosts' states (UP / DOWN).
      * <p>
-     * This method has no effect if the node is already {@code UP}, or if a reconnection attempt
-     * is already in progress.
+     * For a host that is at distance {@code IGNORED}, this method will try to reconnect exactly once: if
+     * reconnection succeeds, the host is marked {@code UP}; otherwise, no further attempts will be scheduled.
+     * It has no effect if the node is already {@code UP}, or if a reconnection attempt is already in progress.
+     * <p>
+     * Note that if the host is <em>not</em> a distance {@code IGNORED}, this method <em>will</em> trigger a periodic
+     * reconnection attempt if the reconnection fails.
      */
     public void tryReconnectOnce() {
         this.manager.startSingleReconnectionAttempt(this);

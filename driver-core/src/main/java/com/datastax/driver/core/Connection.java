@@ -19,6 +19,7 @@ import javax.net.ssl.SSLEngine;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -31,6 +32,9 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
+import org.jboss.netty.handler.timeout.IdleStateAwareChannelUpstreamHandler;
+import org.jboss.netty.handler.timeout.IdleStateEvent;
+import org.jboss.netty.handler.timeout.IdleStateHandler;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timeout;
 import org.jboss.netty.util.TimerTask;
@@ -89,7 +93,8 @@ class Connection {
             ClientBootstrap bootstrap = factory.newBootstrap();
             ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
             ProtocolVersion protocolVersion = factory.protocolVersion == null ? ProtocolVersion.NEWEST_SUPPORTED : factory.protocolVersion;
-            bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions()));
+            bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions(),
+                factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds(), factory.timer));
 
             ChannelFuture future = bootstrap.connect(address);
 
@@ -282,9 +287,19 @@ class Connection {
         // sure the "suspected" mechanism work as expected
         Host host = factory.manager.metadata.getHost(address);
         if (host != null) {
+
+            // If the host was reconnecting, and this error happens right after we opened a connection pool, but
+            // before we could mark the node UP, we don't want to go through the SUSPECTED state, because that can
+            // lead to a race condition that leaves the node UP with a closed pool.
+            boolean belongsToReconnectingPool = host.state != Host.State.UP &&
+                this instanceof PooledConnection &&
+                (((PooledConnection)this).pool == null || !((PooledConnection)this).pool.isClosed());
+
+            boolean markSuspected = isInitialized && !belongsToReconnectingPool;
+
             // This will trigger onDown, including when the defunct Connection is part of a reconnection attempt, which is redundant.
             // This is not too much of a problem since calling onDown on a node that is already down has no effect.
-            boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded(), isInitialized);
+            boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded(), markSuspected);
             notifyOwnerWhenDefunct(isDown);
         }
 
@@ -310,11 +325,12 @@ class Connection {
         if (this.keyspace != null && this.keyspace.equals(keyspace))
             return;
 
+        Future future = null;
         try {
             logger.trace("{} Setting keyspace {}", this, keyspace);
             long timeout = factory.getConnectTimeoutMillis();
             // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
-            Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
+            future = write(new Requests.Query("USE \"" + keyspace + '"'));
             Message.Response response = Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
             switch (response.type) {
                 case RESULT:
@@ -332,9 +348,16 @@ class Connection {
         } catch (ConnectionException e) {
             throw defunct(e);
         } catch (TimeoutException e) {
+            // We've given up waiting on the future, but it's still running. Cancel to make sure that the request timeout logic
+            // (readTimeout) will not kick in, because that would release the connection. This will work since connectTimeout is
+            // generally lower than readTimeout (and if not, we'll get an ExecutionException and defunct below).
+            future.cancel(true);
             logger.warn(String.format("Timeout while setting keyspace on connection to %s. This should not happen but is not critical (it will retried)", address));
+            // Rethrow so that the caller will not try to use the connection, but do not defunct as we don't want to mark down
+            throw new ConnectionException(address, "Timeout while setting keyspace on connection");
         } catch (BusyConnectionException e) {
             logger.warn(String.format("Tried to set the keyspace on busy connection to %s. This should not happen but is not critical (it will retried)", address));
+            throw new ConnectionException(address, "Tried to set the keyspace on busy connection");
         } catch (ExecutionException e) {
             throw defunct(new ConnectionException(address, "Error while setting keyspace", e));
         }
@@ -356,6 +379,10 @@ class Connection {
     }
 
     public ResponseHandler write(ResponseCallback callback) throws ConnectionException, BusyConnectionException {
+        return write(callback, true);
+    }
+
+    public ResponseHandler write(ResponseCallback callback, boolean startTimeout) throws ConnectionException, BusyConnectionException {
 
         Message.Request request = callback.request();
 
@@ -370,18 +397,22 @@ class Connection {
          * never leave a handler that won't get an answer or be errored out.
          */
         if (isDefunct) {
-            dispatcher.removeHandler(handler.streamId, true);
+            dispatcher.removeHandler(handler, true);
             throw new ConnectionException(address, "Write attempt on defunct connection");
         }
 
         if (isClosed()) {
-            dispatcher.removeHandler(handler.streamId, true);
+            dispatcher.removeHandler(handler, true);
             throw new ConnectionException(address, "Connection has been closed");
         }
 
         logger.trace("{} writing request {}", this, request);
         writer.incrementAndGet();
         channel.write(request).addListener(writeHandler(request, handler));
+
+        if (startTimeout)
+            handler.startTimeout();
+
         return handler;
     }
 
@@ -396,7 +427,7 @@ class Connection {
                     logger.debug("{} Error writing request {}", Connection.this, request);
                     // Remove this handler from the dispatcher so it don't get notified of the error
                     // twice (we will fail that method already)
-                    dispatcher.removeHandler(handler.streamId, true);
+                    dispatcher.removeHandler(handler, true);
 
                     final ConnectionException ce;
                     if (writeFuture.getCause() instanceof java.nio.channels.ClosedChannelException) {
@@ -619,7 +650,7 @@ class Connection {
         }
     }
 
-    private class Dispatcher extends SimpleChannelUpstreamHandler {
+    private class Dispatcher extends IdleStateAwareChannelUpstreamHandler {
 
         public final StreamIdGenerator streamIdHandler;
         private final ConcurrentMap<Integer, ResponseHandler> pending = new ConcurrentHashMap<Integer, ResponseHandler>();
@@ -640,19 +671,27 @@ class Connection {
             assert old == null;
         }
 
-        public void removeHandler(int streamId, boolean releaseStreamId) {
+        public void removeHandler(ResponseHandler handler, boolean releaseStreamId) {
 
             // If we don't release the ID, mark first so that we can rely later on the fact that if
             // we receive a response for an ID with no handler, it's that this ID has been marked.
             if (!releaseStreamId)
-                streamIdHandler.mark(streamId);
+                streamIdHandler.mark(handler.streamId);
 
-            ResponseHandler handler = pending.remove(streamId);
-            if (handler != null)
-                handler.cancelTimeout();
+            // If a RequestHandler is cancelled right when the response arrives, this method (called with releaseStreamId=false) will race with messageReceived.
+            // messageReceived could have already released the streamId, which could have already been reused by another request. We must not remove the handler
+            // if it's not ours, because that would cause the other request to hang forever.
+            boolean removed = pending.remove(handler.streamId, handler);
+            if (!removed) {
+                // We raced, so if we marked the streamId above, that was wrong.
+                if (!releaseStreamId)
+                    streamIdHandler.unmark(handler.streamId);
+                return;
+            }
+            handler.cancelTimeout();
 
             if (releaseStreamId)
-                streamIdHandler.release(streamId);
+                streamIdHandler.release(handler.streamId);
 
             if (isClosed())
                 tryTerminate(false);
@@ -703,6 +742,12 @@ class Connection {
             }
         }
 
+        @Override
+        public void channelIdle(ChannelHandlerContext ctx, IdleStateEvent e) throws Exception {
+            logger.debug("{} was inactive for {} seconds, sending heartbeat", Connection.this, factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds());
+            write(HEARTBEAT_CALLBACK);
+        }
+
         // Make sure we don't print huge responses in debug/error logs.
         private String asDebugString(Object obj) {
             if (obj == null)
@@ -750,6 +795,45 @@ class Connection {
                 defunct(new TransportException(address, "Channel has been closed"));
         }
     }
+
+    private static final ResponseCallback HEARTBEAT_CALLBACK = new ResponseCallback() {
+
+        @Override
+        public Message.Request request() {
+            return new Requests.Options();
+        }
+
+        @Override
+        public int retryCount() {
+            return 0; // no retries here
+        }
+
+        @Override
+        public void onSet(Connection connection, Message.Response response, long latency, int retryCount) {
+            switch (response.type) {
+                case SUPPORTED:
+                    logger.debug("{} heartbeat query succeeded", connection);
+                    break;
+                default:
+                    fail(connection, new ConnectionException(connection.address, "Unexpected heartbeat response: " + response));
+            }
+        }
+
+        @Override
+        public void onException(Connection connection, Exception exception, long latency, int retryCount) {
+            // Nothing to do: the connection is already defunct if we arrive here
+        }
+
+        @Override
+        public boolean onTimeout(Connection connection, long latency, int retryCount) {
+            fail(connection, new ConnectionException(connection.address, "Heartbeat query timed out"));
+            return true;
+        }
+
+        private void fail(Connection connection, Exception e) {
+            connection.defunct(e);
+        }
+    };
 
     private class ConnectionCloseFuture extends CloseFuture {
 
@@ -832,8 +916,7 @@ class Connection {
         public boolean onTimeout(Connection connection, long latency, int retryCount) {
             assert connection != null; // We always timeout on a specific connection, so this shouldn't be null
             this.address = connection.address;
-            super.setException(new ConnectionException(connection.address, "Operation timed out"));
-            return true;
+            return super.setException(new OperationTimedOutException(connection.address));
         }
 
         public InetSocketAddress getAddress() {
@@ -856,8 +939,10 @@ class Connection {
         public final ResponseCallback callback;
         public final int retryCount;
 
-        private final Timeout timeout;
         private final long startTime;
+        private volatile Timeout timeout;
+
+        private final AtomicBoolean isCancelled = new AtomicBoolean();
 
         public ResponseHandler(Connection connection, ResponseCallback callback) throws BusyConnectionException {
             this.connection = connection;
@@ -865,10 +950,12 @@ class Connection {
             this.callback = callback;
             this.retryCount = callback.retryCount();
 
+            this.startTime = System.nanoTime();
+        }
+
+        void startTimeout() {
             long timeoutMs = connection.factory.getReadTimeoutMillis();
             this.timeout = timeoutMs <= 0 ? null : connection.factory.timer.newTimeout(onTimeoutTask(), timeoutMs, TimeUnit.MILLISECONDS);
-
-            this.startTime = System.nanoTime();
         }
 
         void cancelTimeout() {
@@ -877,11 +964,14 @@ class Connection {
         }
 
         public void cancelHandler() {
+            if (!isCancelled.compareAndSet(false, true))
+                return;
+
             // We haven't really received a response: we want to remove the handle because we gave up on that
             // request and there is no point in holding the handler, but we don't release the streamId. If we
             // were, a new request could reuse that ID but get the answer to the request we just gave up on instead
             // of its own answer, and we would have no way to detect that.
-            connection.dispatcher.removeHandler(streamId, false);
+            connection.dispatcher.removeHandler(this, false);
             if (connection instanceof PooledConnection)
                 ((PooledConnection)connection).release();
         }
@@ -913,12 +1003,14 @@ class Connection {
         private final Connection connection;
         private final FrameCompressor compressor;
         private final SSLOptions sslOptions;
+        private final ChannelHandler idleStateHandler;
 
-        public PipelineFactory(Connection connection, ProtocolVersion protocolVersion, FrameCompressor compressor, SSLOptions sslOptions) {
+        public PipelineFactory(Connection connection, ProtocolVersion protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds, HashedWheelTimer timer) {
             this.connection = connection;
             this.protocolVersion = protocolVersion;
             this.compressor = compressor;
             this.sslOptions = sslOptions;
+            this.idleStateHandler = new IdleStateHandler(timer, 0, 0, heartBeatIntervalSeconds);
         }
 
         @Override
@@ -945,8 +1037,9 @@ class Connection {
             }
 
             pipeline.addLast("messageDecoder", messageDecoder);
-
             pipeline.addLast("messageEncoder", messageEncoderFor(protocolVersion));
+
+            pipeline.addLast("idleStateHandler", idleStateHandler);
 
             pipeline.addLast("dispatcher", connection.dispatcher);
 

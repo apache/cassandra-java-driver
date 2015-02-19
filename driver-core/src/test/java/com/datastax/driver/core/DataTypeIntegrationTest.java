@@ -30,6 +30,7 @@ import static com.datastax.driver.core.DataTypeTest.exclude;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import com.datastax.driver.core.utils.CassandraVersion;
 
 /**
  * Tests DataType class to ensure data sent in is the same as data received
@@ -431,9 +432,8 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major=2.0, minor=0, description="This feature requires protocol v2")
     public void primitiveInsertWithValueTest() throws Throwable {
-        TestUtils.versionCheck(2.0, 0, "This feature requires protocol v2");
-
         for (DataType dt : DataType.allPrimitiveTypes()) {
             if (exclude(dt))
                 continue;

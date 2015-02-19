@@ -25,6 +25,8 @@ import static org.testng.Assert.*;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.SyntaxError;
+import com.datastax.driver.core.utils.CassandraVersion;
+
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
@@ -206,7 +208,8 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
-    public void conditionalDeletesTest() throws Exception {        
+    @CassandraVersion(major=2.0, minor=7, description="DELETE..IF EXISTS only supported in 2.0.7+ (CASSANDRA-5708)")
+    public void conditionalDeletesTest() throws Exception {
         session.execute("INSERT INTO ks.test_int (k, a, b) VALUES (1, 1, 1)");
         
         Statement delete;
