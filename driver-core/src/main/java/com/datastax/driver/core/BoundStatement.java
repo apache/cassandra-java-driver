@@ -195,6 +195,9 @@ public class BoundStatement extends Statement implements SettableData<BoundState
                     }
                     break;
                 default:
+                    if (toSet instanceof Token)
+                        toSet = ((Token)toSet).getValue();
+
                     Class<?> providedClass = toSet.getClass();
                     Class<?> expectedClass = columnType.getName().javaType;
                     if (!expectedClass.isAssignableFrom(providedClass))
@@ -719,6 +722,38 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      */
     public BoundStatement setInet(String name, InetAddress v) {
         return wrapper.setInet(name, v);
+    }
+
+    /**
+     * Sets the {@code i}th value to the provided {@link Token}.
+     *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
+     * @return this BoundStatement.
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
+     * @throws InvalidTypeException if column {@code i} is not of the type of the token's value.
+     */
+    public BoundStatement setToken(int i, Token v) {
+        return wrapper.setToken(i, v);
+    }
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided token.
+     *
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, all of them are set.
+     * @param v the value to set.
+     * @return this BoundStatement.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a prepared
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not of the type of the token's value.
+     */
+    public BoundStatement setToken(String name, Token v) {
+        return wrapper.setToken(name, v);
     }
 
     /**

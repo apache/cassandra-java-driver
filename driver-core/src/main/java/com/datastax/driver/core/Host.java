@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -65,6 +66,8 @@ public class Host {
     // ControlConnection.refreshNodeInfo. We don't want to expose however because we don't always have the info
     // (partly because the 'System.local' doesn't have it for some weird reason for instance).
     volatile InetAddress listenAddress;
+
+    private volatile Set<Token> tokens;
 
     // ClusterMetadata keeps one Host object per inet address and we rely on this (more precisely,
     // we rely on the fact that we can use Object equality as a valid equality), so don't use
@@ -156,6 +159,19 @@ public class Host {
      */
     public VersionNumber getCassandraVersion() {
         return cassandraVersion;
+    }
+
+    /**
+     * Returns the tokens that this host owns.
+     *
+     * @return the (immutable) set of tokens.
+     */
+    public Set<Token> getTokens() {
+        return tokens;
+    }
+
+    void setTokens(Set<Token> tokens) {
+        this.tokens = tokens;
     }
 
     /**

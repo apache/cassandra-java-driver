@@ -15,13 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
 
 /**
  * Implementation of a Row backed by an ArrayList.
@@ -29,19 +26,21 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 class ArrayBackedRow extends AbstractGettableData implements Row {
 
     private final ColumnDefinitions metadata;
+    private final Token.Factory tokenFactory;
     private final List<ByteBuffer> data;
 
-    private ArrayBackedRow(ColumnDefinitions metadata, ProtocolVersion protocolVersion, List<ByteBuffer> data) {
+    private ArrayBackedRow(ColumnDefinitions metadata, Token.Factory tokenFactory, ProtocolVersion protocolVersion, List<ByteBuffer> data) {
         super(protocolVersion);
         this.metadata = metadata;
+        this.tokenFactory = tokenFactory;
         this.data = data;
     }
 
-    static Row fromData(ColumnDefinitions metadata, ProtocolVersion protocolVersion, List<ByteBuffer> data) {
+    static Row fromData(ColumnDefinitions metadata, Token.Factory tokenFactory, ProtocolVersion protocolVersion, List<ByteBuffer> data) {
         if (data == null)
             return null;
 
-        return new ArrayBackedRow(metadata, protocolVersion, data);
+        return new ArrayBackedRow(metadata, tokenFactory, protocolVersion, data);
     }
 
     @Override
@@ -67,6 +66,35 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
     @Override
     protected int getIndexOf(String name) {
         return metadata.getFirstIdx(name);
+    }
+
+    @Override
+    public Token getToken(int i) {
+        if (tokenFactory == null)
+            throw new DriverInternalError("Token factory not set. This should only happen at initialization time");
+
+        metadata.checkType(i, tokenFactory.getTokenType().getName());
+
+        ByteBuffer value = data.get(i);
+        if (value == null || value.remaining() == 0)
+            return null;
+
+        return tokenFactory.deserialize(value, protocolVersion);
+    }
+
+    @Override
+    public Token getToken(String name) {
+        // first, try with `token(name)`, preserving case sensitivity
+        String tokenName = (name.length() >= 2 && name.charAt(0) == '"' && name.charAt(name.length() - 1) == '"')
+            ? "\"token(" + name.substring(1, name.length() - 1) + ")\""
+            : "token(" + name + ")";
+        int[] indexes = metadata.findAllIdx(tokenName);
+        if (indexes != null) {
+            return getToken(indexes[0]);
+        }
+
+        // Otherwise, use normal name
+        return getToken(metadata.getFirstIdx(name));
     }
 
     @Override

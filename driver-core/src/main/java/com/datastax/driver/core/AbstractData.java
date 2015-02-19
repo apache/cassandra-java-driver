@@ -271,6 +271,21 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    // setToken is package-private because we only want to expose it in BoundStatement
+    T setToken(int i, Token v) {
+        if (v == null)
+            throw new NullPointerException(String.format("Cannot set a null token for column %s", getName(i)));
+        checkType(i, v.getType().getName());
+        return setValue(i, v.getType().codec(protocolVersion).serialize(v.getValue()));
+    }
+
+    T setToken(String name, Token v) {
+        int[] indexes = getAllIndexesOf(name);
+        for (int i = 0; i < indexes.length; i++)
+            setToken(indexes[i], v);
+        return wrapped;
+    }
+
     public <E> T setList(int i, List<E> v) {
         DataType type = getType(i);
         if (type.getName() != DataType.Name.LIST)
