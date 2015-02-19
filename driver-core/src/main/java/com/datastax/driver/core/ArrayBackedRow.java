@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
@@ -29,18 +30,20 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 class ArrayBackedRow implements Row {
 
     private final ColumnDefinitions metadata;
+    private final Token.Factory tokenFactory;
     private final List<ByteBuffer> data;
 
-    private ArrayBackedRow(ColumnDefinitions metadata, List<ByteBuffer> data) {
+    private ArrayBackedRow(ColumnDefinitions metadata, Token.Factory tokenFactory, List<ByteBuffer> data) {
         this.metadata = metadata;
+        this.tokenFactory = tokenFactory;
         this.data = data;
     }
 
-    static Row fromData(ColumnDefinitions metadata, List<ByteBuffer> data) {
+    static Row fromData(ColumnDefinitions metadata, Token.Factory tokenFactory, List<ByteBuffer> data) {
         if (data == null)
             return null;
 
-        return new ArrayBackedRow(metadata, data);
+        return new ArrayBackedRow(metadata, tokenFactory, data);
     }
 
     public ColumnDefinitions getColumnDefinitions() {
@@ -237,6 +240,33 @@ class ArrayBackedRow implements Row {
 
     public InetAddress getInet(String name) {
         return getInet(metadata.getFirstIdx(name));
+    }
+
+    public Token getToken(int i) {
+        if (tokenFactory == null)
+            throw new DriverInternalError("Token factory not set. This should only happen at initialization time");
+
+        metadata.checkType(i, tokenFactory.getTokenType().getName());
+
+        ByteBuffer value = data.get(i);
+        if (value == null || value.remaining() == 0)
+            return null;
+
+        return tokenFactory.deserialize(value);
+    }
+
+    public Token getToken(String name) {
+        // first, try with `token(name)`, preserving case sensitivity
+        String tokenName = (name.length() >= 2 && name.charAt(0) == '"' && name.charAt(name.length() - 1) == '"')
+            ? "\"token(" + name.substring(1, name.length() - 1) + ")\""
+            : "token(" + name + ")";
+        int[] indexes = metadata.findAllIdx(tokenName);
+        if (indexes != null) {
+            return getToken(indexes[0]);
+        }
+
+        // Otherwise, use normal name
+        return getToken(metadata.getFirstIdx(name));
     }
 
     @SuppressWarnings("unchecked")

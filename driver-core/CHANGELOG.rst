@@ -7,6 +7,7 @@ CHANGELOG
 - [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
 - [improvement] Add connection heartbeat (JAVA-533)
 - [improvement] Reduce level of logs on missing rpc_address (JAVA-568)
+- [improvement] Expose node token and range information (JAVA-312)
 
 Merged from 2.0.9_fixes branch:
 

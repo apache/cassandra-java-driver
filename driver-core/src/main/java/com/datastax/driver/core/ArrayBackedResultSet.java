@@ -40,10 +40,12 @@ abstract class ArrayBackedResultSet implements ResultSet {
     private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque<List<ByteBuffer>>(0);
 
     protected final ColumnDefinitions metadata;
+    protected final Token.Factory tokenFactory;
     private final boolean wasApplied;
 
-    private ArrayBackedResultSet(ColumnDefinitions metadata, List<ByteBuffer> firstRow) {
+    private ArrayBackedResultSet(ColumnDefinitions metadata, Token.Factory tokenFactory, List<ByteBuffer> firstRow) {
         this.metadata = metadata;
+        this.tokenFactory = tokenFactory;
         this.wasApplied = checkWasApplied(firstRow, metadata);
     }
 
@@ -65,12 +67,15 @@ abstract class ArrayBackedResultSet implements ResultSet {
                     columnDefs = r.metadata.columns;
                 }
 
+                Token.Factory tokenFactory = (session == null) ? null
+                    : session.getCluster().getMetadata().tokenFactory();
+
                 // info can be null only for internal calls, but we don't page those. We assert
                 // this explicitly because MultiPage implementation don't support info == null.
                 assert r.metadata.pagingState == null || info != null;
                 return r.metadata.pagingState == null
-                     ? new SinglePage(columnDefs, r.data, info)
-                     : new MultiPage(columnDefs, r.data, info, r.metadata.pagingState, session, statement);
+                     ? new SinglePage(columnDefs, tokenFactory, r.data, info)
+                     : new MultiPage(columnDefs, tokenFactory, r.data, info, r.metadata.pagingState, session, statement);
 
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
@@ -89,7 +94,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
     }
 
     private static ArrayBackedResultSet empty(ExecutionInfo info) {
-        return new SinglePage(ColumnDefinitions.EMPTY, EMPTY_QUEUE, info);
+        return new SinglePage(ColumnDefinitions.EMPTY, null, EMPTY_QUEUE, info);
     }
 
     public ColumnDefinitions getColumnDefinitions() {
@@ -148,9 +153,10 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final ExecutionInfo info;
 
         private SinglePage(ColumnDefinitions metadata,
+                           Token.Factory tokenFactory,
                            Queue<List<ByteBuffer>> rows,
                            ExecutionInfo info) {
-            super(metadata, rows.peek());
+            super(metadata, tokenFactory, rows.peek());
             this.info = info;
             this.rows = rows;
         }
@@ -160,7 +166,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         }
 
         public Row one() {
-            return ArrayBackedRow.fromData(metadata, rows.poll());
+            return ArrayBackedRow.fromData(metadata, tokenFactory, rows.poll());
         }
 
         public int getAvailableWithoutFetching() {
@@ -210,6 +216,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final Statement statement;
 
         private MultiPage(ColumnDefinitions metadata,
+                          Token.Factory tokenFactory,
                           Queue<List<ByteBuffer>> rows,
                           ExecutionInfo info,
                           ByteBuffer pagingState,
@@ -219,7 +226,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
             // Note: as of Cassandra 2.1.0, it turns out that the result of a CAS update is never paged, so
             // we could hard-code the result of wasApplied in this class to "true". However, we can not be sure
             // that this will never change, so apply the generic check by peeking at the first row.
-            super(metadata, rows.peek());
+            super(metadata, tokenFactory, rows.peek());
             this.currentPage = rows;
             this.infos.offer(info);
 
@@ -235,7 +242,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
         public Row one() {
             prepareNextRow();
-            return ArrayBackedRow.fromData(metadata, currentPage.poll());
+            return ArrayBackedRow.fromData(metadata, tokenFactory, currentPage.poll());
         }
 
         public int getAvailableWithoutFetching() {
