@@ -166,20 +166,15 @@ public abstract class TokenIntegrationTest {
         Token token = row.getToken(0);
         assertThat(token.getType()).isEqualTo(expectedTokenType);
 
-        // get by "base" column name (will add token() around it):
         assertThat(
-            row.getToken("i")
+            row.getPartitionKeyToken()
         ).isEqualTo(token);
 
-        // get by name:
+        // get by name when column is aliased:
         assertThat(
             session.execute("SELECT token(i) AS t FROM test.foo WHERE i = 1").one()
                 .getToken("t")
         ).isEqualTo(token);
-
-        // get by "base" column name when it's case-sensitive
-        session.execute("SELECT token(\"caseSensitiveKey\") FROM test.foo2 WHERE \"caseSensitiveKey\" = 1").one()
-            .getToken("\"caseSensitiveKey\"");
 
 
         PreparedStatement pst = session.prepare("SELECT * FROM test.foo WHERE token(i) = ?");
@@ -187,6 +182,9 @@ public abstract class TokenIntegrationTest {
         assertThat(row.getInt(0)).isEqualTo(1);
 
         row = session.execute(pst.bind().setToken(0, token)).one();
+        assertThat(row.getInt(0)).isEqualTo(1);
+
+        row = session.execute(pst.bind().setPartitionKeyToken(token)).one();
         assertThat(row.getInt(0)).isEqualTo(1);
 
         PreparedStatement pst2 = session.prepare("SELECT * FROM test.foo WHERE token(i) = :myToken");
