@@ -14,6 +14,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.WhiteListPolicy;
+import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
@@ -26,15 +27,13 @@ import static com.datastax.driver.core.Assertions.assertThat;
 public abstract class TokenIntegrationTest {
 
     List<String> schema = Lists.newArrayList(
-        "CREATE KEYSPACE IF NOT EXISTS test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}",
-        "CREATE KEYSPACE IF NOT EXISTS test2 WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 2}",
+        "CREATE KEYSPACE test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}",
+        "CREATE KEYSPACE test2 WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 2}",
         "USE test",
-        "CREATE TABLE IF NOT EXISTS foo(i int primary key)",
+        "CREATE TABLE foo(i int primary key)",
         "INSERT INTO foo (i) VALUES (1)",
         "INSERT INTO foo (i) VALUES (2)",
-        "INSERT INTO foo (i) VALUES (3)",
-        "CREATE TABLE IF NOT EXISTS foo2(\"caseSensitiveKey\" int primary key)",
-        "INSERT INTO foo2 (\"caseSensitiveKey\") VALUES (1)"
+        "INSERT INTO foo (i) VALUES (3)"
     );
 
     private final String ccmOptions;
@@ -75,8 +74,9 @@ public abstract class TokenIntegrationTest {
             session.execute(statement);
     }
 
-    @AfterClass(groups = "short")
+    @AfterClass(groups = "short", alwaysRun=true)
     public void teardown() {
+        System.out.println("Tearing down");
         if (cluster != null)
             cluster.close();
         if (ccm != null)
@@ -106,9 +106,12 @@ public abstract class TokenIntegrationTest {
 
         // Iterate the cluster's token ranges. For each one, use a range query to ask Cassandra which partition keys
         // are in this range.
+
+        PreparedStatement rangeStmt = session.prepare("SELECT i FROM foo WHERE token(i) > ? and token(i) <= ?");
+
         TokenRange foundRange = null;
         for (TokenRange range : metadata.getTokenRanges()) {
-            List<Row> rows = rangeQuery("SELECT i FROM foo WHERE token(i) > ? and token(i) <= ?", range);
+            List<Row> rows = rangeQuery(rangeStmt, range);
             for (Row row : rows) {
                 if (row.getInt("i") == testKey) {
                     // We should find our test key exactly once
@@ -124,12 +127,11 @@ public abstract class TokenIntegrationTest {
         assertThat(foundRange).isNotNull();
     }
 
-    private List<Row> rangeQuery(String query, TokenRange range) {
+    private List<Row> rangeQuery(PreparedStatement rangeStmt, TokenRange range) {
         List<Row> rows = Lists.newArrayList();
         for (TokenRange subRange : range.unwrap()) {
-            rows.addAll(session.execute(query,
-                subRange.getStart(), subRange.getEnd())
-                .all());
+            Statement statement = rangeStmt.bind(subRange.getStart(), subRange.getEnd());
+            rows.addAll(session.execute(statement).all());
         }
         return rows;
     }
@@ -145,13 +147,10 @@ public abstract class TokenIntegrationTest {
      *
      * <ol>
      *     <li>Retrieve the token for the key with value '1', get it by index, and ensure if is of the expected token type.</li>
-     *     <li>Retrieve the token for the key with value '1', get it by name,  and ensure it matches the token by index.</li>
-     *     <li>Retrieve the token by alias for the key '1', and ensure it matches the token by index.</li>
-     *     <li>Retrieve the token for a case sensitive key.</li>
+     *     <li>Retrieve the token for the partition key with getPartitionKeyToken</li>
      *     <li>Select data by token with a BoundStatement.</li>
      *     <li>Select data by token using setToken by index.</li>
-     *     <li>Select data by token using setToken by name.</li>
-     *     <li>Select data by token with a SimpleStatement</li>
+     *     <li>Select data by token with setPartitionKeyToken.</li>
      * </ol>
      *
      * @test_category token
@@ -170,13 +169,6 @@ public abstract class TokenIntegrationTest {
             row.getPartitionKeyToken()
         ).isEqualTo(token);
 
-        // get by name when column is aliased:
-        assertThat(
-            session.execute("SELECT token(i) AS t FROM test.foo WHERE i = 1").one()
-                .getToken("t")
-        ).isEqualTo(token);
-
-
         PreparedStatement pst = session.prepare("SELECT * FROM test.foo WHERE token(i) = ?");
         row = session.execute(pst.bind(token)).one();
         assertThat(row.getInt(0)).isEqualTo(1);
@@ -186,9 +178,31 @@ public abstract class TokenIntegrationTest {
 
         row = session.execute(pst.bind().setPartitionKeyToken(token)).one();
         assertThat(row.getInt(0)).isEqualTo(1);
+    }
 
-        PreparedStatement pst2 = session.prepare("SELECT * FROM test.foo WHERE token(i) = :myToken");
-        row = session.execute(pst2.bind().setToken("myToken", token)).one();
+    /**
+     * <p>
+     * Validates that a {@link Token} can be retrieved and parsed by using bind variables and
+     * aliasing.
+     * </p>
+     *
+     * <p>
+     * This test does the following:
+     *
+     * <ol>
+     *      <li>Retrieve the token by alias for the key '1', and ensure it matches the token by index.</li>
+     *      <li>Select data by token using setToken by name.</li>
+     * </ol>
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major=2)
+    public void should_get_token_from_row_and_set_token_in_query_with_binding_and_aliasing() {
+        Row row = session.execute("SELECT token(i) AS t FROM test.foo WHERE i = 1").one();
+        Token token = row.getToken("t");
+        assertThat(token.getType()).isEqualTo(expectedTokenType);
+
+        PreparedStatement pst = session.prepare("SELECT * FROM test.foo WHERE token(i) = :myToken");
+        row = session.execute(pst.bind().setToken("myToken", token)).one();
         assertThat(row.getInt(0)).isEqualTo(1);
 
         row = session.execute("SELECT * FROM test.foo WHERE token(i) = ?", token).one();
@@ -283,7 +297,7 @@ public abstract class TokenIntegrationTest {
             // Note that this relies on all queries going to node 1, which is why we use a WhiteList LBP in setup().
             Row row = (host.listenAddress == null)
                 ? session.execute("select tokens from system.local").one()
-                : session.execute("select tokens from system.peers where peer = ?", host.listenAddress).one();
+                : session.execute("select tokens from system.peers where peer = '" + host.listenAddress.getHostAddress() + "'").one();
             Set<String> tokenStrings = row.getSet("tokens", String.class);
             assertThat(tokenStrings).hasSize(numTokens);
             Iterable<Token> tokensFromSystemTable = Iterables.transform(tokenStrings, new Function<String, Token>() {

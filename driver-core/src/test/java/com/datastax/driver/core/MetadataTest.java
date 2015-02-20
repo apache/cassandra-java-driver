@@ -47,7 +47,7 @@ public class MetadataTest {
             Session session = cluster.connect();
 
             String keyspace = "test";
-            session.execute("CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
+            session.execute("CREATE KEYSPACE " + keyspace + " WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
             Metadata metadata = cluster.getMetadata();
 
             // Capture all Token data.
