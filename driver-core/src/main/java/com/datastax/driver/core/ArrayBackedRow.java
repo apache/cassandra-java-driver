@@ -256,17 +256,17 @@ class ArrayBackedRow implements Row {
     }
 
     public Token getToken(String name) {
-        // first, try with `token(name)`, preserving case sensitivity
-        String tokenName = (name.length() >= 2 && name.charAt(0) == '"' && name.charAt(name.length() - 1) == '"')
-            ? "\"token(" + name.substring(1, name.length() - 1) + ")\""
-            : "token(" + name + ")";
-        int[] indexes = metadata.findAllIdx(tokenName);
-        if (indexes != null) {
-            return getToken(indexes[0]);
-        }
-
-        // Otherwise, use normal name
         return getToken(metadata.getFirstIdx(name));
+    }
+
+    public Token getPartitionKeyToken() {
+        int i = 0;
+        for (ColumnDefinitions.Definition column : metadata) {
+            if (column.getName().matches("token(.*)"))
+                return getToken(i);
+            i++;
+        }
+        throw new IllegalStateException("Found no column named 'token(...)'. If the column is aliased, use getToken(String).");
     }
 
     @SuppressWarnings("unchecked")
