@@ -148,6 +148,29 @@
           </supportedProjectTypes>
         </configuration>
       </plugin>
+      <plugin>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.3</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals><goal>shade</goal></goals>
+            <configuration>
+              <artifactSet>
+                <includes>
+                  <include>io.netty:netty</include>
+                </includes>
+              </artifactSet>
+              <relocations>
+                <relocation>
+                  <pattern>org.jboss.netty</pattern>
+                  <shadedPattern>com.datastax.shaded.netty</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
@@ -177,29 +200,6 @@
               <!--May be needed for debugging-->
               <!--<forkMode>never</forkMode>-->
             </configuration>
-          </plugin>
-          <plugin>
-            <artifactId>maven-shade-plugin</artifactId>
-            <version>2.3</version>
-            <executions>
-              <execution>
-                <phase>package</phase>
-                <goals><goal>shade</goal></goals>
-                <configuration>
-                  <artifactSet>
-                    <includes>
-                      <include>io.netty:netty</include>
-                    </includes>
-                  </artifactSet>
-                  <relocations>
-                    <relocation>
-                      <pattern>org.jboss.netty</pattern>
-                      <shadedPattern>com.datastax.shaded.netty</shadedPattern>
-                    </relocation>
-                  </relocations>
-                </configuration>
-              </execution>
-            </executions>
           </plugin>
         </plugins>
       </build>
