@@ -175,6 +175,7 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
             if(this.statement.getFetchSize()==0)
             		// force paging to avoid timeout and node harm...
             		this.statement.setFetchSize(100);
+            this.statement.setConsistencyLevel(this.connection.defaultConsistencyLevel);
             currentResultSet = new CassandraResultSet(this, this.connection.getSession().execute(this.statement));            
                         
             //currentResultSet = this.statement.bind(values); 
@@ -201,6 +202,8 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
 	    	if (this.connection.debugMode) System.out.println("CQL statements : "+ batchStatements.size());
 	    	for(BoundStatement q:batchStatements){
 	    		if (this.connection.debugMode) System.out.println("CQL: "+ cql);
+	    		q.setConsistencyLevel(this.connection.defaultConsistencyLevel);
+	    		
 	    		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(q);
 	    		futures.add(resultSetFuture);
 	    	}

@@ -171,7 +171,7 @@ class CassandraDatabaseMetaData implements DatabaseMetaData
 
     public String getDatabaseProductVersion() throws SQLException
     {
-        return String.format("%d.%d", CassandraConnection.DB_MAJOR_VERSION,CassandraConnection.DB_MINOR_VERSION);
+        return String.format("%d.%d.%d", CassandraConnection.DB_MAJOR_VERSION,CassandraConnection.DB_MINOR_VERSION,CassandraConnection.DB_REVISION);
     }
 
     public int getDefaultTransactionIsolation() throws SQLException

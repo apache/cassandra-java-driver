@@ -30,6 +30,10 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.driver.core.policies.LatencyAwarePolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.TokenAwarePolicy;
 import com.datastax.driver.jdbc.Utils;
 
 public class UtilsUnitTest
@@ -95,6 +99,31 @@ public class UtilsUnitTest
         assertNull(props.getProperty(Utils.TAG_CQL_VERSION));
         assertEquals("TokenAwarePolicy-DCAwareRoundRobinPolicy", props.getProperty(Utils.TAG_LOADBALANCING_POLICY));
         assertEquals("DC1", props.getProperty(Utils.TAG_PRIMARY_DC));
+    }
+    
+    @Test
+    public void testLoadBalancingPolicyParsing() throws Exception
+    {
+    	String lbPolicyStr = "RoundRobinPolicy()";
+    	System.out.println(lbPolicyStr);
+    	assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof RoundRobinPolicy);
+    	System.out.println("====================");
+    	lbPolicyStr = "TokenAwarePolicy(RoundRobinPolicy())";
+    	System.out.println(lbPolicyStr);
+    	assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof TokenAwarePolicy);
+    	System.out.println("====================");
+    	lbPolicyStr = "DCAwareRoundRobinPolicy(\"dc1\")";
+    	System.out.println(lbPolicyStr);
+    	assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof DCAwareRoundRobinPolicy);
+    	System.out.println("====================");
+    	lbPolicyStr = "TokenAwarePolicy(DCAwareRoundRobinPolicy(\"dc1\"))";
+    	System.out.println(lbPolicyStr);
+    	assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof TokenAwarePolicy);    	
+    	System.out.println("====================");
+    	lbPolicyStr = "TokenAwarePolicy";
+    	System.out.println(lbPolicyStr);
+    	assertTrue(Utils.parsePolicy(lbPolicyStr)==null);
+    	System.out.println("====================");
     }
   
     @Test
