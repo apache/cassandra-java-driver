@@ -179,6 +179,7 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
             	for(String cqlQuery:cql.split(";")){           
             			if (logger.isTraceEnabled() || this.connection.debugMode) System.out.println("CQL: "+ cqlQuery);
             			SimpleStatement stmt = new SimpleStatement(cqlQuery);
+            			stmt.setConsistencyLevel(this.connection.defaultConsistencyLevel);
             			stmt.setFetchSize(this.fetchSize);
                 		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(stmt);
                 		futures.add(resultSetFuture);
@@ -194,8 +195,10 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
             	currentResultSet = new CassandraResultSet(this, results);
             	
             }else{
+            	// Only one statement to execute so we go synchronous
             	if (logger.isTraceEnabled() || this.connection.debugMode) System.out.println("CQL: "+ cql);
             	SimpleStatement stmt = new SimpleStatement(cql);
+            	stmt.setConsistencyLevel(this.connection.defaultConsistencyLevel);
     			stmt.setFetchSize(this.fetchSize);
             	currentResultSet = new CassandraResultSet(this, this.connection.getSession().execute(stmt));
             }
@@ -233,7 +236,9 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
     	if (logger.isTraceEnabled() || this.connection.debugMode) System.out.println("CQL statements: "+ batchQueries.size());
     	for(String q:batchQueries){
     		if (logger.isTraceEnabled() || this.connection.debugMode) System.out.println("CQL: "+ q);
-    		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(q);
+    		SimpleStatement stmt = new SimpleStatement(q);
+    		stmt.setConsistencyLevel(this.connection.defaultConsistencyLevel);
+    		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(stmt);
     		futures.add(resultSetFuture);
     	}
 		

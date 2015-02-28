@@ -331,6 +331,8 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     	if(currentRow!=null){
     		if(currentRow.isNull(index-1))
             	wasNull=true;
+    		else
+    			wasNull=false;
     		if(currentRow.getColumnDefinitions()!=null){
     			if (index < 1 || index > currentRow.getColumnDefinitions().asList().size()) throw new SQLSyntaxErrorException(String.format(MUST_BE_POSITIVE, String.valueOf(index)) + " " + currentRow.getColumnDefinitions().asList().size());
     		}
@@ -348,6 +350,8 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     	if(currentRow!=null){
     		if(currentRow.isNull(name))
             	wasNull=true;
+    		else
+    			wasNull=false;
     		if (!currentRow.getColumnDefinitions().contains(name)) throw new SQLSyntaxErrorException(String.format(VALID_LABELS, name));
     	}else if(driverResultSet!=null){
     		if(driverResultSet.getColumnDefinitions()!=null){
@@ -491,7 +495,11 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     public Date getDate(int index) throws SQLException
     {
         checkIndex(index);
-        return new java.sql.Date(currentRow.getDate(index - 1).getTime());
+        if(currentRow.getDate(index - 1)==null){
+        	return null;
+        }else{
+        	return new java.sql.Date(currentRow.getDate(index - 1).getTime());
+        }
     }
 
     public Date getDate(int index, Calendar calendar) throws SQLException
@@ -504,7 +512,11 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     public Date getDate(String name) throws SQLException
     {
         checkName(name);
-        return new java.sql.Date(currentRow.getDate(name).getTime());
+        if(currentRow.getDate(name)==null){
+        	return null;
+        }else{
+        	return new java.sql.Date(currentRow.getDate(name).getTime());
+        }
     }
 
     public Date getDate(String name, Calendar calendar) throws SQLException
@@ -672,6 +684,8 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         checkIndex(index);
         if(currentRow.isNull(index-1))
         	wasNull=true;
+        else
+        	wasNull=false;        
         return currentRow.getMap(index-1,String.class,String.class); // TODO: a remplacer par une vraie verification des types de collections
     }
 

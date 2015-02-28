@@ -34,6 +34,7 @@ import java.sql.SQLTimeoutException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -448,5 +449,11 @@ class ManagedConnection extends AbstractConnection implements Connection
 	public void setSchema(String arg0) throws SQLException {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public Map<String, Class<?>> getTypeMap() throws SQLException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
