@@ -20,6 +20,12 @@
  */
 package com.datastax.driver.jdbc;
 
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeClass;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -28,16 +34,13 @@ import java.sql.Statement;
 
 import javax.sql.DataSource;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
+import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.jdbc.CassandraDataSource;
 import com.datastax.driver.jdbc.PooledCassandraDataSource;
 
 public class PooledUnitTest
 {
-	private static final String HOST = System.getProperty("host", ConnectionDetails.getHost());
+	private static String HOST = System.getProperty("host", ConnectionDetails.getHost());
 	private static final int PORT = Integer.parseInt(System.getProperty("port", ConnectionDetails.getPort() + ""));
 	private static final String KEYSPACE = "testks";
 	private static final String USER = "JohnDoe";
@@ -47,10 +50,15 @@ public class PooledUnitTest
     
 
 	private static java.sql.Connection con = null;
+    private static CCMBridge ccmBridge = null;
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception
-	{
+    
+    @BeforeClass
+    public static void setUpBeforeClass() throws Exception
+    {
+    	/*System.setProperty("cassandra.version", "2.1.2");*/
+    	HOST = CCMBridge.ipOfNode(1);        
+
 		Class.forName("com.datastax.driver.jdbc.CassandraDriver");
 		con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s", HOST, PORT, "system"));
 		Statement stmt = con.createStatement();
@@ -85,11 +93,11 @@ public class PooledUnitTest
 		stmt.execute(insertWorld);
 	}
 
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception
-	{
-		if (con != null) con.close();
-	}
+   @AfterClass
+    public static void tearDownAfterClass() throws Exception
+    {
+    	if (con != null) con.close();
+    }
 
 	@Test
 	public void twoMillionConnections() throws Exception

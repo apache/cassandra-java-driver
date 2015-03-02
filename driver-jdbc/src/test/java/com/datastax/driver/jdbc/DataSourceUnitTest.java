@@ -20,10 +20,16 @@
  */
 package com.datastax.driver.jdbc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeClass;
 
 import java.sql.DriverManager;
 import java.sql.SQLFeatureNotSupportedException;
@@ -31,30 +37,28 @@ import java.sql.Statement;
 
 import javax.sql.DataSource;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
+import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.jdbc.CassandraConnection;
 import com.datastax.driver.jdbc.CassandraDataSource;
 import com.datastax.driver.jdbc.Utils;
 
 public class DataSourceUnitTest
 {
-    private static final String HOST = System.getProperty("host", ConnectionDetails.getHost());
+    private static String HOST = System.getProperty("host", ConnectionDetails.getHost());
     private static final int PORT = Integer.parseInt(System.getProperty("port", ConnectionDetails.getPort()+""));
-    private static final String KEYSPACE = "testks";
+    private static final String KEYSPACE = "testks2";
     private static final String USER = "JohnDoe";
     private static final String PASSWORD = "secret";
     private static final String VERSION = "3.0.0";
     private static final String CONSISTENCY = "ONE";
     
     private static java.sql.Connection con = null;
-
+    private static CCMBridge ccmBridge = null;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
+    	HOST = CCMBridge.ipOfNode(1);    
         Class.forName("com.datastax.driver.jdbc.CassandraDriver");
         con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,"system"));
         Statement stmt = con.createStatement();
@@ -74,7 +78,7 @@ public class DataSourceUnitTest
     @AfterClass
     public static void tearDownAfterClass() throws Exception
     {
-        if (con!=null) con.close();
+    	if (con != null) con.close();        
     }
 
 
@@ -123,7 +127,7 @@ public class DataSourceUnitTest
         assertFalse(isIt);
     }
  
-    @Test(expected=SQLFeatureNotSupportedException.class)
+    @Test(expectedExceptions=SQLFeatureNotSupportedException.class)
     public void testUnwrap() throws Exception
     {
         DataSource ds = new CassandraDataSource(HOST,PORT,KEYSPACE,USER,PASSWORD,VERSION,CONSISTENCY);

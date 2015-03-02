@@ -63,6 +63,8 @@ public class TypesMap
         map.put("org.apache.cassandra.db.marshal.timeuuid",JdbcTimeUUID.instance);
         map.put("org.apache.cassandra.db.marshal.varchar",JdbcUTF8.instance);
         map.put("org.apache.cassandra.db.marshal.varint",JdbcInteger.instance);
+        map.put("org.apache.cassandra.db.marshal.udt",JdbcUdt.instance);
+        map.put("org.apache.cassandra.db.marshal.tuple",JdbcTuple.instance);
     }
 
     public static AbstractJdbcType<?> getTypeForComparator(String comparator)

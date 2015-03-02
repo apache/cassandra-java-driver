@@ -20,7 +20,13 @@
 
 package com.datastax.driver.jdbc;
 
-import static org.junit.Assert.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeClass;
+import org.testng.AssertJUnit;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,12 +42,10 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.Map;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.jdbc.CassandraResultSetExtras;
 
 /**
@@ -56,7 +60,7 @@ public class CollectionsUnitTest
     private static final Logger LOG = LoggerFactory.getLogger(CollectionsUnitTest.class);
 
 
-    private static final String HOST = System.getProperty("host", ConnectionDetails.getHost());
+    private static String HOST = System.getProperty("host", ConnectionDetails.getHost());
     private static final int PORT = Integer.parseInt(System.getProperty("port", ConnectionDetails.getPort() + ""));
     private static final String KEYSPACE = "testks";
     private static final String SYSTEM = "system";
@@ -64,12 +68,16 @@ public class CollectionsUnitTest
 
     private static java.sql.Connection con = null;
 
-    /**
-     * @throws java.lang.Exception
-     */
+    private static CCMBridge ccmBridge = null;
+
+    
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
+    	/*System.setProperty("cassandra.version", "2.1.2");*/    	
+    	
+    	HOST = CCMBridge.ipOfNode(1);        
+    
         Class.forName("com.datastax.driver.jdbc.CassandraDriver");
         String URL = String.format("jdbc:cassandra://%s:%d/%s?version=%s", HOST, PORT, SYSTEM, CQLV3);
 
@@ -129,14 +137,14 @@ public class CollectionsUnitTest
         if (LOG.isDebugEnabled()) LOG.debug("Unit Test: 'CollectionsTest' initialization complete.\n\n");
     }
 
-    /**
-     * Close down the connection when complete
-     */
+    
     @AfterClass
     public static void tearDownAfterClass() throws Exception
     {
-        if (con != null) con.close();
+    	if (con != null) con.close();
+             
     }
+    
 
     @Test
     public void testReadList() throws Exception
@@ -151,18 +159,18 @@ public class CollectionsUnitTest
         ResultSet result = statement.executeQuery("SELECT * FROM testcollection WHERE k = 1;");
         result.next();
 
-        assertEquals(1, result.getInt("k"));
+        AssertJUnit.assertEquals(1, result.getInt("k"));
 
         Object myObj = result.getObject("l");
         if (LOG.isDebugEnabled()) LOG.debug("l           = '{}'\n", myObj);
         List<Long> myList = (List<Long>) myObj;
-        assertEquals(3, myList.size());
-        assertTrue(12345L == myList.get(2));
-        assertTrue(myObj instanceof ArrayList);
+        AssertJUnit.assertEquals(3, myList.size());
+        AssertJUnit.assertTrue(12345L == myList.get(2));
+        AssertJUnit.assertTrue(myObj instanceof ArrayList);
 
         myList = (List<Long>) extras(result).getList("l");
         statement.close();
-        assertTrue(3L == myList.get(1));
+        AssertJUnit.assertTrue(3L == myList.get(1));
     }
 
     @Test
@@ -178,11 +186,11 @@ public class CollectionsUnitTest
         ResultSet result = statement.executeQuery("SELECT * FROM testcollection WHERE k = 1;");
         result.next();
 
-        assertEquals(1, result.getInt("k"));
+        AssertJUnit.assertEquals(1, result.getInt("k"));
         Object myObj = result.getObject("l");
         List<Long> myList = (List<Long>) myObj;
-        assertEquals(6, myList.size());
-        assertTrue(12345L == myList.get(2));
+        AssertJUnit.assertEquals(6, myList.size());
+        AssertJUnit.assertTrue(12345L == myList.get(2));
         
         if (LOG.isDebugEnabled()) LOG.debug("l           = '{}'", myObj);
 
@@ -192,7 +200,7 @@ public class CollectionsUnitTest
         result.next();
         myObj = result.getObject("l");
         myList = (List<Long>) myObj;
-        assertTrue(100L == myList.get(0));
+        AssertJUnit.assertTrue(100L == myList.get(0));
         
         if (LOG.isDebugEnabled()) LOG.debug("l           = '{}'", myObj);
 
@@ -237,14 +245,14 @@ public class CollectionsUnitTest
         ResultSet result = statement.executeQuery("SELECT * FROM testcollection WHERE k = 1;");
         result.next();
 
-        assertEquals(1, result.getInt("k"));
+        AssertJUnit.assertEquals(1, result.getInt("k"));
 
         Object myObj = result.getObject("s");
         if (LOG.isDebugEnabled()) LOG.debug("s           = '{}'\n", myObj);
         Set<String> mySet = (Set<String>) myObj;
-        assertEquals(3, mySet.size());
-        assertTrue(mySet.contains("white"));
-        assertTrue(myObj instanceof LinkedHashSet);
+        AssertJUnit.assertEquals(3, mySet.size());
+        AssertJUnit.assertTrue(mySet.contains("white"));
+        AssertJUnit.assertTrue(myObj instanceof LinkedHashSet);
     }
 
     @Test
@@ -261,11 +269,11 @@ public class CollectionsUnitTest
         ResultSet result = statement.executeQuery("SELECT * FROM testcollection WHERE k = 1;");
         result.next();
 
-        assertEquals(1, result.getInt("k"));
+        AssertJUnit.assertEquals(1, result.getInt("k"));
         Object myObj = result.getObject("s");
         Set<String> mySet = (Set<String>) myObj;
-        assertEquals(5, mySet.size());
-        assertTrue(mySet.contains("white"));
+        AssertJUnit.assertEquals(5, mySet.size());
+        AssertJUnit.assertTrue(mySet.contains("white"));
 
         if (LOG.isDebugEnabled()) LOG.debug("s           = '{}'", myObj);
 
@@ -276,13 +284,13 @@ public class CollectionsUnitTest
         result = statement.executeQuery("SELECT * FROM testcollection WHERE k = 1;");
         result.next();
 
-        assertEquals(1, result.getInt("k"));
+        AssertJUnit.assertEquals(1, result.getInt("k"));
 
         myObj = result.getObject("s");
         mySet = (Set<String>) myObj;
-        assertEquals(4, mySet.size());
-        assertTrue(mySet.contains("white"));
-        assertFalse(mySet.contains("red"));
+        AssertJUnit.assertEquals(4, mySet.size());
+        AssertJUnit.assertTrue(mySet.contains("white"));
+        AssertJUnit.assertFalse(mySet.contains("red"));
 
         if (LOG.isDebugEnabled()) LOG.debug("s           = '{}'", myObj);
         
@@ -315,14 +323,14 @@ public class CollectionsUnitTest
         ResultSet result = statement.executeQuery("SELECT * FROM testcollection WHERE k = 1;");
         result.next();
 
-        assertEquals(1, result.getInt("k"));
+        AssertJUnit.assertEquals(1, result.getInt("k"));
 
         Object myObj = result.getObject("m");
         if (LOG.isDebugEnabled()) LOG.debug("m           = '{}'\n", myObj);
         Map<Double,Boolean> myMap = (Map<Double,Boolean>) myObj;
-        assertEquals(3, myMap.size());
-        assertTrue(myMap.keySet().contains(2.0));
-        assertTrue(myObj instanceof HashMap);
+        AssertJUnit.assertEquals(3, myMap.size());
+        AssertJUnit.assertTrue(myMap.keySet().contains(2.0));
+        AssertJUnit.assertTrue(myObj instanceof HashMap);
     }
 
     @Test
@@ -339,11 +347,11 @@ public class CollectionsUnitTest
         ResultSet result = statement.executeQuery("SELECT * FROM testcollection WHERE k = 1;");
         result.next();
 
-        assertEquals(1, result.getInt("k"));
+        AssertJUnit.assertEquals(1, result.getInt("k"));
         Object myObj = result.getObject("m");
         Map<Double,Boolean> myMap = (Map<Double,Boolean>) myObj;
-        assertEquals(6, myMap.size());
-        assertTrue(myMap.keySet().contains(5.0));
+        AssertJUnit.assertEquals(6, myMap.size());
+        AssertJUnit.assertTrue(myMap.keySet().contains(5.0));
 
         if (LOG.isDebugEnabled()) LOG.debug("m           = '{}'", myObj);
 
@@ -354,13 +362,13 @@ public class CollectionsUnitTest
         result = statement.executeQuery("SELECT * FROM testcollection WHERE k = 1;");
         result.next();
 
-        assertEquals(1, result.getInt("k"));
+        AssertJUnit.assertEquals(1, result.getInt("k"));
 
         myObj = result.getObject("m");
         myMap = (Map<Double,Boolean>) myObj;
-        assertEquals(5, myMap.size());
-        assertTrue(myMap.keySet().contains(5.0));
-        assertFalse(myMap.keySet().contains(6.0));
+        AssertJUnit.assertEquals(5, myMap.size());
+        AssertJUnit.assertTrue(myMap.keySet().contains(5.0));
+        AssertJUnit.assertFalse(myMap.keySet().contains(6.0));
 
         if (LOG.isDebugEnabled()) LOG.debug("m           = '{}'", myObj);
         

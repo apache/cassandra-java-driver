@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="JdbcTestSuite" parallel="false">
+  <!--  <test name="DataSourceUnitTest">
+    <classes>
+      <class name="com.datastax.driver.jdbc.DataSourceUnitTest"/>
+    </classes>
+  </test>  
+  <test name="UtilsUnitTest">
+    <classes>
+      <class name="com.datastax.driver.jdbc.UtilsUnitTest"/>
+    </classes>
+  </test>
+  <test name="PooledUnitTest">
+    <classes>
+      <class name="com.datastax.driver.jdbc.PooledUnitTest"/>
+    </classes>
+  </test>
+  <test name="MetadataResultSetsUnitTest">
+    <classes>
+      <class name="com.datastax.driver.jdbc.MetadataResultSetsUnitTest"/>
+    </classes>
+  </test>
+  <test name="CollectionsUnitTest">
+    <classes>
+      <class name="com.datastax.driver.jdbc.CollectionsUnitTest"/>
+    </classes>
+  </test>
+  <test name="BatchStatementsUnitTest">
+    <classes>
+      <class name="com.datastax.driver.jdbc.BatchStatementsUnitTest"/>
+    </classes>
+  </test>
+  <test name="JdbcRegressionUnitTest">
+    <classes>
+      <class name="com.datastax.driver.jdbc.JdbcRegressionUnitTest"/>
+    </classes>
+  </test> -->
+  <test name="JdbcTest">  
+    <classes>    
+      <class name="com.datastax.driver.jdbc.BuildCluster"/>
+      <class name="com.datastax.driver.jdbc.DataSourceUnitTest"/>
+      <class name="com.datastax.driver.jdbc.UtilsUnitTest"/>
+      <class name="com.datastax.driver.jdbc.PooledUnitTest"/>
+      <class name="com.datastax.driver.jdbc.MetadataResultSetsUnitTest"/>
+      <class name="com.datastax.driver.jdbc.CollectionsUnitTest"/>
+      <class name="com.datastax.driver.jdbc.BatchStatementsUnitTest"/>
+      <class name="com.datastax.driver.jdbc.JdbcRegressionUnitTest"/>
+    </classes>
+  </test> 
+</suite> <!-- JdbcTestSuite -->

@@ -20,13 +20,23 @@
  */
 package com.datastax.driver.jdbc;
 
-import static org.junit.Assert.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeClass;
+import org.testng.AssertJUnit;
+import org.testng.Assert;
+
 import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.sql.Blob;
@@ -40,6 +50,7 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,17 +60,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
+import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMBridge.CCMCluster;
+import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.TupleValue;
+import com.datastax.driver.core.UDTValue;
 import com.datastax.driver.jdbc.CassandraStatementExtras;
 
-public class JdbcRegressionUnitTest
+import static com.datastax.driver.core.TestUtils.*;
+
+public class JdbcRegressionUnitTest 
 {
-    private static final String HOST = System.getProperty("host", ConnectionDetails.getHost());
-    private static final int PORT = Integer.parseInt(System.getProperty("port", ConnectionDetails.getPort()+""));
+    private static String HOST = System.getProperty("host", ConnectionDetails.getHost());
+    private static int PORT = Integer.parseInt(System.getProperty("port", ConnectionDetails.getPort()+""));
     private static final String KEYSPACE = "testks";
     private static final String TABLE = "regressiontest";
 //    private static final String CQLV3 = "3.0.0";
@@ -67,10 +82,14 @@ public class JdbcRegressionUnitTest
       
     private static java.sql.Connection con = null;
     
+    private static CCMBridge ccmBridge = null;
+      
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
+    	/*System.setProperty("cassandra.version", "2.1.2");*/
+    	HOST = CCMBridge.ipOfNode(1);
         Class.forName("org.apache.cassandra2.cql.jdbc.CassandraDriver");
         String URL = String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,"system");
         System.out.println("Connection URL = '"+URL +"'");
@@ -117,6 +136,7 @@ public class JdbcRegressionUnitTest
     public static void tearDownAfterClass() throws Exception
     {
         if (con!=null) con.close();
+        
     }
 
 
@@ -134,30 +154,19 @@ public class JdbcRegressionUnitTest
         result.next();
         
         boolean b = result.getBoolean(1);
-        assertTrue(b);
+        AssertJUnit.assertTrue(b);
         
         int i = result.getInt(2);
-        assertEquals(2000, i);
+        AssertJUnit.assertEquals(2000, i);
    }
 
-    @Test
-    public void testIssue15() throws Exception
-    {
-//        con.close();
-//
-//        con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s?version=%s",HOST,PORT,KEYSPACE,CQLV3));
-//        System.out.println(con);
-//        con.close();
 
-//        con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE));
-//        System.out.println(con);
-//        con.close();
-
-    }
-    
     @Test
     public void testIssue18() throws Exception
     {
+       con.close();
+       
+       con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE));
        Statement statement = con.createStatement();
 
        String truncate = "TRUNCATE regressiontest;";
@@ -288,44 +297,44 @@ public class JdbcRegressionUnitTest
         // test various retrieval methods
         ResultSet result = md.getTables(con.getCatalog(), null, "%", new String[]
         { "TABLE" });
-        assertTrue("Make sure we have found a table", result.next());
+        AssertJUnit.assertTrue("Make sure we have found a table", result.next());
         result = md.getTables(null, KEYSPACE, TABLE, null);
-        assertTrue("Make sure we have found the table asked for", result.next());
+        AssertJUnit.assertTrue("Make sure we have found the table asked for", result.next());
         result = md.getTables(null, KEYSPACE, TABLE, new String[]
         { "TABLE" });
-        assertTrue("Make sure we have found the table asked for", result.next());
+        AssertJUnit.assertTrue("Make sure we have found the table asked for", result.next());
         result = md.getTables(con.getCatalog(), KEYSPACE, TABLE, new String[]
         { "TABLE" });
-        assertTrue("Make sure we have found the table asked for", result.next());
+        AssertJUnit.assertTrue("Make sure we have found the table asked for", result.next());
 
         // check the table name
         String tn = result.getString("TABLE_NAME");
-        assertEquals("Table name match", TABLE, tn);
+        AssertJUnit.assertEquals("Table name match", TABLE, tn);
         System.out.println("Found table via dmd    :   " + tn);
 
         // load the columns
         result = md.getColumns(con.getCatalog(), KEYSPACE, TABLE, null);
-        assertTrue("Make sure we have found first column", result.next());
-        assertEquals("Make sure table name match", TABLE, result.getString("TABLE_NAME"));
+        AssertJUnit.assertTrue("Make sure we have found first column", result.next());
+        AssertJUnit.assertEquals("Make sure table name match", TABLE, result.getString("TABLE_NAME"));
         String cn = result.getString("COLUMN_NAME");
         System.out.println("Found (default) PK column       :   " + cn);
-        assertEquals("Column name check", "keyname", cn);
-        assertEquals("Column type check", Types.VARCHAR, result.getInt("DATA_TYPE"));
-        assertTrue("Make sure we have found second column", result.next());
+        AssertJUnit.assertEquals("Column name check", "keyname", cn);
+        AssertJUnit.assertEquals("Column type check", Types.VARCHAR, result.getInt("DATA_TYPE"));
+        AssertJUnit.assertTrue("Make sure we have found second column", result.next());
         cn = result.getString("COLUMN_NAME");
         System.out.println("Found column       :   " + cn);
-        assertEquals("Column name check", "bvalue", cn);
-        assertEquals("Column type check", Types.BOOLEAN, result.getInt("DATA_TYPE"));
-        assertTrue("Make sure we have found thirth column", result.next());
+        AssertJUnit.assertEquals("Column name check", "bvalue", cn);
+        AssertJUnit.assertEquals("Column type check", Types.BOOLEAN, result.getInt("DATA_TYPE"));
+        AssertJUnit.assertTrue("Make sure we have found thirth column", result.next());
         cn = result.getString("COLUMN_NAME");
         System.out.println("Found column       :   " + cn);
-        assertEquals("Column name check", "ivalue", cn);
-        assertEquals("Column type check", Types.INTEGER, result.getInt("DATA_TYPE"));
+        AssertJUnit.assertEquals("Column name check", "ivalue", cn);
+        AssertJUnit.assertEquals("Column type check", Types.INTEGER, result.getInt("DATA_TYPE"));
 
         // make sure we filter
         result = md.getColumns(con.getCatalog(), KEYSPACE, TABLE, "bvalue");
         result.next();
-        assertFalse("Make sure we have found requested column only", result.next());
+        AssertJUnit.assertFalse("Make sure we have found requested column only", result.next());
     }    
     
     @Test
@@ -419,7 +428,7 @@ public class JdbcRegressionUnitTest
        stmt = con.createStatement();
        
        ConsistencyLevel cl = statementExtras(stmt).getConsistencyLevel();
-       assertTrue(ConsistencyLevel.QUORUM == cl );
+       AssertJUnit.assertTrue(ConsistencyLevel.QUORUM == cl );
        
        System.out.println();
        System.out.println("Test Issue #71");
@@ -459,13 +468,13 @@ public class JdbcRegressionUnitTest
 
         ResultSet result = statement.executeQuery("SELECT * FROM t74;");
         
-        assertTrue(result.next());
-        assertEquals(1L, result.getLong(1));
+        AssertJUnit.assertTrue(result.next());
+        AssertJUnit.assertEquals(1L, result.getLong(1));
         Timestamp stamp = result.getTimestamp(2);
         
-        assertEquals(now, stamp);
+        AssertJUnit.assertEquals(now, stamp);
         stamp = (Timestamp)result.getObject(2); // maybe exception here
-        assertEquals(now, stamp);
+        AssertJUnit.assertEquals(now, stamp);
 
         System.out.println(resultToDisplay(result,74, "current date"));
        
@@ -486,10 +495,10 @@ public class JdbcRegressionUnitTest
         String select = "select ivalue from "+TABLE;        
         
         ResultSet result = stmt.executeQuery(select);
-        assertFalse("Make sure we have no rows", result.next());
+        AssertJUnit.assertFalse("Make sure we have no rows", result.next());
         ResultSetMetaData rsmd = result.getMetaData();
-        assertTrue("Make sure we do get a result", rsmd.getColumnDisplaySize(1) != 0);
-        assertNotNull("Make sure we do get a label",rsmd.getColumnLabel(1));
+        AssertJUnit.assertTrue("Make sure we do get a result", rsmd.getColumnDisplaySize(1) != 0);
+        AssertJUnit.assertNotNull("Make sure we do get a label",rsmd.getColumnLabel(1));
         System.out.println("Found a column in ResultsetMetaData even when there are no rows:   " + rsmd.getColumnLabel(1));
         stmt.close();
     }
@@ -504,11 +513,11 @@ public class JdbcRegressionUnitTest
 
         // test various retrieval methods
         ResultSet result = md.getIndexInfo(con.getCatalog(), KEYSPACE, TABLE, false, false);
-        assertTrue("Make sure we have found an index", result.next());
+        AssertJUnit.assertTrue("Make sure we have found an index", result.next());
 
         // check the column name from index
         String cn = result.getString("COLUMN_NAME");
-        assertEquals("Column name match for index", "ivalue", cn);
+        AssertJUnit.assertEquals("Column name match for index", "ivalue", cn);
         System.out.println("Found index via dmd on :   " + cn);
     }
 
@@ -522,11 +531,11 @@ public class JdbcRegressionUnitTest
 
         // test various retrieval methods
         ResultSet result = md.getPrimaryKeys(con.getCatalog(), KEYSPACE, TABLE);
-        assertTrue("Make sure we have found an pk", result.next());
+        AssertJUnit.assertTrue("Make sure we have found an pk", result.next());
 
         // check the column name from index
         String cn = result.getString("COLUMN_NAME");
-        assertEquals("Column name match for pk", "keyname", cn);
+        AssertJUnit.assertEquals("Column name match for pk", "keyname", cn);
         System.out.println("Found pk via dmd :   " + cn);
     }
 
@@ -537,7 +546,7 @@ public class JdbcRegressionUnitTest
 
         // load the columns, with no catalog and schema
         ResultSet result = md.getColumns(null, "%", TABLE, "ivalue");
-        assertTrue("Make sure we have found an column", result.next());
+        AssertJUnit.assertTrue("Make sure we have found an column", result.next());
     }
 
     @Test
@@ -643,9 +652,9 @@ public class JdbcRegressionUnitTest
 
         ResultSet result = statement.executeQuery("SELECT * FROM t80 where bigint_col=1;");
         
-        assertTrue(result.next());
-        assertEquals(1L, result.getLong("bigint_col"));
-        assertEquals("test", result.getString("ascii_col"));
+        AssertJUnit.assertTrue(result.next());
+        AssertJUnit.assertEquals(1L, result.getLong("bigint_col"));
+        AssertJUnit.assertEquals("test", result.getString("ascii_col"));
         byte[] array = new byte[result.getBinaryStream("blob_col").available()];
     	try {
     		result.getBinaryStream("blob_col").read(array);
@@ -653,36 +662,36 @@ public class JdbcRegressionUnitTest
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-        assertEquals("test", new String(array, "UTF-8"));
-        assertEquals(true, result.getBoolean("boolean_col"));
-        assertEquals(new BigDecimal(5.1), result.getBigDecimal("decimal_col"));
-        assertEquals((double)5.1, result.getDouble("double_col"),0);
-        assertEquals((float)5.1, result.getFloat("float_col"),0);
-        assertEquals(InetAddress.getLocalHost(), (InetAddress)result.getObject("inet_col"));
-        assertEquals(1, result.getInt("int_col"));
-        assertEquals("test", result.getString("text_col"));        
-        assertEquals(new Timestamp(now.getTime()),result.getTimestamp("timestamp_col"));
+        AssertJUnit.assertEquals("test", new String(array, "UTF-8"));
+        AssertJUnit.assertEquals(true, result.getBoolean("boolean_col"));
+        AssertJUnit.assertEquals(new BigDecimal(5.1), result.getBigDecimal("decimal_col"));
+        AssertJUnit.assertEquals((double)5.1, result.getDouble("double_col"),0);
+        AssertJUnit.assertEquals((float)5.1, result.getFloat("float_col"),0);
+        AssertJUnit.assertEquals(InetAddress.getLocalHost(), (InetAddress)result.getObject("inet_col"));
+        AssertJUnit.assertEquals(1, result.getInt("int_col"));
+        AssertJUnit.assertEquals("test", result.getString("text_col"));        
+        AssertJUnit.assertEquals(new Timestamp(now.getTime()),result.getTimestamp("timestamp_col"));
         // 12 - cannot test timeuuid as it is generated by the server
-        assertEquals(uuid,(UUID)result.getObject("uuid_col"));
-        assertEquals("test",result.getString("varchar_col"));
-        assertEquals(1,result.getLong("varint_col"));
+        AssertJUnit.assertEquals(uuid,(UUID)result.getObject("uuid_col"));
+        AssertJUnit.assertEquals("test",result.getString("varchar_col"));
+        AssertJUnit.assertEquals(1,result.getLong("varint_col"));
         Set<String> retSet = (Set<String>) result.getObject("string_set_col");
-        assertTrue(retSet instanceof LinkedHashSet);
-        assertEquals(1,retSet.size());
+        AssertJUnit.assertTrue(retSet instanceof LinkedHashSet);
+        AssertJUnit.assertEquals(1,retSet.size());
         List<String> retList = (List<String>) result.getObject("string_list_col");
-        assertTrue(retList instanceof ArrayList);
-        assertEquals(2,retList.size());
+        AssertJUnit.assertTrue(retList instanceof ArrayList);
+        AssertJUnit.assertEquals(2,retList.size());
         Map<String,String> retMap = (Map<String,String>) result.getObject("string_map_col");
-        assertTrue(retMap instanceof HashMap);
-        assertEquals(2,retMap.keySet().size());
+        AssertJUnit.assertTrue(retMap instanceof HashMap);
+        AssertJUnit.assertEquals(2,retMap.keySet().size());
         
         
         result = statement.executeQuery("SELECT * FROM t80 where bigint_col=2;");
         
         
-        assertTrue(result.next());
-        assertEquals(2L, result.getLong("bigint_col"));
-        assertEquals("test", result.getString("ascii_col"));
+        AssertJUnit.assertTrue(result.next());
+        AssertJUnit.assertEquals(2L, result.getLong("bigint_col"));
+        AssertJUnit.assertEquals("test", result.getString("ascii_col"));
         array = new byte[result.getBinaryStream("blob_col").available()];
     	try {
     		result.getBinaryStream("blob_col").read(array);
@@ -690,29 +699,29 @@ public class JdbcRegressionUnitTest
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-        assertEquals("test", new String(array, "UTF-8"));
-        assertEquals(true, result.getBoolean("boolean_col"));
-        assertEquals(new BigDecimal(5.1), result.getBigDecimal("decimal_col"));
-        assertEquals((double)5.1, result.getDouble("double_col"),0);
-        assertEquals((float)5.1, result.getFloat("float_col"),0);
-        assertEquals(InetAddress.getLocalHost(), (InetAddress)result.getObject("inet_col"));
-        assertEquals(1, result.getInt("int_col"));
-        assertEquals("test", result.getString("text_col"));        
-        assertEquals(new Timestamp(now.getTime()),result.getTimestamp("timestamp_col"));
+        AssertJUnit.assertEquals("test", new String(array, "UTF-8"));
+        AssertJUnit.assertEquals(true, result.getBoolean("boolean_col"));
+        AssertJUnit.assertEquals(new BigDecimal(5.1), result.getBigDecimal("decimal_col"));
+        AssertJUnit.assertEquals((double)5.1, result.getDouble("double_col"),0);
+        AssertJUnit.assertEquals((float)5.1, result.getFloat("float_col"),0);
+        AssertJUnit.assertEquals(InetAddress.getLocalHost(), (InetAddress)result.getObject("inet_col"));
+        AssertJUnit.assertEquals(1, result.getInt("int_col"));
+        AssertJUnit.assertEquals("test", result.getString("text_col"));        
+        AssertJUnit.assertEquals(new Timestamp(now.getTime()),result.getTimestamp("timestamp_col"));
         // 12 - cannot test timeuuid as it is generated by the server
-        assertEquals(uuid,(UUID)result.getObject("uuid_col"));
-        assertEquals("test",result.getString("varchar_col"));
-        assertEquals(1,result.getLong("varint_col"));
+        AssertJUnit.assertEquals(uuid,(UUID)result.getObject("uuid_col"));
+        AssertJUnit.assertEquals("test",result.getString("varchar_col"));
+        AssertJUnit.assertEquals(1,result.getLong("varint_col"));
         retSet = (Set<String>) result.getObject("string_set_col");
-        assertTrue(retSet instanceof LinkedHashSet);
-        assertEquals(1,retSet.size()); 
+        AssertJUnit.assertTrue(retSet instanceof LinkedHashSet);
+        AssertJUnit.assertEquals(1,retSet.size()); 
         retList = (List<String>) result.getObject("string_list_col");
-        assertTrue(retList instanceof ArrayList);
-        assertEquals(2,retList.size()); 
+        AssertJUnit.assertTrue(retList instanceof ArrayList);
+        AssertJUnit.assertEquals(2,retList.size()); 
         retMap = (Map<String,String>) result.getObject("string_map_col");
         System.out.println("HashMap ??? " + retMap);
-        assertTrue(retMap instanceof HashMap);
-        assertEquals(2,retMap.keySet().size());
+        AssertJUnit.assertTrue(retMap instanceof HashMap);
+        AssertJUnit.assertEquals(2,retMap.keySet().size());
         
         statement.close();
         pstatement.close();
@@ -737,14 +746,14 @@ public class JdbcRegressionUnitTest
         
         // Create the target Column family with each basic data type available on Cassandra
                 
-        String createCF = "CREATE COLUMNFAMILY t102 (bigint_col bigint PRIMARY KEY, null_int_col int , null_bigint_col bigint);";
+        String createCF = "CREATE COLUMNFAMILY t102 (bigint_col bigint PRIMARY KEY, null_int_col int , null_bigint_col bigint, not_null_int_col int);";
         
         stmt.execute(createCF);
         stmt.close();
         con.close();
 
         // open it up again to see the new CF
-        con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE));
+        con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s?loadbalancing=TokenAwarePolicy(RoundRobinPolicy())",HOST,PORT,KEYSPACE));
         System.out.println("con.getMetaData().getDatabaseProductName() = " + con.getMetaData().getDatabaseProductName());
         System.out.println("con.getMetaData().getDriverName() = " + con.getMetaData().getDriverName());
         Statement statement = con.createStatement();
@@ -759,7 +768,7 @@ public class JdbcRegressionUnitTest
          */
         
         
-        String insert = "INSERT INTO t102(bigint_col) values(?);";
+        String insert = "INSERT INTO t102(bigint_col,not_null_int_col) values(?,?);";
         
         
         
@@ -769,18 +778,21 @@ public class JdbcRegressionUnitTest
         
         
         pstatement.setObject(1, 1L); // bigint
+        pstatement.setObject(2, 1); // int
                 
         pstatement.execute();
                 
         ResultSet result = statement.executeQuery("SELECT * FROM t102 where bigint_col=1;");
         
-        assertTrue(result.next());
-        assertEquals(1L, result.getLong("bigint_col"));
+        AssertJUnit.assertTrue(result.next());
+        AssertJUnit.assertEquals(1L, result.getLong("bigint_col"));
         System.out.println("null_bigint_col = " +  result.getLong("null_bigint_col"));
-        assertEquals(0L,result.getLong("null_bigint_col"));
-        assertTrue(result.wasNull());
-        assertEquals(0,result.getInt("null_int_col"));
-        assertTrue(result.wasNull());
+        AssertJUnit.assertEquals(0L,result.getLong("null_bigint_col"));
+        AssertJUnit.assertTrue(result.wasNull());
+        AssertJUnit.assertEquals(0,result.getInt("null_int_col"));
+        AssertJUnit.assertTrue(result.wasNull());
+        AssertJUnit.assertEquals(1,result.getInt("not_null_int_col"));
+        AssertJUnit.assertFalse(result.wasNull());
         
         statement.close();
         pstatement.close();
@@ -790,6 +802,157 @@ public class JdbcRegressionUnitTest
        
     }
 
+    @Test
+    public void testUDTandTuple() throws Exception
+    {
+    	// Work with UDT - only in Cassandra 2.1+
+    	if(!System.getProperty("cassandra.version").startsWith("1") && !System.getProperty("cassandra.version").startsWith("2.0")){
+	    	System.out.println();
+	        System.out.println("Test UDT and Tuple");
+	        System.out.println("--------------");
+	        
+	    	Statement stmt = con.createStatement();
+	        java.util.Date now = new java.util.Date();
+	        
+	        
+	        // Create the target Column family with each basic data type available on Cassandra
+	                
+	        String createUDT = "CREATE TYPE IF NOT EXISTS fieldmap (key text, value text )";
+	        String createCF = "CREATE COLUMNFAMILY t_udt (id bigint PRIMARY KEY, field_values frozen<fieldmap>, the_tuple frozen<tuple<int, text, float>>);";
+	        stmt.execute(createUDT);
+	        stmt.execute(createCF);
+	        stmt.close();
+	        
+	        System.out.println("con.getMetaData().getDatabaseProductName() = " + con.getMetaData().getDatabaseProductName());
+	        System.out.println("con.getMetaData().getDatabaseProductVersion() = " + con.getMetaData().getDatabaseProductVersion());
+	        System.out.println("con.getMetaData().getDriverName() = " + con.getMetaData().getDriverName());
+	        Statement statement = con.createStatement();
+	        
+	        
+	        
+	        String insert = "INSERT INTO t_udt(id,field_values,the_tuple) values(?,{key : ?, value : ?}, (?,?,?));";
+	        
+	        
+	        
+	        
+			
+	        PreparedStatement pstatement = con.prepareStatement(insert);
+	        
+	        
+	        pstatement.setObject(1, 1L); // bigint
+	                        
+	        pstatement.setString(2, "key1");        
+	        pstatement.setString(3, "value1");
+	        pstatement.setInt(4, 1);
+	        pstatement.setString(5, "midVal");
+	        pstatement.setFloat(6, (float) 2.0);
+	        
+	                
+	        pstatement.execute();
+	                
+	        ResultSet result = statement.executeQuery("SELECT * FROM t_udt;");
+	        
+	        assert(result.next()==true);
+	        Assert.assertEquals(1L, result.getLong("id"));
+	        UDTValue udtVal = (UDTValue) result.getObject("field_values");
+	        Assert.assertEquals(udtVal.getString("key"), "key1");
+	        Assert.assertEquals(udtVal.getString("value"), "value1");
+	        
+	        TupleValue tupleVal = (TupleValue) result.getObject("the_tuple");
+	        Assert.assertEquals(tupleVal.getInt(0), 1);
+	        Assert.assertEquals(tupleVal.getString(1), "midVal");
+	        Assert.assertEquals(tupleVal.getFloat(2), (float) 2.0);
+	        
+	        
+	        statement.close();
+	        pstatement.close();
+    	}
+       
+    }
+    
+    
+    @Test
+    public void testUDTandTuple_collections() throws Exception
+    {
+        // Work with UDT - only in Cassandra 2.1+
+    	if(!System.getProperty("cassandra.version").startsWith("1") && !System.getProperty("cassandra.version").startsWith("2.0")){
+	    	System.out.println();
+	        System.out.println("Test UDT and Tuple in collections");
+	        System.out.println("--------------");
+	        
+	    	Statement stmt = con.createStatement();
+	        java.util.Date now = new java.util.Date();
+	        
+	        
+	        // Create the target Column family with each basic data type available on Cassandra
+	                
+	        String createUDT = "CREATE TYPE IF NOT EXISTS fieldmap (key text, value text )";
+	        String createCF = "CREATE COLUMNFAMILY t_udt_tuple_coll (id bigint PRIMARY KEY, field_values set<frozen<fieldmap>>, the_tuple list<frozen<tuple<int, text, float>>>, field_values_map map<text,frozen<fieldmap>>, tuple_map map<text,frozen<tuple<int,int>>>);";
+	        stmt.execute(createUDT);
+	        stmt.execute(createCF);
+	        stmt.close();
+	        
+	        System.out.println("con.getMetaData().getDatabaseProductName() = " + con.getMetaData().getDatabaseProductName());
+	        System.out.println("con.getMetaData().getDatabaseProductVersion() = " + con.getMetaData().getDatabaseProductVersion());
+	        System.out.println("con.getMetaData().getDriverName() = " + con.getMetaData().getDriverName());
+	        Statement statement = con.createStatement();
+	        
+	        
+	        
+	        String insert = "INSERT INTO t_udt_tuple_coll(id,field_values,the_tuple, field_values_map, tuple_map) values(1,{{key : 'key1', value : 'value1'},{key : 'key2', value : 'value2'}}, [(1, 'midVal1', 1.0),(2, 'midVal2', 2.0)], {'map_key1':{key : 'key1', value : 'value1'},'map_key2':{key : 'key2', value : 'value2'}}, {'tuple1':(1, 2),'tuple2':(2,3)} );";
+	        statement.execute(insert);
+	           
+	                
+	        ResultSet result = statement.executeQuery("SELECT * FROM t_udt_tuple_coll;");
+	        
+	        assert(result.next()==true);
+	        Assert.assertEquals(1L, result.getLong("id"));
+	        LinkedHashSet<UDTValue> udtSet = (LinkedHashSet<UDTValue>) result.getObject("field_values");
+	        ArrayList<TupleValue> tupleList = (ArrayList<TupleValue>) result.getObject("the_tuple");
+	        HashMap<String,UDTValue> udtMap = (HashMap<String,UDTValue>) result.getObject("field_values_map");
+	        HashMap<String,TupleValue> tupleMap = (HashMap<String,TupleValue>) result.getObject(5);
+	        
+	        int i=0;
+	        for(UDTValue val:udtSet){        	
+	        	i++;
+	        	Assert.assertEquals(val.getString("key"), "key"+i);
+	        	Assert.assertEquals(val.getString("value"), "value"+i);
+	        }
+	        
+	        i=0;
+	        for(TupleValue val:tupleList){        	
+	        	i++;
+	        	Assert.assertEquals(val.getInt(0), i);
+	        	Assert.assertEquals(val.getString(1), "midVal"+i);
+	        	Assert.assertEquals(val.getFloat(2), (float)i);        	
+	        }
+	        
+	        UDTValue udtVal1 = udtMap.get("map_key1");
+	        UDTValue udtVal2 = udtMap.get("map_key2");
+	        Assert.assertEquals(udtVal1.getString("key"), "key1");
+	        Assert.assertEquals(udtVal1.getString("value"), "value1");
+	        Assert.assertEquals(udtVal2.getString("key"), "key2");
+	        Assert.assertEquals(udtVal2.getString("value"), "value2");
+	        
+	        
+	        TupleValue tupleVal1 = tupleMap.get("tuple1");
+	        TupleValue tupleVal2 = tupleMap.get("tuple2");
+	        Assert.assertEquals(tupleVal1.getInt(0), 1);
+	        Assert.assertEquals(tupleVal1.getInt(1), 2);
+	        Assert.assertEquals(tupleVal2.getInt(0), 2);
+	        Assert.assertEquals(tupleVal2.getInt(1), 3);
+	        
+	        
+	        
+	            
+	        
+	        statement.close();
+    	}
+        
+       
+    }
+    
+    
     @Test
     public void testGetLongGetDouble() throws Exception
     {
@@ -827,11 +990,11 @@ public class JdbcRegressionUnitTest
                 
         ResultSet result = statement.executeQuery("SELECT * FROM getLongGetDouble where bigint_col=1;");
         
-        assertTrue(result.next());
-        assertEquals(1L, result.getLong("bigint_col"));        
-        assertEquals(1L,result.getLong("int_col"));
-        assertEquals(1L,result.getLong("varint_col"));
-        assertEquals((double)1.1,result.getDouble("float_col"),0.1);
+        AssertJUnit.assertTrue(result.next());
+        AssertJUnit.assertEquals(1L, result.getLong("bigint_col"));        
+        AssertJUnit.assertEquals(1L,result.getLong("int_col"));
+        AssertJUnit.assertEquals(1L,result.getLong("varint_col"));
+        AssertJUnit.assertEquals((double)1.1,result.getDouble("float_col"),0.1);
         
         statement.close();
         pstatement.close();
@@ -847,7 +1010,7 @@ public class JdbcRegressionUnitTest
 //    	assert con.isValid(3);
     }
     
-    @Test(expected=SQLException.class)
+    @Test(expectedExceptions=SQLException.class)
     public void isValidSubZero() throws Exception
     {
     	con.isValid(-42);
@@ -900,5 +1063,7 @@ public class JdbcRegressionUnitTest
         Class cse = Class.forName("com.datastax.driver.jdbc.CassandraStatementExtras");
         return (CassandraStatementExtras) statement.unwrap(cse);
     }
+
+
 
 }
