@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2015 DataStax Inc.
+ *      Copyright (C) 2012-2014 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,34 +15,32 @@
  */
 package com.datastax.driver.core;
 
-import java.io.*;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import com.datastax.driver.core.Cluster.Builder;
+import com.datastax.driver.core.exceptions.AlreadyExistsException;
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Closer;
 import com.google.common.io.Files;
-import org.apache.commons.exec.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import static org.testng.Assert.fail;
 
-import com.datastax.driver.core.exceptions.AlreadyExistsException;
-import com.datastax.driver.core.exceptions.DriverException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
@@ -54,40 +52,9 @@ public class CCMBridge {
     public static final String IP_PREFIX;
 
     private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d+(-\\w+)?";
+
     static final File CASSANDRA_DIR;
     static final String CASSANDRA_VERSION;
-
-    public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "cassandra1sfun";
-    public static final String DEFAULT_CLIENT_TRUSTSTORE_PATH = "/client.truststore";
-
-    public static final String DEFAULT_CLIENT_KEYSTORE_PASSWORD = "cassandra1sfun";
-    public static final String DEFAULT_CLIENT_KEYSTORE_PATH = "/client.keystore";
-
-    public static final String DEFAULT_SERVER_TRUSTSTORE_PASSWORD = "cassandra1sfun";
-    public static final String DEFAULT_SERVER_TRUSTSTORE_PATH = "/server.truststore";
-
-    private static final File DEFAULT_SERVER_TRUSTSTORE_FILE = createTempStore(DEFAULT_SERVER_TRUSTSTORE_PATH);
-
-    public static final String DEFAULT_SERVER_KEYSTORE_PASSWORD = "cassandra1sfun";
-    public static final String DEFAULT_SERVER_KEYSTORE_PATH = "/server.keystore";
-
-    private static final File DEFAULT_SERVER_KEYSTORE_FILE = createTempStore(DEFAULT_SERVER_KEYSTORE_PATH);
-
-    /**
-     * The environment variables to use when invoking CCM.  Inherits the current processes environment, but will also
-     * prepend to the PATH variable the value of the 'ccm.path' property and set JAVA_HOME variable to the
-     * 'ccm.java.home' variable.
-     *
-     * At times it is necessary to use a separate java install for CCM then what is being used for running tests.
-     * For example, if you want to run tests with JDK 6 but against Cassandra 2.0, which requires JDK 7.
-     */
-    private static final Map<String,String> ENVIRONMENT_MAP;
-
-    /**
-     * The command to use to launch CCM
-     */
-    private static final String CCM_COMMAND;
-
     static {
         String version = System.getProperty("cassandra.version");
         if (version.matches(CASSANDRA_VERSION_REGEXP)) {
@@ -103,86 +70,38 @@ public class CCMBridge {
             ip_prefix = "127.0.1.";
         }
         IP_PREFIX = ip_prefix;
-
-        // Inherit the current environment.
-        Map<String,String> envMap = Maps.newHashMap(new ProcessBuilder().environment());
-        // If ccm.path is set, override the PATH variable with it.
-        String ccmPath = System.getProperty("ccm.path");
-        if(ccmPath != null) {
-            String existingPath = envMap.get("PATH");
-            if(existingPath == null) {
-                existingPath = "";
-            }
-            envMap.put("PATH", ccmPath + File.pathSeparator + existingPath);
-        }
-
-        if (isWindows()) {
-            CCM_COMMAND = "cmd /c ccm.py";
-        } else {
-            CCM_COMMAND = "ccm";
-        }
-
-        // If ccm.java.home is set, override the JAVA_HOME variable with it.
-        String ccmJavaHome = System.getProperty("ccm.java.home");
-        if(ccmJavaHome != null) {
-            envMap.put("JAVA_HOME", ccmJavaHome);
-        }
-        ENVIRONMENT_MAP = ImmutableMap.copyOf(envMap);
     }
 
-    /**
-     * Checks if the operating system is a Windows one
-     * @return <code>true</code> if the operating system is a Windows one, <code>false</code> otherwise.
-     */
-    private static boolean isWindows() {
-
-        String osName = System.getProperty("os.name");
-        return osName != null && osName.startsWith("Windows");
-    }
-
+    private final Runtime runtime = Runtime.getRuntime();
     private final File ccmDir;
 
     private CCMBridge() {
         this.ccmDir = Files.createTempDir();
     }
 
-    /**
-     * <p>
-     * Extracts a keystore from the classpath into a temporary file.
-     * </p>
-     *
-     * <p>
-     * This is needed as the keystore could be part of a built test jar used by other
-     * projects, and they need to be extracted to a file system so cassandra may use them.
-     * </p>
-     * @param storePath Path in classpath where the keystore exists.
-     * @return The generated File.
-     */
-    private static File createTempStore(String storePath) {
-        File f = null;
-        Closer closer = Closer.create();
-        try {
-            InputStream trustStoreIs = CCMBridge.class.getResourceAsStream(storePath);
-            closer.register(trustStoreIs);
-            f = File.createTempFile("server", ".store");
-            logger.debug("Created store file {} for {}.", f, storePath);
-            OutputStream trustStoreOs = new FileOutputStream(f);
-            closer.register(trustStoreOs);
-            ByteStreams.copy(trustStoreIs, trustStoreOs);
-        } catch (IOException e) {
-            logger.warn("Failure to write keystore, SSL-enabled servers may fail to start.", e);
-        } finally {
-            try {
-                closer.close();
-            } catch (IOException e) {
-                logger.warn("Failure closing streams.", e);
-            }
-        }
-        return f;
+    public static CCMBridge create(String name) {
+        // This leads to a confusing CCM error message so check explicitly:
+        checkArgument(!"current".equals(name.toLowerCase()),
+                      "cluster can't be called \"current\"");
+        CCMBridge bridge = new CCMBridge();
+        bridge.execute("ccm create %s -b -i %s %s", name, IP_PREFIX, CASSANDRA_VERSION);
+        return bridge;
     }
 
-    public static Builder builder(String clusterName) {
-        return new Builder(clusterName);
+    public static CCMBridge create(String name, int nbNodes) {
+        checkArgument(!"current".equals(name.toLowerCase()),
+                        "cluster can't be called \"current\"");
+        CCMBridge bridge = new CCMBridge();
+        bridge.execute("ccm create %s -n %d -s -i %s -b %s", name, nbNodes, IP_PREFIX, CASSANDRA_VERSION);
+        return bridge;
+    }
+
+    public static CCMBridge create(String name, int nbNodesDC1, int nbNodesDC2) {
+        checkArgument(!"current".equals(name.toLowerCase()),
+                        "cluster can't be called \"current\"");
+        CCMBridge bridge = new CCMBridge();
+        bridge.execute("ccm create %s -n %d:%d -s -i %s -b %s", name, nbNodesDC1, nbNodesDC2, IP_PREFIX, CASSANDRA_VERSION);
+        return bridge;
     }
 
     public static CCMBridge.CCMCluster buildCluster(int nbNodes, Cluster.Builder builder) {
@@ -194,55 +113,48 @@ public class CCMBridge {
     }
 
     public void start() {
-        execute(CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto");
+        execute("ccm start --wait-other-notice --wait-for-binary-proto");
     }
 
     public void stop() {
-        execute(CCM_COMMAND + " stop");
+        execute("ccm stop");
     }
 
     public void forceStop() {
-        execute(CCM_COMMAND + " stop --not-gently");
+        execute("ccm stop --not-gently");
     }
 
     public void start(int n) {
         logger.info("Starting: " + IP_PREFIX + n);
-        execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto", n);
+        execute("ccm node%d start --wait-other-notice --wait-for-binary-proto", n);
     }
 
-    public void start(int n, String jvmArg) {
-        logger.info("Starting: " + IP_PREFIX + n + " with " + jvmArg);
-        execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto --jvm_arg=%s", n, jvmArg);
+    public void start(int n, String option) {
+        logger.info("Starting: " + IP_PREFIX + n + " with " + option);
+        execute("ccm node%d start --wait-other-notice --wait-for-binary-proto --jvm_arg=%s", n, option);
     }
 
     public void stop(int n) {
         logger.info("Stopping: " + IP_PREFIX + n);
-        execute(CCM_COMMAND + " node%d stop", n);
-    }
-
-    public void stop(String clusterName) {
-        logger.info("Stopping Cluster : " + clusterName);
-        execute(CCM_COMMAND + " stop "+clusterName);
+        execute("ccm node%d stop", n);
     }
 
     public void forceStop(int n) {
         logger.info("Force stopping: " + IP_PREFIX + n);
-        execute(CCM_COMMAND + " node%d stop --not-gently", n);
+        execute("ccm node%d stop --not-gently", n);
     }
 
     public void remove() {
         stop();
-        execute(CCM_COMMAND + " remove");
+        execute("ccm remove");
     }
 
-    public void remove(String clusterName) {
-        stop(clusterName);
-        execute(CCM_COMMAND + " remove " + clusterName);
+    public void ring() {
+        ring(1);
     }
 
-    public void remove(int n) {
-        logger.info("Removing: " + IP_PREFIX + n);
-        execute(CCM_COMMAND + " node%d remove", n);
+    public void ring(int n) {
+        executeAndPrint("ccm node%d ring", n);
     }
 
     public void bootstrapNode(int n) {
@@ -251,64 +163,79 @@ public class CCMBridge {
 
     public void bootstrapNode(int n, String dc) {
         if (dc == null)
-            execute(CCM_COMMAND + " add node%d -i %s%d -j %d -r %d -b -s", n, IP_PREFIX, n, 7000 + 100 * n, 8000 + 100 * n);
+            execute("ccm add node%d -i %s%d -j %d -b", n, IP_PREFIX, n, 7000 + 100*n);
         else
-            execute(CCM_COMMAND + " add node%d -i %s%d -j %d -b -d %s -s", n, IP_PREFIX, n, 7000 + 100 * n, dc);
-        execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto", n);
-    }
-
-    public void bootstrapNodeWithPorts(int n, int thriftPort, int storagePort, int binaryPort, int jmxPort, int remoteDebugPort) {
-        String thriftItf = IP_PREFIX + n + ":" + thriftPort;
-        String storageItf = IP_PREFIX + n + ":" + storagePort;
-        String binaryItf = IP_PREFIX + n + ":" + binaryPort;
-        String remoteLogItf = IP_PREFIX + n + ":" + remoteDebugPort;
-        execute(CCM_COMMAND + " add node%d -i %s%d -b -t %s -l %s --binary-itf %s -j %d -r %s -s",
-            n, IP_PREFIX, n, thriftItf, storageItf, binaryItf, jmxPort, remoteLogItf);
-        execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto", n);
+            execute("ccm add node%d -i %s%d -j %d -b -d %s", n, IP_PREFIX, n, 7000 + 100*n, dc);
+        execute("ccm node%d start --wait-other-notice --wait-for-binary-proto", n);
     }
 
     public void decommissionNode(int n) {
-        execute(CCM_COMMAND + " node%d decommission", n);
+        execute("ccm node%d decommission", n);
     }
 
-    public void updateConfig(Map<String, String> configs) {
-        StringBuilder confStr = new StringBuilder();
-        for (Map.Entry<String, String> entry : configs.entrySet()) {
-            confStr.append(entry.getKey() + ":" + entry.getValue() + " ");
-        }
-        execute(CCM_COMMAND + " updateconf " + confStr);
+    public void updateConfig(String name, String value) {
+        execute("ccm updateconf %s:%s", name, value);
+    }
+
+    public void populate(int n) {
+        execute("ccm populate -n %d -i %s", n, IP_PREFIX);
     }
 
     private void execute(String command, Object... args) {
-
-        String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
         try {
-            logger.debug("Executing: " + fullCommand);
-            CommandLine cli = CommandLine.parse(fullCommand);
-            Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(CASSANDRA_DIR);
+            String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
+            if(System.getProperty("os.name").toLowerCase().startsWith("win")){
+            	// fix to start ccm on windows platform
+            	fullCommand = "powershell -Command \"" + fullCommand + "\"";
+            }
+                        
+            Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
+            int retValue = p.waitFor();
 
-            LogOutputStream outStream = new LogOutputStream() {
-                @Override protected void processLine(String line, int logLevel) {
-                    logger.debug("ccmout> " + line);
-                }
-            };
-            LogOutputStream errStream = new LogOutputStream() {
-                @Override protected void processLine(String line, int logLevel) {
-                    logger.error("ccmerr> " + line);
-                }
-            };
-
-            ExecuteStreamHandler streamHandler = new PumpStreamHandler(outStream, errStream);
-            executor.setStreamHandler(streamHandler);
-
-            int retValue = executor.execute(cli, ENVIRONMENT_MAP);
             if (retValue != 0) {
-                logger.error("Non-zero exit code ({}) returned from executing ccm command: {}", retValue, fullCommand);
+                BufferedReader outReader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                BufferedReader errReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+
+                String line = outReader.readLine();
+                while (line != null) {
+                    logger.info("out> " + line);
+                    line = outReader.readLine();
+                }
+                line = errReader.readLine();
+                while (line != null) {
+                    logger.error("err> " + line);
+                    line = errReader.readLine();
+                }
                 throw new RuntimeException();
             }
         } catch (IOException e) {
-            throw new RuntimeException(String.format("The command %s failed to execute", fullCommand), e);
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void executeAndPrint(String command, Object... args) {
+        try {
+            String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
+            if(System.getProperty("os.name").toLowerCase().startsWith("win")){
+            	// fix to start ccm on windows platform
+            	fullCommand = "powershell -Command \"" + fullCommand + "\"";
+            }
+            
+            Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
+            int retValue = p.waitFor();
+
+            BufferedReader outReaderOutput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line = outReaderOutput.readLine();
+            while (line != null) {
+                System.out.println(line);
+                line = outReaderOutput.readLine();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -378,42 +305,15 @@ public class CCMBridge {
         return IP_PREFIX + Integer.toString(nodeNumber);
     }
 
-    public static class terminationHook extends Thread {
-        public void run() {
-            logger.debug("shut down hook task..");
-
-            if (PerClassSingleNodeCluster.cluster != null) {
-                PerClassSingleNodeCluster.cluster.close();
-            }
-            if (PerClassSingleNodeCluster.ccmBridge == null) {
-                logger.error("No cluster to discard");
-            } else if (PerClassSingleNodeCluster.erroredOut) {
-                PerClassSingleNodeCluster.ccmBridge.remove("test-class");
-                logger.info("Error during tests, kept C* logs in " + PerClassSingleNodeCluster.ccmBridge.ccmDir);
-            } else {
-                PerClassSingleNodeCluster.ccmBridge.remove("test-class");
-                PerClassSingleNodeCluster.ccmBridge.ccmDir.delete();
-            }
-
-        }
-    }
-
     // One cluster for the whole test class
     public static abstract class PerClassSingleNodeCluster {
 
-        protected static CCMBridge ccmBridge;
+        protected static CCMBridge cassandraCluster;
         private static boolean erroredOut;
-        private static boolean clusterInitialized=false;
-        private static AtomicLong ksNumber;
-        protected String keyspace;
-
-        protected static InetSocketAddress hostAddress;
-        protected static int[] ports;
+        private static boolean schemaCreated;
 
         protected static Cluster cluster;
         protected static Session session;
-        
-        protected final VersionNumber cassandraVersion = VersionNumber.parse(System.getProperty("cassandra.version"));
 
         protected abstract Collection<String> getTableDefinitions();
 
@@ -426,63 +326,59 @@ public class CCMBridge {
             erroredOut = true;
         }
 
-        @BeforeClass(groups = { "short", "long" })
-        public void beforeClass() {
-            maybeInitCluster();
-            initKeyspace();
-        }
-
-        @AfterClass(groups = { "short", "long" })
-        public void afterClass() {
+        public void createCluster() {
+            erroredOut = false;
+            schemaCreated = false;
+            cassandraCluster = CCMBridge.create("test", 1);
             try {
-                clearSimpleKeyspace();
-            } finally {
-                if(cluster != null) {
-                    cluster.close();
-                }
-            }
-        }
-
-        private void maybeInitCluster(){
-            if (!clusterInitialized){
-                try {
-                    //launch ccm cluster
-                    ccmBridge = CCMBridge.builder("test-class").withoutNodes().notStarted().build();
-
-                    ports = new int[5];
-                    for (int i = 0; i < 5; i++) {
-                        ports[i] = TestUtils.findAvailablePort(11000 + i);
-                    }
-
-                    ccmBridge.bootstrapNodeWithPorts(1, ports[0], ports[1], ports[2], ports[3], ports[4]);
-                    ksNumber = new AtomicLong(0);
-                    erroredOut = false;
-                    hostAddress = new InetSocketAddress(InetAddress.getByName(IP_PREFIX + 1), ports[2]);
-
-                    Runtime r = Runtime.getRuntime();
-                    r.addShutdownHook(new terminationHook());
-                    clusterInitialized = true;
-
-                } catch (UnknownHostException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-        }
-
-
-        private void initKeyspace() {
-            try {
-                Cluster.Builder builder = Cluster.builder();
-
+                Builder builder = Cluster.builder();
                 builder = configure(builder);
-
-                cluster = builder.addContactPointsWithPorts(Collections.singletonList(hostAddress)).build();
+                cluster = builder.addContactPoints(IP_PREFIX + '1').build();
                 session = cluster.connect();
-                keyspace = SIMPLE_KEYSPACE + "_" + ksNumber.incrementAndGet();
-                session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
+            } catch (NoHostAvailableException e) {
+                erroredOut = true;
+                for (Map.Entry<InetSocketAddress, Throwable> entry : e.getErrors().entrySet())
+                    logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
+                throw new RuntimeException(e);
+            }
+        }
 
-                session.execute("USE " + keyspace);
+        @AfterClass(groups = {"short", "long"})
+        public static void discardCluster() {
+            if (cluster != null)
+                cluster.close();
+
+            if (cassandraCluster == null) {
+                logger.error("No cluster to discard");
+            } else if (erroredOut) {
+                cassandraCluster.stop();
+                logger.info("Error during tests, kept C* logs in " + cassandraCluster.ccmDir);
+            } else {
+                cassandraCluster.remove();
+                cassandraCluster.ccmDir.delete();
+            }
+        }
+
+        @BeforeClass(groups = {"short", "long"})
+        public void beforeClass() {
+            createCluster();
+            maybeCreateSchema();
+        }
+
+        public void maybeCreateSchema() {
+
+            try {
+                if (schemaCreated)
+                    return;
+
+                try {
+                    session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, 1));
+                } catch (AlreadyExistsException e) {
+                    // It's ok, ignore
+                }
+
+                session.execute("USE " + SIMPLE_KEYSPACE);
+
                 for (String tableDef : getTableDefinitions()) {
                     try {
                         session.execute(tableDef);
@@ -490,34 +386,13 @@ public class CCMBridge {
                         // It's ok, ignore
                     }
                 }
-            } catch (AlreadyExistsException e) {
-                // It's ok, ignore (not supposed to go there)
-            } catch (NoHostAvailableException e) {
-                erroredOut = true;
-                for (Map.Entry<InetSocketAddress, Throwable> entry : e.getErrors().entrySet())
-                    logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
-                throw new RuntimeException(e);
+
+                schemaCreated = true;
             } catch (DriverException e) {
                 erroredOut = true;
                 throw e;
             }
         }
-
-        private void clearSimpleKeyspace() {
-            if(keyspace != null) {
-                // Temporarily extend read timeout to 1 minute to accommodate keyspaces with many tables.
-                // This should be more than enough although some tests create many tables, so dropping a keyspace
-                // could take as long as 12 seconds on restricted hardware.
-                int currentTimeout = cluster.getConfiguration().getSocketOptions().getReadTimeoutMillis();
-                cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(60000);
-                try {
-                    session.execute("DROP KEYSPACE " + keyspace);
-                } finally {
-                    cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(currentTimeout);
-                }
-            }
-        }
-
     }
 
     public static class CCMCluster {
@@ -533,16 +408,14 @@ public class CCMBridge {
             if (nbNodes == 0)
                 throw new IllegalArgumentException();
 
-            CCMBridge ccm = CCMBridge.builder("test").withNodes(nbNodes).build();
-            return new CCMCluster(ccm, builder, nbNodes);
+            return new CCMCluster(CCMBridge.create("test", nbNodes), builder, nbNodes);
         }
 
         public static CCMCluster create(int nbNodesDC1, int nbNodesDC2, Cluster.Builder builder) {
             if (nbNodesDC1 == 0)
                 throw new IllegalArgumentException();
 
-            CCMBridge ccm = CCMBridge.builder("test").withNodes(nbNodesDC1, nbNodesDC2).build();
-            return new CCMCluster(ccm, builder, nbNodesDC1 + nbNodesDC2);
+            return new CCMCluster(CCMBridge.create("test", nbNodesDC1, nbNodesDC2), builder, nbNodesDC1 + nbNodesDC2);
         }
 
         public static CCMCluster create(CCMBridge cassandraCluster, Cluster.Builder builder, int totalNodes) {
@@ -554,13 +427,10 @@ public class CCMBridge {
             try {
                 String[] contactPoints = new String[totalNodes];
                 for (int i = 0; i < totalNodes; i++)
-                    contactPoints[i] = IP_PREFIX + (i + 1);
+                    contactPoints[i] = IP_PREFIX + (i+1);
 
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    fail("Unexpected interruption");
-                }
+                try { Thread.sleep(1000); } catch (Exception e) {}
+
                 this.cluster = builder.addContactPoints(contactPoints).build();
                 this.session = cluster.connect();
             } catch (NoHostAvailableException e) {
@@ -588,89 +458,6 @@ public class CCMBridge {
                 cassandraCluster.remove();
                 cassandraCluster.ccmDir.delete();
             }
-        }
-    }
-
-    /** use {@link #builder(String)} to get an instance */
-    public static class Builder {
-        private final String clusterName;
-        private Integer[] nodes = { 1 };
-        private boolean start = true;
-        private String cassandraVersion = CASSANDRA_VERSION;
-        private String[] startOptions = new String[0];
-        private Map<String, String> cassandraConfiguration = Maps.newHashMap();
-
-
-        Builder(String clusterName) {
-            this.clusterName = clusterName;
-        }
-
-        /** Number of nodes for each DC. Defaults to [1] (1 DC with 1 node) */
-        public Builder withNodes(Integer... nodes) {
-            this.nodes = nodes;
-            return this;
-        }
-
-        public Builder withoutNodes() {
-            return withNodes();
-        }
-
-        public Builder withSSL(boolean requireClientAuth) {
-            cassandraConfiguration.put("client_encryption_options.enabled", "true");
-            cassandraConfiguration.put("client_encryption_options.keystore", DEFAULT_SERVER_KEYSTORE_FILE.getAbsolutePath());
-            cassandraConfiguration.put("client_encryption_options.keystore_password", DEFAULT_SERVER_KEYSTORE_PASSWORD);
-
-            if (requireClientAuth) {
-                cassandraConfiguration.put("client_encryption_options.require_client_auth", "true");
-                cassandraConfiguration.put("client_encryption_options.truststore", DEFAULT_SERVER_TRUSTSTORE_FILE.getAbsolutePath());
-                cassandraConfiguration.put("client_encryption_options.truststore_password", DEFAULT_SERVER_TRUSTSTORE_PASSWORD);
-            }
-            return this;
-        }
-
-        /** Whether to start the cluster immediately (defaults to true if this is never called) */
-        public Builder notStarted() {
-            this.start = false;
-            return this;
-        }
-
-        /** Defaults to system property cassandra.version */
-        public Builder withCassandraVersion(String cassandraVersion) {
-            this.cassandraVersion = "-v " + cassandraVersion;
-            return this;
-        }
-
-        /** Free-form options that will be added at the end of the start command */
-        public Builder withStartOptions(String... options) {
-            this.startOptions = options;
-            return this;
-        }
-
-        /** Customizes entries in cassandra.yaml (can be called multiple times) */
-        public Builder withCassandraConfiguration(String key, String value) {
-            this.cassandraConfiguration.put(key, value);
-            return this;
-        }
-
-        public CCMBridge build() {
-            CCMBridge ccm = new CCMBridge();
-            ccm.execute(buildCreateCommand());
-            ccm.updateConfig(cassandraConfiguration);
-            if (start)
-                ccm.start();
-            return ccm;
-        }
-
-        private String buildCreateCommand() {
-            StringBuilder result = new StringBuilder(CCM_COMMAND + " create");
-            result.append(" " + clusterName);
-            result.append(" -i" + IP_PREFIX);
-            result.append(" " + cassandraVersion);
-            if (nodes.length > 0)
-                result.append(" -n " + Joiner.on(":").join(nodes));
-            if (startOptions.length > 0)
-                result.append(" " + Joiner.on(" ").join(startOptions));
-            return result.toString();
         }
     }
 }
