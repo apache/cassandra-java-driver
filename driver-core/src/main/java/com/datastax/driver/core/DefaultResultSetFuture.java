@@ -84,7 +84,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                         //    session.poolsState.setKeyspace(null);
                                         session.cluster.manager.metadata.removeKeyspace(scc.keyspace);
                                     } else {
-                                        KeyspaceMetadata keyspace = session.cluster.manager.metadata.getKeyspace(scc.keyspace);
+                                        KeyspaceMetadata keyspace = session.cluster.manager.metadata.getKeyspaceInternal(scc.keyspace);
                                         if (keyspace == null)
                                             logger.warn("Received a DROPPED notification for {}.{}, but this keyspace is unknown in our metadata",
                                                 scc.keyspace, scc.columnFamily);

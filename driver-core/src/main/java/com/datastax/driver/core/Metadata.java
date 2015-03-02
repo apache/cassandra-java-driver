@@ -362,6 +362,14 @@ public class Metadata {
         return keyspaces.get(handleId(keyspace));
     }
 
+    /**
+     * Used when the keyspace name is unquoted and in the exact case we store it in
+     * (typically when we got it from an internal call, not from the user).
+     */
+    KeyspaceMetadata getKeyspaceInternal(String keyspace) {
+        return keyspaces.get(keyspace);
+    }
+
     void removeKeyspace(String keyspace) {
         keyspaces.remove(keyspace);
         if (tokenMap != null)
