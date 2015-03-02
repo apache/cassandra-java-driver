@@ -20,8 +20,14 @@
  */
 package com.datastax.driver.jdbc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeClass;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -43,17 +49,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
+import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.jdbc.CassandraStatement;
 import com.datastax.driver.jdbc.MetadataResultSets;
 
 
 public class MetadataResultSetsUnitTest
 {
-    private static final String HOST = System.getProperty("host", ConnectionDetails.getHost());
+    private static String HOST = System.getProperty("host", ConnectionDetails.getHost());
     private static final int PORT = Integer.parseInt(System.getProperty("port", ConnectionDetails.getPort()+""));
     private static final String KEYSPACE1 = "testks1";
     private static final String KEYSPACE2 = "testks2";
@@ -63,9 +66,15 @@ public class MetadataResultSetsUnitTest
     private static java.sql.Connection con = null;
     
 
+    private static CCMBridge ccmBridge = null;
+    
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
+    	/*System.setProperty("cassandra.version", "2.1.2");*/
+    	HOST = CCMBridge.ipOfNode(1);
+    	
         Class.forName("com.datastax.driver.jdbc.CassandraDriver");
         String URL = String.format("jdbc:cassandra://%s:%d/%s?version=3.0.0",HOST,PORT,"system");
         System.out.println("Connection URL = '"+URL +"'");
@@ -124,9 +133,10 @@ public class MetadataResultSetsUnitTest
     @AfterClass
     public static void tearDownAfterClass() throws Exception
     {
-        if (con!=null) con.close();
+    	if (con != null) con.close();
+        
     }
-
+    
     private final String showColumn(int index, ResultSet result) throws SQLException
     {
         StringBuilder sb = new StringBuilder();

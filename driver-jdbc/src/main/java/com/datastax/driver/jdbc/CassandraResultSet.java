@@ -708,16 +708,57 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         checkIndex(index);  
         List<DataType>  datatypes=null;
         
+        if(currentRow.getColumnDefinitions().getType(index-1).getName().toString().equals("udt")){
+        	return (Object) currentRow.getUDTValue(index-1);
+        }
+        
+        if(currentRow.getColumnDefinitions().getType(index-1).getName().toString().equals("tuple")){
+        	return (Object) currentRow.getTupleValue(index-1);
+        }
+        
         if(currentRow.getColumnDefinitions().getType(index-1).isCollection()){
         	datatypes = currentRow.getColumnDefinitions().getType(index-1).getTypeArguments();
-        	if(currentRow.getColumnDefinitions().getType(index-1).getName().toString().equals("set")){        	
-        		return (Object) Sets.newLinkedHashSet(currentRow.getSet(index-1,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType()));
+        	if(currentRow.getColumnDefinitions().getType(index-1).getName().toString().equals("set")){
+        		if( datatypes.get(0).getName().toString().equals("udt")){
+        			return (Object) Sets.newLinkedHashSet(currentRow.getSet(index-1,TypesMap.getTypeForComparator("udt").getType()));
+        		}else if( datatypes.get(0).getName().toString().equals("tuple")){
+        			if( datatypes.get(0).getName().toString().equals("udt")){
+            			return (Object) Lists.newArrayList(currentRow.getList(index-1,TypesMap.getTypeForComparator("udt").getType()));
+            		}else if( datatypes.get(0).getName().toString().equals("tuple")){
+            			return (Object) Lists.newArrayList(currentRow.getList(index-1,TypesMap.getTypeForComparator("tuple").getType()));
+            		}
+            		else{
+            			return (Object) Lists.newArrayList(currentRow.getList(index-1,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType()));
+            		}
+        			
+        		}
+        		else{
+        			return (Object) Sets.newLinkedHashSet(currentRow.getSet(index-1,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType()));
+        		}
+        		
         	}
         	if(currentRow.getColumnDefinitions().getType(index-1).getName().toString().equals("list")){        		
         		return (Object) Lists.newArrayList(currentRow.getList(index-1,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType()));
         	}
-        	if(currentRow.getColumnDefinitions().getType(index-1).getName().toString().equals("map")){        		
-        		return (Object) Maps.newHashMap(currentRow.getMap(index-1,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType(),TypesMap.getTypeForComparator(datatypes.get(1).toString()).getType()));
+        	if(currentRow.getColumnDefinitions().getType(index-1).getName().toString().equals("map")){ 
+        		
+        		Class<?> keyType = TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType();
+        		if( datatypes.get(0).getName().toString().equals("udt")){
+        			keyType = TypesMap.getTypeForComparator("udt").getType();
+        		}else if( datatypes.get(0).getName().toString().equals("tuple")){
+        			keyType = TypesMap.getTypeForComparator("tuple").getType();
+        			
+        		}
+        		
+        		Class<?> valueType = TypesMap.getTypeForComparator(datatypes.get(1).toString()).getType();
+        		if( datatypes.get(1).getName().toString().equals("udt")){
+        			valueType = TypesMap.getTypeForComparator("udt").getType();
+        		}else if( datatypes.get(1).getName().toString().equals("tuple")){
+        			valueType = TypesMap.getTypeForComparator("tuple").getType();
+        			
+        		}
+        		
+        		return (Object) Maps.newHashMap(currentRow.getMap(index-1,keyType,valueType));
         	}
         	
         }else{
@@ -772,19 +813,57 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         checkName(name);
         List<DataType>  datatypes=null;
         
+        if(currentRow.getColumnDefinitions().getType(name).getName().toString().equals("udt")){        	
+        	return (Object) currentRow.getUDTValue(name);
+        }
+        
+        if(currentRow.getColumnDefinitions().getType(name).getName().toString().equals("tuple")){
+        	return (Object) currentRow.getTupleValue(name);
+        }
+        
+        
         if(currentRow.getColumnDefinitions().getType(name).isCollection()){
         	datatypes = currentRow.getColumnDefinitions().getType(name).getTypeArguments();
-        	if(currentRow.getColumnDefinitions().getType(name).getName().toString().equals("set")){        	
-        		return (Object) Sets.newLinkedHashSet(currentRow.getSet(name,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType()));
+        	if(currentRow.getColumnDefinitions().getType(name).getName().toString().equals("set")){             		
+        		if( datatypes.get(0).getName().toString().equals("udt")){
+        			return (Object) Sets.newLinkedHashSet(currentRow.getSet(name,TypesMap.getTypeForComparator("udt").getType()));
+        		}else if( datatypes.get(0).getName().toString().equals("tuple")){
+        			return (Object) Sets.newLinkedHashSet(currentRow.getSet(name,TypesMap.getTypeForComparator("tuple").getType()));
+        		}
+        		else{
+        			return (Object) Sets.newLinkedHashSet(currentRow.getSet(name,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType()));
+        		}
         	}
         	if(currentRow.getColumnDefinitions().getType(name).getName().toString().equals("list")){        		
+        		if( datatypes.get(0).getName().toString().equals("udt")){
+        			return (Object) Lists.newArrayList(currentRow.getList(name,TypesMap.getTypeForComparator("udt").getType()));
+        		}else if( datatypes.get(0).getName().toString().equals("tuple")){
+        			return (Object) Lists.newArrayList(currentRow.getList(name,TypesMap.getTypeForComparator("tuple").getType()));
+        		}
+        		else{
+        			return (Object) Lists.newArrayList(currentRow.getList(name,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType()));
+        		}
+        	}
+        	if(currentRow.getColumnDefinitions().getType(name).getName().toString().equals("map")){
+        		Class<?> keyType = TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType();
+        		if( datatypes.get(0).getName().toString().equals("udt")){
+        			keyType = TypesMap.getTypeForComparator("udt").getType();
+        		}else if( datatypes.get(0).getName().toString().equals("tuple")){
+        			keyType = TypesMap.getTypeForComparator("tuple").getType();
+        			
+        		}
         		
-        		return (Object) Lists.newArrayList(currentRow.getList(name,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType()));
+        		Class<?> valueType = TypesMap.getTypeForComparator(datatypes.get(1).toString()).getType();
+        		if( datatypes.get(1).getName().toString().equals("udt")){
+        			valueType = TypesMap.getTypeForComparator("udt").getType();
+        		}else if( datatypes.get(1).getName().toString().equals("tuple")){
+        			valueType = TypesMap.getTypeForComparator("tuple").getType();
+        			
+        		}
+        		
+        		return (Object) Maps.newHashMap(currentRow.getMap(name,keyType,valueType));
         	}
-        	if(currentRow.getColumnDefinitions().getType(name).getName().toString().equals("map")){        		
-        		return (Object) Maps.newHashMap(currentRow.getMap(name,TypesMap.getTypeForComparator(datatypes.get(0).toString()).getType(),TypesMap.getTypeForComparator(datatypes.get(1).toString()).getType()));
-        	}
-        	
+        
         }else{
         	String typeName = currentRow.getColumnDefinitions().getType(name).getName().toString();
         	

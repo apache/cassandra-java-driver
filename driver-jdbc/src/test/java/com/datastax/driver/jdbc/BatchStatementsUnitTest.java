@@ -1,7 +1,15 @@
 package com.datastax.driver.jdbc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeClass;
 
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -13,18 +21,17 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.CCMBridge;
 
 public class BatchStatementsUnitTest {
 	
     private static final Logger LOG = LoggerFactory.getLogger(CollectionsUnitTest.class);
 
 
-    private static final String HOST = System.getProperty("host", ConnectionDetails.getHost());
+    public static String HOST = System.getProperty("host", ConnectionDetails.getHost());
     private static final int PORT = Integer.parseInt(System.getProperty("port", ConnectionDetails.getPort() + ""));
     private static final String KEYSPACE = "testks";
     private static final String SYSTEM = "system";
@@ -33,12 +40,15 @@ public class BatchStatementsUnitTest {
     private static java.sql.Connection con = null;
     private static java.sql.Connection con2 = null;
 
-    /**
-     * @throws java.lang.Exception
-     */
+
+    
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
+    	
+    	HOST = CCMBridge.ipOfNode(1);        
+
+ 
         Class.forName("com.datastax.driver.jdbc.CassandraDriver");
         String URL = String.format("jdbc:cassandra://%s:%d/%s?debug=true&version=%s", HOST, PORT, SYSTEM, CQLV3);
 
@@ -99,15 +109,14 @@ public class BatchStatementsUnitTest {
         if (LOG.isDebugEnabled()) LOG.debug("Unit Test: 'CollectionsTest' initialization complete.\n\n");
     }
 
-    /**
-     * Close down the connection when complete
-     */
+    
     @AfterClass
     public static void tearDownAfterClass() throws Exception
     {
-        if (con != null) con.close();
-        if (con2 != null) con2.close();
+    	if (con != null) con.close();
+        if (con2 != null) con2.close();        
     }
+ 
 
     @Test
     public void testBatchSimpleStatement() throws Exception
