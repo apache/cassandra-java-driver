@@ -2177,7 +2177,7 @@ public class Cluster implements Closeable {
                                     manager.metadata.removeKeyspace(scc.keyspace);
                                     break;
                                 case TABLE:
-                                    keyspace = manager.metadata.getKeyspace(scc.keyspace);
+                                    keyspace = manager.metadata.getKeyspaceInternal(scc.keyspace);
                                     if (keyspace == null)
                                         logger.warn("Received a DROPPED notification for table {}.{}, but this keyspace is unknown in our metadata",
                                             scc.keyspace, scc.name);
@@ -2185,7 +2185,7 @@ public class Cluster implements Closeable {
                                         keyspace.removeTable(scc.name);
                                     break;
                                 case TYPE:
-                                    keyspace = manager.metadata.getKeyspace(scc.keyspace);
+                                    keyspace = manager.metadata.getKeyspaceInternal(scc.keyspace);
                                     if (keyspace == null)
                                         logger.warn("Received a DROPPED notification for UDT {}.{}, but this keyspace is unknown in our metadata",
                                             scc.keyspace, scc.name);

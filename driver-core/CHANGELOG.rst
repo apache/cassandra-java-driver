@@ -11,6 +11,7 @@ Merged from 2.0 branch:
 - [improvement] Reduce level of logs on missing rpc_address (JAVA-568)
 - [improvement] Expose node token and range information (JAVA-312)
 - [bug] Fix guava dependency when using OSGI (JAVA-620)
+- [bug] Fix handling of DROP events when ks name is case-sensitive (JAVA-678)
 - [bug] Prevent race between cancellation and query completion (JAVA-614)
 - [bug] Prevent cancel and timeout from cancelling unrelated ResponseHandler if
   streamId was already released and reused (JAVA-632).

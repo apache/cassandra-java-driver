@@ -95,7 +95,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                             session.cluster.manager.metadata.removeKeyspace(scc.keyspace);
                                             break;
                                         case TABLE:
-                                            keyspace = session.cluster.manager.metadata.getKeyspace(scc.keyspace);
+                                            keyspace = session.cluster.manager.metadata.getKeyspaceInternal(scc.keyspace);
                                             if (keyspace == null)
                                                 logger.warn("Received a DROPPED notification for table {}.{}, but this keyspace is unknown in our metadata",
                                                     scc.keyspace, scc.name);
@@ -103,7 +103,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                                 keyspace.removeTable(scc.name);
                                             break;
                                         case TYPE:
-                                            keyspace = session.cluster.manager.metadata.getKeyspace(scc.keyspace);
+                                            keyspace = session.cluster.manager.metadata.getKeyspaceInternal(scc.keyspace);
                                             if (keyspace == null)
                                                 logger.warn("Received a DROPPED notification for UDT {}.{}, but this keyspace is unknown in our metadata",
                                                     scc.keyspace, scc.name);
