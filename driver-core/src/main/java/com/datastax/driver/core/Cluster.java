@@ -2131,7 +2131,7 @@ public class Cluster implements Closeable {
                             if (scc.table.isEmpty())
                                 manager.metadata.removeKeyspace(scc.keyspace);
                             else {
-                                KeyspaceMetadata keyspace = manager.metadata.getKeyspace(scc.keyspace);
+                                KeyspaceMetadata keyspace = manager.metadata.getKeyspaceInternal(scc.keyspace);
                                 if (keyspace == null)
                                     logger.warn("Received a DROPPED notification for {}.{}, but this keyspace is unknown in our metadata",
                                         scc.keyspace, scc.table);
