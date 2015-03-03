@@ -15,18 +15,12 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.net.InetAddress;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
-import com.google.common.collect.ImmutableList;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.*;
 
-import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 import static org.testng.Assert.*;
@@ -38,9 +32,7 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
     @Override
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
-                             "CREATE TABLE dateTest (t timestamp PRIMARY KEY)",
-                             "CREATE TYPE udt (i int, a inet)",
-                             "CREATE TABLE udtTest(k int PRIMARY KEY, t frozen<udt>, l list<frozen<udt>>)");
+                             "CREATE TABLE dateTest (t timestamp PRIMARY KEY)");
     }
 
     @Test(groups = "short")
@@ -109,41 +101,5 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         Row r2 = rows.get(1);
         assertEquals("batchTest2", r2.getString("k"));
         assertEquals("val2", r2.getString("t"));
-    }
-
-    @Test(groups = "short")
-    public void insertUdtTest() throws Exception {
-        UserType udtType = cluster.getMetadata().getKeyspace("ks").getUserType("udt");
-        UDTValue udtValue = udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
-
-        Statement insert = insertInto("udtTest").value("k", 1).value("t", udtValue);
-        assertEquals(insert.toString(), "INSERT INTO udtTest(k,t) VALUES (1,{i:2, a:'127.0.0.1'});");
-
-        session.execute(insert);
-
-        List<Row> rows = session.execute(select().from("udtTest").where(eq("k", 1))).all();
-
-        assertEquals(rows.size(), 1);
-
-        Row r1 = rows.get(0);
-        assertEquals("127.0.0.1", r1.getUDTValue("t").getInet("a").getHostAddress());
-    }
-
-    @Test(groups = "short")
-    public void should_handle_collections_of_UDT() throws Exception {
-        UserType udtType = cluster.getMetadata().getKeyspace("ks").getUserType("udt");
-        UDTValue udtValue = udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
-
-        Statement insert = insertInto("udtTest").value("k", 1).value("l", ImmutableList.of(udtValue));
-        assertThat(insert.toString()).isEqualTo("INSERT INTO udtTest(k,l) VALUES (1,[{i:2, a:'127.0.0.1'}]);");
-
-        session.execute(insert);
-
-        List<Row> rows = session.execute(select().from("udtTest").where(eq("k", 1))).all();
-
-        assertThat(rows.size()).isEqualTo(1);
-
-        Row r1 = rows.get(0);
-        assertThat(r1.getList("l", UDTValue.class).get(0).getInet("a").getHostAddress()).isEqualTo("127.0.0.1");
     }
 }

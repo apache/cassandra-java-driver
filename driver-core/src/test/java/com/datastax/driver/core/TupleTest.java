@@ -25,15 +25,15 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
-import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
-import static com.datastax.driver.core.TestUtils.versionCheck;
+import com.datastax.driver.core.utils.CassandraVersion;
 
+import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
+
+@CassandraVersion(major=2.1)
 public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
-        versionCheck(2.1, 0, "This will only work with Cassandra 2.1.0");
-
         return Arrays.asList("CREATE TABLE t (k int PRIMARY KEY, v frozen<tuple<int, text, float>>)");
     }
 

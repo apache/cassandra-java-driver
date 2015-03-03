@@ -32,9 +32,11 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 import static com.datastax.driver.core.Metadata.quote;
-import static com.datastax.driver.core.TestUtils.versionCheck;
 import static org.testng.Assert.assertNotEquals;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+
+@CassandraVersion(major=2.1)
 public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private final static List<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes());
@@ -43,8 +45,6 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
-        versionCheck(2.1, 0, "This will only work with Cassandra 2.1.0");
-
         String type1 = "CREATE TYPE phone (alias text, number text)";
         String type2 = "CREATE TYPE address (street text, \"ZIP\" int, phones set<frozen<phone>>)";
 

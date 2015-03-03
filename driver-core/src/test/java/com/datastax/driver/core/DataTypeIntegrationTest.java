@@ -15,15 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
@@ -149,6 +144,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         tables.addAll(tablesWithCollectionsOfPrimitives());
         tables.addAll(tablesWithMapsOfPrimitives());
         tables.addAll(tablesWithNestedCollections());
+        tables.addAll(tablesWithRandomlyGeneratedNestedCollections());
 
         return ImmutableList.copyOf(tables);
     }
@@ -219,5 +215,108 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
             }
         }
         return tables;
+    }
+
+    private static Collection<? extends TestTable> tablesWithRandomlyGeneratedNestedCollections() {
+        List<TestTable> tables = Lists.newArrayList();
+
+        DataType nestedListType = buildNestedType(DataType.Name.LIST, 5);
+        DataType nestedSetType = buildNestedType(DataType.Name.SET, 5);
+        DataType nestedMapType = buildNestedType(DataType.Name.MAP, 5);
+
+        tables.add(new TestTable(nestedListType, nestedObject(nestedListType), "2.1.3"));
+        tables.add(new TestTable(nestedSetType, nestedObject(nestedSetType), "2.1.3"));
+        tables.add(new TestTable(nestedMapType, nestedObject(nestedMapType), "2.1.3"));
+        return tables;
+    }
+
+    /**
+     * Populate a nested collection based on the given type and it's arguments.
+     */
+    public static Object nestedObject(DataType type) {
+
+        int typeIdx = type.getTypeArguments().size() > 1 ? 1 : 0;
+        DataType argument = type.getTypeArguments().get(typeIdx);
+        boolean isAtBottom = !argument.isCollection();
+
+        if(isAtBottom) {
+            switch(type.getName()) {
+                case LIST:
+                    return Lists.newArrayList(1, 2, 3);
+                case SET:
+                    return Sets.newHashSet(1, 2, 3);
+                case MAP:
+                    Map<Integer, Integer> map = Maps.newHashMap();
+                    map.put(1, 2);
+                    map.put(3, 4);
+                    map.put(5, 6);
+                    return map;
+            }
+        }
+        else {
+            switch(type.getName()) {
+                case LIST:
+                    List<Object> l = Lists.newArrayListWithExpectedSize(2);
+                    for(int i = 0; i < 5; i++) {
+                        l.add(nestedObject(argument));
+                    }
+                    return l;
+                case SET:
+                    Set<Object> s = Sets.newHashSet();
+                    for(int i = 0; i < 5; i++) {
+                        s.add(nestedObject(argument));
+                    }
+                    return s;
+                case MAP:
+                    Map<Integer, Object> map = Maps.newHashMap();
+                    for(int i = 0; i < 5; i++) {
+                        map.put(i, nestedObject(argument));
+                    }
+                    return map;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @param baseType The base type to use, one of SET, MAP, LIST.
+     * @param depth How many subcollections to generate.
+     * @return a DataType that is a nested collection with the given baseType with the
+     * given depth.
+     */
+    public static DataType buildNestedType(DataType.Name baseType, int depth) {
+        Random r = new Random();
+        DataType t = null;
+
+        for (int i = 1; i <= depth; i++) {
+            int chooser = r.nextInt(3);
+            if(t == null) {
+                if(chooser == 0) {
+                    t = DataType.frozenList(DataType.cint());
+                } else if(chooser == 1) {
+                    t = DataType.frozenSet(DataType.cint());
+                } else {
+                    t = DataType.frozenMap(DataType.cint(), DataType.cint());
+                }
+            } else if(i == depth) {
+                switch(baseType) {
+                    case LIST:
+                        return DataType.list(t);
+                    case SET:
+                        return DataType.set(t);
+                    case MAP:
+                        return DataType.map(DataType.cint(), t);
+                }
+            } else {
+                if(chooser == 0) {
+                    t = DataType.frozenList(t);
+                } else if(chooser == 1) {
+                    t = DataType.frozenSet(t);
+                } else {
+                    t = DataType.frozenMap(DataType.cint(), t);
+                }
+            }
+        }
+        return null;
     }
 }

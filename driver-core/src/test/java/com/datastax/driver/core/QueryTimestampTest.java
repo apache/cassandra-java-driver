@@ -11,18 +11,16 @@ import static org.testng.Assert.assertTrue;
 import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.Metrics.Errors;
 import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
-
-import static com.datastax.driver.core.TestUtils.versionCheck;
+import com.datastax.driver.core.utils.CassandraVersion;
 
 /**
  * Tests the behavior of client-provided timestamps with protocol v3.
  */
+@CassandraVersion(major=2.1)
 public class QueryTimestampTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
-        versionCheck(2.1, 0, "This will only work with Cassandra 2.1.0");
-
         return Lists.newArrayList("CREATE TABLE foo (k int PRIMARY KEY, v int)");
     }
 

@@ -1,24 +1,26 @@
 package com.datastax.driver.mapping;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
+@CassandraVersion(major=2.1, minor=3)
 public class MapperNestedCollectionsTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TYPE testType(i int)",
+            "CREATE TYPE testType(i int, ls list<frozen<set<int>>>)",
             "CREATE TABLE testTable (k int primary key, "
                 + "m1 map<text, frozen<map<int, int>>>, " // nested collection
                 + "m2 map<text, frozen<map<int, frozen<testType>>>>)" // nested collection with UDT
@@ -32,7 +34,14 @@ public class MapperNestedCollectionsTest extends CCMBridge.PerClassSingleNodeClu
         TestTable testTable = new TestTable();
         testTable.setK(1);
         testTable.setM1(ImmutableMap.<String, Map<Integer, Integer>>of("bar", ImmutableMap.of(1, 2)));
-        testTable.setM2(ImmutableMap.<String, Map<Integer, TestType>>of("bar", ImmutableMap.of(1, new TestType(2))));
+
+        Set<Integer> s1 = Sets.newHashSet(1,2,3);
+        Set<Integer> s2 = Sets.newHashSet(4,5,6);
+        List<Set<Integer>> ls = new ArrayList<Set<Integer>>();
+        ls.add(s1);
+        ls.add(s2);
+
+        testTable.setM2(ImmutableMap.<String, Map<Integer, TestType>>of("bar", ImmutableMap.of(1, new TestType(2, ls))));
 
         mapper.save(testTable);
 
@@ -65,11 +74,21 @@ public class MapperNestedCollectionsTest extends CCMBridge.PerClassSingleNodeClu
     public static class TestType {
         private int i;
 
+        @Frozen("list<frozen<set<int>>>")
+        private List<Set<Integer>> ls;
+
         public TestType() {
+            ls = Lists.newArrayList();
         }
 
         public TestType(int i) {
+            this();
             this.i = i;
+        }
+
+        public TestType(int i, List<Set<Integer>> ls) {
+            this(i);
+            this.ls = ls;
         }
 
         public int getI() {
@@ -80,20 +99,36 @@ public class MapperNestedCollectionsTest extends CCMBridge.PerClassSingleNodeClu
             this.i = i;
         }
 
+        public List<Set<Integer>> getLs() {
+            return ls;
+        }
+
+        public void setLs(List<Set<Integer>> ls) {
+            this.ls = ls;
+        }
+
         @Override
-        public boolean equals(Object other) {
-            if (this == other)
+        public boolean equals(Object o) {
+            if (this == o)
                 return true;
-            if (other instanceof TestType) {
-                TestType that = (TestType)other;
-                return this.i == that.i;
-            }
-            return false;
+            if (!(o instanceof TestType))
+                return false;
+
+            TestType testType = (TestType)o;
+
+            if (i != testType.i)
+                return false;
+            if (!ls.equals(testType.ls))
+                return false;
+
+            return true;
         }
 
         @Override
         public int hashCode() {
-            return i;
+            int result = i;
+            result = 31 * result + ls.hashCode();
+            return result;
         }
     }
 

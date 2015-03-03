@@ -755,6 +755,10 @@ public class QueryBuilderTest {
         statement = update("foo").with(set("m", ImmutableMap.of(1, list, 2, list))).where(eq("k", 1));
         assertThat(statement.toString()).isEqualTo(query);
 
+        query = "UPDATE foo SET m=m+{1:[[1],[2]],2:[[1],[2]]} WHERE k=1;";
+        statement = update("foo").with(putAll("m", ImmutableMap.of(1, list, 2, list))).where(eq("k", 1));
+        assertThat(statement.toString()).isEqualTo(query);
+
         query = "UPDATE foo SET l=[[1]]+l WHERE k=1;";
         statement = update("foo").with(prepend("l", ImmutableList.of(1))).where(eq("k", 1));
         assertThat(statement.toString()).isEqualTo(query);
