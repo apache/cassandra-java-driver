@@ -123,6 +123,7 @@ public class UtilsUnitTest
     	System.out.println(lbPolicyStr);
     	AssertJUnit.assertTrue(Utils.parsePolicy(lbPolicyStr)==null);
     	System.out.println("====================");
+    	
     }
   
     @Test

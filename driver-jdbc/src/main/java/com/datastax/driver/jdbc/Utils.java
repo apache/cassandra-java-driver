@@ -639,13 +639,19 @@ public class Utils
     	String lb_regex = "([a-zA-Z]*Policy)(\\()(.*)(\\))";
     	Pattern lb_pattern = Pattern.compile(lb_regex);
     	Matcher lb_matcher = lb_pattern.matcher(loadBalancingPolicyString);
-    	if(lb_matcher.matches()){
-	    	if(lb_matcher.groupCount()>0){
-	    		// Primary LB policy has been specified
-	    		String primaryLoadBalancingPolicy = lb_matcher.group(1);
-	    		String loadBalancingPolicyParams = lb_matcher.group(3);
-	    		return getPolicy(primaryLoadBalancingPolicy, loadBalancingPolicyParams);
+    	try{
+	    	if(lb_matcher.matches()){
+		    	if(lb_matcher.groupCount()>0){
+		    		// Primary LB policy has been specified
+		    		String primaryLoadBalancingPolicy = lb_matcher.group(1);
+		    		System.out.println("primaryLoadBalancingPolicy : " + primaryLoadBalancingPolicy);
+		    		String loadBalancingPolicyParams = lb_matcher.group(3);
+		    		System.out.println("loadBalancingPolicyParams : " + loadBalancingPolicyParams);
+		    		return getPolicy(primaryLoadBalancingPolicy, loadBalancingPolicyParams);
+		    	}
 	    	}
+    	}catch(Exception e){
+    		e.printStackTrace();
     	}
 		return null;
     }
@@ -656,58 +662,68 @@ public class Utils
     	if(!lbString.contains(".")){
 			lbString="com.datastax.driver.core.policies."+ lbString;
 		}
+    	
     	if(parameters.length()>0){
     		// Child policy or parameters have been specified
+    		System.out.println("parameters = " + parameters);
+    		String paramsRegex = "([^,]+\\(.+?\\))|([^,]+)";    
+    		String lb_regex = "([a-zA-Z]*Policy)(\\()(.*)(\\))";
+    		Pattern param_pattern = Pattern.compile(paramsRegex);
+        	Matcher lb_matcher = param_pattern.matcher(parameters);
+        	
+        	//String[] parameterArray = parameters.split(",");
+    		//Object[] paramList = new Object[lb_matcher.groupCount()-1];
+    		ArrayList<Object> paramList = Lists.newArrayList();
+    		ArrayList<Class> primaryParametersClasses = Lists.newArrayList();
+        	int nb=0;
+        	while(lb_matcher.find()){
+	        	if(lb_matcher.groupCount()>0){	        		
+	        			try{
+		        			if(lb_matcher.group().contains("(")){
+		        				// We are dealing with child policies here
+		        				System.out.println("Policy : " + lb_matcher.group());
+		        				primaryParametersClasses.add(LoadBalancingPolicy.class);
+		        				// Parse and add child policy to the parameter list
+		        				paramList.add(parsePolicy(lb_matcher.group()));
+		        				nb++;
+		        			}else{
+		        				// We are dealing with parameters that are not policies here
+		        				String param = lb_matcher.group();
+		        				if(param.contains("\"")){
+		    	    				primaryParametersClasses.add(String.class);
+		    	    				paramList.add(new String(param.trim().replace("\"", "")));
+		    	    			}else if(param.contains(".")){
+		    	    				primaryParametersClasses.add(Float.class);
+		    	    				paramList.add(Double.parseDouble(param.trim()));
+		    	    			}else{
+		    	    				primaryParametersClasses.add(Integer.class);
+		    	    				paramList.add(Integer.parseInt(param.trim()));
+		    	    			}
+		        				nb++;
+		        			}
+	        			}catch(Exception e){
+	        				e.printStackTrace();
+	        			}
+	        		}
+	        		
+	        }
+        	        	
+        	
+        	if(nb>0){
+        		// Instantiate load balancing policy with parameters
+        		Class<?> clazz = Class.forName(lbString);
+        		Constructor<?> constructor = clazz.getConstructor(primaryParametersClasses.toArray(new Class[primaryParametersClasses.size()]));
+        		
+        		return (LoadBalancingPolicy) constructor.newInstance(paramList.toArray(new Object[paramList.size()]));
+        	}else{
+        		// Only one policy has been specified, with no parameter or child policy         		
+        		Class<?> clazz = Class.forName(lbString);			
+        		policy =  (LoadBalancingPolicy) clazz.newInstance();
     		
-	    	if(parameters.contains("(")){
-	    		// child policy has been specified
-	    		String lb_regex = "([a-zA-Z]*Policy)(\\()(.*)(\\))";
-	        	Pattern lb_pattern = Pattern.compile(lb_regex);
-	        	Matcher lb_matcher = lb_pattern.matcher(parameters);
-	        	if(lb_matcher.matches()){
-		        	if(lb_matcher.groupCount()>0){
-		        		
-		        		String childLoadBalancingPolicy = lb_matcher.group(1);  
-		        		String childParams = lb_matcher.group(3);
-		        		childPolicy = getPolicy(childLoadBalancingPolicy, childParams);
-		        		Class<?> clazz = Class.forName(lbString);
-		        		Object[] paramList = new Object[]{childPolicy};
-		        		
-		        		ArrayList<Class> primaryParametersClasses = Lists.newArrayList();
-		        		
-		        		/* if(!lbString.contains(".")){
-		        			lbString="com.datastax.driver.core.policies."+ lbString;
-		        		}	*/        		
-		        		primaryParametersClasses.add(LoadBalancingPolicy.class);
-		        		Constructor<?> constructor = clazz.getConstructor(primaryParametersClasses.toArray(new Class[primaryParametersClasses.size()]));
-		        		
-		        		return (LoadBalancingPolicy) constructor.newInstance(paramList);
-		        	}    		
-	        	}
-	    	}else{
-	    		// No child policy, but parameters have been specified
-	    		String[] parameterArray = parameters.split(",");
-	    		Object[] paramList = new Object[parameterArray.length];
-	    		ArrayList<Class> primaryParametersClasses = Lists.newArrayList();
-	    		int nb = 0;
-	    		for(String param:parameterArray){    					
-	    			if(param.contains("\"")){
-	    				primaryParametersClasses.add(String.class);
-	    				paramList[nb] = new String(param.trim().replace("\"", ""));
-	    			}else if(param.contains(".")){
-	    				primaryParametersClasses.add(Float.class);
-	    				paramList[nb] = Double.parseDouble(param.trim());
-	    			}else{
-	    				primaryParametersClasses.add(Integer.class);
-	    				paramList[nb] = Integer.parseInt(param.trim());
-	    			}
-	    			nb++;
-	    		}
-	    		Class<?> clazz = Class.forName(lbString);
-	    		Constructor<?> constructor = clazz.getConstructor(primaryParametersClasses.toArray(new Class[primaryParametersClasses.size()]));
-	    		
-	    		return (LoadBalancingPolicy) constructor.newInstance(paramList);
-	    	}
+        		return policy;
+        	
+        	}        	
+    			    	
     	}else{
     		// Only one policy has been specified, with no parameter or child policy 
     		
@@ -717,7 +733,7 @@ public class Utils
     		return policy;
     	
     	}
-    	return null;
+    	//return null;
     }
     
 }
