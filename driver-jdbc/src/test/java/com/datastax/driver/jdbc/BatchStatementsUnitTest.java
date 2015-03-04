@@ -40,12 +40,18 @@ public class BatchStatementsUnitTest {
     private static java.sql.Connection con = null;
     private static java.sql.Connection con2 = null;
 
-
+    private static boolean suiteLaunch = true;
     
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
-    	
+    	/*System.setProperty("cassandra.version", "2.1.2");*/    	
+    	    	
+    	if(BuildCluster.HOST.equals(System.getProperty("host", ConnectionDetails.getHost()))){
+    		BuildCluster.setUpBeforeSuite();
+    		suiteLaunch=false;
+    	}
     	HOST = CCMBridge.ipOfNode(1);        
 
  
@@ -114,7 +120,10 @@ public class BatchStatementsUnitTest {
     public static void tearDownAfterClass() throws Exception
     {
     	if (con != null) con.close();
-        if (con2 != null) con2.close();        
+        if (con2 != null) con2.close();  
+        if(!suiteLaunch){
+        	BuildCluster.tearDownAfterSuite();
+        }
     }
  
 

@@ -64,7 +64,9 @@ import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.CCMBridge.CCMCluster;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Host;
+import com.datastax.driver.core.TupleType;
 import com.datastax.driver.core.TupleValue;
 import com.datastax.driver.core.UDTValue;
 import com.datastax.driver.jdbc.CassandraStatementExtras;
@@ -83,12 +85,18 @@ public class JdbcRegressionUnitTest
     private static java.sql.Connection con = null;
     
     private static CCMBridge ccmBridge = null;
+    private static boolean suiteLaunch = true;
       
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
-    	/*System.setProperty("cassandra.version", "2.1.2");*/
+    	/*System.setProperty("cassandra.version", "2.1.2");*/    	
+    	    	
+    	if(BuildCluster.HOST.equals(System.getProperty("host", ConnectionDetails.getHost()))){
+    		BuildCluster.setUpBeforeSuite();
+    		suiteLaunch=false;
+    	}
     	HOST = CCMBridge.ipOfNode(1);
         Class.forName("org.apache.cassandra2.cql.jdbc.CassandraDriver");
         String URL = String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,"system");
@@ -136,7 +144,9 @@ public class JdbcRegressionUnitTest
     public static void tearDownAfterClass() throws Exception
     {
         if (con!=null) con.close();
-        
+        if(!suiteLaunch){
+        	BuildCluster.tearDownAfterSuite();
+        }
     }
 
 
@@ -818,7 +828,7 @@ public class JdbcRegressionUnitTest
 	        // Create the target Column family with each basic data type available on Cassandra
 	                
 	        String createUDT = "CREATE TYPE IF NOT EXISTS fieldmap (key text, value text )";
-	        String createCF = "CREATE COLUMNFAMILY t_udt (id bigint PRIMARY KEY, field_values frozen<fieldmap>, the_tuple frozen<tuple<int, text, float>>);";
+	        String createCF = "CREATE COLUMNFAMILY t_udt (id bigint PRIMARY KEY, field_values frozen<fieldmap>, the_tuple frozen<tuple<int, text, float>>, , the_other_tuple frozen<tuple<int, text, float>>);";
 	        stmt.execute(createUDT);
 	        stmt.execute(createCF);
 	        stmt.close();
@@ -830,11 +840,11 @@ public class JdbcRegressionUnitTest
 	        
 	        
 	        
-	        String insert = "INSERT INTO t_udt(id,field_values,the_tuple) values(?,{key : ?, value : ?}, (?,?,?));";
+	        String insert = "INSERT INTO t_udt(id, field_values, the_tuple, the_other_tuple) values(?,{key : ?, value : ?}, (?,?,?),?);";
 	        
 	        
-	        
-	        
+	        TupleValue t = TupleType.of(DataType.cint(), DataType.text(), DataType.cfloat()).newValue();
+	        t.setInt(0, 1).setString(1, "midVal").setFloat(2, (float)2.0);	        
 			
 	        PreparedStatement pstatement = con.prepareStatement(insert);
 	        
@@ -846,6 +856,7 @@ public class JdbcRegressionUnitTest
 	        pstatement.setInt(4, 1);
 	        pstatement.setString(5, "midVal");
 	        pstatement.setFloat(6, (float) 2.0);
+	        pstatement.setObject(7, (Object)t);
 	        
 	                
 	        pstatement.execute();
