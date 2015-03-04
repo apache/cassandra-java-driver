@@ -497,7 +497,9 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         	this.statement.setUUID(parameterIndex-1, (java.util.UUID)object);
         	break;
         case Types.OTHER:
-        	
+        	if(object.getClass().equals(com.datastax.driver.core.TupleValue.class)){
+        		this.statement.setTupleValue(parameterIndex-1, (com.datastax.driver.core.TupleValue) object);
+        	}
         	if(object.getClass().equals(java.util.UUID.class)){
         		this.statement.setUUID(parameterIndex-1, (java.util.UUID) object);
         	}
