@@ -71,11 +71,18 @@ public class CollectionsUnitTest
     private static CCMBridge ccmBridge = null;
 
     
+    private static boolean suiteLaunch = true;
+    
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
     	/*System.setProperty("cassandra.version", "2.1.2");*/    	
-    	
+    	    	
+    	if(BuildCluster.HOST.equals(System.getProperty("host", ConnectionDetails.getHost()))){
+    		BuildCluster.setUpBeforeSuite();
+    		suiteLaunch=false;
+    	}
     	HOST = CCMBridge.ipOfNode(1);        
     
         Class.forName("com.datastax.driver.jdbc.CassandraDriver");
@@ -142,6 +149,9 @@ public class CollectionsUnitTest
     public static void tearDownAfterClass() throws Exception
     {
     	if (con != null) con.close();
+    	if(!suiteLaunch){
+        	BuildCluster.tearDownAfterSuite();
+        }
              
     }
     
