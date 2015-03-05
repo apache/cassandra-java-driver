@@ -7,7 +7,7 @@ CHANGELOG
 - [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
 - [improvement] Add connection heartbeat (JAVA-533)
 - [improvement] Reduce level of logs on missing rpc_address (JAVA-568)
-- [improvement] Expose node token and range information (JAVA-312)
+- [improvement] Expose node token and range information (JAVA-312, JAVA-681)
 - [bug] Fix cluster name mismatch check at startup (JAVA-595)
 - [bug] Fix guava dependency when using OSGI (JAVA-620)
 - [bug] Fix handling of DROP events when ks name is case-sensitive (JAVA-678)
