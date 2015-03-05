@@ -305,8 +305,15 @@ public abstract class Token implements Comparable<Token> {
 
             @Override
             public OPPToken fromString(String tokenStr) {
-                String prefix = (tokenStr.length() % 2 == 0) ? "0x" : "0x0";
-                ByteBuffer value = Bytes.fromHexString(prefix + tokenStr);
+                // This method must be able to parse the contents of system.peers.tokens, which do not have the "0x" prefix.
+                // On the other hand, OPPToken#toString has the "0x" because it should be usable in a CQL query, and it's
+                // nice to have fromString and toString symetrical.
+                // So handle both cases:
+                if (!tokenStr.startsWith("0x")) {
+                    String prefix = (tokenStr.length() % 2 == 0) ? "0x" : "0x0";
+                    tokenStr = prefix + tokenStr;
+                }
+                ByteBuffer value = Bytes.fromHexString(tokenStr);
                 return new OPPToken(value);
             }
 
