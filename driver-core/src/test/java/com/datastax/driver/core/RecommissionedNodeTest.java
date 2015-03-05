@@ -7,11 +7,13 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+
 import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.Assertions.*;
 import static com.datastax.driver.core.Host.State.DOWN;
 import static com.datastax.driver.core.Host.State.UP;
+
 
 /**
  * Due to C* gossip bugs, system.peers may report nodes that are gone from the cluster.
