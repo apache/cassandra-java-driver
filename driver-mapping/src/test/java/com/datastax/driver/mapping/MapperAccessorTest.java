@@ -40,11 +40,23 @@ public class MapperAccessorTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
-    public void should_allow_null_parameter_in_accessor() {
+    public void should_allow_null_argument_in_accessor_when_set_by_name() {
         FooAccessor accessor = new MappingManager(session)
             .createAccessor(FooAccessor.class);
 
         accessor.insert(1, null);
+        Row row = session.execute("select * from foo where k = 1").one();
+
+        assertThat(row.getString("v")).isNull();
+    }
+
+    @Test(groups = "short")
+    public void should_allow_null_argument_in_accessor_when_set_by_index() {
+        FooAccessor accessor = new MappingManager(session)
+            .createAccessor(FooAccessor.class);
+
+        accessor.insertArg(1, null);
+
         Row row = session.execute("select * from foo where k = 1").one();
 
         assertThat(row.getString("v")).isNull();
@@ -60,5 +72,8 @@ public class MapperAccessorTest extends CCMBridge.PerClassSingleNodeCluster {
     public interface FooAccessor {
         @Query("insert into foo (k, v) values (:k, :v)")
         ResultSet insert(@Param("k") int k, @Param("v") String v);
+
+        @Query("insert into foo (k, v) values (?, ?)")
+        ResultSet insertArg(int k, String v);
     }
 }

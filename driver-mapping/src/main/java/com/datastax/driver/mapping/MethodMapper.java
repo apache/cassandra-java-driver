@@ -193,7 +193,8 @@ class MethodMapper {
         void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
             @SuppressWarnings("unchecked")
             V entity = (V) arg;
-            super.setValue(boundStatement, udtMapper.toUDT(entity), protocolVersion);
+            UDTValue udtArg = arg != null ? udtMapper.toUDT(entity) : null;
+            super.setValue(boundStatement, udtArg, protocolVersion);
         }
     }
 
@@ -263,6 +264,9 @@ class MethodMapper {
 
         @SuppressWarnings("rawtypes")
         private Object convert(Object arg) {
+            if(arg == null)
+                return arg;
+
             switch (enumType) {
             case STRING:
                 return arg.toString();
