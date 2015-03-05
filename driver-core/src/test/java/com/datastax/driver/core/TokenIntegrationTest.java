@@ -76,7 +76,6 @@ public abstract class TokenIntegrationTest {
 
     @AfterClass(groups = "short", alwaysRun=true)
     public void teardown() {
-        System.out.println("Tearing down");
         if (cluster != null)
             cluster.close();
         if (ccm != null)

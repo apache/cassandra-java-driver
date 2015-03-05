@@ -26,6 +26,7 @@
 
   <modules>
     <module>stress</module>
+    <module>osgi</module>
   </modules>
   
   <licenses>
