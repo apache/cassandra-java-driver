@@ -40,7 +40,7 @@ abstract class Utils {
         return sb;
     }
 
-    static StringBuilder joinAndAppendNames(StringBuilder sb, String separator, List<Object> values) {
+    static StringBuilder joinAndAppendNames(StringBuilder sb, String separator, List<?> values) {
         for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);
@@ -49,7 +49,7 @@ abstract class Utils {
         return sb;
     }
 
-    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<Object> values, List<ByteBuffer> variables) {
+    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<?> values, List<ByteBuffer> variables) {
         for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);
@@ -142,7 +142,7 @@ abstract class Utils {
             sb.append(((Date)value).getTime());
             return true;
         } else if (value instanceof ByteBuffer) {
-            sb.append(Bytes.toHexString((ByteBuffer)value));
+            sb.append(Bytes.toHexString((ByteBuffer) value));
             return true;
         } else if (value instanceof BindMarker) {
             sb.append(value);
@@ -171,7 +171,7 @@ abstract class Utils {
     @SuppressWarnings("rawtypes")
     private static boolean appendValueIfCollection(Object value, StringBuilder sb, boolean rawValue) {
         if (value instanceof List) {
-            appendList((List)value, sb, rawValue);
+            appendList((List) value, sb, rawValue);
             return true;
         } else if (value instanceof Set) {
             appendSet((Set)value, sb, rawValue);
