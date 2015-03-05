@@ -7,27 +7,28 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+
 import static com.datastax.driver.core.Assertions.*;
-import static com.datastax.driver.core.Host.State.ADDED;
 import static com.datastax.driver.core.Host.State.DOWN;
 import static com.datastax.driver.core.Host.State.UP;
 
 /**
  * Due to C* gossip bugs, system.peers may report nodes that are gone from the cluster.
  *
- * This class tests scenarios where these nodes have been recommissionned to another cluster and
+ * This class tests scenarios where these nodes have been recommissioned to another cluster and
  * come back up. The driver must detect that they are not part of the cluster anymore, and ignore them.
  */
-public class RecommissionnedNodeTest {
-    private static final Logger logger = LoggerFactory.getLogger(RecommissionnedNodeTest.class);
+public class RecommissionedNodeTest {
+    private static final Logger logger = LoggerFactory.getLogger(RecommissionedNodeTest.class);
 
     CCMBridge mainCcm, otherCcm;
     Cluster mainCluster;
 
     @Test(groups = "long")
-    public void should_ignore_recommissionned_node_on_reconnection_attempt() throws Exception {
+    public void should_ignore_recommissioned_node_on_reconnection_attempt() throws Exception {
         mainCcm = CCMBridge.create("main", 3);
-        // node1 will be our "recommissionned" node, for now we just stop it so that it stays in the peers table.
+        // node1 will be our "recommissioned" node, for now we just stop it so that it stays in the peers table.
         mainCcm.stop(1);
         mainCcm.waitForDown(1);
 
@@ -48,7 +49,7 @@ public class RecommissionnedNodeTest {
     }
 
     @Test(groups = "long")
-    public void should_ignore_recommissionned_node_on_control_connection_reconnect() throws Exception {
+    public void should_ignore_recommissioned_node_on_control_connection_reconnect() throws Exception {
         mainCcm = CCMBridge.create("main", 2);
         mainCcm.stop(1);
         mainCcm.waitForDown(1);
@@ -71,7 +72,7 @@ public class RecommissionnedNodeTest {
     }
 
     @Test(groups = "long")
-    public void should_ignore_recommissionned_node_on_session_init() throws Exception {
+    public void should_ignore_recommissioned_node_on_session_init() throws Exception {
         // Simulate the bug before starting the cluster
         mainCcm = CCMBridge.create("main", 2);
         mainCcm.stop(1);
@@ -88,6 +89,30 @@ public class RecommissionnedNodeTest {
         assertThat(mainCluster).host(1).hasState(UP);
 
         // Create a session. This will try to open a pool to node 1 and find out that the cluster name doesn't match.
+        mainCluster.connect();
+
+        // Node 1 should now be DOWN with no reconnection attempt
+        assertThat(mainCluster).host(1)
+            .hasState(DOWN)
+            .isNotReconnectingFromDown()
+            .isNotReconnectingFromSuspected();
+    }
+
+    @Test(groups = "long")
+    @CassandraVersion(major=2.0)
+    public void should_ignore_node_that_does_not_support_protocol_version_on_session_init() throws Exception {
+        // Simulate the bug before starting the cluster
+        mainCcm = CCMBridge.create("main", 2);
+        mainCcm.stop(1);
+        mainCcm.waitForDown(1);
+
+        otherCcm = CCMBridge.createWithCustomVersion("main", 1, "1.2.19");
+        otherCcm.waitForUp(1);
+
+        // Start the driver, it should only connect to node 2
+        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2").build();
+
+        // Create a session. This will try to open a pool to node 1 and find that it doesn't support protocol version.
         mainCluster.connect();
 
         // Node 1 should now be DOWN with no reconnection attempt
