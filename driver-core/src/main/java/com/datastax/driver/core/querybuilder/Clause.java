@@ -110,6 +110,66 @@ public abstract class Clause extends Utils.Appendeable {
         }
     }
 
+    static class ContainsClause extends AbstractClause {
+
+        private final Object value;
+
+        ContainsClause(String name, Object value) {
+            super(name);
+            this.value = value;
+
+            if (value == null)
+                throw new IllegalArgumentException("Missing value for CONTAINS clause");
+        }
+
+        @Override
+        void appendTo(StringBuilder sb, List<Object> variables) {
+            Utils.appendName(name, sb).append(" CONTAINS ");
+            Utils.appendValue(value, sb, variables);
+        }
+
+        @Override
+        Object firstValue() {
+            return value;
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            return Utils.containsBindMarker(value);
+        }
+    }
+
+
+    static class ContainsKeyClause extends AbstractClause {
+
+        private final Object value;
+
+        ContainsKeyClause(String name, Object value) {
+            super(name);
+            this.value = value;
+
+            if (value == null)
+                throw new IllegalArgumentException("Missing value for CONTAINS KEY clause");
+        }
+
+        @Override
+        void appendTo(StringBuilder sb, List<Object> variables) {
+            Utils.appendName(name, sb).append(" CONTAINS KEY ");
+            Utils.appendValue(value, sb, variables);
+        }
+
+        @Override
+        Object firstValue() {
+            return value;
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            return Utils.containsBindMarker(value);
+        }
+    }
+
+
     static class CompoundClause extends Clause {
         private String op;
         private final List<String> names;
