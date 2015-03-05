@@ -21,6 +21,11 @@ public class ClusterAssert extends AbstractAssert<ClusterAssert, Cluster> {
         return this;
     }
 
+    public ClusterAssert hasClosedControlConnection() {
+        assertThat(actual.manager.controlConnection.isOpen()).isFalse();
+        return this;
+    }
+
     public HostAssert host(int hostNumber) {
         // TODO at some point this won't work anymore if we have assertions that wait for a node to
         // join the cluster, e.g. assertThat(cluster).node(3).comesUp().

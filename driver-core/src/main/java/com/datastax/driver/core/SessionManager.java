@@ -308,6 +308,14 @@ class SessionManager extends AbstractSession {
                             return true;
                         }
                     }
+                } catch (UnsupportedProtocolVersionException e) {
+                    cluster.manager.logUnsupportedVersionProtocol(host);
+                    cluster.manager.triggerOnDown(host, false);
+                    return false;
+                } catch (ClusterNameMismatchException e) {
+                    cluster.manager.logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
+                    cluster.manager.triggerOnDown(host, false);
+                    return false;
                 } catch (Exception e) {
                     logger.error("Error creating pool to " + host, e);
                     return false;
