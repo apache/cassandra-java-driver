@@ -141,9 +141,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
                 currentAttempt.compareAndSet(handlerFuture, null);
             }
         } catch (InterruptedException e) {
-            // If interrupted, skip this attempt but still skip scheduling reconnections
             Thread.currentThread().interrupt();
-            reschedule(schedule.nextDelayMs());
         } catch (UnsupportedProtocolVersionException e) {
             logger.error(e.getMessage());
             long nextDelay = schedule.nextDelayMs();
