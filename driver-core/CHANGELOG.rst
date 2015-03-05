@@ -10,6 +10,8 @@ CHANGELOG
 - [improvement] Expose node token and range information (JAVA-312)
 - [bug] Fix guava dependency when using OSGI (JAVA-620)
 - [bug] Fix handling of DROP events when ks name is case-sensitive (JAVA-678)
+- [improvement] Use List<?> instead of List<Object> in QueryBuilder API
+  (JAVA-631)
 
 Merged from 2.0.9_fixes branch:
 
