@@ -131,6 +131,15 @@ public class QueryBuilderTest {
         select = select().all().from("foo").where(eq("b", Bytes.fromHexString("0xCAFEBABE")));
         assertEquals(select.toString(), query);
 
+        query = "SELECT * FROM foo WHERE e CONTAINS 'text';";
+        select = select().from("foo").where(contains("e", "text"));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM foo WHERE e CONTAINS KEY 'key1';";
+        select = select().from("foo").where(containsKey("e", "key1"));
+        assertEquals(select.toString(), query);
+
+
         try {
             select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));
             fail();

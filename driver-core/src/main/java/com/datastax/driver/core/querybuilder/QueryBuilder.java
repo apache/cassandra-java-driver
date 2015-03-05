@@ -297,6 +297,30 @@ public final class QueryBuilder {
 	}
 
     /**
+     * Creates a "contains" where clause stating the provided column must contain
+     * the value provided.
+     *
+     * @param name the column name
+     * @param value the value
+     * @return the corresponding where clause.
+     */
+    public static Clause contains(String name, Object value) {
+        return new Clause.ContainsClause(name, value);
+    }
+
+    /**
+     * Creates a "contains key" where clause stating the provided column must contain
+     * the key provided.
+     *
+     * @param name the column name
+     * @param key the key
+     * @return the corresponding where clause.
+     */
+    public static Clause containsKey(String name, Object key) {
+        return new Clause.ContainsKeyClause(name, key);
+    }
+
+    /**
      * Creates a "lesser than" where clause stating the provided column must be less than
      * the provided value.
      *

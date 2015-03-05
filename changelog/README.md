@@ -18,6 +18,7 @@
 - [bug] Preserve default timestamp for retries and speculative executions (JAVA-724)
 - [improvement] Use same pool implementation for protocol v2 and v3
   (JAVA-738).
+- [improvement] Support CONTAINS / CONTAINS KEY in QueryBuilder (JAVA-677)
 
 Merged from 2.0 branch:
 
