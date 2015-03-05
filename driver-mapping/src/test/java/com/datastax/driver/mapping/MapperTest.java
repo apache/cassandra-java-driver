@@ -372,5 +372,9 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         userAccessor.updateNameAndGender("Paule", User.Gender.FEMALE, u1.getUserId());
         Mapper<User> userMapper = manager.mapper(User.class);
         assertEquals(userMapper.get(u1.getUserId()).getGender(), User.Gender.FEMALE);
+
+        // Test that an enum value can be unassigned through an accessor (set to null).
+        userAccessor.updateNameAndGender("Paule", null, u1.getUserId());
+        assertEquals(userMapper.get(u1.getUserId()).getGender(), null);
     }
 }

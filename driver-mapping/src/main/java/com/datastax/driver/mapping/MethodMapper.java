@@ -95,7 +95,7 @@ class MethodMapper {
     }
 
     @SuppressWarnings("rawtypes")
-	private void mapType(MappingManager manager, Class<?> fullReturnType, Type type) {
+    private void mapType(MappingManager manager, Class<?> fullReturnType, Type type) {
 
         if (type instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType)type;
@@ -167,9 +167,14 @@ class MethodMapper {
         }
 
         void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
-            if (arg != null) {
-                if (paramName == null)
+            if (paramName == null) {
+                if (arg == null)
+                    boundStatement.setToNull(paramIdx);
+                else
                     boundStatement.setBytesUnsafe(paramIdx, DataType.serializeValue(arg, protocolVersion));
+            } else {
+                if (arg == null)
+                    boundStatement.setToNull(paramName);
                 else
                     boundStatement.setBytesUnsafe(paramName, DataType.serializeValue(arg, protocolVersion));
             }
@@ -188,7 +193,8 @@ class MethodMapper {
         void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
             @SuppressWarnings("unchecked")
             V entity = (V) arg;
-            super.setValue(boundStatement, udtMapper.toUDT(entity), protocolVersion);
+            UDTValue udtArg = arg != null ? udtMapper.toUDT(entity) : null;
+            super.setValue(boundStatement, udtArg, protocolVersion);
         }
     }
 
@@ -258,6 +264,9 @@ class MethodMapper {
 
         @SuppressWarnings("rawtypes")
         private Object convert(Object arg) {
+            if(arg == null)
+                return arg;
+
             switch (enumType) {
             case STRING:
                 return arg.toString();
