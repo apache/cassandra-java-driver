@@ -100,8 +100,8 @@ public abstract class Token implements Comparable<Token> {
 
             private static final BigInteger RING_END = BigInteger.valueOf(Long.MAX_VALUE);
             private static final BigInteger RING_LENGTH = RING_END.subtract(BigInteger.valueOf(Long.MIN_VALUE));
-            public static final M3PToken MIN_TOKEN = new M3PToken(Long.MIN_VALUE);
-            public static final M3PToken MAX_TOKEN = new M3PToken(Long.MAX_VALUE);
+            static final M3PToken MIN_TOKEN = new M3PToken(Long.MIN_VALUE);
+            static final M3PToken MAX_TOKEN = new M3PToken(Long.MAX_VALUE);
 
             private long getblock(ByteBuffer key, int offset, int index) {
                 int i_8 = index << 3;
@@ -202,7 +202,7 @@ public abstract class Token implements Comparable<Token> {
             }
 
             @Override
-            public M3PToken fromString(String tokenStr) {
+            M3PToken fromString(String tokenStr) {
                 return new M3PToken(Long.parseLong(tokenStr));
             }
 
@@ -222,7 +222,7 @@ public abstract class Token implements Comparable<Token> {
             }
 
             @Override
-            public M3PToken hash(ByteBuffer partitionKey) {
+            M3PToken hash(ByteBuffer partitionKey) {
                 long v = murmur(partitionKey);
                 return new M3PToken(v == Long.MIN_VALUE ? Long.MAX_VALUE : v);
             }
@@ -305,8 +305,15 @@ public abstract class Token implements Comparable<Token> {
 
             @Override
             public OPPToken fromString(String tokenStr) {
-                String prefix = (tokenStr.length() % 2 == 0) ? "0x" : "0x0";
-                ByteBuffer value = Bytes.fromHexString(prefix + tokenStr);
+                // This method must be able to parse the contents of system.peers.tokens, which do not have the "0x" prefix.
+                // On the other hand, OPPToken#toString has the "0x" because it should be usable in a CQL query, and it's
+                // nice to have fromString and toString symetrical.
+                // So handle both cases:
+                if (!tokenStr.startsWith("0x")) {
+                    String prefix = (tokenStr.length() % 2 == 0) ? "0x" : "0x0";
+                    tokenStr = prefix + tokenStr;
+                }
+                ByteBuffer value = Bytes.fromHexString(tokenStr);
                 return new OPPToken(value);
             }
 
@@ -326,12 +333,12 @@ public abstract class Token implements Comparable<Token> {
             }
 
             @Override
-            public OPPToken hash(ByteBuffer partitionKey) {
+            OPPToken hash(ByteBuffer partitionKey) {
                 return new OPPToken(partitionKey);
             }
 
             @Override
-            public List<Token> split(Token startToken, Token endToken, int numberOfSplits) {
+            List<Token> split(Token startToken, Token endToken, int numberOfSplits) {
                 int tokenOrder = startToken.compareTo(endToken);
 
                 // ]min,min] means the whole ring. However, since there is no "max token" with this partitioner, we can't come up
@@ -514,7 +521,7 @@ public abstract class Token implements Comparable<Token> {
             }
 
             @Override
-            public RPToken fromString(String tokenStr) {
+            RPToken fromString(String tokenStr) {
                 return new RPToken(new BigInteger(tokenStr));
             }
 
@@ -534,7 +541,7 @@ public abstract class Token implements Comparable<Token> {
             }
 
             @Override
-            public RPToken hash(ByteBuffer partitionKey) {
+            RPToken hash(ByteBuffer partitionKey) {
                 return new RPToken(md5(partitionKey));
             }
 
@@ -559,7 +566,7 @@ public abstract class Token implements Comparable<Token> {
                     tokens.add(new RPToken(value));
                 return tokens;
             }
-        };
+        }
 
         private RPToken(BigInteger value) {
             this.value = value;

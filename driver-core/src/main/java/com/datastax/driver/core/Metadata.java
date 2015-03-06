@@ -27,6 +27,8 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.exceptions.DriverInternalError;
+
 /**
  * Keeps metadata on the connected cluster, including known nodes and schema definitions.
  */
@@ -435,6 +437,36 @@ public class Metadata {
             sb.append(ksm.exportAsString()).append('\n');
 
         return sb.toString();
+    }
+
+    /**
+     * Builds a new {@link Token} from its string representation, according to the partitioner
+     * reported by the Cassandra nodes.
+     *
+     * @param tokenStr the string representation.
+     * @return the token.
+     */
+    public Token newToken(String tokenStr) {
+        TokenMap current = tokenMap;
+        if (current == null)
+            throw new DriverInternalError("Token factory not set. This should only happen at initialization time");
+
+        return current.factory.fromString(tokenStr);
+    }
+
+    /**
+     * Builds a new {@link TokenRange}.
+     *
+     * @param start the start token.
+     * @param end the end token.
+     * @return the range.
+     */
+    public TokenRange newTokenRange(Token start, Token end) {
+        TokenMap current = tokenMap;
+        if (current == null)
+            throw new DriverInternalError("Token factory not set. This should only happen at initialization time");
+
+        return new TokenRange(start, end, current.factory);
     }
 
     Token.Factory tokenFactory() {

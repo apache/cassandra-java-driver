@@ -27,13 +27,13 @@ import com.datastax.driver.core.TableMetadata;
 public class Delete extends BuiltStatement {
 
     private final String table;
-    private final List<Object> columnNames;
+    private final List<?> columnNames;
     private final Where where;
     private final Options usings;
     private final Conditions conditions;
     private boolean ifExists;
 
-    Delete(String keyspace, String table, List<Object> columnNames) {
+    Delete(String keyspace, String table, List<?> columnNames) {
         super(keyspace);
         this.table = table;
         this.columnNames = columnNames;

@@ -97,6 +97,14 @@ public class CCMBridge {
         return bridge;
     }
 
+    public static CCMBridge createWithCustomVersion(String name, int nbNodes, String cassandraVersion) {
+        checkArgument(!"current".equals(name.toLowerCase()),
+            "cluster can't be called \"current\"");
+        CCMBridge bridge = new CCMBridge();
+        bridge.execute("ccm create %s -n %d -s -i %s -b -v %s ", name, nbNodes, IP_PREFIX, cassandraVersion);
+        return bridge;
+    }
+
     public static CCMBridge create(String name, int nbNodesDC1, int nbNodesDC2) {
         checkArgument(!"current".equals(name.toLowerCase()),
                         "cluster can't be called \"current\"");

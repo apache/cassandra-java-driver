@@ -189,9 +189,7 @@ class Connection {
 
     private UnsupportedProtocolVersionException unsupportedProtocolVersionException(ProtocolVersion triedVersion, ProtocolVersion serverProtocolVersion) {
         logger.debug("Got unsupported protocol version error from {} for version {} server supports version {}", address, triedVersion, serverProtocolVersion);
-        UnsupportedProtocolVersionException exc = new UnsupportedProtocolVersionException(address, triedVersion, serverProtocolVersion);
-        defunct(new TransportException(address, "Cannot initialize transport", exc));
-        return exc;
+        return new UnsupportedProtocolVersionException(address, triedVersion, serverProtocolVersion);
     }
 
     private void authenticateV1(Authenticator authenticator) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {

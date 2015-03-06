@@ -76,7 +76,6 @@ public abstract class TokenIntegrationTest {
 
     @AfterClass(groups = "short", alwaysRun=true)
     public void teardown() {
-        System.out.println("Tearing down");
         if (cluster != null)
             cluster.close();
         if (ccm != null)
@@ -358,6 +357,20 @@ public abstract class TokenIntegrationTest {
                 assertThat(range).unwrapsToItself();
             }
         }
+    }
+
+    @Test(groups = "short")
+    public void should_expose_token_and_range_creation_methods() {
+        Metadata metadata = cluster.getMetadata();
+
+        // Pick a random range
+        TokenRange range = metadata.getTokenRanges().iterator().next();
+
+        Token start = metadata.newToken(range.getStart().toString());
+        Token end = metadata.newToken(range.getEnd().toString());
+
+        assertThat(metadata.newTokenRange(start, end))
+            .isEqualTo(range);
     }
 
     protected abstract Token.Factory tokenFactory();

@@ -11,9 +11,12 @@ Merged from 2.0 branch:
 - [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
 - [improvement] Add connection heartbeat (JAVA-533)
 - [improvement] Reduce level of logs on missing rpc_address (JAVA-568)
-- [improvement] Expose node token and range information (JAVA-312)
+- [improvement] Expose node token and range information (JAVA-312, JAVA-681)
+- [bug] Fix cluster name mismatch check at startup (JAVA-595)
 - [bug] Fix guava dependency when using OSGI (JAVA-620)
 - [bug] Fix handling of DROP events when ks name is case-sensitive (JAVA-678)
+- [improvement] Use List<?> instead of List<Object> in QueryBuilder API
+  (JAVA-631)
 - [bug] Prevent race between cancellation and query completion (JAVA-614)
 - [bug] Prevent cancel and timeout from cancelling unrelated ResponseHandler if
   streamId was already released and reused (JAVA-632).

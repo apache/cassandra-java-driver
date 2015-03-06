@@ -163,6 +163,26 @@ public final class TokenRange implements Comparable<TokenRange> {
             || that.contains(this.end, false);
     }
 
+    /**
+     * Computes the intersection of this range with another one.
+     * <p>
+     * This call will fail if the two ranges do not intersect, you must check by calling
+     * {@link #intersects(TokenRange)} beforehand.
+     *
+     * @param that the other range.
+     * @return the range resulting from the intersection.
+     * @throws IllegalArgumentException if the ranges do not intersect.
+     */
+    public TokenRange intersectWith(TokenRange that) {
+        if (!this.intersects(that))
+            throw new IllegalArgumentException("The two ranges do not intersect, use intersects() before calling this method");
+
+        return new TokenRange(
+            (this.contains(that.start, true)) ? that.start : this.start,
+            (this.contains(that.end, false)) ? that.end : this.end,
+            factory);
+    }
+
     // isStart handles the case where the token is the start of another range, for example:
     // * ]1,2] contains 2, but it does not contain the start of ]2,3]
     // * ]1,2] does not contain 1, but it contains the start of ]1,3]
