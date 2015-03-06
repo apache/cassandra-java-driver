@@ -117,7 +117,8 @@ abstract class Utils {
     static StringBuilder appendFlatValue(Object value, StringBuilder sb) {
         if (appendValueIfLiteral(value, sb))
             return sb;
-
+        if (appendValueIfUdt(value, sb))
+            return sb;
         appendStringIfValid(value, sb);
         return sb;
     }
