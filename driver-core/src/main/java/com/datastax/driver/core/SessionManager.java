@@ -311,7 +311,7 @@ class SessionManager extends AbstractSession {
                         }
                     }
                 } catch (UnsupportedProtocolVersionException e) {
-                    cluster.manager.logUnsupportedVersionProtocol(host);
+                    cluster.manager.logUnsupportedVersionProtocol(host, e.unsupportedVersion);
                     cluster.manager.triggerOnDown(host, false);
                     return false;
                 } catch (ClusterNameMismatchException e) {
