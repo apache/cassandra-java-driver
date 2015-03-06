@@ -17,6 +17,7 @@ Merged from 2.0 branch:
 - [bug] Fix handling of DROP events when ks name is case-sensitive (JAVA-678)
 - [improvement] Use List<?> instead of List<Object> in QueryBuilder API
   (JAVA-631)
+- [improvement] Exclude Netty POM from META-INF in shaded JAR (JAVA-654)
 - [bug] Prevent race between cancellation and query completion (JAVA-614)
 - [bug] Prevent cancel and timeout from cancelling unrelated ResponseHandler if
   streamId was already released and reused (JAVA-632).

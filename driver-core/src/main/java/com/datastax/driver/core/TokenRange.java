@@ -16,10 +16,12 @@
 package com.datastax.driver.core;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 /**
  * A range of tokens on the Cassandra ring.
@@ -166,21 +168,47 @@ public final class TokenRange implements Comparable<TokenRange> {
     /**
      * Computes the intersection of this range with another one.
      * <p>
+     * If either of these ranges overlap the the ring, they are unwrapped and the unwrapped
+     * tokens are compared with one another.
+     * <p>
      * This call will fail if the two ranges do not intersect, you must check by calling
      * {@link #intersects(TokenRange)} beforehand.
      *
      * @param that the other range.
-     * @return the range resulting from the intersection.
+     * @return the range(s) resulting from the intersection.
      * @throws IllegalArgumentException if the ranges do not intersect.
      */
-    public TokenRange intersectWith(TokenRange that) {
+    public List<TokenRange> intersectWith(TokenRange that) {
         if (!this.intersects(that))
             throw new IllegalArgumentException("The two ranges do not intersect, use intersects() before calling this method");
 
-        return new TokenRange(
-            (this.contains(that.start, true)) ? that.start : this.start,
-            (this.contains(that.end, false)) ? that.end : this.end,
-            factory);
+        List<TokenRange> intersected = Lists.newArrayList();
+
+        // Compare the unwrapped ranges to one another.
+        List<TokenRange> unwrappedForThis = this.unwrap();
+        List<TokenRange> unwrappedForThat = that.unwrap();
+        for(TokenRange t1 : unwrappedForThis) {
+            for(TokenRange t2 : unwrappedForThat) {
+                if(t1.intersects(t2)) {
+                    intersected.add(new TokenRange(
+                        (t1.contains(t2.start, true)) ? t2.start : t1.start,
+                        (t1.contains(t2.end, false)) ? t2.end : t1.end,
+                        factory));
+                }
+            }
+        }
+
+        // If two intersecting ranges were produced, merge them if they are adjacent.
+        // This could happen in the case that two wrapped ranges intersected.
+        if(intersected.size() == 2) {
+            TokenRange t1 = intersected.get(0);
+            TokenRange t2 = intersected.get(1);
+            if (t1.end.equals(t2.start) || t2.end.equals(t1.start)) {
+                return ImmutableList.of(t1.mergeWith(t2));
+            }
+        }
+
+        return intersected;
     }
 
     // isStart handles the case where the token is the start of another range, for example:

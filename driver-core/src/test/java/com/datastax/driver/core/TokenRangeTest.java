@@ -2,6 +2,7 @@ package com.datastax.driver.core;
 
 import java.util.List;
 
+import com.google.common.collect.ImmutableList;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.fail;
@@ -76,15 +77,30 @@ public class TokenRangeTest {
     @Test(groups = "unit")
     public void should_compute_intersection() {
         assertThat(tokenRange(3, 9).intersectWith(tokenRange(2, 4)))
-            .isEqualTo(tokenRange(3, 4));
+            .isEqualTo(ImmutableList.of(tokenRange(3, 4)));
         assertThat(tokenRange(3, 9).intersectWith(tokenRange(3, 5)))
-            .isEqualTo(tokenRange(3, 5));
+            .isEqualTo(ImmutableList.of(tokenRange(3, 5)));
         assertThat(tokenRange(3, 9).intersectWith(tokenRange(4, 6)))
-            .isEqualTo(tokenRange(4, 6));
+            .isEqualTo(ImmutableList.of(tokenRange(4, 6)));
         assertThat(tokenRange(3, 9).intersectWith(tokenRange(7, 9)))
-            .isEqualTo(tokenRange(7, 9));
+            .isEqualTo(ImmutableList.of(tokenRange(7, 9)));
         assertThat(tokenRange(3, 9).intersectWith(tokenRange(8, 10)))
-            .isEqualTo(tokenRange(8, 9));
+            .isEqualTo(ImmutableList.of(tokenRange(8, 9)));
+    }
+
+    @Test(groups = "unit")
+    public void should_could_intersection_with_ranges_around_ring() {
+        // If a range wraps the ring like 10, -10 does this will produce two separate
+        // intersected ranges.
+        assertThat(tokenRange(10, -10).intersectWith(tokenRange(-20, 20)))
+            .isEqualTo(ImmutableList.of(tokenRange(10, 20), tokenRange(-20, -10)));
+        assertThat(tokenRange(-20, 20).intersectWith(tokenRange(10, -10)))
+            .isEqualTo(ImmutableList.of(tokenRange(10, 20), tokenRange(-20, -10)));
+
+        // If both ranges wrap the ring, they should be merged together wrapping across
+        // the range.
+        assertThat(tokenRange(10, -30).intersectWith(tokenRange(20, -20)))
+            .isEqualTo(ImmutableList.of(tokenRange(20, -30)));
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)
