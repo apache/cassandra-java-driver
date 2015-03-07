@@ -20,13 +20,19 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.*;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.testng.annotations.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.*;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.Delete.Where;
 import com.datastax.driver.core.utils.Bytes;
+import com.datastax.driver.core.utils.CassandraVersion;
 
+import static com.datastax.driver.core.DataType.cint;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class QueryBuilderTest {
@@ -211,7 +217,7 @@ public class QueryBuilderTest {
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo(k,x) VALUES (0,(1));";
-        insert = insertInto("foo").value("k", 0).value("x", TupleType.of(DataType.cint()).newValue(1));
+        insert = insertInto("foo").value("k", 0).value("x", TupleType.of(cint()).newValue(1));
         assertEquals(insert.toString(), query);
 
         // UDT: see QueryBuilderExecutionTest
@@ -562,7 +568,11 @@ public class QueryBuilderTest {
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo(a,b) VALUES ({'2''} space','3','4'},3.4) USING TTL 24 AND TIMESTAMP 42;";
-        insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<String>(){{ add("2'} space"); add("3"); add("4"); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
+        insert = insertInto("foo").values(new String[]{ "a", "b" }, new Object[]{ new TreeSet<String>() {{
+            add("2'} space");
+            add("3");
+            add("4");
+        }}, 3.4 }).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
     }
 
@@ -717,5 +727,40 @@ public class QueryBuilderTest {
         // But we still want to check it client-side, to fail fast instead of sending a bad query to Cassandra.
         // getValues() is called on any RegularStatement before we send it (see SessionManager.makeRequestMessage).
         statement.getValues(ProtocolVersion.V3);
+    }
+
+    @Test(groups = "unit")
+    public void should_handle_collections_of_tuples() {
+        String query;
+        Statement statement;
+
+        query = "UPDATE foo SET l=[(1, 2)] WHERE k=1;";
+        List<TupleValue> list = ImmutableList.of(TupleType.of(cint(), cint()).newValue(1, 2));
+        statement = update("foo").with(set("l", list)).where(eq("k", 1));
+        assertThat(statement.toString()).isEqualTo(query);
+    }
+
+    @Test(groups = "unit")
+    @CassandraVersion(major = 2.1, minor = 3)
+    public void should_handle_nested_collections() {
+        String query;
+        Statement statement;
+
+        query = "UPDATE foo SET l=[[1],[2]] WHERE k=1;";
+        ImmutableList<ImmutableList<Integer>> list = ImmutableList.of(ImmutableList.of(1), ImmutableList.of(2));
+        statement = update("foo").with(set("l", list)).where(eq("k", 1));
+        assertThat(statement.toString()).isEqualTo(query);
+
+        query = "UPDATE foo SET m={1:[[1],[2]],2:[[1],[2]]} WHERE k=1;";
+        statement = update("foo").with(set("m", ImmutableMap.of(1, list, 2, list))).where(eq("k", 1));
+        assertThat(statement.toString()).isEqualTo(query);
+
+        query = "UPDATE foo SET l=[[1]]+l WHERE k=1;";
+        statement = update("foo").with(prepend("l", ImmutableList.of(1))).where(eq("k", 1));
+        assertThat(statement.toString()).isEqualTo(query);
+
+        query = "UPDATE foo SET l=[[1],[2]]+l WHERE k=1;";
+        statement = update("foo").with(prependAll("l", list)).where(eq("k", 1));
+        assertThat(statement.toString()).isEqualTo(query);
     }
 }

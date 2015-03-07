@@ -71,7 +71,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
         session.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
 
         for (Metadata m : metadatas)
-            assertThat(m.getKeyspace(keyspace).getUserType("type1"))
+            assertThat((DataType) m.getKeyspace(keyspace).getUserType("type1"))
                 .isNotNull();
     }
 
@@ -93,7 +93,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
         session.execute(String.format("DROP TYPE %s.type1", keyspace));
 
         for (Metadata m : metadatas)
-            assertThat(m.getKeyspace(keyspace).getUserType("type1"))
+            assertThat((DataType) m.getKeyspace(keyspace).getUserType("type1"))
                 .isNull();
     }
 

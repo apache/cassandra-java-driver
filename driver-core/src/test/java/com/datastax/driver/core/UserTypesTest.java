@@ -22,9 +22,12 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.base.Joiner;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
@@ -37,8 +40,6 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
     private final static List<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes());
     private final static List<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES =
             new ArrayList<DataType.Name>(EnumSet.of(DataType.Name.LIST, DataType.Name.SET, DataType.Name.MAP, DataType.Name.TUPLE));
-
-    private final static HashMap<DataType, Object> SAMPLE_DATA = DataTypeIntegrationTest.getSampleData();
 
     @Override
     protected Collection<String> getTableDefinitions() {
@@ -242,7 +243,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             for (int i = 0; i < DATA_TYPE_PRIMITIVES.size(); i++) {
                 DataType dataType = DATA_TYPE_PRIMITIVES.get(i);
                 String index = Character.toString((char) (startIndex + i));
-                Object sampleData = SAMPLE_DATA.get(dataType);
+                Object sampleData = PrimitiveTypeSamples.ALL.get(dataType);
 
                 switch (dataType.getName()) {
                     case ASCII:
@@ -365,19 +366,19 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
                     DataType dataType = DATA_TYPE_PRIMITIVES.get(j);
 
                     String index = Character.toString((char) (startIndex + i)) + "_" + Character.toString((char) (startIndex + j));
-                    Object sample = DataTypeIntegrationTest.getCollectionSample(name, dataType);
+                    Object sampleElement = PrimitiveTypeSamples.ALL.get(dataType);
                     switch(name) {
                         case LIST:
-                            alldatatypes.setList(index, (ArrayList<DataType>) sample);
+                            alldatatypes.setList(index, Lists.newArrayList(sampleElement));
                             break;
                         case SET:
-                            alldatatypes.setSet(index, (Set<DataType>) sample);
+                            alldatatypes.setSet(index, Sets.newHashSet(sampleElement));
                             break;
                         case MAP:
-                            alldatatypes.setMap(index, (HashMap<DataType, DataType>) sample);
+                            alldatatypes.setMap(index, ImmutableMap.of(sampleElement, sampleElement));
                             break;
                         case TUPLE:
-                            alldatatypes.setTupleValue(index, (TupleValue) sample);
+                            alldatatypes.setTupleValue(index, TupleType.of(dataType).newValue(sampleElement));
                     }
                 }
 

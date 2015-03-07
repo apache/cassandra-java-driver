@@ -26,7 +26,6 @@ import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TupleValue;
 import com.datastax.driver.core.UDTValue;
-import com.datastax.driver.core.utils.Bytes;
 
 // Static utilities private to the query builder
 abstract class Utils {
@@ -96,7 +95,7 @@ abstract class Utils {
         return sb;
     }
 
-    private static StringBuilder appendValue(Object value, StringBuilder sb) {
+    static StringBuilder appendValue(Object value, StringBuilder sb) {
         // That is kind of lame but lacking a better solution
         if (appendValueIfLiteral(value, sb))
             return sb;
@@ -108,14 +107,6 @@ abstract class Utils {
             return sb;
 
         if (appendValueIfTuple(value, sb))
-            return sb;
-
-        appendStringIfValid(value, sb);
-        return sb;
-    }
-
-    static StringBuilder appendFlatValue(Object value, StringBuilder sb) {
-        if (appendValueIfLiteral(value, sb))
             return sb;
 
         appendStringIfValid(value, sb);
@@ -205,7 +196,7 @@ abstract class Utils {
         for (int i = 0; i < l.size(); i++) {
             if (i > 0)
                 sb.append(',');
-            appendFlatValue(l.get(i), sb);
+            appendValue(l.get(i), sb);
         }
         sb.append(']');
         return sb;
@@ -216,7 +207,7 @@ abstract class Utils {
         boolean first = true;
         for (Object elt : s) {
             if (first) first = false; else sb.append(',');
-            appendFlatValue(elt, sb);
+            appendValue(elt, sb);
         }
         sb.append('}');
         return sb;
@@ -230,9 +221,9 @@ abstract class Utils {
                 first = false;
             else
                 sb.append(',');
-            appendFlatValue(entry.getKey(), sb);
+            appendValue(entry.getKey(), sb);
             sb.append(':');
-            appendFlatValue(entry.getValue(), sb);
+            appendValue(entry.getValue(), sb);
         }
         sb.append('}');
         return sb;
