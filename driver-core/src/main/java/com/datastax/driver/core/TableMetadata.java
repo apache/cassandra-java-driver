@@ -436,7 +436,7 @@ public class TableMetadata {
         else
             and(sb, formatted).append("caching = ").append(formatOptionMap(options.caching));
         if (options.comment != null)
-            and(sb, formatted).append("comment = '").append(options.comment).append('\'');
+            and(sb, formatted).append("comment = '").append(options.comment.replace("'","''")).append('\'');
         and(sb, formatted).append("compaction = ").append(formatOptionMap(options.compaction));
         and(sb, formatted).append("compression = ").append(formatOptionMap(options.compression));
         if (cassandraVersion.getMajor() >= 2) {

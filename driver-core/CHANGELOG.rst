@@ -22,6 +22,8 @@ Merged from 2.0 branch:
 - [improvement] Use List<?> instead of List<Object> in QueryBuilder API
   (JAVA-631)
 - [improvement] Exclude Netty POM from META-INF in shaded JAR (JAVA-654)
+- [bug] Quote single quotes contained in table comments in asCQLQuery method
+  (JAVA-655)
 - [bug] Prevent race between cancellation and query completion (JAVA-614)
 - [bug] Prevent cancel and timeout from cancelling unrelated ResponseHandler if
   streamId was already released and reused (JAVA-632).
