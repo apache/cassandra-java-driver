@@ -11,6 +11,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.schemabuilder.TableOptions.CompactionOptions.DateTieredCompactionStrategyOptions.TimeStampResolution;
+import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.schemabuilder.SchemaBuilder.dateTieredStrategy;
 import static com.datastax.driver.core.schemabuilder.SchemaBuilder.percentile;
@@ -25,9 +26,8 @@ public class SchemaBuilderIT extends CCMBridge.PerClassSingleNodeCluster{
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major=2.1, minor=2)
     public void should_modify_table_metadata() {
-        TestUtils.versionCheck(2.1, 2, "This test requires Cassandra 2.1.2");
-
         // Create a table
         session.execute(SchemaBuilder.createTable("ks", "TableMetadata")
                 .addPartitionKey("a", DataType.cint())
@@ -122,9 +122,8 @@ public class SchemaBuilderIT extends CCMBridge.PerClassSingleNodeCluster{
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major=2.1)
     public void should_create_a_table_and_a_udt() {
-        TestUtils.versionCheck(2.1, 0, "This test requires Cassandra 2.1.0");
-
         // Create a UDT and a table
         session.execute(SchemaBuilder.createType("MyUDT")
                 .ifNotExists()

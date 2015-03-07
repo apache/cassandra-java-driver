@@ -12,6 +12,7 @@ import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.Policies;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
+import com.datastax.driver.core.utils.CassandraVersion;
 
 public class ControlConnectionTest {
     @Test(groups = "short")
@@ -73,9 +74,8 @@ public class ControlConnectionTest {
      * Therefore we use two different driver instances in this test.
      */
     @Test(groups = "short")
+    @CassandraVersion(major=2.1)
     public void should_parse_UDT_definitions_when_using_default_protocol_version() {
-        TestUtils.versionCheck(2.1, 0, "This will only work with C* 2.1.0");
-
         CCMBridge ccm = null;
         Cluster cluster = null;
 

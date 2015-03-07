@@ -21,6 +21,8 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.google.common.reflect.TypeToken;
+
 public abstract class AbstractGettableData extends AbstractGettableByIndexData implements GettableData {
 
     /**
@@ -181,6 +183,14 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
      * {@inheritDoc}
      */
     @Override
+    public <T> List<T> getList(String name, TypeToken<T> elementsType) {
+        return getList(getIndexOf(name), elementsType);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public <T> Set<T> getSet(String name, Class<T> elementsClass) {
         return getSet(getIndexOf(name), elementsClass);
     }
@@ -189,8 +199,24 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
      * {@inheritDoc}
      */
     @Override
+    public <T> Set<T> getSet(String name, TypeToken<T> elementsType) {
+        return getSet(getIndexOf(name), elementsType);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass) {
         return getMap(getIndexOf(name), keysClass, valuesClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public <K, V> Map<K, V> getMap(String name, TypeToken<K> keysType, TypeToken<V> valuesType) {
+        return getMap(getIndexOf(name), keysType, valuesType);
     }
 
     /**

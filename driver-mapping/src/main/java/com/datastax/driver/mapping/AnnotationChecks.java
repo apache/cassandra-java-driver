@@ -20,13 +20,7 @@ import java.lang.reflect.*;
 import java.lang.reflect.Field;
 import java.util.*;
 
-import com.google.common.primitives.Primitives;
-
 import com.datastax.driver.mapping.annotations.*;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSet.Builder;
-
-import com.datastax.driver.core.DataType;
 
 /**
  * Various checks on mapping annotations.
@@ -35,22 +29,6 @@ class AnnotationChecks {
 
     // The package containing the mapping annotations
     private static final Package MAPPING_PACKAGE = Table.class.getPackage();
-
-    // The Java types that should not be annotated with @Frozen. Any other type is supposed
-    // to map to a UDT or tuple.
-    private static final Set<Class<?>> EXPECTED_NON_FROZEN_CLASSES;
-    static {
-        Builder<Class<?>> builder = ImmutableSet.<Class<?>>builder();
-        for (DataType type : DataType.allPrimitiveTypes()) {
-            builder.add(type.asJavaClass());
-            builder.add(Primitives.unwrap(type.asJavaClass()));
-        }
-        builder.add(List.class);
-        builder.add(Set.class);
-        builder.add(Map.class);
-
-        EXPECTED_NON_FROZEN_CLASSES = builder.build();
-    }
 
     /**
      * Checks that a class is decorated with the given annotation, and return the annotation instance.
@@ -118,35 +96,39 @@ class AnnotationChecks {
 
     static void checkFrozenTypes(Field field) {
         Type javaType = field.getGenericType();
-        CQLType cqlType = getCQLType(field);
-        checkFrozenTypes(javaType, cqlType);
+        DeclaredFrozenType declaredFrozenType = getDeclaredFrozenType(field);
+        checkFrozenTypes(javaType, declaredFrozenType);
     }
 
-    // Builds a CQLType hierarchy based on the @Frozen* annotations on a field.
-    private static CQLType getCQLType(Field field) {
+    // Builds a DeclaredFrozenType hierarchy based on the @Frozen* annotations on a field.
+    private static DeclaredFrozenType getDeclaredFrozenType(Field field) {
         Frozen frozen = field.getAnnotation(Frozen.class);
         if (frozen != null)
-            return CQLType.parse(frozen.value());
+            return DeclaredFrozenType.parse(frozen.value());
 
         boolean frozenKey = field.getAnnotation(FrozenKey.class) != null;
         boolean frozenValue = field.getAnnotation(FrozenValue.class) != null;
         if (frozenKey && frozenValue)
-            return CQLType.FROZEN_MAP_KEY_AND_VALUE;
+            return DeclaredFrozenType.FROZEN_MAP_KEY_AND_VALUE;
         else if (frozenKey)
-            return CQLType.FROZEN_MAP_KEY;
+            return DeclaredFrozenType.FROZEN_MAP_KEY;
         else if (frozenValue && field.getType().equals(Map.class))
-            return CQLType.FROZEN_MAP_VALUE;
+            return DeclaredFrozenType.FROZEN_MAP_VALUE;
         else if (frozenValue)
-            return CQLType.FROZEN_ELEMENT;
+            return DeclaredFrozenType.FROZEN_ELEMENT;
         else
-            return CQLType.UNFROZEN_SIMPLE;
+            return DeclaredFrozenType.UNFROZEN_SIMPLE;
     }
 
     // Traverses the Java type and CQLType hierarchies in parallel, to ensure that all
-    // Java types mapping to UDTs and tuples are marked as frozen in the CQLType.
+    // Java types mapping to UDTs, tuples and nested collections are marked as frozen in the CQLType.
     // We accept that parts of the CQLType be null, in which case the matching parts
     // in the Java type will be considered as not frozen.
-    private static void checkFrozenTypes(Type javaType, CQLType cqlType) {
+    private static void checkFrozenTypes(Type javaType, DeclaredFrozenType declaredFrozenType) {
+        checkFrozenTypes(javaType, declaredFrozenType, true);
+    }
+
+    private static void checkFrozenTypes(Type javaType, DeclaredFrozenType declaredFrozenType, boolean isRoot) {
         Class<?> javaClass;
         Type[] childrenJavaTypes;
         if (javaType instanceof Class<?>) {
@@ -159,26 +141,27 @@ class AnnotationChecks {
         } else
             throw new IllegalArgumentException("unexpected type: " + javaType);
 
-        boolean frozen = (cqlType != null && cqlType.frozen);
-        checkValidFrozen(javaClass, frozen);
+        boolean frozen = (declaredFrozenType != null && declaredFrozenType.frozen);
+        checkValidFrozen(javaClass, isRoot, frozen);
 
         if (childrenJavaTypes != null) {
             for (int i = 0; i < childrenJavaTypes.length; i++) {
                 Type childJavaType = childrenJavaTypes[i];
-                CQLType childCQLType = null;
-                if (cqlType != null && cqlType.subTypes != null && cqlType.subTypes.size() > i)
-                    childCQLType = cqlType.subTypes.get(i);
-                checkFrozenTypes(childJavaType, childCQLType);
+                DeclaredFrozenType childDeclaredFrozenType = null;
+                if (declaredFrozenType != null && declaredFrozenType.subTypes != null && declaredFrozenType.subTypes.size() > i)
+                    childDeclaredFrozenType = declaredFrozenType.subTypes.get(i);
+                checkFrozenTypes(childJavaType, childDeclaredFrozenType, false);
             }
         }
     }
 
-    private static void checkValidFrozen(Class<?> clazz, boolean declared) {
-        boolean expected = !EXPECTED_NON_FROZEN_CLASSES.contains(clazz) && !clazz.isEnum();
-        if (expected != declared)
+    private static void checkValidFrozen(Class<?> clazz, boolean isRoot, boolean isDeclaredFrozen) {
+        boolean shouldBeFrozen = (TypeMappings.mapsToCollection(clazz) && !isRoot)
+            || TypeMappings.mapsToUserTypeOrTuple(clazz);
+        if (shouldBeFrozen != isDeclaredFrozen)
             throw new IllegalArgumentException(String.format("expected %s to be %sfrozen but was %sfrozen",
-                                                             clazz.getSimpleName(),
-                                                             expected ? "" : "not ",
-                                                             declared ? "" : "not "));
+                clazz.getSimpleName(),
+                shouldBeFrozen ? "" : "not ",
+                isDeclaredFrozen ? "" : "not "));
     }
 }

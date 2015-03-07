@@ -21,6 +21,8 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.google.common.reflect.TypeToken;
+
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
@@ -1241,8 +1243,22 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    public <T> List<T> getList(int i, TypeToken<T> elementsType) {
+        return wrapper.getList(i, elementsType);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public <T> List<T> getList(String name, Class<T> elementsClass) {
         return wrapper.getList(name, elementsClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public <T> List<T> getList(String name, TypeToken<T> elementsType) {
+        return wrapper.getList(name, elementsType);
     }
 
     /**
@@ -1255,8 +1271,22 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    public <T> Set<T> getSet(int i, TypeToken<T> elementsType) {
+        return wrapper.getSet(i, elementsType);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public <T> Set<T> getSet(String name, Class<T> elementsClass) {
         return wrapper.getSet(name, elementsClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public <T> Set<T> getSet(String name, TypeToken<T> elementsType) {
+        return wrapper.getSet(name, elementsType);
     }
 
     /**
@@ -1269,8 +1299,22 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    public <K, V> Map<K, V> getMap(int i, TypeToken<K> keysType, TypeToken<V> valuesType) {
+        return wrapper.getMap(i, keysType, valuesType);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass) {
         return wrapper.getMap(name, keysClass, valuesClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public <K, V> Map<K, V> getMap(String name, TypeToken<K> keysType, TypeToken<V> valuesType) {
+        return wrapper.getMap(name, keysType, valuesType);
     }
 
     /**

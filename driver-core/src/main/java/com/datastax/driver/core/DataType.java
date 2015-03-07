@@ -24,6 +24,7 @@ import java.util.*;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeToken;
 import org.jboss.netty.buffer.ChannelBuffer;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
@@ -163,26 +164,6 @@ public abstract class DataType {
 
     protected DataType(DataType.Name name) {
         this.name = name;
-    }
-
-
-    /**
-     * Returns whether this data type is frozen.
-     * <p>
-     * This applies to User Defined Types, tuples and nested collections. Frozen types are serialized as a single value in
-     * Cassandra's storage engine, whereas non-frozen types are stored in a form that allows updates to individual subfields.
-     *
-     * @return whether this data type is frozen.
-     */
-    public boolean isFrozen() {
-        // With Cassandra 2.1.0, this is straightforward; in future versions, "frozenness" will be stored in the database.
-        switch (name) {
-            case UDT:
-            case TUPLE:
-                return true;
-            default:
-                return false;
-        }
     }
 
     static DataType decode(ChannelBuffer buffer) {
@@ -374,23 +355,70 @@ public abstract class DataType {
      * Returns the type of lists of {@code elementType} elements.
      *
      * @param elementType the type of the list elements.
+     * @param frozen whether the list is frozen.
      * @return the type of lists of {@code elementType} elements.
      */
+    public static DataType list(DataType elementType, boolean frozen) {
+        return new DataType.Collection(Name.LIST, ImmutableList.of(elementType), frozen);
+    }
+
+    /**
+     * Returns the type of lists of "not frozen" {@code elementType} elements.
+     * <p>
+     * This is a shorthand for {@code list(elementType, false);}.
+     *
+     * @param elementType the type of the list elements.
+     * @return the type of lists of "not frozen" {@code elementType} elements.
+     */
     public static DataType list(DataType elementType) {
-        // TODO: for list, sets and maps, we could cache them (may or may not be worth it, but since we
-        // don't allow nesting of collections, even pregenerating all the lists/sets like we do for
-        // primitives wouldn't be very costly)
-        return new DataType.Collection(Name.LIST, ImmutableList.of(elementType));
+        return list(elementType, false);
+    }
+
+    /**
+     * Returns the type of lists of frozen {@code elementType} elements.
+     * <p>
+     * This is a shorthand for {@code list(elementType, true);}.
+     *
+     * @param elementType the type of the list elements.
+     * @return the type of lists of frozen {@code elementType} elements.
+     */
+    public static DataType frozenList(DataType elementType) {
+        return list(elementType, true);
     }
 
     /**
      * Returns the type of sets of {@code elementType} elements.
      *
      * @param elementType the type of the set elements.
+     * @param frozen whether the set is frozen.
      * @return the type of sets of {@code elementType} elements.
      */
+    public static DataType set(DataType elementType, boolean frozen) {
+        return new DataType.Collection(Name.SET, ImmutableList.of(elementType), frozen);
+    }
+
+    /**
+     * Returns the type of "not frozen" sets of {@code elementType} elements.
+     * <p>
+     * This is a shorthand for {@code set(elementType, false);}.
+     *
+     * @param elementType the type of the set elements.
+     * @return the type of sets of "not frozen" {@code elementType} elements.
+     */
     public static DataType set(DataType elementType) {
-        return new DataType.Collection(Name.SET, ImmutableList.of(elementType));
+        return set(elementType, false);
+    }
+
+    /**
+     * Returns the type of frozen sets of {@code elementType} elements.
+     * <p>
+     * This is a shorthand for {@code set(elementType, true);}.
+     *
+     * @param elementType the type of the set elements.
+     * @return the type of frozen sets of {@code elementType} elements.
+     */
+    public static DataType frozenSet(DataType elementType) {
+        return set(elementType, true);
     }
 
     /**
@@ -398,10 +426,37 @@ public abstract class DataType {
      *
      * @param keyType the type of the map keys.
      * @param valueType the type of the map values.
-     * @return the type of map of {@code keyType} to {@code valueType} elements.
+     * @param frozen whether the map is frozen.
+     * @return the type of maps of {@code keyType} to {@code valueType} elements.
+     */
+    public static DataType map(DataType keyType, DataType valueType, boolean frozen) {
+        return new DataType.Collection(Name.MAP, ImmutableList.of(keyType, valueType), frozen);
+    }
+
+    /**
+     * Returns the type of "not frozen" maps of {@code keyType} to {@code valueType} elements.
+     * <p>
+     * This is a shorthand for {@code map(keyType, valueType, false);}.
+     *
+     * @param keyType the type of the map keys.
+     * @param valueType the type of the map values.
+     * @return the type of "not frozen" maps of {@code keyType} to {@code valueType} elements.
      */
     public static DataType map(DataType keyType, DataType valueType) {
-        return new DataType.Collection(Name.MAP, ImmutableList.of(keyType, valueType));
+        return map(keyType, valueType, false);
+    }
+
+    /**
+     * Returns the type of frozen maps of {@code keyType} to {@code valueType} elements.
+     * <p>
+     * This is a shorthand for {@code map(keyType, valueType, true);}.
+     *
+     * @param keyType the type of the map keys.
+     * @param valueType the type of the map values.
+     * @return the type of frozen maps of {@code keyType} to {@code valueType} elements.
+     */
+    public static DataType frozenMap(DataType keyType, DataType valueType) {
+        return map(keyType, valueType, true);
     }
 
     /**
@@ -434,6 +489,16 @@ public abstract class DataType {
     }
 
     /**
+     * Returns whether this data type is frozen.
+     * <p>
+     * This applies to User Defined Types, tuples and nested collections. Frozen types are serialized as a single value in
+     * Cassandra's storage engine, whereas non-frozen types are stored in a form that allows updates to individual subfields.
+     *
+     * @return whether this data type is frozen.
+     */
+    public abstract boolean isFrozen();
+
+    /**
      * Returns the type arguments of this type.
      * <p>
      * Note that only the collection types (LIST, MAP, SET) have type
@@ -453,6 +518,8 @@ public abstract class DataType {
     public List<DataType> getTypeArguments() {
         return Collections.<DataType>emptyList();
     }
+
+    abstract boolean canBeDeserializedAs(TypeToken typeToken);
 
     /**
      * Returns the server-side class name for a custom type.
@@ -694,6 +761,16 @@ public abstract class DataType {
         }
 
         @Override
+        public boolean isFrozen() {
+            return false;
+        }
+
+        @Override
+        boolean canBeDeserializedAs(TypeToken typeToken) {
+            return typeToken.isAssignableFrom(getName().javaType);
+        }
+
+        @Override
         TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
             return TypeCodec.createFor(name);
         }
@@ -725,10 +802,35 @@ public abstract class DataType {
     private static class Collection extends DataType {
 
         private final List<DataType> typeArguments;
+        private boolean frozen;
 
-        private Collection(DataType.Name name, List<DataType> typeArguments) {
+        private Collection(DataType.Name name, List<DataType> typeArguments, boolean frozen) {
             super(name);
             this.typeArguments = typeArguments;
+            this.frozen = frozen;
+        }
+
+        @Override
+        public boolean isFrozen() {
+            return frozen;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        boolean canBeDeserializedAs(TypeToken typeToken) {
+            switch (name) {
+                case LIST:
+                    return typeToken.getRawType().isAssignableFrom(List.class) &&
+                        typeArguments.get(0).canBeDeserializedAs(typeToken.resolveType(typeToken.getRawType().getTypeParameters()[0]));
+                case SET:
+                    return typeToken.getRawType().isAssignableFrom(Set.class) &&
+                        typeArguments.get(0).canBeDeserializedAs(typeToken.resolveType(typeToken.getRawType().getTypeParameters()[0]));
+                case MAP:
+                    return typeToken.getRawType().isAssignableFrom(Map.class) &&
+                        typeArguments.get(0).canBeDeserializedAs(typeToken.resolveType(typeToken.getRawType().getTypeParameters()[0])) &&
+                        typeArguments.get(1).canBeDeserializedAs(typeToken.resolveType(typeToken.getRawType().getTypeParameters()[1]));
+            }
+            throw new AssertionError();
         }
 
         @SuppressWarnings("unchecked")
@@ -764,10 +866,14 @@ public abstract class DataType {
 
         @Override
         public String toString() {
-            if (name == Name.MAP)
-                return String.format("%s<%s, %s>", name, typeArguments.get(0), typeArguments.get(1));
-            else
-                return String.format("%s<%s>", name, typeArguments.get(0));
+            if (name == Name.MAP) {
+                String template = frozen ? "frozen<%s<%s, %s>>" : "%s<%s, %s>";
+                return String.format(template, name, typeArguments.get(0), typeArguments.get(1));
+            }
+            else {
+                String template = frozen ? "frozen<%s<%s>>" : "%s<%s>";
+                return String.format(template, name, typeArguments.get(0));
+            }
         }
     }
 
@@ -778,6 +884,16 @@ public abstract class DataType {
         private Custom(DataType.Name name, String className) {
             super(name);
             this.customClassName = className;
+        }
+
+        @Override
+        public boolean isFrozen() {
+            return false;
+        }
+
+        @Override
+        boolean canBeDeserializedAs(TypeToken typeToken) {
+            return typeToken.getRawType().getName().equals(customClassName);
         }
 
         @SuppressWarnings("unchecked")

@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -361,7 +360,7 @@ public class Delete extends BuiltStatement {
             StringBuilder sb = new StringBuilder();
             Utils.appendName(columnName, sb);
             sb.append('[');
-            Utils.appendFlatValue(key, sb);
+            Utils.appendValue(key, sb);
             return column(sb.append(']').toString());
         }
     }

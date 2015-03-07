@@ -4,7 +4,11 @@ CHANGELOG
 2.1.5:
 ------
 
+- [bug] Fix checks on mapped collection types (JAVA-612)
 - [bug] Authorize Null parameter in Accessor method (JAVA-575)
+- [improvement] Support C* 2.1.3's nested collections (JAVA-570)
+- [bug] Fix checks on mapped collection types (JAVA-612)
+- [bug] Fix QueryBuilder.putAll() when the collection contains UDTs (JAVA-672)
 
 Merged from 2.0 branch:
 

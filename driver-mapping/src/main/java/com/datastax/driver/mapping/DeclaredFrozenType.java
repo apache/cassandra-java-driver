@@ -6,42 +6,45 @@ import java.util.List;
 import com.datastax.driver.mapping.annotations.Frozen;
 import com.google.common.base.Strings;
 
-/** A CQL type definition parsed from {@link Frozen#value()}, for example map<text,map<text,frozen<user>>> */
-class CQLType {
+/**
+ * A tree-like structure parsed from {@code Frozen*} annotations, that indicates which
+ * types in the hierarchy were declared frozen.
+ */
+class DeclaredFrozenType {
     String name;
     boolean frozen;
-    List<CQLType> subTypes;
+    List<DeclaredFrozenType> subTypes;
 
-    private CQLType(String name) {
+    private DeclaredFrozenType(String name) {
         this(name, false);
     }
 
-    private CQLType(String name, boolean frozen, CQLType... subTypes) {
+    private DeclaredFrozenType(String name, boolean frozen, DeclaredFrozenType... subTypes) {
         this.name = name;
         this.frozen = frozen;
-        for (CQLType subType : subTypes) {
+        for (DeclaredFrozenType subType : subTypes) {
             if (this.subTypes == null)
-                this.subTypes = new ArrayList<CQLType>();
+                this.subTypes = new ArrayList<DeclaredFrozenType>();
             this.subTypes.add(subType);
         }
     }
 
     // Some constant types for the simple cases. Note that we can afford generic names because currently we don't include the name in our
     // checks.
-    static final CQLType FROZEN_SIMPLE = new CQLType("root", true);
-    static final CQLType FROZEN_ELEMENT = new CQLType("collection", false,
-                                                      new CQLType("element", true));
-    static final CQLType FROZEN_MAP_KEY = new CQLType("map", false,
-                                                      new CQLType("key", true));
-    static final CQLType FROZEN_MAP_VALUE = new CQLType("map", false,
-                                                        new CQLType("key", false),
-                                                        new CQLType("value", true));
-    static final CQLType FROZEN_MAP_KEY_AND_VALUE = new CQLType("map", false,
-                                                                new CQLType("key", true),
-                                                                new CQLType("value", true));
-    static final CQLType UNFROZEN_SIMPLE = new CQLType("root");
+    static final DeclaredFrozenType FROZEN_SIMPLE = new DeclaredFrozenType("root", true);
+    static final DeclaredFrozenType FROZEN_ELEMENT = new DeclaredFrozenType("collection", false,
+                                                      new DeclaredFrozenType("element", true));
+    static final DeclaredFrozenType FROZEN_MAP_KEY = new DeclaredFrozenType("map", false,
+                                                      new DeclaredFrozenType("key", true));
+    static final DeclaredFrozenType FROZEN_MAP_VALUE = new DeclaredFrozenType("map", false,
+                                                        new DeclaredFrozenType("key", false),
+                                                        new DeclaredFrozenType("value", true));
+    static final DeclaredFrozenType FROZEN_MAP_KEY_AND_VALUE = new DeclaredFrozenType("map", false,
+                                                                new DeclaredFrozenType("key", true),
+                                                                new DeclaredFrozenType("value", true));
+    static final DeclaredFrozenType UNFROZEN_SIMPLE = new DeclaredFrozenType("root");
 
-    static CQLType parse(String toParse) {
+    static DeclaredFrozenType parse(String toParse) {
         if (Strings.isNullOrEmpty(toParse))
             // we allow that as a shorthand
             return FROZEN_SIMPLE;
@@ -57,7 +60,7 @@ class CQLType {
             this.toParse = toParse;
         }
 
-        CQLType parse() {
+        DeclaredFrozenType parse() {
             skipSpaces();
 
             if (toParse.charAt(idx) == '"') {
@@ -73,7 +76,7 @@ class CQLType {
                 String name = toParse.substring(idx + 1, endQuote);
                 idx = endQuote + 1;
                 // a quoted identifier cannot be parameterized, so we can return immediately
-                return new CQLType(name);
+                return new DeclaredFrozenType(name);
             } else {
                 // unquoted identifier: could be "simpleType", "complexType<subType1, subType2...>" or "frozen<type>"
                 int n = skipWord();
@@ -84,7 +87,7 @@ class CQLType {
                     if (idx >= toParse.length() || toParse.charAt(idx) != '<')
                         throw fail("expected '<'");
                     idx += 1;
-                    CQLType type = parse();
+                    DeclaredFrozenType type = parse();
                     skipSpaces();
                     if (idx >= toParse.length() || toParse.charAt(idx) != '>')
                         throw fail("expected '>'");
@@ -92,11 +95,11 @@ class CQLType {
                     type.frozen = true;
                     return type;
                 } else {
-                    CQLType type = new CQLType(nextWord);
+                    DeclaredFrozenType type = new DeclaredFrozenType(nextWord);
                     skipSpaces();
                     if (idx < toParse.length() && toParse.charAt(idx) == '<') {
                         idx += 1;
-                        type.subTypes = new ArrayList<CQLType>();
+                        type.subTypes = new ArrayList<DeclaredFrozenType>();
                         while (idx < toParse.length()) {
                             type.subTypes.add(parse());
                             skipSpaces();
