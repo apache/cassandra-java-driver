@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
@@ -508,8 +509,12 @@ class SessionManager extends AbstractSession {
             bs.ensureAllSet();
             boolean skipMetadata = protoVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.wrapper.values), skipMetadata,
-                                                                                      fetchSize, pagingState, scl, defaultTimestamp);
-            return new Requests.Execute(bs.statement.getPreparedId().id, options);
+                fetchSize, pagingState, scl, defaultTimestamp);
+            if (cluster.manager.preparedQueries.get(bs.statement.getPreparedId().id) != null) {
+                return new Requests.Execute(bs.statement.getPreparedId().id, options);
+            } else {
+                throw new InvalidQueryException("Prepared statement doesn't exist on the current cluster");
+            }
         } else {
             assert statement instanceof BatchStatement : statement;
             assert pagingState == null;
