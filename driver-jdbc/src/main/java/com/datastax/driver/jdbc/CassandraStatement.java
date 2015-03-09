@@ -57,7 +57,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class CassandraStatement extends AbstractStatement implements CassandraStatementExtras, Comparable<Object>, Statement
 {
-    private static final Logger logger = LoggerFactory.getLogger(CassandraStatement.class);
+    public static final int MAX_ASYNC_QUERIES=10000;
+	private static final Logger logger = LoggerFactory.getLogger(CassandraStatement.class);
     /**
      * The connection.
      */
@@ -176,7 +177,12 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
             	// several statements in the query to execute asynchronously            	
             	List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>();
             	ArrayList<com.datastax.driver.core.ResultSet> results = Lists.newArrayList();
-            	for(String cqlQuery:cql.split(";")){           
+            	String[] cqlQueries = cql.split(";");
+            	if(cqlQueries.length>MAX_ASYNC_QUERIES){
+            		// Protect the cluster from receiving too many queries at once and force the dev to split the load
+            		throw new SQLNonTransientException("Too many queries at once (" + cqlQueries.length + "). You must split your queries into more batches !");
+            	}
+            	for(String cqlQuery:cqlQueries){           
             			if (logger.isTraceEnabled() || this.connection.debugMode) System.out.println("CQL: "+ cqlQuery);
             			SimpleStatement stmt = new SimpleStatement(cqlQuery);
             			stmt.setConsistencyLevel(this.connection.defaultConsistencyLevel);
@@ -184,6 +190,8 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
                 		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(stmt);
                 		futures.add(resultSetFuture);
                 }
+            	
+            	//ListenableFuture<List<com.datastax.driver.core.ResultSet>> res = Futures.allAsList(futures);
             	
             	
                 
@@ -205,7 +213,7 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
         }        
         catch (Exception e)
         {        	
-            throw new SQLTransientConnectionException(e);
+            throw new SQLNonTransientException(e);
         }
          
     }

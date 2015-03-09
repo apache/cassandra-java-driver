@@ -239,9 +239,15 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
 
         // Now we concatenate iterators of the different result sets into a single one and voilà !! ;) 
         rowsIterator = this.driverResultSet.iterator();
-        for(int i=1;i<resultSets.size();i++){        	
-        	rowsIterator = Iterators.concat(rowsIterator,resultSets.get(i).iterator());
+        ArrayList<Row> allRows = Lists.newArrayList();
+        Iterators.addAll(allRows, rowsIterator);
+        
+        for(int i=1;i<resultSets.size();i++){
+        	Iterators.addAll(allRows, resultSets.get(i).iterator());
+        	
         }
+        
+        rowsIterator = allRows.iterator();
         colDefinitions = driverResultSet.getColumnDefinitions();
 
         // Initialize to column values from the first row

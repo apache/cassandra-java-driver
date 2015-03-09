@@ -25,6 +25,7 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.ExpectedExceptions;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
 import org.testng.AssertJUnit;
@@ -46,6 +47,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLNonTransientException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.sql.Timestamp;
@@ -1013,6 +1015,22 @@ public class JdbcRegressionUnitTest
         
         
        
+    }
+    
+    @Test(expectedExceptions = SQLNonTransientException.class)
+    public void testAsyncQuerySizeLimit() throws Exception
+    {
+    	Statement stmt = con.createStatement();
+    	String createCF = "CREATE table test_async_query_size_limit(bigint_col bigint PRIMARY KEY, int_col int);";        
+        stmt.execute(createCF);        
+        
+    	StringBuilder queries = new StringBuilder();
+    	for(int i=0;i<CassandraStatement.MAX_ASYNC_QUERIES+10;i++){
+    		queries.append("INSERT INTO test_async_query_size_limit(bigint_col, int_col) values(" + i + "," + i + ");");
+    	}
+    	
+    	stmt.execute(queries.toString());
+    	Assert.assertTrue(false);
     }
     
     @Test
