@@ -123,6 +123,19 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>2.18.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
         <extensions>true</extensions>
@@ -172,7 +185,14 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <version>2.14</version>
             <configuration>
-              <skipTests>true</skipTests>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <version>2.18.1</version>
+            <configuration>
+              <skip>true</skip>
             </configuration>
           </plugin>
           <plugin>
@@ -207,6 +227,19 @@
               </systemPropertyVariables>
             </configuration>
           </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <version>2.18.1</version>
+            <configuration>
+              <groups>unit,short</groups>
+              <useFile>false</useFile>
+              <systemPropertyVariables>
+                <cassandra.version>${cassandra.version}</cassandra.version>
+                <ipprefix>${ipprefix}</ipprefix>
+              </systemPropertyVariables>
+            </configuration>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -222,6 +255,19 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <version>2.16</version>
+            <configuration>
+              <groups>unit,short,long</groups>
+              <useFile>false</useFile>
+              <systemPropertyVariables>
+                <cassandra.version>${cassandra.version}</cassandra.version>
+                <ipprefix>${ipprefix}</ipprefix>
+              </systemPropertyVariables>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <version>2.18.1</version>
             <configuration>
               <groups>unit,short,long</groups>
               <useFile>false</useFile>

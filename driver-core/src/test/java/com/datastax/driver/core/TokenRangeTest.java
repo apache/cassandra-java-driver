@@ -89,7 +89,7 @@ public class TokenRangeTest {
     }
 
     @Test(groups = "unit")
-    public void should_could_intersection_with_ranges_around_ring() {
+    public void should_compute_intersection_with_ranges_around_ring() {
         // If a range wraps the ring like 10, -10 does this will produce two separate
         // intersected ranges.
         assertThat(tokenRange(10, -10).intersectWith(tokenRange(-20, 20)))

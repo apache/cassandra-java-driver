@@ -24,6 +24,7 @@ import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.options.CompositeOption;
 import org.ops4j.pax.exam.options.MavenArtifactProvisionOption;
+import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.ops4j.pax.exam.testng.listener.PaxExam;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -40,11 +41,16 @@ import static com.datastax.driver.osgi.VersionProvider.projectVersion;
 
 @Listeners({CCMBridgeListener.class, PaxExam.class})
 @Test(groups="short")
-public class MailboxServiceTest {
+public class MailboxServiceIT {
     @Inject MailboxService service;
 
-    private MavenArtifactProvisionOption driverBundle() {
-        return mavenBundle("com.datastax.cassandra", "cassandra-driver-core", projectVersion());
+    private UrlProvisionOption driverBundle() {
+        return driverBundle(false);
+    }
+
+    private UrlProvisionOption driverBundle(boolean useShaded) {
+        String classifier = useShaded ? "-shaded" : "";
+        return bundle("reference:file:../../driver-core/target/cassandra-driver-core-" + projectVersion() + classifier + ".jar");
     }
 
     private MavenArtifactProvisionOption guavaBundle() {
@@ -75,7 +81,7 @@ public class MailboxServiceTest {
     @Configuration
     public Option[] shadedConfig() {
         return options(
-            driverBundle().classifier("shaded"),
+            driverBundle(true),
             guavaBundle(),
             defaultOptions()
         );
