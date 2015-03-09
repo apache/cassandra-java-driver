@@ -331,7 +331,7 @@ public class PoolingOptions {
      * <p>
      * This option is only used with {@code ProtocolVersion#V3} or above.
      * <p>
-     * The default value for this option is 8192 for {@code LOCAL} and 256 for
+     * The default value for this option is 1024 for {@code LOCAL} and 256 for
      * {@code REMOTE} hosts.
      *
      * @param distance the {@code HostDistance} for which to return this threshold.
