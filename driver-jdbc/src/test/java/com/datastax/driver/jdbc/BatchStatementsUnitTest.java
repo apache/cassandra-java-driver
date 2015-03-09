@@ -56,7 +56,7 @@ public class BatchStatementsUnitTest {
 
  
         Class.forName("com.datastax.driver.jdbc.CassandraDriver");
-        String URL = String.format("jdbc:cassandra://%s:%d/%s?debug=true&version=%s", HOST, PORT, SYSTEM, CQLV3);
+        String URL = String.format("jdbc:cassandra://%s:%d/%s?version=%s", HOST, PORT, SYSTEM, CQLV3);
 
         con = DriverManager.getConnection(URL);
         
@@ -98,7 +98,7 @@ public class BatchStatementsUnitTest {
         con.close();
 
         // open it up again to see the new TABLE
-        URL = String.format("jdbc:cassandra://%s:%d/%s?debug=true&version=%s", HOST, PORT, KEYSPACE, CQLV3);
+        URL = String.format("jdbc:cassandra://%s:%d/%s?version=%s", HOST, PORT, KEYSPACE, CQLV3);
         con = DriverManager.getConnection(URL);
         if (LOG.isDebugEnabled()) LOG.debug("URL         = '{}'", URL);
 
@@ -131,20 +131,27 @@ public class BatchStatementsUnitTest {
     public void testBatchSimpleStatement() throws Exception
     {
         System.out.println("Test: 'testBatchSimpleStatement'\n");
-
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("truncate testcollection");
         Statement statement = con.createStatement();
+        int nbRows = 5000;
         
-        
-        for(int i=0;i<10;i++){
-        	System.out.println("--- Statement " + i + " ==> INSERT INTO testcollection (k,L) VALUES( " + i + ",[1, 3, 12345])");
+        for(int i=0;i<nbRows;i++){
+        	//System.out.println("--- Statement " + i + " ==> INSERT INTO testcollection (k,L) VALUES( " + i + ",[1, 3, 12345])");
         	statement.addBatch("INSERT INTO testcollection (k,L) VALUES( " + i + ",[1, 3, 12345])");
         }
         
         int[] counts = statement.executeBatch();
         
-        assertEquals(10,counts.length);
+        assertEquals(nbRows,counts.length);
         
-        ResultSet result = statement.executeQuery("SELECT * FROM testcollection;");
+        
+        StringBuilder queries = new StringBuilder();
+        for(int i=0;i<nbRows;i++){
+        	queries.append("SELECT * FROM testcollection where k = "+ i + ";");
+        }
+        ResultSet result = statement.executeQuery(queries.toString());
 
         int nbRow = 0;
         ArrayList<Integer> ids = new ArrayList<Integer>(); 
@@ -153,7 +160,7 @@ public class BatchStatementsUnitTest {
         	ids.add(result.getInt("k"));
         }
 
-        assertEquals(10, nbRow);
+        assertEquals(nbRows, nbRow);
         Collections.sort(ids);
         int nb = 0;
         for(Integer id:ids){
@@ -172,11 +179,13 @@ public class BatchStatementsUnitTest {
     {
     	System.out.println("Test: 'testBatchPreparedStatement'\n");
 
-        PreparedStatement statement = con.prepareStatement("INSERT INTO testcollection (k,L) VALUES(?,?)");
+        Statement stmt = con.createStatement();
+        stmt.execute("truncate testcollection");
+    	PreparedStatement statement = con.prepareStatement("INSERT INTO testcollection (k,L) VALUES(?,?)");
+        int nbRows = 10000;
         
-        
-        for(int i=0;i<10;i++){
-        	System.out.println("--- Generating prepared statement " + i);
+        for(int i=0;i<nbRows;i++){
+        	//System.out.println("--- Generating prepared statement " + i);
         	statement.setInt(1, i);
         	statement.setString(2, "[1, 3, 12345]");
         	statement.addBatch();
@@ -186,9 +195,15 @@ public class BatchStatementsUnitTest {
         int[] counts = statement.executeBatch();
         
         
-        assertEquals(10,counts.length);
+        assertEquals(nbRows,counts.length);
         
-        ResultSet result = statement.executeQuery("SELECT * FROM testcollection;");
+        
+        StringBuilder queries = new StringBuilder();
+        for(int i=0;i<nbRows;i++){
+        	queries.append("SELECT * FROM testcollection where k = "+ i + ";");
+        }
+        ResultSet result = statement.executeQuery(queries.toString());
+        
 
         int nbRow = 0;
         ArrayList<Integer> ids = new ArrayList<Integer>(); 
@@ -197,7 +212,7 @@ public class BatchStatementsUnitTest {
         	ids.add(result.getInt("k"));
         }
 
-        assertEquals(10, nbRow);
+        assertEquals(nbRows, nbRow);
         Collections.sort(ids);
         int nb = 0;
         for(Integer id:ids){
@@ -220,7 +235,7 @@ public class BatchStatementsUnitTest {
         
         
         for(int i=0;i<10;i++){
-        	System.out.println("--- Generating prepared statement " + i);
+        	//System.out.println("--- Generating prepared statement " + i);
         	statement.setInt(1, i);
         	statement.setString(2, "[1, 3, 12345]");
         	statement.addBatch();

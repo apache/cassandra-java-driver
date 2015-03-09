@@ -192,6 +192,9 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
     {
         batchStatements.add(statement);
         this.statement = new BoundStatement(stmt);
+        if(batchStatements.size()>MAX_ASYNC_QUERIES){
+        	throw new SQLNonTransientException("Too many queries at once (" + batchStatements.size() + "). You must split your queries into more batches !");
+        }
     }
     
     public int[] executeBatch() throws SQLException
