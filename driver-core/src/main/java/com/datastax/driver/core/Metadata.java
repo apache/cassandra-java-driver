@@ -547,10 +547,15 @@ public class Metadata {
 
         private static Set<TokenRange> makeTokenRanges(List<Token> ring, Token.Factory factory) {
             ImmutableSet.Builder<TokenRange> builder = ImmutableSet.builder();
-            for (int i = 0; i < ring.size(); i++) {
-                Token start = ring.get(i);
-                Token end = ring.get((i + 1) % ring.size());
-                builder.add(new TokenRange(start, end, factory));
+            // JAVA-684: if there is only one token, return the range ]minToken, minToken]
+            if(ring.size() == 1) {
+                builder.add(new TokenRange(factory.minToken(), factory.minToken(), factory));                
+            } else {
+                for (int i = 0; i < ring.size(); i++) {
+                    Token start = ring.get(i);
+                    Token end = ring.get((i + 1) % ring.size());
+                    builder.add(new TokenRange(start, end, factory));
+                }
             }
             return builder.build();
         }
