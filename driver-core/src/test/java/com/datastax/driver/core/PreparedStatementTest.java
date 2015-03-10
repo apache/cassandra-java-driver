@@ -27,6 +27,7 @@ import static org.testng.Assert.assertTrue;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.TestUtils.*;
 
@@ -423,6 +424,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short", expectedExceptions = { IllegalStateException.class })
+    @CassandraVersion(major=2.0)
     public void unboundVariableInBatchStatementTest() {
         PreparedStatement ps = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BatchStatement batch = new BatchStatement();
