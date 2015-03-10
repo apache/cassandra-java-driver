@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
@@ -491,6 +492,10 @@ class SessionManager extends AbstractSession {
             return new Requests.Query(qString, options);
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
+            if (!cluster.manager.preparedQueries.containsKey(bs.statement.getPreparedId().id)) {
+                throw new InvalidQueryException(String.format("Tried to execute unknown prepared query : %s. "
+                    + "You may have used a PreparedStatement that was created with another Cluster instance.", bs.statement.getPreparedId().id));
+            }
             boolean skipMetadata = protoVersion != 1 && bs.statement.getPreparedId().resultSetMetadata != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.values), skipMetadata, fetchSize, usedPagingState, scl);
             return new Requests.Execute(bs.statement.getPreparedId().id, options);
