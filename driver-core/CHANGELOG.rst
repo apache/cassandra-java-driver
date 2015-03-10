@@ -16,6 +16,7 @@ CHANGELOG
 - [improvement] Exclude Netty POM from META-INF in shaded JAR (JAVA-654)
 - [bug] Quote single quotes contained in table comments in asCQLQuery method
   (JAVA-655)
+- [bug] Empty TokenRange returned in a one token cluster (JAVA-684)
 
 Merged from 2.0.9_fixes branch:
 
