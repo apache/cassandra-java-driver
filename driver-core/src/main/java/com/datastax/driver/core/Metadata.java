@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
@@ -510,7 +511,14 @@ public class Metadata {
 
                 tokenToHosts.put(keyspace.getName(), ksTokens);
 
-                Map<Host, Set<TokenRange>> ksRanges = computeHostsToRangesMap(tokenRanges, ksTokens, hosts.size());
+                Map<Host, Set<TokenRange>> ksRanges;
+                if (ring.size() == 1) {
+                    // The single range is ]minToken,minToken] which does not necessarily match the host's token
+                    assert hosts.size() == 1;
+                    ksRanges = ImmutableMap.of(hosts.iterator().next(), tokenRanges);
+                } else {
+                    ksRanges = computeHostsToRangesMap(tokenRanges, ksTokens, hosts.size());
+                }
                 hostsToRanges.put(keyspace.getName(), ksRanges);
             }
             return new TokenMap(factory, primaryToTokens, tokenToHosts, hostsToRanges, ring, tokenRanges, hosts);
