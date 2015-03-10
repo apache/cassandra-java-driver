@@ -75,16 +75,16 @@ public class MailboxImpl implements MailboxService {
 
         retrieveStatement = session.prepare(select()
             .from(keyspace, TABLE)
-            .where(eq("recipient", bindMarker("recipient"))));
+            .where(eq("recipient", bindMarker())));
 
         insertStatement = session.prepare(insertInto(keyspace, TABLE)
-            .value("recipient", bindMarker("recipient"))
-            .value("time", bindMarker("time"))
-            .value("sender", bindMarker("sender"))
-            .value("body", bindMarker("body")));
+            .value("recipient", bindMarker())
+            .value("time", bindMarker())
+            .value("sender", bindMarker())
+            .value("body", bindMarker()));
 
         deleteStatement = session.prepare(delete().from(keyspace, TABLE)
-            .where(eq("recipient", bindMarker("recipient"))));
+            .where(eq("recipient", bindMarker())));
 
         initialized = true;
     }
@@ -92,7 +92,7 @@ public class MailboxImpl implements MailboxService {
     @Override public Collection<MailboxMessage> getMessages(String recipient) throws MailboxException {
         try {
             BoundStatement statement = new BoundStatement(retrieveStatement);
-            statement.setString("recipient", recipient);
+            statement.setString(0, recipient);
             ResultSet result = session.execute(statement);
 
             Collection<MailboxMessage> messages = new ArrayList<MailboxMessage>();
@@ -114,10 +114,10 @@ public class MailboxImpl implements MailboxService {
             UUID time = UUIDs.startOf(message.getDate().getTime());
 
             BoundStatement statement = new BoundStatement(insertStatement);
-            statement.setString("recipient", message.getRecipient());
-            statement.setUUID("time", time);
-            statement.setString("sender", message.getSender());
-            statement.setString("body", message.getBody());
+            statement.setString(0, message.getRecipient());
+            statement.setUUID(1, time);
+            statement.setString(2, message.getSender());
+            statement.setString(3, message.getBody());
 
             session.execute(statement);
             return time;
@@ -129,7 +129,7 @@ public class MailboxImpl implements MailboxService {
     @Override public void clearMailbox(String recipient) throws MailboxException {
         try {
             BoundStatement statement = new BoundStatement(deleteStatement);
-            statement.setString("recipient", recipient);
+            statement.setString(0, recipient);
             session.execute(statement);
         } catch(Exception e) {
             throw new MailboxException(e);
