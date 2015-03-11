@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closer;
 import com.google.common.io.Files;
+import org.apache.commons.exec.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
@@ -226,14 +227,6 @@ public class CCMBridge {
         execute("ccm node%d remove", n);
     }
 
-    public void ring() {
-        ring(1);
-    }
-
-    public void ring(int n) {
-        executeAndPrint("ccm node%d ring", n);
-    }
-
     public void bootstrapNode(int n) {
         bootstrapNode(n, null);
     }
@@ -280,48 +273,29 @@ public class CCMBridge {
         try {
             String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
             logger.debug("Executing: " + fullCommand);
-            Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
-            int retValue = p.waitFor();
+            CommandLine cli = CommandLine.parse(fullCommand);
+            Executor executor = new DefaultExecutor();
 
+            LogOutputStream outStream = new LogOutputStream() {
+                @Override protected void processLine(String line, int logLevel) {
+                    logger.debug("ccmout> " + line);
+                }
+            };
+            LogOutputStream errStream = new LogOutputStream() {
+                @Override protected void processLine(String line, int logLevel) {
+                    logger.error("ccmerr> " + line);
+                }
+            };
+
+            ExecuteStreamHandler streamHandler = new PumpStreamHandler(outStream, errStream);
+            executor.setStreamHandler(streamHandler);
+
+            int retValue = executor.execute(cli);
             if (retValue != 0) {
-                BufferedReader outReader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                BufferedReader errReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-
-                String line = outReader.readLine();
-                while (line != null) {
-                    logger.info("out> " + line);
-                    line = outReader.readLine();
-                }
-                line = errReader.readLine();
-                while (line != null) {
-                    logger.error("err> " + line);
-                    line = errReader.readLine();
-                }
+                logger.error("Non-zero exit code ({}) returned from executing ccm command: {}", retValue, fullCommand);
                 throw new RuntimeException();
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void executeAndPrint(String command, Object... args) {
-        try {
-            String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
-            logger.debug("Executing: " + fullCommand);
-            Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
-            int retValue = p.waitFor();
-
-            BufferedReader outReaderOutput = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String line = outReaderOutput.readLine();
-            while (line != null) {
-                System.out.println(line);
-                line = outReaderOutput.readLine();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
