@@ -171,11 +171,11 @@ public class TokenRangeTest {
     @Test(groups = "unit")
     public void should_unwrap_to_non_wrapping_ranges() {
         assertThat(tokenRange(9, 3)).unwrapsTo(tokenRange(9, minToken), tokenRange(minToken, 3));
-        assertThat(tokenRange(3, 9)).unwrapsToItself();
-        assertThat(tokenRange(3, minToken)).unwrapsToItself();
-        assertThat(tokenRange(minToken, 3)).unwrapsToItself();
-        assertThat(tokenRange(3, 3)).unwrapsToItself();
-        assertThat(tokenRange(minToken, minToken)).unwrapsToItself();
+        assertThat(tokenRange(3, 9)).isNotWrappedAround();
+        assertThat(tokenRange(3, minToken)).isNotWrappedAround();
+        assertThat(tokenRange(minToken, 3)).isNotWrappedAround();
+        assertThat(tokenRange(3, 3)).isNotWrappedAround();
+        assertThat(tokenRange(minToken, minToken)).isNotWrappedAround();
     }
 
     @Test(groups = "unit")

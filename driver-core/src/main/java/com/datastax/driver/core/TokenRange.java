@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -34,7 +35,8 @@ import com.google.common.collect.Lists;
 public final class TokenRange implements Comparable<TokenRange> {
     private final Token start;
     private final Token end;
-    private final Token.Factory factory;
+    @VisibleForTesting
+    final Token.Factory factory;
 
     TokenRange(Token start, Token end, Token.Factory factory) {
         this.start = start;

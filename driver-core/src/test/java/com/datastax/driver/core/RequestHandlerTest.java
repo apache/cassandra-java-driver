@@ -31,7 +31,8 @@ public class RequestHandlerTest {
             cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(scassandra.getBinaryPort())
                 .withPoolingOptions(new PoolingOptions()
                     .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
-                    .setMaxConnectionsPerHost(HostDistance.LOCAL, 1))
+                    .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
+                    .setHeartbeatIntervalSeconds(0))
                 .build();
 
             Session session = cluster.connect();

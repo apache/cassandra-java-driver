@@ -352,9 +352,9 @@ public abstract class TokenIntegrationTest {
                     .isNull();
                 wrappedRange = range;
 
-                assertThat(range).unwrapsOverMinToken(tokenFactory());
+                assertThat(range).isWrappedAround(); // this also checks the unwrapped ranges
             } else {
-                assertThat(range).unwrapsToItself();
+                assertThat(range).isNotWrappedAround();
             }
         }
     }
