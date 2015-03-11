@@ -24,6 +24,7 @@ Merged from 2.0 branch:
 - [bug] Quote single quotes contained in table comments in asCQLQuery method
   (JAVA-655)
 - [bug] Empty TokenRange returned in a one token cluster (JAVA-684)
+- [improvement] Expose TokenRange#contains (JAVA-687)
 - [bug] Prevent race between cancellation and query completion (JAVA-614)
 - [bug] Prevent cancel and timeout from cancelling unrelated ResponseHandler if
   streamId was already released and reused (JAVA-632).
