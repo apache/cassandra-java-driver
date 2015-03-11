@@ -17,6 +17,7 @@ CHANGELOG
 - [bug] Quote single quotes contained in table comments in asCQLQuery method
   (JAVA-655)
 - [bug] Empty TokenRange returned in a one token cluster (JAVA-684)
+- [improvement] Expose TokenRange#contains (JAVA-687)
 
 Merged from 2.0.9_fixes branch:
 
