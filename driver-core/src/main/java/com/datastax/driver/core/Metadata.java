@@ -513,9 +513,11 @@ public class Metadata {
 
                 Map<Host, Set<TokenRange>> ksRanges;
                 if (ring.size() == 1) {
-                    // The single range is ]minToken,minToken] which does not necessarily match the host's token
-                    assert hosts.size() == 1;
-                    ksRanges = ImmutableMap.of(hosts.iterator().next(), tokenRanges);
+                    // We forced the single range to ]minToken,minToken], make sure to use that instead of relying on the host's token
+                    ImmutableMap.Builder<Host, Set<TokenRange>> builder = ImmutableMap.builder();
+                    for (Host host : allTokens.keySet())
+                        builder.put(host, tokenRanges);
+                    ksRanges = builder.build();
                 } else {
                     ksRanges = computeHostsToRangesMap(tokenRanges, ksTokens, hosts.size());
                 }

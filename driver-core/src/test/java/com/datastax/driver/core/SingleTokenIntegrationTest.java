@@ -15,9 +15,12 @@
  */
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
 import java.util.Set;
 
 import org.testng.annotations.Test;
+
+import com.datastax.driver.core.utils.Bytes;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
@@ -32,7 +35,7 @@ public class SingleTokenIntegrationTest {
 
         try {
             ccm = CCMBridge.create("test");
-            // Set an initial token that is not the minimum
+            // force the initial token to a non-min value to validate that the single range will always be ]minToken, minToken]
             ccm.updateConfig("initial_token", "1");
             ccm.bootstrapNode(1);
             ccm.start();
@@ -42,7 +45,9 @@ public class SingleTokenIntegrationTest {
             Session session = cluster.connect();
             session.execute("create keyspace test with replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
 
-            Set<TokenRange> tokenRanges = cluster.getMetadata().getTokenRanges();
+            Metadata metadata = cluster.getMetadata();
+
+            Set<TokenRange> tokenRanges = metadata.getTokenRanges();
             assertThat(tokenRanges).hasSize(1);
             TokenRange tokenRange = tokenRanges.iterator().next();
             assertThat(tokenRange)
@@ -51,10 +56,16 @@ public class SingleTokenIntegrationTest {
                 .isNotEmpty()
                 .isNotWrappedAround();
 
-            Set<Host> rangeHosts = cluster.getMetadata().getReplicas("test", tokenRange);
-            assertThat(rangeHosts)
-                .containsOnly(TestUtils.findHost(cluster, 1));
+            Set<Host> hostsForRange = metadata.getReplicas("test", tokenRange);
+            Host host1 = TestUtils.findHost(cluster, 1);
+            assertThat(hostsForRange).containsOnly(host1);
 
+            ByteBuffer randomPartitionKey = Bytes.fromHexString("0xCAFEBABE");
+            Set<Host> hostsForKey = metadata.getReplicas("test", randomPartitionKey);
+            assertThat(hostsForKey).containsOnly(host1);
+
+            Set<TokenRange> rangesForHost = metadata.getTokenRanges("test", host1);
+            assertThat(rangesForHost).containsOnly(tokenRange);
         } finally {
             if (cluster != null)
                 cluster.close();
