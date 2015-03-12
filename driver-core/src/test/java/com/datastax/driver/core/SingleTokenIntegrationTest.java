@@ -28,7 +28,7 @@ public class SingleTokenIntegrationTest {
     /**
      * JAVA-684: Empty TokenRange returned in a one token cluster
      */
-    @Test(groups = "unit")
+    @Test(groups = "short")
     public void should_return_single_non_empty_range_when_cluster_has_one_single_token() {
         CCMBridge ccm = null;
         Cluster cluster = null;
