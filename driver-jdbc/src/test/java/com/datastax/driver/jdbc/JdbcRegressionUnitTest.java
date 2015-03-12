@@ -1011,9 +1011,6 @@ public class JdbcRegressionUnitTest
         
         statement.close();
         pstatement.close();
-        
-        
-        
        
     }
     
@@ -1031,6 +1028,29 @@ public class JdbcRegressionUnitTest
     	
     	stmt.execute(queries.toString());
     	Assert.assertTrue(false);
+    }
+    
+    
+    @Test
+    public void testSemiColonSplit() throws Exception
+    {
+    	Statement stmt = con.createStatement();
+    	String createCF = "CREATE table test_semicolon(bigint_col bigint PRIMARY KEY, text_value text);";        
+        stmt.execute(createCF);        
+        
+    	StringBuilder queries = new StringBuilder();
+    	for(int i=0;i<10;i++){
+    		queries.append("INSERT INTO test_semicolon(bigint_col, text_value) values(" + i + ",'" + i + ";; tptp ;" + i + "');");
+    	}
+    	
+    	stmt.execute(queries.toString());
+    	ResultSet result = stmt.executeQuery("SELECT * FROM test_semicolon;");
+    	int nb=0;
+        while(result.next()){
+        	nb++;        	
+        }
+    	
+    	Assert.assertEquals(nb,10);
     }
     
     @Test
