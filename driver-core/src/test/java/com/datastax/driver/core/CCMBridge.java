@@ -21,16 +21,14 @@ import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import com.google.common.base.Joiner;
-import com.google.common.io.Files;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -53,6 +51,22 @@ public class CCMBridge {
     public static final String IP_PREFIX;
 
     private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d+(-\\w+)?";
+
+    public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "cassandra1sfun";
+    public static final String DEFAULT_CLIENT_TRUSTSTORE_PATH = "/client.truststore";
+
+    public static final String DEFAULT_CLIENT_KEYSTORE_PASSWORD = "cassandra1sfun";
+    public static final String DEFAULT_CLIENT_KEYSTORE_PATH = "/client.keystore";
+
+    public static final String DEFAULT_SERVER_TRUSTSTORE_PASSWORD = "cassandra1sfun";
+    public static final String DEFAULT_SERVER_TRUSTSTORE_PATH = "/server.truststore";
+
+    private static final File DEFAULT_SERVER_TRUSTSTORE_FILE = createTempStore(DEFAULT_SERVER_TRUSTSTORE_PATH);
+
+    public static final String DEFAULT_SERVER_KEYSTORE_PASSWORD = "cassandra1sfun";
+    public static final String DEFAULT_SERVER_KEYSTORE_PATH = "/server.keystore";
+
+    private static final File DEFAULT_SERVER_KEYSTORE_FILE = createTempStore(DEFAULT_SERVER_KEYSTORE_PATH);
 
     static final File CASSANDRA_DIR;
     static final String CASSANDRA_VERSION;
@@ -81,12 +95,47 @@ public class CCMBridge {
         this.ccmDir = Files.createTempDir();
     }
 
-    public static CCMBridge create(String name) {
+    /**
+     * <p>
+     * Extracts a keystore from the classpath into a temporary file.
+     * </p>
+     *
+     * <p>
+     * This is needed as the keystore could be part of a built test jar used by other
+     * projects, and they need to be extracted to a file system so cassandra may use them.
+     * </p>
+     * @param storePath Path in classpath where the keystore exists.
+     * @return The generated File.
+     */
+    private static File createTempStore(String storePath) {
+        File f = null;
+        Closer closer = Closer.create();
+        try {
+            InputStream trustStoreIs = CCMBridge.class.getResourceAsStream(storePath);
+            closer.register(trustStoreIs);
+            f = File.createTempFile("server", ".store");
+            logger.debug("Created store file {} for {}.", f, storePath);
+            OutputStream trustStoreOs = new FileOutputStream(f);
+            closer.register(trustStoreOs);
+            ByteStreams.copy(trustStoreIs, trustStoreOs);
+        } catch(IOException e) {
+            logger.warn("Failure to write keystore, SSL-enabled servers may fail to start.", e);
+        } finally {
+            try {
+                closer.close();
+            } catch (IOException e) {
+                logger.warn("Failure closing streams.", e);
+            }
+        }
+        return f;
+    }
+
+    public static CCMBridge create(String name, String... options) {
         // This leads to a confusing CCM error message so check explicitly:
         checkArgument(!"current".equals(name.toLowerCase()),
-                      "cluster can't be called \"current\"");
+            "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
-        bridge.execute("ccm create %s -b -i %s %s", name, IP_PREFIX, CASSANDRA_VERSION);
+        bridge.execute("ccm create %s -b -i %s %s " + Joiner.on(" ").join(options), name, IP_PREFIX, CASSANDRA_VERSION);
         return bridge;
     }
 
@@ -189,7 +238,15 @@ public class CCMBridge {
     }
 
     public void updateConfig(String name, String value) {
-        execute("ccm updateconf %s:%s", name, value);
+        updateConfig(ImmutableMap.of(name, value));
+    }
+
+    public void updateConfig(Map<String, String> configs) {
+        StringBuilder confStr = new StringBuilder();
+        for(Map.Entry<String,String> entry : configs.entrySet()) {
+            confStr.append(entry.getKey() + ":" + entry.getValue() + " ");
+        }
+        execute("ccm updateconf " + confStr);
     }
 
     public void populate(int n) {
@@ -268,6 +325,33 @@ public class CCMBridge {
         } catch (UnknownHostException e) {
             fail("Unknown host " + ipOfNode(node) + "( node " + node + " of CCMBridge)");
         }
+    }
+
+    /**
+     * Enables SSL without client authentication.  Does not apply to already started nodes.
+     */
+    public void enableSSL() {
+        enableSSL(false);
+    }
+
+    /**
+     * Enables SSL.  Does not apply to already started nodes.
+     * @param requireClientAuth Whether or not to require Clients used authentication.
+     */
+    public void enableSSL(boolean requireClientAuth) {
+        ImmutableMap.Builder<String,String> configs = ImmutableMap.builder();
+
+        configs.put("client_encryption_options.enabled", "true");
+        configs.put("client_encryption_options.keystore", DEFAULT_SERVER_KEYSTORE_FILE.getAbsolutePath());
+        configs.put("client_encryption_options.keystore_password", DEFAULT_SERVER_KEYSTORE_PASSWORD);
+
+        if(requireClientAuth) {
+            configs.put("client_encryption_options.require_client_auth", "true");
+            configs.put("client_encryption_options.truststore", DEFAULT_SERVER_TRUSTSTORE_FILE.getAbsolutePath());
+            configs.put("client_encryption_options.truststore_password", DEFAULT_SERVER_TRUSTSTORE_PASSWORD);
+        }
+
+        updateConfig(configs.build());
     }
 
     private static void busyWaitForPort(InetAddress address, int port, boolean expectedConnectionState) {
