@@ -1,4 +1,4 @@
-Driver Core
+Driver JDBC
 ===========
 
 This is the jdbc module of the DataStax Java Driver for Apache Cassandra (C*), 
@@ -65,18 +65,20 @@ it in your application using the following Maven dependency::
 Getting Started
 ---------------
 
-Connect to a Cassandra cluster using the following arguments : 
+Connect to a Cassandra cluster using the following arguments::
 
     JDBC driver class : com.datastax.driver.jdbc.CassandraDriver
     JDBC URL : jdbc:cassandra://host1--host2--host3:9042/keyspace
-	
+
+
+    	
 You can give the driver any number of host you want seperated by "--". 
 They will be used as contact points for the driver to discover the entire cluster.
 Give enough hosts taking into account that some nodes may be unavailable upon establishing the JDBC connection.
 
 Statements and prepared statements can be executed as with any JDBC driver, but queries must be expressed in CQL3.
 
-Java sample : 
+Java sample::
 
     Class.forName("com.datastax.driver.jdbc.CassandraDriver");
     String URL = "jdbc:cassandra://host1--host2--host3:9042/keyspace1";
@@ -86,8 +88,8 @@ Java sample :
 Using simple statements
 -------------------------
 
-To issue a simple select and get data from it : 
-    
+To issue a simple select and get data from it:: 
+
     statement = connection.createStatement();
     ResultSet result = statement.executeQuery("SELECT bValue,iValue FROM test_table WHERE keyname='key0';");
     while(result.next()){
@@ -99,7 +101,7 @@ To issue a simple select and get data from it :
 Using Prepared statements
 -------------------------
 
-Considering the following table : 
+Considering the following table:: 
 
     CREATE TABLE table1 
         (bigint_col bigint PRIMARY KEY, ascii_col ascii , blob_col blob, boolean_col boolean, 
@@ -110,7 +112,7 @@ Considering the following table :
         );
 
 
-Prepared statements to insert a record in "table1": 
+Prepared statements to insert a record in "table1":: 
 
     String insert = "INSERT INTO table1(bigint_col , ascii_col , blob_col , boolean_col , decimal_col , double_col , "
                     + "float_col , inet_col , int_col , text_col , timestamp_col , uuid_col , timeuuid_col , varchar_col , varint_col, string_set_col, string_list_col, string_map_col) "
