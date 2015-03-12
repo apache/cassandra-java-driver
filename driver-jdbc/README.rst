@@ -151,3 +151,70 @@ Prepared statements to insert a record in "table1"::
     pstatement.setObject(17, myMap);
             
     pstatement.execute();
+
+
+Using Async Queries
+-------------------
+
+**INSERT/UPDATE**
+
+There are 2 ways to insert/update data using asynchronous queries.
+The first is to use JDBC batches (we're not talking about Cassandra atomic batches here).
+
+With simple statements::
+
+    Statement statement = con.createStatement();
+    for(int i=0;i<10;i++){
+        statement.addBatch("INSERT INTO testcollection (k,L) VALUES( " + i + ",[1, 3, 12345])");
+    }
+       
+    int[] counts = statement.executeBatch();
+    statement.close();
+
+With prepared statements::
+
+    PreparedStatement statement = con.prepareStatement("INSERT INTO testcollection (k,L) VALUES(?,?)");
+        
+    for(int i=0;i<10;i++){
+        statement.setInt(1, i);
+        statement.setString(2, "[1, 3, 12345]");
+        statement.addBatch();
+    }
+        
+    int[] counts = statement.executeBatch();
+    statement.close();
+
+
+
+The second one is to put all the queries in a single CQL statement, each ended with a semi colon (;)::
+
+    Statement statement = con.createStatement();
+            
+    StringBuilder queryBuilder = new StringBuilder();        
+    for(int i=0;i<10;i++){
+        queryBuilder.append("INSERT INTO testcollection (k,L) VALUES( " + i + ",[1, 3, 12345]);");
+    }
+        
+    statement.execute(queryBuilder.toString());
+    statement.close();
+
+
+**SELECT**
+
+As JDBC batches do not support returning result sets, there is only one way to send asynchronous selects through the JDBC driver::
+
+    StringBuilder queries = new StringBuilder();
+    for(int i=0;i<10;i++){
+        queries.append("SELECT * FROM testcollection where k = "+ i + ";");
+    }
+    
+    //send all select queries at onces
+    ResultSet result = statement.executeQuery(queries.toString());
+
+    int nbRow = 0;
+    ArrayList<Integer> ids = new ArrayList<Integer>(); 
+
+    // get all results from all the select queries in a single result set
+    while(result.next()){        
+        ids.add(result.getInt("k"));
+    }
