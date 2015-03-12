@@ -103,6 +103,11 @@ under the License.
       <artifactId>mockito-all</artifactId>
       <version>1.9.0</version>
     </dependency>
+    <dependency>
+		<groupId>commons-lang</groupId>
+		<artifactId>commons-lang</artifactId>
+		<version>2.3</version>
+	</dependency>
     
      <!-- Compression libraries for the protocol. -->
     <!-- Each of them is only a mandatory runtime dependency if you want to use the compression it offers -->
@@ -263,6 +268,7 @@ under the License.
                     <artifactId>cassandra-maven-plugin</artifactId>
                     <version>1.2.1-1</version>
                 </plugin>
+                
                 <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
                 <plugin>
                 	<groupId>org.eclipse.m2e</groupId>

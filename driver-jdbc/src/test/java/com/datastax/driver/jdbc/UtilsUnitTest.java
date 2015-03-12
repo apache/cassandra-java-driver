@@ -23,7 +23,7 @@ package com.datastax.driver.jdbc;
 
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
-import org.testng.AssertJUnit;
+import static org.testng.Assert.*;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -48,56 +48,56 @@ public class UtilsUnitTest
     {
         String happypath = "jdbc:cassandra://localhost:9042/Keyspace1?version=3.0.0&consistency=QUORUM";
         Properties props = Utils.parseURL(happypath);
-        AssertJUnit.assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        AssertJUnit.assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
-        AssertJUnit.assertEquals("Keyspace1", props.getProperty(Utils.TAG_DATABASE_NAME));
-        AssertJUnit.assertEquals("3.0.0", props.getProperty(Utils.TAG_CQL_VERSION));
-        AssertJUnit.assertEquals("QUORUM", props.getProperty(Utils.TAG_CONSISTENCY_LEVEL));
+        assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("Keyspace1", props.getProperty(Utils.TAG_DATABASE_NAME));
+        assertEquals("3.0.0", props.getProperty(Utils.TAG_CQL_VERSION));
+        assertEquals("QUORUM", props.getProperty(Utils.TAG_CONSISTENCY_LEVEL));
                        
         String consistencyonly = "jdbc:cassandra://localhost/Keyspace1?consistency=QUORUM";
         props = Utils.parseURL(consistencyonly);
-        AssertJUnit.assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        AssertJUnit.assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
-        AssertJUnit.assertEquals("Keyspace1", props.getProperty(Utils.TAG_DATABASE_NAME));
-        AssertJUnit.assertEquals("QUORUM", props.getProperty(Utils.TAG_CONSISTENCY_LEVEL));
+        assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("Keyspace1", props.getProperty(Utils.TAG_DATABASE_NAME));
+        assertEquals("QUORUM", props.getProperty(Utils.TAG_CONSISTENCY_LEVEL));
         assert(props.getProperty(Utils.TAG_CQL_VERSION)==null);
        
         String noport = "jdbc:cassandra://localhost/Keyspace1?version=2.0.0";
         props = Utils.parseURL(noport);
-        AssertJUnit.assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        AssertJUnit.assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
-        AssertJUnit.assertEquals("Keyspace1", props.getProperty(Utils.TAG_DATABASE_NAME));
-        AssertJUnit.assertEquals("2.0.0", props.getProperty(Utils.TAG_CQL_VERSION));
+        assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("Keyspace1", props.getProperty(Utils.TAG_DATABASE_NAME));
+        assertEquals("2.0.0", props.getProperty(Utils.TAG_CQL_VERSION));
         
         String noversion = "jdbc:cassandra://localhost:9042/Keyspace1";
         props = Utils.parseURL(noversion);
-        AssertJUnit.assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        AssertJUnit.assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
-        AssertJUnit.assertEquals("Keyspace1", props.getProperty(Utils.TAG_DATABASE_NAME));
+        assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("Keyspace1", props.getProperty(Utils.TAG_DATABASE_NAME));
         assert(props.getProperty(Utils.TAG_CQL_VERSION)==null);
         
         String nokeyspaceonly = "jdbc:cassandra://localhost:9042?version=2.0.0";
         props = Utils.parseURL(nokeyspaceonly);
-        AssertJUnit.assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        AssertJUnit.assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
         assert(props.getProperty(Utils.TAG_DATABASE_NAME)==null);
-        AssertJUnit.assertEquals("2.0.0", props.getProperty(Utils.TAG_CQL_VERSION));
+        assertEquals("2.0.0", props.getProperty(Utils.TAG_CQL_VERSION));
         
         String nokeyspaceorver = "jdbc:cassandra://localhost:9042";
         props = Utils.parseURL(nokeyspaceorver);
-        AssertJUnit.assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        AssertJUnit.assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
         assert(props.getProperty(Utils.TAG_DATABASE_NAME)==null);
         assert(props.getProperty(Utils.TAG_CQL_VERSION)==null);
         
         String withloadbalancingpolicy = "jdbc:cassandra://localhost:9042?loadbalancing=TokenAwarePolicy-DCAwareRoundRobinPolicy&primarydc=DC1";
         props = Utils.parseURL(withloadbalancingpolicy);
-        AssertJUnit.assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
-        AssertJUnit.assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
+        assertEquals("localhost", props.getProperty(Utils.TAG_SERVER_NAME));
+        assertEquals("9042", props.getProperty(Utils.TAG_PORT_NUMBER));
         assert(props.getProperty(Utils.TAG_DATABASE_NAME)==null);
         assert(props.getProperty(Utils.TAG_CQL_VERSION)==null);
-        AssertJUnit.assertEquals("TokenAwarePolicy-DCAwareRoundRobinPolicy", props.getProperty(Utils.TAG_LOADBALANCING_POLICY));
-        AssertJUnit.assertEquals("DC1", props.getProperty(Utils.TAG_PRIMARY_DC));
+        assertEquals("TokenAwarePolicy-DCAwareRoundRobinPolicy", props.getProperty(Utils.TAG_LOADBALANCING_POLICY));
+        assertEquals("DC1", props.getProperty(Utils.TAG_PRIMARY_DC));
     }
     
     @Test
@@ -105,23 +105,23 @@ public class UtilsUnitTest
     {
     	String lbPolicyStr = "RoundRobinPolicy()";
     	System.out.println(lbPolicyStr);
-    	AssertJUnit.assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof RoundRobinPolicy);
+    	assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof RoundRobinPolicy);
     	System.out.println("====================");
     	lbPolicyStr = "TokenAwarePolicy(RoundRobinPolicy())";
     	System.out.println(lbPolicyStr);
-    	AssertJUnit.assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof TokenAwarePolicy);
+    	assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof TokenAwarePolicy);
     	System.out.println("====================");
     	lbPolicyStr = "DCAwareRoundRobinPolicy(\"dc1\")";
     	System.out.println(lbPolicyStr);
-    	AssertJUnit.assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof DCAwareRoundRobinPolicy);
+    	assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof DCAwareRoundRobinPolicy);
     	System.out.println("====================");
     	lbPolicyStr = "TokenAwarePolicy(DCAwareRoundRobinPolicy(\"dc1\"))";
     	System.out.println(lbPolicyStr);
-    	AssertJUnit.assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof TokenAwarePolicy);    	
+    	assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof TokenAwarePolicy);    	
     	System.out.println("====================");
     	lbPolicyStr = "TokenAwarePolicy";
     	System.out.println(lbPolicyStr);
-    	AssertJUnit.assertTrue(Utils.parsePolicy(lbPolicyStr)==null);
+    	assertTrue(Utils.parsePolicy(lbPolicyStr)==null);
     	System.out.println("====================");
     	
     }
@@ -138,6 +138,9 @@ public class UtilsUnitTest
         String result = Utils.createSubName(props);
         if (LOG.isDebugEnabled()) LOG.debug("result       = '{}'", Utils.PROTOCOL+result);
         
-        AssertJUnit.assertEquals(happypath, Utils.PROTOCOL+result);
+        assertEquals(happypath, Utils.PROTOCOL+result);
     }
+    
+
+    
 }

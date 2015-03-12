@@ -40,6 +40,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +59,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class CassandraStatement extends AbstractStatement implements CassandraStatementExtras, Comparable<Object>, Statement
 {
     public static final int MAX_ASYNC_QUERIES=10000;
+    //public static final String semiColonRegex = ";(?=([^\\']*\\'[^\\']*\\')*[^\\']*$)";
+    //public static final String semiColonRegex = "(?<!');(?!')";
+    public static final String semiColonRegex = ";";
 	private static final Logger logger = LoggerFactory.getLogger(CassandraStatement.class);
     /**
      * The connection.
@@ -172,23 +176,31 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
     	    	
         try
         {
-            
-            if(cql.split(";").length>1 && !(cql.toLowerCase().startsWith("begin") && cql.toLowerCase().contains("batch") && cql.toLowerCase().contains("apply"))){
+        	String[] cqlQueries = cql.split(semiColonRegex);
+            if(cqlQueries.length>1 && !(cql.trim().toLowerCase().startsWith("begin") && cql.toLowerCase().contains("batch") && cql.toLowerCase().contains("apply"))){
             	// several statements in the query to execute asynchronously            	
             	List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>();
-            	ArrayList<com.datastax.driver.core.ResultSet> results = Lists.newArrayList();
-            	String[] cqlQueries = cql.split(";");
+            	ArrayList<com.datastax.driver.core.ResultSet> results = Lists.newArrayList();            	
             	if(cqlQueries.length>MAX_ASYNC_QUERIES){
             		// Protect the cluster from receiving too many queries at once and force the dev to split the load
             		throw new SQLNonTransientException("Too many queries at once (" + cqlQueries.length + "). You must split your queries into more batches !");
             	}
-            	for(String cqlQuery:cqlQueries){           
-            			if (logger.isTraceEnabled() || this.connection.debugMode) System.out.println("CQL: "+ cqlQuery);
-            			SimpleStatement stmt = new SimpleStatement(cqlQuery);
-            			stmt.setConsistencyLevel(this.connection.defaultConsistencyLevel);
-            			stmt.setFetchSize(this.fetchSize);
-                		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(stmt);
-                		futures.add(resultSetFuture);
+            	StringBuilder prevCqlQuery=new StringBuilder();
+            	for(String cqlQuery:cqlQueries){                       			
+            			if((cqlQuery.contains("'") && ((StringUtils.countMatches(cqlQuery,"'")%2==1 && prevCqlQuery.length()==0) 
+            						|| (StringUtils.countMatches(cqlQuery,"'")%2==0 && prevCqlQuery.length()>0))) 
+            				|| (prevCqlQuery.toString().length()>0 && !cqlQuery.contains("'"))){
+            				prevCqlQuery.append(cqlQuery+";");
+            			}else{
+            				prevCqlQuery.append(cqlQuery);
+            				if (logger.isTraceEnabled() || this.connection.debugMode) System.out.println("CQL:: "+ prevCqlQuery.toString());
+	            			SimpleStatement stmt = new SimpleStatement(prevCqlQuery.toString());            			
+	            			stmt.setConsistencyLevel(this.connection.defaultConsistencyLevel);
+	            			stmt.setFetchSize(this.fetchSize);
+	                		ResultSetFuture resultSetFuture = this.connection.getSession().executeAsync(stmt);
+	                		futures.add(resultSetFuture);
+	                		prevCqlQuery = new StringBuilder();
+            			}
                 }
             	
             	//ListenableFuture<List<com.datastax.driver.core.ResultSet>> res = Futures.allAsList(futures);

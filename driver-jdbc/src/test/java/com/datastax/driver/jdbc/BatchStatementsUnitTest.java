@@ -173,6 +173,53 @@ public class BatchStatementsUnitTest {
         
     }
     
+    @Test
+    public void testBatchSimpleSplitStatement() throws Exception
+    {
+        System.out.println("Test: 'testBatchSimpleSplitStatement'\n");
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("truncate testcollection");
+        Statement statement = con.createStatement();
+        int nbRows = 5000;
+        
+        StringBuilder queryBuilder = new StringBuilder();
+        
+        for(int i=0;i<nbRows;i++){
+        	//System.out.println("--- Statement " + i + " ==> INSERT INTO testcollection (k,L) VALUES( " + i + ",[1, 3, 12345])");
+        	queryBuilder.append("INSERT INTO testcollection (k,L) VALUES( " + i + ",[1, 3, 12345]);");
+        }
+        
+        statement.execute(queryBuilder.toString());
+        
+        
+        
+        
+        StringBuilder queries = new StringBuilder();
+        for(int i=0;i<nbRows;i++){
+        	queries.append("SELECT * FROM testcollection where k = "+ i + ";");
+        }
+        ResultSet result = statement.executeQuery(queries.toString());
+
+        int nbRow = 0;
+        ArrayList<Integer> ids = new ArrayList<Integer>(); 
+        while(result.next()){
+        	nbRow++;
+        	ids.add(result.getInt("k"));
+        }
+
+        assertEquals(nbRows, nbRow);
+        Collections.sort(ids);
+        int nb = 0;
+        for(Integer id:ids){
+        	assertEquals(nb,id.intValue());
+        	nb++;
+        }
+        
+        statement.close();
+
+        
+    }
     
     @Test
     public void testBatchPreparedStatement() throws Exception

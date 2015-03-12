@@ -67,8 +67,8 @@ Getting Started
 
 Connect to a Cassandra cluster using the following arguments : 
 
-	JDBC driver class : com.datastax.driver.jdbc.CassandraDriver
-	JDBC URL : jdbc:cassandra://host1--host2--host3:9042/keyspace
+    JDBC driver class : com.datastax.driver.jdbc.CassandraDriver
+    JDBC URL : jdbc:cassandra://host1--host2--host3:9042/keyspace
 	
 You can give the driver any number of host you want seperated by "--". 
 They will be used as contact points for the driver to discover the entire cluster.
@@ -91,8 +91,8 @@ To issue a simple select and get data from it :
     statement = connection.createStatement();
     ResultSet result = statement.executeQuery("SELECT bValue,iValue FROM test_table WHERE keyname='key0';");
     while(result.next()){
-    	System.out.println("bValue = " + result.getBoolean("bValue"));
-    	System.out.println("iValue = " + result.getInt("iValue"));
+        System.out.println("bValue = " + result.getBoolean("bValue"));
+        System.out.println("iValue = " + result.getInt("iValue"));
     };
 
 
@@ -103,22 +103,22 @@ Considering the following table :
 
     CREATE TABLE table1 
         (bigint_col bigint PRIMARY KEY, ascii_col ascii , blob_col blob, boolean_col boolean, 
-         decimal_col decimal, double_col double, float_col float, inet_col inet, int_col int, 
-         text_col text, timestamp_col timestamp, uuid_col uuid, 
-         timeuuid_col timeuuid, varchar_col varchar, varint_col varint,string_set_col set<text>,
-         string_list_col list<text>, string_map_col map<text,text>
+        decimal_col decimal, double_col double, float_col float, inet_col inet, int_col int, 
+        text_col text, timestamp_col timestamp, uuid_col uuid, 
+        timeuuid_col timeuuid, varchar_col varchar, varint_col varint,string_set_col set<text>,
+        string_list_col list<text>, string_map_col map<text,text>
         );
 
 
 Prepared statements to insert a record in "table1": 
 
     String insert = "INSERT INTO table1(bigint_col , ascii_col , blob_col , boolean_col , decimal_col , double_col , "
-                  + "float_col , inet_col , int_col , text_col , timestamp_col , uuid_col , timeuuid_col , varchar_col , varint_col, string_set_col, string_list_col, string_map_col) "
-                  + " values(?, ?, ?, ?, ?, ? , ?, ? , ? , ?, ? , ? , now(), ? , ?, ?, ?, ? );";
-    		
+                    + "float_col , inet_col , int_col , text_col , timestamp_col , uuid_col , timeuuid_col , varchar_col , varint_col, string_set_col, string_list_col, string_map_col) "
+                    + " values(?, ?, ?, ?, ?, ? , ?, ? , ? , ?, ? , ? , now(), ? , ?, ?, ?, ? );";
+    
     PreparedStatement pstatement = connection.prepareStatement(insert);
-        
-        
+    
+    
     pstatement.setObject(1, 1L); // bigint
     pstatement.setObject(2, "test"); // ascii                             
     pstatement.setObject(3, new ByteArrayInputStream("test".getBytes("UTF-8"))); // blob
@@ -147,9 +147,5 @@ Prepared statements to insert a record in "table1":
     myMap.put("1","test");
     myMap.put("2","test");
     pstatement.setObject(17, myMap);
-        
-        
+            
     pstatement.execute();
-
-    
-    
