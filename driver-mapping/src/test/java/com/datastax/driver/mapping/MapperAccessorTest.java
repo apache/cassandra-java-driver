@@ -10,6 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Param;
 import com.datastax.driver.mapping.annotations.Query;
@@ -40,6 +41,7 @@ public class MapperAccessorTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major=2.0)
     public void should_allow_null_argument_in_accessor_when_set_by_name() {
         FooAccessor accessor = new MappingManager(session)
             .createAccessor(FooAccessor.class);
@@ -52,10 +54,10 @@ public class MapperAccessorTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void should_allow_null_argument_in_accessor_when_set_by_index() {
-        FooAccessor accessor = new MappingManager(session)
-            .createAccessor(FooAccessor.class);
+        FooBindMarkerAccessor accessor = new MappingManager(session)
+            .createAccessor(FooBindMarkerAccessor.class);
 
-        accessor.insertArg(1, null);
+        accessor.insert(1, null);
 
         Row row = session.execute("select * from foo where k = 1").one();
 
@@ -72,8 +74,11 @@ public class MapperAccessorTest extends CCMBridge.PerClassSingleNodeCluster {
     public interface FooAccessor {
         @Query("insert into foo (k, v) values (:k, :v)")
         ResultSet insert(@Param("k") int k, @Param("v") String v);
+    }
 
+    @Accessor
+    public interface FooBindMarkerAccessor {
         @Query("insert into foo (k, v) values (?, ?)")
-        ResultSet insertArg(int k, String v);
+        ResultSet insert(int k, String v);
     }
 }
