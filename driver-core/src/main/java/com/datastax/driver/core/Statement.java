@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
 
+import com.datastax.driver.core.exceptions.PagingStateException;
 import com.datastax.driver.core.policies.RetryPolicy;
 
 /**
@@ -32,10 +33,14 @@ public abstract class Statement {
     // used when preparing a statement and for other internal queries. Do not expose publicly.
     static final Statement DEFAULT = new Statement() {
         @Override
-        public ByteBuffer getRoutingKey() { return null; }
+        public ByteBuffer getRoutingKey() {
+            return null;
+        }
 
         @Override
-        public String getKeyspace() { return null; }
+        public String getKeyspace() {
+            return null;
+        }
     };
 
     private volatile ConsistencyLevel consistency;
@@ -45,8 +50,11 @@ public abstract class Statement {
 
     private volatile RetryPolicy retryPolicy;
 
+    private volatile ByteBuffer pagingState;
+
     // We don't want to expose the constructor, because the code relies on this being only sub-classed by RegularStatement, BoundStatement and BatchStatement
-    Statement() {}
+    Statement() {
+    }
 
     /**
      * Sets the consistency level for the query.
@@ -251,5 +259,71 @@ public abstract class Statement {
      */
     public int getFetchSize() {
         return fetchSize;
+    }
+
+    /**
+     * Sets the paging state.
+     * <p>
+     * This will cause the next execution of this statement to fetch results from a given
+     * page, rather than restarting from the beginning.
+     * <p>
+     * You get the paging state from a previous execution of the statement. This is typically
+     * used to iterate in a "stateless" manner (e.g. across HTTP requests):
+     * <pre>
+     * {@code
+     * Statement st = new SimpleStatement("your query");
+     * ResultSet rs = session.execute(st.setFetchSize(20));
+     * int available = rs.getAvailableWithoutFetching();
+     * for (int i = 0; i < available; i++) {
+     *     Row row = rs.one();
+     *     // Do something with row (e.g. display it to the user...)
+     * }
+     * // Get state and serialize as string or byte[] to store it for the next execution
+     * // (e.g. pass it as a parameter in the "next page" URI)
+     * PagingState pagingState = rs.getExecutionInfo().getPagingState();
+     * String savedState = pagingState.toString();
+     *
+     * // Next execution:
+     * // Get serialized state back (e.g. get URI parameter)
+     * String savedState = ...
+     * Statement st = new SimpleStatement("your query");
+     * st.setPagingState(PagingState.fromString(savedState));
+     * ResultSet rs = session.execute(st.setFetchSize(20));
+     * int available = rs.getAvailableWithoutFetching();
+     * for (int i = 0; i < available; i++) {
+     *     ...
+     * }
+     * }
+     * </pre>
+     * <p>
+     * Note that the paging state can only be reused between perfectly identical statements
+     * (same query string, same bound parameters). Altering the contents of the paging state
+     * or trying to set it on a different statement will cause this method to fail.
+     *
+     * @param pagingState the paging state to set, or {@code null} to remove any state that was
+     *                    previously set on this statement.
+     * @return this {@code Statement} object.
+     *
+     * @throws PagingStateException if the paging state does not match this statement.
+     */
+    public Statement setPagingState(PagingState pagingState) {
+        if (this instanceof BatchStatement) {
+            throw new UnsupportedOperationException("Cannot set the paging state on a batch statement");
+        } else {
+            if (pagingState == null) {
+                this.pagingState = null;
+            } else if (pagingState.matches(this)) {
+                this.pagingState = pagingState.getRawState();
+            } else {
+                throw new PagingStateException("Paging state mismatch, "
+                    + "this means that either the paging state contents were altered, "
+                    + "or you're trying to apply it to a different statement");
+            }
+        }
+        return this;
+    }
+
+    ByteBuffer getPagingState() {
+        return pagingState;
     }
 }

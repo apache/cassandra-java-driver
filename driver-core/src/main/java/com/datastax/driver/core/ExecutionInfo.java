@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -32,28 +33,39 @@ import java.util.List;
  *   query.</li>
  * </ul>
  */
-public class ExecutionInfo
-{
+public class ExecutionInfo {
     private final List<Host> triedHosts;
     private final ConsistencyLevel achievedConsistency;
     private final QueryTrace trace;
+    private final ByteBuffer pagingState;
+    private final Statement statement;
 
-    private ExecutionInfo(List<Host> triedHosts, ConsistencyLevel achievedConsistency, QueryTrace trace) {
+    private ExecutionInfo(List<Host> triedHosts, ConsistencyLevel achievedConsistency, QueryTrace trace, ByteBuffer pagingState, Statement statement) {
         this.triedHosts = triedHosts;
         this.achievedConsistency = achievedConsistency;
         this.trace = trace;
+        this.pagingState = pagingState;
+        this.statement = statement;
     }
 
     ExecutionInfo(List<Host> triedHosts) {
-        this(triedHosts, null, null);
+        this(triedHosts, null, null, null, null);
     }
 
     ExecutionInfo withTrace(QueryTrace newTrace) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, newTrace);
+        return new ExecutionInfo(triedHosts, achievedConsistency, newTrace, pagingState, statement);
     }
 
     ExecutionInfo withAchievedConsistency(ConsistencyLevel newConsistency) {
-        return new ExecutionInfo(triedHosts, newConsistency, trace);
+        return new ExecutionInfo(triedHosts, newConsistency, trace, pagingState, statement);
+    }
+
+    ExecutionInfo withPagingState(ByteBuffer pagingState) {
+        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, statement);
+    }
+
+    ExecutionInfo withStatement(Statement statement) {
+        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, statement);
     }
 
     /**
@@ -118,5 +130,21 @@ public class ExecutionInfo
      */
     public QueryTrace getQueryTrace() {
         return trace;
+    }
+
+    /**
+     * The paging state of the query.
+     *
+     * This object represents the next page to be fetched if this query is
+     * multi page. It can be saved and reused later on the same statement.
+     *
+     * @return the paging state or null if there is no next page.
+     *
+     * @see Statement#setPagingState(PagingState)
+     */
+    public PagingState getPagingState() {
+        if (this.pagingState == null)
+            return null;
+        return new PagingState(this.pagingState, this.statement);
     }
 }
