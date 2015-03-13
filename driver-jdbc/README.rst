@@ -28,7 +28,7 @@ The JDBC module offers access to most of the core module features:
 Prerequisite
 ------------
 
-The driver uses Casandra's native protocol which is available starting from
+The driver uses Cassandra's native protocol which is available starting from
 Cassandra 1.2. Some of the features (result set paging, BatchStatement, ...) of
 this version 2.0 of the driver require Cassandra 2.0 however and will throw
 'unsupported feature' exceptions if used against a Cassandra 1.2 cluster.
@@ -52,12 +52,12 @@ it in your application using the following Maven dependency::
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>2.1.0</version>
+      <version>2.1.4</version>
     </dependency>
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-jdbc</artifactId>
-      <version>2.1.0</version>
+      <version>2.1.4</version>
     </dependency>
 
 
@@ -85,8 +85,35 @@ Java sample::
     connection = DriverManager.getConnection(URL); 
 
 
+Specifying load balancing policies
+----------------------------------
+
+The default load balancing policy if not specified otherwise is TokenAwarePolicy(RoundRobinPolicy()).
+If you want to use another policy, add a "loadbalancing" argument to the jdbc url as follows::
+
+    jdbc:cassandra://host1--host2--host3:9042/keyspace1?loadbalancing=TokenAwarePolicy(DCAwareRoundRobinPolicy("DC1"))
+
+Or for a Round Robin Policy::
+
+    jdbc:cassandra://host1--host2--host3:9042/keyspace1?loadbalancing=RoundRobinPolicy()
+
+If you want to use a custom policy, give the full package of the policy's class::
+
+    jdbc:cassandra://host1--host2--host3:9042/keyspace1?loadbalancing=com.company.package.CustomPolicy()
+
+
+Specifying consistency level
+----------------------------
+
+Consistency level can be specified per connection (not per query).
+To do so, add a consistency argument to the JDBC url::
+
+    jdbc:cassandra://host1--host2--host3:9042/keyspace1?consistency=LOCAL_QUORUM
+
+Consistency level defaults to ONE if not specified.
+
 Using simple statements
--------------------------
+-----------------------
 
 To issue a simple select and get data from it:: 
 
@@ -186,7 +213,7 @@ With prepared statements::
 
 
 
-The second one is to put all the queries in a single CQL statement, each ended with a semi colon (;)::
+The second one is to put all the queries in a single CQL statement, each ended with a semicolon (;)::
 
     Statement statement = con.createStatement();
             
@@ -218,3 +245,5 @@ As JDBC batches do not support returning result sets, there is only one way to s
     while(result.next()){        
         ids.add(result.getInt("k"));
     }
+
+Make sure you send selects that return the exact same columns or you might get pretty unpredictable results.
