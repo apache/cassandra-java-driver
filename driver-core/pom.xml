@@ -88,7 +88,6 @@
     <dependency>
       <groupId>org.scassandra</groupId>
       <artifactId>java-client</artifactId>
-      <!-- N.B. later versions of scassandra require JDK 7 -->
       <version>${scassandra.version}</version>
       <scope>test</scope>
       <exclusions>
