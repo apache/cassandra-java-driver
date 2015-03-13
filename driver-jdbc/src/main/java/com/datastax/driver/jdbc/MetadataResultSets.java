@@ -62,45 +62,38 @@ public  class MetadataResultSets
      * 
      * @return {@code Column}
      */
-    private static final Row makeColumn(String name, String value)
+    private static final MetadataRow makeColumn(String name, String value)
     {
       return new MetadataRow().addEntry(name, value);
     }
 
-    public  CassandraResultSet makeTableTypes(CassandraStatement statement) throws SQLException
+    public  CassandraMetadataResultSet makeTableTypes(CassandraStatement statement) throws SQLException
     {
-        final ArrayList<Row> tableTypes = Lists.newArrayList();
+        final ArrayList<MetadataRow> tableTypes = Lists.newArrayList();
         MetadataRow row = new MetadataRow().addEntry("TABLE_TYPE", TABLE_CONSTANT);
         tableTypes.add(row);
-        CassandraResultSet result = new CassandraResultSet(statement,new MetadataResultSet().setRows(tableTypes));
+        CassandraMetadataResultSet result = new CassandraMetadataResultSet(statement,new MetadataResultSet().setRows(tableTypes));
         return result;
     }
 
-   public  CassandraResultSet makeCatalogs(CassandraStatement statement) throws SQLException
+   public  CassandraMetadataResultSet makeCatalogs(CassandraStatement statement) throws SQLException
     {
-	   final ArrayList<Row> catalog = Lists.newArrayList();
+	   final ArrayList<MetadataRow> catalog = Lists.newArrayList();
         MetadataRow row = new MetadataRow().addEntry("TABLE_CAT", statement.connection.getCatalog());
         catalog.add(row);
        
-        CassandraResultSet result = new CassandraResultSet(statement,new MetadataResultSet().setRows(catalog));
+        CassandraMetadataResultSet result = new CassandraMetadataResultSet(statement,new MetadataResultSet().setRows(catalog));
         return result;
-        /* final Entry[][] catalogs = { { new Entry("TABLE_CAT",bytes(statement.connection.getCatalog()),Entry.ASCII_TYPE)} };
-
-        // use catalogs with the key in column number 1 (one based)
-        CqlResult cqlresult =  makeCqlResult(catalogs, 1);
         
-        CassandraResultSet result = new CassandraResultSet(statement,cqlresult);
-        return result; 
-        */
     }
  
-    public  CassandraResultSet makeSchemas(CassandraStatement statement, String schemaPattern) throws SQLException
+    public  CassandraMetadataResultSet makeSchemas(CassandraStatement statement, String schemaPattern) throws SQLException
     {
     	
     	// TABLE_SCHEM String => schema name
         // TABLE_CATALOG String => catalog name (may be null)
     	
-    	final ArrayList<Row> schemas = Lists.newArrayList();
+    	final ArrayList<MetadataRow> schemas = Lists.newArrayList();
     	List<KeyspaceMetadata> keyspaces = statement.connection.getClusterMetadata().getKeyspaces();
     	
     	for(KeyspaceMetadata keyspace:keyspaces){
@@ -112,12 +105,12 @@ public  class MetadataResultSets
     		
     	}
        
-        CassandraResultSet result = new CassandraResultSet(statement,new MetadataResultSet().setRows(schemas));
+        CassandraMetadataResultSet result = new CassandraMetadataResultSet(statement,new MetadataResultSet().setRows(schemas));
         return result;
     	    	
     }
     
-    public CassandraResultSet makeTables(CassandraStatement statement, String schemaPattern, String tableNamePattern) throws SQLException
+    public CassandraMetadataResultSet makeTables(CassandraStatement statement, String schemaPattern, String tableNamePattern) throws SQLException
     {
         //   1.   TABLE_CAT String => table catalog (may be null)
         //   2.   TABLE_SCHEM String => table schema (may be null)
@@ -134,7 +127,7 @@ public  class MetadataResultSets
         
         
         
-        final ArrayList<Row> schemas = Lists.newArrayList();
+        final ArrayList<MetadataRow> schemas = Lists.newArrayList();
     	List<KeyspaceMetadata> keyspaces = statement.connection.getClusterMetadata().getKeyspaces();
     	
     	for(KeyspaceMetadata keyspace:keyspaces){
@@ -163,14 +156,14 @@ public  class MetadataResultSets
     	}
     	
        
-        CassandraResultSet result = new CassandraResultSet(statement,new MetadataResultSet().setRows(schemas));
+        CassandraMetadataResultSet result = new CassandraMetadataResultSet(statement,new MetadataResultSet().setRows(schemas));
         return result;
         
     }
     
-    public CassandraResultSet makeColumns(CassandraStatement statement, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException
+    public CassandraMetadataResultSet makeColumns(CassandraStatement statement, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException
     {
-    	final ArrayList<Row> schemas = Lists.newArrayList();
+    	final ArrayList<MetadataRow> schemas = Lists.newArrayList();
     	List<KeyspaceMetadata> keyspaces = statement.connection.getClusterMetadata().getKeyspaces();
     	
     	for(KeyspaceMetadata keyspace:keyspaces){
@@ -246,7 +239,7 @@ public  class MetadataResultSets
     	}
     	
        
-        CassandraResultSet result = new CassandraResultSet(statement,new MetadataResultSet().setRows(schemas));
+        CassandraMetadataResultSet result = new CassandraMetadataResultSet(statement,new MetadataResultSet().setRows(schemas));
         return result;
         // 1.TABLE_CAT String => table catalog (may be null)
         // 2.TABLE_SCHEM String => table schema (may be null)
@@ -290,10 +283,10 @@ public  class MetadataResultSets
     }
     
     
-    public CassandraResultSet makeIndexes(CassandraStatement statement, String schema, String tableName, boolean unique, boolean approximate) throws SQLException
+    public CassandraMetadataResultSet makeIndexes(CassandraStatement statement, String schema, String tableName, boolean unique, boolean approximate) throws SQLException
 	{
     	
-    	final ArrayList<Row> schemas = Lists.newArrayList();
+    	final ArrayList<MetadataRow> schemas = Lists.newArrayList();
     	List<KeyspaceMetadata> keyspaces = statement.connection.getClusterMetadata().getKeyspaces();
     	
     	for(KeyspaceMetadata keyspace:keyspaces){
@@ -331,7 +324,7 @@ public  class MetadataResultSets
 	
     	
        
-        CassandraResultSet result = new CassandraResultSet(statement,new MetadataResultSet().setRows(schemas));
+        CassandraMetadataResultSet result = new CassandraMetadataResultSet(statement,new MetadataResultSet().setRows(schemas));
         return result;
 	
 		//1.TABLE_CAT String => table catalog (may be null) 
@@ -360,9 +353,9 @@ public  class MetadataResultSets
     
    
 	
-	public CassandraResultSet makePrimaryKeys(CassandraStatement statement, String schema, String tableName) throws SQLException
+	public CassandraMetadataResultSet makePrimaryKeys(CassandraStatement statement, String schema, String tableName) throws SQLException
 	{
-		final ArrayList<Row> schemas = Lists.newArrayList();
+		final ArrayList<MetadataRow> schemas = Lists.newArrayList();
     	List<KeyspaceMetadata> keyspaces = statement.connection.getClusterMetadata().getKeyspaces();
     	
     	for(KeyspaceMetadata keyspace:keyspaces){
@@ -393,7 +386,7 @@ public  class MetadataResultSets
 	
     	
        
-        CassandraResultSet result = new CassandraResultSet(statement,new MetadataResultSet().setRows(schemas));
+        CassandraMetadataResultSet result = new CassandraMetadataResultSet(statement,new MetadataResultSet().setRows(schemas));
         return result;
 		
 		//1.TABLE_CAT String => table catalog (may be null) 

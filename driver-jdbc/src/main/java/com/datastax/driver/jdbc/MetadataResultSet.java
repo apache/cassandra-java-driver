@@ -10,82 +10,82 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.google.common.util.concurrent.ListenableFuture;
 
-public class MetadataResultSet implements ResultSet {
+public class MetadataResultSet{
 	
 	
 
-	private ArrayList<Row> rows;
+	private ArrayList<MetadataRow> rows;
 	
 	public MetadataResultSet(){
 		
 	}
 	
-	public MetadataResultSet setRows(ArrayList<Row> rows){
-		this.rows = rows;
+	public MetadataResultSet setRows(ArrayList<MetadataRow> schemas){
+		this.rows = schemas;
 		return this;
 	}
 	
-	@Override
+
 	public ColumnDefinitions getColumnDefinitions() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
+
 	public boolean isExhausted() {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
-	@Override
+
 	public Row one() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
-	public List<Row> all() {
+
+	public List<MetadataRow> all() {
 		// TODO Auto-generated method stub
 		return rows;
 	}
 
-	@Override
-	public Iterator<Row> iterator() {
+
+	public Iterator<MetadataRow> iterator() {
 		// TODO Auto-generated method stub
 		return rows.iterator();
 	}
 
-	@Override
+
 	public int getAvailableWithoutFetching() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
-	@Override
+
 	public boolean isFullyFetched() {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
-	@Override
+
 	public ListenableFuture<Void> fetchMoreResults() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
+
 	public ExecutionInfo getExecutionInfo() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
+
 	public List<ExecutionInfo> getAllExecutionInfo() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
+
 	public boolean wasApplied() {
 		// TODO Auto-generated method stub
 		return false;
