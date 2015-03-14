@@ -23,14 +23,22 @@ package com.datastax.driver.jdbc;
 
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
+
 import static org.testng.Assert.*;
+
 import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
+import com.datastax.driver.core.policies.ExponentialReconnectionPolicy;
+import com.datastax.driver.core.policies.FallthroughRetryPolicy;
 import com.datastax.driver.core.policies.LatencyAwarePolicy;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
 import com.datastax.driver.jdbc.Utils;
@@ -105,26 +113,66 @@ public class UtilsUnitTest
     {
     	String lbPolicyStr = "RoundRobinPolicy()";
     	System.out.println(lbPolicyStr);
-    	assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof RoundRobinPolicy);
+    	assertTrue(Utils.parseLbPolicy(lbPolicyStr) instanceof RoundRobinPolicy);
     	System.out.println("====================");
     	lbPolicyStr = "TokenAwarePolicy(RoundRobinPolicy())";
     	System.out.println(lbPolicyStr);
-    	assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof TokenAwarePolicy);
+    	assertTrue(Utils.parseLbPolicy(lbPolicyStr) instanceof TokenAwarePolicy);
     	System.out.println("====================");
     	lbPolicyStr = "DCAwareRoundRobinPolicy(\"dc1\")";
     	System.out.println(lbPolicyStr);
-    	assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof DCAwareRoundRobinPolicy);
+    	assertTrue(Utils.parseLbPolicy(lbPolicyStr) instanceof DCAwareRoundRobinPolicy);
     	System.out.println("====================");
     	lbPolicyStr = "TokenAwarePolicy(DCAwareRoundRobinPolicy(\"dc1\"))";
     	System.out.println(lbPolicyStr);
-    	assertTrue(Utils.parsePolicy(lbPolicyStr) instanceof TokenAwarePolicy);    	
+    	assertTrue(Utils.parseLbPolicy(lbPolicyStr) instanceof TokenAwarePolicy);    	
     	System.out.println("====================");
     	lbPolicyStr = "TokenAwarePolicy";
     	System.out.println(lbPolicyStr);
-    	assertTrue(Utils.parsePolicy(lbPolicyStr)==null);
+    	assertTrue(Utils.parseLbPolicy(lbPolicyStr)==null);
+    	System.out.println("====================");
+    	lbPolicyStr = "LatencyAwarePolicy(TokenAwarePolicy(RoundRobinPolicy()),(double) 10.5,(long) 1,(long) 10,(long)1,10)";    	
+    	System.out.println(lbPolicyStr);
+    	assertTrue(Utils.parseLbPolicy(lbPolicyStr) instanceof LatencyAwarePolicy);
     	System.out.println("====================");
     	
     }
+    
+    @Test
+    public void testRetryPolicyParsing() throws Exception
+    {
+    	String retryPolicyStr = "DefaultRetryPolicy";
+    	System.out.println(retryPolicyStr);
+    	assertTrue(Utils.parseRetryPolicy(retryPolicyStr) instanceof DefaultRetryPolicy);
+    	System.out.println("====================");
+    	retryPolicyStr = "DowngradingConsistencyRetryPolicy";
+    	System.out.println(retryPolicyStr);
+    	assertTrue(Utils.parseRetryPolicy(retryPolicyStr) instanceof DowngradingConsistencyRetryPolicy);
+    	System.out.println("====================");
+    	retryPolicyStr = "FallthroughRetryPolicy";
+    	System.out.println(retryPolicyStr);
+    	assertTrue(Utils.parseRetryPolicy(retryPolicyStr) instanceof FallthroughRetryPolicy);
+    	System.out.println("====================");
+    	    	
+
+    }
+    
+    
+    @Test
+    public void testReconnectionPolicyParsing() throws Exception
+    {
+    	String retryPolicyStr = "ConstantReconnectionPolicy((long)10)";
+    	System.out.println(retryPolicyStr);
+    	assertTrue(Utils.parseReconnectionPolicy(retryPolicyStr) instanceof ConstantReconnectionPolicy);
+    	System.out.println("====================");
+    	retryPolicyStr = "ExponentialReconnectionPolicy((long)10,(Long)100)";
+    	System.out.println(retryPolicyStr);
+    	assertTrue(Utils.parseReconnectionPolicy(retryPolicyStr) instanceof ExponentialReconnectionPolicy);
+    	System.out.println("====================");
+
+    }
+    
+    
   
     @Test
     public void testCreateSubName() throws Exception

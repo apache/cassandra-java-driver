@@ -148,7 +148,7 @@ public class BatchStatementsUnitTest {
         
         
         StringBuilder queries = new StringBuilder();
-        for(int i=0;i<nbRows;i++){
+        for(int i=0;i<nbRows+10;i++){
         	queries.append("SELECT * FROM testcollection where k = "+ i + ";");
         }
         ResultSet result = statement.executeQuery(queries.toString());
@@ -170,7 +170,6 @@ public class BatchStatementsUnitTest {
         
         statement.close();
 
-        
     }
     
     @Test
