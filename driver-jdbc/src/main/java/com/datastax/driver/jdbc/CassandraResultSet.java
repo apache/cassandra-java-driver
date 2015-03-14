@@ -144,7 +144,9 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
     /**
      * The rows iterator.
      */
+    private int currentIteratorIndex=0;
     private Iterator<Row> rowsIterator;
+    private ArrayList<Iterator<Row>> rowsIterators;
 
 
     int rowNumber = 0;
@@ -197,13 +199,17 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         this.fetchDirection = statement.getFetchDirection();
         this.fetchSize = statement.getFetchSize();
         this.driverResultSet = resultSet;
+        this.rowsIterators = Lists.newArrayList();
+        this.currentIteratorIndex = 0;
         //this.schema = resultSet.schema;
 
         // Initialize meta-data from schema
         populateMetaData();
 
         
+        rowsIterators.add(resultSet.iterator());
         rowsIterator = resultSet.iterator();
+        
         colDefinitions = resultSet.getColumnDefinitions();
 
         // Initialize to column values from the first row
@@ -229,6 +235,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         this.resultSetType = statement.getResultSetType();
         this.fetchDirection = statement.getFetchDirection();
         this.fetchSize = statement.getFetchSize();
+        this.rowsIterators = Lists.newArrayList();
         
         // We have several result sets, but we will use only the first one for metadata needs
         this.driverResultSet = resultSets.get(0);
@@ -238,8 +245,9 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         populateMetaData();
 
         // Now we concatenate iterators of the different result sets into a single one and voilà !! ;) 
-        rowsIterator = this.driverResultSet.iterator();
-        ArrayList<Row> allRows = Lists.newArrayList();
+        //rowsIterator = this.driverResultSet.iterator();
+        currentIteratorIndex=0;
+        /*ArrayList<Row> allRows = Lists.newArrayList();
         Iterators.addAll(allRows, rowsIterator);
         
         for(int i=1;i<resultSets.size();i++){
@@ -247,7 +255,15 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
         	
         }
         
-        rowsIterator = allRows.iterator();
+        rowsIterator = allRows.iterator();*/
+        
+        for(int i=0;i<resultSets.size();i++){
+        	//rowsIterator = Iterators.concat(rowsIterator,resultSets.get(i).iterator());
+        	if(resultSets.get(i).iterator().hasNext()){
+        		rowsIterators.add(resultSets.get(i).iterator());
+        	}
+        }
+        rowsIterator = driverResultSet.iterator();
         colDefinitions = driverResultSet.getColumnDefinitions();
 
         // Initialize to column values from the first row
@@ -267,7 +283,7 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
 
     private final boolean hasMoreRows()
     {
-        return (rowsIterator != null && (rowsIterator.hasNext() || (rowNumber==0 && currentRow!=null)));
+        return (rowsIterator != null && (rowsIterator.hasNext() || hasNextIterator() || (rowNumber==0 && currentRow!=null)));
     }
 
     private final void populateMetaData()
@@ -278,8 +294,12 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
 
     private final void populateColumns()
     {
-    	
-    	currentRow = rowsIterator.next();
+    	if(rowsIterator.hasNext()){
+    		currentRow = rowsIterator.next();
+    	}else if(hasNextIterator()){
+    		nextIterator();
+    		currentRow = rowsIterator.next();
+    	}
    
     }
 
@@ -1436,6 +1456,20 @@ class CassandraResultSet extends AbstractResultSet implements CassandraResultSet
 		currentRow.getBytes(columnLabel).get(bytes, 0, bytes.length);
 
 		return new ByteArrayInputStream(bytes);
+	}
+	
+	private boolean hasNextIterator(){		
+		return currentIteratorIndex<rowsIterators.size()-1; 
+	}
+	
+	private boolean nextIterator(){
+		try{
+			currentIteratorIndex++;
+			rowsIterator = rowsIterators.get(currentIteratorIndex);
+			return true;
+		}catch(Exception e){
+			return false;
+		}
 	}
 
 
