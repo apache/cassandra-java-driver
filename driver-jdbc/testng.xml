@@ -45,7 +45,8 @@
       <class name="com.datastax.driver.jdbc.MetadataResultSetsUnitTest"/>
       <class name="com.datastax.driver.jdbc.CollectionsUnitTest"/>
       <class name="com.datastax.driver.jdbc.BatchStatementsUnitTest"/>
-      <class name="com.datastax.driver.jdbc.JdbcRegressionUnitTest"/>
+      <class name="com.datastax.driver.jdbc.JdbcRegressionUnitTest"/>     
+      <class name="com.datastax.driver.jdbc.ConnectionUnitTest"/>    
     </classes>
   </test> 
 </suite> <!-- JdbcTestSuite -->

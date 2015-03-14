@@ -62,7 +62,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
     private final Definition[] byIdx;
     private final Map<String, int[]> byName;
 
-    public ColumnDefinitions(Definition[] defs) {
+    ColumnDefinitions(Definition[] defs) {
 
         this.byIdx = defs;
         this.byName = new HashMap<String, int[]>(defs.length);
@@ -317,7 +317,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         private final String name;
         private final DataType type;
 
-        public Definition(String keyspace, String table, String name, DataType type) {
+        Definition(String keyspace, String table, String name, DataType type) {
             this.keyspace = keyspace;
             this.table = table;
             this.name = name;

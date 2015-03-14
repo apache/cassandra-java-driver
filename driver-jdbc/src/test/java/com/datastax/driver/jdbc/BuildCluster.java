@@ -23,11 +23,11 @@ public class BuildCluster {
     public static void setUpBeforeSuite() throws Exception
     {
     	/*System.setProperty("cassandra.version", "2.1.2");*/
-    	ccmBridge = CCMBridge.create("jdbc_cluster");
-    	ccmBridge.populate(2);
-    	ccmBridge.start(1);
+    	ccmBridge = CCMBridge.create("jdbc_cluster",1,1);
+    	//ccmBridge.populate(2);
+    	//ccmBridge.start(1);
     	ccmBridge.waitForUp(1);
-    	ccmBridge.start(2);
+    	//ccmBridge.start(2);
     	ccmBridge.waitForUp(2);
     	//cluster = ccmCluster.cluster;    	
     	//PORT = getPort();

@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
 
 
 
+
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.ConsistencyLevel;
@@ -65,6 +66,7 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SocketOptions;
 import com.datastax.driver.core.UserType;
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.driver.core.policies.DefaultRetryPolicy;
 import com.datastax.driver.core.policies.LatencyAwarePolicy;
 import com.datastax.driver.core.policies.Policies;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
@@ -159,6 +161,8 @@ public class CassandraConnection extends AbstractConnection implements Connectio
             String primaryDc = props.getProperty(TAG_PRIMARY_DC,"");
             String backupDc = props.getProperty(TAG_BACKUP_DC,"");
             String loadBalancingPolicy = props.getProperty(TAG_LOADBALANCING_POLICY,"");
+            String retryPolicy = props.getProperty(TAG_RETRY_POLICY,"");
+            String reconnectPolicy = props.getProperty(TAG_RECONNECT_POLICY,"");
             debugMode = props.getProperty(TAG_DEBUG,"").equals("true");
                         
             connectionProps.setProperty(TAG_ACTIVE_CQL_VERSION, version);
@@ -174,17 +178,44 @@ public class CassandraConnection extends AbstractConnection implements Connectio
             if(username.length()>0){
             	builder.withCredentials(username, password);
             }
+            
                         
             if(loadBalancingPolicy.length()>0){
+            	// if load balancing policy has been given in the JDBC URL, parse it and add it to the cluster builder 
             	try{
-            		builder.withLoadBalancingPolicy(Utils.parsePolicy(loadBalancingPolicy));
+            		builder.withLoadBalancingPolicy(Utils.parseLbPolicy(loadBalancingPolicy));
             	}catch(Exception e){
+            		if(debugMode){
+            			throw new Exception(e);
+            		}            		
             		logger.warn("Error occured while parsing load balancing policy :" + e.getMessage() + " / Forcing to TokenAwarePolicy...");
             		builder.withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
             	}
             }
             
+            if(retryPolicy.length()>0){
+            	// if retry policy has been given in the JDBC URL, parse it and add it to the cluster builder 
+            	try{
+            		builder.withRetryPolicy(Utils.parseRetryPolicy(retryPolicy));
+            	}catch(Exception e){
+            		if(debugMode){
+            			throw new Exception(e);
+            		}
+            		logger.warn("Error occured while parsing retry policy :" + e.getMessage() + " / skipping...");
+            	}
+            }
             
+            if(reconnectPolicy.length()>0){
+            	// if reconnection policy has been given in the JDBC URL, parse it and add it to the cluster builder 
+            	try{
+            		builder.withReconnectionPolicy(Utils.parseReconnectionPolicy(reconnectPolicy));
+            	}catch(Exception e){
+            		if(debugMode){
+            			throw new Exception(e);
+            		}
+            		logger.warn("Error occured while parsing reconnection policy :" + e.getMessage() + " / skipping...");            		
+            	}
+            }
            
             cCluster = builder.build();
 	    	
