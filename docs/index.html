@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Introduction</title>
+
+    <link rel="icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/pygments.css" rel="stylesheet">
+    <link href="css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="./">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            <li class="active">
+              <a href="./">Introduction</a>
+            </li>
+            
+            <li>
+              <a href="features/">Features</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              
+              
+              
+              <li class="active">Introduction</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<h1 id="datastax-java-driver-for-apache-cassandra">Datastax Java Driver for Apache Cassandra<a class="anchor" href="#datastax-java-driver-for-apache-cassandra" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h1>
+
+<p><em>If you’re reading this on GitHub, please note that this is the readme
+for the development version and that some features described here might
+not yet have been released. You can find the documentation for latest
+version through <a href="./">Java driver
+docs</a> or via the release tags,
+<a href="https://github.com/datastax/java-driver/tree/2.1.5">e.g.
+2.1.5</a>.</em></p>
+
+<p>A Java client driver for Apache Cassandra. This driver works exclusively with
+the Cassandra Query Language version 3 (CQL3) and Cassandra’s binary protocol.</p>
+
+<ul>
+<li>JIRA: <a href="https://datastax-oss.atlassian.net/browse/JAVA">https://datastax-oss.atlassian.net/browse/JAVA</a>
+</li>
+<li>MAILING LIST: <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user</a>
+</li>
+<li>IRC: #datastax-drivers on <a href="http://freenode.net">irc.freenode.net</a>
+</li>
+<li>TWITTER: Follow the latest news about DataStax Drivers - <a href="http://twitter.com/olim7t">@olim7t</a>, <a href="http://twitter.com/mfiguiere">@mfiguiere</a>
+</li>
+<li>DOCS: <a href="http://www.datastax.com/documentation/developer/java-driver/2.1/index.html">http://www.datastax.com/documentation/developer/java-driver/2.1/index.html</a>
+</li>
+<li>API: <a href="http://www.datastax.com/drivers/java/2.1">http://www.datastax.com/drivers/java/2.1</a>
+</li>
+<li>CHANGELOG: <a href="https://github.com/datastax/java-driver/blob/2.1/driver-core/CHANGELOG.rst">https://github.com/datastax/java-driver/blob/2.1/driver-core/CHANGELOG.rst</a>
+</li>
+</ul>
+
+<p>The driver architecture is based on layers. At the bottom lies the driver core.
+This core handles everything related to the connections to a Cassandra
+cluster (for example, connection pool, discovering new nodes, etc.) and exposes a simple,
+relatively low-level API on top of which higher level layer can be built.</p>
+
+<p>The driver contains the following modules:</p>
+
+<ul>
+<li>driver-core: the core layer.</li>
+<li>driver-mapping: the object mapper.</li>
+<li>driver-examples: example applications using the other modules which are
+only meant for demonstration purposes.</li>
+</ul>
+
+<p>Please refer to the README of each module for more information.</p>
+
+<h2 id="maven">Maven<a class="anchor" href="#maven" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p>The last release of the driver is available on Maven Central. You can install
+it in your application using the following Maven dependency:</p>
+<pre><code>&lt;dependency&gt;
+  &lt;groupId&gt;com.datastax.cassandra&lt;/groupId&gt;
+  &lt;artifactId&gt;cassandra-driver-core&lt;/artifactId&gt;
+  &lt;version&gt;2.1.5&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<p>Note that the object mapper is published as a separate artifact:</p>
+<pre><code>&lt;dependency&gt;
+  &lt;groupId&gt;com.datastax.cassandra&lt;/groupId&gt;
+  &lt;artifactId&gt;cassandra-driver-mapping&lt;/artifactId&gt;
+  &lt;version&gt;2.1.5&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<p>We also provide a <a href="features/shaded_jar/">shaded JAR</a>
+to avoid the explicit dependency to Netty.</p>
+
+<h2 id="compatibility">Compatibility<a class="anchor" href="#compatibility" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p>The Java client driver 2.1 (<a href="https://github.com/datastax/java-driver/tree/2.1">branch 2.1</a>) is compatible with Apache
+Cassandra 1.2, 2.0 and 2.1.</p>
+
+<p>UDT and tuple support is available only when using Apache Cassandra 2.1 (see <a href="http://www.datastax.com/dev/blog/cql-in-2-1">CQL improvements in Cassandra 2.1</a>).</p>
+
+<p>Other features are available only when using Apache Cassandra 2.0 or higher (e.g. result set paging,
+<a href="https://github.com/datastax/java-driver/blob/2.1/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java">BatchStatement</a>, 
+<a href="http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_ltweight_transaction_t.html">lightweight transactions</a> 
+– see <a href="http://www.datastax.com/documentation/cassandra/2.0/cassandra/features/features_key_c.html">What’s new in Cassandra 2.0</a>). 
+Trying to use these with a cluster running Cassandra 1.2 will result in 
+an <a href="https://github.com/datastax/java-driver/blob/2.1/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java">UnsupportedFeatureException</a> being thrown.</p>
+
+<h2 id="upgrading-from-previous-versions">Upgrading from previous versions<a class="anchor" href="#upgrading-from-previous-versions" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p>If you are upgrading from the 2.0.x branch of the driver, be sure to have a look at
+the <a href="https://github.com/datastax/java-driver/blob/2.1/driver-core/Upgrade_guide_to_2.1.rst">upgrade guide</a>.</p>
+
+<p>If you are upgrading from the 1.x branch, follow the <a href="https://github.com/datastax/java-driver/blob/2.0/driver-core/Upgrade_guide_to_2.0.rst">upgrade guide to 2.0</a>,
+and then the above document.</p>
+
+<h3 id="troubleshooting">Troubleshooting<a class="anchor" href="#troubleshooting" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>If you are having issues connecting to the cluster (seeing <code>NoHostAvailableConnection</code> exceptions) please check the 
+<a href="https://github.com/datastax/java-driver/wiki/Connection-requirements">connection requirements</a>.</p>
+
+<h2 id="license">License<a class="anchor" href="#license" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p>Copyright 2012-2014, DataStax</p>
+
+<p>Licensed under the Apache License, Version 2.0 (the “License”);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p><a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an “AS IS” BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" data-parent="#navigation" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">Contents</a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc">
+<li><a href="#maven">Maven
+</a></li>
+<li><a href="#compatibility">Compatibility
+</a></li>
+<li>
+<a href="#upgrading-from-previous-versions">Upgrading from previous versions
+</a><ol class="nav nav-pills nav-stacked"><li><a href="#troubleshooting">Troubleshooting
+</a></li></ol>
+</li>
+<li><a href="#license">License
+</a></li>
+</ol>
+                </div>
+              </div>
+            </div>
+
+            
+            <div class="panel panel-default">
+              <div id="read-more-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" data-parent="#navigation" href="#read-more" aria-expanded="true" aria-controls="read-more">Read More</a>
+                </h4>
+              </div>
+              <div id="read-more" class="panel-collapse collapse" role="tabpanel" aria-labelledby="read-more-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked">
+                  
+                    <li>
+                      <a href="features/">Features</a>
+                    </li>
+                  
+                  </ol>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script src="js/angular.js"></script>
+    <script src="js/mousetrap.js"></script>
+    <script src="js/hotkeys.js"></script>
+    <script src="js/ZeroClipboard.js"></script>
+    <script src="js/lunr.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

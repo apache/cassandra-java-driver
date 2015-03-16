@@ -1,0 +1,14 @@
+target/
+cobertura-history/
+testing/
+.settings
+.classpath
+.project
+doc
+notes
+.DS_Store
+
+/.idea
+*.iml
+
+/driver-core/dependency-reduced-pom.xml
