@@ -830,7 +830,7 @@ public class JdbcRegressionUnitTest
 	        // Create the target Column family with each basic data type available on Cassandra
 	                
 	        String createUDT = "CREATE TYPE IF NOT EXISTS fieldmap (key text, value text )";
-	        String createCF = "CREATE COLUMNFAMILY t_udt (id bigint PRIMARY KEY, field_values frozen<fieldmap>, the_tuple frozen<tuple<int, text, float>>, , the_other_tuple frozen<tuple<int, text, float>>);";
+	        String createCF = "CREATE COLUMNFAMILY t_udt (id bigint PRIMARY KEY, field_values frozen<fieldmap>, the_tuple frozen<tuple<int, text, float>>, the_other_tuple frozen<tuple<int, text, float>>);";
 	        stmt.execute(createUDT);
 	        stmt.execute(createCF);
 	        stmt.close();

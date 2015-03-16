@@ -82,7 +82,8 @@ public class CassandraDriver implements Driver
         if (acceptsURL(url))
         {
             // parse the URL into a set of Properties
-            finalProps = Utils.parseURL(url);
+        	// replace " by ' to handle the fact that " is not a valid character in URIs
+            finalProps = Utils.parseURL(url.replace("\"", "'"));
 
             // override any matching values in finalProps with values from props
             finalProps.putAll(props);

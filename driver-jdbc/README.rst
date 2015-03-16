@@ -101,6 +101,32 @@ If you want to use a custom policy, give the full package of the policy's class:
 
     jdbc:cassandra://host1--host2--host3:9042/keyspace1?loadbalancing=com.company.package.CustomPolicy()
 
+If you want to use a policy with arguments, cast them appropriately so that the driver can use the correct types::
+
+    jdbc:cassandra://host1--host2--host3:9042/keyspace1?loadbalancing=LatencyAwarePolicy(TokenAwarePolicy(RoundRobinPolicy()),(double)10.5,(long)1,(long)10,(long)1,10)
+
+
+Specifying retry policies
+-------------------------
+
+If you want to use a retry policy, add a "retry" argument to the jdbc url as follows::
+
+    jdbc:cassandra://host1--host2--host3:9042/keyspace1?retry=DowngradingConsistencyRetryPolicy
+
+Or for a Fallthrough Retry Policy::
+
+    jdbc:cassandra://host1--host2--host3:9042/keyspace1?loadbalancing=FallthroughRetryPolicy
+
+
+Specifying reconnection policies
+--------------------------------
+
+If you want to use a reconnection policy, add a "reconnection" argument to the jdbc url as follows::
+
+    jdbc:cassandra://host1--host2--host3:9042/keyspace1?reconnection=ConstantReconnectionPolicy((long)10)
+
+Make sure you cast the policy's arguments appropriately.
+
 
 Specifying consistency level
 ----------------------------
@@ -247,3 +273,58 @@ As JDBC batches do not support returning result sets, there is only one way to s
     }
 
 Make sure you send selects that return the exact same columns or you might get pretty unpredictable results.
+
+
+Working with Tuples and UDTs
+----------------------------
+
+To create a new Tuple object in Java, use the TupleType.of().newValue() method.
+UDT fields cannot be instantiated outside of the Datastax Java driver core. If you want to use prepared statements, you must proceed as in the following example:: 
+
+	String createUDT = "CREATE TYPE IF NOT EXISTS fieldmap (key text, value text )";
+    
+	String createCF = "CREATE COLUMNFAMILY t_udt (id bigint PRIMARY KEY, field_values frozen<fieldmap>, the_tuple frozen<tuple<int, text, float>>, the_other_tuple frozen<tuple<int, text, float>>);";
+	stmt.execute(createUDT);
+	stmt.execute(createCF);
+	stmt.close();
+		        
+	
+	String insert = "INSERT INTO t_udt(id, field_values, the_tuple, the_other_tuple) values(?,{key : ?, value : ?}, (?,?,?),?);";
+	
+	
+	TupleValue t = TupleType.of(DataType.cint(), DataType.text(), DataType.cfloat()).newValue();
+	t.setInt(0, 1).setString(1, "midVal").setFloat(2, (float)2.0);	        
+    	
+	PreparedStatement pstatement = con.prepareStatement(insert);    
+	
+	pstatement.setLong(1, 1L); 	
+	pstatement.setString(2, "key1");        
+	pstatement.setString(3, "value1");
+	pstatement.setInt(4, 1);
+	pstatement.setString(5, "midVal");
+	pstatement.setFloat(6, (float) 2.0);
+	pstatement.setObject(7, (Object)t);
+	
+	pstatement.execute();
+	pstatement.close();
+
+
+When working on collections of UDT types, it is not possible to use prepared statements. You then have to use simple statements as follows::
+
+    String createUDT = "CREATE TYPE IF NOT EXISTS fieldmap (key text, value text )";
+	String createCF = "CREATE COLUMNFAMILY t_udt_tuple_coll (id bigint PRIMARY KEY, field_values set<frozen<fieldmap>>, the_tuple list<frozen<tuple<int, text, float>>>, field_values_map map<text,frozen<fieldmap>>, tuple_map map<text,frozen<tuple<int,int>>>);";
+	stmt.execute(createUDT);
+	stmt.execute(createCF);
+	stmt.close();
+	
+	System.out.println("con.getMetaData().getDatabaseProductName() = " + con.getMetaData().getDatabaseProductName());
+	System.out.println("con.getMetaData().getDatabaseProductVersion() = " + con.getMetaData().getDatabaseProductVersion());
+	System.out.println("con.getMetaData().getDriverName() = " + con.getMetaData().getDriverName());
+	Statement statement = con.createStatement();	
+	
+	String insert = "INSERT INTO t_udt_tuple_coll(id,field_values,the_tuple, field_values_map, tuple_map) values(1,{{key : 'key1', value : 'value1'},{key : 'key2', value : 'value2'}}, [(1, 'midVal1', 1.0),(2, 'midVal2', 2.0)], {'map_key1':{key : 'key1', value : 'value1'},'map_key2':{key : 'key2', value : 'value2'}}, {'tuple1':(1, 2),'tuple2':(2,3)} );";
+	statement.execute(insert);
+	statement.close();
+
+
+	
