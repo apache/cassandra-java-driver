@@ -26,7 +26,10 @@ public enum WriteType
 {
     /** A write to a single partition key. Such writes are guaranteed to be atomic and isolated. */
     SIMPLE,
-    /** A write to a multiple partition key that used the distributed batch log to ensure atomicity. */
+    /**
+     * A write to a multiple partition key that used the distributed batch log to ensure atomicity
+     * (atomicity meaning that if any statement in the batch succeeds, all will eventually succeed).
+     */
     BATCH,
     /** A write to a multiple partition key that doesn't use the distributed batch log. Atomicity for such writes is not guaranteed */
     UNLOGGED_BATCH,
