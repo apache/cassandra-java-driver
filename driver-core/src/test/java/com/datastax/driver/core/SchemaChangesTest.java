@@ -1,6 +1,5 @@
 package com.datastax.driver.core;
 
-import java.util.Collection;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -12,27 +11,46 @@ import com.datastax.driver.core.utils.Bytes;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
-public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
+public class SchemaChangesTest {
+    private static final String CREATE_KEYSPACE =
+        "CREATE KEYSPACE %s WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor': '1' }";
 
-    // Create a second cluster to check that other clients also get notified
-    Cluster cluster2;
-    // The metadatas of the two clusters should be kept in sync
+    CCMBridge ccm;
+    Cluster cluster;
+    Cluster cluster2; // a second cluster to check that other clients also get notified
+
+    // The metadatas of the two clusters (we'll test that they're kept in sync)
     List<Metadata> metadatas;
 
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return Lists.newArrayList("CREATE KEYSPACE \"CaseSensitive\" WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1' }");
+    Session session;
+
+    @BeforeClass(groups = "short")
+    public void setup() {
+        ccm = CCMBridge.create("schemaChangesTest", 1);
+
+        cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
+        cluster2 = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
+
+        metadatas = Lists.newArrayList(cluster.getMetadata(), cluster2.getMetadata());
+
+        session = cluster.connect();
+        session.execute(String.format(CREATE_KEYSPACE, "lowercase"));
+        session.execute(String.format(CREATE_KEYSPACE, "\"CaseSensitive\""));
+    }
+
+    @AfterClass(groups = "short")
+    public void teardown() {
+        if (cluster != null)
+            cluster.close();
+        if (cluster2 != null)
+            cluster2.close();
+        if (ccm != null)
+            ccm.remove();
     }
 
     @DataProvider(name = "existingKeyspaceName")
     public static Object[][] existingKeyspaceName() {
-        return new Object[][]{ { "ks" }, { "\"CaseSensitive\"" } };
-    }
-
-    @BeforeClass(groups = "short")
-    public void setup() {
-        cluster2 = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
-        metadatas = Lists.newArrayList(cluster.getMetadata(), cluster2.getMetadata());
+        return new Object[][]{ { "lowercase" }, { "\"CaseSensitive\"" } };
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
@@ -66,12 +84,12 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @DataProvider(name = "newKeyspaceName")
     public static Object[][] newKeyspaceName() {
-        return new Object[][]{ { "ks2" }, { "\"CaseSensitive2\"" } };
+        return new Object[][]{ { "lowercase2" }, { "\"CaseSensitive2\"" } };
     }
 
     @Test(groups = "short", dataProvider = "newKeyspaceName")
     public void should_notify_of_keyspace_creation(String keyspace) {
-        session.execute(String.format("CREATE KEYSPACE %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}", keyspace));
+        session.execute(String.format(CREATE_KEYSPACE, keyspace));
 
         for (Metadata m : metadatas)
             assertThat(m.getKeyspace(keyspace))
@@ -80,7 +98,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short", dataProvider = "newKeyspaceName")
     public void should_notify_of_keyspace_update(String keyspace) {
-        session.execute(String.format("CREATE KEYSPACE %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}", keyspace));
+        session.execute(String.format(CREATE_KEYSPACE, keyspace));
         for (Metadata m : metadatas)
             assertThat(m.getKeyspace(keyspace).isDurableWrites())
                 .isTrue();
@@ -93,7 +111,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short", dataProvider = "newKeyspaceName")
     public void should_notify_of_keyspace_drop(String keyspace) {
-        session.execute(String.format("CREATE KEYSPACE %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}", keyspace));
+        session.execute(String.format(CREATE_KEYSPACE, keyspace));
         for (Metadata m : metadatas)
             assertThat(m.getReplicas(keyspace, Bytes.fromHexString("0xCAFEBABE")))
                 .isNotEmpty();
@@ -111,17 +129,11 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @AfterMethod(groups = "short")
     public void cleanup() {
         ListenableFuture<List<ResultSet>> f = Futures.successfulAsList(Lists.newArrayList(
-            session.executeAsync("DROP TABLE ks.table1"),
+            session.executeAsync("DROP TABLE lowercase.table1"),
             session.executeAsync("DROP TABLE \"CaseSensitive\".table1"),
-            session.executeAsync("DROP KEYSPACE ks2"),
+            session.executeAsync("DROP KEYSPACE lowercase2"),
             session.executeAsync("DROP KEYSPACE \"CaseSensitive2\"")
         ));
         Futures.getUnchecked(f);
-    }
-
-    @AfterClass(groups = "short")
-    public void teardown() {
-        if (cluster2 != null)
-            cluster2.close();
     }
 }
