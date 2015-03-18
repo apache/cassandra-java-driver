@@ -20,6 +20,7 @@ import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
+import com.google.common.base.Joiner;
 import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,11 +89,19 @@ public class CCMBridge {
         return bridge;
     }
 
-    public static CCMBridge create(String name, int nbNodes) {
+    public static CCMBridge create(String name, int nbNodes, String... options) {
         checkArgument(!"current".equals(name.toLowerCase()),
                         "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
-        bridge.execute("ccm create %s -n %d -s -i %s -b %s", name, nbNodes, IP_PREFIX, CASSANDRA_VERSION);
+        bridge.execute("ccm create %s -n %d -s -i %s -b %s " + Joiner.on(" ").join(options), name, nbNodes, IP_PREFIX, CASSANDRA_VERSION);
+        return bridge;
+    }
+
+    public static CCMBridge createWithCustomVersion(String name, int nbNodes, String cassandraVersion) {
+        checkArgument(!"current".equals(name.toLowerCase()),
+            "cluster can't be called \"current\"");
+        CCMBridge bridge = new CCMBridge();
+        bridge.execute("ccm create %s -n %d -s -i %s -b -v %s ", name, nbNodes, IP_PREFIX, cassandraVersion);
         return bridge;
     }
 
@@ -149,6 +158,11 @@ public class CCMBridge {
         execute("ccm remove");
     }
 
+    public void remove(int n) {
+        logger.info("Removing: " + IP_PREFIX + n);
+        execute("ccm node%d remove", n);
+    }
+
     public void ring() {
         ring(1);
     }
@@ -163,9 +177,9 @@ public class CCMBridge {
 
     public void bootstrapNode(int n, String dc) {
         if (dc == null)
-            execute("ccm add node%d -i %s%d -j %d -b", n, IP_PREFIX, n, 7000 + 100*n);
+            execute("ccm add node%d -i %s%d -j %d -r %d -b -s", n, IP_PREFIX, n, 7000 + 100*n, 8000 + 100*n);
         else
-            execute("ccm add node%d -i %s%d -j %d -b -d %s", n, IP_PREFIX, n, 7000 + 100*n, dc);
+            execute("ccm add node%d -i %s%d -j %d -b -d %s -s", n, IP_PREFIX, n, 7000 + 100*n, dc);
         execute("ccm node%d start --wait-other-notice --wait-for-binary-proto", n);
     }
 

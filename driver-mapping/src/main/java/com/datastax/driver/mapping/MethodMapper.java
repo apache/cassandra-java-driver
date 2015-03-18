@@ -18,9 +18,7 @@ package com.datastax.driver.mapping;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.nio.ByteBuffer;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -95,7 +93,7 @@ class MethodMapper {
     }
 
     @SuppressWarnings("rawtypes")
-	private void mapType(MappingManager manager, Class<?> fullReturnType, Type type) {
+    private void mapType(MappingManager manager, Class<?> fullReturnType, Type type) {
 
         if (type instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType)type;
@@ -160,18 +158,32 @@ class MethodMapper {
         // We'll only set one of the other. If paramName is null, then paramIdx is used.
         private final String paramName;
         private final int paramIdx;
+        private final DataType dataType;
 
-        public ParamMapper(String paramName, int paramIdx) {
+        public ParamMapper(String paramName, int paramIdx, DataType dataType) {
             this.paramName = paramName;
             this.paramIdx = paramIdx;
+            this.dataType = dataType;
+        }
+
+        public ParamMapper(String paramName, int paramIdx) {
+            this(paramName, paramIdx, null);
         }
 
         void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
-            if (arg != null) {
-                if (paramName == null)
-                    boundStatement.setBytesUnsafe(paramIdx, DataType.serializeValue(arg, protocolVersion));
+            ByteBuffer serializedArg = (dataType == null)
+                ? DataType.serializeValue(arg, protocolVersion)
+                : dataType.serialize(arg, protocolVersion);
+            if (paramName == null) {
+                if (arg == null)
+                    boundStatement.setToNull(paramIdx);
                 else
-                    boundStatement.setBytesUnsafe(paramName, DataType.serializeValue(arg, protocolVersion));
+                    boundStatement.setBytesUnsafe(paramIdx, serializedArg);
+            } else {
+                if (arg == null)
+                    boundStatement.setToNull(paramName);
+                else
+                    boundStatement.setBytesUnsafe(paramName, serializedArg);
             }
         }
     }
@@ -188,57 +200,27 @@ class MethodMapper {
         void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
             @SuppressWarnings("unchecked")
             V entity = (V) arg;
-            super.setValue(boundStatement, udtMapper.toUDT(entity), protocolVersion);
+            UDTValue udtArg = arg != null ? udtMapper.toUDT(entity) : null;
+            super.setValue(boundStatement, udtArg, protocolVersion);
         }
     }
 
-    static class UDTListParamMapper<V> extends ParamMapper {
-        private final UDTMapper<V> valueMapper;
+    /**
+     * Maps a nested collection which has a mapped UDT somewhere in the hierarchy.
+     */
+    static class NestedUDTParamMapper extends ParamMapper {
+        private final InferredCQLType inferredCQLType;
 
-        UDTListParamMapper(String paramName, int paramIdx, UDTMapper<V> valueMapper) {
+        NestedUDTParamMapper(String paramName, int paramIdx, InferredCQLType inferredCQLType) {
             super(paramName, paramIdx);
-            this.valueMapper = valueMapper;
+            this.inferredCQLType = inferredCQLType;
         }
 
         @Override
         void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
-            @SuppressWarnings("unchecked")
-            List<V> entities = (List<V>) arg;
-            super.setValue(boundStatement, valueMapper.toUDTValues(entities), protocolVersion);
-        }
-    }
-
-    static class UDTSetParamMapper<V> extends ParamMapper {
-        private final UDTMapper<V> valueMapper;
-
-        UDTSetParamMapper(String paramName, int paramIdx, UDTMapper<V> valueMapper) {
-            super(paramName, paramIdx);
-            this.valueMapper = valueMapper;
-        }
-
-        @Override
-        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
-            @SuppressWarnings("unchecked")
-            Set<V> entities = (Set<V>) arg;
-            super.setValue(boundStatement, valueMapper.toUDTValues(entities), protocolVersion);
-        }
-    }
-
-    static class UDTMapParamMapper<K, V> extends ParamMapper {
-        private final UDTMapper<K> keyMapper;
-        private final UDTMapper<V> valueMapper;
-
-        UDTMapParamMapper(String paramName, int paramIdx, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper) {
-            super(paramName, paramIdx);
-            this.keyMapper = keyMapper;
-            this.valueMapper = valueMapper;
-        }
-
-        @Override
-        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
-            @SuppressWarnings("unchecked")
-            Map<K, V> entities = (Map<K, V>) arg;
-            super.setValue(boundStatement, UDTMapper.toUDTValues(entities, keyMapper, valueMapper), protocolVersion);
+            super.setValue(boundStatement,
+                UDTMapper.convertEntitiesToUDTs(arg, inferredCQLType),
+                protocolVersion);
         }
     }
 
@@ -258,6 +240,9 @@ class MethodMapper {
 
         @SuppressWarnings("rawtypes")
         private Object convert(Object arg) {
+            if(arg == null)
+                return arg;
+
             switch (enumType) {
             case STRING:
                 return arg.toString();

@@ -66,9 +66,9 @@ public abstract class Clause extends Utils.Appendeable {
 
     static class InClause extends AbstractClause {
 
-        private final List<Object> values;
+        private final List<?> values;
 
-        InClause(String name, List<Object> values) {
+        InClause(String name, List<?> values) {
             super(name);
             this.values = values;
 
@@ -114,9 +114,9 @@ public abstract class Clause extends Utils.Appendeable {
     static class CompoundClause extends Clause {
         private String op;
         private final List<String> names;
-        private final List<Object> values;
+        private final List<?> values;
 
-        CompoundClause(List<String> names, String op, List<Object> values) {
+        CompoundClause(List<String> names, String op, List<?> values) {
             assert names.size() == values.size();
             this.op = op;
             this.names = names;

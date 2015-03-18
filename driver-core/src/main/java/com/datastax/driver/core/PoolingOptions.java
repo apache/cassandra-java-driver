@@ -35,6 +35,12 @@ package com.datastax.driver.core;
  * reclaimed if the use of opened connections drops below the
  * configured threshold ({@link #getMinSimultaneousRequestsPerConnectionThreshold}).
  * <p>
+ * Due to known issues with the current {@code ProtocolVersion#V2} pool implementation (see
+ * <a href="https://datastax-oss.atlassian.net/browse/JAVA-419">JAVA-419</a>),
+ * it is <b>strongly recommended</b> to use a fixed-size pool (core connections =
+ * max connections).
+ * The default values respect this (8 for local hosts, 2 for remote hosts).
+ * <p>
  * <b>With {@code ProtocolVersion#V3} or above:</b>
  * the driver uses a single connection for each {@code LOCAL} or {@code REMOTE}
  * host. This connection can handle a larger amount of simultaneous requests,
@@ -49,8 +55,8 @@ public class PoolingOptions {
     private static final int DEFAULT_MIN_REQUESTS_PER_CONNECTION = 25;
     private static final int DEFAULT_MAX_REQUESTS_PER_CONNECTION = 100;
 
-    private static final int DEFAULT_CORE_POOL_LOCAL = 2;
-    private static final int DEFAULT_CORE_POOL_REMOTE = 1;
+    private static final int DEFAULT_CORE_POOL_LOCAL = 8;
+    private static final int DEFAULT_CORE_POOL_REMOTE = 2;
 
     private static final int DEFAULT_MAX_POOL_LOCAL = 8;
     private static final int DEFAULT_MAX_POOL_REMOTE = 2;
@@ -59,6 +65,7 @@ public class PoolingOptions {
     private static final int DEFAULT_MAX_REQUESTS_PER_HOST_REMOTE = 256;
 
     private static final int DEFAULT_POOL_TIMEOUT_MILLIS = 5000;
+    private static final int DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30;
 
     private volatile Cluster.Manager manager;
 
@@ -73,6 +80,7 @@ public class PoolingOptions {
 
 
     private volatile int poolTimeoutMillis = DEFAULT_POOL_TIMEOUT_MILLIS;
+    private volatile int heartbeatIntervalSeconds = DEFAULT_HEARTBEAT_INTERVAL_SECONDS;
 
     public PoolingOptions() {}
 
@@ -192,6 +200,11 @@ public class PoolingOptions {
      * Sets the core number of connections per host.
      * <p>
      * This option is only used with {@code ProtocolVersion#V2} or below.
+     * <p>
+     * Due to known issues with the current pool implementation (see
+     * <a href="https://datastax-oss.atlassian.net/browse/JAVA-419">JAVA-419</a>),
+     * it is <b>strongly recommended</b> to use a fixed-size pool (core connections =
+     * max connections).
      *
      * @param distance the {@code HostDistance} for which to set this threshold.
      * @param newCoreConnections the value to set
@@ -231,6 +244,11 @@ public class PoolingOptions {
      * Sets the maximum number of connections per host.
      * <p>
      * This option is only used with {@code ProtocolVersion#V2} or below.
+     * <p>
+     * Due to known issues with the current pool implementation (see
+     * <a href="https://datastax-oss.atlassian.net/browse/JAVA-419">JAVA-419</a>),
+     * it is <b>strongly recommended</b> to use a fixed-size pool (core connections =
+     * max connections).
      *
      * @param distance the {@code HostDistance} for which to set this threshold.
      * @param newMaxConnections the value to set
@@ -278,11 +296,42 @@ public class PoolingOptions {
     }
 
     /**
+     * Returns the heart beat interval, after which a message is sent on an idle connection to make sure it's still alive.
+     * @return the interval.
+     */
+    public int getHeartbeatIntervalSeconds() {
+        return heartbeatIntervalSeconds;
+    }
+
+    /**
+     * Sets the heart beat interval, after which a message is sent on an idle connection to make sure it's still alive.
+     * <p>
+     * This is an application-level keep-alive, provided for convenience since adjusting the TCP keep-alive might not be
+     * practical in all environments.
+     * <p>
+     * This option should be set higher than {@link SocketOptions#getReadTimeoutMillis()}.
+     * <p>
+     * The default value for this option is 30 seconds.
+     *
+     * @param heartbeatIntervalSeconds the new value in seconds. If set to 0, it will disable the feature.
+     * @return this {@code PoolingOptions}
+     *
+     * @throws IllegalArgumentException if the interval is negative.
+     */
+    public PoolingOptions setHeartbeatIntervalSeconds(int heartbeatIntervalSeconds) {
+        if (poolTimeoutMillis < 0)
+            throw new IllegalArgumentException("Heartbeat interval must be positive");
+
+        this.heartbeatIntervalSeconds = heartbeatIntervalSeconds;
+        return this;
+    }
+
+    /**
      * Returns the maximum number of requests per host.
      * <p>
      * This option is only used with {@code ProtocolVersion#V3} or above.
      * <p>
-     * The default value for this option is 8192 for {@code LOCAL} and 256 for
+     * The default value for this option is 1024 for {@code LOCAL} and 256 for
      * {@code REMOTE} hosts.
      *
      * @param distance the {@code HostDistance} for which to return this threshold.

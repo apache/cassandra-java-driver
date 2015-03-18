@@ -19,9 +19,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-
 import com.datastax.driver.core.*;
 
 /**
@@ -88,51 +85,6 @@ public class UDTMapper<T> {
         return userType;
     }
 
-    List<UDTValue> toUDTValues(List<T> entities) {
-        if (entities == null)
-            return null;
-
-        List<UDTValue> udtValues = new ArrayList<UDTValue>(entities.size());
-        for (T entity : entities) {
-            UDTValue udtValue = toUDT(entity);
-            udtValues.add(udtValue);
-        }
-        return udtValues;
-    }
-
-    Set<UDTValue> toUDTValues(Set<T> entities) {
-        if (entities == null)
-            return null;
-
-        Set<UDTValue> udtValues = Sets.newHashSetWithExpectedSize(entities.size());
-        for (T entity : entities) {
-            UDTValue udtValue = toUDT(entity);
-            udtValues.add(udtValue);
-        }
-        return udtValues;
-    }
-
-    /*
-     * Map conversion methods are static because they use two mappers, either of
-     * which (but not both) may be null.
-     *
-     * This reflects the fact that the map datatype can use UDTs as keys, or
-     * values, or both.
-     */
-    static <K, V> Map<Object, Object> toUDTValues(Map<K, V> entities, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper) {
-        assert keyMapper != null || valueMapper != null;
-        if (entities == null)
-            return null;
-
-        Map<Object, Object> udtValues = Maps.newHashMapWithExpectedSize(entities.size());
-        for (Entry<K, V> entry : entities.entrySet()) {
-            Object key = (keyMapper == null) ? entry.getKey() : keyMapper.toUDT(entry.getKey());
-            Object value = (valueMapper == null) ? entry.getValue() : valueMapper.toUDT(entry.getValue());
-            udtValues.put(key, value);
-        }
-        return udtValues;
-    }
-
     T toEntity(UDTValue udtValue) {
         T entity = entityMapper.newEntity();
         for (ColumnMapper<T> cm : entityMapper.allColumns()) {
@@ -143,30 +95,93 @@ public class UDTMapper<T> {
         return entity;
     }
 
-    List<T> toEntities(List<UDTValue> udtValues) {
-        List<T> entities = new ArrayList<T>(udtValues.size());
-        for (UDTValue udtValue : udtValues) {
-            entities.add(toEntity(udtValue));
-        }
-        return entities;
-    }
-
-    Set<T> toEntities(Set<UDTValue> udtValues) {
-        Set<T> entities = Sets.newHashSetWithExpectedSize(udtValues.size());
-        for (UDTValue udtValue : udtValues) {
-            entities.add(toEntity(udtValue));
-        }
-        return entities;
-    }
-
+    /**
+     * Handles a (possibly nested) collection where some of the elements are domain classes that
+     * must be converted to {@code UDTValue} instances.
+     */
     @SuppressWarnings("unchecked")
-    static <K, V> Map<K, V> toEntities(Map<Object, Object> udtValues, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper) {
-        Map<K, V> entities = Maps.newHashMapWithExpectedSize(udtValues.size());
-        for (Entry<Object, Object> entry : udtValues.entrySet()) {
-            K key = (keyMapper == null) ? (K) entry.getKey() : keyMapper.toEntity((UDTValue) entry.getKey());
-            V value = (valueMapper == null) ? (V) entry.getValue() : valueMapper.toEntity((UDTValue)entry.getValue());
-            entities.put(key, value);
+    static Object convertEntitiesToUDTs(Object value, InferredCQLType type) {
+        if (value == null)
+            return null;
+
+        if (!type.containsMappedUDT)
+            return value;
+
+        if (type.udtMapper != null)
+            return type.udtMapper.toUDT(value);
+
+        if (type.dataType.getName() == DataType.Name.LIST) {
+            InferredCQLType elementType = type.childTypes.get(0);
+            List<Object> result = new ArrayList<Object>();
+            for (Object element : (List<Object>)value)
+                result.add(convertEntitiesToUDTs(element, elementType));
+            return result;
         }
-        return entities;
+
+        if (type.dataType.getName() == DataType.Name.SET) {
+            InferredCQLType elementType = type.childTypes.get(0);
+            Set<Object> result = new LinkedHashSet<Object>();
+            for (Object element : (Set<Object>)value)
+                result.add(convertEntitiesToUDTs(element, elementType));
+            return result;
+        }
+
+        if (type.dataType.getName() == DataType.Name.MAP) {
+            InferredCQLType keyType = type.childTypes.get(0);
+            InferredCQLType valueType = type.childTypes.get(1);
+            Map<Object, Object> result = new LinkedHashMap<Object, Object>();
+            for (Entry<Object, Object> entry : ((Map<Object, Object>)value).entrySet())
+                result.put(
+                    convertEntitiesToUDTs(entry.getKey(), keyType),
+                    convertEntitiesToUDTs(entry.getValue(), valueType)
+                );
+            return result;
+        }
+        throw new IllegalArgumentException("Error converting " + value);
+    }
+
+    /**
+     * Handles a (possibly nested) collection where some of the elements are {@code UDTValue}
+     * instances that must be converted to domain classes.
+     */
+    @SuppressWarnings("unchecked")
+    static Object convertUDTsToEntities(Object value, InferredCQLType type) {
+        if (value == null)
+            return null;
+
+        if (!type.containsMappedUDT)
+            return value;
+
+        if (type.udtMapper != null)
+            return type.udtMapper.toEntity((UDTValue)value);
+
+        if (type.dataType.getName() == DataType.Name.LIST) {
+            InferredCQLType elementType = type.childTypes.get(0);
+            List<Object> result = new ArrayList<Object>();
+            for (Object element : (List<Object>)value)
+                result.add(convertUDTsToEntities(element, elementType));
+            return result;
+        }
+
+        if (type.dataType.getName() == DataType.Name.SET) {
+            InferredCQLType elementType = type.childTypes.get(0);
+            Set<Object> result = new LinkedHashSet<Object>();
+            for (Object element : (Set<Object>)value)
+                result.add(convertUDTsToEntities(element, elementType));
+            return result;
+        }
+
+        if (type.dataType.getName() == DataType.Name.MAP) {
+            InferredCQLType keyType = type.childTypes.get(0);
+            InferredCQLType valueType = type.childTypes.get(1);
+            Map<Object, Object> result = new LinkedHashMap<Object, Object>();
+            for (Entry<Object, Object> entry : ((Map<Object, Object>)value).entrySet())
+                result.put(
+                    convertUDTsToEntities(entry.getKey(), keyType),
+                    convertUDTsToEntities(entry.getValue(), valueType)
+                );
+            return result;
+        }
+        throw new IllegalArgumentException("Error converting " + value);
     }
 }

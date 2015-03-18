@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.util.*;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.reflect.TypeToken;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
@@ -100,6 +101,16 @@ public class TupleType extends DataType {
     }
 
     @Override
+    public boolean isFrozen() {
+        return true;
+    }
+
+    @Override
+    boolean canBeDeserializedAs(TypeToken typeToken) {
+        return typeToken.isAssignableFrom(getName().javaType);
+    }
+
+    @Override
     public int hashCode() {
         return Arrays.hashCode(new Object[]{ name, types });
     }
@@ -117,9 +128,9 @@ public class TupleType extends DataType {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (DataType type : types) {
-            sb.append(sb.length() == 0 ? "tuple<" : ", ");
+            sb.append(sb.length() == 0 ? "frozen<tuple<" : ", ");
             sb.append(type);
         }
-        return sb.append(">").toString();
+        return sb.append(">>").toString();
     }
 }

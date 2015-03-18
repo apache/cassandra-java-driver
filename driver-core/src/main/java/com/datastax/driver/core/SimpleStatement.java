@@ -92,11 +92,14 @@ public class SimpleStatement extends RegularStatement {
     private static ByteBuffer[] convert(Object[] values, ProtocolVersion protocolVersion) {
         ByteBuffer[] serializedValues = new ByteBuffer[values.length];
         for (int i = 0; i < values.length; i++) {
+            Object value = values[i];
             try {
-                serializedValues[i] = DataType.serializeValue(values[i], protocolVersion);
+                if (value instanceof Token)
+                    value = ((Token)value).getValue();
+                serializedValues[i] = DataType.serializeValue(value, protocolVersion);
             } catch (IllegalArgumentException e) {
                 // Catch and rethrow to provide a more helpful error message (one that include which value is bad)
-                throw new IllegalArgumentException(String.format("Value %d of type %s does not correspond to any CQL3 type", i, values[i].getClass()));
+                throw new IllegalArgumentException(String.format("Value %d of type %s does not correspond to any CQL3 type", i, value.getClass()));
             }
         }
         return serializedValues;

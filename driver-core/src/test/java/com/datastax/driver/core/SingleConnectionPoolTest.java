@@ -12,11 +12,12 @@ import org.testng.collections.Lists;
 
 import static org.testng.Assert.fail;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+
+@CassandraVersion(major=2.1)
 public class SingleConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
-        TestUtils.versionCheck(2.1, 0, "This will only work with Cassandra 2.1.0+");
-
         return Lists.newArrayList();
     }
 

@@ -10,14 +10,14 @@ import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TestUtils;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
 
+@CassandraVersion(major=2.1)
 public class UDTFieldMapperTest {
 
     @Test(groups = "short")
     public void udt_and_tables_with_ks_created_in_another_session_should_be_mapped() {
-        TestUtils.versionCheck(2.1, 0, "This will only work with C* 2.1.0");
-
         CCMBridge ccm = null;
         Cluster cluster = null;
 
@@ -65,8 +65,6 @@ public class UDTFieldMapperTest {
 
     @Test(groups = "short")
     public void udt_and_tables_without_ks_created_in_another_session_should_be_mapped() {
-        TestUtils.versionCheck(2.1, 0, "This will only work with C* 2.1.0");
-
         CCMBridge ccm = null;
         Cluster cluster = null;
 

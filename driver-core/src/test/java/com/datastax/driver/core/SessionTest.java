@@ -161,16 +161,18 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // create a new cluster object and ensure 0 sessions and connections
         Cluster cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1').build();
+
         assertEquals(cluster.manager.sessions.size(), 0);
         assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 0);
 
+        // ensure sessions.size() returns with 1 control connection + core pool size.
         Session session = cluster.connect();
         assertEquals(cluster.manager.sessions.size(), 1);
         int coreConnections = TestUtils.numberOfLocalCoreConnections(cluster);
         assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(),
                      1 + coreConnections);
 
-        // ensure sessions.size() returns to 0 with only 1 active connection
+        // ensure sessions.size() returns to 0 with only 1 active connection (the control connection)
         session.close();
         assertEquals(cluster.manager.sessions.size(), 0);
         assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
@@ -183,8 +185,8 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             assertEquals(cluster.manager.sessions.size(), 0);
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
 
-            // ensure a new session gets registered and control connections are established
-            // an additional 2 control connections should be seen for node2
+            // ensure a new session gets registered and core connections are established
+            // there should be corePoolSize more connections to accommodate for the new host.
             thisSession = cluster.connect();
             assertEquals(cluster.manager.sessions.size(), 1);
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(),

@@ -12,6 +12,7 @@ import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.Policies;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
+import com.datastax.driver.core.utils.CassandraVersion;
 
 public class ControlConnectionTest {
     @Test(groups = "short")
@@ -73,9 +74,8 @@ public class ControlConnectionTest {
      * Therefore we use two different driver instances in this test.
      */
     @Test(groups = "short")
+    @CassandraVersion(major=2.1)
     public void should_parse_UDT_definitions_when_using_default_protocol_version() {
-        TestUtils.versionCheck(2.1, 0, "This will only work with C* 2.1.0");
-
         CCMBridge ccm = null;
         Cluster cluster = null;
 
@@ -94,6 +94,47 @@ public class ControlConnectionTest {
             UserType fooType = cluster.getMetadata().getKeyspace("ks").getUserType("foo");
 
             assertThat(fooType.getFieldNames()).containsExactly("i");
+        } finally {
+            if (cluster != null)
+                cluster.close();
+            if (ccm != null)
+                ccm.remove();
+        }
+    }
+    
+    /**
+     * Ensures that if the host that the Control Connection is connected to is removed/decommissioned that the
+     * Control Connection is reestablished to another host.
+     *
+     * @since 2.0.9
+     * @jira_ticket JAVA-597
+     * @expected_result Control Connection is reestablished to another host.
+     * @test_category control_connection
+     */
+    @Test(groups = "long")
+    public void should_reestablish_if_control_node_decommissioned() throws InterruptedException {
+        CCMBridge ccm = null;
+        Cluster cluster = null;
+
+        try {
+            ccm = CCMBridge.create("test", 3);
+
+            cluster = Cluster.builder()
+                .addContactPoint(CCMBridge.ipOfNode(1))
+                .build();
+            cluster.init();
+
+            // Ensure the control connection host is that of the first node.
+            String controlHost = cluster.manager.controlConnection.connectedHost().getAddress().getHostAddress();
+            assertThat(controlHost).isEqualTo(CCMBridge.ipOfNode(1));
+
+            // Decommission the node.
+            ccm.decommissionNode(1);
+
+            // Ensure that the new control connection is not null and it's host is not equal to the decommissioned node.
+            Host newHost = cluster.manager.controlConnection.connectedHost();
+            assertThat(newHost).isNotNull();
+            assertThat(newHost.getAddress().getHostAddress()).isNotEqualTo(controlHost);
         } finally {
             if (cluster != null)
                 cluster.close();

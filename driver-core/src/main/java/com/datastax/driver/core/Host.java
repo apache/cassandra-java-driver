@@ -17,7 +17,9 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -41,6 +43,8 @@ public class Host {
 
     enum State { ADDED, DOWN, SUSPECT, UP }
     volatile State state;
+    /** Ensures state change notifications for that host are handled serially */
+    final ReentrantLock notificationsLock = new ReentrantLock(true);
 
     private final ConvictionPolicy policy;
     private final Cluster.Manager manager;
@@ -62,6 +66,8 @@ public class Host {
     // ControlConnection.refreshNodeInfo. We don't want to expose however because we don't always have the info
     // (partly because the 'System.local' doesn't have it for some weird reason for instance).
     volatile InetAddress listenAddress;
+
+    private volatile Set<Token> tokens;
 
     // ClusterMetadata keeps one Host object per inet address and we rely on this (more precisely,
     // we rely on the fact that we can use Object equality as a valid equality), so don't use
@@ -156,6 +162,19 @@ public class Host {
     }
 
     /**
+     * Returns the tokens that this host owns.
+     *
+     * @return the (immutable) set of tokens.
+     */
+    public Set<Token> getTokens() {
+        return tokens;
+    }
+
+    void setTokens(Set<Token> tokens) {
+        this.tokens = tokens;
+    }
+
+    /**
      * Returns whether the host is considered up by the driver.
      * <p>
      * Please note that this is only the view of the driver and may not reflect
@@ -204,14 +223,17 @@ public class Host {
     }
 
     /**
-     * Triggers an asynchronous one-time reconnection attempt to this host.
+     * Triggers an asynchronous reconnection attempt to this host.
      * <p>
-     * If reconnection succeeds, the host will be marked {@code UP} and its connection pool(s)
-     * will be initialized (unless the load balancing policy returns {@link HostDistance#IGNORED}
-     * for it). If reconnection fails, no further attempts will be scheduled.
+     * This method is intended for load balancing policies that mark hosts as {@link HostDistance#IGNORED IGNORED},
+     * but still need a way to periodically check these hosts' states (UP / DOWN).
      * <p>
-     * This method has no effect if the node is already {@code UP}, or if a reconnection attempt
-     * is already in progress.
+     * For a host that is at distance {@code IGNORED}, this method will try to reconnect exactly once: if
+     * reconnection succeeds, the host is marked {@code UP}; otherwise, no further attempts will be scheduled.
+     * It has no effect if the node is already {@code UP}, or if a reconnection attempt is already in progress.
+     * <p>
+     * Note that if the host is <em>not</em> a distance {@code IGNORED}, this method <em>will</em> trigger a periodic
+     * reconnection attempt if the reconnection fails.
      */
     public void tryReconnectOnce() {
         this.manager.startSingleReconnectionAttempt(this);

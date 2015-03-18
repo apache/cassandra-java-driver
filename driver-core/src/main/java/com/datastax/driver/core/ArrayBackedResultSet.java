@@ -40,14 +40,15 @@ abstract class ArrayBackedResultSet implements ResultSet {
     private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque<List<ByteBuffer>>(0);
 
     protected final ColumnDefinitions metadata;
-
+    protected final Token.Factory tokenFactory;
     private final boolean wasApplied;
 
     protected final ProtocolVersion protocolVersion;
 
-    private ArrayBackedResultSet(ColumnDefinitions metadata, List<ByteBuffer> firstRow, ProtocolVersion protocolVersion) {
+    private ArrayBackedResultSet(ColumnDefinitions metadata, Token.Factory tokenFactory, List<ByteBuffer> firstRow, ProtocolVersion protocolVersion) {
         this.metadata = metadata;
         this.protocolVersion = protocolVersion;
+        this.tokenFactory = tokenFactory;
         this.wasApplied = checkWasApplied(firstRow, metadata);
     }
 
@@ -69,12 +70,15 @@ abstract class ArrayBackedResultSet implements ResultSet {
                     columnDefs = r.metadata.columns;
                 }
 
+                Token.Factory tokenFactory = (session == null) ? null
+                    : session.getCluster().getMetadata().tokenFactory();
+
                 // info can be null only for internal calls, but we don't page those. We assert
                 // this explicitly because MultiPage implementation don't support info == null.
                 assert r.metadata.pagingState == null || info != null;
                 return r.metadata.pagingState == null
-                     ? new SinglePage(columnDefs, protocolVersion, r.data, info)
-                     : new MultiPage(columnDefs, protocolVersion, r.data, info, r.metadata.pagingState, session, statement);
+                    ? new SinglePage(columnDefs, tokenFactory, protocolVersion, r.data, info)
+                    : new MultiPage(columnDefs, tokenFactory, protocolVersion, r.data, info, r.metadata.pagingState, session, statement);
 
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
@@ -93,8 +97,8 @@ abstract class ArrayBackedResultSet implements ResultSet {
     }
 
     private static ArrayBackedResultSet empty(ExecutionInfo info) {
-        // We could pass the protocol version but we know we won't need it so passing a bogus value (-1)
-        return new SinglePage(ColumnDefinitions.EMPTY, null, EMPTY_QUEUE, info);
+        // We could pass the protocol version but we know we won't need it so passing a bogus value (null)
+        return new SinglePage(ColumnDefinitions.EMPTY, null,  null, EMPTY_QUEUE, info);
     }
 
     public ColumnDefinitions getColumnDefinitions() {
@@ -153,10 +157,11 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final ExecutionInfo info;
 
         private SinglePage(ColumnDefinitions metadata,
+                           Token.Factory tokenFactory,
                            ProtocolVersion protocolVersion,
                            Queue<List<ByteBuffer>> rows,
                            ExecutionInfo info) {
-            super(metadata, rows.peek(), protocolVersion);
+            super(metadata, tokenFactory, rows.peek(), protocolVersion);
             this.info = info;
             this.rows = rows;
         }
@@ -166,7 +171,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         }
 
         public Row one() {
-            return ArrayBackedRow.fromData(metadata, protocolVersion, rows.poll());
+            return ArrayBackedRow.fromData(metadata, tokenFactory, protocolVersion, rows.poll());
         }
 
         public int getAvailableWithoutFetching() {
@@ -216,6 +221,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final Statement statement;
 
         private MultiPage(ColumnDefinitions metadata,
+                          Token.Factory tokenFactory,
                           ProtocolVersion protocolVersion,
                           Queue<List<ByteBuffer>> rows,
                           ExecutionInfo info,
@@ -226,7 +232,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
             // Note: as of Cassandra 2.1.0, it turns out that the result of a CAS update is never paged, so
             // we could hard-code the result of wasApplied in this class to "true". However, we can not be sure
             // that this will never change, so apply the generic check by peeking at the first row.
-            super(metadata, rows.peek(), protocolVersion);
+            super(metadata, tokenFactory, rows.peek(), protocolVersion);
             this.currentPage = rows;
             this.infos.offer(info);
 
@@ -242,7 +248,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
         public Row one() {
             prepareNextRow();
-            return ArrayBackedRow.fromData(metadata, protocolVersion, currentPage.poll());
+            return ArrayBackedRow.fromData(metadata, tokenFactory, protocolVersion, currentPage.poll());
         }
 
         public int getAvailableWithoutFetching() {

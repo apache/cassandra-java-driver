@@ -17,10 +17,15 @@ package com.datastax.driver.core;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+
+import static com.datastax.driver.core.Assertions.assertThat;
 
 public class CassandraTypeParserTest {
 
@@ -44,7 +49,7 @@ public class CassandraTypeParserTest {
     public void parseWithCompositeTest() {
 
         String s = "org.apache.cassandra.db.marshal.CompositeType(org.apache.cassandra.db.marshal.Int32Type, org.apache.cassandra.db.marshal.UTF8Type,";
-              s += "org.apache.cassandra.db.marshal.ColumnToCollectionType(6162:org.apache.cassandra.db.marshal.ListType(org.apache.cassandra.db.marshal.Int32Type)))";
+        s += "org.apache.cassandra.db.marshal.ColumnToCollectionType(6162:org.apache.cassandra.db.marshal.ListType(org.apache.cassandra.db.marshal.Int32Type)))";
         CassandraTypeParser.ParseResult r1 = CassandraTypeParser.parseWithComposite(s);
         assertTrue(r1.isComposite);
         assertEquals(r1.types, Arrays.asList(DataType.cint(), DataType.text()));
@@ -105,5 +110,23 @@ public class CassandraTypeParserTest {
         assertEquals(type.getComponentTypes().get(0), DataType.cint());
         assertEquals(type.getComponentTypes().get(1), DataType.text());
         assertEquals(type.getComponentTypes().get(2), DataType.cfloat());
+    }
+
+    @Test(groups = "unit")
+    public void parseNestedCollectionTest() {
+        // map<text, frozen<map<int,int>>>
+        String s = "org.apache.cassandra.db.marshal.MapType(org.apache.cassandra.db.marshal.UTF8Type,org.apache.cassandra.db.marshal.FrozenType(org.apache.cassandra.db.marshal.MapType(org.apache.cassandra.db.marshal.Int32Type,org.apache.cassandra.db.marshal.Int32Type)))";
+
+        DataType parentMap = CassandraTypeParser.parseOne(s);
+        assertThat(parentMap)
+            .hasName(DataType.Name.MAP)
+            .isNotFrozen()
+            .hasTypeArgument(0, DataType.text());
+
+        DataType childMap = parentMap.getTypeArguments().get(1);
+        assertThat(childMap)
+            .hasName(DataType.Name.MAP)
+            .isFrozen()
+            .hasTypeArguments(DataType.cint(), DataType.cint());
     }
 }

@@ -110,6 +110,9 @@ class ControlConnection implements Host.StateListener {
             // reconnectInternal only propagate those if we've not decided on the protocol version yet,
             // which should only happen on the initial connection and thus in connect() but never here.
             throw new AssertionError();
+        } catch (Exception e) {
+            logger.error("[Control connection] Unknown error during reconnection, scheduling retry", e);
+            backgroundReconnect(-1);
         }
     }
 
@@ -159,9 +162,9 @@ class ControlConnection implements Host.StateListener {
 
     private void signalError() {
         Connection connection = connectionRef.get();
-        if (connection != null && connection.isDefunct()) {
-            // If the connection was marked as defunct, this already reported the
-            // node down, which will trigger a reconnect.
+        if (connection != null && connection.isDefunct() && cluster.metadata.getHost(connection.address) != null) {
+            // If the connection was marked as defunct and the host hadn't left, this already reported the
+            // host down, which will trigger a reconnect.
             return;
         }
         // If the connection is not defunct, or the host has left, just reconnect manually
@@ -236,7 +239,8 @@ class ControlConnection implements Host.StateListener {
         return errors;
     }
 
-    private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+    private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException
+    {
         Connection connection = cluster.connectionFactory.open(host);
 
         // If no protocol version was specified, set the default as soon as a connection succeeds (it's needed to parse UDTs in refreshSchema)
@@ -263,10 +267,19 @@ class ControlConnection implements Host.StateListener {
             refreshSchema(connection, null, null, null, cluster, isInitialConnection);
             return connection;
         } catch (BusyConnectionException e) {
-            connection.closeAsync().get();
+            connection.closeAsync().force();
             throw new DriverInternalError("Newly created connection should not be busy");
+        } catch (InterruptedException e) {
+            connection.closeAsync().force();
+            throw e;
+        } catch (ConnectionException e) {
+            connection.closeAsync().force();
+            throw e;
+        } catch (ExecutionException e) {
+            connection.closeAsync().force();
+            throw e;
         } catch (RuntimeException e) {
-            connection.closeAsync().get();
+            connection.closeAsync().force();
             throw e;
         }
     }
@@ -398,7 +411,7 @@ class ControlConnection implements Host.StateListener {
             return null;
         } else if (addr == null) {
             if (logMissingRpcAddresses)
-                logger.error("No rpc_address found for host {} in {}'s peers system table. {} will be ignored.", peer, connectedHost, peer);
+                logger.warn("No rpc_address found for host {} in {}'s peers system table. {} will be ignored.", peer, connectedHost, peer);
             return null;
         } else if (addr.equals(bindAllAddress)) {
             logger.warn("Found host with 0.0.0.0 as rpc_address, using listen_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.", peer);
@@ -448,18 +461,18 @@ class ControlConnection implements Host.StateListener {
                     // until the control connection is back up (which leads to a catch-22 if there is only one)
                     return true;
                 } else {
-                    logger.error("No row found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
+                    logger.warn("No row found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
                     return false;
                 }
                 // Ignore hosts with a null rpc_address, as this is most likely a phantom row in system.peers (JAVA-428).
                 // Don't test this for the control host since we're already connected to it anyway, and we read the info from system.local
                 // which doesn't have an rpc_address column (JAVA-546).
             } else if (!c.address.equals(host.getSocketAddress()) && row.getInet("rpc_address") == null) {
-                logger.error("No rpc_address found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
+                logger.warn("No rpc_address found for host {} in {}'s peers system table. {} will be ignored.", host.getAddress(), c.address, host.getAddress());
                 return false;
             }
 
-            updateInfo(host, row, cluster);
+            updateInfo(host, row, cluster, false);
             return true;
 
         } catch (ConnectionException e) {
@@ -486,9 +499,9 @@ class ControlConnection implements Host.StateListener {
     }
 
     // row can come either from the 'local' table or the 'peers' one
-    private static void updateInfo(Host host, Row row, Cluster.Manager cluster) {
+    private static void updateInfo(Host host, Row row, Cluster.Manager cluster, boolean isInitialConnection) {
         if (!row.isNull("data_center") || !row.isNull("rack"))
-            updateLocationInfo(host, row.getString("data_center"), row.getString("rack"), cluster);
+            updateLocationInfo(host, row.getString("data_center"), row.getString("rack"), isInitialConnection, cluster);
 
         String version = row.getString("release_version");
         // We don't know if it's a 'local' or a 'peers' row, and only 'peers' rows have the 'peer' field.
@@ -499,17 +512,17 @@ class ControlConnection implements Host.StateListener {
         host.setVersionAndListenAdress(version, listenAddress);
     }
 
-    private static void updateLocationInfo(Host host, String datacenter, String rack, Cluster.Manager cluster) {
+    private static void updateLocationInfo(Host host, String datacenter, String rack, boolean isInitialConnection, Cluster.Manager cluster) {
         if (Objects.equal(host.getDatacenter(), datacenter) && Objects.equal(host.getRack(), rack))
             return;
 
         // If the dc/rack information changes for an existing node, we need to update the load balancing policy.
         // For that, we remove and re-add the node against the policy. Not the most elegant, and assumes
         // that the policy will update correctly, but in practice this should work.
-        if (!host.wasJustAdded())
+        if (!isInitialConnection)
             cluster.loadBalancingPolicy().onDown(host);
         host.setLocationInfo(datacenter, rack);
-        if (!host.wasJustAdded())
+        if (!isInitialConnection)
             cluster.loadBalancingPolicy().onAdd(host);
     }
 
@@ -543,7 +556,7 @@ class ControlConnection implements Host.StateListener {
             if (host == null) {
                 logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
-                updateInfo(host, localRow, cluster);
+                updateInfo(host, localRow, cluster, isInitialConnection);
                 Set<String> tokens = localRow.getSet("tokens", String.class);
                 if (partitioner != null && !tokens.isEmpty())
                     tokenMap.put(host, tokens);
@@ -580,7 +593,7 @@ class ControlConnection implements Host.StateListener {
                 isNew = true;
             }
             if (dcs.get(i) != null || racks.get(i) != null)
-                updateLocationInfo(host, dcs.get(i), racks.get(i), cluster);
+                updateLocationInfo(host, dcs.get(i), racks.get(i), isInitialConnection, cluster);
             if (cassandraVersions.get(i) != null)
                 host.setVersionAndListenAdress(cassandraVersions.get(i), listenAddresses.get(i));
 
@@ -681,6 +694,15 @@ class ControlConnection implements Host.StateListener {
 
     @Override
     public void onRemove(Host host) {
+        Connection current = connectionRef.get();
+        if (logger.isDebugEnabled())
+            logger.debug("[Control connection] {} has been removed, currently connected to {}", host, current == null ? "nobody" : current.address);
+
+        // Schedule a reconnection if that was our control host
+        if (current != null && current.address.equals(host.getSocketAddress())) {
+            backgroundReconnect(0);
+        }
+
         refreshNodeListAndTokenMap();
     }
 }

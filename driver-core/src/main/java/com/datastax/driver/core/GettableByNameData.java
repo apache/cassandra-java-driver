@@ -21,6 +21,8 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.google.common.reflect.TypeToken;
+
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
@@ -206,54 +208,126 @@ public interface GettableByNameData {
 
     /**
      * Returns the value for {@code name} as a list.
+     * <p>
+     * If the type of the elements is generic, use {@link #getList(String, TypeToken)}.
      *
      * @param name the name to retrieve.
      * @param elementsClass the class for the elements of the list to retrieve.
      * @return the value of the {@code i}th element as a list of
-     * {@code elementsClass} objects. If the value is NULL, an empty list is
+     * {@code T} objects. If the value is NULL, an empty list is
      * returned (note that Cassandra makes no difference between an empty list
      * and column of type list that is not set). The returned list is immutable.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
      * @throws InvalidTypeException if value {@code name} is not a list or if its
-     * elements are not of class {@code elementsClass}.
+     * elements are not of class {@code T}.
      */
     public <T> List<T> getList(String name, Class<T> elementsClass);
 
     /**
+     * Returns the value for {@code name} as a list.
+     * <p>
+     * Use this variant with nested collections, which produce a generic element type:
+     * <pre>
+     * {@code List<List<String>> l = row.getList("theColumn", new TypeToken<List<String>>() {});}
+     * </pre>
+     *
+     * @param name the name to retrieve.
+     * @param elementsType the type for the elements of the list to retrieve.
+     * @return the value of the {@code i}th element as a list of
+     * {@code T} objects. If the value is NULL, an empty list is
+     * returned (note that Cassandra makes no difference between an empty list
+     * and column of type list that is not set). The returned list is immutable.
+     *
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws InvalidTypeException if value {@code name} is not a list or if its
+     * elements are not of class {@code T}.
+     */
+    public <T> List<T> getList(String name, TypeToken<T> elementsType);
+
+    /**
      * Returns the value for {@code name} as a set.
+     * <p>
+     * If the type of the elements is generic, use {@link #getSet(String, TypeToken)}.
      *
      * @param name the name to retrieve.
      * @param elementsClass the class for the elements of the set to retrieve.
      * @return the value of the {@code i}th element as a set of
-     * {@code elementsClass} objects. If the value is NULL, an empty set is
+     * {@code T} objects. If the value is NULL, an empty set is
      * returned (note that Cassandra makes no difference between an empty set
      * and column of type set that is not set). The returned set is immutable.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
      * @throws InvalidTypeException if value {@code name} is not a set or if its
-     * elements are not of class {@code elementsClass}.
+     * elements are not of class {@code T}.
      */
     public <T> Set<T> getSet(String name, Class<T> elementsClass);
 
     /**
+     * Returns the value for {@code name} as a set.
+     * <p>
+     * Use this variant with nested collections, which produce a generic element type:
+     * <pre>
+     * {@code Set<List<String>> l = row.getSet("theColumn", new TypeToken<List<String>>() {});}
+     * </pre>
+     *
+     * @param name the name to retrieve.
+     * @param elementsType the type for the elements of the set to retrieve.
+     * @return the value of the {@code i}th element as a set of
+     * {@code T} objects. If the value is NULL, an empty set is
+     * returned (note that Cassandra makes no difference between an empty set
+     * and column of type set that is not set). The returned set is immutable.
+     *
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws InvalidTypeException if value {@code name} is not a set or if its
+     * elements are not of class {@code T}.
+     */
+    public <T> Set<T> getSet(String name, TypeToken<T> elementsType);
+
+    /**
      * Returns the value for {@code name} as a map.
+     * <p>
+     * If the type of the keys and/or values is generic, use {@link #getMap(String, TypeToken, TypeToken)}.
      *
      * @param name the name to retrieve.
      * @param keysClass the class for the keys of the map to retrieve.
      * @param valuesClass the class for the values of the map to retrieve.
      * @return the value of {@code name} as a map of
-     * {@code keysClass} to {@code valuesClass} objects. If the value is NULL,
+     * {@code K} to {@code V} objects. If the value is NULL,
      * an empty map is returned (note that Cassandra makes no difference
      * between an empty map and column of type map that is not set). The
      * returned map is immutable.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
      * @throws InvalidTypeException if value {@code name} is not a map, if its
-     * keys are not of class {@code keysClass} or if its values are not of
-     * class {@code valuesClass}.
+     * keys are not of class {@code K} or if its values are not of
+     * class {@code V}.
      */
     public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass);
+
+    /**
+     * Returns the value for {@code name} as a map.
+     * <p>
+     * Use this variant with nested collections, which produce a generic element type:
+     * <pre>
+     * {@code Map<Int, List<String>> l = row.getMap("theColumn", TypeToken.of(Integer.class), new TypeToken<List<String>>() {});}
+     * </pre>
+     *
+     * @param name the name to retrieve.
+     * @param keysType the class for the keys of the map to retrieve.
+     * @param valuesType the class for the values of the map to retrieve.
+     * @return the value of {@code name} as a map of
+     * {@code K} to {@code V} objects. If the value is NULL,
+     * an empty map is returned (note that Cassandra makes no difference
+     * between an empty map and column of type map that is not set). The
+     * returned map is immutable.
+     *
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws InvalidTypeException if value {@code name} is not a map, if its
+     * keys are not of class {@code K} or if its values are not of
+     * class {@code V}.
+     */
+    public <K, V> Map<K, V> getMap(String name, TypeToken<K> keysType, TypeToken<V> valuesType);
 
     /**
      * Return the value for {@code name} as a UDT value.

@@ -15,24 +15,25 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
 import java.nio.ByteBuffer;
+import java.util.*;
 
+import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Joiner;
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.core.DataTypeIntegrationTest.getSampleData;
-import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
-import static com.datastax.driver.core.TestUtils.versionCheck;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+
+import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
+
+@CassandraVersion(major=2.1)
 public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
-        versionCheck(2.1, 0, "This will only work with Cassandra 2.1.0");
-
         return Arrays.asList("CREATE TABLE t (k int PRIMARY KEY, v frozen<tuple<int, text, float>>)");
     }
 
@@ -215,16 +216,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void tupleSubtypesTest() throws Exception {
 
-        // hold onto constants
-        ArrayList<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>();
-        for (DataType dt : DataType.allPrimitiveTypes()) {
-            // skip counter types since counters are not allowed inside tuples
-            if (dt == DataType.counter())
-                continue;
-
-            DATA_TYPE_PRIMITIVES.add(dt);
-        }
-        HashMap<DataType, Object> SAMPLE_DATA = getSampleData();
+        List<DataType> DATA_TYPE_PRIMITIVES = Lists.newArrayList(PrimitiveTypeSamples.ALL.keySet());
 
         try {
             session.execute("CREATE KEYSPACE test_tuple_subtypes " +
@@ -249,8 +241,8 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 for (int j = 0; j < i; ++j) {
                     dataTypes.add(DATA_TYPE_PRIMITIVES.get(j));
                     completeDataTypes.add(DATA_TYPE_PRIMITIVES.get(j));
-                    createdValues.add(SAMPLE_DATA.get(DATA_TYPE_PRIMITIVES.get(j)));
-                    completeValues.add(SAMPLE_DATA.get(DATA_TYPE_PRIMITIVES.get(j)));
+                    createdValues.add(PrimitiveTypeSamples.ALL.get(DATA_TYPE_PRIMITIVES.get(j)));
+                    completeValues.add(PrimitiveTypeSamples.ALL.get(DATA_TYPE_PRIMITIVES.get(j)));
                 }
 
                 // complete portion of the arrays needed for trailing nulls
@@ -290,19 +282,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void tupleNonPrimitiveSubTypesTest() throws Exception {
 
-        // hold onto constants
-        ArrayList<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>();
-        for (DataType dt : DataType.allPrimitiveTypes()) {
-            // skip counter types since counters are not allowed inside tuples
-            if (dt == DataType.counter())
-                continue;
-
-            DATA_TYPE_PRIMITIVES.add(dt);
-        }
-        ArrayList<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES = new ArrayList<DataType.Name>(Arrays.asList(DataType.Name.MAP,
-                                                                                                            DataType.Name.SET,
-                                                                                                            DataType.Name.LIST));
-        HashMap<DataType, Object> SAMPLE_DATA = getSampleData();
+        List<DataType> DATA_TYPE_PRIMITIVES = Lists.newArrayList(PrimitiveTypeSamples.ALL.keySet());
 
         try {
             session.execute("CREATE KEYSPACE test_tuple_non_primitive_subtypes " +
@@ -323,9 +303,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
             // create map values
             for (DataType datatype : DATA_TYPE_PRIMITIVES) {
-                DataType dataType1 = datatype;
-                DataType dataType2 = datatype;
-                values.add(String.format("v_%s frozen<tuple<map<%s, %s>>>", values.size(), dataType1, dataType2));
+                values.add(String.format("v_%s frozen<tuple<map<%s, %s>>>", values.size(), datatype, datatype));
             }
 
             // create table
@@ -340,7 +318,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 ArrayList<Object> createdValues = new ArrayList<Object>();
 
                 dataTypes.add(DataType.list(datatype));
-                createdValues.add(Arrays.asList(SAMPLE_DATA.get(datatype)));
+                createdValues.add(Arrays.asList(PrimitiveTypeSamples.ALL.get(datatype)));
 
                 TupleType t = new TupleType(dataTypes);
                 TupleValue createdTuple = t.newValue(createdValues.toArray());
@@ -363,7 +341,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 ArrayList<Object> createdValues = new ArrayList<Object>();
 
                 dataTypes.add(DataType.set(datatype));
-                createdValues.add(new HashSet<Object>(Arrays.asList(SAMPLE_DATA.get(datatype))));
+                createdValues.add(new HashSet<Object>(Arrays.asList(PrimitiveTypeSamples.ALL.get(datatype))));
 
                 TupleType t = new TupleType(dataTypes);
                 TupleValue createdTuple = t.newValue(createdValues.toArray());
@@ -386,7 +364,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                 ArrayList<Object> createdValues = new ArrayList<Object>();
 
                 HashMap<Object, Object> hm = new HashMap<Object, Object>();
-                hm.put(SAMPLE_DATA.get(datatype), SAMPLE_DATA.get(datatype));
+                hm.put(PrimitiveTypeSamples.ALL.get(datatype), PrimitiveTypeSamples.ALL.get(datatype));
 
                 dataTypes.add(DataType.map(datatype, datatype));
                 createdValues.add(hm);
@@ -446,17 +424,6 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short")
     public void nestedTuplesTest() throws Exception {
-
-        // hold onto constants
-        ArrayList<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>();
-        for (DataType dt : DataType.allPrimitiveTypes()) {
-            // skip counter types since counters are not allowed inside tuples
-            if (dt == DataType.counter())
-                continue;
-
-            DATA_TYPE_PRIMITIVES.add(dt);
-        }
-        HashMap<DataType, Object> SAMPLE_DATA = getSampleData();
 
         try {
             session.execute("CREATE KEYSPACE test_nested_tuples " +

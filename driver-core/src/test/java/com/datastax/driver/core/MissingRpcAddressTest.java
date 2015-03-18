@@ -22,10 +22,10 @@ public class MissingRpcAddressTest {
     @Test(groups = "short")
     public void testMissingRpcAddressAtStartup() throws Exception {
         CCMBridge ccm = CCMBridge.create("ccm", 2);
-        deleteNode2RpcAddressFromNode1();
 
         Cluster cluster = null;
         try {
+            deleteNode2RpcAddressFromNode1();
             // Use only one contact point to make sure that the control connection is on node1
             cluster = Cluster.builder()
                              .addContactPoint(CCMBridge.IP_PREFIX + "1")
@@ -53,7 +53,9 @@ public class MissingRpcAddressTest {
                                                                           Lists.newArrayList(socketAddress(1))))
                              .build();
             Session session = cluster.connect();
-            session.execute("DELETE rpc_address FROM system.peers WHERE peer = ?", InetAddress.getByName(CCMBridge.IP_PREFIX + "2"));
+            String deleteStmt = String.format("DELETE rpc_address FROM system.peers WHERE peer = '%s'",
+                    InetAddress.getByName(CCMBridge.IP_PREFIX + "2").getHostName());
+            session.execute(deleteStmt);
             session.close();
         } finally {
             if (cluster != null)

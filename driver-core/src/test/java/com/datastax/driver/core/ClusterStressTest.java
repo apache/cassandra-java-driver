@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
@@ -29,7 +30,10 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "long")
     public void clusters_should_not_leak_connections() {
         int numberOfClusters = 10;
-        for (int i = 0; i < 500; i++) {
+        int numberOfIterations = 500;
+        for (int i = 1; i < numberOfIterations; i++) {
+            logger.info("On iteration {}/{}.", i, numberOfIterations);
+            logger.info("Creating {} clusters", numberOfClusters);
             List<Cluster> clusters = waitForCreates(createClustersConcurrently(numberOfClusters));
             waitForCloses(closeClustersConcurrently(clusters));
             logger.debug("# {} threads currently running", Thread.getAllStackTraces().keySet().size());
@@ -131,7 +135,8 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
         public Cluster call() throws Exception {
             startSignal.await();
 
-            Cluster cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1').build();
+            Cluster cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1')
+                .withPoolingOptions(new PoolingOptions().setCoreConnectionsPerHost(HostDistance.LOCAL, 1)).build();
 
             try {
                 // The cluster has not been initialized yet, therefore the control connection is not opened

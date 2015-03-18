@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -30,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
@@ -272,7 +270,11 @@ class SessionManager extends AbstractSession {
 
             HostConnectionPool newPool = HostConnectionPool.newInstance(host, distance, SessionManager.this,
                                                                         cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum());
-            pools.put(host, newPool);
+            previous = pools.put(host, newPool);
+            if (previous != null && !previous.isClosed()) {
+                logger.warn("Replacing a pool that wasn't closed. Closing it now, but this was not expected.");
+                previous.closeAsync();
+            }
 
             // If we raced with a session shutdown, ensure that the pool will be closed.
             if (isClosing)
@@ -308,6 +310,14 @@ class SessionManager extends AbstractSession {
                             return true;
                         }
                     }
+                } catch (UnsupportedProtocolVersionException e) {
+                    cluster.manager.logUnsupportedVersionProtocol(host, e.unsupportedVersion);
+                    cluster.manager.triggerOnDown(host, false);
+                    return false;
+                } catch (ClusterNameMismatchException e) {
+                    cluster.manager.logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
+                    cluster.manager.triggerOnDown(host, false);
+                    return false;
                 } catch (Exception e) {
                     logger.error("Error creating pool to " + host, e);
                     return false;
@@ -350,7 +360,7 @@ class SessionManager extends AbstractSession {
                 HostConnectionPool pool = pools.get(h);
 
                 if (pool == null) {
-                    if (dist != HostDistance.IGNORED && h.isUp())
+                    if (dist != HostDistance.IGNORED && h.state == Host.State.UP)
                         poolCreationFutures.add(maybeAddPool(h, executor));
                 } else if (dist != pool.hostDistance) {
                     if (dist == HostDistance.IGNORED) {
@@ -383,7 +393,7 @@ class SessionManager extends AbstractSession {
 
         try {
             if (pool == null) {
-                if (dist != HostDistance.IGNORED && h.isUp())
+                if (dist != HostDistance.IGNORED && h.state == Host.State.UP)
                     maybeAddPool(h, executor).get();
             } else if (dist != pool.hostDistance) {
                 if (dist == HostDistance.IGNORED) {
@@ -536,6 +546,7 @@ class SessionManager extends AbstractSession {
             // Let's not wait too long if we can't get a connection. Things
             // will fix themselves once the user tries a query anyway.
             PooledConnection c = null;
+            boolean timedOut = false;
             try {
                 c = entry.getValue().borrowConnection(200, TimeUnit.MILLISECONDS);
                 c.write(new Requests.Prepare(query)).get();
@@ -549,8 +560,10 @@ class SessionManager extends AbstractSession {
                 // We shouldn't really get exception while preparing a
                 // query, so log this (but ignore otherwise as it's not a big deal)
                 logger.error(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), e);
+                // If the query timed out, that already released the connection
+                timedOut = e.getCause() instanceof OperationTimedOutException;
             } finally {
-                if (c != null)
+                if (c != null && !timedOut)
                     c.release();
             }
         }

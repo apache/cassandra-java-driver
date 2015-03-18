@@ -18,6 +18,7 @@ package com.datastax.driver.mapping;
 import java.util.*;
 
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import org.testng.annotations.Test;
@@ -31,6 +32,7 @@ import com.datastax.driver.core.utils.UUIDs;
 /**
  * Tests usage of mapping annotations without specifying a keyspace.
  */
+@CassandraVersion(major=2.1)
 public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeCluster {
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList("CREATE TABLE groups (group_id uuid PRIMARY KEY, name text)",

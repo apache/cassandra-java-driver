@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
@@ -74,6 +73,8 @@ public class Cluster implements Closeable {
     private static final AtomicInteger CLUSTER_ID = new AtomicInteger(0);
 
     private static final int DEFAULT_THREAD_KEEP_ALIVE = 30;
+
+    private static final int NOTIF_LOCK_TIMEOUT_SECONDS = SystemProperties.getInt("com.datastax.driver.NOTIF_LOCK_TIMEOUT_SECONDS", 60);
 
     final Manager manager;
 
@@ -1352,6 +1353,10 @@ public class Cluster implements Closeable {
             if (loadBalancingPolicy instanceof CloseableLoadBalancingPolicy)
                 ((CloseableLoadBalancingPolicy)loadBalancingPolicy).close();
 
+            AddressTranslater translater = configuration.getPolicies().getAddressTranslater();
+            if (translater instanceof CloseableAddressTranslater)
+                ((CloseableAddressTranslater)translater).close();
+
             // Then we shutdown all connections
             List<CloseFuture> futures = new ArrayList<CloseFuture>(sessions.size() + 1);
             futures.add(controlConnection.closeAsync());
@@ -1383,8 +1388,8 @@ public class Cluster implements Closeable {
 
         void logClusterNameMismatch(Host host, String expectedClusterName, String actualClusterName) {
             logger.warn("Detected added or restarted Cassandra host {} but ignoring it since its cluster name '{}' does not match the one "
-                        + "currently known ({})",
-                        host, actualClusterName, expectedClusterName);
+                    + "currently known ({})",
+                host, actualClusterName, expectedClusterName);
         }
 
         public ListenableFuture<?> triggerOnUp(final Host host) {
@@ -1411,94 +1416,105 @@ public class Cluster implements Closeable {
             if (isClosed())
                 return;
 
-            // We don't want to use the public Host.isUp() as this would make us skip the rest for suspected hosts
-            if (host.state == Host.State.UP)
-                return;
-
             if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
                 logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
                 return;
             }
 
-            // If there is a reconnection attempt scheduled for that node, cancel it
-            Future<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
-            if (scheduledAttempt != null) {
-                logger.debug("Cancelling reconnection attempt since node is UP");
-                scheduledAttempt.cancel(false);
+            boolean locked = host.notificationsLock.tryLock(NOTIF_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                logger.warn("Could not acquire notifications lock within {} seconds, ignoring UP notification for {}", NOTIF_LOCK_TIMEOUT_SECONDS, host);
+                return;
             }
-
             try {
-                prepareAllQueries(host);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                // Don't propagate because we don't want to prevent other listener to run
-            } catch (UnsupportedProtocolVersionException e) {
-                logUnsupportedVersionProtocol(host, e.unsupportedVersion);
+                
+                // We don't want to use the public Host.isUp() as this would make us skip the rest for suspected hosts
+                if (host.state == Host.State.UP)
                 return;
-            } catch (ClusterNameMismatchException e) {
-                logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
-                return;
-            }
 
-            // Session#onUp() expects the load balancing policy to have been updated first, so that
-            // Host distances are up to date. This mean the policy could return the node before the
-            // new pool have been created. This is harmless if there is no prior pool since RequestHandler
-            // will ignore the node, but we do want to make sure there is no prior pool so we don't
-            // query from a pool we will shutdown right away.
-            for (SessionManager s : sessions)
-                s.removePool(host);
-            loadBalancingPolicy().onUp(host);
-            controlConnection.onUp(host);
+                // If there is a reconnection attempt scheduled for that node, cancel it
+                Future<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
+                if (scheduledAttempt != null) {
+                    logger.debug("Cancelling reconnection attempt since node is UP");
+                    scheduledAttempt.cancel(false);
+                }
 
-            logger.trace("Adding/renewing host pools for newly UP host {}", host);
+                try {
+                    prepareAllQueries(host);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    // Don't propagate because we don't want to prevent other listener to run
+                } catch (UnsupportedProtocolVersionException e) {
+                    logUnsupportedVersionProtocol(host, e.unsupportedVersion);
+                    return;
+                } catch (ClusterNameMismatchException e) {
+                    logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
+                    return;
+                }
 
-            List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
-            for (SessionManager s : sessions)
-                futures.add(s.forceRenewPool(host, poolCreationExecutor));
+                // Session#onUp() expects the load balancing policy to have been updated first, so that
+                // Host distances are up to date. This mean the policy could return the node before the
+                // new pool have been created. This is harmless if there is no prior pool since RequestHandler
+                // will ignore the node, but we do want to make sure there is no prior pool so we don't
+                // query from a pool we will shutdown right away.
+                for (SessionManager s : sessions)
+                    s.removePool(host);
+                loadBalancingPolicy().onUp(host);
+                controlConnection.onUp(host);
 
-            // Only mark the node up once all session have re-added their pool (if the load-balancing
-            // policy says it should), so that Host.isUp() don't return true before we're reconnected
-            // to the node.
-            ListenableFuture<List<Boolean>> f = Futures.allAsList(futures);
-            Futures.addCallback(f, new FutureCallback<List<Boolean>>() {
-                public void onSuccess(List<Boolean> poolCreationResults) {
-                    // If any of the creation failed, they will have signaled a connection failure
-                    // which will trigger a reconnection to the node. So don't bother marking UP.
-                    if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
-                        logger.debug("Connection pool cannot be created, not marking {} UP", host);
-                        return;
+                logger.trace("Adding/renewing host pools for newly UP host {}", host);
+
+                List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
+                for (SessionManager s : sessions)
+                    futures.add(s.forceRenewPool(host, poolCreationExecutor));
+
+                // Only mark the node up once all session have re-added their pool (if the load-balancing
+                // policy says it should), so that Host.isUp() don't return true before we're reconnected
+                // to the node.
+                ListenableFuture<List<Boolean>> f = Futures.allAsList(futures);
+                Futures.addCallback(f, new FutureCallback<List<Boolean>>() {
+                    public void onSuccess(List<Boolean> poolCreationResults) {
+                        // If any of the creation failed, they will have signaled a connection failure
+                        // which will trigger a reconnection to the node. So don't bother marking UP.
+                        if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
+                            logger.debug("Connection pool cannot be created, not marking {} UP", host);
+                            return;
+                        }
+
+                        host.setUp();
+
+                        for (Host.StateListener listener : listeners)
+                            listener.onUp(host);
                     }
 
-                    host.setUp();
+                    public void onFailure(Throwable t) {
+                        // That future is not really supposed to throw unexpected exceptions
+                        if (!(t instanceof InterruptedException))
+                            logger.error("Unexpected error while marking node UP: while this shouldn't happen, this shouldn't be critical", t);
+                    }
+                });
 
-                    for (Host.StateListener listener : listeners)
-                        listener.onUp(host);
-                }
+                f.get();
 
-                public void onFailure(Throwable t) {
-                    // That future is not really supposed to throw unexpected exceptions
-                    if (!(t instanceof InterruptedException))
-                        logger.error("Unexpected error while marking node UP: while this shouldn't happen, this shouldn't be critical", t);
-                }
-            });
+                // Now, check if there isn't pools to create/remove following the addition.
+                // We do that now only so that it's not called before we've set the node up.
+                for (SessionManager s : sessions)
+                    s.updateCreatedPools(blockingExecutor);
 
-            f.get();
-
-            // Now, check if there isn't pools to create/remove following the addition.
-            // We do that now only so that it's not called before we've set the node up.
-            for (SessionManager s : sessions)
-                s.updateCreatedPools(blockingExecutor);
+            } finally {
+                host.notificationsLock.unlock();
+            }
         }
 
-        public ListenableFuture<?> triggerOnDown(final Host host) {
-            return triggerOnDown(host, false);
+        public ListenableFuture<?> triggerOnDown(final Host host, boolean startReconnection) {
+            return triggerOnDown(host, false, startReconnection);
         }
 
-        public ListenableFuture<?> triggerOnDown(final Host host, final boolean isHostAddition) {
+        public ListenableFuture<?> triggerOnDown(final Host host, final boolean isHostAddition, final boolean startReconnection) {
             return executor.submit(new ExceptionCatchingRunnable() {
                 @Override
                 public void runMayThrow() throws InterruptedException, ExecutionException {
-                    onDown(host, isHostAddition, false);
+                    onDown(host, isHostAddition, false, startReconnection);
                 }
             });
         }
@@ -1513,7 +1529,7 @@ public class Cluster implements Closeable {
             // connected to one in the first place, but if we ever do, simply hand it
             // off to onDown
             if (loadBalancingPolicy().distance(host) == HostDistance.IGNORED) {
-                triggerOnDown(host);
+                triggerOnDown(host, true);
                 return;
             }
 
@@ -1529,7 +1545,7 @@ public class Cluster implements Closeable {
             // the loadbalancing policy has been informed (otherwise those threads won't
             // consider the host suspect but simply ignore it). So we synchronize.
             synchronized (host) {
-                // If we've already mark the node down/suspected, ignore this
+                // If we've already marked the node down/suspected, ignore this
                 if (!host.setSuspected() || host.reconnectionAttempt.get() != null)
                     return;
 
@@ -1553,7 +1569,7 @@ public class Cluster implements Closeable {
                             success = false;
                         }
                         if (!success)
-                            onDown(host, false, true);
+                            onDown(host, false, true, true);
                     }
                 }));
 
@@ -1569,58 +1585,68 @@ public class Cluster implements Closeable {
         }
 
         // Use triggerOnDown unless you're sure you want to run this on the current thread.
-        private void onDown(final Host host, final boolean isHostAddition, final boolean isSuspectedVerification) throws InterruptedException, ExecutionException {
+        private void onDown(final Host host, final boolean isHostAddition, final boolean isSuspectedVerification, boolean startReconnection) throws InterruptedException, ExecutionException {
             logger.debug("Host {} is DOWN", host);
 
             if (isClosed())
                 return;
 
-            // If we're SUSPECT and not the task validating the suspicion, then some other task is
-            // already checking to verify if the node is really down (or if it's simply that the
-            // connections where broken). So just skip this in that case.
-            if (!isSuspectedVerification && host.state == Host.State.SUSPECT) {
-                logger.debug("Aborting onDown because a reconnection is running on SUSPECT host {}", host);
+            boolean locked = host.notificationsLock.tryLock(NOTIF_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                logger.warn("Could not acquire notifications lock within {} seconds, ignoring DOWN notification for {}", NOTIF_LOCK_TIMEOUT_SECONDS, host);
                 return;
             }
+            try {
 
-            // Note: we don't want to skip that method if !host.isUp() because we set isUp
-            // late in onUp, and so we can rely on isUp if there is an error during onUp.
-            // But if there is a reconnection attempt in progress already, then we know
-            // we've already gone through that method since the last successful onUp(), so
-            // we're good skipping it.
-            if (host.reconnectionAttempt.get() != null) {
-                logger.debug("Aborting onDown because a reconnection is running on DOWN host {}", host);
-                return;
+                // If we're SUSPECT and not the task validating the suspicion, then some other task is
+                // already checking to verify if the node is really down (or if it's simply that the
+                // connections where broken). So just skip this in that case.
+                if (!isSuspectedVerification && host.state == Host.State.SUSPECT) {
+                    logger.debug("Aborting onDown because a reconnection is running on SUSPECT host {}", host);
+                    return;
+                }
+
+                // Note: we don't want to skip that method if !host.isUp() because we set isUp
+                // late in onUp, and so we can rely on isUp if there is an error during onUp.
+                // But if there is a reconnection attempt in progress already, then we know
+                // we've already gone through that method since the last successful onUp(), so
+                // we're good skipping it.
+                if (host.reconnectionAttempt.get() != null) {
+                    logger.debug("Aborting onDown because a reconnection is running on DOWN host {}", host);
+                    return;
+                }
+
+                // Remember if we care about this node at all. We must call this before
+                // we've signalled the load balancing policy, since most policy will always
+                // IGNORE down nodes anyway.
+                HostDistance distance = loadBalancingPolicy().distance(host);
+
+                boolean wasUp = host.isUp();
+                host.setDown();
+
+                loadBalancingPolicy().onDown(host);
+                controlConnection.onDown(host);
+                for (SessionManager s : sessions)
+                    s.onDown(host);
+
+                // Contrarily to other actions of that method, there is no reason to notify listeners
+                // unless the host was UP at the beginning of this function since even if a onUp fail
+                // mid-method, listeners won't have been notified of the UP.
+                if (wasUp) {
+                    for (Host.StateListener listener : listeners)
+                        listener.onDown(host);
+                }
+
+                // Don't start a reconnection if we ignore the node anyway (JAVA-314)
+                if (distance == HostDistance.IGNORED || !startReconnection)
+                    return;
+
+                // Note: we basically waste the first successful reconnection, but it's probably not a big deal
+                logger.debug("{} is down, scheduling connection retries", host);
+                startPeriodicReconnectionAttempt(host, isHostAddition);
+            } finally {
+                host.notificationsLock.unlock();
             }
-
-            // Remember if we care about this node at all. We must call this before
-            // we've signalled the load balancing policy, since most policy will always
-            // IGNORE down nodes anyway.
-            HostDistance distance = loadBalancingPolicy().distance(host);
-
-            boolean wasUp = host.isUp();
-            host.setDown();
-
-            loadBalancingPolicy().onDown(host);
-            controlConnection.onDown(host);
-            for (SessionManager s : sessions)
-                s.onDown(host);
-
-            // Contrarily to other actions of that method, there is no reason to notify listeners
-            // unless the host was UP at the beginning of this function since even if a onUp fail
-            // mid-method, listeners won't have been notified of the UP.
-            if (wasUp) {
-                for (Host.StateListener listener : listeners)
-                    listener.onDown(host);
-            }
-
-            // Don't start a reconnection if we ignore the node anyway (JAVA-314)
-            if (distance == HostDistance.IGNORED)
-                return;
-
-            // Note: we basically waste the first successful reconnection, but it's probably not a big deal
-            logger.debug("{} is down, scheduling connection retries", host);
-            startPeriodicReconnectionAttempt(host, isHostAddition);
         }
 
         void startPeriodicReconnectionAttempt(final Host host, final boolean isHostAddition) {
@@ -1746,74 +1772,85 @@ public class Cluster implements Closeable {
                 return;
             }
 
-            // Adds to the load balancing first and foremost, as doing so might change the decision
-            // it will make for distance() on that node (not likely but we leave that possibility).
-            // This does mean the policy may start returning that node for query plan, but as long
-            // as no pools have been created (below) this will be ignored by RequestHandler so it's fine.
-            loadBalancingPolicy().onAdd(host);
-
-            // Next, if the host should be ignored, well, ignore it.
-            if (loadBalancingPolicy().distance(host) == HostDistance.IGNORED) {
-                // We still mark the node UP though as it should be (and notifiy the listeners).
-                // We'll mark it down if we have  a notification anyway and we've documented that especially
-                // for IGNORED hosts, the isUp() method was a best effort guess
-                host.setUp();
-                for (Host.StateListener listener : listeners)
-                    listener.onAdd(host);
+            boolean locked = host.notificationsLock.tryLock(NOTIF_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                logger.warn("Could not acquire notifications lock within {} seconds, ignoring ADD notification for {}", NOTIF_LOCK_TIMEOUT_SECONDS, host);
                 return;
             }
-
             try {
-                prepareAllQueries(host);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                // Don't propagate because we don't want to prevent other listener to run
-            } catch (UnsupportedProtocolVersionException e) {
-                logUnsupportedVersionProtocol(host, e.unsupportedVersion);
-                return;
-            } catch (ClusterNameMismatchException e) {
-                logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
-                return;
-            }
 
-            controlConnection.onAdd(host);
+                // Adds to the load balancing first and foremost, as doing so might change the decision
+                // it will make for distance() on that node (not likely but we leave that possibility).
+                // This does mean the policy may start returning that node for query plan, but as long
+                // as no pools have been created (below) this will be ignored by RequestHandler so it's fine.
+                loadBalancingPolicy().onAdd(host);
 
-            List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
-            for (SessionManager s : sessions)
-                futures.add(s.maybeAddPool(host, blockingExecutor));
-
-            // Only mark the node up once all session have added their pool (if the load-balancing
-            // policy says it should), so that Host.isUp() don't return true before we're reconnected
-            // to the node.
-            ListenableFuture<List<Boolean>> f = Futures.allAsList(futures);
-            Futures.addCallback(f, new FutureCallback<List<Boolean>>() {
-                public void onSuccess(List<Boolean> poolCreationResults) {
-                    // If any of the creation failed, they will have signaled a connection failure
-                    // which will trigger a reconnection to the node. So don't bother marking UP.
-                    if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
-                        logger.debug("Connection pool cannot be created, not marking {} UP", host);
-                        return;
-                    }
-
+                // Next, if the host should be ignored, well, ignore it.
+                if (loadBalancingPolicy().distance(host) == HostDistance.IGNORED) {
+                    // We still mark the node UP though as it should be (and notifiy the listeners).
+                    // We'll mark it down if we have  a notification anyway and we've documented that especially
+                    // for IGNORED hosts, the isUp() method was a best effort guess
                     host.setUp();
-
                     for (Host.StateListener listener : listeners)
                         listener.onAdd(host);
+                    return;
                 }
 
-                public void onFailure(Throwable t) {
-                    // That future is not really supposed to throw unexpected exceptions
-                    if (!(t instanceof InterruptedException))
-                        logger.error("Unexpected error while adding node: while this shouldn't happen, this shouldn't be critical", t);
+                try {
+                    prepareAllQueries(host);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    // Don't propagate because we don't want to prevent other listener to run
+                } catch (UnsupportedProtocolVersionException e) {
+                    logUnsupportedVersionProtocol(host, e.unsupportedVersion);
+                    return;
+                } catch (ClusterNameMismatchException e) {
+                    logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
+                    return;
                 }
-            });
 
-            f.get();
+                controlConnection.onAdd(host);
 
-            // Now, check if there isn't pools to create/remove following the addition.
-            // We do that now only so that it's not called before we've set the node up.
-            for (SessionManager s : sessions)
-                s.updateCreatedPools(blockingExecutor);
+                List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
+                for (SessionManager s : sessions)
+                    futures.add(s.maybeAddPool(host, blockingExecutor));
+
+                // Only mark the node up once all session have added their pool (if the load-balancing
+                // policy says it should), so that Host.isUp() don't return true before we're reconnected
+                // to the node.
+                ListenableFuture<List<Boolean>> f = Futures.allAsList(futures);
+                Futures.addCallback(f, new FutureCallback<List<Boolean>>() {
+                    public void onSuccess(List<Boolean> poolCreationResults) {
+                        // If any of the creation failed, they will have signaled a connection failure
+                        // which will trigger a reconnection to the node. So don't bother marking UP.
+                        if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
+                            logger.debug("Connection pool cannot be created, not marking {} UP", host);
+                            return;
+                        }
+
+                        host.setUp();
+
+                        for (Host.StateListener listener : listeners)
+                            listener.onAdd(host);
+                    }
+
+                    public void onFailure(Throwable t) {
+                        // That future is not really supposed to throw unexpected exceptions
+                        if (!(t instanceof InterruptedException))
+                            logger.error("Unexpected error while adding node: while this shouldn't happen, this shouldn't be critical", t);
+                    }
+                });
+
+                f.get();
+
+                // Now, check if there isn't pools to create/remove following the addition.
+                // We do that now only so that it's not called before we've set the node up.
+                for (SessionManager s : sessions)
+                    s.updateCreatedPools(blockingExecutor);
+
+            } finally {
+                host.notificationsLock.unlock();
+            }
         }
 
         public ListenableFuture<?> triggerOnRemove(final Host host) {
@@ -1830,16 +1867,26 @@ public class Cluster implements Closeable {
             if (isClosed())
                 return;
 
-            host.setDown();
+            boolean locked = host.notificationsLock.tryLock(NOTIF_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                logger.warn("Could not acquire notifications lock within {} seconds, ignoring REMOVE notification for {}", NOTIF_LOCK_TIMEOUT_SECONDS, host);
+                return;
+            }
+            try {
 
-            logger.debug("Removing host {}", host);
-            loadBalancingPolicy().onRemove(host);
-            controlConnection.onRemove(host);
-            for (SessionManager s : sessions)
-                s.onRemove(host);
+                host.setDown();
 
-            for (Host.StateListener listener : listeners)
-                listener.onRemove(host);
+                logger.debug("Removing host {}", host);
+                loadBalancingPolicy().onRemove(host);
+                controlConnection.onRemove(host);
+                for (SessionManager s : sessions)
+                    s.onRemove(host);
+
+                for (Host.StateListener listener : listeners)
+                    listener.onRemove(host);
+            } finally {
+                host.notificationsLock.unlock();
+            }
         }
 
         public boolean signalConnectionFailure(Host host, ConnectionException exception, boolean isHostAddition, boolean markSuspected) {
@@ -1851,7 +1898,7 @@ public class Cluster implements Closeable {
             boolean isDown = host.signalConnectionFailure(exception);
             if (isDown) {
                 if (isHostAddition || !markSuspected) {
-                    triggerOnDown(host, isHostAddition);
+                    triggerOnDown(host, isHostAddition, true);
                 } else {
                     // Note that we do want to call onSuspected on the current thread, as the whole point is
                     // that by the time this method return, the host initialReconnectionAttempt will have been
@@ -2103,7 +2150,7 @@ public class Cluster implements Closeable {
                             // right away, so we favor the detection to make the Host.isUp method more reliable.
                             Host hostDown = metadata.getHost(stAddr);
                             if (hostDown != null)
-                                triggerOnDown(hostDown);
+                                triggerOnDown(hostDown, true);
                             break;
                     }
                     break;
@@ -2130,7 +2177,7 @@ public class Cluster implements Closeable {
                                     manager.metadata.removeKeyspace(scc.keyspace);
                                     break;
                                 case TABLE:
-                                    keyspace = manager.metadata.getKeyspace(scc.keyspace);
+                                    keyspace = manager.metadata.getKeyspaceInternal(scc.keyspace);
                                     if (keyspace == null)
                                         logger.warn("Received a DROPPED notification for table {}.{}, but this keyspace is unknown in our metadata",
                                             scc.keyspace, scc.name);
@@ -2138,7 +2185,7 @@ public class Cluster implements Closeable {
                                         keyspace.removeTable(scc.name);
                                     break;
                                 case TYPE:
-                                    keyspace = manager.metadata.getKeyspace(scc.keyspace);
+                                    keyspace = manager.metadata.getKeyspaceInternal(scc.keyspace);
                                     if (keyspace == null)
                                         logger.warn("Received a DROPPED notification for UDT {}.{}, but this keyspace is unknown in our metadata",
                                             scc.keyspace, scc.name);

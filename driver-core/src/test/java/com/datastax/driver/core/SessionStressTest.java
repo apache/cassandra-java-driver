@@ -1,5 +1,6 @@
 package com.datastax.driver.core;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
@@ -53,7 +54,8 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "long")
     public void sessions_should_not_leak_connections() {
         // override inherited field with a new cluster object and ensure 0 sessions and connections
-        cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1').build();
+        cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1')
+            .withPoolingOptions(new PoolingOptions().setCoreConnectionsPerHost(HostDistance.LOCAL, 1)).build();
 
         // The cluster has not been initialized yet, therefore the control connection is not opened
         assertEquals(cluster.manager.sessions.size(), 0);
@@ -74,8 +76,12 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
         try {
             int nbOfSessions = 2000;
             int halfOfTheSessions = nbOfSessions / 2;
+            int nbOfIterations = 5;
+            int sleepTime = 20;
 
-            for (int iteration = 0; iteration < 5; iteration++) {
+            for (int iteration = 1; iteration <= nbOfIterations; iteration++) {
+                logger.info("On iteration {}/{}.", iteration, nbOfIterations);
+                logger.info("Creating {} sessions.", nbOfSessions);
                 waitFor(openSessionsConcurrently(nbOfSessions));
 
                 // We should see the exact number of opened sessions
@@ -85,6 +91,7 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
                              coreConnections * nbOfSessions + 1);
 
                 // Close half of the sessions asynchronously
+                logger.info("Closing {}/{} sessions.", halfOfTheSessions, nbOfSessions);
                 waitFor(closeSessionsConcurrently(halfOfTheSessions));
 
                 // Check that we have the right number of sessions and connections
@@ -93,6 +100,7 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
                              coreConnections * (nbOfSessions / 2) + 1);
 
                 // Close and open the same number of sessions concurrently
+                logger.info("Closing and Opening {} sessions concurrently.", halfOfTheSessions);
                 CountDownLatch startSignal = new CountDownLatch(1);
                 List<Future<Session>> openSessionFutures = openSessionsConcurrently(halfOfTheSessions, startSignal);
                 List<Future<CloseFuture>> closeSessionsFutures = closeSessionsConcurrently(halfOfTheSessions,
@@ -107,19 +115,16 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
                              coreConnections * (nbOfSessions / 2) + 1);
 
                 // Close the remaining sessions
+                logger.info("Closing remaining {} sessions.", halfOfTheSessions);
                 waitFor(closeSessionsConcurrently(halfOfTheSessions));
 
                 // Check that we have a clean state
                 assertEquals(cluster.manager.sessions.size(), 0);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
 
-                try {
-                    // On OSX, the TCP connections are released after 15s by default (sysctl -a net.inet.tcp.msl)
-                    logger.debug("Sleeping so that TCP connections are released by the OS");
-                    TimeUnit.SECONDS.sleep(20);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException("Interrupted during test!", e);
-                }
+                // On OSX, the TCP connections are released after 15s by default (sysctl -a net.inet.tcp.msl)
+                logger.info("Sleeping {} seconds so that TCP connections are released by the OS", sleepTime);
+                Uninterruptibles.sleepUninterruptibly(sleepTime, TimeUnit.SECONDS);
             }
         } finally {
             cluster.close();

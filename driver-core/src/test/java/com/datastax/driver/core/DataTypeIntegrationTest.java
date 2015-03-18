@@ -15,627 +15,308 @@
  */
 package com.datastax.driver.core;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.collect.ImmutableSet;
-
+import com.google.common.collect.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.core.DataTypeTest.exclude;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.driver.core.utils.CassandraVersion;
 
 /**
- * Tests DataType class to ensure data sent in is the same as data received
- * All tests are executed via a Simple Statements
- * Counters are the only datatype not tested within the entirety of the suite.
- *     There is, however, an isolated test case that needs to be implemented.
- * All statements and sample data is easily exportable via the print_*() methods.
+ * The goal of this test is to cover the serialization and deserialization of datatypes.
+ *
+ * It creates a table with a column of a given type, inserts a value and then tries to retrieve it.
+ * There are 3 variants for the insert query: a raw string, a simple statement with a parameter
+ * (protocol > v2 only) and a prepared statement.
+ * This is repeated with a large number of datatypes.
  */
 public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+    private static final Logger logger = LoggerFactory.getLogger(DataTypeIntegrationTest.class);
 
-    private final static Set<DataType> DATA_TYPE_PRIMITIVES = DataType.allPrimitiveTypes();
-    private final static Set<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES = EnumSet.of(DataType.Name.MAP, DataType.Name.SET, DataType.Name.LIST);
+    List<TestTable> tables = allTables();
+    VersionNumber cassandraVersion;
 
-    private final static String PRIMITIVE_INSERT_FORMAT = "INSERT INTO %1$s (k, v) VALUES (%2$s, %2$s);";
-    private final static String BASIC_SELECT_FORMAT = "SELECT k, v FROM %1$s;";
+    enum StatementType {RAW_STRING, SIMPLE_WITH_PARAM, PREPARED}
 
-    private final static String COLLECTION_INSERT_FORMAT = "INSERT INTO %1$s (k, v) VALUES (%2$s, %3$s);";
-    private final static String MAP_INSERT_FORMAT = "INSERT INTO %1$s (k, v) VALUES (%3$s, {%2$s: %3$s});";
-
-    private final static HashMap<DataType, Object> SAMPLE_DATA = getSampleData();
-    private final static HashMap<DataType, Object> SAMPLE_COLLECTIONS = getSampleCollections();
-
-    private final static Collection<String> PRIMITIVE_INSERT_STATEMENTS = getPrimitiveInsertStatements();
-    private final static HashMap<DataType, String> PRIMITIVE_SELECT_STATEMENTS = getPrimitiveSelectStatements();
-
-    private final static Collection<String> COLLECTION_INSERT_STATEMENTS = getCollectionInsertStatements();
-    private final static HashMap<DataType, String> COLLECTION_SELECT_STATEMENTS = getCollectionSelectStatements();
-
-    /**
-     * Generates the table definitions that will be used in testing
-     */
     @Override
     protected Collection<String> getTableDefinitions() {
-        ArrayList<String> tableDefinitions = new ArrayList<String>();
+        Host host = cluster.getMetadata().getAllHosts().iterator().next();
+        cassandraVersion = host.getCassandraVersion().nextStable();
 
-        // Create primitive data type definitions
-        for (DataType dataType : DATA_TYPE_PRIMITIVES) {
-            if (exclude(dataType))
+        List<String> statements = Lists.newArrayList();
+        for (TestTable table : tables) {
+            if (cassandraVersion.compareTo(table.minCassandraVersion) < 0)
+                logger.debug("Skipping table because it uses a feature not supported by Cassandra {}: {}",
+                    cassandraVersion, table.createStatement);
+            else
+                statements.add(table.createStatement);
+        }
+
+        return statements;
+    }
+
+    @Test(groups = "long")
+    public void should_insert_and_retrieve_data_with_legacy_statements() {
+        should_insert_and_retrieve_data(StatementType.RAW_STRING);
+    }
+
+    @Test(groups = "long")
+    public void should_insert_and_retrieve_data_with_prepared_statements() {
+        should_insert_and_retrieve_data(StatementType.PREPARED);
+    }
+
+    @Test(groups = "long")
+    @CassandraVersion(major = 2.0, description = "Uses parameterized simple statements, which are only available with protocol v2")
+    public void should_insert_and_retrieve_data_with_parameterized_simple_statements() {
+        should_insert_and_retrieve_data(StatementType.SIMPLE_WITH_PARAM);
+    }
+
+    protected void should_insert_and_retrieve_data(StatementType statementType) {
+        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+
+        for (TestTable table : tables) {
+            if (cassandraVersion.compareTo(table.minCassandraVersion) < 0)
                 continue;
 
-            tableDefinitions.add(String.format("CREATE TABLE %1$s (k %2$s PRIMARY KEY, v %1$s)", dataType, dataType));
-        }
-
-        // Create collection data type definitions
-        for (DataType.Name dataTypeName : DATA_TYPE_NON_PRIMITIVE_NAMES) {
-            // Create MAP data type definitions
-            if (dataTypeName == DataType.Name.MAP) {
-                for (DataType typeArgument1 : DATA_TYPE_PRIMITIVES) {
-                    if (exclude(typeArgument1))
-                        continue;
-
-                    for (DataType typeArgument2 : DATA_TYPE_PRIMITIVES) {
-                        if (exclude(typeArgument2))
-                            continue;
-
-                        tableDefinitions.add(String.format("CREATE TABLE %1$s_%2$s_%3$s (k %3$s PRIMARY KEY, v %1$s<%2$s, %3$s>)", dataTypeName, typeArgument1, typeArgument2));
-                    }
-                }
-            // Create SET and LIST data type definitions
-            } else {
-                for (DataType typeArgument : DATA_TYPE_PRIMITIVES) {
-                    if (exclude(typeArgument))
-                        continue;
-
-                    tableDefinitions.add(String.format("CREATE TABLE %1$s_%2$s (k %2$s PRIMARY KEY, v %1$s<%2$s>)", dataTypeName, typeArgument));
-                }
+            switch (statementType) {
+                case RAW_STRING:
+                    session.execute(table.insertStatement.replace("?", table.testColumnType.format(table.sampleValue)));
+                    break;
+                case SIMPLE_WITH_PARAM:
+                    session.execute(table.insertStatement, table.sampleValue);
+                    break;
+                case PREPARED:
+                    PreparedStatement ps = session.prepare(table.insertStatement);
+                    session.execute(ps.bind(table.sampleValue));
+                    break;
             }
-        }
 
-        return tableDefinitions;
+            Row row = session.execute(table.selectStatement).one();
+            Object queriedValue = table.testColumnType.deserialize(row.getBytesUnsafe("v"), protocolVersion);
+
+            assertThat(queriedValue)
+                .as("Test failure on %s statement with table:%n%s;%n" +
+                        "insert statement:%n%s;%n",
+                    statementType,
+                    table.createStatement,
+                    table.insertStatement)
+                .isEqualTo(table.sampleValue);
+
+            session.execute(table.truncateStatement);
+        }
     }
 
     /**
-     * Generates the sample data that will be used in testing
+     * Abstracts information about a table (corresponding to a given column type).
      */
-    protected static HashMap<DataType, Object> getSampleData() {
-        HashMap<DataType, Object> sampleData = new HashMap<DataType, Object>();
+    static class TestTable {
+        private static final AtomicInteger counter = new AtomicInteger();
+        private String tableName = "date_type_test" + counter.incrementAndGet();
 
-        for (DataType dataType : DATA_TYPE_PRIMITIVES) {
-            switch (dataType.getName()) {
-                case ASCII:
-                    sampleData.put(dataType, new String("ascii"));
-                    break;
-                case BIGINT:
-                    sampleData.put(dataType, Long.MAX_VALUE);
-                    break;
-                case BLOB:
-                    ByteBuffer bb = ByteBuffer.allocate(58);
-                    bb.putShort((short) 0xCAFE);
-                    bb.flip();
-                    sampleData.put(dataType, bb);
-                    break;
-                case BOOLEAN:
-                    sampleData.put(dataType, Boolean.TRUE);
-                    break;
-                case COUNTER:
-                    // Not supported in an insert statement
-                    break;
-                case DECIMAL:
-                    sampleData.put(dataType, new BigDecimal("12.3E+7"));
-                    break;
-                case DOUBLE:
-                    sampleData.put(dataType, Double.MAX_VALUE);
-                    break;
-                case FLOAT:
-                    sampleData.put(dataType, Float.MAX_VALUE);
-                    break;
-                case INET:
-                    try {
-                        sampleData.put(dataType, InetAddress.getByName("123.123.123.123"));
-                    } catch (java.net.UnknownHostException e) {}
-                    break;
-                case INT:
-                    sampleData.put(dataType, Integer.MAX_VALUE);
-                    break;
-                case TEXT:
-                    sampleData.put(dataType, new String("text"));
-                    break;
-                case TIMESTAMP:
-                    sampleData.put(dataType, new Date(872835240000L));
-                    break;
-                case TIMEUUID:
-                    sampleData.put(dataType, UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66"));
-                    break;
-                case UUID:
-                    sampleData.put(dataType, UUID.fromString("067e6162-3b6f-4ae2-a171-2470b63dff00"));
-                    break;
-                case VARCHAR:
-                    sampleData.put(dataType, new String("varchar"));
-                    break;
-                case VARINT:
-                    sampleData.put(dataType, new BigInteger(Integer.toString(Integer.MAX_VALUE) + "000"));
-                    break;
-                default:
-                    throw new RuntimeException("Missing handling of " + dataType);
-            }
+        final DataType testColumnType;
+        final Object sampleValue;
+
+        final String createStatement;
+        final String insertStatement = String.format("INSERT INTO %s (k, v) VALUES (1, ?)", tableName);
+        final String selectStatement = String.format("SELECT v FROM %s WHERE k = 1", tableName);
+        final String truncateStatement = String.format("TRUNCATE %s", tableName);
+
+        final VersionNumber minCassandraVersion;
+
+        TestTable(DataType testColumnType, Object sampleValue, String minCassandraVersion) {
+            this.testColumnType = testColumnType;
+            this.sampleValue = sampleValue;
+            this.minCassandraVersion = VersionNumber.parse(minCassandraVersion);
+
+            this.createStatement = String.format("CREATE TABLE %s (k int PRIMARY KEY, v %s)", tableName, testColumnType);
         }
-
-        return sampleData;
     }
 
-    protected static Object getCollectionSample(DataType.Name collectionType, DataType dataType) {
-        if(collectionType == DataType.Name.LIST) {
-            List<Object> theList = new ArrayList<Object>();
-            theList.add(SAMPLE_DATA.get(dataType));
-            theList.add(SAMPLE_DATA.get(dataType));
-            return theList;
+    private static List<TestTable> allTables() {
+        List<TestTable> tables = Lists.newArrayList();
+
+        tables.addAll(tablesWithPrimitives());
+        tables.addAll(tablesWithCollectionsOfPrimitives());
+        tables.addAll(tablesWithMapsOfPrimitives());
+        tables.addAll(tablesWithNestedCollections());
+        tables.addAll(tablesWithRandomlyGeneratedNestedCollections());
+
+        return ImmutableList.copyOf(tables);
+    }
+
+    private static List<TestTable> tablesWithPrimitives() {
+        List<TestTable> tables = Lists.newArrayList();
+        for (Map.Entry<DataType, Object> entry : PrimitiveTypeSamples.ALL.entrySet())
+            tables.add(new TestTable(entry.getKey(), entry.getValue(), "1.2.0"));
+        return tables;
+    }
+
+    private static List<TestTable> tablesWithCollectionsOfPrimitives() {
+        List<TestTable> tables = Lists.newArrayList();
+        for (Map.Entry<DataType, Object> entry : PrimitiveTypeSamples.ALL.entrySet()) {
+
+            DataType elementType = entry.getKey();
+            Object elementSample = entry.getValue();
+
+            tables.add(new TestTable(DataType.list(elementType), Lists.newArrayList(elementSample, elementSample), "1.2.0"));
+            tables.add(new TestTable(DataType.set(elementType), Sets.newHashSet(elementSample), "1.2.0"));
         }
-        else if(collectionType == DataType.Name.SET)
-            return ImmutableSet.of(SAMPLE_DATA.get(dataType));
-        else if(collectionType == DataType.Name.MAP)
-                return new HashMap<Object, Object>().put(SAMPLE_DATA.get(dataType), SAMPLE_DATA.get(dataType));
-        else if(collectionType == DataType.Name.TUPLE) {
-            TupleType t = TupleType.of(dataType);
-            return t.newValue(SAMPLE_DATA.get(dataType));
+        return tables;
+    }
+
+    private static List<TestTable> tablesWithMapsOfPrimitives() {
+        List<TestTable> tables = Lists.newArrayList();
+        for (Map.Entry<DataType, Object> keyEntry : PrimitiveTypeSamples.ALL.entrySet()) {
+            DataType keyType = keyEntry.getKey();
+            Object keySample = keyEntry.getValue();
+            for (Map.Entry<DataType, Object> valueEntry : PrimitiveTypeSamples.ALL.entrySet()) {
+                DataType valueType = valueEntry.getKey();
+                Object valueSample = valueEntry.getValue();
+
+                tables.add(new TestTable(DataType.map(keyType, valueType),
+                    ImmutableMap.builder().put(keySample, valueSample).build(),
+                    "1.2.0"));
+            }
         }
-        else
-            throw new IllegalArgumentException("Missing handling of non-primitive type" + collectionType);
+        return tables;
+    }
+
+    private static Collection<? extends TestTable> tablesWithNestedCollections() {
+        List<TestTable> tables = Lists.newArrayList();
+
+        // To avoid combinatorial explosion, only use int as the primitive type, and two levels of nesting.
+        // This yields collections like list<frozen<map<int, int>>, map<frozen<set<int>>, frozen<list<int>>>, etc.
+
+        // Types and samples for the inner collections like frozen<list<int>>
+        Map<DataType, Object> childCollectionSamples = ImmutableMap.<DataType, Object>builder()
+            .put(DataType.frozenList(DataType.cint()), Lists.newArrayList(1, 1))
+            .put(DataType.frozenSet(DataType.cint()), Sets.newHashSet(1, 2))
+            .put(DataType.frozenMap(DataType.cint(), DataType.cint()), ImmutableMap.<Integer, Integer>builder().put(1, 2).put(3, 4).build())
+            .build();
+
+        for (Map.Entry<DataType, Object> entry : childCollectionSamples.entrySet()) {
+            DataType elementType = entry.getKey();
+            Object elementSample = entry.getValue();
+
+            tables.add(new TestTable(DataType.list(elementType), Lists.newArrayList(elementSample, elementSample), "2.1.3"));
+            tables.add(new TestTable(DataType.set(elementType), Sets.newHashSet(elementSample), "2.1.3"));
+
+            for (Map.Entry<DataType, Object> valueEntry : childCollectionSamples.entrySet()) {
+                DataType valueType = valueEntry.getKey();
+                Object valueSample = valueEntry.getValue();
+
+                tables.add(new TestTable(DataType.map(elementType, valueType),
+                    ImmutableMap.builder().put(elementSample, valueSample).build(), "2.1.3"));
+            }
+        }
+        return tables;
+    }
+
+    private static Collection<? extends TestTable> tablesWithRandomlyGeneratedNestedCollections() {
+        List<TestTable> tables = Lists.newArrayList();
+
+        DataType nestedListType = buildNestedType(DataType.Name.LIST, 5);
+        DataType nestedSetType = buildNestedType(DataType.Name.SET, 5);
+        DataType nestedMapType = buildNestedType(DataType.Name.MAP, 5);
+
+        tables.add(new TestTable(nestedListType, nestedObject(nestedListType), "2.1.3"));
+        tables.add(new TestTable(nestedSetType, nestedObject(nestedSetType), "2.1.3"));
+        tables.add(new TestTable(nestedMapType, nestedObject(nestedMapType), "2.1.3"));
+        return tables;
     }
 
     /**
-     * Generates the sample collections that will be used in testing
+     * Populate a nested collection based on the given type and it's arguments.
      */
-    protected static HashMap<DataType, Object> getSampleCollections() {
-        HashMap<DataType, Object> sampleCollections = new HashMap<DataType, Object>();
-        HashMap<DataType, Object> setAndListCollection;
-        HashMap<DataType, HashMap<DataType, Object>> mapCollection;
+    public static Object nestedObject(DataType type) {
 
-        for (DataType.Name dataTypeName : DATA_TYPE_NON_PRIMITIVE_NAMES) {
-            switch (dataTypeName) {
+        int typeIdx = type.getTypeArguments().size() > 1 ? 1 : 0;
+        DataType argument = type.getTypeArguments().get(typeIdx);
+        boolean isAtBottom = !argument.isCollection();
+
+        if(isAtBottom) {
+            switch(type.getName()) {
                 case LIST:
-                    for (DataType typeArgument : DATA_TYPE_PRIMITIVES) {
-                        if (exclude(typeArgument))
-                            continue;
-
-                        List<Object> list = new ArrayList<Object>();
-                        for (int i = 0; i < 5; i++) {
-                            list.add(SAMPLE_DATA.get(typeArgument));
-                        }
-
-                        setAndListCollection = new HashMap<DataType, Object>();
-                        setAndListCollection.put(typeArgument, list);
-                        sampleCollections.put(DataType.list(typeArgument), setAndListCollection);
-                    }
-                    break;
+                    return Lists.newArrayList(1, 2, 3);
                 case SET:
-                    for (DataType typeArgument : DATA_TYPE_PRIMITIVES) {
-                        if (exclude(typeArgument))
-                            continue;
-
-                        Set<Object> set = new HashSet<Object>();
-                        for (int i = 0; i < 5; i++) {
-                            set.add(SAMPLE_DATA.get(typeArgument));
-                        }
-
-                        setAndListCollection = new HashMap<DataType, Object>();
-                        setAndListCollection.put(typeArgument, set);
-                        sampleCollections.put(DataType.set(typeArgument), setAndListCollection);
-                    }
-                    break;
+                    return Sets.newHashSet(1, 2, 3);
                 case MAP:
-                    for (DataType typeArgument1 : DATA_TYPE_PRIMITIVES) {
-                        if (exclude(typeArgument1))
-                            continue;
-
-                        for (DataType typeArgument2 : DATA_TYPE_PRIMITIVES) {
-                            if (exclude(typeArgument2))
-                                continue;
-
-                            HashMap<DataType, Object> map = new HashMap<DataType, Object>();
-                            map.put(typeArgument1, SAMPLE_DATA.get(typeArgument2));
-
-                            mapCollection = new HashMap<DataType, HashMap<DataType, Object>>();
-                            mapCollection.put(typeArgument1, map);
-                            sampleCollections.put(DataType.map(typeArgument1, typeArgument2), mapCollection);
-                        }
+                    Map<Integer, Integer> map = Maps.newHashMap();
+                    map.put(1, 2);
+                    map.put(3, 4);
+                    map.put(5, 6);
+                    return map;
+            }
+        }
+        else {
+            switch(type.getName()) {
+                case LIST:
+                    List<Object> l = Lists.newArrayListWithExpectedSize(2);
+                    for(int i = 0; i < 5; i++) {
+                        l.add(nestedObject(argument));
                     }
-                    break;
-                default:
-                    throw new RuntimeException("Missing handling of " + dataTypeName);
+                    return l;
+                case SET:
+                    Set<Object> s = Sets.newHashSet();
+                    for(int i = 0; i < 5; i++) {
+                        s.add(nestedObject(argument));
+                    }
+                    return s;
+                case MAP:
+                    Map<Integer, Object> map = Maps.newHashMap();
+                    for(int i = 0; i < 5; i++) {
+                        map.put(i, nestedObject(argument));
+                    }
+                    return map;
             }
         }
-
-        return sampleCollections;
+        return null;
     }
 
     /**
-     * Helper method to stringify SAMPLE_DATA for simple insert statements
+     * @param baseType The base type to use, one of SET, MAP, LIST.
+     * @param depth How many subcollections to generate.
+     * @return a DataType that is a nested collection with the given baseType with the
+     * given depth.
      */
-    @SuppressWarnings("fallthrough")
-    private static String helperStringifiedData(DataType dataType) {
-        String value = SAMPLE_DATA.get(dataType).toString();
+    public static DataType buildNestedType(DataType.Name baseType, int depth) {
+        Random r = new Random();
+        DataType t = null;
 
-        switch (dataType.getName()) {
-            case BLOB:
-                value = "0xCAFE";
-                break;
-
-            case INET:
-                InetAddress v1 = (InetAddress) SAMPLE_DATA.get(dataType);
-                value = String.format("'%s'", v1.getHostAddress());
-                break;
-
-            case TIMESTAMP:
-                Date v2 = (Date) SAMPLE_DATA.get(dataType);
-                value = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(v2);
-            case ASCII:
-            case TEXT:
-            case VARCHAR:
-                value = String.format("'%s'", value);
-                break;
-
-            default:
-                break;
-        }
-
-        return value;
-    }
-
-    /**
-     * Generates the insert statements that will be used in testing
-     */
-    private static Collection<String> getPrimitiveInsertStatements() {
-        ArrayList<String> insertStatements = new ArrayList<String>();
-
-        for (DataType dataType : SAMPLE_DATA.keySet()) {
-            String value = helperStringifiedData(dataType);
-            insertStatements.add(String.format(PRIMITIVE_INSERT_FORMAT, dataType, value));
-        }
-
-        return insertStatements;
-    }
-
-    /**
-     * Generates the select statements that will be used in testing
-     */
-    private static HashMap<DataType, String> getPrimitiveSelectStatements() {
-        HashMap<DataType, String> selectStatements = new HashMap<DataType, String>();
-
-        for (DataType dataType : SAMPLE_DATA.keySet()) {
-            selectStatements.put(dataType, String.format(BASIC_SELECT_FORMAT, dataType));
-        }
-
-        return selectStatements;
-    }
-
-    /**
-     * Helper method to generate table names in the form of:
-     * DataType_TypeArgument[_TypeArgument]
-     */
-    private static String helperGenerateTableName(DataType dataType) {
-        String tableName = dataType.getName().toString();
-        for (DataType typeArgument : dataType.getTypeArguments())
-            tableName += "_" + typeArgument;
-
-        return tableName;
-    }
-
-    /**
-     * Generates the insert statements that will be used in testing
-     */
-    @SuppressWarnings("unchecked")
-    private static Collection<String> getCollectionInsertStatements() {
-        ArrayList<String> insertStatements = new ArrayList<String>();
-
-        String tableName;
-        String key;
-        String value;
-        for (DataType dataType : SAMPLE_COLLECTIONS.keySet()) {
-            HashMap<DataType, Object> sampleValueMap = (HashMap<DataType, Object>) SAMPLE_COLLECTIONS.get(dataType);
-
-            // Create tableName in form of: DataType_TypeArgument[_TypeArgument]
-            tableName = helperGenerateTableName(dataType);
-
-            if (dataType.getName() == DataType.Name.MAP) {
-                List<DataType> typeArgument = dataType.getTypeArguments();
-
-                key = helperStringifiedData(typeArgument.get(0));
-                value = helperStringifiedData(typeArgument.get(1));
-
-                insertStatements.add(String.format(MAP_INSERT_FORMAT, tableName, key, value));
-            } else if (dataType.getName() == DataType.Name.LIST) {
-                DataType typeArgument = sampleValueMap.keySet().iterator().next();
-                key = helperStringifiedData(typeArgument);
-
-                // Create the value to be a list of the same 5 elements
-                value = "[";
-                for (int i = 0; i < 5; i++)
-                    value += key + ',';
-                value = value.substring(0, value.length() - 1) + ']';
-
-                insertStatements.add(String.format(COLLECTION_INSERT_FORMAT, tableName, key, value));
+        for (int i = 1; i <= depth; i++) {
+            int chooser = r.nextInt(3);
+            if(t == null) {
+                if(chooser == 0) {
+                    t = DataType.frozenList(DataType.cint());
+                } else if(chooser == 1) {
+                    t = DataType.frozenSet(DataType.cint());
+                } else {
+                    t = DataType.frozenMap(DataType.cint(), DataType.cint());
+                }
+            } else if(i == depth) {
+                switch(baseType) {
+                    case LIST:
+                        return DataType.list(t);
+                    case SET:
+                        return DataType.set(t);
+                    case MAP:
+                        return DataType.map(DataType.cint(), t);
+                }
             } else {
-                DataType typeArgument = sampleValueMap.keySet().iterator().next();
-                key = helperStringifiedData(typeArgument);
-                value = '{' + key + '}';
-
-                insertStatements.add(String.format(COLLECTION_INSERT_FORMAT, tableName, key, value));
+                if(chooser == 0) {
+                    t = DataType.frozenList(t);
+                } else if(chooser == 1) {
+                    t = DataType.frozenSet(t);
+                } else {
+                    t = DataType.frozenMap(DataType.cint(), t);
+                }
             }
         }
-
-        return insertStatements;
-    }
-
-    /**
-     * Generates the select statements that will be used in testing
-     */
-    private static HashMap<DataType, String> getCollectionSelectStatements() {
-        HashMap<DataType, String> selectStatements = new HashMap<DataType, String>();
-
-        String tableName;
-        for (DataType dataType : SAMPLE_COLLECTIONS.keySet()) {
-            tableName = helperGenerateTableName(dataType);
-            selectStatements.put(dataType, String.format(BASIC_SELECT_FORMAT, tableName));
-        }
-
-        return selectStatements;
-    }
-
-    /**
-     * Test simple statement inserts for all primitive data types
-     */
-    public void primitiveInsertTest() throws Throwable {
-        ResultSet rs;
-        for (String execute_string : PRIMITIVE_INSERT_STATEMENTS) {
-            rs = session.execute(execute_string);
-            assertTrue(rs.isExhausted());
-        }
-        assertEquals(SAMPLE_DATA.size(), 14);
-        assertEquals(PRIMITIVE_INSERT_STATEMENTS.size(), SAMPLE_DATA.size());
-    }
-
-    /**
-     * Validate simple statement selects for all primitive data types
-     */
-    public void primitiveSelectTest() throws Throwable {
-        String execute_string;
-        Object value;
-        Row row;
-        for (DataType dataType : PRIMITIVE_SELECT_STATEMENTS.keySet()) {
-            execute_string = PRIMITIVE_SELECT_STATEMENTS.get(dataType);
-            row = session.execute(execute_string).one();
-
-            value = SAMPLE_DATA.get(dataType);
-            assertEquals(TestUtils.getValue(row, "k", dataType), value);
-            assertEquals(TestUtils.getValue(row, "v", dataType), value);
-        }
-        assertEquals(SAMPLE_DATA.size(), 14);
-        assertEquals(PRIMITIVE_SELECT_STATEMENTS.keySet().size(), SAMPLE_DATA.size());
-    }
-
-    /**
-     * Test simple statement inserts and selects for all primitive data types
-     */
-    @Test(groups = "long")
-    public void primitiveTests() throws Throwable {
-        primitiveInsertTest();
-        primitiveSelectTest();
-    }
-
-    @Test(groups = "short")
-    public void primitiveInsertWithValueTest() throws Throwable {
-        TestUtils.versionCheck(2.0, 0, "This feature requires protocol v2");
-
-        for (DataType dt : DataType.allPrimitiveTypes()) {
-            if (exclude(dt))
-                continue;
-
-            session.execute(String.format(PRIMITIVE_INSERT_FORMAT, dt, "?"), SAMPLE_DATA.get(dt), SAMPLE_DATA.get(dt));
-        }
-        // Kind of checking results (kind of because the schema used by this class make it ultra painful
-        // somehow to use a different partition for different tests, so that the insert done here actually
-        // conflict with the one in primitiveInsertTest. So all we check is that we don't write something
-        // horribly wrong, but if the inserts of this test where to do nothing, the following check might
-        // not work. We should fix the schema used by this class)
-        primitiveSelectTest();
-    }
-
-    /**
-     * Test simple statement inserts for all collection data types
-     */
-    public void collectionInsertTest() throws Throwable {
-        ResultSet rs;
-        for (String execute_string : COLLECTION_INSERT_STATEMENTS) {
-            rs = session.execute(execute_string);
-            assertTrue(rs.isExhausted());
-        }
-        assertEquals(SAMPLE_COLLECTIONS.size(), 224);
-        assertEquals(COLLECTION_INSERT_STATEMENTS.size(), SAMPLE_COLLECTIONS.size());
-    }
-
-    /**
-     * Test simple statement selects for all collection data types
-     */
-    @SuppressWarnings("unchecked")
-    public void collectionSelectTest() throws Throwable {
-        HashMap<DataType, Object> sampleValueMap;
-        String execute_string;
-        DataType typeArgument1;
-        DataType typeArgument2;
-        Row row;
-        for (DataType dataType : COLLECTION_SELECT_STATEMENTS.keySet()) {
-            execute_string = COLLECTION_SELECT_STATEMENTS.get(dataType);
-            row = session.execute(execute_string).one();
-
-            sampleValueMap = (HashMap<DataType, Object>) SAMPLE_COLLECTIONS.get(dataType);
-            typeArgument1 = dataType.getTypeArguments().get(0);
-            if (dataType.getName() == DataType.Name.MAP) {
-                typeArgument2 = dataType.getTypeArguments().get(1);
-
-                // Create a copy of the map that is being expected
-                HashMap<DataType, Object> sampleMap = (HashMap<DataType, Object>) sampleValueMap.get(typeArgument1);
-                Object mapKey = SAMPLE_DATA.get(sampleMap.keySet().iterator().next());
-                Object mapValue = sampleMap.values().iterator().next();
-                HashMap<Object, Object> expectedMap = new HashMap<Object, Object>();
-                expectedMap.put(mapKey, mapValue);
-
-                assertEquals(TestUtils.getValue(row, "k", typeArgument2), SAMPLE_DATA.get(typeArgument2));
-                assertEquals(TestUtils.getValue(row, "v", dataType), expectedMap);
-            } else {
-                Object expectedValue = sampleValueMap.get(typeArgument1);
-
-                assertEquals(TestUtils.getValue(row, "k", typeArgument1), SAMPLE_DATA.get(typeArgument1));
-                assertEquals(TestUtils.getValue(row, "v", dataType), expectedValue);
-            }
-        }
-        assertEquals(SAMPLE_COLLECTIONS.size(), 224);
-        assertEquals(COLLECTION_SELECT_STATEMENTS.keySet().size(), SAMPLE_COLLECTIONS.size());
-    }
-
-    /**
-     * Test simple statement inserts and selects for all collection data types
-     */
-    @Test(groups = "long")
-    public void collectionTest() throws Throwable {
-        collectionInsertTest();
-        collectionSelectTest();
-    }
-
-    /**
-     * Prints the table definitions that will be used in testing
-     * (for exporting purposes)
-     */
-    @Test(groups = "doc")
-    public void printTableDefinitions() {
-        String objective = "Table Definitions";
-        System.out.println(String.format("Printing %s...", objective));
-
-        // Prints the full list of table definitions
-        for (String definition : getTableDefinitions()) {
-            System.out.println(definition);
-        }
-
-        System.out.println(String.format("\nEnd of %s\n\n", objective));
-    }
-
-    /**
-     * Prints the sample data that will be used in testing
-     * (for exporting purposes)
-     */
-    @Test(groups = "doc")
-    public void printSampleData() {
-        String objective = "Sample Data";
-        System.out.println(String.format("Printing %s...", objective));
-
-        for (DataType dataType : SAMPLE_DATA.keySet()) {
-            Object sampleValue = SAMPLE_DATA.get(dataType);
-            System.out.println(String.format("%1$-10s %2$s", dataType, sampleValue));
-        }
-
-        System.out.println(String.format("\nEnd of %s\n\n", objective));
-    }
-
-    /**
-     * Prints the sample collections that will be used in testing
-     * (for exporting purposes)
-     */
-    @Test(groups = "doc")
-    @SuppressWarnings("unchecked")
-    public void printSampleCollections() {
-        String objective = "Sample Collections";
-        System.out.println(String.format("Printing %s...", objective));
-
-        for (DataType dataType : SAMPLE_COLLECTIONS.keySet()) {
-            HashMap<DataType, Object> sampleValueMap = (HashMap<DataType, Object>) SAMPLE_COLLECTIONS.get(dataType);
-
-            if (dataType.getName() == DataType.Name.MAP) {
-                DataType typeArgument = sampleValueMap.keySet().iterator().next();
-                HashMap<DataType, Object> sampleMap = (HashMap<DataType, Object>) sampleValueMap.get(typeArgument);
-
-                Object mapKey = SAMPLE_DATA.get(typeArgument);
-                Object mapValue = sampleMap.get(typeArgument);
-                System.out.println(String.format("%1$-30s {%2$s : %3$s}", dataType, mapKey, mapValue));
-            } else {
-                DataType typeArgument = sampleValueMap.keySet().iterator().next();
-                Object sampleValue = sampleValueMap.get(typeArgument);
-
-                System.out.println(String.format("%1$-30s %2$s", dataType, sampleValue));
-            }
-        }
-
-        System.out.println(String.format("\nEnd of %s\n\n", objective));
-    }
-
-    /**
-     * Prints the simple insert statements that will be used in testing
-     * (for exporting purposes)
-     */
-    @Test(groups = "doc")
-    public void printPrimitiveInsertStatements() {
-        String objective = "Primitive Insert Statements";
-        System.out.println(String.format("Printing %s...", objective));
-
-        for (String execute_string : PRIMITIVE_INSERT_STATEMENTS) {
-            System.out.println(execute_string);
-        }
-
-        System.out.println(String.format("\nEnd of %s\n\n", objective));
-    }
-
-    /**
-     * Prints the simple select statements that will be used in testing
-     * (for exporting purposes)
-     */
-    @Test(groups = "doc")
-    public void printPrimitiveSelectStatements() {
-        String objective = "Primitive Select Statements";
-        System.out.println(String.format("Printing %s...", objective));
-
-        for (String execute_string : PRIMITIVE_SELECT_STATEMENTS.values()) {
-            System.out.println(execute_string);
-        }
-
-        System.out.println(String.format("\nEnd of %s\n\n", objective));
-    }
-
-    /**
-     * Prints the simple insert statements that will be used in testing
-     * (for exporting purposes)
-     */
-    @Test(groups = "doc")
-    public void printCollectionInsertStatements() {
-        String objective = "Collection Insert Statements";
-        System.out.println(String.format("Printing %s...", objective));
-
-        for (String execute_string : COLLECTION_INSERT_STATEMENTS) {
-            System.out.println(execute_string);
-        }
-
-        System.out.println(String.format("\nEnd of %s\n\n", objective));
-    }
-
-    /**
-     * Prints the simple insert statements that will be used in testing
-     * (for exporting purposes)
-     */
-    @Test(groups = "doc")
-    public void printCollectionSelectStatements() {
-        String objective = "Collection Select Statements";
-        System.out.println(String.format("Printing %s...", objective));
-
-        for (String execute_string : COLLECTION_SELECT_STATEMENTS.values()) {
-            System.out.println(execute_string);
-        }
-
-        System.out.println(String.format("\nEnd of %s\n\n", objective));
+        return null;
     }
 }
-
