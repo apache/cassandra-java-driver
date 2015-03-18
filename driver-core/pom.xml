@@ -29,7 +29,7 @@
   <dependencies>
     <dependency>
       <groupId>io.netty</groupId>
-      <artifactId>netty-all</artifactId>
+      <artifactId>netty-handler</artifactId>
       <version>${netty.version}</version>
     </dependency>
 
@@ -180,7 +180,7 @@
               <shadedArtifactAttached>true</shadedArtifactAttached>
               <artifactSet>
                 <includes>
-                  <include>io.netty:netty-all</include>
+                  <include>io.netty:*</include>
                 </includes>
               </artifactSet>
               <relocations>
