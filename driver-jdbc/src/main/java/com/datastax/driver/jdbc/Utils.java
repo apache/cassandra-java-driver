@@ -584,10 +584,11 @@ public class Utils
     	
     }
     
-    public static HashMap<?,?> parseMap(String kType, String vType, String value){
+    @SuppressWarnings({ "boxing", "unchecked", "rawtypes" })
+	public static HashMap<?,?> parseMap(String kType, String vType, String value){
     	//Class<?> kTypeClass = TypesMap.getTypeForComparator(kType).getClass(); 
     	
-    	Type t = Type.getObjectType(kType);
+    	//Type t = Type.getObjectType(kType);
     	
     	Map zeMap = new HashMap();
     	String[] values = value.replace("{", "").replace("}", "").split(", ");
@@ -668,7 +669,7 @@ public class Utils
     
     public static LoadBalancingPolicy getLbPolicy(String lbString, String parameters) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
     	LoadBalancingPolicy policy = null;
-    	LoadBalancingPolicy childPolicy = null;
+    	//LoadBalancingPolicy childPolicy = null;
     	if(!lbString.contains(".")){
 			lbString="com.datastax.driver.core.policies."+ lbString;
 		}
@@ -677,7 +678,7 @@ public class Utils
     		// Child policy or parameters have been specified
     		System.out.println("parameters = " + parameters);
     		String paramsRegex = "([^,]+\\(.+?\\))|([^,]+)";    
-    		String lb_regex = "([a-zA-Z]*Policy)(\\()(.*)(\\))";
+    		//String lb_regex = "([a-zA-Z]*Policy)(\\()(.*)(\\))";
     		Pattern param_pattern = Pattern.compile(paramsRegex);
         	Matcher lb_matcher = param_pattern.matcher(parameters);
         	        	
@@ -803,7 +804,7 @@ public class Utils
     
     public static ReconnectionPolicy getReconnectionPolicy(String rcString, String parameters) throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
     	ReconnectionPolicy policy = null;
-    	ReconnectionPolicy childPolicy = null;
+    	//ReconnectionPolicy childPolicy = null;
     	if(!rcString.contains(".")){
     		rcString="com.datastax.driver.core.policies."+ rcString;
 		}
@@ -812,7 +813,7 @@ public class Utils
     		// Child policy or parameters have been specified
     		System.out.println("parameters = " + parameters);
     		String paramsRegex = "([^,]+\\(.+?\\))|([^,]+)";    
-    		String lb_regex = "([a-zA-Z]*Policy)(\\()(.*)(\\))";
+    		//String lb_regex = "([a-zA-Z]*Policy)(\\()(.*)(\\))";
     		Pattern param_pattern = Pattern.compile(paramsRegex);
         	Matcher lb_matcher = param_pattern.matcher(parameters);
         	        	
@@ -868,25 +869,18 @@ public class Utils
 	        		
 	        		return (ReconnectionPolicy) constructor.newInstance(paramList.toArray(new Object[paramList.size()]));
 
-        	}else{
-        		// Only one policy has been specified, with no parameter or child policy         		
-        		Class<?> clazz = Class.forName(rcString);			
-        		policy =  (ReconnectionPolicy) clazz.newInstance();
-    		
-        		return policy;
-        	
-        	}        	
+        	}
+			// Only one policy has been specified, with no parameter or child policy         		
+			Class<?> clazz = Class.forName(rcString);			
+			policy =  (ReconnectionPolicy) clazz.newInstance();
+ 		
+			return policy;        	
     			    	
-    	}else{
-    		// Only one policy has been specified, with no parameter or child policy 
-    		
-    		Class<?> clazz = Class.forName(rcString);			
-    		policy =  (ReconnectionPolicy) clazz.newInstance();
-		
-    		return policy;
-    	
     	}
-    	//return null;
+		Class<?> clazz = Class.forName(rcString);			
+		policy =  (ReconnectionPolicy) clazz.newInstance();
+
+		return policy;
     }
     
 }

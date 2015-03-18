@@ -92,10 +92,7 @@ public class CassandraDriver implements Driver
 
             return new CassandraConnection(finalProps);
         }
-        else
-        {
-            return null; // signal it is the wrong driver for this protocol:subprotocol
-        }
+		return null; // signal it is the wrong driver for this protocol:subprotocol
     }
 
     /**

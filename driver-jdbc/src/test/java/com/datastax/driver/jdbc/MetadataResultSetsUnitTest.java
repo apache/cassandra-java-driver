@@ -282,7 +282,7 @@ public class MetadataResultSetsUnitTest
         System.out.println("--------------");
         
     	Statement stmt = con.createStatement();
-        java.util.Date now = new java.util.Date();
+        //java.util.Date now = new java.util.Date();
         
         
         // Create the target Column family with each basic data type available on Cassandra

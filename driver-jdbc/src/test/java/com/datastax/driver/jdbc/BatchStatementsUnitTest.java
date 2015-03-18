@@ -135,7 +135,7 @@ public class BatchStatementsUnitTest {
         Statement stmt = con.createStatement();
         stmt.execute("truncate testcollection");
         Statement statement = con.createStatement();
-        int nbRows = 5000;
+        int nbRows = CassandraStatement.MAX_ASYNC_QUERIES;
         
         for(int i=0;i<nbRows;i++){
         	//System.out.println("--- Statement " + i + " ==> INSERT INTO testcollection (k,L) VALUES( " + i + ",[1, 3, 12345])");
@@ -180,7 +180,7 @@ public class BatchStatementsUnitTest {
         Statement stmt = con.createStatement();
         stmt.execute("truncate testcollection");
         Statement statement = con.createStatement();
-        int nbRows = 5000;
+        int nbRows = CassandraStatement.MAX_ASYNC_QUERIES;
         
         StringBuilder queryBuilder = new StringBuilder();
         
@@ -228,7 +228,7 @@ public class BatchStatementsUnitTest {
         Statement stmt = con.createStatement();
         stmt.execute("truncate testcollection");
     	PreparedStatement statement = con.prepareStatement("INSERT INTO testcollection (k,L) VALUES(?,?)");
-        int nbRows = 10000;
+        int nbRows = CassandraStatement.MAX_ASYNC_QUERIES;
         
         for(int i=0;i<nbRows;i++){
         	//System.out.println("--- Generating prepared statement " + i);
