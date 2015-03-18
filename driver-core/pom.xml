@@ -117,7 +117,7 @@
         <artifactId>maven-bundle-plugin</artifactId>
         <extensions>true</extensions>
         <version>2.4.0</version>
-        <!-- <executions>
+        <executions>
           <execution>
             <id>bundle-manifest</id>
             <phase>process-classes</phase>
@@ -125,7 +125,7 @@
               <goal>manifest</goal>
             </goals>
           </execution>
-        </executions> -->
+        </executions>
         <configuration>
           <instructions>
             <Bundle-SymbolicName>com.datastax.driver.core</Bundle-SymbolicName>
@@ -150,7 +150,7 @@
         <artifactId>maven-bundle-plugin</artifactId>
         <extensions>true</extensions>
         <version>2.4.0</version>
-        <!-- <executions>
+        <executions>
           <execution>
             <id>bundle-manifest</id>
             <phase>process-classes</phase>
@@ -158,7 +158,7 @@
               <goal>manifest</goal>
             </goals>
           </execution>
-        </executions> -->
+        </executions>
         <configuration>
           <instructions>
             <Bundle-SymbolicName>com.datastax.driver.core</Bundle-SymbolicName>

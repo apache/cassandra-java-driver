@@ -42,20 +42,20 @@
         <extensions>true</extensions>
         <version>2.4.0</version>
         <executions>
-          <!--  <execution>
+          <execution>
             <id>bundle-manifest</id>
             <phase>process-classes</phase>
             <goals>
               <goal>manifest</goal>
             </goals>
-          </execution> -->
+          </execution>
         </executions>
         <configuration>
           <instructions>
             <Bundle-SymbolicName>com.datastax.driver.dse</Bundle-SymbolicName>
             <Bundle-Version>${project.version}</Bundle-Version>
             <_include>-osgi.bnd</_include>
-          </instructions>
+          </instructions>          
           <supportedProjectTypes>
             <supportedProjectType>jar</supportedProjectType>
             <supportedProjectType>bundle</supportedProjectType>
