@@ -83,13 +83,13 @@
         <extensions>true</extensions>
         <version>2.4.0</version>
         <executions>
-          <!--  <execution>
+          <execution>
             <id>bundle-manifest</id>
             <phase>process-classes</phase>
             <goals>
               <goal>manifest</goal>
             </goals>
-          </execution> -->
+          </execution>
         </executions>
         <configuration>
           <instructions>
