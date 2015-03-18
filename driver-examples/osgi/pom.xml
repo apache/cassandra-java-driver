@@ -26,7 +26,7 @@
 
   <properties>
     <felix.version>4.6.0</felix.version>
-    <pax-exam.version>4.4.0</pax-exam.version>
+    <pax-exam.version>3.6.0</pax-exam.version>
   </properties>
 
   <dependencies>
