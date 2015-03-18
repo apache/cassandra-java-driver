@@ -58,7 +58,7 @@ public class MailboxServiceIT {
     }
 
     private MavenArtifactProvisionOption nettyBundle() {
-        return mavenBundle("io.netty", "netty", "3.9.0.Final");
+        return mavenBundle("io.netty", "netty-all", "4.0.26.Final");
     }
 
     private CompositeOption defaultOptions() {
