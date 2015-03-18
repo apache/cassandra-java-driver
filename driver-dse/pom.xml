@@ -55,7 +55,7 @@
             <Bundle-SymbolicName>com.datastax.driver.dse</Bundle-SymbolicName>
             <Bundle-Version>${project.version}</Bundle-Version>
             <_include>-osgi.bnd</_include>
-          </instructions>          
+          </instructions>
           <supportedProjectTypes>
             <supportedProjectType>jar</supportedProjectType>
             <supportedProjectType>bundle</supportedProjectType>
