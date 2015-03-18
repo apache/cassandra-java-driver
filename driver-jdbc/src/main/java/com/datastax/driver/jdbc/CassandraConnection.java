@@ -20,22 +20,18 @@
  */
 package com.datastax.driver.jdbc;
 
-import java.nio.ByteBuffer;
 import java.sql.*;
-import java.util.Calendar;
 import java.util.Collection;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 
 
@@ -65,10 +61,6 @@ import com.datastax.driver.core.Session;
 
 import com.datastax.driver.core.SocketOptions;
 import com.datastax.driver.core.UserType;
-import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
-import com.datastax.driver.core.policies.DefaultRetryPolicy;
-import com.datastax.driver.core.policies.LatencyAwarePolicy;
-import com.datastax.driver.core.policies.Policies;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
 
@@ -134,7 +126,7 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     
     PreparedStatement isAlive = null;
     
-    private String currentCqlVersion;
+    //private String currentCqlVersion;
     
     public ConsistencyLevel defaultConsistencyLevel;
 
@@ -158,8 +150,6 @@ public class CassandraConnection extends AbstractConnection implements Connectio
             username = props.getProperty(TAG_USER,"");
             String password = props.getProperty(TAG_PASSWORD,"");
             String version = props.getProperty(TAG_CQL_VERSION,DEFAULT_CQL_VERSION);
-            String primaryDc = props.getProperty(TAG_PRIMARY_DC,"");
-            String backupDc = props.getProperty(TAG_BACKUP_DC,"");
             String loadBalancingPolicy = props.getProperty(TAG_LOADBALANCING_POLICY,"");
             String retryPolicy = props.getProperty(TAG_RETRY_POLICY,"");
             String reconnectPolicy = props.getProperty(TAG_RECONNECT_POLICY,"");
@@ -168,8 +158,7 @@ public class CassandraConnection extends AbstractConnection implements Connectio
             connectionProps.setProperty(TAG_ACTIVE_CQL_VERSION, version);
             majorCqlVersion = getMajor(version);
             defaultConsistencyLevel = ConsistencyLevel.valueOf(props.getProperty(TAG_CONSISTENCY_LEVEL,ConsistencyLevel.ONE.name()));
-            boolean connected=false;            
-            int retries=0;            
+                        
             
             Builder builder = Cluster.builder();
             builder.addContactPoints(host.split("--")).withPort(port);
@@ -243,7 +232,8 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     }
     
     // get the Major portion of a string like : Major.minor.patch where 2 is the default
-    private final int getMajor(String version)
+    @SuppressWarnings("boxing")
+	private final int getMajor(String version)
     {
         int major = 0;
         String[] parts = version.split("\\.");

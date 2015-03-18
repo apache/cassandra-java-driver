@@ -27,11 +27,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
-import java.sql.SQLNonTransientConnectionException;
 import java.sql.SQLNonTransientException;
 import java.sql.SQLRecoverableException;
 import java.sql.SQLSyntaxErrorException;
-import java.sql.SQLTransientConnectionException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 
@@ -46,11 +44,8 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Row;
 import com.datastax.driver.core.SimpleStatement;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Cassandra statement: implementation class for {@link PreparedStatement}.
@@ -58,7 +53,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class CassandraStatement extends AbstractStatement implements CassandraStatementExtras, Comparable<Object>, Statement
 {
-    public static final int MAX_ASYNC_QUERIES=10000;
+    public static final int MAX_ASYNC_QUERIES=1000;
     //public static final String semiColonRegex = ";(?=([^\\']*\\'[^\\']*\\')*[^\\']*$)";
     //public static final String semiColonRegex = "(?<!');(?!')";
     public static final String semiColonRegex = ";";
@@ -181,7 +176,7 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
             	// several statements in the query to execute asynchronously            	
             	List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>();
             	ArrayList<com.datastax.driver.core.ResultSet> results = Lists.newArrayList();            	
-            	if(cqlQueries.length>MAX_ASYNC_QUERIES){
+            	if(cqlQueries.length>MAX_ASYNC_QUERIES*1.1){
             		// Protect the cluster from receiving too many queries at once and force the dev to split the load
             		throw new SQLNonTransientException("Too many queries at once (" + cqlQueries.length + "). You must split your queries into more batches !");
             	}
@@ -264,7 +259,8 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
 		
     	int i=0;
 		for (ResultSetFuture future : futures){
-			com.datastax.driver.core.ResultSet rows = future.getUninterruptibly();						
+			//com.datastax.driver.core.ResultSet rows = future.getUninterruptibly();
+			future.getUninterruptibly();
 			returnCounts[i]=1;
 			i++;
 		}
@@ -299,7 +295,8 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
         return executeUpdate(sql);
     }
 
-    public Connection getConnection() throws SQLException
+    @SuppressWarnings("cast")
+	public Connection getConnection() throws SQLException
     {
         checkNotClosed();
         return (Connection) connection;
@@ -337,7 +334,8 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
         return false;
     }
 
-    public boolean getMoreResults(int current) throws SQLException
+    @SuppressWarnings("boxing")
+	public boolean getMoreResults(int current) throws SQLException
     {
         checkNotClosed();
 
@@ -430,7 +428,8 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
         escapeProcessing = enable;
     }
 
-    public void setFetchDirection(int direction) throws SQLException
+    @SuppressWarnings("boxing")
+	public void setFetchDirection(int direction) throws SQLException
     {
         checkNotClosed();
 
@@ -444,7 +443,8 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
     }
 
 
-    public void setFetchSize(int size) throws SQLException
+    @SuppressWarnings("boxing")
+	public void setFetchSize(int size) throws SQLException
     {
         checkNotClosed();
         if (size < 0) throw new SQLSyntaxErrorException(String.format(BAD_FETCH_SIZE, size));
@@ -497,6 +497,6 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
     {
         if (this.equals(target)) return 0;
         if (this.hashCode()< target.hashCode()) return -1;
-        else return 1;
+		return 1;
     }
 }

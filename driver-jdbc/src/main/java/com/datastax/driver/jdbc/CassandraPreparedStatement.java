@@ -21,9 +21,6 @@
 package com.datastax.driver.jdbc;
 
 import static com.datastax.driver.jdbc.Utils.NO_RESULTSET;
-import static com.datastax.driver.jdbc.Utils.NO_SERVER;
-import static com.datastax.driver.jdbc.Utils.NO_UPDATE_COUNT;
-import static com.datastax.driver.jdbc.Utils.SCHEMA_MISMATCH;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,8 +41,6 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLNonTransientConnectionException;
 import java.sql.SQLNonTransientException;
 import java.sql.SQLRecoverableException;
-import java.sql.SQLSyntaxErrorException;
-import java.sql.SQLTransientConnectionException;
 import java.sql.SQLTransientException;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -55,28 +50,21 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 class CassandraPreparedStatement extends CassandraStatement implements PreparedStatement
 {
     private static final Logger LOG = LoggerFactory.getLogger(CassandraPreparedStatement.class);
-
-    /** the key token passed back from server-side to identify the prepared statement */
-    private int itemId;
 
     /** the count of bound variable markers (?) encountered in the parse o the CQL server-side */
     private int count;
@@ -126,7 +114,8 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         return cql;
     }
 
-    private final void checkIndex(int index) throws SQLException
+    @SuppressWarnings("boxing")
+	private final void checkIndex(int index) throws SQLException
     {
         if (index > count) throw new SQLRecoverableException(String.format("the column index : %d is greater than the count of bound variable markers in the CQL: %d",
             index,
@@ -213,7 +202,7 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
 			
 	    	int i=0;
 			for (ResultSetFuture future : futures){
-				com.datastax.driver.core.ResultSet rows = future.getUninterruptibly();
+				future.getUninterruptibly();
 				returnCounts[i]=1;
 				i++;
 			}
@@ -348,7 +337,8 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
     }
 
 
-    public void setInt(int parameterIndex, int integer) throws SQLException
+    @SuppressWarnings("cast")
+	public void setInt(int parameterIndex, int integer) throws SQLException
     {
         checkNotClosed();
         checkIndex(parameterIndex);
@@ -440,7 +430,8 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         setObject(parameterIndex, object, targetSqlType, 0);
     }
 
-    public final void setObject(int parameterIndex, Object object, int targetSqlType, int scaleOrLength) throws SQLException
+    @SuppressWarnings({ "boxing", "unchecked" })
+	public final void setObject(int parameterIndex, Object object, int targetSqlType, int scaleOrLength) throws SQLException
     {
         checkNotClosed();
         checkIndex(parameterIndex);
@@ -572,7 +563,8 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
     }
 
 
-    public void setTime(int parameterIndex, Time value) throws SQLException
+    @SuppressWarnings("boxing")
+	public void setTime(int parameterIndex, Time value) throws SQLException
     {
         checkNotClosed();
         checkIndex(parameterIndex);
@@ -623,7 +615,8 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         return currentResultSet;
     }
     
-    private static final <T> List handleAsList(Class<? extends Object> objectClass, Object object) throws SQLException
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	private static final <T> List handleAsList(Class<? extends Object> objectClass, Object object)
     {
         if (!List.class.isAssignableFrom(objectClass)) return null;        
         //Class<?> elType = getCollectionElementType(object);
@@ -631,14 +624,16 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
                 
     }
 
-    private static final <T> Set handleAsSet(Class<? extends Object> objectClass, Object object) throws SQLException
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	private static final <T> Set handleAsSet(Class<? extends Object> objectClass, Object object)
     {
         if (!Set.class.isAssignableFrom(objectClass)) return null;       
         
         return (Set<T>) object.getClass().cast(object);        
     }
 
-    private static final <K,V> HashMap  handleAsMap(Class<? extends Object> objectClass, Object object) throws SQLException
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	private static final <K,V> HashMap  handleAsMap(Class<? extends Object> objectClass, Object object)
     {
         if (!Map.class.isAssignableFrom(objectClass)) return null;
 
@@ -652,24 +647,28 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         
     }
     
-    private static final Class<?> getCollectionElementType(Object maybeCollection)
+    @SuppressWarnings("rawtypes")
+	private static final Class<?> getCollectionElementType(Object maybeCollection)
     {
         Collection trial = (Collection) maybeCollection;
         if (trial.isEmpty()) return trial.getClass();
-        else return trial.iterator().next().getClass();
+		return trial.iterator().next().getClass();
     }
    
-    private static final Class<?> getKeyElementType(Object maybeMap)
+    @SuppressWarnings({ "unused", "rawtypes" })
+	private static final Class<?> getKeyElementType(Object maybeMap)
     {
         return getCollectionElementType(((Map) maybeMap).keySet());
     }
    
-    private static final Class<?> getValueElementType(Object maybeMap)
+    @SuppressWarnings({ "unused", "rawtypes" })
+	private static final Class<?> getValueElementType(Object maybeMap)
     {
         return getCollectionElementType(((Map) maybeMap).values());
     }
 
 
+	@SuppressWarnings("boxing")
 	@Override
 	public void setBlob(int parameterIndex, Blob value) throws SQLException {
 		bindValues.put(parameterIndex,value);

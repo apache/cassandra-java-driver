@@ -753,7 +753,7 @@ public class JdbcRegressionUnitTest
         System.out.println("--------------");
         
     	Statement stmt = con.createStatement();
-        java.util.Date now = new java.util.Date();
+        //java.util.Date now = new java.util.Date();
         
         
         // Create the target Column family with each basic data type available on Cassandra
@@ -824,7 +824,7 @@ public class JdbcRegressionUnitTest
 	        System.out.println("--------------");
 	        
 	    	Statement stmt = con.createStatement();
-	        java.util.Date now = new java.util.Date();
+	        //java.util.Date now = new java.util.Date();
 	        
 	        
 	        // Create the target Column family with each basic data type available on Cassandra
@@ -894,7 +894,7 @@ public class JdbcRegressionUnitTest
 	        System.out.println("--------------");
 	        
 	    	Statement stmt = con.createStatement();
-	        java.util.Date now = new java.util.Date();
+	        //java.util.Date now = new java.util.Date();
 	        
 	        
 	        // Create the target Column family with each basic data type available on Cassandra
@@ -975,7 +975,7 @@ public class JdbcRegressionUnitTest
         System.out.println("--------------");
         
     	Statement stmt = con.createStatement();
-        java.util.Date now = new java.util.Date();
+        //java.util.Date now = new java.util.Date();
         
         
         // Create the target Column family with each basic data type available on Cassandra
@@ -1022,7 +1022,7 @@ public class JdbcRegressionUnitTest
         stmt.execute(createCF);        
         
     	StringBuilder queries = new StringBuilder();
-    	for(int i=0;i<CassandraStatement.MAX_ASYNC_QUERIES+10;i++){
+    	for(int i=0;i<CassandraStatement.MAX_ASYNC_QUERIES*2;i++){
     		queries.append("INSERT INTO test_async_query_size_limit(bigint_col, int_col) values(" + i + "," + i + ");");
     	}
     	
