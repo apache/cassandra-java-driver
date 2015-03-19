@@ -55,8 +55,6 @@ public class RoundRobinPolicy implements LoadBalancingPolicy, CloseableLoadBalan
     private final CopyOnWriteArrayList<Host> liveHosts = new CopyOnWriteArrayList<Host>();
     private final AtomicInteger index = new AtomicInteger();
 
-    private final CopyOnWriteArrayList<Host> suspectedHosts = new CopyOnWriteArrayList<Host>();
-
     private volatile Configuration configuration;
     private volatile boolean hasLoggedLocalCLUse;
 
@@ -132,23 +130,11 @@ public class RoundRobinPolicy implements LoadBalancingPolicy, CloseableLoadBalan
 
             private int idx = startIdx;
             private int remaining = hosts.size();
-            private Iterator<Host> suspected;
 
             @Override
             protected Host computeNext() {
-                if (remaining <= 0) {
-
-                    if (suspected == null)
-                        suspected = suspectedHosts.iterator();
-
-                    while (suspected.hasNext()) {
-                        Host h = suspected.next();
-                        waitOnReconnection(h);
-                        if (h.isUp())
-                            return h;
-                    }
+                if (remaining <= 0)
                     return endOfData();
-                }
 
                 remaining--;
                 int c = idx++ % hosts.size();
@@ -159,34 +145,18 @@ public class RoundRobinPolicy implements LoadBalancingPolicy, CloseableLoadBalan
         };
     }
 
-    private void waitOnReconnection(Host h) {
-        try {
-            h.getInitialReconnectionAttemptFuture().get(configuration.getSocketOptions().getConnectTimeoutMillis(), TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (ExecutionException e) {
-            throw new AssertionError(e);
-        } catch (TimeoutException e) {
-            // Shouldn't really happen but isn't really a huge deal
-            logger.debug("Timeout while waiting only host initial reconnection future", e);
-        }
-    }
-
     @Override
     public void onUp(Host host) {
         liveHosts.addIfAbsent(host);
-        suspectedHosts.remove(host);
     }
 
     @Override
     public void onSuspected(Host host) {
-        suspectedHosts.addIfAbsent(host);
     }
 
     @Override
     public void onDown(Host host) {
         liveHosts.remove(host);
-        suspectedHosts.remove(host);
     }
 
     @Override

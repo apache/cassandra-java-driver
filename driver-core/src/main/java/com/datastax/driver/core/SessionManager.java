@@ -423,9 +423,6 @@ class SessionManager extends AbstractSession {
         updateCreatedPools();
     }
 
-    void onSuspected(Host host) {
-    }
-
     void onRemove(Host host) throws InterruptedException, ExecutionException {
         onDown(host);
     }

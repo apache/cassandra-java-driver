@@ -111,8 +111,7 @@ public class RecommissionedNodeTest {
         // Node 1 should now be DOWN with no reconnection attempt
         assertThat(mainCluster).host(1)
             .hasState(DOWN)
-            .isNotReconnectingFromDown()
-            .isNotReconnectingFromSuspected();
+            .isNotReconnectingFromDown();
     }
 
     @Test(groups = "long")
@@ -135,8 +134,7 @@ public class RecommissionedNodeTest {
         // Node 1 should now be DOWN with no reconnection attempt
         assertThat(mainCluster).host(1)
             .hasState(DOWN)
-            .isNotReconnectingFromDown()
-            .isNotReconnectingFromSuspected();
+            .isNotReconnectingFromDown();
     }
 
     @AfterMethod(groups = "long")

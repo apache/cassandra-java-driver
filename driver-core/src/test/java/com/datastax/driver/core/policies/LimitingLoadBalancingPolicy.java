@@ -134,13 +134,6 @@ public class LimitingLoadBalancingPolicy extends DelegatingLoadBalancingPolicy {
     }
 
     @Override
-    public void onSuspected(Host host) {
-        // If a node gets suspected, it means the driver was connected to it, so it was a chosen node.
-        // Keep it as chosen for now, but notify the child policy which might reorder the query plan accordingly.
-        delegate.onSuspected(host);
-    }
-
-    @Override
     public void onDown(Host host) {
         delegate.onDown(host);
 
