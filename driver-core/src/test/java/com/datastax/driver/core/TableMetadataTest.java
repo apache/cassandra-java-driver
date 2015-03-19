@@ -19,7 +19,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void should_escape_single_quote_table_comment() {
-        TableMetadata table = cluster.getMetadata().getKeyspace("ks").getTable("single_quote");
+        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("single_quote");
         assertThat(table.asCQLQuery()).contains("comment with single quote '' should work");
     }
 }

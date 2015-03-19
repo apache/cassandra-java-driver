@@ -15,16 +15,19 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.*;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.testng.annotations.Test;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
+
+
 
 /**
  * Simple test of the Sessions methods against a one node cluster.
@@ -112,7 +115,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         try {
 
-            Session compressedSession = cluster.connect(TestUtils.SIMPLE_KEYSPACE);
+            Session compressedSession = cluster.connect(keyspace);
 
             // Simple calls to all versions of the execute/executeAsync methods
             String key = "execute_compressed_test";
@@ -196,63 +199,6 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @Test(groups = "short")
-    public void connectionLeakTest() throws Exception {
-        // Checking for JAVA-342
-
-        // give the driver time to close other sessions in this class
-        Thread.sleep(10);
-
-        // create a new cluster object and ensure 0 sessions and connections
-        Cluster cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1').build();
-
-        int corePoolSize = cluster.getConfiguration()
-                .getPoolingOptions()
-                .getCoreConnectionsPerHost(HostDistance.LOCAL);
-
-        assertEquals(cluster.manager.sessions.size(), 0);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 0);
-
-        // ensure sessions.size() returns with 1 control connection + core pool size.
-        Session session = cluster.connect();
-        assertEquals(cluster.manager.sessions.size(), 1);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1 + corePoolSize);
-
-        // ensure sessions.size() returns to 0 with only 1 active connection (the control connection)
-        session.close();
-        assertEquals(cluster.manager.sessions.size(), 0);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-
-        try {
-            Session thisSession;
-
-            // ensure bootstrapping a node does not create additional connections
-            cassandraCluster.bootstrapNode(2);
-            assertEquals(cluster.manager.sessions.size(), 0);
-            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-
-            // ensure a new session gets registered and core connections are established
-            // there should be corePoolSize more connections to accommodate for the new host.
-            thisSession = cluster.connect();
-            assertEquals(cluster.manager.sessions.size(), 1);
-            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1 + (corePoolSize * 2));
-
-            // ensure bootstrapping a node does not create additional connections that won't get cleaned up
-            thisSession.close();
-            assertEquals(cluster.manager.sessions.size(), 0);
-            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-
-        } finally {
-            // ensure we decommission node2 for the rest of the tests
-            cassandraCluster.decommissionNode(2);
-
-            assertEquals(cluster.manager.sessions.size(), 0);
-            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-
-            cluster.close();
-        }
-    }
-
     /**
      * Checks for deadlocks when a session shutdown races with the initialization of the cluster (JAVA-418).
      */
@@ -262,7 +208,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
             // Use our own cluster and session (not the ones provided by the parent class) because we want an uninitialized cluster
             // (note the use of newSession below)
-            final Cluster cluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "1").build();
+            final Cluster cluster = Cluster.builder().addContactPointsWithPorts(Collections.singletonList(hostAddress)).build();
             final Session session = cluster.newSession();
 
             // Spawn two threads to simulate the race
