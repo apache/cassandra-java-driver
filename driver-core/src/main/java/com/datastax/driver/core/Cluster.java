@@ -1069,28 +1069,12 @@ public class Cluster implements Closeable {
         }
     }
 
-    private static ThreadFactory threadFactory(String nameFormat) {
-        return new ThreadFactoryBuilder().setNameFormat(nameFormat).build();
-    }
-
     static long timeSince(long startNanos, TimeUnit destUnit) {
         return destUnit.convert(System.nanoTime() - startNanos, TimeUnit.NANOSECONDS);
     }
 
     private static String generateClusterName() {
         return "cluster" + CLUSTER_ID.incrementAndGet();
-    }
-
-    private static ListeningExecutorService makeExecutor(int threads, String name) {
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(threads,
-                                                             threads,
-                                                             DEFAULT_THREAD_KEEP_ALIVE,
-                                                             TimeUnit.SECONDS,
-                                                             new LinkedBlockingQueue<Runnable>(),
-                                                             threadFactory(name));
-
-        executor.allowCoreThreadTimeOut(true);
-        return MoreExecutors.listeningDecorator(executor);
     }
 
     /**
@@ -1119,10 +1103,10 @@ public class Cluster implements Closeable {
 
         final ConvictionPolicy.Factory convictionPolicyFactory = new ConvictionPolicy.Simple.Factory();
 
-        final ScheduledExecutorService reconnectionExecutor = Executors.newScheduledThreadPool(2, threadFactory("Reconnection-%d"));
+        final ScheduledExecutorService reconnectionExecutor;
         // scheduledTasksExecutor is used to process C* notifications. So having it mono-threaded ensures notifications are
         // applied in the order received.
-        final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, threadFactory("Scheduled Tasks-%d"));
+        final ScheduledExecutorService scheduledTasksExecutor;
 
         // Executor used for tasks that shouldn't be executed on an IO thread. Used for short-lived, generally non-blocking tasks
         final ListeningExecutorService executor;
@@ -1150,10 +1134,12 @@ public class Cluster implements Closeable {
             this.configuration = configuration;
             this.configuration.register(this);
 
-            this.executor = makeExecutor(NON_BLOCKING_EXECUTOR_SIZE, "Cassandra Java Driver worker-%d");
-            this.blockingExecutor = makeExecutor(2, "Cassandra Java Driver blocking tasks worker-%d");
+            this.executor = makeExecutor(NON_BLOCKING_EXECUTOR_SIZE, "worker");
+            this.blockingExecutor = makeExecutor(2, "blocking-task-worker");
+            this.reconnectionExecutor = Executors.newScheduledThreadPool(2, threadFactory("reconnection"));
+            this.scheduledTasksExecutor = Executors.newScheduledThreadPool(1, threadFactory("scheduled-task-worker"));
 
-            this.reaper = new ConnectionReaper();
+            this.reaper = new ConnectionReaper(this);
 
             this.metadata = new Metadata(this);
             this.contactPoints = contactPoints;
@@ -1250,6 +1236,22 @@ public class Cluster implements Closeable {
 
         int protocolVersion() {
             return connectionFactory.protocolVersion;
+        }
+
+        ThreadFactory threadFactory(String name) {
+            return new ThreadFactoryBuilder().setNameFormat(clusterName + "-" + name + "-%d").build();
+        }
+
+        private ListeningExecutorService makeExecutor(int threads, String name) {
+            ThreadPoolExecutor executor = new ThreadPoolExecutor(threads,
+                threads,
+                DEFAULT_THREAD_KEEP_ALIVE,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(),
+                threadFactory(name));
+
+            executor.allowCoreThreadTimeOut(true);
+            return MoreExecutors.listeningDecorator(executor);
         }
 
         Cluster getCluster() {
@@ -2234,7 +2236,7 @@ public class Cluster implements Closeable {
     static class ConnectionReaper {
         private static final int INTERVAL_MS = 15000;
 
-        private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, threadFactory("Reaper-%d"));
+        private final ScheduledExecutorService executor;
         private final Map<Connection, Long> connections = new ConcurrentHashMap<Connection, Long>();
 
         private volatile boolean shutdown;
@@ -2257,7 +2259,8 @@ public class Cluster implements Closeable {
             }
         };
 
-        ConnectionReaper() {
+        ConnectionReaper(Cluster.Manager manager) {
+            executor = Executors.newScheduledThreadPool(1, manager.threadFactory("connection-reaper"));
             executor.scheduleWithFixedDelay(reaperTask, INTERVAL_MS, INTERVAL_MS, TimeUnit.MILLISECONDS);
         }
 

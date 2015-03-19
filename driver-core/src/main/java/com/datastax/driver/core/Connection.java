@@ -15,11 +15,9 @@
  */
 package com.datastax.driver.core;
 
+import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -538,8 +536,10 @@ class Connection {
 
     public static class Factory {
 
+        private static final Class[] EVENT_GROUP_ARGUMENTS = {int.class, ThreadFactory.class};
         private static final Class<? extends EventLoopGroup> EVENT_LOOP_GROUP_CLASS;
         private static final Class<? extends Channel> CHANNEL_CLASS;
+        private static final Constructor<? extends EventLoopGroup> EVENT_LOOP_GROUP_CONSTRUCTOR;
         static {
             boolean useEpoll;
             try {
@@ -547,6 +547,10 @@ class Connection {
                 if (FORCE_NIO) {
                     logger.info("Found Netty's native epoll transport in the classpath, "
                         + "but NIO was forced through the FORCE_NIO system property");
+                    useEpoll = false;
+                } else if(!System.getProperty("os.name", "").toLowerCase(Locale.US).equals("linux")) {
+                    logger.warn("Found Netty's native epoll transport, but not running on linux-based operating " +
+                            "system.  Using NIO instead.");
                     useEpoll = false;
                 } else {
                     logger.info("Found Netty's native epoll transport in the classpath, using it");
@@ -558,12 +562,20 @@ class Connection {
             }
             EVENT_LOOP_GROUP_CLASS = useEpoll ? EpollEventLoopGroup.class :  NioEventLoopGroup.class;
             CHANNEL_CLASS = useEpoll ? EpollSocketChannel.class : NioSocketChannel.class;
+
+            Constructor<? extends EventLoopGroup> constructor = null;
+            try {
+                constructor = EVENT_LOOP_GROUP_CLASS.getDeclaredConstructor(EVENT_GROUP_ARGUMENTS);
+            } catch (NoSuchMethodException e) {
+                logger.warn("Could not resolve {}(int, ThreadFactory), using default constructor instead.",
+                        EVENT_LOOP_GROUP_CLASS.getName());
+            }
+            EVENT_LOOP_GROUP_CONSTRUCTOR = constructor;
         }
 
-        public final HashedWheelTimer timer = new HashedWheelTimer(new ThreadFactoryBuilder().setNameFormat("Timeouter-%d").build());
+        public final HashedWheelTimer timer;
 
         private final EventLoopGroup eventLoopGroup;
-
         private final ChannelGroup allChannels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
         private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
@@ -586,12 +598,19 @@ class Connection {
             this.protocolVersion = configuration.getProtocolOptions().initialProtocolVersion;
 
             try {
-                eventLoopGroup = EVENT_LOOP_GROUP_CLASS.newInstance();
+                // Use default constructor if the specialized constructor could not be resolved.
+                if(EVENT_LOOP_GROUP_CONSTRUCTOR != null) {
+                    eventLoopGroup = EVENT_LOOP_GROUP_CONSTRUCTOR.newInstance(0, manager.threadFactory("nio-worker"));
+                } else {
+                    eventLoopGroup = EVENT_LOOP_GROUP_CLASS.newInstance();
+                }
             } catch (Exception e) {
                 throw new AssertionError("Could not create an instance of "
                     + EVENT_LOOP_GROUP_CLASS.getName()
                     + ", this should not happen");
             }
+
+            this.timer = new HashedWheelTimer(manager.threadFactory("timeouter"));
         }
 
         public int getPort() {
