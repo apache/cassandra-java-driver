@@ -30,6 +30,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -532,9 +535,25 @@ class Connection {
 
     public static class Factory {
 
+        private static final Class<? extends EventLoopGroup> EVENT_LOOP_GROUP_CLASS;
+        private static final Class<? extends Channel> CHANNEL_CLASS;
+        static {
+            boolean epollAvailable = true;
+            try {
+                Class.forName("io.netty.channel.epoll.EpollEventLoopGroup");
+                logger.info("Found Netty's native epoll transport in the classpath, using it");
+            } catch (ClassNotFoundException e) {
+                logger.info("Could not find Netty's native epoll transport in the classpath, defaulting to NIO transport");
+                epollAvailable = false;
+            }
+            EVENT_LOOP_GROUP_CLASS = epollAvailable ? EpollEventLoopGroup.class :  NioEventLoopGroup.class;
+            CHANNEL_CLASS = epollAvailable ? EpollSocketChannel.class : NioSocketChannel.class;
+        }
+
         public final HashedWheelTimer timer = new HashedWheelTimer(new ThreadFactoryBuilder().setNameFormat("Timeouter-%d").build());
 
-        private final EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
+        private final EventLoopGroup eventLoopGroup;
+
         private final ChannelGroup allChannels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
         private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
@@ -555,6 +574,14 @@ class Connection {
             this.configuration = configuration;
             this.authProvider = configuration.getProtocolOptions().getAuthProvider();
             this.protocolVersion = configuration.getProtocolOptions().initialProtocolVersion;
+
+            try {
+                eventLoopGroup = EVENT_LOOP_GROUP_CLASS.newInstance();
+            } catch (Exception e) {
+                throw new AssertionError("Could not create an instance of "
+                    + EVENT_LOOP_GROUP_CLASS.getName()
+                    + ", this should not happen");
+            }
         }
 
         public int getPort() {
@@ -613,7 +640,7 @@ class Connection {
         private Bootstrap newBootstrap() {
             Bootstrap b = new Bootstrap();
             b.group(eventLoopGroup)
-                .channel(NioSocketChannel.class);
+                .channel(CHANNEL_CLASS);
 
             SocketOptions options = configuration.getSocketOptions();
 
