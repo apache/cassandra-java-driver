@@ -30,6 +30,7 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLNonTransientException;
 import java.sql.SQLRecoverableException;
 import java.sql.SQLSyntaxErrorException;
+import java.sql.SQLTransientException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 
@@ -168,13 +169,13 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
     private void doExecute(String cql) throws SQLException
     {
     	
-    	    	
+    	List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>();
         try
         {
         	String[] cqlQueries = cql.split(semiColonRegex);
             if(cqlQueries.length>1 && !(cql.trim().toLowerCase().startsWith("begin") && cql.toLowerCase().contains("batch") && cql.toLowerCase().contains("apply"))){
             	// several statements in the query to execute asynchronously            	
-            	List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>();
+            	
             	ArrayList<com.datastax.driver.core.ResultSet> results = Lists.newArrayList();            	
             	if(cqlQueries.length>MAX_ASYNC_QUERIES*1.1){
             		// Protect the cluster from receiving too many queries at once and force the dev to split the load
@@ -200,8 +201,6 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
             	
             	//ListenableFuture<List<com.datastax.driver.core.ResultSet>> res = Futures.allAsList(futures);
             	
-            	
-                
             	for (ResultSetFuture future : futures){
             		com.datastax.driver.core.ResultSet rows = future.getUninterruptibly();            	
             		results.add(rows);            			            	
@@ -220,7 +219,15 @@ public class CassandraStatement extends AbstractStatement implements CassandraSt
         }        
         catch (Exception e)
         {        	
-            throw new SQLNonTransientException(e);
+        	
+        		for(ResultSetFuture future:futures){
+        			try{
+        				future.cancel(true);
+        			}catch(Exception e1){
+                		
+                	}
+        		}        	
+            throw new SQLTransientException(e);
         }
          
     }

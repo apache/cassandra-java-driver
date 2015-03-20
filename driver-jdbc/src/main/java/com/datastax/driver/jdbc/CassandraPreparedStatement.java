@@ -105,7 +105,7 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
        }
        catch (Exception e)
        {
-           throw new SQLNonTransientConnectionException(e);
+           throw new SQLTransientException(e);
        }
     }
     
@@ -173,7 +173,7 @@ class CassandraPreparedStatement extends CassandraStatement implements PreparedS
         }
         catch (Exception e)
         {
-            throw new SQLNonTransientConnectionException(e);
+            throw new SQLTransientException(e);
         }
     }
 

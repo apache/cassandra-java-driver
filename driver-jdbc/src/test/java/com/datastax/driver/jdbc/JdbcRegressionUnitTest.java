@@ -48,6 +48,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.SQLNonTransientException;
+import java.sql.SQLTransientException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.sql.Timestamp;
@@ -1014,7 +1015,7 @@ public class JdbcRegressionUnitTest
        
     }
     
-    @Test(expectedExceptions = SQLNonTransientException.class)
+    @Test(expectedExceptions = SQLTransientException.class)
     public void testAsyncQuerySizeLimit() throws Exception
     {
     	Statement stmt = con.createStatement();
