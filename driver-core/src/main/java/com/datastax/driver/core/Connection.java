@@ -16,7 +16,10 @@
 package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,6 +60,8 @@ class Connection {
 
     private static final Logger logger = LoggerFactory.getLogger(Connection.class);
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+
+    private static final boolean DISABLE_COALESCING = SystemProperties.getBoolean("com.datastax.driver.DISABLE_COALESCING", false);
 
     public final InetSocketAddress address;
     private final String name;
@@ -404,8 +409,12 @@ class Connection {
 
         logger.trace("{} writing request {}", this, request);
         writer.incrementAndGet();
-        channel.writeAndFlush(request).addListener(writeHandler(request, handler));
 
+        if (DISABLE_COALESCING) {
+            channel.writeAndFlush(request).addListener(writeHandler(request, handler));
+        } else {
+            flush(new FlushItem(channel, request, writeHandler(request, handler)));
+        }
         if (startTimeout)
             handler.startTimeout();
 
@@ -644,6 +653,89 @@ class Connection {
             eventLoopGroup.shutdownGracefully().syncUninterruptibly();
             timer.stop();
         }
+    }
+
+    private static final class Flusher implements Runnable {
+        final EventLoop eventLoop;
+        final ConcurrentLinkedQueue<FlushItem> queued = new ConcurrentLinkedQueue<FlushItem>();
+        final AtomicBoolean running = new AtomicBoolean(false);
+        final HashSet<Channel> channels = new HashSet<Channel>();
+        final List<FlushItem> flushed = new ArrayList<FlushItem>();
+        int runsSinceFlush = 0;
+        int runsWithNoWork = 0;
+
+        private Flusher(EventLoop eventLoop) {
+            this.eventLoop = eventLoop;
+        }
+
+        void start() {
+            if (!running.get() && running.compareAndSet(false, true)) {
+                this.eventLoop.execute(this);
+            }
+        }
+
+        public void run() {
+
+            boolean doneWork = false;
+            FlushItem flush;
+            while (null != (flush = queued.poll())) {
+                channels.add(flush.channel);
+                flush.channel.write(flush.request).addListener(flush.listener);
+                flushed.add(flush);
+                doneWork = true;
+            }
+
+            runsSinceFlush++;
+
+            if (!doneWork || runsSinceFlush > 2 || flushed.size() > 50) {
+                for (Channel channel : channels)
+                    channel.flush();
+
+                channels.clear();
+                flushed.clear();
+                runsSinceFlush = 0;
+            }
+
+            if (doneWork) {
+                runsWithNoWork = 0;
+            } else {
+                // either reschedule or cancel
+                if (++runsWithNoWork > 5) {
+                    running.set(false);
+                    if (queued.isEmpty() || !running.compareAndSet(false, true))
+                        return;
+                }
+            }
+
+            eventLoop.schedule(this, 10000, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    private static final ConcurrentMap<EventLoop, Flusher> flusherLookup = new ConcurrentHashMap<EventLoop, Flusher>();
+
+    private static class FlushItem {
+        final Channel channel;
+        final Object request;
+        final ChannelFutureListener listener;
+
+        private FlushItem(Channel channel, Object request, ChannelFutureListener listener) {
+            this.channel = channel;
+            this.request = request;
+            this.listener = listener;
+        }
+    }
+
+    private void flush(FlushItem item) {
+        EventLoop loop = item.channel.eventLoop();
+        Flusher flusher = flusherLookup.get(loop);
+        if (flusher == null) {
+            Flusher alt = flusherLookup.putIfAbsent(loop, flusher = new Flusher(loop));
+            if (alt != null)
+                flusher = alt;
+        }
+
+        flusher.queued.add(item);
+        flusher.start();
     }
 
     private class Dispatcher extends SimpleChannelInboundHandler<Message.Response> {
