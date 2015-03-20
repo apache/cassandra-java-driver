@@ -2,6 +2,7 @@ package com.datastax.driver.jdbc;
 
 import static org.testng.Assert.assertTrue;
 
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.SQLNonTransientConnectionException;
@@ -61,8 +62,10 @@ public class ConnectionUnitTest {
     public void loadBalancingPolicyTest() throws SQLException{
     	System.out.println("Connecting to : " + String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=RoundRobinPolicy()"));
     	con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=RoundRobinPolicy()"));    	
+    	Connection con2 = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=RoundRobinPolicy()"));
         con.close();
-        
+        con2.close();
+        /*
         System.out.println("Connecting to : " + String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=TokenAwarePolicy(RoundRobinPolicy())"));
         con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=TokenAwarePolicy(RoundRobinPolicy())"));    	
         con.close();
@@ -77,7 +80,8 @@ public class ConnectionUnitTest {
         
         System.out.println("Connecting to : " + String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=LatencyAwarePolicy(TokenAwarePolicy(RoundRobinPolicy()),(double)10.5,(long)1,(long)10,(long)1,10)"));
         con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=LatencyAwarePolicy(TokenAwarePolicy(RoundRobinPolicy()),(double)10.5,(long)1,(long)10,(long)1,10)"));    	
-        con.close();               
+        con.close();
+        */               
     	    	
     }
     

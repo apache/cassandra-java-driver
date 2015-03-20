@@ -28,9 +28,19 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+
+
+
+
+
+
+
+
 
 
 import com.datastax.driver.core.Cluster;
@@ -48,6 +58,11 @@ import com.datastax.driver.core.SocketOptions;
 import com.datastax.driver.core.UserType;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 
 import static com.datastax.driver.jdbc.CassandraResultSet.*;
 import static com.datastax.driver.jdbc.Utils.*;
@@ -107,6 +122,29 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     private Metadata metadata;
     public boolean debugMode;
 
+    public final LoadingCache<String, Session> sessions = CacheBuilder.newBuilder()
+            .weakValues() // une entrée sera évincée quand plus personne n'a de référence sur le Cluster
+            .removalListener(new RemovalListener<String, Session>() {
+                @Override
+                public void onRemoval(RemovalNotification<String, Session> notification) {
+                	System.out.println("Suppression connexion : " + notification.getKey());
+                    Session session = notification.getValue();
+                    Cluster c = session.getCluster();                    
+                    session.close();
+                    c.close();
+                    
+                }
+            })
+            .build(new CacheLoader<String, Session>() {
+                       @Override
+                       public Session load(String url) throws Exception {
+                    	   System.out.println("Creation connexion : " + url);
+                    	   Properties finalProps = Utils.parseURL(url.replace("\"", "'"));
+                           Session session = createSession(finalProps); 
+                           return session;
+                       }
+
+                   });
 
     
     PreparedStatement isAlive = null;
@@ -118,9 +156,17 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     /**
      * Instantiates a new CassandraConnection.
      */
-    public CassandraConnection(Properties props) throws SQLException
+    //public CassandraConnection(Properties props) throws SQLException
+    public CassandraConnection(String url) throws SQLException
     {    	
-    	debugMode = false;
+    	 try {    		     		 
+			cSession = sessions.get(url);
+			cCluster = cSession.getCluster();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			throw new SQLNonTransientConnectionException(e);
+		}
+    /*	debugMode = false;
     	hostListPrimary = new TreeSet<String>();
     	hostListBackup = new TreeSet<String>();
         connectionProps = (Properties)props.clone();
@@ -218,7 +264,108 @@ public class CassandraConnection extends AbstractConnection implements Connectio
         		
         	}
             throw new SQLNonTransientConnectionException(e);            
-        }       
+        }*/       
+    	
+        
+    }
+    
+    private Session createSession(Properties props) throws SQLException{    	
+    	debugMode = false;
+    	hostListPrimary = new TreeSet<String>();
+    	hostListBackup = new TreeSet<String>();
+        connectionProps = (Properties)props.clone();
+        clientInfo = new Properties();
+        url = PROTOCOL + createSubName(props);
+        Cluster cluster;
+        Session session;
+        try
+        {
+        	
+            String host = props.getProperty(TAG_SERVER_NAME);           
+            int port = Integer.parseInt(props.getProperty(TAG_PORT_NUMBER));            
+            currentKeyspace = props.getProperty(TAG_DATABASE_NAME);
+            username = props.getProperty(TAG_USER,"");
+            String password = props.getProperty(TAG_PASSWORD,"");
+            String version = props.getProperty(TAG_CQL_VERSION,DEFAULT_CQL_VERSION);
+            String loadBalancingPolicy = props.getProperty(TAG_LOADBALANCING_POLICY,"");
+            String retryPolicy = props.getProperty(TAG_RETRY_POLICY,"");
+            String reconnectPolicy = props.getProperty(TAG_RECONNECT_POLICY,"");
+            debugMode = props.getProperty(TAG_DEBUG,"").equals("true");
+                        
+            connectionProps.setProperty(TAG_ACTIVE_CQL_VERSION, version);
+            majorCqlVersion = getMajor(version);
+            defaultConsistencyLevel = ConsistencyLevel.valueOf(props.getProperty(TAG_CONSISTENCY_LEVEL,ConsistencyLevel.ONE.name()));
+                        
+            
+            Builder builder = Cluster.builder();
+            builder.addContactPoints(host.split("--")).withPort(port);
+            builder.withSocketOptions(new SocketOptions().setKeepAlive(true));
+            // Set credentials when applicable
+            if(username.length()>0){
+            	builder.withCredentials(username, password);
+            }
+            
+                        
+            if(loadBalancingPolicy.length()>0){
+            	// if load balancing policy has been given in the JDBC URL, parse it and add it to the cluster builder 
+            	try{
+            		builder.withLoadBalancingPolicy(Utils.parseLbPolicy(loadBalancingPolicy));
+            	}catch(Exception e){
+            		if(debugMode){
+            			throw new Exception(e);
+            		}            		
+            		logger.warn("Error occured while parsing load balancing policy :" + e.getMessage() + " / Forcing to TokenAwarePolicy...");
+            		builder.withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
+            	}
+            }
+            
+            if(retryPolicy.length()>0){
+            	// if retry policy has been given in the JDBC URL, parse it and add it to the cluster builder 
+            	try{
+            		builder.withRetryPolicy(Utils.parseRetryPolicy(retryPolicy));
+            	}catch(Exception e){
+            		if(debugMode){
+            			throw new Exception(e);
+            		}
+            		logger.warn("Error occured while parsing retry policy :" + e.getMessage() + " / skipping...");
+            	}
+            }
+            
+            if(reconnectPolicy.length()>0){
+            	// if reconnection policy has been given in the JDBC URL, parse it and add it to the cluster builder 
+            	try{
+            		builder.withReconnectionPolicy(Utils.parseReconnectionPolicy(reconnectPolicy));
+            	}catch(Exception e){
+            		if(debugMode){
+            			throw new Exception(e);
+            		}
+            		logger.warn("Error occured while parsing reconnection policy :" + e.getMessage() + " / skipping...");            		
+            	}
+            }
+           
+            cluster = builder.build();
+	    	
+	    	metadata = cluster.getMetadata();
+			   System.out.printf("Connected to cluster: %s\n", 
+			         metadata.getClusterName());
+			   for ( Host aHost : metadata.getAllHosts() ) {
+			      System.out.printf("Datacenter: %s; Host: %s; Rack: %s\n",
+			    		 aHost.getDatacenter(), aHost.getAddress(), aHost.getRack());
+			   }
+			   
+			session = cluster.connect(currentKeyspace);
+			Host[] hosts = cluster.getMetadata().getAllHosts().toArray(new Host[cluster.getMetadata().getAllHosts().size()]);
+			CassandraConnection.DB_MAJOR_VERSION = hosts[0].getCassandraVersion().getMajor();
+			CassandraConnection.DB_MINOR_VERSION = hosts[0].getCassandraVersion().getMinor();
+			CassandraConnection.DB_REVISION = hosts[0].getCassandraVersion().getPatch();
+			
+			return session;
+                                                                  
+        }        
+        catch (Exception e)
+        {        	
+            throw new SQLNonTransientConnectionException(e);            
+        }
     }
     
     // get the Major portion of a string like : Major.minor.patch where 2 is the default
@@ -514,8 +661,8 @@ public class CassandraConnection extends AbstractConnection implements Connectio
      */
     protected void disconnect()
     {    	
-        cSession.close();
-        cCluster.close();
+        cSession = null;
+        cCluster = null;
         System.out.println("Cassandra connection closed");
     }
 

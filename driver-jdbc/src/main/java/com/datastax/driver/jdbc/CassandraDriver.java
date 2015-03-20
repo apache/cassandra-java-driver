@@ -90,7 +90,8 @@ public class CassandraDriver implements Driver
 
             if (logger.isDebugEnabled()) logger.debug("Final Properties to Connection: {}", finalProps);
 
-            return new CassandraConnection(finalProps);
+            //return new CassandraConnection(finalProps);
+            return new CassandraConnection(url);
         }
 		return null; // signal it is the wrong driver for this protocol:subprotocol
     }
