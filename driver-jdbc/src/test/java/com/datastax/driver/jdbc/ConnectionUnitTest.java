@@ -146,5 +146,23 @@ public class ConnectionUnitTest {
     	    	
     }
     
+    @Test
+    public void connectionFailTest() throws SQLException{
+    	
+    	System.out.println("Connecting to : " + String.format("jdbc:cassandra://%s1:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&reconnection=ConstantReconnectionPolicy((long)10)"));
+    	try{
+    		con = DriverManager.getConnection(String.format("jdbc:cassandra://%s1:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&reconnection=ConstantReconnectionPolicy((long)10)"));    	
+    		con.close();
+    	}catch(SQLNonTransientConnectionException e){
+    		
+    	}
+
+    	con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&reconnection=ConstantReconnectionPolicy((long)10)"));    	
+        con.close();
+        
+                
+    	    	
+    }
+    
 
 }

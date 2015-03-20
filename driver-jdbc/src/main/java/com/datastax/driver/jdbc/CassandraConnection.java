@@ -33,21 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.ConsistencyLevel;
@@ -227,7 +212,12 @@ public class CassandraConnection extends AbstractConnection implements Connectio
         }        
         catch (Exception e)
         {
-            throw new SQLNonTransientConnectionException(e);
+        	try{
+        		cCluster.close();
+        	}catch(Exception e1){
+        		
+        	}
+            throw new SQLNonTransientConnectionException(e);            
         }       
     }
     
@@ -266,6 +256,7 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     public synchronized void close() throws SQLException
     {
         // close all statements associated with this connection upon close
+    	System.out.println("Closing Cassandra connection...");
         for (Statement statement : statements)
             statement.close();
         statements.clear();
@@ -522,9 +513,10 @@ public class CassandraConnection extends AbstractConnection implements Connectio
      * Shutdown the remote connection
      */
     protected void disconnect()
-    {
+    {    	
         cSession.close();
         cCluster.close();
+        System.out.println("Cassandra connection closed");
     }
 
     /**
@@ -532,7 +524,11 @@ public class CassandraConnection extends AbstractConnection implements Connectio
      */
     protected boolean isConnected()
     {
-        return !cSession.isClosed();
+    	try{
+    		return !cSession.isClosed() && !cCluster.isClosed();
+    	}catch(Exception e){
+    		return false;
+    	}
     }
 
     public String toString()

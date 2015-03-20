@@ -14,6 +14,7 @@ import org.testng.annotations.BeforeClass;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLTransientException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -370,5 +371,55 @@ public class BatchStatementsUnitTest {
         
     }
 
+    @Test(expectedExceptions=SQLTransientException.class)
+    public void testBatchFailSimpleSplitStatement() throws Exception
+    {
+        System.out.println("Test: 'testBatchFailSimpleSplitStatement'\n");
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("truncate testcollection");
+        Statement statement = con.createStatement();
+        int nbRows = CassandraStatement.MAX_ASYNC_QUERIES;
+        
+        StringBuilder queryBuilder = new StringBuilder();
+        
+        for(int i=0;i<nbRows;i++){
+        	//System.out.println("--- Statement " + i + " ==> INSERT INTO testcollection (k,L) VALUES( " + i + ",[1, 3, 12345])");
+        	if(i%100==0){
+        		queryBuilder.append("INSERT INTO testcollection (k,L,m) VALUES( " + i + ",[1, 3, 12345],1);");
+        	}else{
+        		queryBuilder.append("INSERT INTO testcollection (k,L) VALUES( " + i + ",[1, 3, 12345]);");
+        	}
+        }
+        
+        statement.execute(queryBuilder.toString());
+        
+        
+        
+        
+        StringBuilder queries = new StringBuilder();
+        for(int i=0;i<nbRows;i++){
+        	queries.append("SELECT * FROM testcollection where k = "+ i + ";");
+        }
+        ResultSet result = statement.executeQuery(queries.toString());
 
+        int nbRow = 0;
+        ArrayList<Integer> ids = new ArrayList<Integer>(); 
+        while(result.next()){
+        	nbRow++;
+        	ids.add(result.getInt("k"));
+        }
+
+        assertEquals(nbRows, nbRow);
+        Collections.sort(ids);
+        int nb = 0;
+        for(Integer id:ids){
+        	assertEquals(nb,id.intValue());
+        	nb++;
+        }
+        
+        statement.close();
+
+        
+    }
 }
