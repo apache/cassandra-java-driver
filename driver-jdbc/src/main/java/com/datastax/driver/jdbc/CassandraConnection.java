@@ -21,12 +21,7 @@
 package com.datastax.driver.jdbc;
 
 import java.sql.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.slf4j.Logger;
@@ -64,9 +59,9 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     static final String IS_VALID_CQLQUERY_2_0_0 = "SELECT COUNT(1) FROM system.Versions WHERE component = 'cql';";
     static final String IS_VALID_CQLQUERY_3_0_0 = "SELECT COUNT(1) FROM system.\"Versions\" WHERE component = 'cql';";
     
-    public static int DB_MAJOR_VERSION = 1;
-    public static int DB_MINOR_VERSION = 2;
-    public static int DB_REVISION = 2;
+    public static volatile int DB_MAJOR_VERSION = 1;
+    public static volatile int DB_MINOR_VERSION = 2;
+    public static volatile int DB_REVISION = 2;
     public static final String DB_PRODUCT_NAME = "Cassandra";
     public static final String DEFAULT_CQL_VERSION = "3.0.0";
 
@@ -75,6 +70,7 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     private final boolean autoCommit = true;
 
     private final int transactionIsolation = Connection.TRANSACTION_NONE;
+    private final SessionHolder sessionHolder;
 
     /**
      * Connection Properties
@@ -92,7 +88,6 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     private Set<Statement> statements = new ConcurrentSkipListSet<Statement>();
 
     
-    private Cluster cCluster;
     private Session cSession;
 
     protected long timeOfLastFailure = 0;
@@ -106,6 +101,7 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     int majorCqlVersion;
     private Metadata metadata;
     public boolean debugMode;
+    private volatile boolean isClosed;
 
 
     
@@ -118,107 +114,42 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     /**
      * Instantiates a new CassandraConnection.
      */
-    public CassandraConnection(Properties props) throws SQLException
-    {    	
-    	debugMode = false;
-    	hostListPrimary = new TreeSet<String>();
-    	hostListBackup = new TreeSet<String>();
+    public CassandraConnection(SessionHolder sessionHolder) throws SQLException
+    {
+        this.sessionHolder = sessionHolder;
+        Properties props = sessionHolder.properties;
+
+        debugMode = props.getProperty(TAG_DEBUG, "").equals("true");
+        hostListPrimary = new TreeSet<String>();
+        hostListBackup = new TreeSet<String>();
         connectionProps = (Properties)props.clone();
         clientInfo = new Properties();
         url = PROTOCOL + createSubName(props);
-        try
-        {
-        	
-            String host = props.getProperty(TAG_SERVER_NAME);           
-            int port = Integer.parseInt(props.getProperty(TAG_PORT_NUMBER));            
-            currentKeyspace = props.getProperty(TAG_DATABASE_NAME);
-            username = props.getProperty(TAG_USER,"");
-            String password = props.getProperty(TAG_PASSWORD,"");
-            String version = props.getProperty(TAG_CQL_VERSION,DEFAULT_CQL_VERSION);
-            String loadBalancingPolicy = props.getProperty(TAG_LOADBALANCING_POLICY,"");
-            String retryPolicy = props.getProperty(TAG_RETRY_POLICY,"");
-            String reconnectPolicy = props.getProperty(TAG_RECONNECT_POLICY,"");
-            debugMode = props.getProperty(TAG_DEBUG,"").equals("true");
-                        
-            connectionProps.setProperty(TAG_ACTIVE_CQL_VERSION, version);
-            majorCqlVersion = getMajor(version);
-            defaultConsistencyLevel = ConsistencyLevel.valueOf(props.getProperty(TAG_CONSISTENCY_LEVEL,ConsistencyLevel.ONE.name()));
-                        
-            
-            Builder builder = Cluster.builder();
-            builder.addContactPoints(host.split("--")).withPort(port);
-            builder.withSocketOptions(new SocketOptions().setKeepAlive(true));
-            // Set credentials when applicable
-            if(username.length()>0){
-            	builder.withCredentials(username, password);
-            }
-            
-                        
-            if(loadBalancingPolicy.length()>0){
-            	// if load balancing policy has been given in the JDBC URL, parse it and add it to the cluster builder 
-            	try{
-            		builder.withLoadBalancingPolicy(Utils.parseLbPolicy(loadBalancingPolicy));
-            	}catch(Exception e){
-            		if(debugMode){
-            			throw new Exception(e);
-            		}            		
-            		logger.warn("Error occured while parsing load balancing policy :" + e.getMessage() + " / Forcing to TokenAwarePolicy...");
-            		builder.withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
-            	}
-            }
-            
-            if(retryPolicy.length()>0){
-            	// if retry policy has been given in the JDBC URL, parse it and add it to the cluster builder 
-            	try{
-            		builder.withRetryPolicy(Utils.parseRetryPolicy(retryPolicy));
-            	}catch(Exception e){
-            		if(debugMode){
-            			throw new Exception(e);
-            		}
-            		logger.warn("Error occured while parsing retry policy :" + e.getMessage() + " / skipping...");
-            	}
-            }
-            
-            if(reconnectPolicy.length()>0){
-            	// if reconnection policy has been given in the JDBC URL, parse it and add it to the cluster builder 
-            	try{
-            		builder.withReconnectionPolicy(Utils.parseReconnectionPolicy(reconnectPolicy));
-            	}catch(Exception e){
-            		if(debugMode){
-            			throw new Exception(e);
-            		}
-            		logger.warn("Error occured while parsing reconnection policy :" + e.getMessage() + " / skipping...");            		
-            	}
-            }
-           
-            cCluster = builder.build();
-	    	
-	    	metadata = cCluster.getMetadata();
-			   System.out.printf("Connected to cluster: %s\n", 
-			         metadata.getClusterName());
-			   for ( Host aHost : metadata.getAllHosts() ) {
-			      System.out.printf("Datacenter: %s; Host: %s; Rack: %s\n",
-			    		 aHost.getDatacenter(), aHost.getAddress(), aHost.getRack());
-			   }
-			   
-			cSession = cCluster.connect(currentKeyspace);
-			Host[] hosts = cCluster.getMetadata().getAllHosts().toArray(new Host[cCluster.getMetadata().getAllHosts().size()]);
-			CassandraConnection.DB_MAJOR_VERSION = hosts[0].getCassandraVersion().getMajor();
-			CassandraConnection.DB_MINOR_VERSION = hosts[0].getCassandraVersion().getMinor();
-			CassandraConnection.DB_REVISION = hosts[0].getCassandraVersion().getPatch();
-			
-			
-                                                                  
-        }        
-        catch (Exception e)
-        {
-        	try{
-        		cCluster.close();
-        	}catch(Exception e1){
-        		
-        	}
-            throw new SQLNonTransientConnectionException(e);            
-        }       
+        currentKeyspace = props.getProperty(TAG_DATABASE_NAME);
+        username = props.getProperty(TAG_USER, "");
+        String version = props.getProperty(TAG_CQL_VERSION, DEFAULT_CQL_VERSION);
+        connectionProps.setProperty(TAG_ACTIVE_CQL_VERSION, version);
+        majorCqlVersion = getMajor(version);
+        defaultConsistencyLevel = ConsistencyLevel.valueOf(props.getProperty(TAG_CONSISTENCY_LEVEL, ConsistencyLevel.ONE.name()));
+
+        cSession = sessionHolder.session;
+
+        metadata = cSession.getCluster().getMetadata();
+        System.out.printf("Connected to cluster: %s\n",
+            metadata.getClusterName());
+        for (Host aHost : metadata.getAllHosts()) {
+            System.out.printf("Datacenter: %s; Host: %s; Rack: %s\n",
+                aHost.getDatacenter(), aHost.getAddress(), aHost.getRack());
+        }
+
+        Iterator<Host> hosts = metadata.getAllHosts().iterator();
+        if (hosts.hasNext()) {
+            Host firstHost = hosts.next();
+            // TODO this is shared among all Connections, what if they belong to different clusters?
+            CassandraConnection.DB_MAJOR_VERSION = firstHost.getCassandraVersion().getMajor();
+            CassandraConnection.DB_MINOR_VERSION = firstHost.getCassandraVersion().getMinor();
+            CassandraConnection.DB_REVISION = firstHost.getCassandraVersion().getPatch();
+        }
     }
     
     // get the Major portion of a string like : Major.minor.patch where 2 is the default
@@ -253,19 +184,10 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     /**
      * On close of connection.
      */
-    public synchronized void close() throws SQLException
+    public void close() throws SQLException
     {
-        // close all statements associated with this connection upon close
-    	System.out.println("Closing Cassandra connection...");
-        for (Statement statement : statements)
-            statement.close();
-        statements.clear();
-        
-        if (isConnected())
-        {
-            // then disconnect from the transport                
-            disconnect();
-        }
+        sessionHolder.release();
+        isClosed = true;
     }
 
     public void commit() throws SQLException
@@ -366,10 +288,9 @@ public class CassandraConnection extends AbstractConnection implements Connectio
         return null;
     }
 
-    public synchronized boolean isClosed() throws SQLException
+    public boolean isClosed() throws SQLException
     {
-
-        return !isConnected();
+        return isClosed;
     }
 
     public boolean isReadOnly() throws SQLException
@@ -509,28 +430,6 @@ public class CassandraConnection extends AbstractConnection implements Connectio
         return statements.remove(statement);
     }
     
-    /**
-     * Shutdown the remote connection
-     */
-    protected void disconnect()
-    {    	
-        cSession.close();
-        cCluster.close();
-        System.out.println("Cassandra connection closed");
-    }
-
-    /**
-     * Connection state.
-     */
-    protected boolean isConnected()
-    {
-    	try{
-    		return !cSession.isClosed() && !cCluster.isClosed();
-    	}catch(Exception e){
-    		return false;
-    	}
-    }
-
     public String toString()
     {
         StringBuilder builder = new StringBuilder();
@@ -546,14 +445,14 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     }
     
     public Metadata getClusterMetadata(){
-    	return this.cCluster.getMetadata();
+    	return metadata;
     }
     
     public Map<String, Class<?>> getTypeMap() throws SQLException
     {
     	HashMap<String, Class<?>> typeMap = new HashMap<String, Class<?>>();
     	System.out.println("current KS : " + currentKeyspace);
-    	Collection<UserType> types = this.cCluster.getMetadata().getKeyspace(currentKeyspace).getUserTypes();
+    	Collection<UserType> types = this.metadata.getKeyspace(currentKeyspace).getUserTypes();
     	for(UserType type:types){    		    		
     		typeMap.put(type.getTypeName(), type.getClass());
     	}

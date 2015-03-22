@@ -25,14 +25,14 @@ import static com.datastax.driver.jdbc.Utils.PROTOCOL;
 import static com.datastax.driver.jdbc.Utils.TAG_PASSWORD;
 import static com.datastax.driver.jdbc.Utils.TAG_USER;
 
-import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.DriverPropertyInfo;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
+import java.sql.*;
+import java.util.Enumeration;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
+import com.google.common.cache.*;
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +65,16 @@ public class CassandraDriver implements Driver
         }
     }
 
+    // Caches Sessions so that multiple CassandraConnections created with the same parameters use the same Session.
+    private final LoadingCache<Map<String, String>, SessionHolder> sessionsCache = CacheBuilder.newBuilder()
+        .build(new CacheLoader<Map<String, String>, SessionHolder>() {
+                   @Override
+                   public SessionHolder load(final Map<String, String> params) throws Exception {
+                       return new SessionHolder(params, sessionsCache);
+                   }
+               }
+        );
+
     /**
      * Method to validate whether provided connection url matches with pattern or not.
      */
@@ -78,19 +88,37 @@ public class CassandraDriver implements Driver
      */
     public Connection connect(String url, Properties props) throws SQLException
     {
-        Properties finalProps;
         if (acceptsURL(url))
         {
-            // parse the URL into a set of Properties
-        	// replace " by ' to handle the fact that " is not a valid character in URIs
-            finalProps = Utils.parseURL(url.replace("\"", "'"));
+            ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
 
-            // override any matching values in finalProps with values from props
-            finalProps.putAll(props);
+            Enumeration<Object> keys = props.keys();
+            while (keys.hasMoreElements()) {
+                String key = (String)keys.nextElement();
+                params.put(key, props.getProperty(key));
+            }
+            params.put(SessionHolder.URL_KEY, url);
 
-            if (logger.isDebugEnabled()) logger.debug("Final Properties to Connection: {}", finalProps);
+            Map<String, String> cacheKey = params.build();
 
-            return new CassandraConnection(finalProps);
+            try {
+                while (true) {
+                    // Get (or create) the corresponding Session from the cache
+                    SessionHolder sessionHolder = sessionsCache.get(cacheKey);
+
+                    if (sessionHolder.acquire())
+                        return new CassandraConnection(sessionHolder);
+                    // If we failed to acquire, it means we raced with the release of the last reference to the session
+                    // (which also removes it from the cache).
+                    // Loop to try again, that will cause the cache to create a new instance.
+                }
+            } catch (ExecutionException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof SQLException)
+                    throw (SQLException)cause;
+                else
+                    throw new SQLNonTransientConnectionException("Unexpected error while creating connection", e);
+            }
         }
 		return null; // signal it is the wrong driver for this protocol:subprotocol
     }
