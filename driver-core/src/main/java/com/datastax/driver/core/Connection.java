@@ -67,6 +67,7 @@ class Connection {
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
     private static final boolean DISABLE_COALESCING = SystemProperties.getBoolean("com.datastax.driver.DISABLE_COALESCING", false);
+    private static final boolean FORCE_NIO = SystemProperties.getBoolean("com.datastax.driver.FORCE_NIO", false);
 
     public final InetSocketAddress address;
     private final String name;
@@ -540,16 +541,23 @@ class Connection {
         private static final Class<? extends EventLoopGroup> EVENT_LOOP_GROUP_CLASS;
         private static final Class<? extends Channel> CHANNEL_CLASS;
         static {
-            boolean epollAvailable = true;
+            boolean useEpoll;
             try {
                 Class.forName("io.netty.channel.epoll.EpollEventLoopGroup");
-                logger.info("Found Netty's native epoll transport in the classpath, using it");
+                if (FORCE_NIO) {
+                    logger.info("Found Netty's native epoll transport in the classpath, "
+                        + "but NIO was forced through the FORCE_NIO system property");
+                    useEpoll = false;
+                } else {
+                    logger.info("Found Netty's native epoll transport in the classpath, using it");
+                    useEpoll = true;
+                }
             } catch (ClassNotFoundException e) {
-                logger.info("Could not find Netty's native epoll transport in the classpath, defaulting to NIO transport");
-                epollAvailable = false;
+                logger.info("Did not find Netty's native epoll transport in the classpath, defaulting to NIO");
+                useEpoll = false;
             }
-            EVENT_LOOP_GROUP_CLASS = epollAvailable ? EpollEventLoopGroup.class :  NioEventLoopGroup.class;
-            CHANNEL_CLASS = epollAvailable ? EpollSocketChannel.class : NioSocketChannel.class;
+            EVENT_LOOP_GROUP_CLASS = useEpoll ? EpollEventLoopGroup.class :  NioEventLoopGroup.class;
+            CHANNEL_CLASS = useEpoll ? EpollSocketChannel.class : NioSocketChannel.class;
         }
 
         public final HashedWheelTimer timer = new HashedWheelTimer(new ThreadFactoryBuilder().setNameFormat("Timeouter-%d").build());
