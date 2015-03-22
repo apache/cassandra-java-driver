@@ -19,7 +19,6 @@ import java.util.EnumSet;
 import java.util.List;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.CompositeByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.*;
@@ -164,10 +163,8 @@ class Frame {
             header.writeByte(frame.header.opcode);
             header.writeInt(frame.body.readableBytes());
 
-            CompositeByteBuf buffer = ctx.alloc().compositeBuffer(2);
-            buffer.addComponents(header, frame.body);
-            buffer.writerIndex(buffer.capacity());
-            out.add(buffer);
+            out.add(header);
+            out.add(frame.body);
         }
     }
 

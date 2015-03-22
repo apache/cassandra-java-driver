@@ -204,7 +204,7 @@ abstract class Message {
 
             @SuppressWarnings("unchecked")
             Coder<Request> coder = (Coder<Request>)request.type.coder(protocolVersion);
-            ByteBuf body = ctx.alloc().ioBuffer(coder.encodedSize(request));
+            ByteBuf body = ctx.alloc().buffer(coder.encodedSize(request));
             coder.encode(request, body);
 
             out.add(Frame.create(protocolVersion, request.type.opcode, request.getStreamId(), flags, body));

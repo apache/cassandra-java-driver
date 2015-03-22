@@ -16,21 +16,21 @@
 package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
-import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.group.ChannelGroup;
@@ -48,6 +48,8 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 import javax.net.ssl.SSLEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static io.netty.handler.timeout.IdleState.ALL_IDLE;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
@@ -103,7 +105,7 @@ class Connection {
             ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
             int protocolVersion = factory.protocolVersion == 1 ? 1 : 2;
             bootstrap.handler(
-                new ChannelInitializer(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions(),
+                new Initializer(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions(),
                     factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds()));
 
             ChannelFuture future = bootstrap.connect(address);
@@ -684,10 +686,10 @@ class Connection {
 
     private static final class Flusher implements Runnable {
         final EventLoop eventLoop;
-        final ConcurrentLinkedQueue<FlushItem> queued = new ConcurrentLinkedQueue<FlushItem>();
+        final Queue<FlushItem> queued = new ConcurrentLinkedQueue<FlushItem>();
         final AtomicBoolean running = new AtomicBoolean(false);
         final HashSet<Channel> channels = new HashSet<Channel>();
-        final List<FlushItem> flushed = new ArrayList<FlushItem>();
+        final List<FlushItem> flushed = Lists.newArrayListWithExpectedSize(50);
         int runsSinceFlush = 0;
         int runsWithNoWork = 0;
 
@@ -701,6 +703,7 @@ class Connection {
             }
         }
 
+        @Override
         public void run() {
 
             boolean doneWork = false;
@@ -841,7 +844,7 @@ class Connection {
 
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-            if (evt instanceof IdleStateEvent) {
+            if (evt instanceof IdleStateEvent && ((IdleStateEvent)evt).state() == ALL_IDLE) {
                 logger.debug("{} was inactive for {} seconds, sending heartbeat", Connection.this, factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds());
                 write(HEARTBEAT_CALLBACK);
             }
@@ -1092,7 +1095,7 @@ class Connection {
         public void handle(Message.Response response);
     }
 
-    private static class ChannelInitializer extends io.netty.channel.ChannelInitializer<SocketChannel> {
+    private static class Initializer extends ChannelInitializer<SocketChannel> {
         // Stateless handlers
         private static final Message.ProtocolDecoder messageDecoder = new Message.ProtocolDecoder();
         private static final Message.ProtocolEncoder messageEncoderV1 = new Message.ProtocolEncoder(1);
@@ -1105,7 +1108,7 @@ class Connection {
         private final SSLOptions sslOptions;
         private final ChannelHandler idleStateHandler;
 
-        public ChannelInitializer(Connection connection, int protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds) {
+        public Initializer(Connection connection, int protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds) {
             this.connection = connection;
             this.protocolVersion = protocolVersion;
             this.compressor = compressor;
