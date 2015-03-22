@@ -45,7 +45,7 @@ public class SocketOptions {
     private volatile Boolean keepAlive;
     private volatile Boolean reuseAddress;
     private volatile Integer soLinger;
-    private volatile Boolean tcpNoDelay;
+    private volatile Boolean tcpNoDelay = Boolean.TRUE;
     private volatile Integer receiveBufferSize;
     private volatile Integer sendBufferSize;
 
@@ -131,55 +131,160 @@ public class SocketOptions {
         return this;
     }
 
+    /**
+     * Returns whether TCP keepalive is enabled.
+     *
+     * @return the value of the option, or {@code null} if it is not set.
+     * @see #setKeepAlive(boolean)
+     */
     public Boolean getKeepAlive() {
         return keepAlive;
     }
 
+    /**
+     * Sets whether to enable TCP keepalive.
+     * <p>
+     * By default, this option is not set by the driver. The actual value will be the default
+     * from the underlying Netty transport (Java NIO or native epoll).
+     *
+     * @param keepAlive whether to enable or disable the option.
+     * @return this {@code SocketOptions}.
+     *
+     * @see java.net.SocketOptions#TCP_NODELAY
+     */
     public SocketOptions setKeepAlive(boolean keepAlive) {
         this.keepAlive = keepAlive;
         return this;
     }
 
+    /**
+     * Returns whether reuse-address is enabled.
+     *
+     * @return the value of the option, or {@code null} if it is not set.
+     * @see #setReuseAddress(boolean)
+     */
     public Boolean getReuseAddress() {
         return reuseAddress;
     }
 
+    /**
+     * Sets whether to enable reuse-address.
+     * <p>
+     * By default, this option is not set by the driver. The actual value will be the default
+     * from the underlying Netty transport (Java NIO or native epoll).
+     *
+     * @param reuseAddress whether to enable or disable the option.
+     * @return this {@code SocketOptions}.
+     *
+     * @see java.net.SocketOptions#SO_REUSEADDR
+     */
     public SocketOptions setReuseAddress(boolean reuseAddress) {
         this.reuseAddress = reuseAddress;
         return this;
     }
 
+    /**
+     * Returns the linger-on-close timeout.
+     *
+     * @return the value of the option, or {@code null} if it is not set.
+     *
+     * @see #setSoLinger(int)
+     */
     public Integer getSoLinger() {
         return soLinger;
     }
 
+    /**
+     * Sets the linger-on-close timeout.
+     * <p>
+     * By default, this option is not set by the driver. The actual value will be the default
+     * from the underlying Netty transport (Java NIO or native epoll).
+
+     * @param soLinger the new value.
+     * @return this {@code SocketOptions}.
+     *
+     * @see java.net.SocketOptions#SO_LINGER
+     */
     public SocketOptions setSoLinger(int soLinger) {
         this.soLinger = soLinger;
         return this;
     }
 
+    /**
+     * Returns whether Nagle's algorithm is disabled.
+     *
+     * @return the value of the option ({@code true} means Nagle is disabled), or {@code null} if it is not set.
+     *
+     * @see #setTcpNoDelay(boolean)
+     */
     public Boolean getTcpNoDelay() {
         return tcpNoDelay;
     }
 
+    /**
+     * Sets whether to disable Nagle's algorithm.
+     * <p>
+     * By default, this option is set to {@code true} (Nagle disabled).
+     *
+     * @param tcpNoDelay whether to enable or disable the option.
+     * @return this {@code SocketOptions}.
+     *
+     * @see java.net.SocketOptions#TCP_NODELAY
+     */
     public SocketOptions setTcpNoDelay(boolean tcpNoDelay) {
         this.tcpNoDelay = tcpNoDelay;
         return this;
     }
 
+    /**
+     * Returns the hint to the size of the underlying buffers for incoming network I/O.
+     *
+     * @return the value of the option, or {@code null} if it is not set.
+     *
+     * @see #setReceiveBufferSize(int)
+     */
     public Integer getReceiveBufferSize() {
         return receiveBufferSize;
     }
 
+    /**
+     * Sets a hint to the size of the underlying buffers for incoming network I/O.
+     * <p>
+     * By default, this option is not set by the driver. The actual value will be the default
+     * from the underlying Netty transport (Java NIO or native epoll).
+     *
+     * @param receiveBufferSize the new value.
+     * @return this {@code SocketOptions}.
+     *
+     * @see java.net.SocketOptions#SO_RCVBUF
+     */
     public SocketOptions setReceiveBufferSize(int receiveBufferSize) {
         this.receiveBufferSize = receiveBufferSize;
         return this;
     }
 
+    /**
+     * Returns the hint to the size of the underlying buffers for outgoing network I/O.
+     *
+     * @return the value of the option, or {@code null} if it is not set.
+     *
+     * @see #setSendBufferSize(int)
+     */
     public Integer getSendBufferSize() {
         return sendBufferSize;
     }
 
+    /**
+     * Sets a hint to the size of the underlying buffers for outgoing network I/O.
+     * <p>
+     * By default, this option is not set by the driver. The actual value will be the default
+     * from the underlying Netty transport (Java NIO or native epoll).
+     *
+     * @param sendBufferSize the new value.
+     * @return this {@code SocketOptions}.
+     *
+     * @see java.net.SocketOptions#SO_SNDBUF
+     */
     public SocketOptions setSendBufferSize(int sendBufferSize) {
         this.sendBufferSize = sendBufferSize;
         return this;
