@@ -159,6 +159,19 @@ public class VersionNumber implements Comparable<VersionNumber> {
         return build;
     }
 
+    /**
+     * The next stable version, i.e. the version stripped of its pre-release labels and build metadata.
+     * <p>
+     * This is mostly used during our development stage, where we test the driver against pre-release
+     * versions of Cassandra like 2.1.0-rc7-SNAPSHOT, but need to compare to the stable version 2.1.0
+     * when testing for native protocol compatibility, etc.
+     *
+     * @return the next stable version.
+     */
+    public VersionNumber nextStable() {
+        return new VersionNumber(major, minor, patch, dsePatch, null, null);
+    }
+
     public int compareTo(VersionNumber other) {
         if (major < other.major)
             return -1;
