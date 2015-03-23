@@ -2,6 +2,7 @@ package com.datastax.driver.jdbc;
 
 import static org.testng.Assert.assertTrue;
 
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.SQLNonTransientConnectionException;
@@ -60,7 +61,11 @@ public class ConnectionUnitTest {
     @Test
     public void loadBalancingPolicyTest() throws SQLException{
     	System.out.println("Connecting to : " + String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=RoundRobinPolicy()"));
-    	con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=RoundRobinPolicy()"));    	
+    	System.out.println("Con1...");
+    	con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=RoundRobinPolicy()"));
+    	System.out.println("Con2...");
+    	Connection con2 = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=RoundRobinPolicy()"));    	
+        con2.close();
         con.close();
         
         System.out.println("Connecting to : " + String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=TokenAwarePolicy(RoundRobinPolicy())"));

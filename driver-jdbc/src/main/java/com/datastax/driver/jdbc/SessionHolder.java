@@ -7,6 +7,7 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.cache.LoadingCache;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +96,8 @@ class SessionHolder {
         }
     }
 
-    private Session createSession(Properties properties) throws SQLException {
+    @SuppressWarnings("resource")
+	private Session createSession(Properties properties) throws SQLException {
         String hosts = properties.getProperty(TAG_SERVER_NAME);
         int port = Integer.parseInt(properties.getProperty(TAG_PORT_NUMBER));
         String keyspace = properties.getProperty(TAG_DATABASE_NAME);

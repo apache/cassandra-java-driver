@@ -135,10 +135,10 @@ public class CassandraConnection extends AbstractConnection implements Connectio
         cSession = sessionHolder.session;
 
         metadata = cSession.getCluster().getMetadata();
-        System.out.printf("Connected to cluster: %s\n",
+        logger.info("Connected to cluster: %s\n",
             metadata.getClusterName());
         for (Host aHost : metadata.getAllHosts()) {
-            System.out.printf("Datacenter: %s; Host: %s; Rack: %s\n",
+        	logger.info("Datacenter: %s; Host: %s; Rack: %s\n",
                 aHost.getDatacenter(), aHost.getAddress(), aHost.getRack());
         }
 
@@ -451,7 +451,7 @@ public class CassandraConnection extends AbstractConnection implements Connectio
     public Map<String, Class<?>> getTypeMap() throws SQLException
     {
     	HashMap<String, Class<?>> typeMap = new HashMap<String, Class<?>>();
-    	System.out.println("current KS : " + currentKeyspace);
+    	logger.info("current KS : " + currentKeyspace);
     	Collection<UserType> types = this.metadata.getKeyspace(currentKeyspace).getUserTypes();
     	for(UserType type:types){    		    		
     		typeMap.put(type.getTypeName(), type.getClass());

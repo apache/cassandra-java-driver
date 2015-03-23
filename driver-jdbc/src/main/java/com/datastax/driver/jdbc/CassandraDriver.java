@@ -45,7 +45,7 @@ public class CassandraDriver implements Driver
 
     public static final int DVR_MINOR_VERSION = 1;
 
-    public static final int DVR_PATCH_VERSION = 4;
+    public static final int DVR_PATCH_VERSION = 6;
 
     public static final String DVR_NAME = "Datastax JDBC Driver";
 
@@ -116,8 +116,7 @@ public class CassandraDriver implements Driver
                 Throwable cause = e.getCause();
                 if (cause instanceof SQLException)
                     throw (SQLException)cause;
-                else
-                    throw new SQLNonTransientConnectionException("Unexpected error while creating connection", e);
+				throw new SQLNonTransientConnectionException("Unexpected error while creating connection", e);
             }
         }
 		return null; // signal it is the wrong driver for this protocol:subprotocol
