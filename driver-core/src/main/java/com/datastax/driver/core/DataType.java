@@ -458,6 +458,20 @@ public class DataType {
     }
 
     /**
+     * Format a Java object as an equivalent CQL value.
+     *
+     * @param value the value to format.
+     * @return a string corresponding to the CQL representation of {@code value}.
+     *
+     * @throws InvalidTypeException if {@code value} does not correspond to
+     * a CQL value (known by the driver). Please note that for custom types this
+     * method will always return this exception.
+     */
+    public String format(Object value) {
+        return value == null ? null : codec().format(value);
+    }
+
+    /**
      * Returns whether this type is a collection one, i.e. a list, set or map type.
      *
      * @return whether this type is a collection one.

@@ -79,6 +79,8 @@ abstract class TypeCodec<T> {
     private TypeCodec() {}
 
     public abstract T parse(String value);
+    public abstract String format(T value);
+
     public abstract ByteBuffer serialize(T value);
     public abstract T deserialize(ByteBuffer bytes);
 
@@ -230,6 +232,43 @@ abstract class TypeCodec<T> {
         }
 
         @Override
+        public String format(String value) {
+            return '\'' + replace(value, '\'', "''") + '\'';
+        }
+
+        // Simple method to replace a single character. String.replace is a bit too
+        // inefficient (see JAVA-67)
+        static String replace(String text, char search, String replacement) {
+            if (text == null || text.isEmpty())
+                return text;
+
+            int nbMatch = 0;
+            int start = -1;
+            do {
+                start = text.indexOf(search, start+1);
+                if (start != -1)
+                    ++nbMatch;
+            } while (start != -1);
+
+            if (nbMatch == 0)
+                return text;
+
+            int newLength = text.length() + nbMatch * (replacement.length() - 1);
+            char[] result = new char[newLength];
+            int newIdx = 0;
+            for (int i = 0; i < text.length(); i++) {
+                char c = text.charAt(i);
+                if (c == search) {
+                    for (int r = 0; r < replacement.length(); r++)
+                        result[newIdx++] = replacement.charAt(r);
+                } else {
+                    result[newIdx++] = c;
+                }
+            }
+            return new String(result);
+        }
+
+        @Override
         public ByteBuffer serialize(String value) {
             return ByteBuffer.wrap(value.getBytes(charset));
         }
@@ -253,6 +292,11 @@ abstract class TypeCodec<T> {
             } catch (NumberFormatException e) {
                 throw new InvalidTypeException(String.format("Cannot parse 64-bits long value from \"%s\"", value));
             }
+        }
+
+        @Override
+        public String format(Long value) {
+            return Long.toString(value);
         }
 
         @Override
@@ -291,6 +335,11 @@ abstract class TypeCodec<T> {
         }
 
         @Override
+        public String format(ByteBuffer value) {
+            return Bytes.toHexString(value);
+        }
+
+        @Override
         public ByteBuffer serialize(ByteBuffer value) {
             return value.duplicate();
         }
@@ -318,6 +367,11 @@ abstract class TypeCodec<T> {
                 return true;
 
             throw new InvalidTypeException(String.format("Cannot parse boolean value from \"%s\"", value));
+        }
+
+        @Override
+        public String format(Boolean value) {
+            return value ? "true" : "false";
         }
 
         @Override
@@ -355,6 +409,11 @@ abstract class TypeCodec<T> {
             } catch (NumberFormatException e) {
                 throw new InvalidTypeException(String.format("Cannot parse decimal value from \"%s\"", value));
             }
+        }
+
+        @Override
+        public String format(BigDecimal value) {
+            return value.toString();
         }
 
         @Override
@@ -401,6 +460,11 @@ abstract class TypeCodec<T> {
         }
 
         @Override
+        public String format(Double value) {
+            return Double.toString(value);
+        }
+
+        @Override
         public ByteBuffer serialize(Double value) {
             return serializeNoBoxing(value);
         }
@@ -437,6 +501,11 @@ abstract class TypeCodec<T> {
             } catch (NumberFormatException e) {
                 throw new InvalidTypeException(String.format("Cannot parse 32-bits float value from \"%s\"", value));
             }
+        }
+
+        @Override
+        public String format(Float value) {
+            return Float.toString(value);
         }
 
         @Override
@@ -479,6 +548,11 @@ abstract class TypeCodec<T> {
         }
 
         @Override
+        public String format(InetAddress value) {
+            return "'" + value.getHostAddress() + "'";
+        }
+
+        @Override
         public ByteBuffer serialize(InetAddress value) {
             return ByteBuffer.wrap(value.getAddress());
         }
@@ -506,6 +580,11 @@ abstract class TypeCodec<T> {
             } catch (NumberFormatException e) {
                 throw new InvalidTypeException(String.format("Cannot parse 32-bits int value from \"%s\"", value));
             }
+        }
+
+        @Override
+        public String format(Integer value) {
+            return Integer.toString(value);
         }
 
         @Override
@@ -599,6 +678,11 @@ abstract class TypeCodec<T> {
         }
 
         @Override
+        public String format(Date value) {
+            return Long.toString(value.getTime());
+        }
+
+        @Override
         public ByteBuffer serialize(Date value) {
             return LongCodec.instance.serializeNoBoxing(value.getTime());
         }
@@ -622,6 +706,11 @@ abstract class TypeCodec<T> {
             } catch (IllegalArgumentException e) {
                 throw new InvalidTypeException(String.format("Cannot parse UUID value from \"%s\"", value));
             }
+        }
+
+        @Override
+        public String format(UUID value) {
+            return value.toString();
         }
 
         @Override
@@ -677,6 +766,11 @@ abstract class TypeCodec<T> {
         }
 
         @Override
+        public String format(BigInteger value) {
+            return value.toString();
+        }
+
+        @Override
         public ByteBuffer serialize(BigInteger value) {
             return ByteBuffer.wrap(value.toByteArray());
         }
@@ -698,6 +792,19 @@ abstract class TypeCodec<T> {
         @Override
         public List<T> parse(String value) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String format(List<T> value) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+            for (int i = 0; i < value.size(); i++) {
+                if (i != 0)
+                    sb.append(", ");
+                sb.append(eltCodec.format(value.get(i)));
+            }
+            sb.append("]");
+            return sb.toString();
         }
 
         @Override
@@ -746,6 +853,20 @@ abstract class TypeCodec<T> {
         }
 
         @Override
+        public String format(Set<T> value) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{");
+            int i = 0;
+            for (T v : value) {
+                if (i++ != 0)
+                    sb.append(", ");
+                sb.append(eltCodec.format(v));
+            }
+            sb.append("}");
+            return sb.toString();
+        }
+
+        @Override
         public ByteBuffer serialize(Set<T> value) {
             List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(value.size());
             int size = 0;
@@ -790,6 +911,22 @@ abstract class TypeCodec<T> {
         @Override
         public Map<K, V> parse(String value) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String format(Map<K, V> value) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{");
+            int i = 0;
+            for (Map.Entry<K, V> e : value.entrySet()) {
+                if (i++ != 0)
+                    sb.append(", ");
+                sb.append(keyCodec.format(e.getKey()));
+                sb.append(":");
+                sb.append(valueCodec.format(e.getValue()));
+            }
+            sb.append("}");
+            return sb.toString();
         }
 
         @Override
