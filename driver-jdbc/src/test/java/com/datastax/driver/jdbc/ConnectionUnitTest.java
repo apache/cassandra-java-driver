@@ -61,11 +61,13 @@ public class ConnectionUnitTest {
     @Test
     public void loadBalancingPolicyTest() throws SQLException{
     	System.out.println("Connecting to : " + String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=RoundRobinPolicy()"));
-    	con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=RoundRobinPolicy()"));    	
-    	Connection con2 = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=RoundRobinPolicy()"));
-        con.close();
+    	System.out.println("Con1...");
+    	con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=RoundRobinPolicy()"));
+    	System.out.println("Con2...");
+    	Connection con2 = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=RoundRobinPolicy()"));    	
         con2.close();
-        /*
+        con.close();
+        
         System.out.println("Connecting to : " + String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=TokenAwarePolicy(RoundRobinPolicy())"));
         con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=TokenAwarePolicy(RoundRobinPolicy())"));    	
         con.close();
@@ -80,8 +82,7 @@ public class ConnectionUnitTest {
         
         System.out.println("Connecting to : " + String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=LatencyAwarePolicy(TokenAwarePolicy(RoundRobinPolicy()),(double)10.5,(long)1,(long)10,(long)1,10)"));
         con = DriverManager.getConnection(String.format("jdbc:cassandra://%s:%d/%s",HOST,PORT,KEYSPACE + "?debug=true&loadbalancing=LatencyAwarePolicy(TokenAwarePolicy(RoundRobinPolicy()),(double)10.5,(long)1,(long)10,(long)1,10)"));    	
-        con.close();
-        */               
+        con.close();               
     	    	
     }
     
