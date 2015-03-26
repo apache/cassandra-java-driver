@@ -1122,12 +1122,12 @@ public class Cluster implements Closeable {
         return "cluster" + CLUSTER_ID.incrementAndGet();
     }
 
-    private static ListeningExecutorService makeExecutor(int threads, String name) {
+    private static ListeningExecutorService makeExecutor(int threads, String name, LinkedBlockingQueue<Runnable> workQueue) {
         ThreadPoolExecutor executor = new ThreadPoolExecutor(threads,
                                                              threads,
                                                              DEFAULT_THREAD_KEEP_ALIVE,
                                                              TimeUnit.SECONDS,
-                                                             new LinkedBlockingQueue<Runnable>(),
+                                                             workQueue,
                                                              threadFactory(name));
 
         executor.allowCoreThreadTimeOut(true);
@@ -1160,16 +1160,22 @@ public class Cluster implements Closeable {
 
         final ConvictionPolicy.Factory convictionPolicyFactory = new ConvictionPolicy.Simple.Factory();
 
-        final ScheduledExecutorService reconnectionExecutor = Executors.newScheduledThreadPool(2, threadFactory("Reconnection-%d"));
+        final ScheduledThreadPoolExecutor reconnectionExecutor = new ScheduledThreadPoolExecutor(2, threadFactory("Reconnection-%d"));
         // scheduledTasksExecutor is used to process C* notifications. So having it mono-threaded ensures notifications are
         // applied in the order received.
-        final ScheduledExecutorService scheduledTasksExecutor = Executors.newScheduledThreadPool(1, threadFactory("Scheduled Tasks-%d"));
+        final ScheduledThreadPoolExecutor scheduledTasksExecutor = new ScheduledThreadPoolExecutor(1, threadFactory("Scheduled Tasks-%d"));
 
         // Executor used for tasks that shouldn't be executed on an IO thread. Used for short-lived, generally non-blocking tasks
         final ListeningExecutorService executor;
 
+        // Work Queue used by executor.
+        final LinkedBlockingQueue<Runnable> executorQueue = new LinkedBlockingQueue<Runnable>();
+
         // An executor for tasks that might block some time, like creating new connection, but are generally not too critical.
         final ListeningExecutorService blockingExecutor;
+
+        // Work Queue used by blockingExecutor.
+        final LinkedBlockingQueue<Runnable> blockingExecutorQueue = new LinkedBlockingQueue<Runnable>();
 
         final ConnectionReaper reaper;
 
@@ -1191,8 +1197,8 @@ public class Cluster implements Closeable {
             this.configuration = configuration;
             this.configuration.register(this);
 
-            this.executor = makeExecutor(NON_BLOCKING_EXECUTOR_SIZE, "Cassandra Java Driver worker-%d");
-            this.blockingExecutor = makeExecutor(2, "Cassandra Java Driver blocking tasks worker-%d");
+            this.executor = makeExecutor(NON_BLOCKING_EXECUTOR_SIZE, "Cassandra Java Driver worker-%d", executorQueue);
+            this.blockingExecutor = makeExecutor(2, "Cassandra Java Driver blocking tasks worker-%d", blockingExecutorQueue);
 
             this.reaper = new ConnectionReaper();
 

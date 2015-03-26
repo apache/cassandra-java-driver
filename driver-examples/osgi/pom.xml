@@ -26,7 +26,7 @@
 
   <properties>
     <felix.version>4.6.0</felix.version>
-    <pax-exam.version>4.4.0</pax-exam.version>
+    <pax-exam.version>3.6.0</pax-exam.version>
   </properties>
 
   <dependencies>
@@ -88,14 +88,14 @@
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
+      <version>${log4j.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
-      <version>1.7.6</version>
+      <version>${slf4j-log4j12.version}</version>
       <scope>test</scope>
     </dependency>
 

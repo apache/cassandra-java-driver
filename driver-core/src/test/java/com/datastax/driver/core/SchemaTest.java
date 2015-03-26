@@ -34,52 +34,52 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
 
-        String sparse = "CREATE TABLE ks.sparse (\n"
+        String sparse = String.format("CREATE TABLE %s.sparse (\n"
                       + "    k text,\n"
                       + "    c1 int,\n"
                       + "    c2 float,\n"
                       + "    l list<text>,\n"
                       + "    v int,\n"
                       + "    PRIMARY KEY (k, c1, c2)\n"
-                      + ");";
+                      + ");", keyspace);
 
-        String st = "CREATE TABLE ks.static (\n"
+        String st = String.format("CREATE TABLE %s.static (\n"
                   + "    k text,\n"
                   + "    i int,\n"
                   + "    m map<text, timeuuid>,\n"
                   + "    v int,\n"
                   + "    PRIMARY KEY (k)\n"
-                  + ");";
+                  + ");", keyspace);
 
-        String counters = "CREATE TABLE ks.counters (\n"
+        String counters = String.format("CREATE TABLE %s.counters (\n"
                         + "    k text,\n"
                         + "    c counter,\n"
                         + "    PRIMARY KEY (k)\n"
-                        + ");";
+                        + ");", keyspace);
 
-        String compactStatic = "CREATE TABLE ks.compact_static (\n"
+        String compactStatic = String.format("CREATE TABLE %s.compact_static (\n"
                              + "    k text,\n"
                              + "    i int,\n"
                              + "    t timeuuid,\n"
                              + "    v int,\n"
                              + "    PRIMARY KEY (k)\n"
-                             + ") WITH COMPACT STORAGE;";
+                             + ") WITH COMPACT STORAGE;", keyspace);
 
-        String compactDynamic = "CREATE TABLE ks.compact_dynamic (\n"
+        String compactDynamic = String.format("CREATE TABLE %s.compact_dynamic (\n"
                               + "    k text,\n"
                               + "    c int,\n"
                               + "    v timeuuid,\n"
                               + "    PRIMARY KEY (k, c)\n"
-                              + ") WITH COMPACT STORAGE;";
+                              + ") WITH COMPACT STORAGE;", keyspace);
 
-        String compactComposite = "CREATE TABLE ks.compact_composite (\n"
+        String compactComposite = String.format("CREATE TABLE %s.compact_composite (\n"
                                 + "    k text,\n"
                                 + "    c1 int,\n"
                                 + "    c2 float,\n"
                                 + "    c3 double,\n"
                                 + "    v timeuuid,\n"
                                 + "    PRIMARY KEY (k, c1, c2, c3)\n"
-                                + ") WITH COMPACT STORAGE;";
+                                + ") WITH COMPACT STORAGE;", keyspace);
 
         cql3.put("sparse", sparse);
         cql3.put("static", st);
@@ -88,7 +88,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
         compact.put("compact_dynamic", compactDynamic);
         compact.put("compact_composite", compactComposite);
 
-        withOptions = "CREATE TABLE ks.with_options (\n"
+        withOptions = String.format("CREATE TABLE %s.with_options (\n"
                     + "    k text,\n"
                     + "    v1 int,\n"
                     + "    v2 int,\n"
@@ -103,7 +103,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                     + "   AND caching = 'ALL'\n"
                     + "   AND comment = 'My awesome table'\n"
                     + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
-                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };";
+                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };", keyspace);
 
         List<String> allDefs = new ArrayList<String>();
         allDefs.addAll(cql3.values());
@@ -127,7 +127,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void schemaExportTest() {
 
-        KeyspaceMetadata metadata = cluster.getMetadata().getKeyspace(TestUtils.SIMPLE_KEYSPACE);
+        KeyspaceMetadata metadata = cluster.getMetadata().getKeyspace(keyspace);
 
         for (Map.Entry<String, String> tableEntry : cql3.entrySet()) {
             String table = tableEntry.getKey();
@@ -145,7 +145,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
     // Same remark as the preceding test
     @Test(groups = "short")
     public void schemaExportOptionsTest() {
-        TableMetadata metadata = cluster.getMetadata().getKeyspace(TestUtils.SIMPLE_KEYSPACE).getTable("with_options");
+        TableMetadata metadata = cluster.getMetadata().getKeyspace(keyspace).getTable("with_options");
 
         String withOpts = withOptions;
         VersionNumber version = cluster.getMetadata()

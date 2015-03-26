@@ -30,23 +30,19 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty</artifactId>
-      <version>3.9.0.Final</version>
+      <version>${netty.version}</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <!--
-        We use an old version of Guava to be compatible with Spark 1.1.
-        Check with the spark-cassandra-connector team before upgrading this.
-      -->
-      <version>14.0.1</version>
+      <version>${guava.version}</version>
     </dependency>
 
     <dependency>
       <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>3.0.2</version>
+      <version>${metrics.version}</version>
     </dependency>
 
     <!-- Compression libraries for the protocol. -->
@@ -55,14 +51,14 @@
     <dependency>
         <groupId>org.xerial.snappy</groupId>
         <artifactId>snappy-java</artifactId>
-        <version>1.0.5</version>
+        <version>${snappy.version}</version>
         <optional>true</optional>
     </dependency>
 
     <dependency>
         <groupId>net.jpountz.lz4</groupId>
         <artifactId>lz4</artifactId>
-        <version>1.2.0</version>
+        <version>${lz4.version}</version>
         <optional>true</optional>
     </dependency>
 
@@ -71,29 +67,28 @@
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
-      <version>6.8.8</version>
+      <version>${testng.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>1.7.0</version>
+      <version>${assertj.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
-      <version>1.10.8</version>
+      <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.scassandra</groupId>
       <artifactId>java-client</artifactId>
-      <!-- N.B. later versions of scassandra require JDK 7 -->
-      <version>0.4.1</version>
+      <version>${scassandra.version}</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
