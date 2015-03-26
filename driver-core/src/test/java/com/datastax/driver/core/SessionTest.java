@@ -156,7 +156,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         PoolingOptions poolingOptions = new PoolingOptions()
                 .setCoreConnectionsPerHost(HostDistance.LOCAL, corePoolSize);
         Cluster cluster = Cluster.builder()
-                .addContactPoints(CCMBridge.IP_PREFIX + '1')
+                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
                 .withPoolingOptions(poolingOptions)
                 .build();
 
