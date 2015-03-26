@@ -329,7 +329,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // This is the same test than reprepareOnNewlyUpNodeTest, except that the
         // prepared statement is prepared while no current keyspace is used
-        reprepareOnNewlyUpNodeTest(TestUtils.SIMPLE_KEYSPACE, cluster.connect());
+        reprepareOnNewlyUpNodeTest(keyspace, cluster.connect());
     }
 
     @Test(groups = "short")
