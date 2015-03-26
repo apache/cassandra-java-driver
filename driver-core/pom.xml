@@ -278,6 +278,9 @@
                 <ipprefix>${ipprefix}</ipprefix>
                 <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
               </systemPropertyVariables>
+              <classpathDependencyExcludes>
+                <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
+              </classpathDependencyExcludes>
               <!--May be needed for debugging-->
               <!--<forkMode>never</forkMode>-->
             </configuration>
@@ -304,6 +307,9 @@
                 <cassandra.version>${cassandra.version}</cassandra.version>
                 <ipprefix>${ipprefix}</ipprefix>
               </systemPropertyVariables>
+              <classpathDependencyExcludes>
+                <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
+              </classpathDependencyExcludes>
             </configuration>
           </plugin>
         </plugins>
@@ -328,6 +334,9 @@
                 <cassandra.version>${cassandra.version}</cassandra.version>
                 <ipprefix>${ipprefix}</ipprefix>
               </systemPropertyVariables>
+              <classpathDependencyExcludes>
+                <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
+              </classpathDependencyExcludes>
             </configuration>
           </plugin>
         </plugins>
@@ -352,6 +361,9 @@
                 <cassandra.version>${cassandra.version}</cassandra.version>
                 <ipprefix>${ipprefix}</ipprefix>
               </systemPropertyVariables>
+              <classpathDependencyExcludes>
+                <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
+              </classpathDependencyExcludes>
             </configuration>
           </plugin>
         </plugins>
@@ -376,6 +388,9 @@
                 <cassandra.version>${cassandra.version}</cassandra.version>
                 <ipprefix>${ipprefix}</ipprefix>
               </systemPropertyVariables>
+              <classpathDependencyExcludes>
+                <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
+              </classpathDependencyExcludes>
             </configuration>
           </plugin>
         </plugins>
