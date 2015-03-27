@@ -596,6 +596,7 @@ class RequestHandler implements Connection.ResponseCallback {
         Host queriedHost = current;
         // If a query times out, we consider that the host is unstable, so we defunct
         // the connection to mark it down.
+        OperationTimedOutException timeoutException = new OperationTimedOutException(connection.address);
         try {
             connection.defunct(timeoutException);
 
