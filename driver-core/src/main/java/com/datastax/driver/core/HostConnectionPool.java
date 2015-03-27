@@ -56,7 +56,7 @@ class HostConnectionPool {
     final List<PooledConnection> connections;
     private final AtomicInteger open;
     /** The total number of in-flight requests on all connections of this pool. */
-    private final AtomicInteger totalInFlight = new AtomicInteger();
+    final AtomicInteger totalInFlight = new AtomicInteger();
     /** The maximum value of {@link #totalInFlight} since the last call to {@link #cleanupIdleConnections(long)}*/
     private final AtomicInteger maxTotalInFlight = new AtomicInteger();
     final Set<PooledConnection> trash = new CopyOnWriteArraySet<PooledConnection>();
@@ -531,6 +531,10 @@ class HostConnectionPool {
 
     public int opened() {
         return open.get();
+    }
+
+    public int trashed() {
+        return trash.size();
     }
 
     private List<CloseFuture> discardAvailableConnections() {

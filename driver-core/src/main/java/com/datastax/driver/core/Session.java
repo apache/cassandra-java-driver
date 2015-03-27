@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import java.io.Closeable;
 import java.util.Collection;
-import java.util.Map;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -376,12 +375,29 @@ public interface Session extends Closeable {
 
         /**
          * The number of open connections to a given host.
+         * <p>
+         * Note that this refers to <em>active</em> connections. The actual number of connections also
+         * includes {@link #getTrashedConnections(Host)}.
          *
          * @param host the host to get open connections for.
          * @return The number of open connections to {@code host}. If the session
          * is not connected to that host, 0 is returned.
          */
         public int getOpenConnections(Host host);
+
+        /**
+         * The number of "trashed" connections to a given host.
+         * <p>
+         * When the load to a host decreases, the driver will reclaim some connections in order to save
+         * resources. No requests are sent to these connections anymore, but they are kept open for an
+         * additional amount of time ({@link PoolingOptions#getIdleTimeoutSeconds()}), in case the load
+         * goes up again. This method counts connections in that state.
+         *
+         * @param host the host to get trashed connections for.
+         * @return The number of trashed connections to {@code host}. If the session
+         * is not connected to that host, 0 is returned.
+         */
+        public int getTrashedConnections(Host host);
 
         /**
          * The number of queries that are currently being executed though a given host.
