@@ -18,6 +18,8 @@ CHANGELOG
   (JAVA-655)
 - [bug] Empty TokenRange returned in a one token cluster (JAVA-684)
 - [improvement] Expose TokenRange#contains (JAVA-687)
+- [new feature] Expose values of BoundStatement (JAVA-547)
+- [new feature] Add getObject to BoundStatement and Row (JAVA-584)
 
 Merged from 2.0.9_fixes branch:
 
