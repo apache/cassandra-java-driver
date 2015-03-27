@@ -443,4 +443,26 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         // tuples always use the protocol V3 to encode values
         return (TupleValue)type.codec(ProtocolVersion.V3).deserialize(value);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Object getObject(int i) {
+        ByteBuffer raw = getValue(i);
+        DataType type = getType(i);
+        if (raw == null)
+            switch (type.getName()) {
+                case LIST:
+                    return Collections.emptyList();
+                case SET:
+                    return Collections.emptySet();
+                case MAP:
+                    return Collections.emptyMap();
+                default:
+                    return null;
+            }
+        else
+            return type.deserialize(raw, protocolVersion);
+    }
 }

@@ -4,6 +4,9 @@ CHANGELOG
 2.1.6:
 ------
 
+- [new feature] Add getObject to BoundStatement, Row, UDTValue and TupleValue
+  (JAVA-584)
+
 
 2.1.5:
 ------

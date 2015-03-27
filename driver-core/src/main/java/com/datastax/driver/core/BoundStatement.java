@@ -1345,6 +1345,20 @@ public class BoundStatement extends Statement implements SettableData<BoundState
         return wrapper.getTupleValue(name);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public Object getObject(int i) {
+        return wrapper.getObject(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Object getObject(String name) {
+        return wrapper.getObject(name);
+    }
+
     static class DataWrapper extends AbstractData<BoundStatement> {
 
         DataWrapper(BoundStatement wrapped, int size) {

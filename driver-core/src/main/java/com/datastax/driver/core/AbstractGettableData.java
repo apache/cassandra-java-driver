@@ -234,4 +234,12 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
     public TupleValue getTupleValue(String name) {
         return getTupleValue(getIndexOf(name));
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Object getObject(String name) {
+        return getObject(getIndexOf(name));
+    }
 }

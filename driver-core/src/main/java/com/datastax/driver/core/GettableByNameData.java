@@ -352,4 +352,16 @@ public interface GettableByNameData {
      * @throws InvalidTypeException if value {@code i} is not a tuple value.
      */
     public TupleValue getTupleValue(String name);
+
+    /**
+     * Returns the value for {@code name} as the Java type matching its CQL type.
+     *
+     * @param name the name to retrieve.
+     * @return the value of the {@code i}th value as the Java type matching its CQL type.
+     * If the value is NULL and is a simple type, UDT or tuple, {@code null} is returned.
+     * If it is NULL and is a collection type, an empty (immutable) collection is returned.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     */
+    Object getObject(String name);
 }

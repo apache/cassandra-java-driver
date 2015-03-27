@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.driver.core.utils.CassandraVersion;
 
@@ -92,7 +93,9 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
                     break;
                 case PREPARED:
                     PreparedStatement ps = session.prepare(table.insertStatement);
-                    session.execute(ps.bind(table.sampleValue));
+                    BoundStatement bs = ps.bind(table.sampleValue);
+                    checkGetterReturnsBoundValue(bs, table);
+                    session.execute(bs);
                     break;
             }
 
@@ -109,6 +112,14 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
 
             session.execute(table.truncateStatement);
         }
+    }
+
+    private void checkGetterReturnsBoundValue(BoundStatement bs, TestTable table) {
+        Object getterResult = getBoundValue(bs, table.testColumnType);
+        assertThat(getterResult).isEqualTo(table.sampleValue);
+
+        // Ensure that bs.getObject() also returns the expected value.
+        assertThat(bs.getObject(0)).isEqualTo(table.sampleValue);
     }
 
     /**
@@ -318,5 +329,50 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
             }
         }
         return null;
+    }
+
+    private Object getBoundValue(BoundStatement bs, DataType dataType) {
+        // This is kind of lame, but better than testing all getters manually
+        switch (dataType.getName()) {
+            case ASCII:
+                return bs.getString(0);
+            case BIGINT:
+                return bs.getLong(0);
+            case BLOB:
+                return bs.getBytes(0);
+            case BOOLEAN:
+                return bs.getBool(0);
+            case DECIMAL:
+                return bs.getDecimal(0);
+            case DOUBLE:
+                return bs.getDouble(0);
+            case FLOAT:
+                return bs.getFloat(0);
+            case INET:
+                return bs.getInet(0);
+            case INT:
+                return bs.getInt(0);
+            case TEXT:
+            case VARCHAR:
+                return bs.getString(0);
+            case TIMESTAMP:
+                return bs.getDate(0);
+            case UUID:
+            case TIMEUUID:
+                return bs.getUUID(0);
+            case VARINT:
+                return bs.getVarint(0);
+            case LIST:
+                return bs.getList(0, dataType.getTypeArguments().get(0).asJavaClass());
+            case SET:
+                return bs.getSet(0, dataType.getTypeArguments().get(0).asJavaClass());
+            case MAP:
+                return bs.getMap(0, dataType.getTypeArguments().get(0).asJavaClass(), dataType.getTypeArguments().get(1).asJavaClass());
+            case CUSTOM:
+            case COUNTER:
+            default:
+                fail("Unexpected type in bound statement test: " + dataType);
+                return null;
+        }
     }
 }
