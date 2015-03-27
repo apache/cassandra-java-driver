@@ -31,43 +31,36 @@ package com.datastax.driver.core;
  * more connections are created up to the configurable maximum number of
  * connections ({@link #getMaxConnectionsPerHost}). When the pool exceeds
  * the maximum number of connections, connections in excess are
- * reclaimed if the use of opened connections drops below the
- * configured threshold ({@link #getMinSimultaneousRequestsPerConnectionThreshold}).
+ * reclaimed.
  * <p>
  * Each of these parameters can be separately set for {@code LOCAL} and
  * {@code REMOTE} hosts ({@link HostDistance}). For {@code IGNORED} hosts,
  * the default for all those settings is 0 and cannot be changed.
- * <p>
- * Due to known issues with the current pool implementation (see
- * <a href="https://datastax-oss.atlassian.net/browse/JAVA-419">JAVA-419</a>),
- * it is <b>strongly recommended</b> to use a fixed-size pool (core connections =
- * max connections).
- * The default values respect this (8 for local hosts, 2 for remote hosts).
  */
 public class PoolingOptions {
 
     // Note: we could use an enumMap or similar, but synchronization would
     // be more costly so let's stick to volatile in for now.
-    private static final int DEFAULT_MIN_REQUESTS = 25;
     private static final int DEFAULT_MAX_REQUESTS = 100;
 
-    private static final int DEFAULT_CORE_POOL_LOCAL = 8;
-    private static final int DEFAULT_CORE_POOL_REMOTE = 2;
+    private static final int DEFAULT_CORE_POOL_LOCAL = 2;
+    private static final int DEFAULT_CORE_POOL_REMOTE = 1;
 
     private static final int DEFAULT_MAX_POOL_LOCAL = 8;
     private static final int DEFAULT_MAX_POOL_REMOTE = 2;
 
+    private static final int DEFAULT_IDLE_TIMEOUT_SECONDS = 120;
     private static final int DEFAULT_POOL_TIMEOUT_MILLIS = 5000;
     private static final int DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30;
 
     private volatile Cluster.Manager manager;
 
-    private final int[] minSimultaneousRequests = new int[]{ DEFAULT_MIN_REQUESTS, DEFAULT_MIN_REQUESTS, 0 };
     private final int[] maxSimultaneousRequests = new int[]{ DEFAULT_MAX_REQUESTS, DEFAULT_MAX_REQUESTS, 0 };
 
     private final int[] coreConnections = new int[] { DEFAULT_CORE_POOL_LOCAL, DEFAULT_CORE_POOL_REMOTE, 0 };
     private final int[] maxConnections = new int[] { DEFAULT_MAX_POOL_LOCAL , DEFAULT_MAX_POOL_REMOTE, 0 };
 
+    private volatile int idleTimeoutSeconds = DEFAULT_IDLE_TIMEOUT_SECONDS;
     private volatile int poolTimeoutMillis = DEFAULT_POOL_TIMEOUT_MILLIS;
     private volatile int heartbeatIntervalSeconds = DEFAULT_HEARTBEAT_INTERVAL_SECONDS;
 
@@ -91,9 +84,12 @@ public class PoolingOptions {
      *
      * @param distance the {@code HostDistance} for which to return this threshold.
      * @return the configured threshold, or the default one if none have been set.
+     *
+     * @deprecated this option isn't used anymore with the current pool resizing algorithm.
      */
+    @Deprecated
     public int getMinSimultaneousRequestsPerConnectionThreshold(HostDistance distance) {
-        return minSimultaneousRequests[distance.ordinal()];
+        return 0;
     }
 
     /**
@@ -106,14 +102,11 @@ public class PoolingOptions {
      *
      * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}, or if {@code minSimultaneousRequests}
      * is not in range, or if {@code newMinSimultaneousRequests} is greater than the maximum value for this distance.
+     *
+     * @deprecated this option isn't used anymore with the current pool resizing algorithm.
      */
+    @Deprecated
     public synchronized PoolingOptions setMinSimultaneousRequestsPerConnectionThreshold(HostDistance distance, int newMinSimultaneousRequests) {
-        if (distance == HostDistance.IGNORED)
-            throw new IllegalArgumentException("Cannot set min simultaneous requests per connection threshold for " + distance + " hosts");
-
-        checkRequestsPerConnectionRange(newMinSimultaneousRequests, "Min simultaneous requests per connection", distance);
-        checkRequestsPerConnectionOrder(newMinSimultaneousRequests, maxSimultaneousRequests[distance.ordinal()], distance);
-        minSimultaneousRequests[distance.ordinal()] = newMinSimultaneousRequests;
         return this;
     }
 
@@ -156,7 +149,6 @@ public class PoolingOptions {
             throw new IllegalArgumentException("Cannot set max simultaneous requests per connection threshold for " + distance + " hosts");
 
         checkRequestsPerConnectionRange(newMaxSimultaneousRequests, "Max simultaneous requests per connection", distance);
-        checkRequestsPerConnectionOrder(minSimultaneousRequests[distance.ordinal()], newMaxSimultaneousRequests, distance);
         maxSimultaneousRequests[distance.ordinal()] = newMaxSimultaneousRequests;
         return this;
     }
@@ -177,11 +169,6 @@ public class PoolingOptions {
 
     /**
      * Sets the core number of connections per host.
-     * <p>
-     * Due to known issues with the current pool implementation (see
-     * <a href="https://datastax-oss.atlassian.net/browse/JAVA-419">JAVA-419</a>),
-     * it is <b>strongly recommended</b> to use a fixed-size pool (core connections =
-     * max connections).
      *
      * @param distance the {@code HostDistance} for which to set this threshold.
      * @param newCoreConnections the value to set
@@ -217,11 +204,6 @@ public class PoolingOptions {
 
     /**
      * Sets the maximum number of connections per host.
-     * <p>
-     * Due to known issues with the current pool implementation (see
-     * <a href="https://datastax-oss.atlassian.net/browse/JAVA-419">JAVA-419</a>),
-     * it is <b>strongly recommended</b> to use a fixed-size pool (core connections =
-     * max connections).
      *
      * @param distance the {@code HostDistance} for which to set this threshold.
      * @param newMaxConnections the value to set
@@ -236,6 +218,33 @@ public class PoolingOptions {
 
         checkConnectionsPerHostOrder(coreConnections[distance.ordinal()], newMaxConnections, distance);
         maxConnections[distance.ordinal()] = newMaxConnections;
+        return this;
+    }
+
+    /**
+     * Returns the timeout before an idle connection is removed.
+     *
+     * @return the timeout.
+     */
+    public int getIdleTimeoutSeconds() {
+        return idleTimeoutSeconds;
+    }
+
+    /**
+     * Sets the timeout before an idle connection is removed.
+     * <p>
+     * The order of magnitude should be a few minutes (the default is 120 seconds). The
+     * timeout that triggers the removal has a granularity of 10 seconds.
+     *
+     * @param idleTimeoutSeconds the new timeout in seconds.
+     * @return this {@code PoolingOptions}.
+     *
+     * @throws IllegalArgumentException if the timeout is negative.
+     */
+    public PoolingOptions setIdleTimeoutSeconds(int idleTimeoutSeconds) {
+        if (idleTimeoutSeconds < 0)
+            throw new IllegalArgumentException("Idle timeout must be positive");
+        this.idleTimeoutSeconds = idleTimeoutSeconds;
         return this;
     }
 
@@ -324,12 +333,6 @@ public class PoolingOptions {
             throw new IllegalArgumentException(String.format("%s for %s hosts must be in the range (0, %d)",
                                                              description, distance,
                                                              StreamIdGenerator.MAX_STREAM_PER_CONNECTION));
-    }
-
-    private static void checkRequestsPerConnectionOrder(int min, int max, HostDistance distance) {
-        if (min > max)
-            throw new IllegalArgumentException(String.format("Min simultaneous requests per connection for %s hosts must be less than max (%d > %d)",
-                                                             distance, min, max));
     }
 
     private static void checkConnectionsPerHostOrder(int core, int max, HostDistance distance) {

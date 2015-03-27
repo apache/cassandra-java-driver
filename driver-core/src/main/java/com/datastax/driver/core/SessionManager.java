@@ -556,11 +556,18 @@ class SessionManager extends AbstractSession {
         return future;
     }
 
+    void cleanupIdleConnections(long now) {
+        for (HostConnectionPool pool : pools.values()) {
+            pool.cleanupIdleConnections(now);
+        }
+    }
+
     private static class State implements Session.State {
 
         private final SessionManager session;
         private final List<Host> connectedHosts;
         private final int[] openConnections;
+        private final int[] trashedConnections;
         private final int[] inFlightQueries;
 
         private State(SessionManager session) {
@@ -568,6 +575,7 @@ class SessionManager extends AbstractSession {
             this.connectedHosts = ImmutableList.copyOf(session.pools.keySet());
 
             this.openConnections = new int[connectedHosts.size()];
+            this.trashedConnections = new int[connectedHosts.size()];
             this.inFlightQueries = new int[connectedHosts.size()];
 
             int i = 0;
@@ -578,14 +586,14 @@ class SessionManager extends AbstractSession {
                 // connections will be slightly weird, but it's unlikely enough that we don't bother avoiding.
                 if (p == null) {
                     openConnections[i] = 0;
+                    trashedConnections[i] = 0;
                     inFlightQueries[i] = 0;
                     continue;
                 }
 
                 openConnections[i] = p.connections.size();
-                for (Connection c : p.connections) {
-                    inFlightQueries[i] += c.inFlight.get();
-                }
+                trashedConnections[i] = p.trash.size();
+                inFlightQueries[i] = p.totalInFlight.get();
                 i++;
             }
         }
@@ -614,6 +622,11 @@ class SessionManager extends AbstractSession {
         public int getOpenConnections(Host host) {
             int i = getIdx(host);
             return i < 0 ? 0 : openConnections[i];
+        }
+
+        public int getTrashedConnections(Host host) {
+            int i = getIdx(host);
+            return i < 0 ? 0 : trashedConnections[i];
         }
 
         public int getInFlightQueries(Host host) {

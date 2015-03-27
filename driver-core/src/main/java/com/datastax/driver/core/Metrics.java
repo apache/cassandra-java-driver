@@ -69,6 +69,16 @@ public class Metrics {
             return value;
         }
     });
+    private final Gauge<Integer> trashedConnections = registry.register("trashed-connections", new Gauge<Integer>() {
+        @Override
+        public Integer getValue() {
+            int value = 0;
+            for (SessionManager session : manager.sessions)
+                for (HostConnectionPool pool : session.pools.values())
+                    value += pool.trashed();
+            return value;
+        }
+    });
 
     private final Gauge<Integer> executorQueueDepth = registry.register("executor-queue-depth", new Gauge<Integer>() {
         @Override
@@ -203,6 +213,20 @@ public class Metrics {
      */
     public Gauge<Integer> getOpenConnections() {
         return openConnections;
+    }
+
+    /**
+     * Returns the total number of currently "trashed" connections to Cassandra hosts.
+     * <p>
+     * When the load to a host decreases, the driver will reclaim some connections in order to save
+     * resources. No requests are sent to these connections anymore, but they are kept open for an
+     * additional amount of time ({@link PoolingOptions#getIdleTimeoutSeconds()}), in case the load
+     * goes up again. This metric counts connections in that state.
+     *
+     * @return The total number of currently trashed connections to Cassandra hosts.
+     */
+    public Gauge<Integer> getTrashedConnections() {
+        return trashedConnections;
     }
 
     /**

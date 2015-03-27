@@ -36,6 +36,8 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
 
+import static com.datastax.driver.core.PooledConnection.State.*;
+
 class HostConnectionPool {
 
     private static final Logger logger = LoggerFactory.getLogger(HostConnectionPool.class);
@@ -53,7 +55,11 @@ class HostConnectionPool {
 
     final List<PooledConnection> connections;
     private final AtomicInteger open;
-    private final Set<Connection> trash = new CopyOnWriteArraySet<Connection>();
+    /** The total number of in-flight requests on all connections of this pool. */
+    final AtomicInteger totalInFlight = new AtomicInteger();
+    /** The maximum value of {@link #totalInFlight} since the last call to {@link #cleanupIdleConnections(long)}*/
+    private final AtomicInteger maxTotalInFlight = new AtomicInteger();
+    final Set<PooledConnection> trash = new CopyOnWriteArraySet<PooledConnection>();
 
     private volatile int waiter = 0;
     private final Lock waitLock = new ReentrantLock(true);
@@ -63,6 +69,7 @@ class HostConnectionPool {
 
     private final AtomicInteger scheduledForCreation = new AtomicInteger();
 
+    private volatile boolean isClosing;
     private final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
     public HostConnectionPool(Host host, HostDistance hostDistance, SessionManager manager) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
@@ -132,6 +139,7 @@ class HostConnectionPool {
                 manager.blockingExecutor().submit(newConnectionTask);
             }
             PooledConnection c = waitForConnection(timeout, unit);
+            totalInFlight.incrementAndGet();
             c.setKeyspace(manager.poolsState.keyspace);
             return c;
         }
@@ -145,9 +153,6 @@ class HostConnectionPool {
                 leastBusy = connection;
             }
         }
-
-        if (minInFlight >= options().getMaxSimultaneousRequestsPerConnectionThreshold(hostDistance) && connections.size() < options().getMaxConnectionsPerHost(hostDistance))
-            maybeSpawnNewConnection();
 
         if (leastBusy == null) {
             // We could have raced with a shutdown since the last check
@@ -170,6 +175,24 @@ class HostConnectionPool {
                     break;
             }
         }
+
+        int totalInFlightCount = totalInFlight.incrementAndGet();
+        // update max atomically:
+        while (true) {
+            int oldMax = maxTotalInFlight.get();
+            if (totalInFlightCount <= oldMax || maxTotalInFlight.compareAndSet(oldMax, totalInFlightCount))
+                break;
+        }
+
+        int connectionCount = open.get() + scheduledForCreation.get();
+        if (connectionCount < options().getMaxConnectionsPerHost(hostDistance)) {
+            // Add a connection if we fill the first n-1 connections and almost fill the last one
+            int currentCapacity = (connectionCount - 1) * StreamIdGenerator.MAX_STREAM_PER_CONNECTION
+                + options().getMaxSimultaneousRequestsPerConnectionThreshold(hostDistance);
+            if (totalInFlightCount > currentCapacity)
+                maybeSpawnNewConnection();
+        }
+
         leastBusy.setKeyspace(manager.poolsState.keyspace);
         return leastBusy;
     }
@@ -260,7 +283,8 @@ class HostConnectionPool {
     }
 
     public void returnConnection(PooledConnection connection) {
-        int inFlight = connection.inFlight.decrementAndGet();
+        connection.inFlight.decrementAndGet();
+        totalInFlight.decrementAndGet();
 
         if (isClosed()) {
             close(connection);
@@ -273,13 +297,8 @@ class HostConnectionPool {
             return;
         }
 
-        if (trash.contains(connection)) {
-            if (inFlight == 0 && trash.remove(connection))
-                close(connection);
-        } else {
-            if (connections.size() > options().getCoreConnectionsPerHost(hostDistance) && inFlight <= options().getMinSimultaneousRequestsPerConnectionThreshold(hostDistance)) {
-                trashConnection(connection);
-            } else if (connection.maxAvailableStreams() < MIN_AVAILABLE_STREAMS) {
+        if (connection.state.get() != TRASHED) {
+            if (connection.maxAvailableStreams() < MIN_AVAILABLE_STREAMS) {
                 replaceConnection(connection);
             } else {
                 signalAvailableConnection();
@@ -290,44 +309,38 @@ class HostConnectionPool {
     // Trash the connection and create a new one, but we don't call trashConnection
     // directly because we want to make sure the connection is always trashed.
     private void replaceConnection(PooledConnection connection) {
-        if (connection.markForTrash.compareAndSet(false, true))
-            open.decrementAndGet();
+        if (!connection.state.compareAndSet(OPEN, TRASHED))
+            return;
+        open.decrementAndGet();
         maybeSpawnNewConnection();
+        connection.maxIdleTime = Long.MIN_VALUE;
         doTrashConnection(connection);
     }
 
     private boolean trashConnection(PooledConnection connection) {
-        if (connection.markForTrash.compareAndSet(false, true)) {
-            // First, make sure we don't go below core connections
-            for (;;) {
-                int opened = open.get();
-                if (opened <= options().getCoreConnectionsPerHost(hostDistance)) {
-                    connection.markForTrash.set(false);
-                    return false;
-                }
+        if (!connection.state.compareAndSet(OPEN, TRASHED))
+            return true;
 
-                if (open.compareAndSet(opened, opened - 1))
-                    break;
+        // First, make sure we don't go below core connections
+        for (;;) {
+            int opened = open.get();
+            if (opened <= options().getCoreConnectionsPerHost(hostDistance)) {
+                connection.state.set(OPEN);
+                return false;
             }
 
-            doTrashConnection(connection);
+            if (open.compareAndSet(opened, opened - 1))
+                break;
         }
-        // If compareAndSet failed, it means we raced and another thread will execute doTrashConnection.
-        // If the connection needs to be closed (inFlight == 0), we don't need to do it here because the other thread will necessarily do
-        // it:
-        // - the current thread decremented inFlight in returnConnection
-        // - we know it did it before the connection was trashed, because otherwise it would have entered `if (trash.contains(connection))`
-        //   in returnConnection and not arrived here.
-        // - so the other thread will see the up-to-date value of inFlight and take appropriate action.
+        logger.trace("Trashing {}", connection);
+        connection.maxIdleTime = System.currentTimeMillis() + options().getIdleTimeoutSeconds() * 1000;
+        doTrashConnection(connection);
         return true;
     }
 
     private void doTrashConnection(PooledConnection connection) {
-        trash.add(connection);
         connections.remove(connection);
-
-        if (connection.inFlight.get() == 0 && trash.remove(connection))
-            close(connection);
+        trash.add(connection);
     }
 
     private boolean addConnectionIfUnderMaximum() {
@@ -342,14 +355,29 @@ class HostConnectionPool {
                 break;
         }
 
-        if (isClosed()) {
+        if (isClosing) {
             open.decrementAndGet();
             return false;
         }
 
         // Now really open the connection
         try {
-            connections.add(manager.connectionFactory().open(this));
+            PooledConnection newConnection = tryResurrectFromTrash();
+            if (newConnection == null) {
+                logger.debug("Creating new connection on busy pool to {}", host);
+                newConnection = manager.connectionFactory().open(this);
+            }
+            connections.add(newConnection);
+
+            newConnection.state.compareAndSet(RESURRECTING, OPEN); // no-op if it was already OPEN
+
+            // We might have raced with pool shutdown since the last check; ensure the connection gets closed in case the pool did not do it.
+            if (isClosing && !newConnection.isClosed()) {
+                close(newConnection);
+                open.decrementAndGet();
+                return false;
+            }
+
             signalAvailableConnection();
             return true;
         } catch (InterruptedException e) {
@@ -378,6 +406,27 @@ class HostConnectionPool {
         }
     }
 
+    private PooledConnection tryResurrectFromTrash() {
+        long highestMaxIdleTime = System.currentTimeMillis();
+        PooledConnection chosen = null;
+
+        while (true) {
+            for (PooledConnection connection : trash)
+                if (connection.maxIdleTime > highestMaxIdleTime && connection.maxAvailableStreams() > MIN_AVAILABLE_STREAMS) {
+                    chosen = connection;
+                    highestMaxIdleTime = connection.maxIdleTime;
+                }
+
+            if (chosen == null)
+                return null;
+            else if (chosen.state.compareAndSet(TRASHED, RESURRECTING))
+                break;
+        }
+        logger.trace("Resurrecting {}", chosen);
+        trash.remove(chosen);
+        return chosen;
+    }
+
     private void maybeSpawnNewConnection() {
         while (true) {
             int inCreation = scheduledForCreation.get();
@@ -387,21 +436,71 @@ class HostConnectionPool {
                 break;
         }
 
-        logger.debug("Creating new connection on busy pool to {}", host);
         manager.blockingExecutor().submit(newConnectionTask);
     }
 
     void replaceDefunctConnection(final PooledConnection connection) {
-        if (connection.markForTrash.compareAndSet(false, true))
+        if (connection.state.compareAndSet(OPEN, GONE))
             open.decrementAndGet();
-        connections.remove(connection);
+        if (connections.remove(connection))
+            manager.blockingExecutor().submit(new Runnable() {
+                @Override
+                public void run() {
+                    addConnectionIfUnderMaximum();
+                }
+            });
         connection.closeAsync();
-        manager.blockingExecutor().submit(new Runnable() {
-            @Override
-            public void run() {
-                addConnectionIfUnderMaximum();
+    }
+
+    void cleanupIdleConnections(long now) {
+        if (isClosed())
+            return;
+
+        shrinkIfBelowCapacity();
+        cleanupTrash(now);
+    }
+
+    /** If we have more active connections than needed, trash some of them */
+    private void shrinkIfBelowCapacity() {
+        int currentLoad = maxTotalInFlight.getAndSet(totalInFlight.get());
+
+        int needed = currentLoad / StreamIdGenerator.MAX_STREAM_PER_CONNECTION + 1;
+        if (currentLoad % StreamIdGenerator.MAX_STREAM_PER_CONNECTION > options().getMaxSimultaneousRequestsPerConnectionThreshold(hostDistance))
+            needed += 1;
+        needed = Math.max(needed, options().getCoreConnectionsPerHost(hostDistance));
+        int actual = open.get();
+        int toTrash = Math.max(0, actual - needed);
+
+        logger.trace("Current inFlight = {}, {} connections needed, {} connections available, trashing {}",
+            currentLoad, needed, actual, toTrash);
+
+        if (toTrash <= 0)
+            return;
+
+        for (PooledConnection connection : connections)
+            if (trashConnection(connection)) {
+                toTrash -= 1;
+                if (toTrash == 0)
+                    return;
             }
-        });
+    }
+
+    /** Close connections that have been sitting in the trash for too long */
+    private void cleanupTrash(long now) {
+        for (PooledConnection connection : trash) {
+            if (connection.maxIdleTime < now && connection.state.compareAndSet(TRASHED, GONE)) {
+                if (connection.inFlight.get() == 0) {
+                    logger.trace("Cleaning up {}", connection);
+                    trash.remove(connection);
+                    close(connection);
+                } else {
+                    // Given that idleTimeout >> request timeout, all outstanding requests should
+                    // have finished by now, so we should not get here.
+                    // Restore the status so that it's retried on the next cleanup.
+                    connection.state.set(TRASHED);
+                }
+            }
+        }
     }
 
     private void close(final Connection connection) {
@@ -418,7 +517,9 @@ class HostConnectionPool {
         if (future != null)
             return future;
 
-        // Wake up all threads that waits
+        isClosing = true;
+
+        // Wake up all threads that wait
         signalAllAvailableConnection();
 
         future = new CloseFuture.Forwarding(discardAvailableConnections());
@@ -432,22 +533,32 @@ class HostConnectionPool {
         return open.get();
     }
 
+    public int trashed() {
+        return trash.size();
+    }
+
     private List<CloseFuture> discardAvailableConnections() {
         // This can happen if creating the connections in the constructor fails
         if (connections == null)
             return Lists.newArrayList(CloseFuture.immediateFuture());
 
-        List<CloseFuture> futures = new ArrayList<CloseFuture>(connections.size());
+        List<CloseFuture> futures = new ArrayList<CloseFuture>(connections.size() + trash.size());
+
         for (final PooledConnection connection : connections) {
             CloseFuture future = connection.closeAsync();
             future.addListener(new Runnable() {
                 public void run() {
-                    if (connection.markForTrash.compareAndSet(false, true))
+                    if (connection.state.compareAndSet(OPEN, GONE))
                         open.decrementAndGet();
                 }
             }, MoreExecutors.sameThreadExecutor());
             futures.add(future);
         }
+
+        // Some connections in the trash might still be open if they hadn't reached their idle timeout
+        for (PooledConnection connection : trash)
+            futures.add(connection.closeAsync());
+
         return futures;
     }
 

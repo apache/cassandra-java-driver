@@ -20,6 +20,8 @@ CHANGELOG
 - [improvement] Expose TokenRange#contains (JAVA-687)
 - [new feature] Expose values of BoundStatement (JAVA-547)
 - [new feature] Add getObject to BoundStatement and Row (JAVA-584)
+- [improvement] Improve connection pool resizing algorithm (JAVA-419)
+- [bug] Fix race condition between pool expansion and shutdown (JAVA-599)
 
 Merged from 2.0.9_fixes branch:
 
