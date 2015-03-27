@@ -115,12 +115,12 @@ class Connection {
             try {
                 // Wait until the connection attempt succeeds or fails.
                 this.channel = future.awaitUninterruptibly().channel();
-                this.factory.allChannels.add(this.channel);
                 if (!future.isSuccess()) {
                     if (logger.isDebugEnabled())
                         logger.debug(String.format("%s Error connecting to %s%s", this, address, extractMessage(future.cause())));
                     throw defunct(new TransportException(address, "Cannot connect", future.cause()));
                 }
+                this.factory.allChannels.add(this.channel);
                 channel.closeFuture().addListener(new ChannelCloseListener());
             } finally {
                 writer.decrementAndGet();
