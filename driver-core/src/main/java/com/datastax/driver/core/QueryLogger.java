@@ -535,6 +535,9 @@ public class QueryLogger implements LatencyTracker {
     }
 
     private int append(Statement statement, StringBuilder buffer, int remaining) {
+        if (statement instanceof StatementWrapper)
+            statement = ((StatementWrapper)statement).getWrappedStatement();
+
         if (statement instanceof RegularStatement) {
             remaining = append(((RegularStatement)statement).getQueryString().trim(), buffer, remaining);
         } else if (statement instanceof BoundStatement) {

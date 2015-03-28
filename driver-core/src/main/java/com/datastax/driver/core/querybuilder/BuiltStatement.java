@@ -39,6 +39,7 @@ public abstract class BuiltStatement extends RegularStatement {
     private ByteBuffer[] values;
 
     Boolean isCounterOp;
+    boolean hasNonIdempotentOps;
 
     // Whether the user has inputted bind markers. If that's the case, we never generate values as
     // it means the user meant for the statement to be prepared and we shouldn't add our own markers.
@@ -120,6 +121,14 @@ public abstract class BuiltStatement extends RegularStatement {
         this.isCounterOp = isCounterOp;
     }
 
+    boolean hasNonIdempotentOps() {
+        return hasNonIdempotentOps;
+    }
+
+    void setNonIdempotentOps() {
+        hasNonIdempotentOps = true;
+    }
+
     void checkForBindMarkers(Object value) {
         dirty = true;
         if (Utils.containsBindMarker(value))
@@ -168,6 +177,16 @@ public abstract class BuiltStatement extends RegularStatement {
     public ByteBuffer[] getValues() {
         maybeRebuildCache();
         return values;
+    }
+
+    @Override
+    public Boolean isIdempotent() {
+        // If a value was forced with setIdempotent, it takes priority
+        if (idempotent != null)
+            return idempotent;
+
+        // Otherwise return the computed value
+        return !hasNonIdempotentOps();
     }
 
     @Override
@@ -270,6 +289,11 @@ public abstract class BuiltStatement extends RegularStatement {
         @Override
         boolean isCounterOp() {
             return statement.isCounterOp();
+        }
+
+        @Override
+        boolean hasNonIdempotentOps() {
+            return statement.hasNonIdempotentOps();
         }
 
         @Override

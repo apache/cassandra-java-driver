@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
@@ -101,6 +102,31 @@ abstract class Message {
 
         public boolean isTracingRequested() {
             return tracingRequested;
+        }
+
+        ConsistencyLevel consistency() {
+            switch (this.type) {
+                case QUERY:   return ((Requests.Query)this).options.consistency;
+                case EXECUTE: return ((Requests.Execute)this).options.consistency;
+                case BATCH:   return ((Requests.Batch)this).consistency;
+                default:      return null;
+            }
+        }
+
+        ConsistencyLevel serialConsistency() {
+            switch (this.type) {
+                case QUERY:   return ((Requests.Query)this).options.serialConsistency;
+                case EXECUTE: return ((Requests.Execute)this).options.serialConsistency;
+                default:      return null;
+            }
+        }
+
+        ByteBuffer pagingState() {
+            switch (this.type) {
+                case QUERY:   return ((Requests.Query)this).options.pagingState;
+                case EXECUTE: return ((Requests.Execute)this).options.pagingState;
+                default:      return null;
+            }
         }
     }
 

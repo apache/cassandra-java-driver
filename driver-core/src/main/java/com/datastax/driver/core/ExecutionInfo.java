@@ -62,11 +62,16 @@ public class ExecutionInfo {
      * The list of tried hosts for this query.
      * <p>
      * In general, this will be a singleton list with the host that coordinated
-     * that query. However, if an host is tried by the driver but is dead or in
-     * error, that host is recorded and the query is retry. Also, on a timeout
-     * or unavailable exception, some
+     * that query. However:
+     * <ul>
+     * <li>if a host is tried by the driver but is dead or in
+     * error, that host is recorded and the query is retried;</li>
+     * <li>on a timeout or unavailable exception, some
      * {@link com.datastax.driver.core.policies.RetryPolicy} may retry the
-     * query on the same host, so the same host might appear twice.
+     * query on the same host, so the same host might appear twice.</li>
+     * <li>if {@link com.datastax.driver.core.policies.SpeculativeExecutionPolicy speculative executions}
+     * are enabled, other hosts might have been tried speculatively as well.</li>
+     * </ul>
      * <p>
      * If you are only interested in fetching the final (and often only) node
      * coordinating the query, {@link #getQueriedHost} provides a shortcut to

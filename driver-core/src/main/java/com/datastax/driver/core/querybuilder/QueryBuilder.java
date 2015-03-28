@@ -641,7 +641,7 @@ public final class QueryBuilder {
      */
     public static Assignment append(String name, Object value) {
         Object v = value instanceof BindMarker ? value : Collections.singletonList(value);
-        return new Assignment.CollectionAssignment(name, v, true);
+        return new Assignment.CollectionAssignment(name, v, true, false);
     }
 
     /**
@@ -654,7 +654,7 @@ public final class QueryBuilder {
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment appendAll(String name, List<?> list) {
-        return new Assignment.CollectionAssignment(name, list, true);
+        return new Assignment.CollectionAssignment(name, list, true, false);
     }
 
     /**
@@ -667,7 +667,7 @@ public final class QueryBuilder {
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment appendAll(String name, BindMarker list) {
-        return new Assignment.CollectionAssignment(name, list, true);
+        return new Assignment.CollectionAssignment(name, list, true, false);
     }
 
     /**

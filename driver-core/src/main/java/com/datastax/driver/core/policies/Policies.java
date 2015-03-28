@@ -23,14 +23,17 @@ public class Policies {
     private static final ReconnectionPolicy DEFAULT_RECONNECTION_POLICY = new ExponentialReconnectionPolicy(1000, 10 * 60 * 1000);
     private static final RetryPolicy DEFAULT_RETRY_POLICY = DefaultRetryPolicy.INSTANCE;
     private static final AddressTranslater DEFAULT_ADDRESS_TRANSLATER = new IdentityTranslater();
+    private static final SpeculativeExecutionPolicy DEFAULT_SPECULATIVE_EXECUTION_POLICY = NoSpeculativeExecutionPolicy.INSTANCE;
 
     private final LoadBalancingPolicy loadBalancingPolicy;
     private final ReconnectionPolicy reconnectionPolicy;
     private final RetryPolicy retryPolicy;
     private final AddressTranslater addressTranslater;
+    private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
 
     public Policies() {
-        this(defaultLoadBalancingPolicy(), defaultReconnectionPolicy(), defaultRetryPolicy(), defaultAddressTranslater());
+        this(defaultLoadBalancingPolicy(), defaultReconnectionPolicy(), defaultRetryPolicy(),
+            defaultAddressTranslater(), defaultSpeculativeExecutionPolicy());
     }
 
     /**
@@ -44,8 +47,9 @@ public class Policies {
      */
     public Policies(LoadBalancingPolicy loadBalancingPolicy,
                     ReconnectionPolicy reconnectionPolicy,
-                    RetryPolicy retryPolicy) {
-        this(loadBalancingPolicy, reconnectionPolicy, retryPolicy, DEFAULT_ADDRESS_TRANSLATER);
+                    RetryPolicy retryPolicy,
+                    SpeculativeExecutionPolicy speculativeExecutionPolicy) {
+        this(loadBalancingPolicy, reconnectionPolicy, retryPolicy, DEFAULT_ADDRESS_TRANSLATER, speculativeExecutionPolicy);
     }
 
     /**
@@ -59,11 +63,13 @@ public class Policies {
     public Policies(LoadBalancingPolicy loadBalancingPolicy,
                     ReconnectionPolicy reconnectionPolicy,
                     RetryPolicy retryPolicy,
-                    AddressTranslater addressTranslater) {
+                    AddressTranslater addressTranslater,
+                    SpeculativeExecutionPolicy speculativeExecutionPolicy) {
         this.loadBalancingPolicy = loadBalancingPolicy;
         this.reconnectionPolicy = reconnectionPolicy;
         this.retryPolicy = retryPolicy;
         this.addressTranslater = addressTranslater;
+        this.speculativeExecutionPolicy = speculativeExecutionPolicy;
     }
 
     /**
@@ -110,12 +116,23 @@ public class Policies {
     /**
      * The default address translater.
      * <p>
-     * The default address tanslater is {@link IdentityTranslater}.
+     * The default address translater is {@link IdentityTranslater}.
      *
      * @return the default address translater.
      */
     public static AddressTranslater defaultAddressTranslater() {
         return DEFAULT_ADDRESS_TRANSLATER;
+    }
+
+    /**
+     * The default speculative retry policy.
+     * <p>
+     * The default speculative retry policy is a {@link NoSpeculativeExecutionPolicy}.
+     *
+     * @return the default speculative retry policy.
+     */
+    public static SpeculativeExecutionPolicy defaultSpeculativeExecutionPolicy() {
+        return DEFAULT_SPECULATIVE_EXECUTION_POLICY;
     }
 
     /**
@@ -159,5 +176,14 @@ public class Policies {
      */
     public AddressTranslater getAddressTranslater() {
         return addressTranslater;
+    }
+
+    /**
+     * The speculative execution policy in use.
+     *
+     * @return the speculative execution policy in use.
+     */
+    public SpeculativeExecutionPolicy getSpeculativeExecutionPolicy() {
+        return speculativeExecutionPolicy;
     }
 }
