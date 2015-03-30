@@ -1140,10 +1140,10 @@ public class Cluster implements Closeable {
             this.configuration = configuration;
             this.configuration.register(this);
 
-            this.executor = makeExecutor(NON_BLOCKING_EXECUTOR_SIZE, "Cassandra Java Driver worker-%d", executorQueue);
-            this.blockingExecutor = makeExecutor(2, "Cassandra Java Driver blocking tasks worker-%d", blockingExecutorQueue);
-            this.reconnectionExecutor = new ScheduledThreadPoolExecutor(2, threadFactory("Reconnection-%d"));
-            this.scheduledTasksExecutor = new ScheduledThreadPoolExecutor(1, threadFactory("Scheduled Tasks-%d"));
+            this.executor = makeExecutor(NON_BLOCKING_EXECUTOR_SIZE, "worker", executorQueue);
+            this.blockingExecutor = makeExecutor(2, "blocking-task-worker", blockingExecutorQueue);
+            this.reconnectionExecutor = new ScheduledThreadPoolExecutor(2, threadFactory("reconnection"));
+            this.scheduledTasksExecutor = new ScheduledThreadPoolExecutor(1, threadFactory("scheduled-task-worker"));
 
             this.reaper = new ConnectionReaper(this);
 
