@@ -70,7 +70,7 @@ public class MapperNestedCollectionsTest extends CCMBridge.PerClassSingleNodeClu
         assertThat(testTable2.getM2()).isEqualTo(m2);
     }
 
-    @UDT(keyspace = "ks", name = "testType")
+    @UDT(name = "testType")
     public static class TestType {
         private int i;
 
@@ -132,7 +132,7 @@ public class MapperNestedCollectionsTest extends CCMBridge.PerClassSingleNodeClu
         }
     }
 
-    @Table(keyspace = "ks", name = "testTable")
+    @Table(name = "testTable")
     public static class TestTable {
         @PartitionKey
         private int k;

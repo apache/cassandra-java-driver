@@ -119,7 +119,7 @@ public class MapperPrimitiveTypesTest extends CCMBridge.PerClassSingleNodeCluste
     }
 
 
-    @Table(keyspace = "ks", name = "primitiveTypes")
+    @Table(name = "primitiveTypes")
     public static class PrimitiveTypes {
         @PartitionKey
         private ByteBuffer byteBufferCol;

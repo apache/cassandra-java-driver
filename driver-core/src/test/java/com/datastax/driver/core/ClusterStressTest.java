@@ -2,6 +2,7 @@ package com.datastax.driver.core;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -135,7 +136,7 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
         public Cluster call() throws Exception {
             startSignal.await();
 
-            Cluster cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1')
+            Cluster cluster = Cluster.builder().addContactPointsWithPorts(Collections.singletonList(hostAddress))
                 .withPoolingOptions(new PoolingOptions().setCoreConnectionsPerHost(HostDistance.LOCAL, 1)).build();
 
             try {

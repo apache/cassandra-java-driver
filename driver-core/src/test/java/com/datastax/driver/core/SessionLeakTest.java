@@ -17,15 +17,16 @@ public class SessionLeakTest {
             // create a new cluster object and ensure 0 sessions and connections
             cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1').build();
 
-            int corePoolSize = cluster.getConfiguration()
-                .getPoolingOptions()
-                .getCoreConnectionsPerHost(HostDistance.LOCAL);
 
             assertEquals(cluster.manager.sessions.size(), 0);
             assertEquals((int)cluster.getMetrics().getOpenConnections().getValue(), 0);
 
             // ensure sessions.size() returns with 1 control connection + core pool size.
             Session session = cluster.connect();
+
+            // Special check for protocol version 3, number of connections should be 1.
+            int corePoolSize = TestUtils.numberOfLocalCoreConnections(cluster);
+
             assertEquals(cluster.manager.sessions.size(), 1);
             assertEquals((int)cluster.getMetrics().getOpenConnections().getValue(), 1 + corePoolSize);
 

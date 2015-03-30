@@ -148,9 +148,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
         TableMetadata metadata = cluster.getMetadata().getKeyspace(keyspace).getTable("with_options");
 
         String withOpts = withOptions;
-        VersionNumber version = cluster.getMetadata()
-                                       .getHost(new InetSocketAddress(CCMBridge.IP_PREFIX + "1", 9042))
-                                       .getCassandraVersion();
+        VersionNumber version = TestUtils.findHost(cluster, 1).getCassandraVersion();
 
         if (version.getMajor() == 2) {
             // Strip the last ';'

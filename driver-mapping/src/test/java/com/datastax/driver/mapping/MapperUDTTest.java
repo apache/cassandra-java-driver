@@ -47,7 +47,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         session.execute("TRUNCATE users");
     }
 
-    @Table(keyspace = "ks", name = "users",
+    @Table(name = "users",
            readConsistency = "QUORUM",
            writeConsistency = "QUORUM")
     public static class User {
@@ -123,7 +123,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @UDT(keyspace = "ks", name = "address")
+    @UDT(name = "address")
     public static class Address {
 
         // Dummy constant to test that static fields are properly ignored
@@ -199,16 +199,16 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Accessor
     public interface UserAccessor {
-        @Query("SELECT * FROM ks.users WHERE user_id=:userId")
+        @Query("SELECT * FROM users WHERE user_id=:userId")
         User getOne(@Param("userId") UUID userId);
 
-        @Query("UPDATE ks.users SET other_addresses[:name]=:address WHERE user_id=:id")
+        @Query("UPDATE users SET other_addresses[:name]=:address WHERE user_id=:id")
         ResultSet addAddress(@Param("id") UUID id, @Param("name") String addressName, @Param("address") Address address);
 
-        @Query("UPDATE ks.users SET other_addresses=:addresses where user_id=:id")
+        @Query("UPDATE users SET other_addresses=:addresses where user_id=:id")
         ResultSet setOtherAddresses(@Param("id") UUID id, @Param("addresses") Map<String, Address> addresses);
 
-        @Query("SELECT * FROM ks.users")
+        @Query("SELECT * FROM users")
         public Result<User> getAll();
     }
 

@@ -33,7 +33,7 @@ public class QueryBuilderUDTExecutionTest extends CCMBridge.PerClassSingleNodeCl
 
     @Test(groups = "short")
     public void insertUdtTest() throws Exception {
-        UserType udtType = cluster.getMetadata().getKeyspace("ks").getUserType("udt");
+        UserType udtType = cluster.getMetadata().getKeyspace(keyspace).getUserType("udt");
         UDTValue udtValue = udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
 
         Statement insert = insertInto("udtTest").value("k", 1).value("t", udtValue);
@@ -51,7 +51,7 @@ public class QueryBuilderUDTExecutionTest extends CCMBridge.PerClassSingleNodeCl
 
     @Test(groups = "short")
     public void should_handle_collections_of_UDT() throws Exception {
-        UserType udtType = cluster.getMetadata().getKeyspace("ks").getUserType("udt");
+        UserType udtType = cluster.getMetadata().getKeyspace(keyspace).getUserType("udt");
         UDTValue udtValue = udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
         UDTValue udtValue2 = udtType.newValue().setInt("i", 3).setInet("a", InetAddress.getByName("localhost"));
 

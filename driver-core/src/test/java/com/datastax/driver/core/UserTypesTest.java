@@ -63,12 +63,12 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
         int userId = 0;
 
         try {
-            session.execute("USE ks");
+            session.execute("USE " + keyspace);
             PreparedStatement ins = session.prepare("INSERT INTO user(id, addr) VALUES (?, ?)");
             PreparedStatement sel = session.prepare("SELECT * FROM user WHERE id=?");
 
-            UserType addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
-            UserType phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+            UserType addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
+            UserType phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
 
             UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
             UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
@@ -96,9 +96,9 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
         int userId = 1;
 
         try {
-            session.execute("USE ks");
-            UserType addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
-            UserType phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+            session.execute("USE " + keyspace);
+            UserType addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
+            UserType phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
 
             UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
             UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
@@ -124,32 +124,33 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void nonExistingTypesTest() throws Exception {
         try {
-            session.execute("USE ks");
+            session.execute("USE " + keyspace);
 
-            UserType addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address1");
-            UserType phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone1");
+            UserType addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address1");
+            UserType phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone1");
             assertEquals(addrDef, null);
             assertEquals(phoneDef, null);
 
-            addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
-            phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+            addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
+            phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
             assertNotEquals(addrDef, null);
             assertNotEquals(phoneDef, null);
 
             // create keyspace
-            session.execute("CREATE KEYSPACE nonExistingTypesTest " +
+            String nonExistingKeyspace = keyspace + "_nonEx";
+            session.execute("CREATE KEYSPACE " + nonExistingKeyspace + " " +
                     "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-            session.execute("USE nonExistingTypesTest");
+            session.execute("USE " + nonExistingKeyspace);
 
-            addrDef = cluster.getMetadata().getKeyspace("nonExistingTypesTest").getUserType("address");
-            phoneDef = cluster.getMetadata().getKeyspace("nonExistingTypesTest").getUserType("phone");
+            addrDef = cluster.getMetadata().getKeyspace(nonExistingKeyspace).getUserType("address");
+            phoneDef = cluster.getMetadata().getKeyspace(nonExistingKeyspace).getUserType("phone");
             assertEquals(addrDef, null);
             assertEquals(phoneDef, null);
 
-            session.execute("USE ks");
+            session.execute("USE " + keyspace);
 
-            addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
-            phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+            addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
+            phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
             assertNotEquals(addrDef, null);
             assertNotEquals(phoneDef, null);
 

@@ -54,7 +54,7 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "long")
     public void sessions_should_not_leak_connections() {
         // override inherited field with a new cluster object and ensure 0 sessions and connections
-        cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1')
+        cluster = Cluster.builder().addContactPointsWithPorts(Collections.singletonList(hostAddress))
             .withPoolingOptions(new PoolingOptions().setCoreConnectionsPerHost(HostDistance.LOCAL, 1)).build();
 
         // The cluster has not been initialized yet, therefore the control connection is not opened

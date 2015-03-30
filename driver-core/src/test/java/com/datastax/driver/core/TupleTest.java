@@ -27,8 +27,6 @@ import static org.testng.Assert.fail;
 
 import com.datastax.driver.core.utils.CassandraVersion;
 
-import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
-
 @CassandraVersion(major=2.1)
 public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -60,7 +58,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void simpleWriteReadTest() throws Exception {
         try {
-            session.execute("USE " + SIMPLE_KEYSPACE);
+            session.execute("USE " + keyspace);
             PreparedStatement ins = session.prepare("INSERT INTO t(k, v) VALUES (?, ?)");
             PreparedStatement sel = session.prepare("SELECT * FROM t WHERE k=?");
 

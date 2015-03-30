@@ -88,7 +88,7 @@ public class SyntheticFieldsMapperTest extends CCMBridge.PerClassSingleNodeClust
         }
     }
 
-    @Table(keyspace = "ks", name = "synthetic_fields")
+    @Table(name = "synthetic_fields")
     public static class ClassWithSyntheticField {
         @PartitionKey
         private int id;

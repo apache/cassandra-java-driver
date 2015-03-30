@@ -52,7 +52,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
      *
      * And the next step will be to support UDT (which should be relatively simple).
      */
-    @Table(keyspace="ks", name = "users",
+    @Table(name = "users",
            readConsistency="QUORUM",
            writeConsistency="QUORUM")
     public static class User {
@@ -147,7 +147,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
      * the order must be specified (@ClusteringColumn(0), @ClusteringColumn(1), ...).
      * The same stands for the @PartitionKey.
      */
-    @Table(keyspace = "ks", name = "posts")
+    @Table(name = "posts")
     public static class Post {
 
         @PartitionKey
@@ -263,31 +263,31 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // don't have @Param annotation like in the 2 other method, we default to some
         // harcoded arg0, arg1, .... A big annoying, and apparently Java 8 will fix that
         // somehow, but well, not a huge deal.
-        @Query("SELECT * FROM ks.posts WHERE user_id=:userId AND post_id=:postId")
+        @Query("SELECT * FROM posts WHERE user_id=:userId AND post_id=:postId")
         public Post getOne(@Param("userId") UUID userId,
                            @Param("postId") UUID postId);
 
         // Note that the following method will be asynchronous (it will use executeAsync
         // underneath) because it's return type is a ListenableFuture. Similarly, we know
         // that we need to map the result to the Post entity thanks to the return type.
-        @Query("SELECT * FROM ks.posts WHERE user_id=?")
+        @Query("SELECT * FROM posts WHERE user_id=?")
         @QueryParameters(consistency="QUORUM")
         public ListenableFuture<Result<Post>> getAllAsync(UUID userId);
 
         // The method above actually query stuff, but if a method is declared to return
         // a Statement, it will not execute anything, but just return you the BoundStatement
         // ready for execution. That way, you can batch stuff for instance (see usage below).
-        @Query("UPDATE ks.posts SET content=? WHERE user_id=? AND post_id=?")
+        @Query("UPDATE posts SET content=? WHERE user_id=? AND post_id=?")
         public Statement updateContentQuery(String newContent, UUID userId, UUID postId);
 
-        @Query("SELECT * FROM ks.posts")
+        @Query("SELECT * FROM posts")
         public Result<Post> getAll();
     }
 
     @Accessor
     public interface UserAccessor {
         // Demonstrates use of an enum as an accessor parameter
-        @Query("UPDATE ks.users SET name=?, gender=? WHERE user_id=?")
+        @Query("UPDATE users SET name=?, gender=? WHERE user_id=?")
         ResultSet updateNameAndGender(String name, Gender gender, UUID userId);
     }
 
