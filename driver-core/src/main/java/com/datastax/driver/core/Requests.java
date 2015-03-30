@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 class Requests {
 
@@ -35,7 +35,7 @@ class Requests {
         public static final String COMPRESSION_OPTION = "COMPRESSION";
 
         public static final Message.Coder<Startup> coder = new Message.Coder<Startup>() {
-            public void encode(Startup msg, ChannelBuffer dest) {
+            public void encode(Startup msg, ByteBuf dest) {
                 CBUtil.writeStringMap(msg.options, dest);
             }
 
@@ -67,7 +67,7 @@ class Requests {
 
         public static final Message.Coder<Credentials> coder = new Message.Coder<Credentials>() {
 
-            public void encode(Credentials msg, ChannelBuffer dest) {
+            public void encode(Credentials msg, ByteBuf dest) {
                 CBUtil.writeStringMap(msg.credentials, dest);
             }
 
@@ -88,7 +88,7 @@ class Requests {
 
         public static final Message.Coder<Options> coder = new Message.Coder<Options>()
         {
-            public void encode(Options msg, ChannelBuffer dest) {}
+            public void encode(Options msg, ByteBuf dest) {}
 
             public int encodedSize(Options msg) {
                 return 0;
@@ -108,7 +108,7 @@ class Requests {
     public static class Query extends Message.Request {
 
         public static final Message.Coder<Query> coderV1 = new Message.Coder<Query>() {
-            public void encode(Query msg, ChannelBuffer dest) {
+            public void encode(Query msg, ByteBuf dest) {
                 CBUtil.writeLongString(msg.query, dest);
                 CBUtil.writeConsistencyLevel(msg.options.consistency, dest);
             }
@@ -120,7 +120,7 @@ class Requests {
         };
 
         public static final Message.Coder<Query> coderV2 = new Message.Coder<Query>() {
-            public void encode(Query msg, ChannelBuffer dest) {
+            public void encode(Query msg, ByteBuf dest) {
                 CBUtil.writeLongString(msg.query, dest);
                 msg.options.encode(dest);
             }
@@ -153,7 +153,7 @@ class Requests {
     public static class Execute extends Message.Request {
 
         public static final Message.Coder<Execute> coderV1 = new Message.Coder<Execute>() {
-            public void encode(Execute msg, ChannelBuffer dest) {
+            public void encode(Execute msg, ByteBuf dest) {
                 CBUtil.writeBytes(msg.statementId.bytes, dest);
                 CBUtil.writeValueList(msg.options.values, dest);
                 CBUtil.writeConsistencyLevel(msg.options.consistency, dest);
@@ -167,7 +167,7 @@ class Requests {
         };
 
         public static final Message.Coder<Execute> coderV2 = new Message.Coder<Execute>() {
-            public void encode(Execute msg, ChannelBuffer dest) {
+            public void encode(Execute msg, ByteBuf dest) {
                 CBUtil.writeBytes(msg.statementId.bytes, dest);
                 msg.options.encode(dest);
             }
@@ -264,7 +264,7 @@ class Requests {
                 flags.add(Flag.SERIAL_CONSISTENCY);
         }
 
-        public void encode(ChannelBuffer dest) {
+        public void encode(ByteBuf dest) {
             CBUtil.writeConsistencyLevel(consistency, dest);
 
             dest.writeByte((byte)Flag.serialize(flags));
@@ -302,7 +302,7 @@ class Requests {
     public static class Batch extends Message.Request {
 
         public static final Message.Coder<Batch> coder = new Message.Coder<Batch>() {
-            public void encode(Batch msg, ChannelBuffer dest) {
+            public void encode(Batch msg, ByteBuf dest) {
                 int queries = msg.queryOrIdList.size();
                 assert queries <= 0xFFFF;
 
@@ -377,7 +377,7 @@ class Requests {
 
         public static final Message.Coder<Prepare> coder = new Message.Coder<Prepare>() {
 
-            public void encode(Prepare msg, ChannelBuffer dest) {
+            public void encode(Prepare msg, ByteBuf dest) {
                 CBUtil.writeLongString(msg.query, dest);
             }
 
@@ -402,7 +402,7 @@ class Requests {
     public static class Register extends Message.Request {
 
         public static final Message.Coder<Register> coder = new Message.Coder<Register>() {
-            public void encode(Register msg, ChannelBuffer dest) {
+            public void encode(Register msg, ByteBuf dest) {
                 dest.writeShort(msg.eventTypes.size());
                 for (ProtocolEvent.Type type : msg.eventTypes)
                     CBUtil.writeEnumValue(type, dest);
@@ -433,7 +433,7 @@ class Requests {
 
         public static final Message.Coder<AuthResponse> coder = new Message.Coder<AuthResponse>() {
 
-            public void encode(AuthResponse response, ChannelBuffer dest) {
+            public void encode(AuthResponse response, ByteBuf dest) {
                 CBUtil.writeValue(response.token, dest);
             }
 

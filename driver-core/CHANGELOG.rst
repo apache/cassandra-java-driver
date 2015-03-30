@@ -22,6 +22,11 @@ CHANGELOG
 - [new feature] Add getObject to BoundStatement and Row (JAVA-584)
 - [improvement] Improve connection pool resizing algorithm (JAVA-419)
 - [bug] Fix race condition between pool expansion and shutdown (JAVA-599)
+- [improvement] Upgrade Netty to 4.0.26 (JAVA-622)
+- [improvement] Coalesce frames before flushing them to the connection
+  (JAVA-562)
+- [improvement] Rename threads to indicate that they are for the driver
+  (JAVA-583)
 
 Merged from 2.0.9_fixes branch:
 

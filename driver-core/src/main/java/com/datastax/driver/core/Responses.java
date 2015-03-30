@@ -18,9 +18,8 @@ package com.datastax.driver.core;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
 
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.Bytes;
@@ -33,7 +32,7 @@ class Responses {
 
         public static final Message.Decoder<Error> decoder = new Message.Decoder<Error>() {
             @Override
-            public Error decode(ChannelBuffer body) {
+            public Error decode(ByteBuf body) {
                 ExceptionCode code = ExceptionCode.fromValue(body.readInt());
                 String msg = CBUtil.readString(body);
                 Object infos = null;
@@ -111,7 +110,7 @@ class Responses {
     public static class Ready extends Message.Response {
 
         public static final Message.Decoder<Ready> decoder = new Message.Decoder<Ready>() {
-            public Ready decode(ChannelBuffer body) {
+            public Ready decode(ByteBuf body) {
                 // TODO: Would it be cool to return a singleton? Check we don't need to
                 // set the streamId or something
                 return new Ready();
@@ -131,7 +130,7 @@ class Responses {
     public static class Authenticate extends Message.Response {
 
         public static final Message.Decoder<Authenticate> decoder = new Message.Decoder<Authenticate>() {
-            public Authenticate decode(ChannelBuffer body) {
+            public Authenticate decode(ByteBuf body) {
                 String authenticator = CBUtil.readString(body);
                 return new Authenticate(authenticator);
             }
@@ -153,7 +152,7 @@ class Responses {
     public static class Supported extends Message.Response {
 
         public static final Message.Decoder<Supported> decoder = new Message.Decoder<Supported>() {
-            public Supported decode(ChannelBuffer body) {
+            public Supported decode(ByteBuf body) {
                 return new Supported(CBUtil.readStringToStringListMap(body));
             }
         };
@@ -189,14 +188,14 @@ class Responses {
     public static abstract class Result extends Message.Response {
 
         public static final Message.Decoder<Result> decoderV1 = new Message.Decoder<Result>() {
-            public Result decode(ChannelBuffer body) {
+            public Result decode(ByteBuf body) {
                 Kind kind = Kind.fromId(body.readInt());
                 return kind.subDecoderV1.decode(body);
             }
         };
 
         public static final Message.Decoder<Result> decoderV2 = new Message.Decoder<Result>() {
-            public Result decode(ChannelBuffer body) {
+            public Result decode(ByteBuf body) {
                 Kind kind = Kind.fromId(body.readInt());
                 return kind.subDecoderV2.decode(body);
             }
@@ -255,7 +254,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body) {
+                public Result decode(ByteBuf body) {
                     return new Void();
                 }
             };
@@ -275,7 +274,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body) {
+                public Result decode(ByteBuf body) {
                     return new SetKeyspace(CBUtil.readString(body));
                 }
             };
@@ -327,7 +326,7 @@ class Responses {
                     this.pagingState = pagingState;
                 }
 
-                public static Metadata decode(ChannelBuffer body) {
+                public static Metadata decode(ByteBuf body) {
 
                     // flags & column count
                     EnumSet<Flag> flags = Flag.deserialize(body.readInt());
@@ -381,7 +380,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body) {
+                public Result decode(ByteBuf body) {
 
                     Metadata metadata = Metadata.decode(body);
 
@@ -436,7 +435,7 @@ class Responses {
         public static class Prepared extends Result {
 
             public static final Message.Decoder<Result> subcodecV1 = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body) {
+                public Result decode(ByteBuf body) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
                     Rows.Metadata metadata = Rows.Metadata.decode(body);
                     return new Prepared(id, metadata, Rows.Metadata.EMPTY);
@@ -444,7 +443,7 @@ class Responses {
             };
 
             public static final Message.Decoder<Result> subcodecV2 = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body) {
+                public Result decode(ByteBuf body) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
                     Rows.Metadata metadata = Rows.Metadata.decode(body);
                     Rows.Metadata resultMetadata = Rows.Metadata.decode(body);
@@ -478,7 +477,7 @@ class Responses {
             public final String columnFamily;
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body)
+                public Result decode(ByteBuf body)
                 {
                     Change change = CBUtil.readEnumValue(Change.class, body);
                     String keyspace = CBUtil.readString(body);
@@ -504,7 +503,7 @@ class Responses {
     public static class Event extends Message.Response {
 
         public static final Message.Decoder<Event> decoder = new Message.Decoder<Event>() {
-            public Event decode(ChannelBuffer body) {
+            public Event decode(ByteBuf body) {
                 return new Event(ProtocolEvent.deserialize(body));
             }
         };
@@ -525,7 +524,7 @@ class Responses {
     public static class AuthChallenge extends Message.Response {
 
         public static final Message.Decoder<AuthChallenge> decoder = new Message.Decoder<AuthChallenge>() {
-            public AuthChallenge decode(ChannelBuffer body) {
+            public AuthChallenge decode(ByteBuf body) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
                     return new AuthChallenge(null);
@@ -547,7 +546,7 @@ class Responses {
     public static class AuthSuccess extends Message.Response {
 
         public static final Message.Decoder<AuthSuccess> decoder = new Message.Decoder<AuthSuccess>() {
-            public AuthSuccess decode(ChannelBuffer body) {
+            public AuthSuccess decode(ByteBuf body) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
                     return new AuthSuccess(null);
