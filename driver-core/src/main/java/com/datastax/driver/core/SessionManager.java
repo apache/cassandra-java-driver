@@ -28,7 +28,6 @@ import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
@@ -327,8 +326,8 @@ class SessionManager extends AbstractSession {
     CloseFuture removePool(Host host) {
         final HostConnectionPool pool = pools.remove(host);
         return pool == null
-             ? CloseFuture.immediateFuture()
-             : pool.closeAsync();
+            ? CloseFuture.immediateFuture()
+            : pool.closeAsync();
     }
 
     /*
@@ -451,6 +450,7 @@ class SessionManager extends AbstractSession {
     Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState) {
         int protoVersion = cluster.manager.protocolVersion();
         int fetchSize = statement.getFetchSize();
+        ByteBuffer usedPagingState = pagingState;
 
         if (protoVersion == 1) {
             assert pagingState == null;
@@ -466,6 +466,10 @@ class SessionManager extends AbstractSession {
 
         if (fetchSize == Integer.MAX_VALUE)
             fetchSize = -1;
+
+        if (pagingState == null) {
+            usedPagingState = statement.getPagingState();
+        }
 
         if (statement instanceof RegularStatement) {
             RegularStatement rs = (RegularStatement)statement;
@@ -483,12 +487,12 @@ class SessionManager extends AbstractSession {
 
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
             String qString = rs.getQueryString();
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false, fetchSize, pagingState, scl);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false, fetchSize, usedPagingState, scl);
             return new Requests.Query(qString, options);
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
             boolean skipMetadata = protoVersion != 1 && bs.statement.getPreparedId().resultSetMetadata != null;
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.values), skipMetadata, fetchSize, pagingState, scl);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.values), skipMetadata, fetchSize, usedPagingState, scl);
             return new Requests.Execute(bs.statement.getPreparedId().id, options);
         } else {
             assert statement instanceof BatchStatement : statement;

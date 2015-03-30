@@ -74,8 +74,8 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 // this explicitly because MultiPage implementation don't support info == null.
                 assert r.metadata.pagingState == null || info != null;
                 return r.metadata.pagingState == null
-                     ? new SinglePage(columnDefs, tokenFactory, r.data, info)
-                     : new MultiPage(columnDefs, tokenFactory, r.data, info, r.metadata.pagingState, session, statement);
+                    ? new SinglePage(columnDefs, tokenFactory, r.data, info)
+                    : new MultiPage(columnDefs, tokenFactory, r.data, info, r.metadata.pagingState, session, statement);
 
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
@@ -228,7 +228,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
             // that this will never change, so apply the generic check by peeking at the first row.
             super(metadata, tokenFactory, rows.peek());
             this.currentPage = rows;
-            this.infos.offer(info);
+            this.infos.offer(info.withPagingState(pagingState).withStatement(statement));
 
             this.fetchState = new FetchingState(pagingState, null);
             this.session = session;
@@ -322,9 +322,10 @@ abstract class ArrayBackedResultSet implements ResultSet {
                             case RESULT:
                                 Responses.Result rm = (Responses.Result)response;
                                 info = update(info, rm, MultiPage.this.session);
-
                                 if (rm.kind == Responses.Result.Kind.ROWS) {
                                     Responses.Result.Rows rows = (Responses.Result.Rows)rm;
+                                    if (rows.metadata.pagingState != null)
+                                        info = info.withPagingState(rows.metadata.pagingState).withStatement(statement);
                                     MultiPage.this.nextPages.offer(rows.data);
                                     MultiPage.this.fetchState = rows.metadata.pagingState == null ? null : new FetchingState(rows.metadata.pagingState, null);
                                 } else if (rm.kind == Responses.Result.Kind.VOID) {
