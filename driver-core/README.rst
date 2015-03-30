@@ -1,10 +1,6 @@
 Driver Core
 ===========
 
-.. image:: https://travis-ci.org/datastax/java-driver.svg?branch=2.1
-   :target: https://travis-ci.org/datastax/java-driver
-   :alt: Travis Build
-
 This is the core module of the DataStax Java Driver for Apache Cassandra (C*), 
 which offers a simple (as in, not abstracted) but complete API to work with
 CQL3. The main goal of the module is to handle all the functionality related
