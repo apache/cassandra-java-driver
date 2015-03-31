@@ -86,8 +86,8 @@ class Responses {
                 case PROTOCOL_ERROR:   return new DriverInternalError("An unexpected protocol error occurred. This is a bug in this library, please report: " + message);
                 case BAD_CREDENTIALS:  return new AuthenticationException(host, message);
                 case UNAVAILABLE:      return ((UnavailableException)infos).copy(); // We copy to have a nice stack trace
-                case OVERLOADED:       return new DriverInternalError(String.format("Queried host (%s) was overloaded; this shouldn't happen, another node should have been tried", host));
-                case IS_BOOTSTRAPPING: return new DriverInternalError(String.format("Queried host (%s) was bootstrapping; this shouldn't happen, another node should have been tried", host));
+                case OVERLOADED:       return new OverloadedException(host, message);
+                case IS_BOOTSTRAPPING: return new BootstrappingException(host, message);
                 case TRUNCATE_ERROR:   return new TruncateException(message);
                 case WRITE_TIMEOUT:    return ((WriteTimeoutException)infos).copy();
                 case READ_TIMEOUT:     return ((ReadTimeoutException)infos).copy();
@@ -96,7 +96,7 @@ class Responses {
                 case INVALID:          return new InvalidQueryException(message);
                 case CONFIG_ERROR:     return new InvalidConfigurationInQueryException(message);
                 case ALREADY_EXISTS:   return ((AlreadyExistsException)infos).copy();
-                case UNPREPARED:       return new DriverInternalError(String.format("A prepared query was submitted on %s but was not known of that node; this shouldn't happen, the query should have been re-prepared", host));
+                case UNPREPARED:       return new UnpreparedException(host, message);
                 default:               return new DriverInternalError(String.format("Unknown protocol error code %s returned by %s. The error message was: %s", code, host, message));
             }
         }

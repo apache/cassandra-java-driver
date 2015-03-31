@@ -19,13 +19,16 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.*;
 
 /**
  * A wrapper load balancing policy that adds latency awareness to a child policy.
@@ -104,7 +107,8 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy, Closeab
         return new Builder(childPolicy);
     }
 
-    private class Updater implements Runnable {
+    @VisibleForTesting
+    class Updater implements Runnable {
 
         private Set<Host> excludedAtLastTick = Collections.<Host>emptySet();
 
@@ -367,20 +371,45 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy, Closeab
         }
     }
 
+    /**
+     * A set of DriverException subclasses that we should prevent from updating the host's score.
+     * The intent behind it is to filter out "fast" errors: when a host replies with such errors,
+     * it usually does so very quickly, because it did not involve any actual
+     * coordination work. Such errors are not good indicators of the host's responsiveness,
+     * and tend to make the host's score look better than it actually is.
+     */
+    private static final Set<Class<? extends DriverException>> EXCLUDED_EXCEPTIONS = ImmutableSet.of(
+        UnavailableException.class, // this is done via the snitch and is usually very fast
+        OverloadedException.class,
+        BootstrappingException.class,
+        UnpreparedException.class,
+        QueryValidationException.class // query validation also happens at early stages in the coordinator
+    );
+
     private class Tracker implements LatencyTracker {
 
         private final ConcurrentMap<Host, HostLatencyTracker> latencies = new ConcurrentHashMap<Host, HostLatencyTracker>();
         private volatile long cachedMin = -1L;
 
-        public void update(Host host, long newLatencyNanos) {
-            HostLatencyTracker hostTracker = latencies.get(host);
-            if (hostTracker == null) {
-                hostTracker = new HostLatencyTracker(scale, (30L * minMeasure) / 100L);
-                HostLatencyTracker old = latencies.putIfAbsent(host, hostTracker);
-                if (old != null)
-                    hostTracker = old;
+        public void update(Host host, Statement statement, Exception exception, long newLatencyNanos) {
+            if(shouldConsiderNewLatency(statement, exception)) {
+                HostLatencyTracker hostTracker = latencies.get(host);
+                if (hostTracker == null) {
+                    hostTracker = new HostLatencyTracker(scale, (30L * minMeasure) / 100L);
+                    HostLatencyTracker old = latencies.putIfAbsent(host, hostTracker);
+                    if (old != null)
+                        hostTracker = old;
+                }
+                hostTracker.add(newLatencyNanos);
             }
-            hostTracker.add(newLatencyNanos);
+        }
+
+        private boolean shouldConsiderNewLatency(Statement statement, Exception exception) {
+            // query was successful: always consider
+            if(exception == null) return true;
+            // filter out "fast" errors
+            if(EXCLUDED_EXCEPTIONS.contains(exception.getClass())) return false;
+            return true;
         }
 
         public void updateMin() {
