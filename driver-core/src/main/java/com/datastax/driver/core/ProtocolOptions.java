@@ -25,23 +25,34 @@ public class ProtocolOptions {
      */
     public enum Compression {
         /** No compression */
-        NONE("", null),
+        NONE("") {
+            @Override
+            FrameCompressor compressor() {
+                return null;
+            }
+        },
         /** Snappy compression */
-        SNAPPY("snappy", FrameCompressor.SnappyCompressor.instance),
+        SNAPPY("snappy") {
+            @Override
+            FrameCompressor compressor() {
+                return FrameCompressor.SnappyCompressor.instance;
+            }
+        },
         /** LZ4 compression */
-        LZ4("lz4", FrameCompressor.LZ4Compressor.instance);
+        LZ4("lz4") {
+            @Override
+            FrameCompressor compressor() {
+                return FrameCompressor.LZ4Compressor.instance;
+            }
+        };
 
         final String protocolName;
-        final FrameCompressor compressor;
 
-        private Compression(String protocolName, FrameCompressor compressor) {
+        private Compression(String protocolName) {
             this.protocolName = protocolName;
-            this.compressor = compressor;
         }
 
-        FrameCompressor compressor() {
-            return compressor;
-        }
+        abstract FrameCompressor compressor();
 
         static Compression fromString(String str) {
             for (Compression c : values()) {
@@ -177,7 +188,7 @@ public class ProtocolOptions {
      * unavailable.
      */
     public ProtocolOptions setCompression(Compression compression) {
-        if (compression != Compression.NONE && compression.compressor == null)
+        if (compression != Compression.NONE && compression.compressor() == null)
             throw new IllegalStateException("The requested compression is not available (some compression require a JAR to be found in the classpath)");
 
         this.compression = compression;

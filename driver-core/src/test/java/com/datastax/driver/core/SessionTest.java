@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -106,19 +107,38 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(rows.get(0).getLong("c"), 2L);
     }
 
+    /**
+     * Validates that a session can be established using snappy compression and executes some queries that inserts and
+     * retrieves data using that session.
+     *
+     * @test_category connection:compression
+     * @expected_result session established and queries made successfully using it.
+     */
     @Test(groups = "short")
-    public void compressionTest() throws Exception {
+    public void session_should_function_with_snappy_compression() throws Exception {
+        compressionTest(ProtocolOptions.Compression.SNAPPY);
+    }
 
-        // Same as executeTest, but with compression enabled
+    /**
+     * Validates that a session can be established using lz4 compression and executes some queries that inserts and
+     * retrieves data using that session.
+     *
+     * @test_category connection:compression
+     * @expected_result session established and queries made successfully using it.
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major=2.0)
+    public void session_should_function_with_lz4_compression() throws Exception {
+        compressionTest(ProtocolOptions.Compression.LZ4);
+    }
 
-        cluster.getConfiguration().getProtocolOptions().setCompression(ProtocolOptions.Compression.SNAPPY);
-
+    public void compressionTest(ProtocolOptions.Compression compression) {
+        cluster.getConfiguration().getProtocolOptions().setCompression(compression);
         try {
-
             Session compressedSession = cluster.connect(keyspace);
 
             // Simple calls to all versions of the execute/executeAsync methods
-            String key = "execute_compressed_test";
+            String key = "execute_compressed_test_" + compression;
             ResultSet rs = compressedSession.execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE3, key, "foo", 42, 24.03f));
             assertTrue(rs.isExhausted());
 

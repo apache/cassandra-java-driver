@@ -98,6 +98,7 @@ abstract class FrameCompressor {
 
         private LZ4Compressor() {
             final LZ4Factory lz4Factory = LZ4Factory.fastestInstance();
+            logger.info("Using {}", lz4Factory.toString());
             compressor = lz4Factory.fastCompressor();
             decompressor = lz4Factory.fastDecompressor();
         }

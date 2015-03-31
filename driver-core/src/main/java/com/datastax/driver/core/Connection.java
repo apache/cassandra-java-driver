@@ -104,7 +104,7 @@ class Connection {
             ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
             int protocolVersion = factory.protocolVersion == 1 ? 1 : 2;
             bootstrap.handler(
-                new Initializer(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions(),
+                new Initializer(this, protocolVersion, protocolOptions.getCompression().compressor(), protocolOptions.getSSLOptions(),
                     factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds()));
 
             ChannelFuture future = bootstrap.connect(address);
