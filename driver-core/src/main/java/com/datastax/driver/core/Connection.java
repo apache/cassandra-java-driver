@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -105,7 +104,8 @@ class Connection {
             int protocolVersion = factory.protocolVersion == 1 ? 1 : 2;
             bootstrap.handler(
                 new Initializer(this, protocolVersion, protocolOptions.getCompression().compressor(), protocolOptions.getSSLOptions(),
-                    factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds()));
+                    factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds(),
+                    factory.configuration.getNettyCustomizer()));
 
             ChannelFuture future = bootstrap.connect(address);
 
@@ -1133,13 +1133,15 @@ class Connection {
         private final Connection connection;
         private final FrameCompressor compressor;
         private final SSLOptions sslOptions;
+        private final NettyCustomizer nettyCustomizer;
         private final ChannelHandler idleStateHandler;
 
-        public Initializer(Connection connection, int protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds) {
+        public Initializer(Connection connection, int protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds, NettyCustomizer nettyCustomizer) {
             this.connection = connection;
             this.protocolVersion = protocolVersion;
             this.compressor = compressor;
             this.sslOptions = sslOptions;
+            this.nettyCustomizer = nettyCustomizer;
             this.idleStateHandler = new IdleStateHandler(0, 0, heartBeatIntervalSeconds);
         }
 
@@ -1171,6 +1173,8 @@ class Connection {
             pipeline.addLast("idleStateHandler", idleStateHandler);
 
             pipeline.addLast("dispatcher", connection.dispatcher);
+
+            nettyCustomizer.afterChannelInitialized(channel);
         }
     }
 }

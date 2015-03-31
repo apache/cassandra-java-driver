@@ -74,11 +74,16 @@ public class MailboxServiceIT {
     }
 
     private CompositeOption defaultOptions() {
+        return defaultOptions(false);
+    }
+
+    private CompositeOption defaultOptions(final boolean useShaded) {
         return new CompositeOption() {
 
             @Override public Option[] getOptions() {
                 return options(
                     systemProperty("cassandra.contactpoints").value(CCMBridge.IP_PREFIX + 1),
+                    systemProperty("netty.shaded").value(Boolean.toString(useShaded)),
                     bundle("reference:file:target/classes"),
                     mavenBundle("com.codahale.metrics", "metrics-core", "3.0.2"),
                     mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
@@ -95,7 +100,7 @@ public class MailboxServiceIT {
         return options(
             driverBundle(true),
             guavaBundle(),
-            defaultOptions()
+            defaultOptions(true)
         );
     }
 

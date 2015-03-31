@@ -26,6 +26,7 @@ import com.datastax.driver.core.policies.Policies;
  *   <li>low-level TCP configuration options (tcpNoDelay, keepAlive, ...).</li>
  *   <li>Metrics related options.</li>
  *   <li>Query related options (default consistency level, fetchSize, ...).</li>
+ *   <li>Netty layer customization options.</li>
  * </ul>
  * This is also where you get the configured policies, though those cannot be changed
  * (they are set during the built of the Cluster object).
@@ -39,6 +40,7 @@ public class Configuration {
     private final SocketOptions socketOptions;
     private final MetricsOptions metricsOptions;
     private final QueryOptions queryOptions;
+    private final NettyCustomizer nettyCustomizer;
 
     /*
      * Creates a configuration object.
@@ -49,7 +51,8 @@ public class Configuration {
              new PoolingOptions(),
              new SocketOptions(),
              new MetricsOptions(),
-             new QueryOptions());
+             new QueryOptions(),
+             new NettyCustomizer());
     }
 
     /**
@@ -61,19 +64,22 @@ public class Configuration {
      * @param socketOptions the socket options to use
      * @param metricsOptions the metrics options, or null to disable metrics.
      * @param queryOptions defaults related to queries.
+     * @param nettyCustomizer the {@link NettyCustomizer} instance to use
      */
     public Configuration(Policies policies,
                          ProtocolOptions protocolOptions,
                          PoolingOptions poolingOptions,
                          SocketOptions socketOptions,
                          MetricsOptions metricsOptions,
-                         QueryOptions queryOptions) {
+                         QueryOptions queryOptions,
+                         NettyCustomizer nettyCustomizer) {
         this.policies = policies;
         this.protocolOptions = protocolOptions;
         this.poolingOptions = poolingOptions;
         this.socketOptions = socketOptions;
         this.metricsOptions = metricsOptions;
         this.queryOptions = queryOptions;
+        this.nettyCustomizer = nettyCustomizer;
     }
 
     void register(Cluster.Manager manager) {
@@ -137,5 +143,13 @@ public class Configuration {
      */
     public QueryOptions getQueryOptions() {
         return queryOptions;
+    }
+
+    /**
+     * Returns the {@link NettyCustomizer} instance for this configuration.
+     * @return the {@link NettyCustomizer} instance for this configuration.
+     */
+    public NettyCustomizer getNettyCustomizer() {
+        return nettyCustomizer;
     }
 }
