@@ -14,6 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.exceptions.PagingStateException;
 
+@CassandraVersion(major=2.0)
 public class PagingStateTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final Logger logger = LoggerFactory.getLogger(PagingStateTest.class);
     public static final String KEY = "paging_test";
