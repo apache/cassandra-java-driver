@@ -15,9 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,17 +27,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
@@ -65,7 +62,6 @@ class Connection {
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
     private static final boolean DISABLE_COALESCING = SystemProperties.getBoolean("com.datastax.driver.DISABLE_COALESCING", false);
-    private static final boolean FORCE_NIO = SystemProperties.getBoolean("com.datastax.driver.FORCE_NIO", false);
 
     public final InetSocketAddress address;
     private final String name;
@@ -105,7 +101,8 @@ class Connection {
             int protocolVersion = factory.protocolVersion == 1 ? 1 : 2;
             bootstrap.handler(
                 new Initializer(this, protocolVersion, protocolOptions.getCompression().compressor(), protocolOptions.getSSLOptions(),
-                    factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds()));
+                    factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds(),
+                    factory.configuration.getNettyOptions()));
 
             ChannelFuture future = bootstrap.connect(address);
 
@@ -538,46 +535,11 @@ class Connection {
 
     public static class Factory {
 
-        private static final Class[] EVENT_GROUP_ARGUMENTS = {int.class, ThreadFactory.class};
-        private static final Class<? extends EventLoopGroup> EVENT_LOOP_GROUP_CLASS;
-        private static final Class<? extends Channel> CHANNEL_CLASS;
-        private static final Constructor<? extends EventLoopGroup> EVENT_LOOP_GROUP_CONSTRUCTOR;
-        static {
-            boolean useEpoll;
-            try {
-                Class.forName("io.netty.channel.epoll.EpollEventLoopGroup");
-                if (FORCE_NIO) {
-                    logger.info("Found Netty's native epoll transport in the classpath, "
-                        + "but NIO was forced through the FORCE_NIO system property");
-                    useEpoll = false;
-                } else if(!System.getProperty("os.name", "").toLowerCase(Locale.US).equals("linux")) {
-                    logger.warn("Found Netty's native epoll transport, but not running on linux-based operating " +
-                            "system.  Using NIO instead.");
-                    useEpoll = false;
-                } else {
-                    logger.info("Found Netty's native epoll transport in the classpath, using it");
-                    useEpoll = true;
-                }
-            } catch (ClassNotFoundException e) {
-                logger.info("Did not find Netty's native epoll transport in the classpath, defaulting to NIO");
-                useEpoll = false;
-            }
-            EVENT_LOOP_GROUP_CLASS = useEpoll ? EpollEventLoopGroup.class :  NioEventLoopGroup.class;
-            CHANNEL_CLASS = useEpoll ? EpollSocketChannel.class : NioSocketChannel.class;
-
-            Constructor<? extends EventLoopGroup> constructor = null;
-            try {
-                constructor = EVENT_LOOP_GROUP_CLASS.getDeclaredConstructor(EVENT_GROUP_ARGUMENTS);
-            } catch (NoSuchMethodException e) {
-                logger.warn("Could not resolve {}(int, ThreadFactory), using default constructor instead.",
-                        EVENT_LOOP_GROUP_CLASS.getName());
-            }
-            EVENT_LOOP_GROUP_CONSTRUCTOR = constructor;
-        }
-
         public final HashedWheelTimer timer;
 
         private final EventLoopGroup eventLoopGroup;
+        private final Class<? extends Channel> channelClass;
+
         private final ChannelGroup allChannels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
         private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
@@ -590,6 +552,7 @@ class Connection {
         private volatile boolean isShutdown;
 
         volatile int protocolVersion;
+        private final NettyOptions nettyOptions;
 
         Factory(Cluster.Manager manager, Configuration configuration) {
             this.defaultHandler = manager;
@@ -598,20 +561,9 @@ class Connection {
             this.configuration = configuration;
             this.authProvider = configuration.getProtocolOptions().getAuthProvider();
             this.protocolVersion = configuration.getProtocolOptions().initialProtocolVersion;
-
-            try {
-                // Use default constructor if the specialized constructor could not be resolved.
-                if(EVENT_LOOP_GROUP_CONSTRUCTOR != null) {
-                    eventLoopGroup = EVENT_LOOP_GROUP_CONSTRUCTOR.newInstance(0, manager.threadFactory("nio-worker"));
-                } else {
-                    eventLoopGroup = EVENT_LOOP_GROUP_CLASS.newInstance();
-                }
-            } catch (Exception e) {
-                throw new AssertionError("Could not create an instance of "
-                    + EVENT_LOOP_GROUP_CLASS.getName()
-                    + ", this should not happen");
-            }
-
+            this.nettyOptions = configuration.getNettyOptions();
+            this.eventLoopGroup = nettyOptions.eventLoopGroup(manager.threadFactory("nio-worker"));
+            this.channelClass = nettyOptions.channelClass();
             this.timer = new HashedWheelTimer(manager.threadFactory("timeouter"));
         }
 
@@ -671,7 +623,7 @@ class Connection {
         private Bootstrap newBootstrap() {
             Bootstrap b = new Bootstrap();
             b.group(eventLoopGroup)
-                .channel(CHANNEL_CLASS);
+                .channel(channelClass);
 
             SocketOptions options = configuration.getSocketOptions();
 
@@ -695,6 +647,7 @@ class Connection {
             if (sendBufferSize != null)
                 b.option(ChannelOption.SO_SNDBUF, sendBufferSize);
 
+            nettyOptions.afterBootstrapInitialized(b);
             return b;
         }
 
@@ -706,9 +659,7 @@ class Connection {
             // we're not on an I/O thread or anything, so just call await.
             allChannels.close().awaitUninterruptibly();
 
-            // This will shut down I/O threads. Since this is called only once all connection have
-            // been individually closed, it's fine.
-            eventLoopGroup.shutdownGracefully().syncUninterruptibly();
+            nettyOptions.onClusterClose(eventLoopGroup);
             timer.stop();
         }
     }
@@ -1135,13 +1086,15 @@ class Connection {
         private final Connection connection;
         private final FrameCompressor compressor;
         private final SSLOptions sslOptions;
+        private final NettyOptions nettyOptions;
         private final ChannelHandler idleStateHandler;
 
-        public Initializer(Connection connection, int protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds) {
+        public Initializer(Connection connection, int protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds, NettyOptions nettyOptions) {
             this.connection = connection;
             this.protocolVersion = protocolVersion;
             this.compressor = compressor;
             this.sslOptions = sslOptions;
+            this.nettyOptions = nettyOptions;
             this.idleStateHandler = new IdleStateHandler(0, 0, heartBeatIntervalSeconds);
         }
 
@@ -1173,6 +1126,8 @@ class Connection {
             pipeline.addLast("idleStateHandler", idleStateHandler);
 
             pipeline.addLast("dispatcher", connection.dispatcher);
+
+            nettyOptions.afterChannelInitialized(channel);
         }
     }
 }

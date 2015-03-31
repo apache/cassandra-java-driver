@@ -581,6 +581,8 @@ public class Cluster implements Closeable {
         private SocketOptions socketOptions;
         private QueryOptions queryOptions;
 
+        private NettyOptions nettyOptions = NettyOptions.DEFAULT_INSTANCE;
+
         private Collection<Host.StateListener> listeners;
 
 
@@ -1039,6 +1041,20 @@ public class Cluster implements Closeable {
         }
 
         /**
+         * Set the {@link NettyOptions} to use for the newly created Cluster.
+         * <p>
+         * If no Netty options are set through this method, {@link NettyOptions#DEFAULT_INSTANCE}
+         * will be used as a default value, which means that no customization will be applied.
+         *
+         * @param nettyOptions the {@link NettyOptions} to use.
+         * @return this builder.
+         */
+        public Builder withNettyOptions(NettyOptions nettyOptions) {
+            this.nettyOptions = nettyOptions;
+            return this;
+        }
+
+        /**
          * The configuration that will be used for the new cluster.
          * <p>
          * You <b>should not</b> modify this object directly because changes made
@@ -1060,7 +1076,8 @@ public class Cluster implements Closeable {
                                      poolingOptions == null ? new PoolingOptions() : poolingOptions,
                                      socketOptions == null ? new SocketOptions() : socketOptions,
                                      metricsEnabled ? new MetricsOptions(jmxEnabled) : null,
-                                     queryOptions == null ? new QueryOptions() : queryOptions);
+                                     queryOptions == null ? new QueryOptions() : queryOptions,
+                                     nettyOptions);
         }
 
         @Override

@@ -189,6 +189,9 @@
                 <includes>
                   <include>io.netty:*</include>
                 </includes>
+                <excludes>
+                  <exclude>io.netty:netty-transport-native-epoll</exclude>
+                </excludes>
               </artifactSet>
               <relocations>
                 <relocation>
