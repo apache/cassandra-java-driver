@@ -33,6 +33,7 @@ CHANGELOG
   (JAVA-698)
 - [bug] Fix issue when executing a PreparedStatement from another cluster
   (JAVA-641)
+- [improvement] Log keyspace xxx does not exist at WARN level (JAVA-534)
 
 Merged from 2.0.9_fixes branch:
 

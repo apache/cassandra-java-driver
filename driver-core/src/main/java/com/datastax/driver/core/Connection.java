@@ -347,7 +347,9 @@ class Connection {
                     // It can happen however that the node we're connecting to
                     // is not up on the schema yet. In that case, defuncting
                     // the connection is not a bad choice.
-                    defunct(new ConnectionException(address, String.format("Problem while setting keyspace, got %s as response", response)));
+                    String message = String.format("Problem while setting keyspace, got %s as response", response);
+                    logger.warn("{} {}", this, message);
+                    defunct(new ConnectionException(address, message));
                     break;
             }
         } catch (ConnectionException e) {
