@@ -17,13 +17,10 @@ package com.datastax.driver.osgi.impl;
 
 import java.util.Hashtable;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
-import io.netty.channel.socket.SocketChannel;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.NettyCustomizer;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.osgi.api.MailboxService;
 
@@ -31,37 +28,19 @@ public class Activator implements BundleActivator {
 
     private Cluster cluster;
 
-    @Override
-    public void start(BundleContext context) throws Exception {
+    @Override public void start(BundleContext context) throws Exception {
         String contactPointsStr = context.getProperty("cassandra.contactpoints");
-        if (contactPointsStr == null) {
+        if(contactPointsStr == null) {
             contactPointsStr = "127.0.0.1";
         }
         String[] contactPoints = contactPointsStr.split(",");
 
-        String nettyShadedStr = context.getProperty("netty.shaded");
-        if (nettyShadedStr == null) {
-            nettyShadedStr = "false";
-        }
-        boolean nettyShaded = Boolean.parseBoolean(nettyShadedStr);
-
         String keyspace = context.getProperty("cassandra.keyspace");
-        if (keyspace == null) {
+        if(keyspace == null) {
             keyspace = "mailbox";
         }
 
-        Cluster.Builder builder = Cluster.builder().addContactPoints(contactPoints);
-        if( ! nettyShaded) {
-            // validate that NettyCustomizer is correctly exposed as part of the public API;
-            // in particular, that it can be subclassed by clients
-            builder.withNettyCustomizer(new NettyCustomizer() {
-                @Override
-                public void afterChannelInitialized(SocketChannel channel) throws Exception {
-                    super.afterChannelInitialized(channel);
-                }
-            });
-        }
-        cluster = builder.build();
+        cluster = Cluster.builder().addContactPoints(contactPoints).build();
         Session session = cluster.connect();
 
         MailboxImpl mailbox = new MailboxImpl(session, keyspace);
@@ -70,9 +49,8 @@ public class Activator implements BundleActivator {
         context.registerService(MailboxService.class.getName(), mailbox, new Hashtable<String, String>());
     }
 
-    @Override
-    public void stop(BundleContext context) throws Exception {
-        if (cluster != null) {
+    @Override public void stop(BundleContext context) throws Exception {
+        if(cluster != null) {
             cluster.close();
         }
     }

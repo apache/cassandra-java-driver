@@ -40,7 +40,7 @@ public class Configuration {
     private final SocketOptions socketOptions;
     private final MetricsOptions metricsOptions;
     private final QueryOptions queryOptions;
-    private final NettyCustomizer nettyCustomizer;
+    private final NettyOptions nettyOptions;
 
     /*
      * Creates a configuration object.
@@ -52,7 +52,7 @@ public class Configuration {
              new SocketOptions(),
              new MetricsOptions(),
              new QueryOptions(),
-             new NettyCustomizer());
+             NettyOptions.DEFAULT_INSTANCE);
     }
 
     /**
@@ -64,7 +64,7 @@ public class Configuration {
      * @param socketOptions the socket options to use
      * @param metricsOptions the metrics options, or null to disable metrics.
      * @param queryOptions defaults related to queries.
-     * @param nettyCustomizer the {@link NettyCustomizer} instance to use
+     * @param nettyOptions the {@link NettyOptions} instance to use
      */
     public Configuration(Policies policies,
                          ProtocolOptions protocolOptions,
@@ -72,14 +72,14 @@ public class Configuration {
                          SocketOptions socketOptions,
                          MetricsOptions metricsOptions,
                          QueryOptions queryOptions,
-                         NettyCustomizer nettyCustomizer) {
+                         NettyOptions nettyOptions) {
         this.policies = policies;
         this.protocolOptions = protocolOptions;
         this.poolingOptions = poolingOptions;
         this.socketOptions = socketOptions;
         this.metricsOptions = metricsOptions;
         this.queryOptions = queryOptions;
-        this.nettyCustomizer = nettyCustomizer;
+        this.nettyOptions = nettyOptions;
     }
 
     void register(Cluster.Manager manager) {
@@ -146,10 +146,10 @@ public class Configuration {
     }
 
     /**
-     * Returns the {@link NettyCustomizer} instance for this configuration.
-     * @return the {@link NettyCustomizer} instance for this configuration.
+     * Returns the {@link NettyOptions} instance for this configuration.
+     * @return the {@link NettyOptions} instance for this configuration.
      */
-    public NettyCustomizer getNettyCustomizer() {
-        return nettyCustomizer;
+    public NettyOptions getNettyOptions() {
+        return nettyOptions;
     }
 }
