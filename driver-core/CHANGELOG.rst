@@ -28,7 +28,7 @@ CHANGELOG
 - [improvement] Rename threads to indicate that they are for the driver
   (JAVA-583)
 - [new feature] Expose paging state (JAVA-550)
-- [improvement] Slow Query Logger (JAVA-646)
+- [new feature] Slow Query Logger (JAVA-646)
 - [improvement] Exclude some errors from measurements in LatencyAwarePolicy
   (JAVA-698)
 - [bug] Fix issue when executing a PreparedStatement from another cluster
