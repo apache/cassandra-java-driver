@@ -15,14 +15,17 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetAddress;
 import java.util.*;
 
+import com.google.common.collect.ImmutableList;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 
@@ -432,5 +435,17 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         PreparedStatement ps = session.prepare("INSERT INTO \"Test\".\"Foo\" (i) VALUES (?)");
         BoundStatement bs = ps.bind(1);
         assertThat(bs.getRoutingKey()).isNotNull();
+    }
+
+    @Test(groups="short", expectedExceptions = InvalidQueryException.class)
+    public void should_fail_when_prepared_on_another_cluster() throws Exception {
+        Cluster otherCluster = Cluster.builder()
+            .addContactPointsWithPorts(ImmutableList.of(hostAddress))
+            .build();
+        PreparedStatement pst = otherCluster.connect().prepare("select * from system.peers where inet = ?");
+        BoundStatement bs = pst.bind().setInet(0, InetAddress.getByName("localhost"));
+
+        // We expect that the error gets detected without a roundtrip to the server, so use executeAsync
+        session.executeAsync(bs);
     }
 }
