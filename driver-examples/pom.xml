@@ -24,6 +24,10 @@
   <description>A collection of examples to demonstrate DataStax Java Driver for Apache Cassandra.</description>
   <url>https://github.com/datastax/java-driver</url>
 
+  <properties>
+    <main.basedir>${project.parent.basedir}</main.basedir>
+  </properties>
+
   <modules>
     <module>stress</module>
     <module>osgi</module>

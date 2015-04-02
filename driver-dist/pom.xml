@@ -22,6 +22,10 @@
   </parent>
   <artifactId>cassandra-driver-dist</artifactId>
 
+  <properties>
+    <main.basedir>${project.parent.basedir}</main.basedir>
+  </properties>
+
   <!-- Should be pom but Javadoc generation requires a "classpath-capable" package -->
   <packaging>jar</packaging>
 
