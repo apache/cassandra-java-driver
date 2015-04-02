@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /**
  * Options of the Cassandra native binary protocol.
  */
@@ -83,7 +85,8 @@ public class ProtocolOptions {
     private final int port;
     final int initialProtocolVersion; // What the user asked us. Will be -1 by default.
 
-    private final int maxSchemaAgreementWaitSeconds;
+    @VisibleForTesting
+    volatile int maxSchemaAgreementWaitSeconds;
 
     private final SSLOptions sslOptions; // null if no SSL
     private final AuthProvider authProvider;

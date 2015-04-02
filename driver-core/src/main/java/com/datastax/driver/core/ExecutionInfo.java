@@ -19,19 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
- * Basic informations on the execution of a query.
- * <p>
- * This provides the following information on the execution of a (successful)
- * query:
- * <ul>
- *   <li>The list of Cassandra hosts tried in order (usually just one, unless
- *   a node has been tried but was dead/in error or a timeout provoked a retry
- *   (which depends on the RetryPolicy)).</li>
- *   <li>The consistency level achieved by the query (usually the one asked,
- *   though some specific RetryPolicy may allow this to be different).</li>
- *   <li>The query trace recorded by Cassandra if tracing had been set for the
- *   query.</li>
- * </ul>
+ * Basic information on the execution of a query.
  */
 public class ExecutionInfo {
     private final List<Host> triedHosts;
@@ -39,33 +27,35 @@ public class ExecutionInfo {
     private final QueryTrace trace;
     private final ByteBuffer pagingState;
     private final Statement statement;
+    private volatile boolean schemaInAgreement;
 
-    private ExecutionInfo(List<Host> triedHosts, ConsistencyLevel achievedConsistency, QueryTrace trace, ByteBuffer pagingState, Statement statement) {
+    private ExecutionInfo(List<Host> triedHosts, ConsistencyLevel achievedConsistency, QueryTrace trace, ByteBuffer pagingState, Statement statement, boolean schemaAgreement) {
         this.triedHosts = triedHosts;
         this.achievedConsistency = achievedConsistency;
         this.trace = trace;
         this.pagingState = pagingState;
         this.statement = statement;
+        this.schemaInAgreement = schemaAgreement;
     }
 
     ExecutionInfo(List<Host> triedHosts) {
-        this(triedHosts, null, null, null, null);
+        this(triedHosts, null, null, null, null, true);
     }
 
     ExecutionInfo withTrace(QueryTrace newTrace) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, newTrace, pagingState, statement);
+        return new ExecutionInfo(triedHosts, achievedConsistency, newTrace, pagingState, statement, schemaInAgreement);
     }
 
     ExecutionInfo withAchievedConsistency(ConsistencyLevel newConsistency) {
-        return new ExecutionInfo(triedHosts, newConsistency, trace, pagingState, statement);
+        return new ExecutionInfo(triedHosts, newConsistency, trace, pagingState, statement, schemaInAgreement);
     }
 
     ExecutionInfo withPagingState(ByteBuffer pagingState) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, statement);
+        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, statement, schemaInAgreement);
     }
 
     ExecutionInfo withStatement(Statement statement) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, statement);
+        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, statement, schemaInAgreement);
     }
 
     /**
@@ -146,5 +136,30 @@ public class ExecutionInfo {
         if (this.pagingState == null)
             return null;
         return new PagingState(this.pagingState, this.statement);
+    }
+
+    /**
+     * Whether the cluster had reached schema agreement after the execution of this query.
+     *
+     * After a successful schema-altering query (ex: creating a table), the driver
+     * will check if the cluster's nodes agree on the new schema version. If not,
+     * it will keep retrying for a given delay (configurable via
+     * {@link Cluster.Builder#withMaxSchemaAgreementWaitSeconds(int)}).
+     * <p>
+     * If this method returns {@code false}, clients can call {@link Metadata#checkSchemaAgreement()}
+     * later to perform the check manually.
+     * <p>
+     * Note that the schema agreement check is only performed for schema-altering queries
+     * For other query types, this method will always return {@code true}.
+     *
+     * @return whether the cluster reached schema agreement, or {@code true} for a non
+     * schema-altering statement.
+     */
+    public boolean isSchemaInAgreement() {
+        return schemaInAgreement;
+    }
+
+    void setSchemaInAgreement(boolean schemaAgreement) {
+        this.schemaInAgreement = schemaAgreement;
     }
 }

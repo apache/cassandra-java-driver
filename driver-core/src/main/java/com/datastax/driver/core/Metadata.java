@@ -354,6 +354,19 @@ public class Metadata {
     }
 
     /**
+     * Checks whether hosts that are currently up agree on the schema definition.
+     * <p>
+     * This method performs a one-time check only, without any form of retry; therefore {@link Cluster.Builder#withMaxSchemaAgreementWaitSeconds(int)}
+     * does not apply in this case.
+     *
+     * @return {@code true} if all hosts agree on the schema; {@code false} if they don't agree, or if the check could not be performed
+     * (for example, if the control connection is down).
+     */
+    public boolean checkSchemaAgreement() {
+        return cluster.controlConnection.checkSchemaAgreement();
+    }
+
+    /**
      * Returns the metadata of a keyspace given its name.
      *
      * @param keyspace the name of the keyspace for which metadata should be

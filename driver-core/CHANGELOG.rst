@@ -36,6 +36,8 @@ CHANGELOG
 - [improvement] Log keyspace xxx does not exist at WARN level (JAVA-534)
 - [improvement] Allow Cluster subclasses to delegate to another instance
   (JAVA-619)
+- [new feature] Expose an API to check for schema agreement after a
+  schema-altering statement (JAVA-669)
 
 Merged from 2.0.9_fixes branch:
 
