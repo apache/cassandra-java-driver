@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -29,14 +28,19 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.utils.MoreFutures.SuccessCallback;
 
-import static com.datastax.driver.core.PooledConnection.State.*;
+import static com.datastax.driver.core.PooledConnection.State.GONE;
+import static com.datastax.driver.core.PooledConnection.State.OPEN;
+import static com.datastax.driver.core.PooledConnection.State.RESURRECTING;
+import static com.datastax.driver.core.PooledConnection.State.TRASHED;
 
 class HostConnectionPool {
 
@@ -72,7 +76,9 @@ class HostConnectionPool {
     private volatile boolean isClosing;
     private final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
-    public HostConnectionPool(Host host, HostDistance hostDistance, SessionManager manager) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+    final ListenableFuture<Void> initFuture;
+
+    public HostConnectionPool(final Host host, HostDistance hostDistance, final SessionManager manager) {
         assert hostDistance != HostDistance.IGNORED;
         this.host = host;
         this.hostDistance = hostDistance;
@@ -86,38 +92,59 @@ class HostConnectionPool {
             }
         };
 
-        // Create initial core connections
-        List<PooledConnection> l = new ArrayList<PooledConnection>(options().getCoreConnectionsPerHost(hostDistance));
-        try {
-            for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
-                l.add(manager.connectionFactory().open(this));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            // If asked to interrupt, we can skip opening core connections, the pool will still work.
-            // But we ignore otherwise cause I'm not sure we can do much better currently.
-        } catch (ConnectionException e) {
-            forceClose(l);
-            throw e;
-        } catch (UnsupportedProtocolVersionException e) {
-            forceClose(l);
-            throw e;
-        } catch (ClusterNameMismatchException e) {
-            forceClose(l);
-            throw e;
-        } catch (RuntimeException e) {
-            forceClose(l);
-            throw e;
-        }
-        this.connections = new CopyOnWriteArrayList<PooledConnection>(l);
-        this.open = new AtomicInteger(connections.size());
+        this.connections = new CopyOnWriteArrayList<PooledConnection>();
+        this.open = new AtomicInteger();
 
-        logger.trace("Created connection pool to host {}", host);
+        // Create initial core connections
+        final List<ListenableFuture<PooledConnection>> connectionFutures =
+            Lists.newArrayListWithCapacity(options().getCoreConnectionsPerHost(hostDistance));
+        for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
+            connectionFutures.add(manager.connectionFactory().openAsync(this));
+
+        ListenableFuture<List<PooledConnection>> allConnectionsFuture = Futures.allAsList(connectionFutures);
+
+        Futures.addCallback(allConnectionsFuture,
+            new FutureCallback<List<PooledConnection>>() {
+                @Override
+                public void onSuccess(List<PooledConnection> l) {
+                    connections.addAll(l);
+                    open.set(l.size());
+                    logger.trace("Created connection pool to host {}", host);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    forceClose(connectionFutures, manager.executor());
+                }
+            },
+            manager.executor()
+        );
+
+        // We could expose allConnectionsFuture directly so this is a bit superfluous, but it avoids
+        // leaking the list of connections
+        initFuture = Futures.transform(
+            allConnectionsFuture,
+            new Function<List<PooledConnection>, Void>() {
+                @Override
+                public Void apply(List<PooledConnection> input) {
+                    return null;
+                }
+            },
+            manager.executor()
+        );
     }
 
     // Clean up if we got an error at construction time but still created part of the core connections
-    private void forceClose(List<PooledConnection> l) {
-        for (PooledConnection connection : l) {
-            connection.closeAsync().force();
+    private void forceClose(List<ListenableFuture<PooledConnection>> l, ListeningExecutorService executor) {
+        for (ListenableFuture<PooledConnection> future : l) {
+            if (!future.isDone())
+                future.cancel(true);
+            Futures.addCallback(future, new SuccessCallback<PooledConnection>() {
+                @Override
+                public void onSuccess(PooledConnection connection) {
+                    connection.closeAsync().force();
+                }
+            }, executor);
         }
     }
 
@@ -538,9 +565,8 @@ class HostConnectionPool {
     }
 
     private List<CloseFuture> discardAvailableConnections() {
-        // This can happen if creating the connections in the constructor fails
-        if (connections == null)
-            return Lists.newArrayList(CloseFuture.immediateFuture());
+        // Note: if this gets called before initialization has completed, both connections and trash will be empty,
+        // so this will return an empty list
 
         List<CloseFuture> futures = new ArrayList<CloseFuture>(connections.size() + trash.size());
 

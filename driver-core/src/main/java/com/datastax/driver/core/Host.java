@@ -27,6 +27,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.utils.MoreFutures;
+
 /**
  * A Cassandra node.
  *
@@ -48,7 +50,7 @@ public class Host {
     private final Cluster.Manager manager;
 
     // Tracks the first "immediate" reconnection attempt when a node get suspected.
-    final AtomicReference<ListenableFuture<?>> initialReconnectionAttempt = new AtomicReference<ListenableFuture<?>>(Futures.immediateFuture(null));
+    final AtomicReference<ListenableFuture<?>> initialReconnectionAttempt = new AtomicReference<ListenableFuture<?>>(MoreFutures.VOID_SUCCESS);
 
     // Tracks later reconnection attempts to that host so we avoid adding multiple tasks.
     final AtomicReference<ListenableFuture<?>> reconnectionAttempt = new AtomicReference<ListenableFuture<?>>();
