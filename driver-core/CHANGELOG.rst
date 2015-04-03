@@ -38,6 +38,7 @@ CHANGELOG
   (JAVA-619)
 - [new feature] Expose an API to check for schema agreement after a
   schema-altering statement (JAVA-669)
+- [improvement] Make connection and pool creation fully async (JAVA-692)
 
 Merged from 2.0.9_fixes branch:
 

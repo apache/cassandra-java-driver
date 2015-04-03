@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingDeque;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -29,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.utils.MoreFutures;
 
 /**
  * Default implementation of a result set, backed by an ArrayDeque of ArrayList.
@@ -178,7 +178,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         }
 
         public ListenableFuture<Void> fetchMoreResults() {
-            return Futures.immediateFuture(null);
+            return MoreFutures.VOID_SUCCESS;
         }
 
         public ExecutionInfo getExecutionInfo() {
@@ -287,7 +287,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
         private ListenableFuture<Void> fetchMoreResults(FetchingState fetchState) {
             if (fetchState == null)
-                return Futures.immediateFuture(null);
+                return MoreFutures.VOID_SUCCESS;
 
             if (fetchState.inProgress != null)
                 return fetchState.inProgress;

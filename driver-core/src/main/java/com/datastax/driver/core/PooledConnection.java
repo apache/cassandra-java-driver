@@ -31,7 +31,7 @@ class PooledConnection extends Connection {
 
     volatile long maxIdleTime;
 
-    PooledConnection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+    PooledConnection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) {
         super(name, address, factory);
         this.pool = pool;
     }
