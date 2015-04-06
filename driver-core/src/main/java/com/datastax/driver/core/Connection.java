@@ -237,7 +237,7 @@ class Connection {
                     public ListenableFuture<Void> apply(Message.Response authResponse) throws Exception {
                         switch (authResponse.type) {
                             case READY:
-                                return MoreFutures.VOID_SUCCESS;
+                                return checkClusterName(executor);
                             case ERROR:
                                 throw defunct(new AuthenticationException(address, ((Responses.Error)authResponse).message));
                             default:
@@ -275,14 +275,14 @@ class Connection {
                     case AUTH_SUCCESS:
                         logger.trace("{} Authentication complete", this);
                         authenticator.onAuthenticationSuccess(((Responses.AuthSuccess)authResponse).token);
-                        return MoreFutures.VOID_SUCCESS;
+                        return checkClusterName(executor);
                     case AUTH_CHALLENGE:
                         byte[] responseToServer = authenticator.evaluateChallenge(((Responses.AuthChallenge)authResponse).token);
                         if (responseToServer == null) {
-                            // If we generate a null response, then authentication has completed, return without
+                            // If we generate a null response, then authentication has completed, proceed without
                             // sending a further response back to the server.
                             logger.trace("{} Authentication complete (No response to server)", this);
-                            return MoreFutures.VOID_SUCCESS;
+                            return checkClusterName(executor);
                         } else {
                             // Otherwise, send the challenge response back to the server
                             logger.trace("{} Sending Auth response to challenge", this);
