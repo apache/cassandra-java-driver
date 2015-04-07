@@ -180,22 +180,24 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
                 .withPoolingOptions(poolingOptions)
                 .build();
 
-        assertEquals(cluster.manager.sessions.size(), 0);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 0);
-
-        Session session = cluster.connect();
-        assertEquals(cluster.manager.sessions.size(), 1);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1 + corePoolSize);
-
-        // ensure sessions.size() returns to 0 with only 1 active connection
-        session.close();
-        assertEquals(cluster.manager.sessions.size(), 0);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-
-        // give the driver time to close sessions
-        Thread.sleep(10);
-
         try {
+            cluster.init();
+
+            assertEquals(cluster.manager.sessions.size(), 0);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+            Session session = cluster.connect();
+            assertEquals(cluster.manager.sessions.size(), 1);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1 + corePoolSize);
+
+            // ensure sessions.size() returns to 0 with only 1 active connection
+            session.close();
+            assertEquals(cluster.manager.sessions.size(), 0);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+
+            // give the driver time to close sessions
+            Thread.sleep(10);
+
             for (int i = 0; i < 10000; ++i) {
                 // ensure 0 sessions with a single control connection
                 assertEquals(cluster.manager.sessions.size(), 0);
