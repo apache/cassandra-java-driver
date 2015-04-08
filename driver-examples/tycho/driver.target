@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.8"?>
+<!--
+
+         Copyright (C) 2012-2015 DataStax Inc.
+
+      Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License.
+      You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      See the License for the specific language governing permissions and
+      limitations under the License.
+
+-->
+
+<!-- 
+A target platform definition suitable to compile the current project with Eclipse.
+This platform definition includes the whole Eclipse installation and the local P2 installation
+containing the Java Driver and its dependencies,
+located under com.datastax.driver.examples.rcp.repository/target/repository.
+note that you need to build the project at least once with Tycho to populate this P2 installation directory.
+In Eclipse, open this target file and make it the active target platform for your workspace
+by clicking on "Set as Target Platform".
+This target platform requires a valid Eclipse installation (Luna 4.4 or higher).
+Tycho does not require this file to build the project.
+-->
+<target
+    name="Java Driver Target Platform"
+    sequenceNumber="1">
+    
+    <locations>
+    
+        <location path="${eclipse_home}" type="Profile"/>
+        
+        <!-- 
+        P2 installation containing the DataStax Java Driver and its dependencies.
+        You need to build the project at least once with Tycho to populate the P2 installation directory.
+        -->
+        <location
+            path="${project_loc}/com.datastax.driver.examples.rcp.repository/target/repository"
+            type="Profile" />
+            
+    </locations>
+
+    <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7" />
+
+</target>
