@@ -7,42 +7,45 @@ built with Maven and Tycho.
 
 The Java Driver is built and distributed as an OSGi bundle, but integrating it in an RCP application is not trivial.
 
-If you are using a "manifest-first" approach and your project/company benefits from a dedicated P2 update site, it is best to place the driver bundle, 
+If your project/company benefits from a dedicated P2 update site, it is best to place the driver bundle, 
 along with its dependencies, in your update site, and have Tycho resolve the dependencies from there.
 
 Alternatively, it is also possible to "wrap" the Java Driver jar, along with its dependencies,
 in a plugin submodule in your application, and have Tycho build it along with your application.
 
-The current project uses a third option: a "pom-first" approach, where the driver dependencies are pulled directly from Maven repositories.
-For this to work, Tycho has been configured to consider pom dependencies when resolving dependencies.
+The current project uses a third option: using the [p2-maven-plugin](http://projects.reficio.org/p2-maven-plugin),
+it is possible to build a local P2 installation directory, then use Jetty to serve it.
+
+## Creating the local P2 installation
+
+First, use the standalone project `com.datastax.driver.examples.repository` to create the local P2 installation,
+then launch Jetty to serve it:
+
+    cd com.datastax.driver.examples.repository
+    mvn p2:site
+    mvn jetty:run
 
 ## Installing/Running with Tycho
+    
+Then, in another terminal, build the project and run the tests from the reactor project `com.datastax.driver.examples.rcp` :
 
-To build the project and run the tests, simply run
-
-    cd com.datastax.driver.examples.rcp
+    cd ../com.datastax.driver.examples.rcp
     mvn integration-test
     
 Please note: currently the tests require an instance of Cassandra running on localhost:9042.
     
 ## Installing/Running with Eclipse RCP
 
-In order for Eclipse to be able to locate the Java Driver and its dependencies, this project
-provides a special submodule, `com.datastax.driver.examples.rcp.repository`, that must be built 
-with Tycho at least once. 
-
-This submodule creates a local P2 installation under 
-`com.datastax.driver.examples.rcp.repository/target/repository` containing the driver bundle and its dependencies.
-(The Tycho build itself does not require this P2 installation to be available since dependencies
-are resolved directly from Maven repositories - it' really only for Eclipse.)
-
 Installation steps:
 
-1. Build the project with Tycho at least once in order for the local P2 installation to be created.
-2. Import the projects via File -> Import... -> Existing projects into Workspace.
-3. Set the JDK compliance level for all projects to 1.7.
-4. Open the file  `driver-examples-rcp.target` and make it the active 
+1. Import the projects via File -> Import... -> Existing projects into Workspace.
+2. Set the JDK compliance level for all projects to 1.7.
+3. Open the file `com.datastax.driver.examples.rcp.platform.target` and make it the active 
 target platform for your workspace by clicking on "Set as Target Platform".
 
 To run the tests, right-click on `MailboxServiceTest` and choose Run... -> JUnit Plugin Test.
+
+Alternatively, you can use the provided launch configuration:
+`Mailbox Service Tests.launch`
+
 Please note: currently the tests require an instance of Cassandra running on localhost:9042.

@@ -16,34 +16,87 @@
 
 -->
 <project
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/xsd/maven-4.0.0.xsd"
     xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>com.datastax.cassandra</groupId>
-    <artifactId>com.datastax.driver.examples.rcp</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <relativePath>../com.datastax.driver.examples.rcp</relativePath>
-  </parent>
-
+  <groupId>com.datastax.cassandra</groupId>
   <artifactId>com.datastax.driver.examples.rcp.repository</artifactId>
-  <packaging>eclipse-repository</packaging>
+  <version>0.0.1-SNAPSHOT</version>
   <name>DataStax Java Driver for Apache Cassandra Examples - Eclipse RCP - Local Repository</name>
+  <packaging>pom</packaging>
+
+  <properties>
+    <driver.version>2.1.5</driver.version>
+    <guava.version>18.0</guava.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
 
   <build>
+
     <plugins>
+
       <plugin>
-        <groupId>org.eclipse.tycho</groupId>
-        <artifactId>tycho-p2-repository-plugin</artifactId>
-        <version>${tycho.version}</version>
+        <groupId>org.reficio</groupId>
+        <artifactId>p2-maven-plugin</artifactId>
+        <version>1.1.0</version>
+        <executions>
+          <execution>
+            <id>default-cli</id>
+            <configuration>
+              <artifacts>
+                <artifact>
+                  <id>com.datastax.cassandra:cassandra-driver-core:${driver.version}</id>
+                  <source>true</source>
+                </artifact>
+                <artifact>
+                  <id>com.datastax.cassandra:cassandra-driver-core:jar:tests:${driver.version}</id>
+                  <source>true</source>
+                </artifact>
+                <artifact>
+                  <id>com.google.guava:guava:${guava.version}</id>
+                  <source>true</source>
+                </artifact>
+                <artifact>
+                  <id>org.slf4j:slf4j-api:1.7.12</id>
+                  <source>true</source>
+                </artifact>
+                <artifact>
+                  <id>ch.qos.logback:logback-classic:1.1.3</id>
+                  <source>true</source>
+                </artifact>
+              </artifacts>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-maven-plugin</artifactId>
+        <version>9.2.10.v20150310</version>
         <configuration>
-          <includeAllDependencies>true</includeAllDependencies>
-          <compress>false</compress>
+          <stopKey>stop</stopKey>
+          <stopPort>9999</stopPort>
+          <scanIntervalSeconds>10</scanIntervalSeconds>
+          <webAppSourceDirectory>${basedir}/target/repository/</webAppSourceDirectory>
+          <webApp>
+            <contextPath>/site</contextPath>
+          </webApp>
         </configuration>
       </plugin>
+
     </plugins>
   </build>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>reficio</id>
+      <url>http://repo.reficio.org/maven/</url>
+    </pluginRepository>
+  </pluginRepositories>
 
 </project>

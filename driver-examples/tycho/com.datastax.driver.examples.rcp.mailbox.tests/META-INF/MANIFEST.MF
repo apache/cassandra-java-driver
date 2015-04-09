@@ -6,5 +6,5 @@ Bundle-Version: 0.0.1.qualifier
 Bundle-Vendor: DataStax
 Fragment-Host: com.datastax.driver.examples.rcp.mailbox;bundle-version="0.0.1"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Require-Bundle: org.junit;bundle-version="[4.11.0,5.0.0)"
-Import-Package: org.slf4j.impl
+Import-Package: org.junit,
+ org.slf4j.impl

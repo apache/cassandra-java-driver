@@ -34,52 +34,13 @@
     <guava.version>18.0</guava.version>
     <tycho.version>0.22.0</tycho.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <luna-repo.url>http://download.eclipse.org/releases/luna/201502271000</luna-repo.url>
-    <orbit-repo.url>http://download.eclipse.org/tools/orbit/downloads/drops/R20150124073747/repository</orbit-repo.url>
   </properties>
 
-  <repositories>
-
-    <repository>
-      <id>luna</id>
-      <url>${luna-repo.url}</url>
-      <layout>p2</layout>
-    </repository>
-
-    <repository>
-      <id>orbit</id>
-      <url>${orbit-repo.url}</url>
-      <layout>p2</layout>
-    </repository>
-
-  </repositories>
-
   <modules>
-    <module>../com.datastax.driver.examples.rcp.repository</module>
+    <module>../com.datastax.driver.examples.rcp.platform</module>
     <module>../com.datastax.driver.examples.rcp.mailbox</module>
     <module>../com.datastax.driver.examples.rcp.mailbox.tests</module>
   </modules>
-
-  <dependencies>
-
-    <dependency>
-      <groupId>com.datastax.cassandra</groupId>
-      <artifactId>cassandra-driver-core</artifactId>
-      <version>${driver.version}</version>
-    </dependency>
-
-    <!--
-    Example of overriding Guava's version.
-    Tycho will pick this version when building
-    the P2 repository in com.datastax.driver.examples.rcp.repository.
-    -->
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
-    </dependency>
-
-  </dependencies>
 
   <build>
 
@@ -121,21 +82,14 @@
         <artifactId>target-platform-configuration</artifactId>
         <version>${tycho.version}</version>
         <configuration>
-          <pomDependencies>consider</pomDependencies>
+          <target>
+            <artifact>
+              <groupId>com.datastax.cassandra</groupId>
+              <artifactId>com.datastax.driver.examples.rcp.platform</artifactId>
+              <version>${project.version}</version>
+            </artifact>
+          </target>
           <targetDefinitionIncludeSource>honor</targetDefinitionIncludeSource>
-          <!-- 
-          SLF4J to Logback bridge is a fragment and needs to be explicitly put in the target platform 
-          see http://stackoverflow.com/questions/22017174/using-slf4j-from-the-eclipse-orbit-in-tests-with-tycho-surefire
-          -->
-          <dependency-resolution>
-            <extraRequirements>
-              <requirement>
-                <type>eclipse-plugin</type>
-                <id>ch.qos.logback.slf4j</id>
-                <versionRange>1.0.7</versionRange>
-              </requirement>
-            </extraRequirements>
-          </dependency-resolution>
           <environments>
             <environment>
               <os>linux</os>
