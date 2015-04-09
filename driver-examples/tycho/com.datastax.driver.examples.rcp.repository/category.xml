@@ -16,8 +16,51 @@
 
 -->
 <site>
-   <bundle id="com.datastax.driver.core" version="2.1.5.qualifier">
-      <category name="com.datastax.driver.core"/>
-   </bundle>
-   <category-def name="com.datastax.driver.core" label="DataStax Java Driver"/>
+
+  <bundle id="com.datastax.driver.core" version="2.1.5.qualifier">
+    <category name="com.datastax.driver.core"/>
+  </bundle>
+
+  <!-- SLF4J API -->
+
+  <bundle id="org.slf4j.api" version="1.7.2.v20121108-1250">
+    <category name="com.datastax.driver.core.logging"/>
+  </bundle>
+
+  <bundle id="org.slf4j.api.source" version="1.7.2.v20121108-1250">
+    <category name="com.datastax.driver.core.logging"/>
+  </bundle>
+
+  <!-- Fragment with SLF4J to Logback binding -->
+
+  <bundle id="ch.qos.logback.slf4j" version="1.0.7.v20121108-1250">
+    <category name="com.datastax.driver.core.logging"/>
+  </bundle>
+
+  <bundle id="ch.qos.logback.slf4j.source" version="1.0.7.v20121108-1250">
+    <category name="com.datastax.driver.core.logging"/>
+  </bundle>
+
+  <!-- Logback -->
+
+  <bundle id="ch.qos.logback.classic" version="1.0.7.v20121108-1250">
+    <category name="com.datastax.driver.core.logging"/>
+  </bundle>
+
+  <bundle id="ch.qos.logback.classic.source" version="1.0.7.v20121108-1250">
+    <category name="com.datastax.driver.core.logging"/>
+  </bundle>
+
+  <bundle id="ch.qos.logback.core" version="1.0.7.v20121108-1250">
+    <category name="com.datastax.driver.core.logging"/>
+  </bundle>
+
+  <bundle id="ch.qos.logback.core.source" version="1.0.7.v20121108-1250">
+    <category name="com.datastax.driver.core.logging"/>
+  </bundle>
+
+  <category-def name="com.datastax.driver.core" label="DataStax Java Driver - Core Dependencies"/>
+
+  <category-def name="com.datastax.driver.core.logging" label="DataStax Java Driver - Logging Libraries"/>
+
 </site>

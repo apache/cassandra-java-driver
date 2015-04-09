@@ -91,7 +91,7 @@ public class MailboxServiceImpl implements MailboxService {
             BoundStatement statement = new BoundStatement(retrieveStatement);
             statement.setString(0, recipient);
             ResultSet result = session.execute(statement);
-            Collection<MailboxMessage> messages = new ArrayList<>();
+            Collection<MailboxMessage> messages = new ArrayList<MailboxMessage>();
             for (Row input : result) {
                 Date date = new Date(UUIDs.unixTimestamp(input.getUUID("time")));
                 messages.add(new MailboxMessage(input.getString("recipient"),

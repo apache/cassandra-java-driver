@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.examples.rcp.mailbox;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.GregorianCalendar;
@@ -22,8 +24,6 @@ import java.util.GregorianCalendar;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.framework.ServiceReference;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * This test requires an OSGi container.
@@ -42,8 +42,7 @@ public class MailboxServiceTest {
 
     /**
      * <p>
-     * Global integration test for the 'mailbox' service.
-     * Ensures that queries can be made through the service with the current given configuration.
+     * Global integration test for the 'mailbox' service. Ensures that queries can be made through the service with the current given configuration.
      * </p>
      */
     @Test
@@ -51,7 +50,7 @@ public class MailboxServiceTest {
         // Insert some data into mailbox for a particular user.
         String recipient = "user@datastax.com";
         try {
-            Collection<MailboxMessage> inMessages = new ArrayList<>();
+            Collection<MailboxMessage> inMessages = new ArrayList<MailboxMessage>();
             for (int i = 0; i < 30; i++) {
                 MailboxMessage message = new MailboxMessage(recipient, new GregorianCalendar(2015, 1, i).getTime(), recipient, "" + i);
                 inMessages.add(message);

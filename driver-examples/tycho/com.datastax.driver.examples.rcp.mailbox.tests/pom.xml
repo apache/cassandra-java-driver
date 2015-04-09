@@ -23,7 +23,7 @@
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>com.datastax.driver.examples.rcp</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <relativePath>../</relativePath>
+    <relativePath>../com.datastax.driver.examples.rcp</relativePath>
   </parent>
 
   <artifactId>com.datastax.driver.examples.rcp.mailbox.tests</artifactId>

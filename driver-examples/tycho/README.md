@@ -20,6 +20,7 @@ For this to work, Tycho has been configured to consider pom dependencies when re
 
 To build the project and run the tests, simply run
 
+    cd com.datastax.driver.examples.rcp
     mvn integration-test
     
 Please note: currently the tests require an instance of Cassandra running on localhost:9042.
@@ -40,7 +41,7 @@ Installation steps:
 1. Build the project with Tycho at least once in order for the local P2 installation to be created.
 2. Import the projects via File -> Import... -> Existing projects into Workspace.
 3. Set the JDK compliance level for all projects to 1.7.
-4. Open the file  `com.datastax.driver.examples.equinox.target` and make it the active 
+4. Open the file  `driver-examples-rcp.target` and make it the active 
 target platform for your workspace by clicking on "Set as Target Platform".
 
 To run the tests, right-click on `MailboxServiceTest` and choose Run... -> JUnit Plugin Test.

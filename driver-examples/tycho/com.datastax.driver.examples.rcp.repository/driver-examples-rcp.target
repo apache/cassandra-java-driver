@@ -19,31 +19,38 @@
 -->
 
 <!-- 
+
 A target platform definition suitable to compile the current project with Eclipse.
-This platform definition includes the whole Eclipse installation and the local P2 installation
-containing the Java Driver and its dependencies,
-located under com.datastax.driver.examples.rcp.repository/target/repository.
-note that you need to build the project at least once with Tycho to populate this P2 installation directory.
-In Eclipse, open this target file and make it the active target platform for your workspace
-by clicking on "Set as Target Platform".
-This target platform requires a valid Eclipse installation (Luna 4.4 or higher).
 Tycho does not require this file to build the project.
+
+This platform definition includes bundles from the following locations:
+
+- Your current Eclipse installation (requires Eclipse 4.4 or higher)
+- A local P2 installation containing the Java Driver and its dependencies,
+  located under target/repository.
+  
+Note that you need to build the project at least once with Tycho to populate the local P2 installation directory.
+
+Once the repository is populated, in Eclipse, open this target file and make it the active target platform for your workspace
+by clicking on "Set as Target Platform".
+
 -->
 <target
-    name="Java Driver Target Platform"
+    name="Java Driver Examples Target Platform"
     sequenceNumber="1">
     
     <locations>
     
+        <!-- 
+        Eclipse Installation
+        -->
         <location path="${eclipse_home}" type="Profile"/>
-        
+    
         <!-- 
         P2 installation containing the DataStax Java Driver and its dependencies.
         You need to build the project at least once with Tycho to populate the P2 installation directory.
         -->
-        <location
-            path="${project_loc}/com.datastax.driver.examples.rcp.repository/target/repository"
-            type="Profile" />
+        <location path="${resource_loc:/com.datastax.driver.examples.rcp.repository/target/repository}" type="Profile" />
             
     </locations>
 

@@ -25,12 +25,12 @@
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>com.datastax.driver.examples.rcp</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <relativePath>../</relativePath>
+    <relativePath>../com.datastax.driver.examples.rcp</relativePath>
   </parent>
 
   <artifactId>com.datastax.driver.examples.rcp.repository</artifactId>
   <packaging>eclipse-repository</packaging>
-  <name>DataStax Java Driver for Apache Cassandra Examples - Eclipse RCP - P2 Repository</name>
+  <name>DataStax Java Driver for Apache Cassandra Examples - Eclipse RCP - Local Repository</name>
 
   <build>
     <plugins>
@@ -40,6 +40,7 @@
         <version>${tycho.version}</version>
         <configuration>
           <includeAllDependencies>true</includeAllDependencies>
+          <compress>false</compress>
         </configuration>
       </plugin>
     </plugins>
