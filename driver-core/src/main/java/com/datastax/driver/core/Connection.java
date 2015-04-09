@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import static io.netty.handler.timeout.IdleState.ALL_IDLE;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.datastax.driver.core.utils.MoreFutures.FailureCallback;
 
@@ -674,13 +675,15 @@ class Connection {
         static RuntimeException launderAsyncInitException(ExecutionException e) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
             Throwable t = e.getCause();
             if (t instanceof ConnectionException)
-                throw ((ConnectionException)t);
+                throw (ConnectionException)t;
             if (t instanceof InterruptedException)
-                throw ((InterruptedException)t);
+                throw (InterruptedException)t;
             if (t instanceof UnsupportedProtocolVersionException)
-                throw ((UnsupportedProtocolVersionException)t);
+                throw (UnsupportedProtocolVersionException)t;
             if (t instanceof ClusterNameMismatchException)
-                throw ((ClusterNameMismatchException)t);
+                throw (ClusterNameMismatchException)t;
+            if (t instanceof DriverException)
+                throw (DriverException)t;
 
             return new RuntimeException("Unexpected exception during connection initialization", t);
         }
