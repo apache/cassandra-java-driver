@@ -58,7 +58,7 @@ public class MailboxServiceIT {
     }
 
     private CompositeOption nettyBundles() {
-        final String nettyVersion = "4.0.26.Final";
+        final String nettyVersion = "4.0.27.Final";
         return new CompositeOption() {
 
             @Override public Option[] getOptions() {
