@@ -2275,7 +2275,8 @@ public class Cluster implements Closeable {
         private static final int INTERVAL_MS = 15000;
 
         private final ScheduledExecutorService executor;
-        private final Map<Connection, Long> connections = new ConcurrentHashMap<Connection, Long>();
+        @VisibleForTesting
+        final Map<Connection, Long> connections = new ConcurrentHashMap<Connection, Long>();
 
         private volatile boolean shutdown;
 

@@ -137,17 +137,31 @@ public class SocketChannelMonitor implements Runnable {
         }
     }
 
+    private static Comparator<SocketChannel> BY_REMOTE_ADDRESS = new Comparator<SocketChannel>() {
+        @Override
+        public int compare(SocketChannel t0, SocketChannel t1) {
+            // Should not be null as these are filtered previously in matchingChannels.
+            assert t0 != null && t0.remoteAddress() != null;
+            assert t1 != null && t1.remoteAddress() != null;;
+            return t0.remoteAddress().toString().compareTo(t1.remoteAddress().toString());
+        }
+    };
+
     /**
      * @param addresses The addresses to include.
      * @return Open channels matching the given socket addresses.
      */
     public Collection<SocketChannel> openChannels(final Collection<InetSocketAddress> addresses) {
-        return Lists.newArrayList(matchingChannels(new Predicate<SocketChannel>() {
+        List<SocketChannel> channels = Lists.newArrayList(matchingChannels(new Predicate<SocketChannel>() {
             @Override
             public boolean apply(SocketChannel input) {
                 return input.isOpen() && input.remoteAddress() != null && addresses.contains(input.remoteAddress());
             }
         }));
+
+        Collections.sort(channels, BY_REMOTE_ADDRESS);
+
+        return channels;
     }
 
     /**
