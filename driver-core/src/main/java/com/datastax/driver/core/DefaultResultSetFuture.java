@@ -249,7 +249,9 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
         if (!super.cancel(mayInterruptIfRunning))
             return false;
 
-        handler.cancel();
+        if(handler != null) {
+            handler.cancel();
+        }
         return true;
     }
 
