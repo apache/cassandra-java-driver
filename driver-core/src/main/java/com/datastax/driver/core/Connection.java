@@ -65,6 +65,12 @@ class Connection {
 
     private static final boolean DISABLE_COALESCING = SystemProperties.getBoolean("com.datastax.driver.DISABLE_COALESCING", false);
 
+    enum State {OPEN, TRASHED, RESURRECTING, GONE }
+
+    final AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
+
+    volatile long maxIdleTime;
+
     public final InetSocketAddress address;
     private final String name;
 
@@ -84,15 +90,30 @@ class Connection {
 
     private final AtomicReference<ConnectionCloseFuture> closeFuture = new AtomicReference<ConnectionCloseFuture>();
 
+    private final AtomicReference<HostConnectionPool> poolRef = new AtomicReference<HostConnectionPool>();
+
     /**
-     * Create a new connection to a Cassandra node.
+     /**
+     * Create a new connection to a Cassandra node and associate it with the given pool.
      *
-     * The connection is open and initialized by the constructor.
+     * @param name the connection name
+     * @param address the remote address
+     * @param factory the connection factory to use
+     * @param pool the pool this connection belongs to. May be null if this connection does not belong to a pool.
+     *             Note that an existing connection can also be associated to a pool later with {@link #setPool(HostConnectionPool)}.
      */
-    protected Connection(String name, InetSocketAddress address, Factory factory) {
+    protected Connection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) {
         this.address = address;
         this.factory = factory;
         this.name = name;
+        this.poolRef.set(pool);
+    }
+
+    /**
+     * Create a new connection to a Cassandra node.
+     */
+    Connection(String name, InetSocketAddress address, Factory factory) {
+        this(name, address, factory, null);
     }
 
     public ListenableFuture<Void> initAsync() {
@@ -377,9 +398,9 @@ class Connection {
             // If the host was reconnecting, and this error happens right after we opened a connection pool, but
             // before we could mark the node UP, we don't want to go through the SUSPECTED state, because that can
             // lead to a race condition that leaves the node UP with a closed pool.
+            HostConnectionPool pool = this.poolRef.get();
             boolean belongsToReconnectingPool = host.state != Host.State.UP &&
-                this instanceof PooledConnection &&
-                (((PooledConnection)this).pool == null || !((PooledConnection)this).pool.isClosed());
+                (pool == null || !pool.isClosed());
 
             boolean markSuspected = isInitialized && !belongsToReconnectingPool;
 
@@ -398,6 +419,19 @@ class Connection {
     }
 
     protected void notifyOwnerWhenDefunct(boolean hostIsDown) {
+        // If an error happens during initialization, the owner will detect it and take appropriate action
+        if (!isInitialized)
+            return;
+
+        HostConnectionPool pool = this.poolRef.get();
+        if (pool == null)
+            return;
+
+        if (hostIsDown) {
+            pool.closeAsync().force();
+        } else {
+            pool.replaceDefunctConnection(this);
+        }
     }
 
     public String keyspace() {
@@ -546,6 +580,25 @@ class Connection {
         };
     }
 
+    boolean hasPool() {
+        return this.poolRef.get() != null;
+    }
+
+    /** @return whether the connection was already associated with a pool */
+    boolean setPool(HostConnectionPool pool) {
+        return poolRef.compareAndSet(null, pool);
+    }
+
+    /**
+     * If the connection is part of a pool, return it to the pool.
+     * The connection should generally not be reused after that.
+     */
+    void release() {
+        HostConnectionPool pool = poolRef.get();
+        if (pool != null)
+            pool.returnConnection(this);
+    }
+
     public boolean isClosed() {
         return closeFuture.get() != null;
     }
@@ -682,9 +735,9 @@ class Connection {
         /**
          * Same as open, but associate the created connection to the provided connection pool.
          */
-        public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+        public Connection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
             try {
-                PooledConnection connection = newConnection(pool);
+                Connection connection = newConnection(pool);
                 connection.initAsync().get();
                 return connection;
             } catch (ExecutionException e) {
@@ -695,11 +748,11 @@ class Connection {
         /**
          * Creates a new connection and associates it to the provided connection pool, but does not start it.
          */
-        public PooledConnection newConnection(HostConnectionPool pool) {
+        public Connection newConnection(HostConnectionPool pool) {
             InetSocketAddress address = pool.host.getSocketAddress();
             String name = address.toString() + '-' + getIdGenerator(pool.host).getAndIncrement();
 
-            return new PooledConnection(name, address, this, pool);
+            return new Connection(name, address, this, pool);
         }
 
         static RuntimeException launderAsyncInitException(ExecutionException e) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
@@ -844,7 +897,7 @@ class Connection {
     }
 
     private static final ConcurrentMap<EventLoop, Flusher> flusherLookup = new MapMaker()
-            .concurrencyLevel(16)
+        .concurrencyLevel(16)
             .weakKeys()
             .makeMap();
 
@@ -1181,8 +1234,7 @@ class Connection {
             // were, a new request could reuse that ID but get the answer to the request we just gave up on instead
             // of its own answer, and we would have no way to detect that.
             connection.dispatcher.removeHandler(this, false);
-            if (connection instanceof PooledConnection)
-                ((PooledConnection)connection).release();
+            connection.release();
         }
 
         private TimerTask onTimeoutTask() {

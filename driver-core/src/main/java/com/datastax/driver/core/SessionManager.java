@@ -77,7 +77,7 @@ class SessionManager extends AbstractSession {
         List<ListenableFuture<Boolean>> futures = Lists.newArrayListWithCapacity(hosts.size());
         for (Host host : hosts)
             if (host.state != Host.State.DOWN)
-                futures.add(maybeAddPool(host));
+                futures.add(maybeAddPool(host, null));
         try {
             Futures.successfulAsList(futures).get();
         } catch (ExecutionException e) {
@@ -192,7 +192,7 @@ class SessionManager extends AbstractSession {
     }
 
     // Returns whether there was problem creating the pool
-    ListenableFuture<Boolean> forceRenewPool(final Host host) {
+    ListenableFuture<Boolean> forceRenewPool(final Host host, Connection reusedConnection) {
         final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
             return Futures.immediateFuture(true);
@@ -201,7 +201,7 @@ class SessionManager extends AbstractSession {
             return Futures.immediateFuture(false);
 
         final HostConnectionPool newPool = new HostConnectionPool(host, distance, SessionManager.this);
-        ListenableFuture<Void> poolInitFuture = newPool.initAsync();
+        ListenableFuture<Void> poolInitFuture = newPool.initAsync(reusedConnection);
 
         final SettableFuture<Boolean> future = SettableFuture.create();
 
@@ -239,7 +239,7 @@ class SessionManager extends AbstractSession {
 
     // Replace pool for a given host only if it's the given previous value (which can be null)
     // This returns a future if the replacement was successful, or null if we raced.
-    private ListenableFuture<Void> replacePool(final Host host, HostDistance distance, HostConnectionPool previous) {
+    private ListenableFuture<Void> replacePool(final Host host, HostDistance distance, HostConnectionPool previous, Connection reusedConnection) {
         if (isClosing)
             return MoreFutures.VOID_SUCCESS;
 
@@ -258,7 +258,7 @@ class SessionManager extends AbstractSession {
             }
         }
 
-        ListenableFuture<Void> poolInitFuture = newPool.initAsync();
+        ListenableFuture<Void> poolInitFuture = newPool.initAsync(reusedConnection);
 
         Futures.addCallback(poolInitFuture, new FutureCallback<Void>() {
             @Override
@@ -279,7 +279,7 @@ class SessionManager extends AbstractSession {
     }
 
     // Returns whether there was problem creating the pool
-    ListenableFuture<Boolean> maybeAddPool(final Host host) {
+    ListenableFuture<Boolean> maybeAddPool(final Host host, Connection reusedConnection) {
         final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
             return Futures.immediateFuture(true);
@@ -294,7 +294,7 @@ class SessionManager extends AbstractSession {
                 return Futures.immediateFuture(true);
 
             final SettableFuture<Boolean> future = SettableFuture.create();
-            ListenableFuture<Void> newPoolInit = replacePool(host, distance, previous);
+            ListenableFuture<Void> newPoolInit = replacePool(host, distance, previous, reusedConnection);
             if (newPoolInit != null) {
                 Futures.addCallback(newPoolInit, new FutureCallback<Void>() {
                     @Override
@@ -358,7 +358,7 @@ class SessionManager extends AbstractSession {
 
                 if (pool == null) {
                     if (dist != HostDistance.IGNORED && h.state == Host.State.UP)
-                        poolCreationFutures.add(maybeAddPool(h));
+                        poolCreationFutures.add(maybeAddPool(h, null));
                 } else if (dist != pool.hostDistance) {
                     if (dist == HostDistance.IGNORED) {
                         toRemove.add(h);
@@ -397,7 +397,7 @@ class SessionManager extends AbstractSession {
             if (pool == null) {
                 if (dist != HostDistance.IGNORED && h.state == Host.State.UP)
                     try {
-                        maybeAddPool(h).get();
+                        maybeAddPool(h, null).get();
                     } catch (ExecutionException e) {
                         // Ignore, maybeAddPool has already handled the error
                     }
@@ -540,7 +540,7 @@ class SessionManager extends AbstractSession {
 
             // Let's not wait too long if we can't get a connection. Things
             // will fix themselves once the user tries a query anyway.
-            PooledConnection c = null;
+            Connection c = null;
             boolean timedOut = false;
             try {
                 c = entry.getValue().borrowConnection(200, TimeUnit.MILLISECONDS);

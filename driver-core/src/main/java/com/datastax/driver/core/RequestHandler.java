@@ -111,7 +111,7 @@ class RequestHandler implements Connection.ResponseCallback {
         if (currentPool == null || currentPool.isClosed())
             return false;
 
-        PooledConnection connection = null;
+        Connection connection = null;
         try {
             connection = currentPool.borrowConnection(manager.configuration().getPoolingOptions().getPoolTimeoutMillis(), TimeUnit.MILLISECONDS);
             if (current != null) {
@@ -157,8 +157,7 @@ class RequestHandler implements Connection.ResponseCallback {
         while (true) {
             QueryState previous = queryStateRef.get();
             if (previous.isCancelled()) {
-                if (connection instanceof PooledConnection)
-                    ((PooledConnection)connection).release();
+                connection.release();
                 return;
             }
             if (previous.inProgress || queryStateRef.compareAndSet(previous, previous.startNext()))
@@ -472,8 +471,7 @@ class RequestHandler implements Connection.ResponseCallback {
             exceptionToReport = e;
             setFinalException(connection, e);
         } finally {
-            if (releaseConnection && connection instanceof PooledConnection)
-                ((PooledConnection)connection).release();
+            connection.release();
             if (queriedHost != null && statement != Statement.DEFAULT)
                 manager.cluster.manager.reportLatency(queriedHost, statement, exceptionToReport, latency);
         }
@@ -502,8 +500,7 @@ class RequestHandler implements Connection.ResponseCallback {
                     return;
                 }
 
-                if (connection instanceof PooledConnection)
-                    ((PooledConnection)connection).release();
+                connection.release();
 
                 // TODO should we check the response ?
                 switch (response.type) {
@@ -562,8 +559,7 @@ class RequestHandler implements Connection.ResponseCallback {
 
         Host queriedHost = current;
         try {
-            if (connection instanceof PooledConnection)
-                ((PooledConnection)connection).release();
+            connection.release();
 
             if (exception instanceof ConnectionException) {
                 if (metricsEnabled())
