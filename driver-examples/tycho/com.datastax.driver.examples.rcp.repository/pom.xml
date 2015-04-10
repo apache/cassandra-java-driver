@@ -49,12 +49,18 @@
             <configuration>
               <artifacts>
                 <artifact>
-                  <id>com.datastax.cassandra:cassandra-driver-core:${driver.version}</id>
+                  <id>com.datastax.cassandra:cassandra-driver-core:jar:${driver.version}</id>
                   <source>true</source>
+                  <excludes>
+                    <exclude>com.google.guava:*</exclude>
+                    <exclude>org.slf4j:*</exclude>
+                  </excludes>
                 </artifact>
                 <artifact>
                   <id>com.datastax.cassandra:cassandra-driver-core:jar:tests:${driver.version}</id>
-                  <source>true</source>
+                  <!-- sources artifact for the test-jar gets mixed with sources for the main jar -->
+                  <source>false</source>
+                  <transitive>false</transitive>
                 </artifact>
                 <artifact>
                   <id>com.google.guava:guava:${guava.version}</id>
@@ -65,8 +71,14 @@
                   <source>true</source>
                 </artifact>
                 <artifact>
+                  <id>ch.qos.logback:logback-core:1.1.3</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+                </artifact>
+                <artifact>
                   <id>ch.qos.logback:logback-classic:1.1.3</id>
                   <source>true</source>
+                  <transitive>false</transitive>
                 </artifact>
               </artifacts>
             </configuration>

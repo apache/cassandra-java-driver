@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.examples.rcp.mailbox;
+package com.datastax.driver.examples.rcp.mailbox.tests;
 
 import static org.junit.Assert.assertEquals;
 
@@ -22,14 +22,22 @@ import java.util.Collection;
 import java.util.GregorianCalendar;
 
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.osgi.framework.ServiceReference;
+
+import com.datastax.driver.examples.rcp.mailbox.MailboxActivator;
+import com.datastax.driver.examples.rcp.mailbox.MailboxMessage;
+import com.datastax.driver.examples.rcp.mailbox.MailboxService;
 
 /**
  * This test requires an OSGi container.
  * Under Eclipse, run it as a "JUnit Plugin Test".
  */
 public class MailboxServiceTest {
+
+    @ClassRule
+    public static CassandraRule ccm = new CassandraRule();
 
     private MailboxService service;
 
@@ -46,7 +54,7 @@ public class MailboxServiceTest {
      * </p>
      */
     @Test
-    public void service_api_functional() throws MailboxException {
+    public void service_api_functional() throws Exception {
         // Insert some data into mailbox for a particular user.
         String recipient = "user@datastax.com";
         try {
