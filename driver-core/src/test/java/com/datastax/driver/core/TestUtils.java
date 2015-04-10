@@ -389,6 +389,10 @@ public abstract class TestUtils {
         return null; // never reached
     }
 
+    public static int numberOfLocalCoreConnections(Cluster cluster) {
+        Configuration configuration = cluster.getConfiguration();
+        return configuration.getPoolingOptions().getCoreConnectionsPerHost(HostDistance.LOCAL);
+    }
     /**
      * @return A Scassandra instance with an arbitrarily chosen binary port from 8042-8142 and admin port from
      * 8052-8152.
