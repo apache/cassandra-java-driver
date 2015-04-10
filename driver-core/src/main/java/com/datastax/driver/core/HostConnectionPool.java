@@ -119,8 +119,9 @@ class HostConnectionPool {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    forceClose(connectionFutures, manager.executor());
+                    isClosing = true;
                     initFuture.setException(t);
+                    forceClose(connectionFutures, manager.executor());
                 }
             },
             manager.executor()
@@ -147,7 +148,10 @@ class HostConnectionPool {
     }
 
     public PooledConnection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
-        if (isClosed())
+        if (!initFuture.isDone())
+            throw new ConnectionException(host.getSocketAddress(), "Pool is initializing.");
+
+        if (isClosing)
             // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
             // That being said, maybe having a specific exception could be cleaner.
             throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
