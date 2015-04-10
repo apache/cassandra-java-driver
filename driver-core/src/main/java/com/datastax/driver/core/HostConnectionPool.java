@@ -76,7 +76,7 @@ class HostConnectionPool {
     private volatile boolean isClosing;
     private final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
-    final ListenableFuture<Void> initFuture;
+    final SettableFuture<Void> initFuture;
 
     public HostConnectionPool(final Host host, HostDistance hostDistance, final SessionManager manager) {
         assert hostDistance != HostDistance.IGNORED;
@@ -103,6 +103,10 @@ class HostConnectionPool {
 
         ListenableFuture<List<PooledConnection>> allConnectionsFuture = Futures.allAsList(connectionFutures);
 
+        // We could expose allConnectionsFuture directly so this is a bit superfluous, but it avoids
+        // leaking the list of connections.  We also don't want to mark initialization as complete until open
+        // has been set.
+        initFuture = SettableFuture.create();
         Futures.addCallback(allConnectionsFuture,
             new FutureCallback<List<PooledConnection>>() {
                 @Override
@@ -110,28 +114,18 @@ class HostConnectionPool {
                     connections.addAll(l);
                     open.set(l.size());
                     logger.trace("Created connection pool to host {}", host);
+                    initFuture.set(null);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
                     forceClose(connectionFutures, manager.executor());
+                    initFuture.setException(t);
                 }
             },
             manager.executor()
         );
 
-        // We could expose allConnectionsFuture directly so this is a bit superfluous, but it avoids
-        // leaking the list of connections
-        initFuture = Futures.transform(
-            allConnectionsFuture,
-            new Function<List<PooledConnection>, Void>() {
-                @Override
-                public Void apply(List<PooledConnection> input) {
-                    return null;
-                }
-            },
-            manager.executor()
-        );
     }
 
     // Clean up if we got an error at construction time but still created part of the core connections
