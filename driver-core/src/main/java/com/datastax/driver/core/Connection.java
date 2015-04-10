@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -752,7 +754,7 @@ class Connection {
     }
 
     private static final class Flusher implements Runnable {
-        final EventLoop eventLoop;
+        final WeakReference<EventLoop> eventLoopRef;
         final Queue<FlushItem> queued = new ConcurrentLinkedQueue<FlushItem>();
         final AtomicBoolean running = new AtomicBoolean(false);
         final HashSet<Channel> channels = new HashSet<Channel>();
@@ -761,12 +763,17 @@ class Connection {
         int runsWithNoWork = 0;
 
         private Flusher(EventLoop eventLoop) {
-            this.eventLoop = eventLoop;
+            this.eventLoopRef = new WeakReference<EventLoop>(eventLoop);
         }
 
         void start() {
             if (!running.get() && running.compareAndSet(false, true)) {
-                this.eventLoop.execute(this);
+                EventLoop eventLoop = eventLoopRef.get();
+                if(eventLoop == null) {
+                    return;
+                } else {
+                    eventLoop.execute(this);
+                }
             }
         }
 
@@ -804,11 +811,17 @@ class Connection {
                 }
             }
 
-            eventLoop.schedule(this, 10000, TimeUnit.NANOSECONDS);
+            EventLoop eventLoop = eventLoopRef.get();
+            if(eventLoop != null) {
+                eventLoop.schedule(this, 10000, TimeUnit.NANOSECONDS);
+            }
         }
     }
 
-    private static final ConcurrentMap<EventLoop, Flusher> flusherLookup = new ConcurrentHashMap<EventLoop, Flusher>();
+    private static final ConcurrentMap<EventLoop, Flusher> flusherLookup = new MapMaker()
+            .concurrencyLevel(16)
+            .weakKeys()
+            .makeMap();
 
     private static class FlushItem {
         final Channel channel;
