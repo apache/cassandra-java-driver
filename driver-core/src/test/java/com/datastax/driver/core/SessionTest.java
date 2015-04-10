@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -22,6 +23,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.core.utils.SocketChannelMonitor;
+import io.netty.channel.socket.SocketChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -34,6 +39,8 @@ import static org.testng.Assert.fail;
  * Simple test of the Sessions methods against a one node cluster.
  */
 public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
+
+    private static final Logger logger = LoggerFactory.getLogger(SessionTest.class);
 
     private static final String TABLE1 = "test1";
     private static final String TABLE2 = "test2";
@@ -173,11 +180,15 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // create a new cluster object and ensure 0 sessions and connections
         int corePoolSize = 2;
+        SocketChannelMonitor channelMonitor = new SocketChannelMonitor();
+        channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
         PoolingOptions poolingOptions = new PoolingOptions()
                 .setCoreConnectionsPerHost(HostDistance.LOCAL, corePoolSize);
+        Collection<InetSocketAddress> contactPoints = Collections.singletonList(hostAddress);
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                .addContactPointsWithPorts(contactPoints)
                 .withPoolingOptions(poolingOptions)
+                .withNettyOptions(channelMonitor.nettyOptions())
                 .build();
 
         try {
@@ -185,15 +196,18 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
             assertEquals(cluster.manager.sessions.size(), 0);
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+            assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
 
             Session session = cluster.connect();
             assertEquals(cluster.manager.sessions.size(), 1);
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1 + corePoolSize);
+            assertEquals(channelMonitor.openChannels(contactPoints).size(), 1 + corePoolSize);
 
             // ensure sessions.size() returns to 0 with only 1 active connection
             session.close();
             assertEquals(cluster.manager.sessions.size(), 0);
             assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+            assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
 
             // give the driver time to close sessions
             Thread.sleep(10);
@@ -202,11 +216,13 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
                 // ensure 0 sessions with a single control connection
                 assertEquals(cluster.manager.sessions.size(), 0);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+                assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
 
                 // ensure a new session gets registered and control connections are established
                 session = cluster.connect();
                 assertEquals(cluster.manager.sessions.size(), 1);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1 + corePoolSize);
+                assertEquals(channelMonitor.openChannels(contactPoints).size(), 1 + corePoolSize);
                 session.close();
 
                 // give the driver time to close sessions
@@ -215,9 +231,14 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
                 // ensure sessions.size() always returns to 0 with only 1 active connection
                 assertEquals(cluster.manager.sessions.size(), 0);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+                assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
             }
         } finally {
             cluster.close();
+            // Ensure no channels remain open.
+            channelMonitor.stop();
+            channelMonitor.report();
+            assertEquals(channelMonitor.openChannels(contactPoints).size(), 0);
         }
     }
 
