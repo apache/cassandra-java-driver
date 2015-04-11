@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Host</title>
+
+    <link rel="icon" href="../../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../../favicon.png">
+    <link href="../../../../css/style.css" rel="stylesheet">
+    <link href="../../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            <li>
+              <a href="../../../">Introduction</a>
+            </li>
+            
+            <li>
+              <a href="../../../features/">Features</a>
+            </li>
+            
+            <li class="active">
+              <a href="../../">API docs</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.1.5
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../../../api/com.datastax.driver.core/Host/">2.0.10</a></li>
+                  
+                    <li class="disabled"><a href="./">2.1.5</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../../">Introduction</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../../">API docs</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">com.datastax.driver.core</a></li>
+              
+              
+              
+              
+              
+              <li class="active">Host</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<div class="page-header">
+  <h1 id="class-host">
+    <small>class</small>
+    <abbr title="com.datastax.driver.core.Host">Host</abbr>
+  <a class="anchor" href="#class-host" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h1>
+</div>
+
+<p>A Cassandra node.
+ This class keeps the information the driver maintain on a given Cassandra node.</p>
+
+<h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-parent">
+  <code><abbr title="java.lang.Object">Object</abbr></code>
+</div>
+
+
+
+<h2 id="fields">Fields<a class="anchor" href="#fields" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-fields">
+  
+  <div class="panel panel-default member-definition" id="state">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#state" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Host.State/">State</a></code> <var>state</var>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-primary">Volatile</span></dt>
+<dd>This field is volatile</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="notificationsLock">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#notificationsLock" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.concurrent.locks.ReentrantLock">ReentrantLock</abbr></code> <var>notificationsLock</var>
+    </div>
+    <div class="panel-body field-body">
+      <p>Ensures state change notifications for that host are handled serially</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="initialReconnectionAttempt">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#initialReconnectionAttempt" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.concurrent.atomic.AtomicReference">AtomicReference</abbr></code>&lt;<code>&lt;any&gt;</code>&gt; <var>initialReconnectionAttempt</var>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="reconnectionAttempt">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#reconnectionAttempt" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.concurrent.atomic.AtomicReference">AtomicReference</abbr></code>&lt;<code>&lt;any&gt;</code>&gt; <var>reconnectionAttempt</var>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="defaultExecutionInfo">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#defaultExecutionInfo" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../ExecutionInfo/">ExecutionInfo</a></code> <var>defaultExecutionInfo</var>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="listenAddress">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#listenAddress" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.net.InetAddress">InetAddress</abbr></code> <var>listenAddress</var>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-primary">Volatile</span></dt>
+<dd>This field is volatile</dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+<h2 id="constructors">Constructors<a class="anchor" href="#constructors" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-constructors">
+  
+  <div class="panel panel-default member-definition" id="Host%28InetSocketAddress%2C+ConvictionPolicy.Factory%2C+Cluster.Manager%29">
+    <div class="panel-heading constructor-heading">
+      <a class="anchor" href="#Host%28InetSocketAddress%2C+ConvictionPolicy.Factory%2C+Cluster.Manager%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      Host <big>(</big><code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code> address, <code><a href="../ConvictionPolicy.Factory/">Factory</a></code> policy, <code><a href="../Cluster.Manager/">Manager</a></code> manager<big>)</big>
+    </div>
+    <div class="panel-body constructor-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>address</var></td>
+<td><code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>policy</var></td>
+<td><code><a href="../ConvictionPolicy.Factory/">Factory</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>manager</var></td>
+<td><code><a href="../Cluster.Manager/">Manager</a></code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+<h2 id="methods">Methods<a class="anchor" href="#methods" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-methods">
+  
+  <div class="panel panel-default member-definition" id="setLocationInfo%28String%2C+String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setLocationInfo%28String%2C+String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> setLocationInfo <big>(</big><code><abbr title="java.lang.String">String</abbr></code> datacenter, <code><abbr title="java.lang.String">String</abbr></code> rack<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>datacenter</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>rack</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setVersionAndListenAdress%28String%2C+InetAddress%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setVersionAndListenAdress%28String%2C+InetAddress%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> setVersionAndListenAdress <big>(</big><code><abbr title="java.lang.String">String</abbr></code> cassandraVersion, <code><abbr title="java.net.InetAddress">InetAddress</abbr></code> listenAddress<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>cassandraVersion</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>listenAddress</var></td>
+<td><code><abbr title="java.net.InetAddress">InetAddress</abbr></code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getAddress%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getAddress%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.net.InetAddress">InetAddress</abbr></code> getAddress <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the node address. </p>
+<p> This is a shortcut for <code>getSocketAddress().getAddress()</code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.net.InetAddress">InetAddress</abbr></code></td>
+<td>
+<p>the node <code><code>InetAddress</code></code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getSocketAddress%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getSocketAddress%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code> getSocketAddress <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the node socket address.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code></td>
+<td>
+<p>the node <code><code>InetSocketAddress</code></code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getDatacenter%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getDatacenter%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> getDatacenter <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the name of the datacenter this host is part of. </p>
+<p> The returned datacenter name is the one as known by Cassandra. It is also possible for this information to be unavailable. In that case this method returns <code>null</code>, and the caller should always be aware of this possibility.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the Cassandra datacenter name or null if datacenter is unavailable.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getRack%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getRack%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> getRack <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the name of the rack this host is part of. </p>
+<p> The returned rack name is the one as known by Cassandra. It is also possible for this information to be unavailable. In that case this method returns <code>null</code>, and the caller should always aware of this possibility.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the Cassandra rack name or null if the rack is unavailable</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getCassandraVersion%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getCassandraVersion%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../VersionNumber/">VersionNumber</a></code> getCassandraVersion <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>The Cassandra version the host is running. </p>
+<p> As for other host information fetch from Cassandra above, the returned version can theoretically be null if the information is unavailable.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../VersionNumber/">VersionNumber</a></code></td>
+<td>
+<p>the Cassandra version the host is running.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getTokens%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getTokens%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.Set">Set</abbr></code>&lt;<code><a href="../Token/">Token</a></code>&gt; getTokens <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the tokens that this host owns.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td>
+<code><abbr title="java.util.Set">Set</abbr></code>&lt;<code><a href="../Token/">Token</a></code>&gt;</td>
+<td>
+<p>the (immutable) set of tokens.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setTokens%28Set%3CToken%3E%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setTokens%28Set%3CToken%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> setTokens <big>(</big><code><abbr title="java.util.Set">Set</abbr></code>&lt;<code><a href="../Token/">Token</a></code>&gt; tokens<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>tokens</var></td>
+<td>
+<code><abbr title="java.util.Set">Set</abbr></code>&lt;<code><a href="../Token/">Token</a></code>&gt;</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="isUp%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#isUp%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>boolean</code> isUp <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns whether the host is considered up by the driver. </p>
+<p> Please note that this is only the view of the driver and may not reflect reality. In particular a node can be down but the driver hasn’t detected it yet, or it can have been restarted and the driver hasn’t detected it yet (in particular, for hosts to which the driver does not connect (because the <code>LoadBalancingPolicy.distance</code> method says so), this information may be durably inaccurate). This information should thus only be considered as best effort and should not be relied upon too strongly.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>boolean</code></td>
+<td>
+<p>whether the node is considered up.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getInitialReconnectionAttemptFuture%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getInitialReconnectionAttemptFuture%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>&lt;any&gt;</code> getInitialReconnectionAttemptFuture <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns a <code>ListenableFuture</code> representing the completion of the first reconnection attempt after a node has been suspected. </p>
+<p> This is useful in load balancing policies when there are no more live nodes and we are trying suspected nodes.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>&lt;any&gt;</code></td>
+<td>
+<p>the future.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getReconnectionAttemptFuture%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getReconnectionAttemptFuture%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>&lt;any&gt;</code> getReconnectionAttemptFuture <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns a <code>ListenableFuture</code> representing the completion of the reconnection attempts scheduled after a host is marked <code>DOWN</code>. </p>
+<p> <b>If the caller cancels this future,</b> the driver will not try to reconnect to this host until it receives an UP event for it. Note that this could mean never, if the node was marked down because of a driver-side error (e.g. read timeout) but no failure was detected by Cassandra. The caller might decide to trigger an explicit reconnection attempt at a later point with <code><a href="#tryReconnectOnce%28%29">Host#tryReconnectOnce()</a></code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>&lt;any&gt;</code></td>
+<td>
+<p>the future, or <code>null</code> if no reconnection attempt was in progress.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="tryReconnectOnce%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#tryReconnectOnce%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> tryReconnectOnce <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Triggers an asynchronous reconnection attempt to this host. </p>
+<p> This method is intended for load balancing policies that mark hosts as <code><a href="../HostDistance/#IGNORED">IGNORED</a></code>, but still need a way to periodically check these hosts’ states (UP / DOWN). </p>
+<p> For a host that is at distance <code>IGNORED</code>, this method will try to reconnect exactly once: if reconnection succeeds, the host is marked <code>UP</code>; otherwise, no further attempts will be scheduled. It has no effect if the node is already <code>UP</code>, or if a reconnection attempt is already in progress. </p>
+<p> Note that if the host is <em>not</em> a distance <code>IGNORED</code>, this method <em>will</em> trigger a periodic reconnection attempt if the reconnection fails.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="equals%28Object%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#equals%28Object%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>boolean</code> equals <big>(</big><code><abbr title="java.lang.Object">Object</abbr></code> other<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>other</var></td>
+<td><code><abbr title="java.lang.Object">Object</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>boolean</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="hashCode%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#hashCode%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> hashCode <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="wasJustAdded%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#wasJustAdded%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>boolean</code> wasJustAdded <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>boolean</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="toString%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#toString%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> toString <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setDown%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setDown%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> setDown <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setUp%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setUp%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> setUp <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setSuspected%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setSuspected%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>boolean</code> setSuspected <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>boolean</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="signalConnectionFailure%28ConnectionException%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#signalConnectionFailure%28ConnectionException%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>boolean</code> signalConnectionFailure <big>(</big><code><a href="../ConnectionException/">ConnectionException</a></code> exception<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>exception</var></td>
+<td><code><a href="../ConnectionException/">ConnectionException</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>boolean</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc">
+<li><a href="#extends">Extends
+</a></li>
+<li><a href="#fields">Fields
+</a></li>
+<li><a href="#constructors">Constructors
+</a></li>
+<li><a href="#methods">Methods
+</a></li>
+</ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../../js/jquery.js"></script>
+    <script src="../../../../js/bootstrap.js"></script>
+    <script src="../../../../js/angular.js"></script>
+    <script src="../../../../js/mousetrap.js"></script>
+    <script src="../../../../js/hotkeys.js"></script>
+    <script src="../../../../js/ZeroClipboard.js"></script>
+    <script src="../../../../js/lunr.js"></script>
+    <script src="../../../../js/app.js"></script>
+  </body>
+</html>

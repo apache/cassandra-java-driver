@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - PoolingOptions</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            <li>
+              <a href="../../../">Introduction</a>
+            </li>
+            
+            <li>
+              <a href="../../../features/">Features</a>
+            </li>
+            
+            <li class="active">
+              <a href="../../">API docs</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.0.10
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li class="disabled"><a href="./">2.0.10</a></li>
+                  
+                    <li><a href="../../../2.1.5/api/com.datastax.driver.core/PoolingOptions/">2.1.5</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../../">Introduction</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../../">API docs</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">com.datastax.driver.core</a></li>
+              
+              
+              
+              
+              
+              <li class="active">PoolingOptions</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<div class="page-header">
+  <h1 id="class-poolingoptions">
+    <small>class</small>
+    <abbr title="com.datastax.driver.core.PoolingOptions">PoolingOptions</abbr>
+  <a class="anchor" href="#class-poolingoptions" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h1>
+</div>
+
+<p>Options related to connection pooling. </p>
+<p> The driver uses connections in an asynchronous manner. Meaning that multiple requests can be submitted on the same connection at the same time. This means that the driver only needs to maintain a relatively small number of connections to each Cassandra host. These options allow the driver to control how many connections are kept exactly. </p>
+<p> For each host, the driver keeps a core pool of connections open at all times determined by calling (<code><a href="#getCoreConnectionsPerHost%28HostDistance%29">PoolingOptions#getCoreConnectionsPerHost</a></code>). If the use of those connections reaches a configurable threshold (<code><a href="#getMaxSimultaneousRequestsPerConnectionThreshold%28HostDistance%29">PoolingOptions#getMaxSimultaneousRequestsPerConnectionThreshold</a></code>), more connections are created up to the configurable maximum number of connections (<code><a href="#getMaxConnectionsPerHost%28HostDistance%29">PoolingOptions#getMaxConnectionsPerHost</a></code>). When the pool exceeds the maximum number of connections, connections in excess are reclaimed. </p>
+<p> Each of these parameters can be separately set for <code>LOCAL</code> and <code>REMOTE</code> hosts (<code><a href="../HostDistance/">HostDistance</a></code>). For <code>IGNORED</code> hosts, the default for all those settings is 0 and cannot be changed.</p>
+
+<h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-parent">
+  <code><abbr title="java.lang.Object">Object</abbr></code>
+</div>
+
+
+
+
+<h2 id="constructors">Constructors<a class="anchor" href="#constructors" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-constructors">
+  
+  <div class="panel panel-default member-definition" id="PoolingOptions%28%29">
+    <div class="panel-heading constructor-heading">
+      <a class="anchor" href="#PoolingOptions%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      PoolingOptions <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body constructor-body">
+      
+      
+    </div>
+  </div>
+  
+</div>
+
+<h2 id="methods">Methods<a class="anchor" href="#methods" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-methods">
+  
+  <div class="panel panel-default member-definition" id="register%28Cluster.Manager%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#register%28Cluster.Manager%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> register <big>(</big><code><a href="../Cluster.Manager/">Manager</a></code> manager<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>manager</var></td>
+<td><code><a href="../Cluster.Manager/">Manager</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getMinSimultaneousRequestsPerConnectionThreshold%28HostDistance%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getMinSimultaneousRequestsPerConnectionThreshold%28HostDistance%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> getMinSimultaneousRequestsPerConnectionThreshold <big>(</big><code><a href="../HostDistance/">HostDistance</a></code> distance<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the number of simultaneous requests on a connection below which connections in excess are reclaimed. </p>
+<p> If an opened connection to an host at distance <code>distance</code> handles less than this number of simultaneous requests and there is more than <code><a href="#getCoreConnectionsPerHost%28HostDistance%29">PoolingOptions#getCoreConnectionsPerHost</a></code> connections open to this host, the connection is closed. </p>
+<p> The default value for this option is 25 for <code>LOCAL</code> and <code>REMOTE</code> hosts.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-warning">Deprecated</span></dt>
+<dd>
+<p>this option isn’t used anymore with the current pool resizing algorithm.</p>
+</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>distance</var></td>
+<td><code><a href="../HostDistance/">HostDistance</a></code></td>
+<td>
+<p>the <code>HostDistance</code> for which to return this threshold.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td>
+<p>the configured threshold, or the default one if none have been set.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setMinSimultaneousRequestsPerConnectionThreshold%28HostDistance%2C+int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setMinSimultaneousRequestsPerConnectionThreshold%28HostDistance%2C+int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PoolingOptions</a></code> setMinSimultaneousRequestsPerConnectionThreshold <big>(</big><code><a href="../HostDistance/">HostDistance</a></code> distance, <code>int</code> newMinSimultaneousRequests<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets the number of simultaneous requests on a connection below which connections in excess are reclaimed.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-warning">Deprecated</span></dt>
+<dd>
+<p>this option isn’t used anymore with the current pool resizing algorithm.</p>
+</dd>
+<dt><span class="label label-primary">Synchronized</span></dt>
+<dd>This method is synchronized</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>distance</var></td>
+<td><code><a href="../HostDistance/">HostDistance</a></code></td>
+<td>
+<p>the <code>HostDistance</code> for which to configure this threshold.</p>
+</td>
+</tr>
+<tr>
+<td><var>newMinSimultaneousRequests</var></td>
+<td><code>int</code></td>
+<td>
+<p>the value to set (between 0 and 128).</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>distance == HostDistance.IGNORED</code>, or if <code>minSimultaneousRequests</code> is not in range, or if <code>newMinSimultaneousRequests</code> is greater than the maximum value for this distance.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PoolingOptions</a></code></td>
+<td>
+<p>this <code>PoolingOptions</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getMaxSimultaneousRequestsPerConnectionThreshold%28HostDistance%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getMaxSimultaneousRequestsPerConnectionThreshold%28HostDistance%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> getMaxSimultaneousRequestsPerConnectionThreshold <big>(</big><code><a href="../HostDistance/">HostDistance</a></code> distance<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the number of simultaneous requests on all connections to an host after which more connections are created. </p>
+<p> If all the connections opened to an host at distance <code>distance</code> connection are handling more than this number of simultaneous requests and there is less than <code><a href="#getMaxConnectionsPerHost%28HostDistance%29">PoolingOptions#getMaxConnectionsPerHost</a></code> connections open to this host, a new connection is open. </p>
+<p> Note that a given connection cannot handle more than 128 simultaneous requests (protocol limitation). </p>
+<p> The default value for this option is 100 for <code>LOCAL</code> and <code>REMOTE</code> hosts.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>distance</var></td>
+<td><code><a href="../HostDistance/">HostDistance</a></code></td>
+<td>
+<p>the <code>HostDistance</code> for which to return this threshold.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td>
+<p>the configured threshold, or the default one if none have been set.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setMaxSimultaneousRequestsPerConnectionThreshold%28HostDistance%2C+int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setMaxSimultaneousRequestsPerConnectionThreshold%28HostDistance%2C+int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PoolingOptions</a></code> setMaxSimultaneousRequestsPerConnectionThreshold <big>(</big><code><a href="../HostDistance/">HostDistance</a></code> distance, <code>int</code> newMaxSimultaneousRequests<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets number of simultaneous requests on all connections to an host after which more connections are created.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-primary">Synchronized</span></dt>
+<dd>This method is synchronized</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>distance</var></td>
+<td><code><a href="../HostDistance/">HostDistance</a></code></td>
+<td>
+<p>the <code>HostDistance</code> for which to configure this threshold.</p>
+</td>
+</tr>
+<tr>
+<td><var>newMaxSimultaneousRequests</var></td>
+<td><code>int</code></td>
+<td>
+<p>the value to set (between 0 and 128).</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>distance == HostDistance.IGNORED</code>, or if <code>maxSimultaneousRequests</code> is not in range, or if <code>newMaxSimultaneousRequests</code> is less than the minimum value for this distance.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PoolingOptions</a></code></td>
+<td>
+<p>this <code>PoolingOptions</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getCoreConnectionsPerHost%28HostDistance%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getCoreConnectionsPerHost%28HostDistance%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> getCoreConnectionsPerHost <big>(</big><code><a href="../HostDistance/">HostDistance</a></code> distance<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the core number of connections per host. </p>
+<p> For the provided <code>distance</code>, this correspond to the number of connections initially created and kept open to each host of that distance.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>distance</var></td>
+<td><code><a href="../HostDistance/">HostDistance</a></code></td>
+<td>
+<p>the <code>HostDistance</code> for which to return this threshold.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td>
+<p>the core number of connections per host at distance <code>distance</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setCoreConnectionsPerHost%28HostDistance%2C+int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setCoreConnectionsPerHost%28HostDistance%2C+int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PoolingOptions</a></code> setCoreConnectionsPerHost <big>(</big><code><a href="../HostDistance/">HostDistance</a></code> distance, <code>int</code> newCoreConnections<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets the core number of connections per host.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-primary">Synchronized</span></dt>
+<dd>This method is synchronized</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>distance</var></td>
+<td><code><a href="../HostDistance/">HostDistance</a></code></td>
+<td>
+<p>the <code>HostDistance</code> for which to set this threshold.</p>
+</td>
+</tr>
+<tr>
+<td><var>newCoreConnections</var></td>
+<td><code>int</code></td>
+<td>
+<p>the value to set</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>distance == HostDistance.IGNORED</code>, or if <code>newCoreConnections</code> is greater than the maximum value for this distance.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PoolingOptions</a></code></td>
+<td>
+<p>this <code>PoolingOptions</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getMaxConnectionsPerHost%28HostDistance%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getMaxConnectionsPerHost%28HostDistance%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> getMaxConnectionsPerHost <big>(</big><code><a href="../HostDistance/">HostDistance</a></code> distance<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the maximum number of connections per host. </p>
+<p> For the provided <code>distance</code>, this correspond to the maximum number of connections that can be created per host at that distance.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>distance</var></td>
+<td><code><a href="../HostDistance/">HostDistance</a></code></td>
+<td>
+<p>the <code>HostDistance</code> for which to return this threshold.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td>
+<p>the maximum number of connections per host at distance <code>distance</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setMaxConnectionsPerHost%28HostDistance%2C+int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setMaxConnectionsPerHost%28HostDistance%2C+int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PoolingOptions</a></code> setMaxConnectionsPerHost <big>(</big><code><a href="../HostDistance/">HostDistance</a></code> distance, <code>int</code> newMaxConnections<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets the maximum number of connections per host.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-primary">Synchronized</span></dt>
+<dd>This method is synchronized</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>distance</var></td>
+<td><code><a href="../HostDistance/">HostDistance</a></code></td>
+<td>
+<p>the <code>HostDistance</code> for which to set this threshold.</p>
+</td>
+</tr>
+<tr>
+<td><var>newMaxConnections</var></td>
+<td><code>int</code></td>
+<td>
+<p>the value to set</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>distance == HostDistance.IGNORED</code>, or if <code>newMaxConnections</code> is less than the core value for this distance.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PoolingOptions</a></code></td>
+<td>
+<p>this <code>PoolingOptions</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getIdleTimeoutSeconds%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getIdleTimeoutSeconds%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> getIdleTimeoutSeconds <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the timeout before an idle connection is removed.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td>
+<p>the timeout.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setIdleTimeoutSeconds%28int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setIdleTimeoutSeconds%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PoolingOptions</a></code> setIdleTimeoutSeconds <big>(</big><code>int</code> idleTimeoutSeconds<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets the timeout before an idle connection is removed. </p>
+<p> The order of magnitude should be a few minutes (the default is 120 seconds). The timeout that triggers the removal has a granularity of 10 seconds.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>idleTimeoutSeconds</var></td>
+<td><code>int</code></td>
+<td>
+<p>the new timeout in seconds.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if the timeout is negative.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PoolingOptions</a></code></td>
+<td>
+<p>this <code>PoolingOptions</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getPoolTimeoutMillis%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getPoolTimeoutMillis%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> getPoolTimeoutMillis <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the timeout when trying to acquire a connection from a host’s pool.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td>
+<p>the timeout.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setPoolTimeoutMillis%28int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setPoolTimeoutMillis%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PoolingOptions</a></code> setPoolTimeoutMillis <big>(</big><code>int</code> poolTimeoutMillis<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets the timeout when trying to acquire a connection from a host’s pool. </p>
+<p> If no connection is available within that time, the driver will try the next host from the query plan. </p>
+<p> If this option is set to zero, the driver won’t wait at all.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>poolTimeoutMillis</var></td>
+<td><code>int</code></td>
+<td>
+<p>the new value in milliseconds.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if the timeout is negative.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PoolingOptions</a></code></td>
+<td>
+<p>this <code>PoolingOptions</code></p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getHeartbeatIntervalSeconds%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getHeartbeatIntervalSeconds%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> getHeartbeatIntervalSeconds <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the heart beat interval, after which a message is sent on an idle connection to make sure it’s still alive.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td>
+<p>the interval.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setHeartbeatIntervalSeconds%28int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setHeartbeatIntervalSeconds%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PoolingOptions</a></code> setHeartbeatIntervalSeconds <big>(</big><code>int</code> heartbeatIntervalSeconds<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets the heart beat interval, after which a message is sent on an idle connection to make sure it’s still alive. </p>
+<p> This is an application-level keep-alive, provided for convenience since adjusting the TCP keep-alive might not be practical in all environments. </p>
+<p> This option should be set higher than <code><a href="../SocketOptions/#getReadTimeoutMillis%28%29">SocketOptions#getReadTimeoutMillis()</a></code>. </p>
+<p> The default value for this option is 30 seconds.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>heartbeatIntervalSeconds</var></td>
+<td><code>int</code></td>
+<td>
+<p>the new value in seconds. If set to 0, it will disable the feature.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if the interval is negative.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PoolingOptions</a></code></td>
+<td>
+<p>this <code>PoolingOptions</code></p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="refreshConnectedHosts%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#refreshConnectedHosts%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> refreshConnectedHosts <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Requests the driver to re-evaluate the <code><a href="../HostDistance/">HostDistance</a></code> (through the configured <code><a href="../../com.datastax.driver.core.policies/LoadBalancingPolicy/#distance%28Host%29">LoadBalancingPolicy#distance</a></code>) for every known hosts and to drop/add connections to each hosts according to the computed distance.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="refreshConnectedHost%28Host%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#refreshConnectedHost%28Host%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> refreshConnectedHost <big>(</big><code><a href="../Host/">Host</a></code> host<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Requests the driver to re-evaluate the <code><a href="../HostDistance/">HostDistance</a></code> for a given node.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>host</var></td>
+<td><code><a href="../Host/">Host</a></code></td>
+<td>
+<p>the host to refresh.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">See Also:</dt>
+<dd class="tag-content"><ul class="see"><li><a href="#refreshConnectedHosts%28%29">PoolingOptions#refreshConnectedHosts()</a></li></ul></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc">
+<li><a href="#extends">Extends
+</a></li>
+<li><a href="#constructors">Constructors
+</a></li>
+<li><a href="#methods">Methods
+</a></li>
+</ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>

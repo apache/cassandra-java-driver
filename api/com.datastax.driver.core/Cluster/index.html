@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Cluster</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            <li>
+              <a href="../../../">Introduction</a>
+            </li>
+            
+            <li>
+              <a href="../../../features/">Features</a>
+            </li>
+            
+            <li class="active">
+              <a href="../../">API docs</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.0.10
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li class="disabled"><a href="./">2.0.10</a></li>
+                  
+                    <li><a href="../../../2.1.5/api/com.datastax.driver.core/Cluster/">2.1.5</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../../">Introduction</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../../">API docs</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">com.datastax.driver.core</a></li>
+              
+              
+              
+              
+              
+              <li class="active">Cluster</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<div class="page-header">
+  <h1 id="class-cluster">
+    <small>class</small>
+    <abbr title="com.datastax.driver.core.Cluster">Cluster</abbr>
+  <a class="anchor" href="#class-cluster" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h1>
+</div>
+
+<p>Information and known state of a Cassandra cluster. </p>
+<p> This is the main entry point of the driver. A simple example of access to a Cassandra cluster would be: </p>
+<pre> Cluster cluster = Cluster.builder().addContactPoint("192.168.0.1").build(); Session session = cluster.connect("db1");
+ for (Row row : session.execute("SELECT * FROM table1")) // do something ... </pre> <p> A cluster object maintains a permanent connection to one of the cluster nodes which it uses solely to maintain information on the state and current topology of the cluster. Using the connection, the driver will discover all the nodes currently in the cluster as well as new nodes joining the cluster subsequently.</p>
+
+<h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-parent">
+  <code><abbr title="java.lang.Object">Object</abbr></code>
+</div>
+
+<h2 id="implements">Implements<a class="anchor" href="#implements" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-interfaces">
+  <ul class="list-inline">
+  
+    <li><code><abbr title="java.io.Closeable">Closeable</abbr></code></li>
+  
+  </ul>
+</div>
+
+<h2 id="extended-by">Extended By<a class="anchor" href="#extended-by" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-children">
+  <ul class="list-inline">
+  
+    <li><code><a href="../DelegatingCluster/">DelegatingCluster</a></code></li>
+  
+  </ul>
+</div>
+
+<h2 id="fields">Fields<a class="anchor" href="#fields" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-fields">
+  
+  <div class="panel panel-default member-definition" id="NEW_NODE_DELAY_SECONDS">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#NEW_NODE_DELAY_SECONDS" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> <var>NEW_NODE_DELAY_SECONDS</var>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="manager">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#manager" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Cluster.Manager/">Manager</a></code> <var>manager</var>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+<h2 id="constructors">Constructors<a class="anchor" href="#constructors" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-constructors">
+  
+  <div class="panel panel-default member-definition" id="Cluster%28String%2C+List%3CInetSocketAddress%3E%2C+Configuration%29">
+    <div class="panel-heading constructor-heading">
+      <a class="anchor" href="#Cluster%28String%2C+List%3CInetSocketAddress%3E%2C+Configuration%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      Cluster <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name, <code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code>&gt; contactPoints, <code><a href="../Configuration/">Configuration</a></code> configuration<big>)</big>
+    </div>
+    <div class="panel-body constructor-body">
+      <p>Constructs a new Cluster instance. </p>
+<p> This constructor is mainly exposed so Cluster can be sub-classed as a means to make testing/mocking easier or to “intercept” its method call. Most users shouldn’t extend this class however and should prefer either using the <code><a href="#builder%28%29">Cluster#builder</a></code> or calling <code><a href="#buildFrom%28Cluster.Initializer%29">Cluster#buildFrom</a></code> with a custom Initializer.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-warning">Protected</span></dt>
+<dd>This constructor is protected</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>name</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name to use for the cluster (this is not the Cassandra cluster name, see <code><a href="#getClusterName%28%29">Cluster#getClusterName</a></code>).</p>
+</td>
+</tr>
+<tr>
+<td><var>contactPoints</var></td>
+<td>
+<code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code>&gt;</td>
+<td>
+<p>the list of contact points to use for the new cluster.</p>
+</td>
+</tr>
+<tr>
+<td><var>configuration</var></td>
+<td><code><a href="../Configuration/">Configuration</a></code></td>
+<td>
+<p>the configuration for the new cluster.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="Cluster%28Cluster.Initializer%29">
+    <div class="panel-heading constructor-heading">
+      <a class="anchor" href="#Cluster%28Cluster.Initializer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      Cluster <big>(</big><code><a href="../Cluster.Initializer/">Initializer</a></code> initializer<big>)</big>
+    </div>
+    <div class="panel-body constructor-body">
+      <p>Constructs a new Cluster instance. </p>
+<p> This constructor is mainly exposed so Cluster can be sub-classed as a means to make testing/mocking easier or to “intercept” its method call. Most users shouldn’t extend this class however and should prefer using the <code><a href="#builder%28%29">Cluster#builder</a></code>.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-warning">Protected</span></dt>
+<dd>This constructor is protected</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>initializer</var></td>
+<td><code><a href="../Cluster.Initializer/">Initializer</a></code></td>
+<td>
+<p>the initializer to use.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">See Also:</dt>
+<dd class="tag-content"><ul class="see"><li><a href="#buildFrom%28Cluster.Initializer%29">Cluster#buildFrom</a></li></ul></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+<h2 id="methods">Methods<a class="anchor" href="#methods" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-methods">
+  
+  <div class="panel panel-default member-definition" id="init%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#init%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">Cluster</a></code> init <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Initialize this Cluster instance.
+ This method creates an initial connection to one of the contact points used to construct the <code>Cluster</code> instance. That connection is then used to populate the cluster <code><a href="../Metadata/">Metadata</a></code>. </p>
+<p> Calling this method is optional in the sense that any call to one of the <code>connect</code> methods of this object will automatically trigger a call to this method beforehand. It is thus only useful to call this method if for some reason you want to populate the metadata (or test that at least one contact point can be reached) without creating a first <code>Session</code>. </p>
+<p> Please note that this method only creates one control connection for gathering cluster metadata. In particular, it doesn’t create any connection pools. Those are created when a new <code>Session</code> is created through <code>connect</code>. </p>
+<p> This method has no effect if the cluster is already initialized.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code><a href="../../com.datastax.driver.core.exceptions/NoHostAvailableException/">NoHostAvailableException</a></code></td>
+<td>
+<p>if no host amongst the contact points can be reached.</p>
+</td>
+</tr>
+<tr>
+<td><code><a href="../../com.datastax.driver.core.exceptions/AuthenticationException/">AuthenticationException</a></code></td>
+<td>
+<p>if an authentication error occurs while contacting the initial contact points.</p>
+</td>
+</tr>
+<tr>
+<td><code><abbr title="java.lang.IllegalStateException">IllegalStateException</abbr></code></td>
+<td>
+<p>if the Cluster was closed prior to calling this method. This can occur either directly (through <code><a href="#close%28%29">Cluster#close()</a></code> or <code><a href="#closeAsync%28%29">Cluster#closeAsync()</a></code>), or as a result of an error while initializing the Cluster.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">Cluster</a></code></td>
+<td>
+<p>this <code>Cluster</code> object.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="buildFrom%28Cluster.Initializer%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#buildFrom%28Cluster.Initializer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">Cluster</a></code> buildFrom <big>(</big><code><a href="../Cluster.Initializer/">Initializer</a></code> initializer<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Build a new cluster based on the provided initializer. </p>
+<p> Note that for building a cluster pragmatically, Cluster.Builder provides a slightly less verbose shortcut with <code><a href="../Cluster.Builder/#build%28%29">Cluster.Builder#build</a></code>. </p>
+<p> Also note that that all the contact points provided by <code>initializer</code> must share the same port.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>initializer</var></td>
+<td><code><a href="../Cluster.Initializer/">Initializer</a></code></td>
+<td>
+<p>the Cluster.Initializer to use</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if the list of contact points provided by <code>initializer</code> is empty or if not all those contact points have the same port.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">Cluster</a></code></td>
+<td>
+<p>the newly created Cluster instance</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="builder%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#builder%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Cluster.Builder/">Builder</a></code> builder <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Creates a new <code><a href="../Cluster.Builder/">Cluster.Builder</a></code> instance. </p>
+<p> This is a convenience method for <code>new Cluster.Builder()</code>.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Cluster.Builder/">Builder</a></code></td>
+<td>
+<p>the new cluster builder.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getDriverVersion%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getDriverVersion%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> getDriverVersion <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the current version of the driver. </p>
+<p> This is intended for products that wrap or extend the driver, as a way to check compatibility if end-users override the driver version in their application.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the version.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="newSession%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#newSession%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Session/">Session</a></code> newSession <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Creates a new session on this cluster but does not initialize it. </p>
+<p> Because this method does not perform any initialization, it cannot fail. The initialization of the session (the connection of the Session to the Cassandra nodes) will occur if either the <code><a href="../Session/#init%28%29">Session#init</a></code> method is called explicitly, or whenever the returned session object is used. </p>
+<p> Once a session returned by this method gets initialized (see above), it will be set to no keyspace. If you want to set such session to a keyspace, you will have to explicitly execute a ‘USE mykeyspace’ query. </p>
+<p> Note that if you do not particularly need to defer initialization, it is simpler to use one of the <code>connect()</code> method of this class.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Session/">Session</a></code></td>
+<td>
+<p>a new, non-initialized session on this cluster.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="connect%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#connect%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Session/">Session</a></code> connect <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Creates a new session on this cluster and initialize it. </p>
+<p> Note that this method will initialize the newly created session, trying to connect to the Cassandra nodes before returning. If you only want to create a Session object without initializing it right away, see <code><a href="#newSession%28%29">Cluster#newSession</a></code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code><a href="../../com.datastax.driver.core.exceptions/NoHostAvailableException/">NoHostAvailableException</a></code></td>
+<td>
+<p>if the Cluster has not been initialized yet (<code><a href="#init%28%29">Cluster#init</a></code> has not be called and this is the first connect call) and no host amongst the contact points can be reached.</p>
+</td>
+</tr>
+<tr>
+<td><code><a href="../../com.datastax.driver.core.exceptions/AuthenticationException/">AuthenticationException</a></code></td>
+<td>
+<p>if an authentication error occurs while contacting the initial contact points.</p>
+</td>
+</tr>
+<tr>
+<td><code><abbr title="java.lang.IllegalStateException">IllegalStateException</abbr></code></td>
+<td>
+<p>if the Cluster was closed prior to calling this method. This can occur either directly (through <code><a href="#close%28%29">Cluster#close()</a></code> or <code><a href="#closeAsync%28%29">Cluster#closeAsync()</a></code>), or as a result of an error while initializing the Cluster.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Session/">Session</a></code></td>
+<td>
+<p>a new session on this cluster sets to no keyspace.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="connect%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#connect%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Session/">Session</a></code> connect <big>(</big><code><abbr title="java.lang.String">String</abbr></code> keyspace<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Creates a new session on this cluster, initialize it and sets the keyspace to the provided one. </p>
+<p> Note that this method will initialize the newly created session, trying to connect to the Cassandra nodes before returning. If you only want to create a Session object without initializing it right away, see <code><a href="#newSession%28%29">Cluster#newSession</a></code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>keyspace</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>The name of the keyspace to use for the created <code>Session</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code><a href="../../com.datastax.driver.core.exceptions/NoHostAvailableException/">NoHostAvailableException</a></code></td>
+<td>
+<p>if the Cluster has not been initialized yet (<code><a href="#init%28%29">Cluster#init</a></code> has not be called and this is the first connect call) and no host amongst the contact points can be reached, or if no host can be contacted to set the <code>keyspace</code>.</p>
+</td>
+</tr>
+<tr>
+<td><code><a href="../../com.datastax.driver.core.exceptions/AuthenticationException/">AuthenticationException</a></code></td>
+<td>
+<p>if an authentication error occurs while contacting the initial contact points.</p>
+</td>
+</tr>
+<tr>
+<td><code><abbr title="java.lang.IllegalStateException">IllegalStateException</abbr></code></td>
+<td>
+<p>if the Cluster was closed prior to calling this method. This can occur either directly (through <code><a href="#close%28%29">Cluster#close()</a></code> or <code><a href="#closeAsync%28%29">Cluster#closeAsync()</a></code>), or as a result of an error while initializing the Cluster.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Session/">Session</a></code></td>
+<td>
+<p>a new session on this cluster sets to keyspace <code>keyspaceName</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getClusterName%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getClusterName%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> getClusterName <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>The name of this cluster object. </p>
+<p> Note that this is not the Cassandra cluster name, but rather a name assigned to this Cluster object. Currently, that name is only used for one purpose: to distinguish exposed JMX metrics when multiple Cluster instances live in the same JVM (which should be rare in the first place). That name can be set at Cluster building time (through <code><a href="../Cluster.Builder/#withClusterName%28String%29">Cluster.Builder#withClusterName</a></code> for instance) but will default to a name like <code>cluster1</code> where each Cluster instance in the same JVM will have a different number.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name for this cluster instance.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getMetadata%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getMetadata%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Metadata/">Metadata</a></code> getMetadata <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns read-only metadata on the connected cluster. </p>
+<p> This includes the known nodes with their status as seen by the driver, as well as the schema definitions. Since this return metadata on the connected cluster, this method may trigger the creation of a connection if none has been established yet (neither <code>init()</code> nor <code>connect()</code> has been called yet).</p>
+
+      <dl class="tags">
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code><a href="../../com.datastax.driver.core.exceptions/NoHostAvailableException/">NoHostAvailableException</a></code></td>
+<td>
+<p>if the Cluster has not been initialized yet and no host amongst the contact points can be reached.</p>
+</td>
+</tr>
+<tr>
+<td><code><a href="../../com.datastax.driver.core.exceptions/AuthenticationException/">AuthenticationException</a></code></td>
+<td>
+<p>if an authentication error occurs while contacting the initial contact points.</p>
+</td>
+</tr>
+<tr>
+<td><code><abbr title="java.lang.IllegalStateException">IllegalStateException</abbr></code></td>
+<td>
+<p>if the Cluster was closed prior to calling this method. This can occur either directly (through <code><a href="#close%28%29">Cluster#close()</a></code> or <code><a href="#closeAsync%28%29">Cluster#closeAsync()</a></code>), or as a result of an error while initializing the Cluster.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Metadata/">Metadata</a></code></td>
+<td>
+<p>the cluster metadata.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getConfiguration%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getConfiguration%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Configuration/">Configuration</a></code> getConfiguration <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>The cluster configuration.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Configuration/">Configuration</a></code></td>
+<td>
+<p>the cluster configuration.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getMetrics%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getMetrics%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Metrics/">Metrics</a></code> getMetrics <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>The cluster metrics.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Metrics/">Metrics</a></code></td>
+<td>
+<p>the cluster metrics, or <code>null</code> if metrics collection has been disabled (that is if <code><a href="../Configuration/#getMetricsOptions%28%29">Configuration#getMetricsOptions</a></code> returns <code>null</code>).</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="register%28Host.StateListener%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#register%28Host.StateListener%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">Cluster</a></code> register <big>(</big><code><a href="../Host.StateListener/">StateListener</a></code> listener<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Registers the provided listener to be notified on hosts up/down/added/removed events. </p>
+<p> Registering the same listener multiple times is a no-op. </p>
+<p> Note that while <code><a href="../../com.datastax.driver.core.policies/LoadBalancingPolicy/">LoadBalancingPolicy</a></code> implements <code>Host.StateListener</code>, the configured load balancing does not need to (and should not) be registered through this method to received host related events.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>listener</var></td>
+<td><code><a href="../Host.StateListener/">StateListener</a></code></td>
+<td>
+<p>the new <code><a href="../Host.StateListener/">Host.StateListener</a></code> to register.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">Cluster</a></code></td>
+<td>
+<p>this <code>Cluster</code> object;</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="unregister%28Host.StateListener%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#unregister%28Host.StateListener%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">Cluster</a></code> unregister <big>(</big><code><a href="../Host.StateListener/">StateListener</a></code> listener<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Unregisters the provided listener from being notified on hosts events. </p>
+<p> This method is a no-op if <code>listener</code> hadn’t previously be registered against this Cluster.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>listener</var></td>
+<td><code><a href="../Host.StateListener/">StateListener</a></code></td>
+<td>
+<p>the <code><a href="../Host.StateListener/">Host.StateListener</a></code> to unregister.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">Cluster</a></code></td>
+<td>
+<p>this <code>Cluster</code> object;</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="register%28LatencyTracker%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#register%28LatencyTracker%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">Cluster</a></code> register <big>(</big><code><a href="../LatencyTracker/">LatencyTracker</a></code> tracker<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Registers the provided tracker to be updated with hosts read latencies. </p>
+<p> Registering the same listener multiple times is a no-op. </p>
+<p> Be wary that the registered tracker <code>update</code> method will be call very frequently (at the end of every query to a Cassandra host) and should thus not be costly. </p>
+<p> The main use case for a <code>LatencyTracker</code> is so <code><a href="../../com.datastax.driver.core.policies/LoadBalancingPolicy/">LoadBalancingPolicy</a></code> can implement latency awareness Typically, <code><a href="../../com.datastax.driver.core.policies/LatencyAwarePolicy/">LatencyAwarePolicy</a></code> registers  it’s own internal <code>LatencyTracker</code> (automatically, you don’t have to call this method directly).</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>tracker</var></td>
+<td><code><a href="../LatencyTracker/">LatencyTracker</a></code></td>
+<td>
+<p>the new <code><a href="../LatencyTracker/">LatencyTracker</a></code> to register.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">Cluster</a></code></td>
+<td>
+<p>this <code>Cluster</code> object;</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="unregister%28LatencyTracker%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#unregister%28LatencyTracker%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">Cluster</a></code> unregister <big>(</big><code><a href="../LatencyTracker/">LatencyTracker</a></code> tracker<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Unregisters the provided latency tracking from being updated with host read latencies. </p>
+<p> This method is a no-op if <code>tracker</code> hadn’t previously be registered against this Cluster.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>tracker</var></td>
+<td><code><a href="../LatencyTracker/">LatencyTracker</a></code></td>
+<td>
+<p>the <code><a href="../LatencyTracker/">LatencyTracker</a></code> to unregister.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">Cluster</a></code></td>
+<td>
+<p>this <code>Cluster</code> object;</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="closeAsync%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#closeAsync%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../CloseFuture/">CloseFuture</a></code> closeAsync <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Initiates a shutdown of this cluster instance. </p>
+<p> This method is asynchronous and return a future on the completion of the shutdown process. As soon a the cluster is shutdown, no new request will be accepted, but already submitted queries are allowed to complete. This method closes all connections from all sessions and reclaims all resources used by this Cluster instance. </p>
+<p> If for some reason you wish to expedite this process, the <code><a href="../CloseFuture/#force%28%29">CloseFuture#force</a></code> can be called on the result future. </p>
+<p> This method has no particular effect if the cluster was already closed (in which case the returned future will return immediately).</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../CloseFuture/">CloseFuture</a></code></td>
+<td>
+<p>a future on the completion of the shutdown process.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="close%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#close%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> close <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Initiates a shutdown of this cluster instance and blocks until that shutdown completes. </p>
+<p> This method is a shortcut for <code>closeAsync().get()</code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="isClosed%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#isClosed%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>boolean</code> isClosed <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Whether this Cluster instance has been closed. </p>
+<p> Note that this method returns true as soon as one of the close methods (<code><a href="#closeAsync%28%29">Cluster#closeAsync</a></code> or <code><a href="#close%28%29">Cluster#close</a></code>) has been called, it does not guarantee that the closing is done. If you want to guarantee that the closing is done, you can call <code>close()</code> and wait until it returns (or call the get method on <code>closeAsync()</code> with a very short timeout and check this doesn’t timeout).</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>boolean</code></td>
+<td>
+<p><code>true</code> if this Cluster instance has been closed, <code>false</code> otherwise.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="timeSince%28long%2C+TimeUnit%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#timeSince%28long%2C+TimeUnit%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>long</code> timeSince <big>(</big><code>long</code> startNanos, <code><abbr title="java.util.concurrent.TimeUnit">TimeUnit</abbr></code> destUnit<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>startNanos</var></td>
+<td><code>long</code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>destUnit</var></td>
+<td><code><abbr title="java.util.concurrent.TimeUnit">TimeUnit</abbr></code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>long</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc">
+<li><a href="#extends">Extends
+</a></li>
+<li><a href="#implements">Implements
+</a></li>
+<li><a href="#extended-by">Extended By
+</a></li>
+<li><a href="#fields">Fields
+</a></li>
+<li><a href="#constructors">Constructors
+</a></li>
+<li><a href="#methods">Methods
+</a></li>
+</ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - CBUtil</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            <li>
+              <a href="../../../">Introduction</a>
+            </li>
+            
+            <li>
+              <a href="../../../features/">Features</a>
+            </li>
+            
+            <li class="active">
+              <a href="../../">API docs</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.0.10
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li class="disabled"><a href="./">2.0.10</a></li>
+                  
+                    <li><a href="../../../2.1.5/api/com.datastax.driver.core/CBUtil/">2.1.5</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../../">Introduction</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../../">API docs</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">com.datastax.driver.core</a></li>
+              
+              
+              
+              
+              
+              <li class="active">CBUtil</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<div class="page-header">
+  <h1 id="class-cbutil">
+    <small>class</small>
+    <abbr title="com.datastax.driver.core.CBUtil">CBUtil</abbr>
+  <a class="anchor" href="#class-cbutil" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h1>
+</div>
+
+<p>ByteBuf utility methods.</p>
+<dl class="dl-horizontal notes">
+<dt><span class="label label-info">Abstract</span></dt>
+<dd>This class is abstract</dd>
+</dl>
+<h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-parent">
+  <code><abbr title="java.lang.Object">Object</abbr></code>
+</div>
+
+
+
+
+
+<h2 id="methods">Methods<a class="anchor" href="#methods" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-methods">
+  
+  <div class="panel panel-default member-definition" id="readString%28ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#readString%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> readString <big>(</big><code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="writeString%28String%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#writeString%28String%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeString <big>(</big><code><abbr title="java.lang.String">String</abbr></code> str, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>str</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizeOfString%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizeOfString%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> sizeOfString <big>(</big><code><abbr title="java.lang.String">String</abbr></code> str<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>str</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="readLongString%28ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#readLongString%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> readLongString <big>(</big><code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="writeLongString%28String%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#writeLongString%28String%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeLongString <big>(</big><code><abbr title="java.lang.String">String</abbr></code> str, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>str</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizeOfLongString%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizeOfLongString%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> sizeOfLongString <big>(</big><code><abbr title="java.lang.String">String</abbr></code> str<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>str</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="readBytes%28ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#readBytes%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>byte</code>[] readBytes <big>(</big><code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td>
+<code>byte</code>[]</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="writeBytes%28byte%5B%5D%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#writeBytes%28byte%5B%5D%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeBytes <big>(</big><code>byte</code>[] bytes, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>bytes</var></td>
+<td>
+<code>byte</code>[]</td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizeOfBytes%28byte%5B%5D%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizeOfBytes%28byte%5B%5D%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> sizeOfBytes <big>(</big><code>byte</code>[] bytes<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>bytes</var></td>
+<td>
+<code>byte</code>[]</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="readConsistencyLevel%28ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#readConsistencyLevel%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> readConsistencyLevel <big>(</big><code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="writeConsistencyLevel%28ConsistencyLevel%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#writeConsistencyLevel%28ConsistencyLevel%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeConsistencyLevel <big>(</big><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> consistency, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>consistency</var></td>
+<td><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizeOfConsistencyLevel%28ConsistencyLevel%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizeOfConsistencyLevel%28ConsistencyLevel%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> sizeOfConsistencyLevel <big>(</big><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> consistency<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>consistency</var></td>
+<td><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="readEnumValue%28Class%3CT%3E%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#readEnumValue%28Class%3CT%3E%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>T</code> readEnumValue <big>(</big><code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>T</code>&gt; enumType, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>enumType</var></td>
+<td>
+<code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>T</code>&gt;</td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>T</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="writeEnumValue%28T%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#writeEnumValue%28T%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeEnumValue <big>(</big><code>T</code> enumValue, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>enumValue</var></td>
+<td><code>T</code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizeOfEnumValue%28T%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizeOfEnumValue%28T%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> sizeOfEnumValue <big>(</big><code>T</code> enumValue<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>enumValue</var></td>
+<td><code>T</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="readUUID%28ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#readUUID%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.UUID">UUID</abbr></code> readUUID <big>(</big><code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.util.UUID">UUID</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="writeUUID%28UUID%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#writeUUID%28UUID%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeUUID <big>(</big><code><abbr title="java.util.UUID">UUID</abbr></code> uuid, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>uuid</var></td>
+<td><code><abbr title="java.util.UUID">UUID</abbr></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizeOfUUID%28UUID%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizeOfUUID%28UUID%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> sizeOfUUID <big>(</big><code><abbr title="java.util.UUID">UUID</abbr></code> uuid<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>uuid</var></td>
+<td><code><abbr title="java.util.UUID">UUID</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="readStringList%28ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#readStringList%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>&gt; readStringList <big>(</big><code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td>
+<code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>&gt;</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="writeStringList%28List%3CString%3E%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#writeStringList%28List%3CString%3E%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeStringList <big>(</big><code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>&gt; l, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>l</var></td>
+<td>
+<code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>&gt;</td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizeOfStringList%28List%3CString%3E%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizeOfStringList%28List%3CString%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> sizeOfStringList <big>(</big><code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>&gt; l<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>l</var></td>
+<td>
+<code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>&gt;</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="readStringMap%28ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#readStringMap%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.lang.String">String</abbr></code>&gt; readStringMap <big>(</big><code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td>
+<code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.lang.String">String</abbr></code>&gt;</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="writeStringMap%28Map%3CString%2C+String%3E%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#writeStringMap%28Map%3CString%2C+String%3E%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeStringMap <big>(</big><code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.lang.String">String</abbr></code>&gt; m, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>m</var></td>
+<td>
+<code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.lang.String">String</abbr></code>&gt;</td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizeOfStringMap%28Map%3CString%2C+String%3E%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizeOfStringMap%28Map%3CString%2C+String%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> sizeOfStringMap <big>(</big><code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.lang.String">String</abbr></code>&gt; m<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>m</var></td>
+<td>
+<code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.lang.String">String</abbr></code>&gt;</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="readStringToStringListMap%28ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#readStringToStringListMap%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.util.List">List</abbr></code>&gt; readStringToStringListMap <big>(</big><code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td>
+<code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.util.List">List</abbr></code>&gt;</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="writeStringToStringListMap%28Map%3CString%2C+List%3CString%3E%3E%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#writeStringToStringListMap%28Map%3CString%2C+List%3CString%3E%3E%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeStringToStringListMap <big>(</big><code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.util.List">List</abbr></code>&gt; m, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>m</var></td>
+<td>
+<code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.util.List">List</abbr></code>&gt;</td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizeOfStringToStringListMap%28Map%3CString%2C+List%3CString%3E%3E%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizeOfStringToStringListMap%28Map%3CString%2C+List%3CString%3E%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> sizeOfStringToStringListMap <big>(</big><code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.util.List">List</abbr></code>&gt; m<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>m</var></td>
+<td>
+<code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.util.List">List</abbr></code>&gt;</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="readValue%28ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#readValue%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> readValue <big>(</big><code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="writeValue%28byte%5B%5D%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#writeValue%28byte%5B%5D%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeValue <big>(</big><code>byte</code>[] bytes, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>bytes</var></td>
+<td>
+<code>byte</code>[]</td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="writeValue%28ByteBuffer%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#writeValue%28ByteBuffer%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeValue <big>(</big><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> bytes, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>bytes</var></td>
+<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizeOfValue%28byte%5B%5D%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizeOfValue%28byte%5B%5D%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> sizeOfValue <big>(</big><code>byte</code>[] bytes<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>bytes</var></td>
+<td>
+<code>byte</code>[]</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizeOfValue%28ByteBuffer%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizeOfValue%28ByteBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> sizeOfValue <big>(</big><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> bytes<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>bytes</var></td>
+<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="readValueList%28ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#readValueList%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>&gt; readValueList <big>(</big><code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td>
+<code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>&gt;</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="writeValueList%28List%3CByteBuffer%3E%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#writeValueList%28List%3CByteBuffer%3E%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeValueList <big>(</big><code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>&gt; values, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>values</var></td>
+<td>
+<code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>&gt;</td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizeOfValueList%28List%3CByteBuffer%3E%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizeOfValueList%28List%3CByteBuffer%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> sizeOfValueList <big>(</big><code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>&gt; values<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>values</var></td>
+<td>
+<code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>&gt;</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="readInet%28ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#readInet%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code> readInet <big>(</big><code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="writeInet%28InetSocketAddress%2C+ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#writeInet%28InetSocketAddress%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeInet <big>(</big><code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code> inet, <code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>inet</var></td>
+<td><code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizeOfInet%28InetSocketAddress%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizeOfInet%28InetSocketAddress%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> sizeOfInet <big>(</big><code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code> inet<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>inet</var></td>
+<td><code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="readRawBytes%28ByteBuf%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#readRawBytes%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>byte</code>[] readRawBytes <big>(</big><code>ByteBuf</code> cb<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cb</var></td>
+<td><code>ByteBuf</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td>
+<code>byte</code>[]</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc">
+<li><a href="#extends">Extends
+</a></li>
+<li><a href="#methods">Methods
+</a></li>
+</ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>

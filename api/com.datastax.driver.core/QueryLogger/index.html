@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - QueryLogger</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            <li>
+              <a href="../../../">Introduction</a>
+            </li>
+            
+            <li>
+              <a href="../../../features/">Features</a>
+            </li>
+            
+            <li class="active">
+              <a href="../../">API docs</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.0.10
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li class="disabled"><a href="./">2.0.10</a></li>
+                  
+                    <li><a href="../../../2.1.5/">2.1.5</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../../">Introduction</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../../">API docs</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">com.datastax.driver.core</a></li>
+              
+              
+              
+              
+              
+              <li class="active">QueryLogger</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<div class="page-header">
+  <h1 id="class-querylogger">
+    <small>class</small>
+    <abbr title="com.datastax.driver.core.QueryLogger">QueryLogger</abbr>
+  <a class="anchor" href="#class-querylogger" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h1>
+</div>
+
+<p>A configurable <code><a href="../LatencyTracker/">LatencyTracker</a></code> that logs all executed statements. </p>
+<p> Typically, client applications would instantiate one single query logger (using its <code><a href="../QueryLogger.Builder/">QueryLogger.Builder</a></code>), configure it and register it on the relevant <code><a href="../Cluster/">Cluster</a></code> instance, e.g.:
+ </p>
+<pre> Cluster cluster = ... QueryLogger queryLogger = QueryLogger.builder(cluster) .withSlowQueryLatencyThresholdMillis(...) .withMaxQueryStringLength(...) .build(); cluster.register(queryLogger); </pre>
+ Refer to the <code><a href="../QueryLogger.Builder/">QueryLogger.Builder</a></code> documentation for more information on configuration settings for the query logger. <p> Once registered, the query logger will log every <code><a href="../RegularStatement/">RegularStatement</a></code>, <code><a href="../BoundStatement/">BoundStatement</a></code> or <code><a href="../BatchStatement/">BatchStatement</a></code> executed by the driver; note that it will never log other types of statement, null statements nor any special statement used internally by the driver. </p>
+<p> There is one log for each request to a Cassandra node; because the driver sometimes retries the same statement on multiple nodes, a single statement execution (for example, a single call to <code><a href="../Session/#execute%28Statement%29">Session#execute(Statement)</a></code>) can produce multiple logs on different nodes. </p>
+<p> For more flexibility, the query logger uses 3 different <code><code>Logger</code></code> instances:
+ </p>
+<ol> <li>
+<code><a href="#NORMAL_LOGGER">QueryLogger#NORMAL_LOGGER</a></code>: used to log normal queries, i.e., queries that completed successfully within a <code><a href="#getSlowQueryLatencyThresholdMillis%28%29">configurable threshold in milliseconds</a></code>.</li> <li>
+<code><a href="#SLOW_LOGGER">QueryLogger#SLOW_LOGGER</a></code>: used to log slow queries, i.e., queries that completed successfully but that took longer than a <code><a href="#getSlowQueryLatencyThresholdMillis%28%29">configurable threshold in milliseconds</a></code> to complete.</li> <li>
+<code><a href="#ERROR_LOGGER">QueryLogger#ERROR_LOGGER</a></code>: used to log unsuccessful queries, i.e., queries that did not completed normally and threw an exception. Note this this logger will also print the full stack trace of the reported exception.</li> </ol>
+ <p> The appropriate logger is chosen according to the following algorithm: </p>
+<ol> <li>if an exception has been thrown: use <code><a href="#ERROR_LOGGER">QueryLogger#ERROR_LOGGER</a></code>;</li> <li>otherwise, if the reported latency is greater than <code><a href="#getSlowQueryLatencyThresholdMillis%28%29">QueryLogger#getSlowQueryLatencyThresholdMillis()</a></code> the configured threshold in milliseconds}: use <code><a href="#SLOW_LOGGER">QueryLogger#SLOW_LOGGER</a></code>;</li> <li>otherwise, use <code><a href="#NORMAL_LOGGER">QueryLogger#NORMAL_LOGGER</a></code>.</li> </ol>
+ <p> All loggers are activated by setting their levels to <code>DEBUG</code> or <code>TRACE</code> (including <code><a href="#ERROR_LOGGER">QueryLogger#ERROR_LOGGER</a></code>). If the level is set to <code>TRACE</code> and the statement being logged is a <code><a href="../BoundStatement/">BoundStatement</a></code>, then the query parameters (if any) will be logged as well (names and actual values).
+ </p>
+<p> This class is thread-safe.</p>
+<dl class="dl-horizontal notes">
+<dt><span class="label label-info">Since</span></dt>
+<dd>2.0.10</dd>
+</dl>
+<h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-parent">
+  <code><abbr title="java.lang.Object">Object</abbr></code>
+</div>
+
+<h2 id="implements">Implements<a class="anchor" href="#implements" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-interfaces">
+  <ul class="list-inline">
+  
+    <li><code><a href="../LatencyTracker/">LatencyTracker</a></code></li>
+  
+  </ul>
+</div>
+
+
+<h2 id="fields">Fields<a class="anchor" href="#fields" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-fields">
+  
+  <div class="panel panel-default member-definition" id="DEFAULT_SLOW_QUERY_THRESHOLD_MS">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#DEFAULT_SLOW_QUERY_THRESHOLD_MS" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>long</code> <var>DEFAULT_SLOW_QUERY_THRESHOLD_MS</var> = <code>5000L</code>
+    </div>
+    <div class="panel-body field-body">
+      <p>The default threshold in milliseconds beyond which queries are considered ‘slow’ and logged as such by the driver.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="DEFAULT_MAX_QUERY_STRING_LENGTH">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#DEFAULT_MAX_QUERY_STRING_LENGTH" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> <var>DEFAULT_MAX_QUERY_STRING_LENGTH</var> = <code>500</code>
+    </div>
+    <div class="panel-body field-body">
+      <p>The default maximum length of a CQL query string that can be logged verbatim by the driver. Query strings longer than this value will be truncated when logged.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="DEFAULT_MAX_PARAMETER_VALUE_LENGTH">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#DEFAULT_MAX_PARAMETER_VALUE_LENGTH" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> <var>DEFAULT_MAX_PARAMETER_VALUE_LENGTH</var> = <code>50</code>
+    </div>
+    <div class="panel-body field-body">
+      <p>The default maximum length of a query parameter value that can be logged verbatim by the driver. Parameter values longer than this value will be truncated when logged.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="DEFAULT_MAX_LOGGED_PARAMETERS">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#DEFAULT_MAX_LOGGED_PARAMETERS" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> <var>DEFAULT_MAX_LOGGED_PARAMETERS</var> = <code>50</code>
+    </div>
+    <div class="panel-body field-body">
+      <p>The default maximum number of query parameters that can be logged by the driver. Queries with a number of parameters higher than this value will not have all their parameters logged.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="NORMAL_LOGGER">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#NORMAL_LOGGER" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>Logger</code> <var>NORMAL_LOGGER</var>
+    </div>
+    <div class="panel-body field-body">
+      <p>The logger used to log normal queries, i.e., queries that completed successfully within a configurable threshold in milliseconds (see <code><a href="#getSlowQueryLatencyThresholdMillis%28%29">QueryLogger#getSlowQueryLatencyThresholdMillis()</a></code>). </p>
+<p> This logger is activated by setting its level to <code>DEBUG</code> or <code>TRACE</code>. Additionally, if the level is set to <code>TRACE</code> and the statement being logged is a <code><a href="../BoundStatement/">BoundStatement</a></code>, then the query parameters (if any) will be logged as well (names and actual values). </p>
+<p> The name of this logger is <code>com.datastax.driver.core.QueryLogger.NORMAL</code>.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="SLOW_LOGGER">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#SLOW_LOGGER" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>Logger</code> <var>SLOW_LOGGER</var>
+    </div>
+    <div class="panel-body field-body">
+      <p>The logger used to log slow queries, i.e., queries that completed successfully but whose execution time exceeded a configurable threshold in milliseconds (see <code><a href="#getSlowQueryLatencyThresholdMillis%28%29">QueryLogger#getSlowQueryLatencyThresholdMillis()</a></code>). </p>
+<p> This logger is activated by setting its level to <code>DEBUG</code> or <code>TRACE</code>. Additionally, if the level is set to <code>TRACE</code> and the statement being logged is a <code><a href="../BoundStatement/">BoundStatement</a></code>, then the query parameters (if any) will be logged as well (names and actual values). </p>
+<p> The name of this logger is <code>com.datastax.driver.core.QueryLogger.SLOW</code>.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="ERROR_LOGGER">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#ERROR_LOGGER" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>Logger</code> <var>ERROR_LOGGER</var>
+    </div>
+    <div class="panel-body field-body">
+      <p>The logger used to log unsuccessful queries, i.e., queries that did not completed normally and threw an exception. </p>
+<p> This logger is activated by setting its level to <code>DEBUG</code> or <code>TRACE</code>. Additionally, if the level is set to <code>TRACE</code> and the statement being logged is a <code><a href="../BoundStatement/">BoundStatement</a></code>, then the query parameters (if any) will be logged as well (names and actual values). Note this this logger will also print the full stack trace of the reported exception. </p>
+<p> The name of this logger is <code>com.datastax.driver.core.QueryLogger.ERROR</code>.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="TRUNCATED_OUTPUT">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#TRUNCATED_OUTPUT" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> <var>TRUNCATED_OUTPUT</var> = <code>"... [truncated output]"</code>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="FURTHER_PARAMS_OMITTED">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#FURTHER_PARAMS_OMITTED" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> <var>FURTHER_PARAMS_OMITTED</var> = <code>" [further parameters omitted]"</code>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="UNKNOWN_STATEMENT">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#UNKNOWN_STATEMENT" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> <var>UNKNOWN_STATEMENT</var> = <code>"??Unknown Statement??"</code>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+
+<h2 id="methods">Methods<a class="anchor" href="#methods" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-methods">
+  
+  <div class="panel panel-default member-definition" id="builder%28Cluster%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#builder%28Cluster%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../QueryLogger.Builder/">Builder</a></code> builder <big>(</big><code><a href="../Cluster/">Cluster</a></code> cluster<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Creates a new <code><a href="../QueryLogger.Builder/">QueryLogger.Builder</a></code> instance. </p>
+<p> This is a convenience method for <code>new QueryLogger.Builder()</code>.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cluster</var></td>
+<td><code><a href="../Cluster/">Cluster</a></code></td>
+<td>
+<p>the <code><a href="../Cluster/">Cluster</a></code> this QueryLogger will be attached to. Note: this parameter is currently not used, but it is included in the public API in anticipation of future use.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.NullPointerException">NullPointerException</abbr></code></td>
+<td>
+<p>if <code>cluster</code> is <code>null</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../QueryLogger.Builder/">Builder</a></code></td>
+<td>
+<p>the new QueryLogger builder.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getSlowQueryLatencyThresholdMillis%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getSlowQueryLatencyThresholdMillis%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>long</code> getSlowQueryLatencyThresholdMillis <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Return the threshold in milliseconds beyond which queries are considered ‘slow’ and logged as such by the driver. The default for this setting is <code><a href="#DEFAULT_SLOW_QUERY_THRESHOLD_MS">QueryLogger#DEFAULT_SLOW_QUERY_THRESHOLD_MS</a></code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>long</code></td>
+<td>
+<p>The threshold in milliseconds beyond which queries are considered ‘slow’ and logged as such by the driver.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setSlowQueryLatencyThresholdMillis%28long%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setSlowQueryLatencyThresholdMillis%28long%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> setSlowQueryLatencyThresholdMillis <big>(</big><code>long</code> slowQueryLatencyThresholdMillis<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Set the threshold in milliseconds beyond which queries are considered ‘slow’ and logged as such by the driver.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>slowQueryLatencyThresholdMillis</var></td>
+<td><code>long</code></td>
+<td>
+<p>Slow queries threshold in milliseconds. It must be strictly positive.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>slowQueryLatencyThresholdMillis = 0</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getMaxQueryStringLength%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getMaxQueryStringLength%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> getMaxQueryStringLength <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Return the maximum length of a CQL query string that can be logged verbatim by the driver. Query strings longer than this value will be truncated when logged. The default for this setting is <code><a href="#DEFAULT_MAX_QUERY_STRING_LENGTH">QueryLogger#DEFAULT_MAX_QUERY_STRING_LENGTH</a></code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td>
+<p>The maximum length of a CQL query string that can be logged verbatim by the driver.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setMaxQueryStringLength%28int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setMaxQueryStringLength%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> setMaxQueryStringLength <big>(</big><code>int</code> maxQueryStringLength<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Set the maximum length of a CQL query string that can be logged verbatim by the driver. Query strings longer than this value will be truncated when logged.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>maxQueryStringLength</var></td>
+<td><code>int</code></td>
+<td>
+<p>The maximum length of a CQL query string that can be logged verbatim by the driver. It must be strictly positive or <code>-1</code>, in which case the query is never truncated (use with care).</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>maxQueryStringLength = 0  maxQueryStringLength != -1</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getMaxParameterValueLength%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getMaxParameterValueLength%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> getMaxParameterValueLength <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Return the maximum length of a query parameter value that can be logged verbatim by the driver. Parameter values longer than this value will be truncated when logged. The default for this setting is <code><a href="#DEFAULT_MAX_PARAMETER_VALUE_LENGTH">QueryLogger#DEFAULT_MAX_PARAMETER_VALUE_LENGTH</a></code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td>
+<p>The maximum length of a query parameter value that can be logged verbatim by the driver.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setMaxParameterValueLength%28int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setMaxParameterValueLength%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> setMaxParameterValueLength <big>(</big><code>int</code> maxParameterValueLength<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Set the maximum length of a query parameter value that can be logged verbatim by the driver. Parameter values longer than this value will be truncated when logged.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>maxParameterValueLength</var></td>
+<td><code>int</code></td>
+<td>
+<p>The maximum length of a query parameter value that can be logged verbatim by the driver. It must be strictly positive or <code>-1</code>, in which case the parameter value is never truncated (use with care).</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>maxParameterValueLength = 0  maxParameterValueLength != -1</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getMaxLoggedParameters%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getMaxLoggedParameters%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> getMaxLoggedParameters <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Return the maximum number of query parameters that can be logged by the driver. Queries with a number of parameters higher than this value will not have all their parameters logged. The default for this setting is <code><a href="#DEFAULT_MAX_LOGGED_PARAMETERS">QueryLogger#DEFAULT_MAX_LOGGED_PARAMETERS</a></code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td>
+<p>The maximum number of query parameters that can be logged by the driver.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setMaxLoggedParameters%28int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setMaxLoggedParameters%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> setMaxLoggedParameters <big>(</big><code>int</code> maxLoggedParameters<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Set the maximum number of query parameters that can be logged by the driver. Queries with a number of parameters higher than this value will not have all their parameters logged.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>maxLoggedParameters</var></td>
+<td><code>int</code></td>
+<td>
+<p>the maximum number of query parameters that can be logged by the driver. It must be strictly positive or <code>-1</code>, in which case all parameters will be logged, regardless of their number (use with care).</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>maxLoggedParameters = 0  maxLoggedParameters != -1</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="update%28Host%2C+Statement%2C+Exception%2C+long%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#update%28Host%2C+Statement%2C+Exception%2C+long%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> update <big>(</big><code><a href="../Host/">Host</a></code> host, <code><a href="../Statement/">Statement</a></code> statement, <code><abbr title="java.lang.Exception">Exception</abbr></code> exception, <code>long</code> newLatencyNanos<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>A method that is called after each request to a Cassandra node with the duration of that operation. </p>
+<p> Note that there is no guarantee that this method won’t be called concurrently by multiple threads, so implementations should synchronize internally if need be.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>host</var></td>
+<td><code><a href="../Host/">Host</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>statement</var></td>
+<td><code><a href="../Statement/">Statement</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>exception</var></td>
+<td><code><abbr title="java.lang.Exception">Exception</abbr></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>newLatencyNanos</var></td>
+<td><code>long</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc">
+<li><a href="#extends">Extends
+</a></li>
+<li><a href="#implements">Implements
+</a></li>
+<li><a href="#fields">Fields
+</a></li>
+<li><a href="#methods">Methods
+</a></li>
+</ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>

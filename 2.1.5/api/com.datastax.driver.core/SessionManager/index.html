@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - SessionManager</title>
+
+    <link rel="icon" href="../../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../../favicon.png">
+    <link href="../../../../css/style.css" rel="stylesheet">
+    <link href="../../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            <li>
+              <a href="../../../">Introduction</a>
+            </li>
+            
+            <li>
+              <a href="../../../features/">Features</a>
+            </li>
+            
+            <li class="active">
+              <a href="../../">API docs</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.1.5
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../../../api/com.datastax.driver.core/SessionManager/">2.0.10</a></li>
+                  
+                    <li class="disabled"><a href="./">2.1.5</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../../">Introduction</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../../">API docs</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">com.datastax.driver.core</a></li>
+              
+              
+              
+              
+              
+              <li class="active">SessionManager</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<div class="page-header">
+  <h1 id="class-sessionmanager">
+    <small>class</small>
+    <abbr title="com.datastax.driver.core.SessionManager">SessionManager</abbr>
+  <a class="anchor" href="#class-sessionmanager" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h1>
+</div>
+
+<p>Driver implementation of the Session interface.</p>
+
+<h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-parent">
+  <code><a href="../AbstractSession/">AbstractSession</a></code>
+</div>
+
+
+
+<h2 id="fields">Fields<a class="anchor" href="#fields" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-fields">
+  
+  <div class="panel panel-default member-definition" id="cluster">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#cluster" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Cluster/">Cluster</a></code> <var>cluster</var>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="pools">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#pools" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.concurrent.ConcurrentMap">ConcurrentMap</abbr></code>&lt;<code><a href="../Host/">Host</a></code>, <code><a href="../HostConnectionPool/">HostConnectionPool</a></code>&gt; <var>pools</var>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="poolsState">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#poolsState" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../HostConnectionPool.PoolState/">PoolState</a></code> <var>poolsState</var>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="closeFuture">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#closeFuture" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.concurrent.atomic.AtomicReference">AtomicReference</abbr></code>&lt;<code><a href="../CloseFuture/">CloseFuture</a></code>&gt; <var>closeFuture</var>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+<h2 id="constructors">Constructors<a class="anchor" href="#constructors" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-constructors">
+  
+  <div class="panel panel-default member-definition" id="SessionManager%28Cluster%29">
+    <div class="panel-heading constructor-heading">
+      <a class="anchor" href="#SessionManager%28Cluster%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      SessionManager <big>(</big><code><a href="../Cluster/">Cluster</a></code> cluster<big>)</big>
+    </div>
+    <div class="panel-body constructor-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>cluster</var></td>
+<td><code><a href="../Cluster/">Cluster</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+<h2 id="methods">Methods<a class="anchor" href="#methods" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-methods">
+  
+  <div class="panel panel-default member-definition" id="init%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#init%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Session/">Session</a></code> init <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-primary">Synchronized</span></dt>
+<dd>This method is synchronized</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Session/">Session</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getLoggedKeyspace%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getLoggedKeyspace%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> getLoggedKeyspace <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="executeAsync%28Statement%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#executeAsync%28Statement%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../ResultSetFuture/">ResultSetFuture</a></code> executeAsync <big>(</big><code><a href="../Statement/">Statement</a></code> statement<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>statement</var></td>
+<td><code><a href="../Statement/">Statement</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../ResultSetFuture/">ResultSetFuture</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="prepareAsync%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#prepareAsync%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>&lt;any&gt;</code> prepareAsync <big>(</big><code><abbr title="java.lang.String">String</abbr></code> query<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>query</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>&lt;any&gt;</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="closeAsync%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#closeAsync%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../CloseFuture/">CloseFuture</a></code> closeAsync <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../CloseFuture/">CloseFuture</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="isClosed%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#isClosed%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>boolean</code> isClosed <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>boolean</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getCluster%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getCluster%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Cluster/">Cluster</a></code> getCluster <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Cluster/">Cluster</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getState%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getState%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Session.State/">State</a></code> getState <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Session.State/">State</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="connectionFactory%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#connectionFactory%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Connection.Factory/">Factory</a></code> connectionFactory <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Connection.Factory/">Factory</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="configuration%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#configuration%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Configuration/">Configuration</a></code> configuration <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Configuration/">Configuration</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="loadBalancingPolicy%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#loadBalancingPolicy%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../../com.datastax.driver.core.policies/LoadBalancingPolicy/">LoadBalancingPolicy</a></code> loadBalancingPolicy <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../../com.datastax.driver.core.policies/LoadBalancingPolicy/">LoadBalancingPolicy</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="reconnectionPolicy%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#reconnectionPolicy%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../../com.datastax.driver.core.policies/ReconnectionPolicy/">ReconnectionPolicy</a></code> reconnectionPolicy <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../../com.datastax.driver.core.policies/ReconnectionPolicy/">ReconnectionPolicy</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="executor%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#executor%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>ListeningExecutorService</code> executor <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>ListeningExecutorService</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="blockingExecutor%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#blockingExecutor%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>ListeningExecutorService</code> blockingExecutor <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>ListeningExecutorService</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="forceRenewPool%28Host%2C+ListeningExecutorService%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#forceRenewPool%28Host%2C+ListeningExecutorService%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>&lt;any&gt;</code> forceRenewPool <big>(</big><code><a href="../Host/">Host</a></code> host, <code>ListeningExecutorService</code> executor<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>host</var></td>
+<td><code><a href="../Host/">Host</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>executor</var></td>
+<td><code>ListeningExecutorService</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>&lt;any&gt;</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="maybeAddPool%28Host%2C+ListeningExecutorService%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#maybeAddPool%28Host%2C+ListeningExecutorService%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>&lt;any&gt;</code> maybeAddPool <big>(</big><code><a href="../Host/">Host</a></code> host, <code>ListeningExecutorService</code> executor<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>host</var></td>
+<td><code><a href="../Host/">Host</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>executor</var></td>
+<td><code>ListeningExecutorService</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>&lt;any&gt;</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="removePool%28Host%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#removePool%28Host%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../CloseFuture/">CloseFuture</a></code> removePool <big>(</big><code><a href="../Host/">Host</a></code> host<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>host</var></td>
+<td><code><a href="../Host/">Host</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../CloseFuture/">CloseFuture</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="updateCreatedPools%28ListeningExecutorService%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#updateCreatedPools%28ListeningExecutorService%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> updateCreatedPools <big>(</big><code>ListeningExecutorService</code> executor<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>executor</var></td>
+<td><code>ListeningExecutorService</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="updateCreatedPools%28Host%2C+ListeningExecutorService%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#updateCreatedPools%28Host%2C+ListeningExecutorService%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> updateCreatedPools <big>(</big><code><a href="../Host/">Host</a></code> h, <code>ListeningExecutorService</code> executor<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>h</var></td>
+<td><code><a href="../Host/">Host</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>executor</var></td>
+<td><code>ListeningExecutorService</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="onDown%28Host%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#onDown%28Host%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> onDown <big>(</big><code><a href="../Host/">Host</a></code> host<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>host</var></td>
+<td><code><a href="../Host/">Host</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code><abbr title="java.lang.InterruptedException">InterruptedException</abbr></code></td>
+<td></td>
+</tr>
+<tr>
+<td><code><abbr title="java.util.concurrent.ExecutionException">ExecutionException</abbr></code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="onSuspected%28Host%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#onSuspected%28Host%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> onSuspected <big>(</big><code><a href="../Host/">Host</a></code> host<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>host</var></td>
+<td><code><a href="../Host/">Host</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="onRemove%28Host%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#onRemove%28Host%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> onRemove <big>(</big><code><a href="../Host/">Host</a></code> host<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>host</var></td>
+<td><code><a href="../Host/">Host</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code><abbr title="java.lang.InterruptedException">InterruptedException</abbr></code></td>
+<td></td>
+</tr>
+<tr>
+<td><code><abbr title="java.util.concurrent.ExecutionException">ExecutionException</abbr></code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setKeyspace%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setKeyspace%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> setKeyspace <big>(</big><code><abbr title="java.lang.String">String</abbr></code> keyspace<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>keyspace</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="makeRequestMessage%28Statement%2C+ByteBuffer%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#makeRequestMessage%28Statement%2C+ByteBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Message.Request/">Request</a></code> makeRequestMessage <big>(</big><code><a href="../Statement/">Statement</a></code> statement, <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> pagingState<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>statement</var></td>
+<td><code><a href="../Statement/">Statement</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>pagingState</var></td>
+<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Message.Request/">Request</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="makeRequestMessage%28Statement%2C+ConsistencyLevel%2C+ConsistencyLevel%2C+ByteBuffer%2C+long%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#makeRequestMessage%28Statement%2C+ConsistencyLevel%2C+ConsistencyLevel%2C+ByteBuffer%2C+long%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Message.Request/">Request</a></code> makeRequestMessage <big>(</big><code><a href="../Statement/">Statement</a></code> statement, <code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> cl, <code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> scl, <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> pagingState, <code>long</code> defaultTimestamp<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>statement</var></td>
+<td><code><a href="../Statement/">Statement</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>cl</var></td>
+<td><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>scl</var></td>
+<td><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>pagingState</var></td>
+<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>defaultTimestamp</var></td>
+<td><code>long</code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Message.Request/">Request</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="execute%28RequestHandler.Callback%2C+Statement%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#execute%28RequestHandler.Callback%2C+Statement%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> execute <big>(</big><code><a href="../RequestHandler.Callback/">Callback</a></code> callback, <code><a href="../Statement/">Statement</a></code> statement<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Execute the provided request.
+ This method will find a suitable node to connect to using the <code><a href="../../com.datastax.driver.core.policies/LoadBalancingPolicy/">LoadBalancingPolicy</a></code> and handle host failover.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>callback</var></td>
+<td><code><a href="../RequestHandler.Callback/">Callback</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>statement</var></td>
+<td><code><a href="../Statement/">Statement</a></code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="executeQuery%28Message.Request%2C+Statement%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#executeQuery%28Message.Request%2C+Statement%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../ResultSetFuture/">ResultSetFuture</a></code> executeQuery <big>(</big><code><a href="../Message.Request/">Request</a></code> msg, <code><a href="../Statement/">Statement</a></code> statement<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>msg</var></td>
+<td><code><a href="../Message.Request/">Request</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>statement</var></td>
+<td><code><a href="../Statement/">Statement</a></code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../ResultSetFuture/">ResultSetFuture</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc">
+<li><a href="#extends">Extends
+</a></li>
+<li><a href="#fields">Fields
+</a></li>
+<li><a href="#constructors">Constructors
+</a></li>
+<li><a href="#methods">Methods
+</a></li>
+</ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../../js/jquery.js"></script>
+    <script src="../../../../js/bootstrap.js"></script>
+    <script src="../../../../js/angular.js"></script>
+    <script src="../../../../js/mousetrap.js"></script>
+    <script src="../../../../js/hotkeys.js"></script>
+    <script src="../../../../js/ZeroClipboard.js"></script>
+    <script src="../../../../js/lunr.js"></script>
+    <script src="../../../../js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,1532 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - com.datastax.driver.core</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            <li>
+              <a href="../../">Introduction</a>
+            </li>
+            
+            <li>
+              <a href="../../features/">Features</a>
+            </li>
+            
+            <li class="active">
+              <a href="../">API docs</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.1.5
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../../api/com.datastax.driver.core/">2.0.10</a></li>
+                  
+                    <li class="disabled"><a href="./">2.1.5</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../">Introduction</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">API docs</a></li>
+              
+              
+              
+              
+              
+              <li class="active">com.datastax.driver.core</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<div class="page-header">
+  <h1 id="package-com-datastax-driver-core">
+    <small>package</small>
+    <abbr>com.datastax.driver.core</abbr>
+  <a class="anchor" href="#package-com-datastax-driver-core" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h1>
+</div>
+
+<p>The main package for the DataStax Java driver for Cassandra. </p>
+<p> The main entry for this package is the <code>Cluster</code> class.</p>
+
+
+<h2 id="enums">Enums<a class="anchor" href="#enums" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="package-enums">
+  <ul class="list-inline">
+  
+    <li><code><a href="BatchStatement.Type/" title="com.datastax.driver.core.BatchStatement.Type (enum)">BatchStatement.Type</a></code></li>
+  
+    <li><code><a href="ColumnMetadata.Raw.Kind/" title="com.datastax.driver.core.ColumnMetadata.Raw.Kind (enum)">ColumnMetadata.Raw.Kind</a></code></li>
+  
+    <li><code><a href="ConsistencyLevel/" title="com.datastax.driver.core.ConsistencyLevel (enum)">ConsistencyLevel</a></code></li>
+  
+    <li><code><a href="DataType.Name/" title="com.datastax.driver.core.DataType.Name (enum)">DataType.Name</a></code></li>
+  
+    <li><code><a href="ExceptionCode/" title="com.datastax.driver.core.ExceptionCode (enum)">ExceptionCode</a></code></li>
+  
+    <li><code><a href="Frame.Header.Flag/" title="com.datastax.driver.core.Frame.Header.Flag (enum)">Frame.Header.Flag</a></code></li>
+  
+    <li><code><a href="Host.State/" title="com.datastax.driver.core.Host.State (enum)">Host.State</a></code></li>
+  
+    <li><code><a href="HostDistance/" title="com.datastax.driver.core.HostDistance (enum)">HostDistance</a></code></li>
+  
+    <li><code><a href="Message.Request.Type/" title="com.datastax.driver.core.Message.Request.Type (enum)">Message.Request.Type</a></code></li>
+  
+    <li><code><a href="Message.Response.Type/" title="com.datastax.driver.core.Message.Response.Type (enum)">Message.Response.Type</a></code></li>
+  
+    <li><code><a href="ProtocolEvent.Type/" title="com.datastax.driver.core.ProtocolEvent.Type (enum)">ProtocolEvent.Type</a></code></li>
+  
+    <li><code><a href="ProtocolEvent.TopologyChange.Change/" title="com.datastax.driver.core.ProtocolEvent.TopologyChange.Change (enum)">ProtocolEvent.TopologyChange.Change</a></code></li>
+  
+    <li><code><a href="ProtocolEvent.StatusChange.Status/" title="com.datastax.driver.core.ProtocolEvent.StatusChange.Status (enum)">ProtocolEvent.StatusChange.Status</a></code></li>
+  
+    <li><code><a href="ProtocolEvent.SchemaChange.Change/" title="com.datastax.driver.core.ProtocolEvent.SchemaChange.Change (enum)">ProtocolEvent.SchemaChange.Change</a></code></li>
+  
+    <li><code><a href="ProtocolEvent.SchemaChange.Target/" title="com.datastax.driver.core.ProtocolEvent.SchemaChange.Target (enum)">ProtocolEvent.SchemaChange.Target</a></code></li>
+  
+    <li><code><a href="ProtocolOptions.Compression/" title="com.datastax.driver.core.ProtocolOptions.Compression (enum)">ProtocolOptions.Compression</a></code></li>
+  
+    <li><code><a href="ProtocolVersion/" title="com.datastax.driver.core.ProtocolVersion (enum)">ProtocolVersion</a></code></li>
+  
+    <li><code><a href="Requests.QueryFlag/" title="com.datastax.driver.core.Requests.QueryFlag (enum)">Requests.QueryFlag</a></code></li>
+  
+    <li><code><a href="Responses.Result.Kind/" title="com.datastax.driver.core.Responses.Result.Kind (enum)">Responses.Result.Kind</a></code></li>
+  
+    <li><code><a href="Responses.Result.SchemaChange.Change/" title="com.datastax.driver.core.Responses.Result.SchemaChange.Change (enum)">Responses.Result.SchemaChange.Change</a></code></li>
+  
+    <li><code><a href="Responses.Result.SchemaChange.Target/" title="com.datastax.driver.core.Responses.Result.SchemaChange.Target (enum)">Responses.Result.SchemaChange.Target</a></code></li>
+  
+    <li><code><a href="TableMetadata.Order/" title="com.datastax.driver.core.TableMetadata.Order (enum)">TableMetadata.Order</a></code></li>
+  
+    <li><code><a href="WriteType/" title="com.datastax.driver.core.WriteType (enum)">WriteType</a></code></li>
+  
+  </ul>
+</div>
+
+<h2 id="interfaces">Interfaces<a class="anchor" href="#interfaces" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="package-interfaces">
+  <ul class="list-inline">
+  
+    <li><code><a href="Authenticator/" title="com.datastax.driver.core.Authenticator (interface)">Authenticator</a></code></li>
+  
+    <li><code><a href="AuthProvider/" title="com.datastax.driver.core.AuthProvider (interface)">AuthProvider</a></code></li>
+  
+    <li><code><a href="Clock/" title="com.datastax.driver.core.Clock (interface)">Clock</a></code></li>
+  
+    <li><code><a href="Cluster.Initializer/" title="com.datastax.driver.core.Cluster.Initializer (interface)">Cluster.Initializer</a></code></li>
+  
+    <li><code><a href="Connection.ResponseCallback/" title="com.datastax.driver.core.Connection.ResponseCallback (interface)">Connection.ResponseCallback</a></code></li>
+  
+    <li><code><a href="Connection.DefaultResponseHandler/" title="com.datastax.driver.core.Connection.DefaultResponseHandler (interface)">Connection.DefaultResponseHandler</a></code></li>
+  
+    <li><code><a href="ConvictionPolicy.Factory/" title="com.datastax.driver.core.ConvictionPolicy.Factory (interface)">ConvictionPolicy.Factory</a></code></li>
+  
+    <li><code><a href="GettableByIndexData/" title="com.datastax.driver.core.GettableByIndexData (interface)">GettableByIndexData</a></code></li>
+  
+    <li><code><a href="GettableByNameData/" title="com.datastax.driver.core.GettableByNameData (interface)">GettableByNameData</a></code></li>
+  
+    <li><code><a href="GettableData/" title="com.datastax.driver.core.GettableData (interface)">GettableData</a></code></li>
+  
+    <li><code><a href="Host.StateListener/" title="com.datastax.driver.core.Host.StateListener (interface)">Host.StateListener</a></code></li>
+  
+    <li><code><a href="LatencyTracker/" title="com.datastax.driver.core.LatencyTracker (interface)">LatencyTracker</a></code></li>
+  
+    <li><code><a href="Message.Coder/" title="com.datastax.driver.core.Message.Coder (interface)">Message.Coder</a></code></li>
+  
+    <li><code><a href="Message.Decoder/" title="com.datastax.driver.core.Message.Decoder (interface)">Message.Decoder</a></code></li>
+  
+    <li><code><a href="PreparedStatement/" title="com.datastax.driver.core.PreparedStatement (interface)">PreparedStatement</a></code></li>
+  
+    <li><code><a href="RequestHandler.Callback/" title="com.datastax.driver.core.RequestHandler.Callback (interface)">RequestHandler.Callback</a></code></li>
+  
+    <li><code><a href="ResultSet/" title="com.datastax.driver.core.ResultSet (interface)">ResultSet</a></code></li>
+  
+    <li><code><a href="ResultSetFuture/" title="com.datastax.driver.core.ResultSetFuture (interface)">ResultSetFuture</a></code></li>
+  
+    <li><code><a href="Row/" title="com.datastax.driver.core.Row (interface)">Row</a></code></li>
+  
+    <li><code><a href="Session/" title="com.datastax.driver.core.Session (interface)">Session</a></code></li>
+  
+    <li><code><a href="Session.State/" title="com.datastax.driver.core.Session.State (interface)">Session.State</a></code></li>
+  
+    <li><code><a href="SettableByIndexData/" title="com.datastax.driver.core.SettableByIndexData (interface)">SettableByIndexData</a></code></li>
+  
+    <li><code><a href="SettableByNameData/" title="com.datastax.driver.core.SettableByNameData (interface)">SettableByNameData</a></code></li>
+  
+    <li><code><a href="SettableData/" title="com.datastax.driver.core.SettableData (interface)">SettableData</a></code></li>
+  
+    <li><code><a href="TimestampGenerator/" title="com.datastax.driver.core.TimestampGenerator (interface)">TimestampGenerator</a></code></li>
+  
+  </ul>
+</div>
+
+<h2 id="classes">Classes<a class="anchor" href="#classes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="package-classes">
+  <ul class="list-inline">
+  
+    <li><code><a href="AbstractAddressableByIndexData/" title="com.datastax.driver.core.AbstractAddressableByIndexData (klass)">AbstractAddressableByIndexData</a></code></li>
+  
+    <li><code><a href="AbstractData/" title="com.datastax.driver.core.AbstractData (klass)">AbstractData</a></code></li>
+  
+    <li><code><a href="AbstractGettableByIndexData/" title="com.datastax.driver.core.AbstractGettableByIndexData (klass)">AbstractGettableByIndexData</a></code></li>
+  
+    <li><code><a href="AbstractGettableData/" title="com.datastax.driver.core.AbstractGettableData (klass)">AbstractGettableData</a></code></li>
+  
+    <li><code><a href="AbstractReconnectionHandler/" title="com.datastax.driver.core.AbstractReconnectionHandler (klass)">AbstractReconnectionHandler</a></code></li>
+  
+    <li><code><a href="AbstractSession/" title="com.datastax.driver.core.AbstractSession (klass)">AbstractSession</a></code></li>
+  
+    <li><code><a href="AbstractMonotonicTimestampGenerator/" title="com.datastax.driver.core.AbstractMonotonicTimestampGenerator (klass)">AbstractMonotonicTimestampGenerator</a></code></li>
+  
+    <li><code><a href="ArrayBackedResultSet/" title="com.datastax.driver.core.ArrayBackedResultSet (klass)">ArrayBackedResultSet</a></code></li>
+  
+    <li><code><a href="ArrayBackedRow/" title="com.datastax.driver.core.ArrayBackedRow (klass)">ArrayBackedRow</a></code></li>
+  
+    <li><code><a href="AtomicMonotonicTimestampGenerator/" title="com.datastax.driver.core.AtomicMonotonicTimestampGenerator (klass)">AtomicMonotonicTimestampGenerator</a></code></li>
+  
+    <li><code><a href="BatchStatement/" title="com.datastax.driver.core.BatchStatement (klass)">BatchStatement</a></code></li>
+  
+    <li><code><a href="BatchStatement.IdAndValues/" title="com.datastax.driver.core.BatchStatement.IdAndValues (klass)">BatchStatement.IdAndValues</a></code></li>
+  
+    <li><code><a href="BoundStatement/" title="com.datastax.driver.core.BoundStatement (klass)">BoundStatement</a></code></li>
+  
+    <li><code><a href="BoundStatement.DataWrapper/" title="com.datastax.driver.core.BoundStatement.DataWrapper (klass)">BoundStatement.DataWrapper</a></code></li>
+  
+    <li><code><a href="BusyConnectionException/" title="com.datastax.driver.core.BusyConnectionException (klass)">BusyConnectionException</a></code></li>
+  
+    <li><code><a href="CassandraTypeParser/" title="com.datastax.driver.core.CassandraTypeParser (klass)">CassandraTypeParser</a></code></li>
+  
+    <li><code><a href="CassandraTypeParser.ParseResult/" title="com.datastax.driver.core.CassandraTypeParser.ParseResult (klass)">CassandraTypeParser.ParseResult</a></code></li>
+  
+    <li><code><a href="CBUtil/" title="com.datastax.driver.core.CBUtil (klass)">CBUtil</a></code></li>
+  
+    <li><code><a href="SystemClock/" title="com.datastax.driver.core.SystemClock (klass)">SystemClock</a></code></li>
+  
+    <li><code><a href="CloseFuture/" title="com.datastax.driver.core.CloseFuture (klass)">CloseFuture</a></code></li>
+  
+    <li><code><a href="CloseFuture.Forwarding/" title="com.datastax.driver.core.CloseFuture.Forwarding (klass)">CloseFuture.Forwarding</a></code></li>
+  
+    <li><code><a href="Cluster/" title="com.datastax.driver.core.Cluster (klass)">Cluster</a></code></li>
+  
+    <li><code><a href="Cluster.Builder/" title="com.datastax.driver.core.Cluster.Builder (klass)">Cluster.Builder</a></code></li>
+  
+    <li><code><a href="Cluster.Manager/" title="com.datastax.driver.core.Cluster.Manager (klass)">Cluster.Manager</a></code></li>
+  
+    <li><code><a href="Cluster.ConnectionReaper/" title="com.datastax.driver.core.Cluster.ConnectionReaper (klass)">Cluster.ConnectionReaper</a></code></li>
+  
+    <li><code><a href="ClusterNameMismatchException/" title="com.datastax.driver.core.ClusterNameMismatchException (klass)">ClusterNameMismatchException</a></code></li>
+  
+    <li><code><a href="ColumnDefinitions/" title="com.datastax.driver.core.ColumnDefinitions (klass)">ColumnDefinitions</a></code></li>
+  
+    <li><code><a href="ColumnDefinitions.Definition/" title="com.datastax.driver.core.ColumnDefinitions.Definition (klass)">ColumnDefinitions.Definition</a></code></li>
+  
+    <li><code><a href="ColumnMetadata/" title="com.datastax.driver.core.ColumnMetadata (klass)">ColumnMetadata</a></code></li>
+  
+    <li><code><a href="ColumnMetadata.IndexMetadata/" title="com.datastax.driver.core.ColumnMetadata.IndexMetadata (klass)">ColumnMetadata.IndexMetadata</a></code></li>
+  
+    <li><code><a href="ColumnMetadata.Raw/" title="com.datastax.driver.core.ColumnMetadata.Raw (klass)">ColumnMetadata.Raw</a></code></li>
+  
+    <li><code><a href="Configuration/" title="com.datastax.driver.core.Configuration (klass)">Configuration</a></code></li>
+  
+    <li><code><a href="Connection/" title="com.datastax.driver.core.Connection (klass)">Connection</a></code></li>
+  
+    <li><code><a href="Connection.Factory/" title="com.datastax.driver.core.Connection.Factory (klass)">Connection.Factory</a></code></li>
+  
+    <li><code><a href="Connection.Future/" title="com.datastax.driver.core.Connection.Future (klass)">Connection.Future</a></code></li>
+  
+    <li><code><a href="Connection.ResponseHandler/" title="com.datastax.driver.core.Connection.ResponseHandler (klass)">Connection.ResponseHandler</a></code></li>
+  
+    <li><code><a href="ConnectionException/" title="com.datastax.driver.core.ConnectionException (klass)">ConnectionException</a></code></li>
+  
+    <li><code><a href="ControlConnection/" title="com.datastax.driver.core.ControlConnection (klass)">ControlConnection</a></code></li>
+  
+    <li><code><a href="ConvictionPolicy/" title="com.datastax.driver.core.ConvictionPolicy (klass)">ConvictionPolicy</a></code></li>
+  
+    <li><code><a href="ConvictionPolicy.Simple/" title="com.datastax.driver.core.ConvictionPolicy.Simple (klass)">ConvictionPolicy.Simple</a></code></li>
+  
+    <li><code><a href="ConvictionPolicy.Simple.Factory/" title="com.datastax.driver.core.ConvictionPolicy.Simple.Factory (klass)">ConvictionPolicy.Simple.Factory</a></code></li>
+  
+    <li><code><a href="DataType/" title="com.datastax.driver.core.DataType (klass)">DataType</a></code></li>
+  
+    <li><code><a href="DefaultPreparedStatement/" title="com.datastax.driver.core.DefaultPreparedStatement (klass)">DefaultPreparedStatement</a></code></li>
+  
+    <li><code><a href="DefaultResultSetFuture/" title="com.datastax.driver.core.DefaultResultSetFuture (klass)">DefaultResultSetFuture</a></code></li>
+  
+    <li><code><a href="DynamicConnectionPool/" title="com.datastax.driver.core.DynamicConnectionPool (klass)">DynamicConnectionPool</a></code></li>
+  
+    <li><code><a href="ExceptionCatchingRunnable/" title="com.datastax.driver.core.ExceptionCatchingRunnable (klass)">ExceptionCatchingRunnable</a></code></li>
+  
+    <li><code><a href="ExecutionInfo/" title="com.datastax.driver.core.ExecutionInfo (klass)">ExecutionInfo</a></code></li>
+  
+    <li><code><a href="Frame/" title="com.datastax.driver.core.Frame (klass)">Frame</a></code></li>
+  
+    <li><code><a href="Frame.Header/" title="com.datastax.driver.core.Frame.Header (klass)">Frame.Header</a></code></li>
+  
+    <li><code><a href="Frame.Decoder/" title="com.datastax.driver.core.Frame.Decoder (klass)">Frame.Decoder</a></code></li>
+  
+    <li><code><a href="Frame.DecoderV1/" title="com.datastax.driver.core.Frame.DecoderV1 (klass)">Frame.DecoderV1</a></code></li>
+  
+    <li><code><a href="Frame.DecoderV3/" title="com.datastax.driver.core.Frame.DecoderV3 (klass)">Frame.DecoderV3</a></code></li>
+  
+    <li><code><a href="Frame.Encoder/" title="com.datastax.driver.core.Frame.Encoder (klass)">Frame.Encoder</a></code></li>
+  
+    <li><code><a href="Frame.Decompressor/" title="com.datastax.driver.core.Frame.Decompressor (klass)">Frame.Decompressor</a></code></li>
+  
+    <li><code><a href="Frame.Compressor/" title="com.datastax.driver.core.Frame.Compressor (klass)">Frame.Compressor</a></code></li>
+  
+    <li><code><a href="FrameCompressor/" title="com.datastax.driver.core.FrameCompressor (klass)">FrameCompressor</a></code></li>
+  
+    <li><code><a href="FrameCompressor.SnappyCompressor/" title="com.datastax.driver.core.FrameCompressor.SnappyCompressor (klass)">FrameCompressor.SnappyCompressor</a></code></li>
+  
+    <li><code><a href="FrameCompressor.LZ4Compressor/" title="com.datastax.driver.core.FrameCompressor.LZ4Compressor (klass)">FrameCompressor.LZ4Compressor</a></code></li>
+  
+    <li><code><a href="Host/" title="com.datastax.driver.core.Host (klass)">Host</a></code></li>
+  
+    <li><code><a href="HostConnectionPool/" title="com.datastax.driver.core.HostConnectionPool (klass)">HostConnectionPool</a></code></li>
+  
+    <li><code><a href="HostConnectionPool.PoolState/" title="com.datastax.driver.core.HostConnectionPool.PoolState (klass)">HostConnectionPool.PoolState</a></code></li>
+  
+    <li><code><a href="KeyspaceMetadata/" title="com.datastax.driver.core.KeyspaceMetadata (klass)">KeyspaceMetadata</a></code></li>
+  
+    <li><code><a href="MD5Digest/" title="com.datastax.driver.core.MD5Digest (klass)">MD5Digest</a></code></li>
+  
+    <li><code><a href="Message/" title="com.datastax.driver.core.Message (klass)">Message</a></code></li>
+  
+    <li><code><a href="Message.Request/" title="com.datastax.driver.core.Message.Request (klass)">Message.Request</a></code></li>
+  
+    <li><code><a href="Message.Response/" title="com.datastax.driver.core.Message.Response (klass)">Message.Response</a></code></li>
+  
+    <li><code><a href="Message.ProtocolDecoder/" title="com.datastax.driver.core.Message.ProtocolDecoder (klass)">Message.ProtocolDecoder</a></code></li>
+  
+    <li><code><a href="Message.ProtocolEncoder/" title="com.datastax.driver.core.Message.ProtocolEncoder (klass)">Message.ProtocolEncoder</a></code></li>
+  
+    <li><code><a href="Metadata/" title="com.datastax.driver.core.Metadata (klass)">Metadata</a></code></li>
+  
+    <li><code><a href="Metadata.TokenMap/" title="com.datastax.driver.core.Metadata.TokenMap (klass)">Metadata.TokenMap</a></code></li>
+  
+    <li><code><a href="Metrics/" title="com.datastax.driver.core.Metrics (klass)">Metrics</a></code></li>
+  
+    <li><code><a href="Metrics.Errors/" title="com.datastax.driver.core.Metrics.Errors (klass)">Metrics.Errors</a></code></li>
+  
+    <li><code><a href="MetricsOptions/" title="com.datastax.driver.core.MetricsOptions (klass)">MetricsOptions</a></code></li>
+  
+    <li><code><a href="OperationTimedOutException/" title="com.datastax.driver.core.OperationTimedOutException (klass)">OperationTimedOutException</a></code></li>
+  
+    <li><code><a href="ParseUtils/" title="com.datastax.driver.core.ParseUtils (klass)">ParseUtils</a></code></li>
+  
+    <li><code><a href="PlainTextAuthProvider/" title="com.datastax.driver.core.PlainTextAuthProvider (klass)">PlainTextAuthProvider</a></code></li>
+  
+    <li><code><a href="PooledConnection/" title="com.datastax.driver.core.PooledConnection (klass)">PooledConnection</a></code></li>
+  
+    <li><code><a href="PoolingOptions/" title="com.datastax.driver.core.PoolingOptions (klass)">PoolingOptions</a></code></li>
+  
+    <li><code><a href="PreparedId/" title="com.datastax.driver.core.PreparedId (klass)">PreparedId</a></code></li>
+  
+    <li><code><a href="ProtocolEvent/" title="com.datastax.driver.core.ProtocolEvent (klass)">ProtocolEvent</a></code></li>
+  
+    <li><code><a href="ProtocolEvent.TopologyChange/" title="com.datastax.driver.core.ProtocolEvent.TopologyChange (klass)">ProtocolEvent.TopologyChange</a></code></li>
+  
+    <li><code><a href="ProtocolEvent.StatusChange/" title="com.datastax.driver.core.ProtocolEvent.StatusChange (klass)">ProtocolEvent.StatusChange</a></code></li>
+  
+    <li><code><a href="ProtocolEvent.SchemaChange/" title="com.datastax.driver.core.ProtocolEvent.SchemaChange (klass)">ProtocolEvent.SchemaChange</a></code></li>
+  
+    <li><code><a href="ProtocolOptions/" title="com.datastax.driver.core.ProtocolOptions (klass)">ProtocolOptions</a></code></li>
+  
+    <li><code><a href="ProtocolV1Authenticator/" title="com.datastax.driver.core.ProtocolV1Authenticator (klass)">ProtocolV1Authenticator</a></code></li>
+  
+    <li><code><a href="QueryOptions/" title="com.datastax.driver.core.QueryOptions (klass)">QueryOptions</a></code></li>
+  
+    <li><code><a href="QueryTrace/" title="com.datastax.driver.core.QueryTrace (klass)">QueryTrace</a></code></li>
+  
+    <li><code><a href="QueryTrace.Event/" title="com.datastax.driver.core.QueryTrace.Event (klass)">QueryTrace.Event</a></code></li>
+  
+    <li><code><a href="RegularStatement/" title="com.datastax.driver.core.RegularStatement (klass)">RegularStatement</a></code></li>
+  
+    <li><code><a href="ReplicationStrategy/" title="com.datastax.driver.core.ReplicationStrategy (klass)">ReplicationStrategy</a></code></li>
+  
+    <li><code><a href="ReplicationStrategy.SimpleStrategy/" title="com.datastax.driver.core.ReplicationStrategy.SimpleStrategy (klass)">ReplicationStrategy.SimpleStrategy</a></code></li>
+  
+    <li><code><a href="ReplicationStrategy.NetworkTopologyStrategy/" title="com.datastax.driver.core.ReplicationStrategy.NetworkTopologyStrategy (klass)">ReplicationStrategy.NetworkTopologyStrategy</a></code></li>
+  
+    <li><code><a href="RequestHandler/" title="com.datastax.driver.core.RequestHandler (klass)">RequestHandler</a></code></li>
+  
+    <li><code><a href="RequestHandler.QueryState/" title="com.datastax.driver.core.RequestHandler.QueryState (klass)">RequestHandler.QueryState</a></code></li>
+  
+    <li><code><a href="Requests/" title="com.datastax.driver.core.Requests (klass)">Requests</a></code></li>
+  
+    <li><code><a href="Requests.Startup/" title="com.datastax.driver.core.Requests.Startup (klass)">Requests.Startup</a></code></li>
+  
+    <li><code><a href="Requests.Credentials/" title="com.datastax.driver.core.Requests.Credentials (klass)">Requests.Credentials</a></code></li>
+  
+    <li><code><a href="Requests.Options/" title="com.datastax.driver.core.Requests.Options (klass)">Requests.Options</a></code></li>
+  
+    <li><code><a href="Requests.Query/" title="com.datastax.driver.core.Requests.Query (klass)">Requests.Query</a></code></li>
+  
+    <li><code><a href="Requests.Execute/" title="com.datastax.driver.core.Requests.Execute (klass)">Requests.Execute</a></code></li>
+  
+    <li><code><a href="Requests.QueryProtocolOptions/" title="com.datastax.driver.core.Requests.QueryProtocolOptions (klass)">Requests.QueryProtocolOptions</a></code></li>
+  
+    <li><code><a href="Requests.Batch/" title="com.datastax.driver.core.Requests.Batch (klass)">Requests.Batch</a></code></li>
+  
+    <li><code><a href="Requests.BatchProtocolOptions/" title="com.datastax.driver.core.Requests.BatchProtocolOptions (klass)">Requests.BatchProtocolOptions</a></code></li>
+  
+    <li><code><a href="Requests.Prepare/" title="com.datastax.driver.core.Requests.Prepare (klass)">Requests.Prepare</a></code></li>
+  
+    <li><code><a href="Requests.Register/" title="com.datastax.driver.core.Requests.Register (klass)">Requests.Register</a></code></li>
+  
+    <li><code><a href="Requests.AuthResponse/" title="com.datastax.driver.core.Requests.AuthResponse (klass)">Requests.AuthResponse</a></code></li>
+  
+    <li><code><a href="Responses/" title="com.datastax.driver.core.Responses (klass)">Responses</a></code></li>
+  
+    <li><code><a href="Responses.Error/" title="com.datastax.driver.core.Responses.Error (klass)">Responses.Error</a></code></li>
+  
+    <li><code><a href="Responses.Ready/" title="com.datastax.driver.core.Responses.Ready (klass)">Responses.Ready</a></code></li>
+  
+    <li><code><a href="Responses.Authenticate/" title="com.datastax.driver.core.Responses.Authenticate (klass)">Responses.Authenticate</a></code></li>
+  
+    <li><code><a href="Responses.Supported/" title="com.datastax.driver.core.Responses.Supported (klass)">Responses.Supported</a></code></li>
+  
+    <li><code><a href="Responses.Result/" title="com.datastax.driver.core.Responses.Result (klass)">Responses.Result</a></code></li>
+  
+    <li><code><a href="Responses.Result.Void/" title="com.datastax.driver.core.Responses.Result.Void (klass)">Responses.Result.Void</a></code></li>
+  
+    <li><code><a href="Responses.Result.SetKeyspace/" title="com.datastax.driver.core.Responses.Result.SetKeyspace (klass)">Responses.Result.SetKeyspace</a></code></li>
+  
+    <li><code><a href="Responses.Result.Rows/" title="com.datastax.driver.core.Responses.Result.Rows (klass)">Responses.Result.Rows</a></code></li>
+  
+    <li><code><a href="Responses.Result.Rows.Metadata/" title="com.datastax.driver.core.Responses.Result.Rows.Metadata (klass)">Responses.Result.Rows.Metadata</a></code></li>
+  
+    <li><code><a href="Responses.Result.Prepared/" title="com.datastax.driver.core.Responses.Result.Prepared (klass)">Responses.Result.Prepared</a></code></li>
+  
+    <li><code><a href="Responses.Result.SchemaChange/" title="com.datastax.driver.core.Responses.Result.SchemaChange (klass)">Responses.Result.SchemaChange</a></code></li>
+  
+    <li><code><a href="Responses.Event/" title="com.datastax.driver.core.Responses.Event (klass)">Responses.Event</a></code></li>
+  
+    <li><code><a href="Responses.AuthChallenge/" title="com.datastax.driver.core.Responses.AuthChallenge (klass)">Responses.AuthChallenge</a></code></li>
+  
+    <li><code><a href="Responses.AuthSuccess/" title="com.datastax.driver.core.Responses.AuthSuccess (klass)">Responses.AuthSuccess</a></code></li>
+  
+    <li><code><a href="ServerSideTimestampGenerator/" title="com.datastax.driver.core.ServerSideTimestampGenerator (klass)">ServerSideTimestampGenerator</a></code></li>
+  
+    <li><code><a href="SessionManager/" title="com.datastax.driver.core.SessionManager (klass)">SessionManager</a></code></li>
+  
+    <li><code><a href="SimpleJSONParser/" title="com.datastax.driver.core.SimpleJSONParser (klass)">SimpleJSONParser</a></code></li>
+  
+    <li><code><a href="SimpleStatement/" title="com.datastax.driver.core.SimpleStatement (klass)">SimpleStatement</a></code></li>
+  
+    <li><code><a href="SingleConnectionPool/" title="com.datastax.driver.core.SingleConnectionPool (klass)">SingleConnectionPool</a></code></li>
+  
+    <li><code><a href="SocketOptions/" title="com.datastax.driver.core.SocketOptions (klass)">SocketOptions</a></code></li>
+  
+    <li><code><a href="SSLOptions/" title="com.datastax.driver.core.SSLOptions (klass)">SSLOptions</a></code></li>
+  
+    <li><code><a href="Statement/" title="com.datastax.driver.core.Statement (klass)">Statement</a></code></li>
+  
+    <li><code><a href="StreamIdGenerator/" title="com.datastax.driver.core.StreamIdGenerator (klass)">StreamIdGenerator</a></code></li>
+  
+    <li><code><a href="SystemProperties/" title="com.datastax.driver.core.SystemProperties (klass)">SystemProperties</a></code></li>
+  
+    <li><code><a href="TableMetadata/" title="com.datastax.driver.core.TableMetadata (klass)">TableMetadata</a></code></li>
+  
+    <li><code><a href="TableMetadata.Options/" title="com.datastax.driver.core.TableMetadata.Options (klass)">TableMetadata.Options</a></code></li>
+  
+    <li><code><a href="ThreadLocalMonotonicTimestampGenerator/" title="com.datastax.driver.core.ThreadLocalMonotonicTimestampGenerator (klass)">ThreadLocalMonotonicTimestampGenerator</a></code></li>
+  
+    <li><code><a href="Token/" title="com.datastax.driver.core.Token (klass)">Token</a></code></li>
+  
+    <li><code><a href="Token.Factory/" title="com.datastax.driver.core.Token.Factory (klass)">Token.Factory</a></code></li>
+  
+    <li><code><a href="Token.M3PToken/" title="com.datastax.driver.core.Token.M3PToken (klass)">Token.M3PToken</a></code></li>
+  
+    <li><code><a href="Token.OPPToken/" title="com.datastax.driver.core.Token.OPPToken (klass)">Token.OPPToken</a></code></li>
+  
+    <li><code><a href="Token.RPToken/" title="com.datastax.driver.core.Token.RPToken (klass)">Token.RPToken</a></code></li>
+  
+    <li><code><a href="TokenRange/" title="com.datastax.driver.core.TokenRange (klass)">TokenRange</a></code></li>
+  
+    <li><code><a href="TransportException/" title="com.datastax.driver.core.TransportException (klass)">TransportException</a></code></li>
+  
+    <li><code><a href="TupleType/" title="com.datastax.driver.core.TupleType (klass)">TupleType</a></code></li>
+  
+    <li><code><a href="TupleValue/" title="com.datastax.driver.core.TupleValue (klass)">TupleValue</a></code></li>
+  
+    <li><code><a href="TypeCodec/" title="com.datastax.driver.core.TypeCodec (klass)">TypeCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.StringCodec/" title="com.datastax.driver.core.TypeCodec.StringCodec (klass)">TypeCodec.StringCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.LongCodec/" title="com.datastax.driver.core.TypeCodec.LongCodec (klass)">TypeCodec.LongCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.BytesCodec/" title="com.datastax.driver.core.TypeCodec.BytesCodec (klass)">TypeCodec.BytesCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.BooleanCodec/" title="com.datastax.driver.core.TypeCodec.BooleanCodec (klass)">TypeCodec.BooleanCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.DecimalCodec/" title="com.datastax.driver.core.TypeCodec.DecimalCodec (klass)">TypeCodec.DecimalCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.DoubleCodec/" title="com.datastax.driver.core.TypeCodec.DoubleCodec (klass)">TypeCodec.DoubleCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.FloatCodec/" title="com.datastax.driver.core.TypeCodec.FloatCodec (klass)">TypeCodec.FloatCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.InetCodec/" title="com.datastax.driver.core.TypeCodec.InetCodec (klass)">TypeCodec.InetCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.IntCodec/" title="com.datastax.driver.core.TypeCodec.IntCodec (klass)">TypeCodec.IntCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.DateCodec/" title="com.datastax.driver.core.TypeCodec.DateCodec (klass)">TypeCodec.DateCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.UUIDCodec/" title="com.datastax.driver.core.TypeCodec.UUIDCodec (klass)">TypeCodec.UUIDCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.TimeUUIDCodec/" title="com.datastax.driver.core.TypeCodec.TimeUUIDCodec (klass)">TypeCodec.TimeUUIDCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.BigIntegerCodec/" title="com.datastax.driver.core.TypeCodec.BigIntegerCodec (klass)">TypeCodec.BigIntegerCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.ListCodec/" title="com.datastax.driver.core.TypeCodec.ListCodec (klass)">TypeCodec.ListCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.SetCodec/" title="com.datastax.driver.core.TypeCodec.SetCodec (klass)">TypeCodec.SetCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.MapCodec/" title="com.datastax.driver.core.TypeCodec.MapCodec (klass)">TypeCodec.MapCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.UDTCodec/" title="com.datastax.driver.core.TypeCodec.UDTCodec (klass)">TypeCodec.UDTCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.TupleCodec/" title="com.datastax.driver.core.TypeCodec.TupleCodec (klass)">TypeCodec.TupleCodec</a></code></li>
+  
+    <li><code><a href="UDTValue/" title="com.datastax.driver.core.UDTValue (klass)">UDTValue</a></code></li>
+  
+    <li><code><a href="UnsupportedProtocolVersionException/" title="com.datastax.driver.core.UnsupportedProtocolVersionException (klass)">UnsupportedProtocolVersionException</a></code></li>
+  
+    <li><code><a href="UserType/" title="com.datastax.driver.core.UserType (klass)">UserType</a></code></li>
+  
+    <li><code><a href="UserType.Field/" title="com.datastax.driver.core.UserType.Field (klass)">UserType.Field</a></code></li>
+  
+    <li><code><a href="VersionNumber/" title="com.datastax.driver.core.VersionNumber (klass)">VersionNumber</a></code></li>
+  
+  </ul>
+</div>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc">
+<li><a href="#enums">Enums
+</a></li>
+<li><a href="#interfaces">Interfaces
+</a></li>
+<li><a href="#classes">Classes
+</a></li>
+</ol>
+                </div>
+              </div>
+            </div>
+
+            
+            <div id="read-more-panel" class="panel panel-default">
+              <div id="read-more-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#read-more" aria-expanded="true" aria-controls="read-more">
+                    Read More<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="read-more" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="read-more-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked">
+                  
+                    <li>
+                      <a href="AbstractAddressableByIndexData/">AbstractAddressableByIndexData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="AbstractData/">AbstractData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="AbstractGettableByIndexData/">AbstractGettableByIndexData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="AbstractGettableData/">AbstractGettableData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="AbstractMonotonicTimestampGenerator/">AbstractMonotonicTimestampGenerator</a>
+                    </li>
+                  
+                    <li>
+                      <a href="AbstractReconnectionHandler/">AbstractReconnectionHandler</a>
+                    </li>
+                  
+                    <li>
+                      <a href="AbstractSession/">AbstractSession</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ArrayBackedResultSet/">ArrayBackedResultSet</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ArrayBackedRow/">ArrayBackedRow</a>
+                    </li>
+                  
+                    <li>
+                      <a href="AtomicMonotonicTimestampGenerator/">AtomicMonotonicTimestampGenerator</a>
+                    </li>
+                  
+                    <li>
+                      <a href="AuthProvider/">AuthProvider</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Authenticator/">Authenticator</a>
+                    </li>
+                  
+                    <li>
+                      <a href="BatchStatement/">BatchStatement</a>
+                    </li>
+                  
+                    <li>
+                      <a href="BatchStatement.IdAndValues/">BatchStatement.IdAndValues</a>
+                    </li>
+                  
+                    <li>
+                      <a href="BatchStatement.Type/">BatchStatement.Type</a>
+                    </li>
+                  
+                    <li>
+                      <a href="BoundStatement/">BoundStatement</a>
+                    </li>
+                  
+                    <li>
+                      <a href="BoundStatement.DataWrapper/">BoundStatement.DataWrapper</a>
+                    </li>
+                  
+                    <li>
+                      <a href="BusyConnectionException/">BusyConnectionException</a>
+                    </li>
+                  
+                    <li>
+                      <a href="CBUtil/">CBUtil</a>
+                    </li>
+                  
+                    <li>
+                      <a href="CassandraTypeParser/">CassandraTypeParser</a>
+                    </li>
+                  
+                    <li>
+                      <a href="CassandraTypeParser.ParseResult/">CassandraTypeParser.ParseResult</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Clock/">Clock</a>
+                    </li>
+                  
+                    <li>
+                      <a href="CloseFuture/">CloseFuture</a>
+                    </li>
+                  
+                    <li>
+                      <a href="CloseFuture.Forwarding/">CloseFuture.Forwarding</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Cluster/">Cluster</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Cluster.Builder/">Cluster.Builder</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Cluster.ConnectionReaper/">Cluster.ConnectionReaper</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Cluster.Initializer/">Cluster.Initializer</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Cluster.Manager/">Cluster.Manager</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ClusterNameMismatchException/">ClusterNameMismatchException</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ColumnDefinitions/">ColumnDefinitions</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ColumnDefinitions.Definition/">ColumnDefinitions.Definition</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ColumnMetadata/">ColumnMetadata</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ColumnMetadata.IndexMetadata/">ColumnMetadata.IndexMetadata</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ColumnMetadata.Raw/">ColumnMetadata.Raw</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ColumnMetadata.Raw.Kind/">ColumnMetadata.Raw.Kind</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Configuration/">Configuration</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Connection/">Connection</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Connection.DefaultResponseHandler/">Connection.DefaultResponseHandler</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Connection.Factory/">Connection.Factory</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Connection.Future/">Connection.Future</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Connection.ResponseCallback/">Connection.ResponseCallback</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Connection.ResponseHandler/">Connection.ResponseHandler</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ConnectionException/">ConnectionException</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ConsistencyLevel/">ConsistencyLevel</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ControlConnection/">ControlConnection</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ConvictionPolicy/">ConvictionPolicy</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ConvictionPolicy.Factory/">ConvictionPolicy.Factory</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ConvictionPolicy.Simple/">ConvictionPolicy.Simple</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ConvictionPolicy.Simple.Factory/">ConvictionPolicy.Simple.Factory</a>
+                    </li>
+                  
+                    <li>
+                      <a href="DataType/">DataType</a>
+                    </li>
+                  
+                    <li>
+                      <a href="DataType.Name/">DataType.Name</a>
+                    </li>
+                  
+                    <li>
+                      <a href="DefaultPreparedStatement/">DefaultPreparedStatement</a>
+                    </li>
+                  
+                    <li>
+                      <a href="DefaultResultSetFuture/">DefaultResultSetFuture</a>
+                    </li>
+                  
+                    <li>
+                      <a href="DynamicConnectionPool/">DynamicConnectionPool</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ExceptionCatchingRunnable/">ExceptionCatchingRunnable</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ExceptionCode/">ExceptionCode</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ExecutionInfo/">ExecutionInfo</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Frame/">Frame</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Frame.Compressor/">Frame.Compressor</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Frame.Decoder/">Frame.Decoder</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Frame.DecoderV1/">Frame.DecoderV1</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Frame.DecoderV3/">Frame.DecoderV3</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Frame.Decompressor/">Frame.Decompressor</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Frame.Encoder/">Frame.Encoder</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Frame.Header/">Frame.Header</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Frame.Header.Flag/">Frame.Header.Flag</a>
+                    </li>
+                  
+                    <li>
+                      <a href="FrameCompressor/">FrameCompressor</a>
+                    </li>
+                  
+                    <li>
+                      <a href="FrameCompressor.LZ4Compressor/">FrameCompressor.LZ4Compressor</a>
+                    </li>
+                  
+                    <li>
+                      <a href="FrameCompressor.SnappyCompressor/">FrameCompressor.SnappyCompressor</a>
+                    </li>
+                  
+                    <li>
+                      <a href="GettableByIndexData/">GettableByIndexData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="GettableByNameData/">GettableByNameData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="GettableData/">GettableData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Host/">Host</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Host.State/">Host.State</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Host.StateListener/">Host.StateListener</a>
+                    </li>
+                  
+                    <li>
+                      <a href="HostConnectionPool/">HostConnectionPool</a>
+                    </li>
+                  
+                    <li>
+                      <a href="HostConnectionPool.PoolState/">HostConnectionPool.PoolState</a>
+                    </li>
+                  
+                    <li>
+                      <a href="HostDistance/">HostDistance</a>
+                    </li>
+                  
+                    <li>
+                      <a href="KeyspaceMetadata/">KeyspaceMetadata</a>
+                    </li>
+                  
+                    <li>
+                      <a href="LatencyTracker/">LatencyTracker</a>
+                    </li>
+                  
+                    <li>
+                      <a href="MD5Digest/">MD5Digest</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Message/">Message</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Message.Coder/">Message.Coder</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Message.Decoder/">Message.Decoder</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Message.ProtocolDecoder/">Message.ProtocolDecoder</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Message.ProtocolEncoder/">Message.ProtocolEncoder</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Message.Request/">Message.Request</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Message.Request.Type/">Message.Request.Type</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Message.Response/">Message.Response</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Message.Response.Type/">Message.Response.Type</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Metadata/">Metadata</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Metadata.TokenMap/">Metadata.TokenMap</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Metrics/">Metrics</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Metrics.Errors/">Metrics.Errors</a>
+                    </li>
+                  
+                    <li>
+                      <a href="MetricsOptions/">MetricsOptions</a>
+                    </li>
+                  
+                    <li>
+                      <a href="OperationTimedOutException/">OperationTimedOutException</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ParseUtils/">ParseUtils</a>
+                    </li>
+                  
+                    <li>
+                      <a href="PlainTextAuthProvider/">PlainTextAuthProvider</a>
+                    </li>
+                  
+                    <li>
+                      <a href="PooledConnection/">PooledConnection</a>
+                    </li>
+                  
+                    <li>
+                      <a href="PoolingOptions/">PoolingOptions</a>
+                    </li>
+                  
+                    <li>
+                      <a href="PreparedId/">PreparedId</a>
+                    </li>
+                  
+                    <li>
+                      <a href="PreparedStatement/">PreparedStatement</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolEvent/">ProtocolEvent</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolEvent.SchemaChange/">ProtocolEvent.SchemaChange</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolEvent.SchemaChange.Change/">ProtocolEvent.SchemaChange.Change</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolEvent.SchemaChange.Target/">ProtocolEvent.SchemaChange.Target</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolEvent.StatusChange/">ProtocolEvent.StatusChange</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolEvent.StatusChange.Status/">ProtocolEvent.StatusChange.Status</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolEvent.TopologyChange/">ProtocolEvent.TopologyChange</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolEvent.TopologyChange.Change/">ProtocolEvent.TopologyChange.Change</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolEvent.Type/">ProtocolEvent.Type</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolOptions/">ProtocolOptions</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolOptions.Compression/">ProtocolOptions.Compression</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolV1Authenticator/">ProtocolV1Authenticator</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolVersion/">ProtocolVersion</a>
+                    </li>
+                  
+                    <li>
+                      <a href="QueryOptions/">QueryOptions</a>
+                    </li>
+                  
+                    <li>
+                      <a href="QueryTrace/">QueryTrace</a>
+                    </li>
+                  
+                    <li>
+                      <a href="QueryTrace.Event/">QueryTrace.Event</a>
+                    </li>
+                  
+                    <li>
+                      <a href="RegularStatement/">RegularStatement</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ReplicationStrategy/">ReplicationStrategy</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ReplicationStrategy.NetworkTopologyStrategy/">ReplicationStrategy.NetworkTopologyStrategy</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ReplicationStrategy.SimpleStrategy/">ReplicationStrategy.SimpleStrategy</a>
+                    </li>
+                  
+                    <li>
+                      <a href="RequestHandler/">RequestHandler</a>
+                    </li>
+                  
+                    <li>
+                      <a href="RequestHandler.Callback/">RequestHandler.Callback</a>
+                    </li>
+                  
+                    <li>
+                      <a href="RequestHandler.QueryState/">RequestHandler.QueryState</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests/">Requests</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests.AuthResponse/">Requests.AuthResponse</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests.Batch/">Requests.Batch</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests.BatchProtocolOptions/">Requests.BatchProtocolOptions</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests.Credentials/">Requests.Credentials</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests.Execute/">Requests.Execute</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests.Options/">Requests.Options</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests.Prepare/">Requests.Prepare</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests.Query/">Requests.Query</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests.QueryFlag/">Requests.QueryFlag</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests.QueryProtocolOptions/">Requests.QueryProtocolOptions</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests.Register/">Requests.Register</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests.Startup/">Requests.Startup</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses/">Responses</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.AuthChallenge/">Responses.AuthChallenge</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.AuthSuccess/">Responses.AuthSuccess</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Authenticate/">Responses.Authenticate</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Error/">Responses.Error</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Event/">Responses.Event</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Ready/">Responses.Ready</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Result/">Responses.Result</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Result.Kind/">Responses.Result.Kind</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Result.Prepared/">Responses.Result.Prepared</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Result.Rows/">Responses.Result.Rows</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Result.Rows.Metadata/">Responses.Result.Rows.Metadata</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Result.SchemaChange/">Responses.Result.SchemaChange</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Result.SchemaChange.Change/">Responses.Result.SchemaChange.Change</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Result.SchemaChange.Target/">Responses.Result.SchemaChange.Target</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Result.SetKeyspace/">Responses.Result.SetKeyspace</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Result.Void/">Responses.Result.Void</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Responses.Supported/">Responses.Supported</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ResultSet/">ResultSet</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ResultSetFuture/">ResultSetFuture</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Row/">Row</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SSLOptions/">SSLOptions</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ServerSideTimestampGenerator/">ServerSideTimestampGenerator</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Session/">Session</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Session.State/">Session.State</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SessionManager/">SessionManager</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SettableByIndexData/">SettableByIndexData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SettableByNameData/">SettableByNameData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SettableData/">SettableData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SimpleJSONParser/">SimpleJSONParser</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SimpleStatement/">SimpleStatement</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SingleConnectionPool/">SingleConnectionPool</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SocketOptions/">SocketOptions</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Statement/">Statement</a>
+                    </li>
+                  
+                    <li>
+                      <a href="StreamIdGenerator/">StreamIdGenerator</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SystemClock/">SystemClock</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SystemProperties/">SystemProperties</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TableMetadata/">TableMetadata</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TableMetadata.Options/">TableMetadata.Options</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TableMetadata.Order/">TableMetadata.Order</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ThreadLocalMonotonicTimestampGenerator/">ThreadLocalMonotonicTimestampGenerator</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TimestampGenerator/">TimestampGenerator</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Token/">Token</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Token.Factory/">Token.Factory</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Token.M3PToken/">Token.M3PToken</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Token.OPPToken/">Token.OPPToken</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Token.RPToken/">Token.RPToken</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TokenRange/">TokenRange</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TransportException/">TransportException</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TupleType/">TupleType</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TupleValue/">TupleValue</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec/">TypeCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.BigIntegerCodec/">TypeCodec.BigIntegerCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.BooleanCodec/">TypeCodec.BooleanCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.BytesCodec/">TypeCodec.BytesCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.DateCodec/">TypeCodec.DateCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.DecimalCodec/">TypeCodec.DecimalCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.DoubleCodec/">TypeCodec.DoubleCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.FloatCodec/">TypeCodec.FloatCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.InetCodec/">TypeCodec.InetCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.IntCodec/">TypeCodec.IntCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.ListCodec/">TypeCodec.ListCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.LongCodec/">TypeCodec.LongCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.MapCodec/">TypeCodec.MapCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.SetCodec/">TypeCodec.SetCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.StringCodec/">TypeCodec.StringCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.TimeUUIDCodec/">TypeCodec.TimeUUIDCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.TupleCodec/">TypeCodec.TupleCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.UDTCodec/">TypeCodec.UDTCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.UUIDCodec/">TypeCodec.UUIDCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="UDTValue/">UDTValue</a>
+                    </li>
+                  
+                    <li>
+                      <a href="UnsupportedProtocolVersionException/">UnsupportedProtocolVersionException</a>
+                    </li>
+                  
+                    <li>
+                      <a href="UserType/">UserType</a>
+                    </li>
+                  
+                    <li>
+                      <a href="UserType.Field/">UserType.Field</a>
+                    </li>
+                  
+                    <li>
+                      <a href="VersionNumber/">VersionNumber</a>
+                    </li>
+                  
+                    <li>
+                      <a href="WriteType/">WriteType</a>
+                    </li>
+                  
+                  </ol>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>

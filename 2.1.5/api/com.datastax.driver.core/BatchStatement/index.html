@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - BatchStatement</title>
+
+    <link rel="icon" href="../../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../../favicon.png">
+    <link href="../../../../css/style.css" rel="stylesheet">
+    <link href="../../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            <li>
+              <a href="../../../">Introduction</a>
+            </li>
+            
+            <li>
+              <a href="../../../features/">Features</a>
+            </li>
+            
+            <li class="active">
+              <a href="../../">API docs</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.1.5
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../../../api/com.datastax.driver.core/BatchStatement/">2.0.10</a></li>
+                  
+                    <li class="disabled"><a href="./">2.1.5</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../../">Introduction</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../../">API docs</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">com.datastax.driver.core</a></li>
+              
+              
+              
+              
+              
+              <li class="active">BatchStatement</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<div class="page-header">
+  <h1 id="class-batchstatement">
+    <small>class</small>
+    <abbr title="com.datastax.driver.core.BatchStatement">BatchStatement</abbr>
+  <a class="anchor" href="#class-batchstatement" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h1>
+</div>
+
+<p>A statement that groups a number of <code><a href="../Statement/">Statement</a></code> so they get executed as a batch. </p>
+<p> Note: BatchStatement is not supported with the native protocol version 1: you will get an <code><a href="../../com.datastax.driver.core.exceptions/UnsupportedFeatureException/">UnsupportedFeatureException</a></code> when submitting one if version 1 of the protocol is in use (i.e. if you’ve force version 1 through <code><a href="../Cluster.Builder/#withProtocolVersion%28ProtocolVersion%29">Cluster.Builder#withProtocolVersion</a></code> or you use Cassandra 1.2). Note however that you can still use <a href="http://cassandra.apache.org/doc/cql3/CQL.html#batchStmt">CQL Batch statements</a> even with the protocol version 1. </p>
+<p> Setting a BatchStatement’s serial consistency level is only supported with the native protocol version 3 or higher (see <code><a href="#setSerialConsistencyLevel%28ConsistencyLevel%29">BatchStatement#setSerialConsistencyLevel(ConsistencyLevel)</a></code>).</p>
+
+<h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-parent">
+  <code><a href="../Statement/">Statement</a></code>
+</div>
+
+
+
+<h2 id="fields">Fields<a class="anchor" href="#fields" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-fields">
+  
+  <div class="panel panel-default member-definition" id="batchType">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#batchType" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../BatchStatement.Type/">Type</a></code> <var>batchType</var>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+<h2 id="constructors">Constructors<a class="anchor" href="#constructors" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-constructors">
+  
+  <div class="panel panel-default member-definition" id="BatchStatement%28%29">
+    <div class="panel-heading constructor-heading">
+      <a class="anchor" href="#BatchStatement%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      BatchStatement <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body constructor-body">
+      <p>Creates a new <code>LOGGED</code> batch statement.</p>
+
+      
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="BatchStatement%28BatchStatement.Type%29">
+    <div class="panel-heading constructor-heading">
+      <a class="anchor" href="#BatchStatement%28BatchStatement.Type%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      BatchStatement <big>(</big><code><a href="../BatchStatement.Type/">Type</a></code> batchType<big>)</big>
+    </div>
+    <div class="panel-body constructor-body">
+      <p>Creates a new batch statement of the provided type.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>batchType</var></td>
+<td><code><a href="../BatchStatement.Type/">Type</a></code></td>
+<td>
+<p>the type of batch.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+<h2 id="methods">Methods<a class="anchor" href="#methods" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-methods">
+  
+  <div class="panel panel-default member-definition" id="getIdAndValues%28ProtocolVersion%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getIdAndValues%28ProtocolVersion%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../BatchStatement.IdAndValues/">IdAndValues</a></code> getIdAndValues <big>(</big><code><a href="../ProtocolVersion/">ProtocolVersion</a></code> protocolVersion<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>protocolVersion</var></td>
+<td><code><a href="../ProtocolVersion/">ProtocolVersion</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../BatchStatement.IdAndValues/">IdAndValues</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="add%28Statement%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#add%28Statement%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">BatchStatement</a></code> add <big>(</big><code><a href="../Statement/">Statement</a></code> statement<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Adds a new statement to this batch. </p>
+<p> Note that <code>statement</code> can be any <code>Statement</code>. It is allowed to mix <code>RegularStatement</code> and <code>BoundStatement</code> in the same <code>BatchStatement</code> in particular. Adding another <code>BatchStatement</code> is also allowed for convenience and is equivalent to adding all the <code>Statement</code> contained in that other <code>BatchStatement</code>. </p>
+<p> When adding a <code>BoundStatement</code>, all of its values must be set, otherwise an <code>IllegalStateException</code> will be thrown when submitting the batch statement. See <code><a href="../BoundStatement/">BoundStatement</a></code> for more details, in particular how to handle <code>null</code> values. </p>
+<p> Please note that the options of the added Statement (all those defined directly by the <code><a href="../Statement/">Statement</a></code> class: consistency level, fetch size, tracing, …) will be ignored for the purpose of the execution of the Batch. Instead, the options used are the one of this <code>BatchStatement</code> object.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>statement</var></td>
+<td><code><a href="../Statement/">Statement</a></code></td>
+<td>
+<p>the new statement to add.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalStateException">IllegalStateException</abbr></code></td>
+<td>
+<p>if adding the new statement means that this <code>BatchStatement</code> has more than 65536 statements (since this is the maximum number of statements for a BatchStatement allowed by the underlying protocol).</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">BatchStatement</a></code></td>
+<td>
+<p>this batch statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="addAll%28Iterable%3C%3F+extends+Statement%3E%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#addAll%28Iterable%3C%3F+extends+Statement%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">BatchStatement</a></code> addAll <big>(</big><code><abbr title="java.lang.Iterable">Iterable</abbr></code>&lt;<code><a href="../Statement/">?</a></code> extends <code><a href="../Statement/">Statement</a></code>&gt; statements<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Adds multiple statements to this batch. </p>
+<p> This is a shortcut method that calls <code><a href="#add%28Statement%29">BatchStatement#add</a></code> on all the statements from <code>statements</code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>statements</var></td>
+<td>
+<code><abbr title="java.lang.Iterable">Iterable</abbr></code>&lt;<code><a href="../Statement/">?</a></code> extends <code><a href="../Statement/">Statement</a></code>&gt;</td>
+<td>
+<p>the statements to add.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">BatchStatement</a></code></td>
+<td>
+<p>this batch statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getStatements%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getStatements%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.Collection">Collection</abbr></code>&lt;<code><a href="../Statement/">Statement</a></code>&gt; getStatements <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>The statements that have been added to this batch so far.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td>
+<code><abbr title="java.util.Collection">Collection</abbr></code>&lt;<code><a href="../Statement/">Statement</a></code>&gt;</td>
+<td>
+<p>an (immutable) collection of the statements that have been added to this batch so far.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="clear%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#clear%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">BatchStatement</a></code> clear <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Clears this batch, removing all statements added so far.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">BatchStatement</a></code></td>
+<td>
+<p>this (now empty) <code>BatchStatement</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="size%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#size%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> size <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the number of elements in this batch.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td>
+<p>the number of elements in this batch.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setSerialConsistencyLevel%28ConsistencyLevel%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setSerialConsistencyLevel%28ConsistencyLevel%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">BatchStatement</a></code> setSerialConsistencyLevel <big>(</big><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> serialConsistency<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets the serial consistency level for the query. </p>
+<p> This is only supported with version 3 or higher of the native protocol. If you call this method when version 2 is in use, you will get an <code><a href="../../com.datastax.driver.core.exceptions/UnsupportedFeatureException/">UnsupportedFeatureException</a></code> when submitting the statement. With version 2, protocol batches with conditions have their serial consistency level hardcoded to SERIAL; if you need to execute a batch with LOCAL_SERIAL, you will have to use a CQL batch.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>serialConsistency</var></td>
+<td><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code></td>
+<td>
+<p>the serial consistency level to set.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>serialConsistency</code> is not one of <code>ConsistencyLevel.SERIAL</code> or <code>ConsistencyLevel.LOCAL_SERIAL</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">BatchStatement</a></code></td>
+<td>
+<p>this <code>Statement</code> object.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">See Also:</dt>
+<dd class="tag-content"><ul class="see"><li><a href="../Statement/#setSerialConsistencyLevel%28ConsistencyLevel%29">Statement#setSerialConsistencyLevel(ConsistencyLevel)</a></li></ul></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getRoutingKey%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getRoutingKey%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> getRoutingKey <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getKeyspace%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getKeyspace%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> getKeyspace <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="ensureAllSet%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#ensureAllSet%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> ensureAllSet <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>void</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc">
+<li><a href="#extends">Extends
+</a></li>
+<li><a href="#fields">Fields
+</a></li>
+<li><a href="#constructors">Constructors
+</a></li>
+<li><a href="#methods">Methods
+</a></li>
+</ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../../js/jquery.js"></script>
+    <script src="../../../../js/bootstrap.js"></script>
+    <script src="../../../../js/angular.js"></script>
+    <script src="../../../../js/mousetrap.js"></script>
+    <script src="../../../../js/hotkeys.js"></script>
+    <script src="../../../../js/ZeroClipboard.js"></script>
+    <script src="../../../../js/lunr.js"></script>
+    <script src="../../../../js/app.js"></script>
+  </body>
+</html>

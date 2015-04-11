@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - SimpleStatement</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            <li>
+              <a href="../../../">Introduction</a>
+            </li>
+            
+            <li>
+              <a href="../../../features/">Features</a>
+            </li>
+            
+            <li class="active">
+              <a href="../../">API docs</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.0.10
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li class="disabled"><a href="./">2.0.10</a></li>
+                  
+                    <li><a href="../../../2.1.5/api/com.datastax.driver.core/SimpleStatement/">2.1.5</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../../">Introduction</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../../">API docs</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">com.datastax.driver.core</a></li>
+              
+              
+              
+              
+              
+              <li class="active">SimpleStatement</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<div class="page-header">
+  <h1 id="class-simplestatement">
+    <small>class</small>
+    <abbr title="com.datastax.driver.core.SimpleStatement">SimpleStatement</abbr>
+  <a class="anchor" href="#class-simplestatement" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h1>
+</div>
+
+<p>A simple <code>RegularStatement</code> implementation built directly from a query string.</p>
+
+<h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-parent">
+  <code><a href="../RegularStatement/">RegularStatement</a></code>
+</div>
+
+
+
+
+<h2 id="constructors">Constructors<a class="anchor" href="#constructors" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-constructors">
+  
+  <div class="panel panel-default member-definition" id="SimpleStatement%28String%29">
+    <div class="panel-heading constructor-heading">
+      <a class="anchor" href="#SimpleStatement%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      SimpleStatement <big>(</big><code><abbr title="java.lang.String">String</abbr></code> query<big>)</big>
+    </div>
+    <div class="panel-body constructor-body">
+      <p>Creates a new <code>SimpleStatement</code> with the provided query string (and no values).</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>query</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the query string.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="SimpleStatement%28String%2C+Object...%29">
+    <div class="panel-heading constructor-heading">
+      <a class="anchor" href="#SimpleStatement%28String%2C+Object...%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      SimpleStatement <big>(</big><code><abbr title="java.lang.String">String</abbr></code> query, <code><abbr title="java.lang.Object">Object</abbr></code>[] values&#8230;<big>)</big>
+    </div>
+    <div class="panel-body constructor-body">
+      <p>Creates a new <code>SimpleStatement</code> with the provided query string and values. </p>
+<p> This version of SimpleStatement is useful when you do not want to execute a query only once (and thus do not want to resort to prepared statement), but do not want to convert all column values to string (typically, if you have blob values, encoding them to a hexadecimal string is not very efficient). In that case, you can provide a query string with bind marker to this constructor along with the values for those bind variables. When executed, the server will prepare the provided, bind the provided values to that prepare statement and execute the resulting statement. Thus, </p>
+<pre> session.execute(new SimpleStatement(query, value1, value2, value3)); </pre> is functionally equivalent to <pre> PreparedStatement ps = session.prepare(query); session.execute(ps.bind(value1, value2, value3)); </pre> except that the former version: <ul> <li>Requires only one round-trip to a Cassandra node.</li> <li>Does not left any prepared statement stored in memory (neither client or server side) once it has been executed.</li> </ul> <p> Note that the type of the <code>values</code> provided to this method will not be validated by the driver as is done by <code><a href="../BoundStatement/#bind%28Object...%29">BoundStatement#bind</a></code> since <code>query</code> is not parsed (and hence the driver cannot know what those value should be). If too much or too little values are provided or if a value is not a valid one for the variable it is bound to, an <code><a href="../../com.datastax.driver.core.exceptions/InvalidQueryException/">InvalidQueryException</a></code> will be thrown by Cassandra at execution time. An <code>IllegalArgumentException</code> may be thrown by this constructor however if one of the value does not correspond to any CQL3 type (for instance, if it is a custom class).</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>query</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the query string.</p>
+</td>
+</tr>
+<tr>
+<td><var>values</var></td>
+<td>
+<code><abbr title="java.lang.Object">Object</abbr></code>[]</td>
+<td>
+<p>values required for the execution of <code>query</code>.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if one of <code>values</code> is not of a type corresponding to a CQL3 type, i.e. is not a Class that could be returned by <code><a href="../DataType/#asJavaClass%28%29">DataType#asJavaClass</a></code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+<h2 id="methods">Methods<a class="anchor" href="#methods" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-methods">
+  
+  <div class="panel panel-default member-definition" id="getQueryString%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getQueryString%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> getQueryString <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the query string.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the query string;</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getValues%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getValues%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>[] getValues <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td>
+<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>[]</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getRoutingKey%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getRoutingKey%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> getRoutingKey <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the routing key for the query. </p>
+<p> Unless the routing key has been explicitly set through <code><a href="#setRoutingKey%28ByteBuffer%29">SimpleStatement#setRoutingKey</a></code>, this method will return <code>null</code> to avoid having to parse the query string to retrieve the partition key.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
+<td>
+<p>the routing key set through <code><a href="#setRoutingKey%28ByteBuffer%29">SimpleStatement#setRoutingKey</a></code> if such a key was set, <code>null</code> otherwise.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">See Also:</dt>
+<dd class="tag-content"><ul class="see"><li><a href="../Statement/#getRoutingKey%28%29">Statement#getRoutingKey</a></li></ul></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setRoutingKey%28ByteBuffer%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setRoutingKey%28ByteBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">SimpleStatement</a></code> setRoutingKey <big>(</big><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> routingKey<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets the routing key for this query. </p>
+<p> This method allows you to manually provide a routing key for this query. It is thus optional since the routing key is only an hint for token aware load balancing policy but is never mandatory. </p>
+<p> If the partition key for the query is composite, use the <code><a href="#setRoutingKey%28ByteBuffer...%29">SimpleStatement#setRoutingKey(ByteBuffer...)</a></code> method instead to build the routing key.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>routingKey</var></td>
+<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
+<td>
+<p>the raw (binary) value to use as routing key.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">SimpleStatement</a></code></td>
+<td>
+<p>this <code>SimpleStatement</code> object.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">See Also:</dt>
+<dd class="tag-content"><ul class="see"><li><a href="../Statement/#getRoutingKey%28%29">Statement#getRoutingKey</a></li></ul></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getKeyspace%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getKeyspace%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> getKeyspace <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the keyspace this query operates on. </p>
+<p> Unless the keyspace has been explicitly set through <code><a href="#setKeyspace%28String%29">SimpleStatement#setKeyspace</a></code>, this method will return <code>null</code> to avoid having to parse the query string.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the keyspace set through <code><a href="#setKeyspace%28String%29">SimpleStatement#setKeyspace</a></code> if such keyspace was set, <code>null</code> otherwise.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">See Also:</dt>
+<dd class="tag-content"><ul class="see"><li><a href="../Statement/#getKeyspace%28%29">Statement#getKeyspace</a></li></ul></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setKeyspace%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setKeyspace%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">SimpleStatement</a></code> setKeyspace <big>(</big><code><abbr title="java.lang.String">String</abbr></code> keyspace<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets the keyspace this query operates on. </p>
+<p> This method allows you to manually provide a keyspace for this query. It is thus optional since the value returned by this method is only an hint for token aware load balancing policy but is never mandatory. </p>
+<p> Do note that if the query does not use a fully qualified keyspace, then you do not need to set the keyspace through that method as the currently logged in keyspace will be used.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>keyspace</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the keyspace this query operates on.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">SimpleStatement</a></code></td>
+<td>
+<p>this <code>SimpleStatement</code> object.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">See Also:</dt>
+<dd class="tag-content"><ul class="see"><li><a href="../Statement/#getKeyspace%28%29">Statement#getKeyspace</a></li></ul></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setRoutingKey%28ByteBuffer...%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setRoutingKey%28ByteBuffer...%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">SimpleStatement</a></code> setRoutingKey <big>(</big><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>[] routingKeyComponents&#8230;<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets the routing key for this query. </p>
+<p> See <code><a href="#setRoutingKey%28ByteBuffer%29">SimpleStatement#setRoutingKey(ByteBuffer)</a></code> for more information. This method is a variant for when the query partition key is composite and thus the routing key must be built from multiple values.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>routingKeyComponents</var></td>
+<td>
+<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>[]</td>
+<td>
+<p>the raw (binary) values to compose to obtain the routing key.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">SimpleStatement</a></code></td>
+<td>
+<p>this <code>SimpleStatement</code> object.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">See Also:</dt>
+<dd class="tag-content"><ul class="see"><li><a href="../Statement/#getRoutingKey%28%29">Statement#getRoutingKey</a></li></ul></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="compose%28ByteBuffer...%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#compose%28ByteBuffer...%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> compose <big>(</big><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>[] buffers&#8230;<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>buffers</var></td>
+<td>
+<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>[]</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc">
+<li><a href="#extends">Extends
+</a></li>
+<li><a href="#constructors">Constructors
+</a></li>
+<li><a href="#methods">Methods
+</a></li>
+</ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>

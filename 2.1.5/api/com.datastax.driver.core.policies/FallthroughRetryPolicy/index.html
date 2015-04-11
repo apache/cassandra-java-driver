@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - FallthroughRetryPolicy</title>
+
+    <link rel="icon" href="../../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../../favicon.png">
+    <link href="../../../../css/style.css" rel="stylesheet">
+    <link href="../../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            <li>
+              <a href="../../../">Introduction</a>
+            </li>
+            
+            <li>
+              <a href="../../../features/">Features</a>
+            </li>
+            
+            <li class="active">
+              <a href="../../">API docs</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.1.5
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../../../api/com.datastax.driver.core.policies/FallthroughRetryPolicy/">2.0.10</a></li>
+                  
+                    <li class="disabled"><a href="./">2.1.5</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../../">Introduction</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../../">API docs</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">com.datastax.driver.core.policies</a></li>
+              
+              
+              
+              
+              
+              <li class="active">FallthroughRetryPolicy</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<div class="page-header">
+  <h1 id="class-fallthroughretrypolicy">
+    <small>class</small>
+    <abbr title="com.datastax.driver.core.policies.FallthroughRetryPolicy">FallthroughRetryPolicy</abbr>
+  <a class="anchor" href="#class-fallthroughretrypolicy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h1>
+</div>
+
+<p>A retry policy that never retry (nor ignore). </p>
+<p> All of the methods of this retry policy unconditionally return <code><a href="../RetryPolicy.RetryDecision/#rethrow%28%29">RetryPolicy.RetryDecision#rethrow</a></code>. If this policy is used, retry will have to be implemented in business code.</p>
+
+<h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-parent">
+  <code><abbr title="java.lang.Object">Object</abbr></code>
+</div>
+
+<h2 id="implements">Implements<a class="anchor" href="#implements" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-interfaces">
+  <ul class="list-inline">
+  
+    <li><code><a href="../RetryPolicy/">RetryPolicy</a></code></li>
+  
+  </ul>
+</div>
+
+
+<h2 id="fields">Fields<a class="anchor" href="#fields" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-fields">
+  
+  <div class="panel panel-default member-definition" id="INSTANCE">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#INSTANCE" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">FallthroughRetryPolicy</a></code> <var>INSTANCE</var>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+
+<h2 id="methods">Methods<a class="anchor" href="#methods" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-methods">
+  
+  <div class="panel panel-default member-definition" id="onReadTimeout%28Statement%2C+ConsistencyLevel%2C+int%2C+int%2C+boolean%2C+int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#onReadTimeout%28Statement%2C+ConsistencyLevel%2C+int%2C+int%2C+boolean%2C+int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../RetryPolicy.RetryDecision/">RetryDecision</a></code> onReadTimeout <big>(</big><code><a href="../../com.datastax.driver.core/Statement/">Statement</a></code> statement, <code><a href="../../com.datastax.driver.core/ConsistencyLevel/">ConsistencyLevel</a></code> cl, <code>int</code> requiredResponses, <code>int</code> receivedResponses, <code>boolean</code> dataRetrieved, <code>int</code> nbRetry<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Defines whether to retry and at which consistency level on a read timeout.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>statement</var></td>
+<td><code><a href="../../com.datastax.driver.core/Statement/">Statement</a></code></td>
+<td>
+<p>the original query that timed out.</p>
+</td>
+</tr>
+<tr>
+<td><var>cl</var></td>
+<td><code><a href="../../com.datastax.driver.core/ConsistencyLevel/">ConsistencyLevel</a></code></td>
+<td>
+<p>the original consistency level of the read that timed out.</p>
+</td>
+</tr>
+<tr>
+<td><var>requiredResponses</var></td>
+<td><code>int</code></td>
+<td>
+<p>the number of responses that were required to achieve the requested consistency level.</p>
+</td>
+</tr>
+<tr>
+<td><var>receivedResponses</var></td>
+<td><code>int</code></td>
+<td>
+<p>the number of responses that had been received by the time the timeout exception was raised.</p>
+</td>
+</tr>
+<tr>
+<td><var>dataRetrieved</var></td>
+<td><code>boolean</code></td>
+<td>
+<p>whether actual data (by opposition to data checksum) was present in the received responses.</p>
+</td>
+</tr>
+<tr>
+<td><var>nbRetry</var></td>
+<td><code>int</code></td>
+<td>
+<p>the number of retry already performed for this operation.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../RetryPolicy.RetryDecision/">RetryDecision</a></code></td>
+<td>
+<p><code>RetryDecision.rethrow()</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="onWriteTimeout%28Statement%2C+ConsistencyLevel%2C+WriteType%2C+int%2C+int%2C+int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#onWriteTimeout%28Statement%2C+ConsistencyLevel%2C+WriteType%2C+int%2C+int%2C+int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../RetryPolicy.RetryDecision/">RetryDecision</a></code> onWriteTimeout <big>(</big><code><a href="../../com.datastax.driver.core/Statement/">Statement</a></code> statement, <code><a href="../../com.datastax.driver.core/ConsistencyLevel/">ConsistencyLevel</a></code> cl, <code><a href="../../com.datastax.driver.core/WriteType/">WriteType</a></code> writeType, <code>int</code> requiredAcks, <code>int</code> receivedAcks, <code>int</code> nbRetry<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Defines whether to retry and at which consistency level on a write timeout.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>statement</var></td>
+<td><code><a href="../../com.datastax.driver.core/Statement/">Statement</a></code></td>
+<td>
+<p>the original query that timed out.</p>
+</td>
+</tr>
+<tr>
+<td><var>cl</var></td>
+<td><code><a href="../../com.datastax.driver.core/ConsistencyLevel/">ConsistencyLevel</a></code></td>
+<td>
+<p>the original consistency level of the write that timed out.</p>
+</td>
+</tr>
+<tr>
+<td><var>writeType</var></td>
+<td><code><a href="../../com.datastax.driver.core/WriteType/">WriteType</a></code></td>
+<td>
+<p>the type of the write that timed out.</p>
+</td>
+</tr>
+<tr>
+<td><var>requiredAcks</var></td>
+<td><code>int</code></td>
+<td>
+<p>the number of acknowledgments that were required to achieve the requested consistency level.</p>
+</td>
+</tr>
+<tr>
+<td><var>receivedAcks</var></td>
+<td><code>int</code></td>
+<td>
+<p>the number of acknowledgments that had been received by the time the timeout exception was raised.</p>
+</td>
+</tr>
+<tr>
+<td><var>nbRetry</var></td>
+<td><code>int</code></td>
+<td>
+<p>the number of retry already performed for this operation.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../RetryPolicy.RetryDecision/">RetryDecision</a></code></td>
+<td>
+<p><code>RetryDecision.rethrow()</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="onUnavailable%28Statement%2C+ConsistencyLevel%2C+int%2C+int%2C+int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#onUnavailable%28Statement%2C+ConsistencyLevel%2C+int%2C+int%2C+int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../RetryPolicy.RetryDecision/">RetryDecision</a></code> onUnavailable <big>(</big><code><a href="../../com.datastax.driver.core/Statement/">Statement</a></code> statement, <code><a href="../../com.datastax.driver.core/ConsistencyLevel/">ConsistencyLevel</a></code> cl, <code>int</code> requiredReplica, <code>int</code> aliveReplica, <code>int</code> nbRetry<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Defines whether to retry and at which consistency level on an unavailable exception.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>statement</var></td>
+<td><code><a href="../../com.datastax.driver.core/Statement/">Statement</a></code></td>
+<td>
+<p>the original query for which the consistency level cannot be achieved.</p>
+</td>
+</tr>
+<tr>
+<td><var>cl</var></td>
+<td><code><a href="../../com.datastax.driver.core/ConsistencyLevel/">ConsistencyLevel</a></code></td>
+<td>
+<p>the original consistency level for the operation.</p>
+</td>
+</tr>
+<tr>
+<td><var>requiredReplica</var></td>
+<td><code>int</code></td>
+<td>
+<p>the number of replica that should have been (known) alive for the operation to be attempted.</p>
+</td>
+</tr>
+<tr>
+<td><var>aliveReplica</var></td>
+<td><code>int</code></td>
+<td>
+<p>the number of replica that were know to be alive by the coordinator of the operation.</p>
+</td>
+</tr>
+<tr>
+<td><var>nbRetry</var></td>
+<td><code>int</code></td>
+<td>
+<p>the number of retry already performed for this operation.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../RetryPolicy.RetryDecision/">RetryDecision</a></code></td>
+<td>
+<p><code>RetryDecision.rethrow()</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc">
+<li><a href="#extends">Extends
+</a></li>
+<li><a href="#implements">Implements
+</a></li>
+<li><a href="#fields">Fields
+</a></li>
+<li><a href="#methods">Methods
+</a></li>
+</ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../../js/jquery.js"></script>
+    <script src="../../../../js/bootstrap.js"></script>
+    <script src="../../../../js/angular.js"></script>
+    <script src="../../../../js/mousetrap.js"></script>
+    <script src="../../../../js/hotkeys.js"></script>
+    <script src="../../../../js/ZeroClipboard.js"></script>
+    <script src="../../../../js/lunr.js"></script>
+    <script src="../../../../js/app.js"></script>
+  </body>
+</html>

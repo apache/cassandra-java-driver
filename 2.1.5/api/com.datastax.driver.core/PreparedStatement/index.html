@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - PreparedStatement</title>
+
+    <link rel="icon" href="../../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../../favicon.png">
+    <link href="../../../../css/style.css" rel="stylesheet">
+    <link href="../../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            <li>
+              <a href="../../../">Introduction</a>
+            </li>
+            
+            <li>
+              <a href="../../../features/">Features</a>
+            </li>
+            
+            <li class="active">
+              <a href="../../">API docs</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.1.5
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../../../api/com.datastax.driver.core/PreparedStatement/">2.0.10</a></li>
+                  
+                    <li class="disabled"><a href="./">2.1.5</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../../">Introduction</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../../">API docs</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">com.datastax.driver.core</a></li>
+              
+              
+              
+              
+              
+              <li class="active">PreparedStatement</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<div class="page-header">
+  <h1 id="interface-preparedstatement">
+    <small>interface</small>
+    <abbr title="com.datastax.driver.core.PreparedStatement">PreparedStatement</abbr>
+  <a class="anchor" href="#interface-preparedstatement" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h1>
+</div>
+
+<p>Represents a prepared statement, a query with bound variables that has been prepared (pre-parsed) by the database. </p>
+<p> A prepared statement can be executed once concrete values have been provided for the bound variables. A prepared statement and the values for its bound variables constitute a BoundStatement and can be executed (by <code><a href="../Session/#execute%28String%29">Session#execute</a></code>). </p>
+<p> A <code>PreparedStatement</code> object allows you to define specific defaults for the different properties of a <code><a href="../Statement/">Statement</a></code> (Consistency level, tracing, …), in which case those properties will be inherited as default by every BoundedStatement created from the {PreparedStatement}. The default for those <code>PreparedStatement</code> properties is the same that in <code><a href="../Statement/">Statement</a></code> if the PreparedStatement is created by <code><a href="../Session/#prepare%28String%29">Session#prepare(String)</a></code> but will inherit of the properties of the <code><a href="../RegularStatement/">RegularStatement</a></code> used for the preparation if <code><a href="../Session/#prepare%28RegularStatement%29">Session#prepare(RegularStatement)</a></code> is used.</p>
+
+
+
+<h2 id="implemented-by">Implemented By<a class="anchor" href="#implemented-by" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="interface-implementations">
+  <ul class="list-inline">
+  
+    <li><code><a href="../DefaultPreparedStatement/">DefaultPreparedStatement</a></code></li>
+  
+  </ul>
+</div>
+
+<h2 id="methods">Methods<a class="anchor" href="#methods" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-methods">
+  
+  <div class="panel panel-default member-definition" id="getVariables%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getVariables%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../ColumnDefinitions/">ColumnDefinitions</a></code> getVariables <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns metadata on the bounded variables of this prepared statement.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../ColumnDefinitions/">ColumnDefinitions</a></code></td>
+<td>
+<p>the variables bounded in this prepared statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="bind%28Object...%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#bind%28Object...%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../BoundStatement/">BoundStatement</a></code> bind <big>(</big><code><abbr title="java.lang.Object">Object</abbr></code>[] values&#8230;<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Creates a new BoundStatement object and bind its variables to the provided values. </p>
+<p> While the number of <code>values</code> cannot be greater than the number of bound variables, the number of <code>values</code> may be fewer than the number of bound variables. In that case, the remaining variables will have to be bound to values by another mean because the resulting <code>BoundStatement</code> being executable. </p>
+<p> This method is a convenience for <code>new BoundStatement(this).bind(...)</code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>values</var></td>
+<td>
+<code><abbr title="java.lang.Object">Object</abbr></code>[]</td>
+<td>
+<p>the values to bind to the variables of the newly created BoundStatement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if more <code>values</code> are provided than there is of bound variables in this statement.</p>
+</td>
+</tr>
+<tr>
+<td><code><a href="../../com.datastax.driver.core.exceptions/InvalidTypeException/">InvalidTypeException</a></code></td>
+<td>
+<p>if any of the provided value is not of correct type to be bound to the corresponding bind variable.</p>
+</td>
+</tr>
+<tr>
+<td><code><abbr title="java.lang.NullPointerException">NullPointerException</abbr></code></td>
+<td>
+<p>if one of <code>values</code> is a collection (List, Set or Map) containing a null value. Nulls are not supported in collections by CQL.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../BoundStatement/">BoundStatement</a></code></td>
+<td>
+<p>the newly created <code>BoundStatement</code> with its variables bound to <code>values</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">See Also:</dt>
+<dd class="tag-content"><ul class="see"><li><a href="../BoundStatement/#bind%28Object...%29">BoundStatement#bind</a></li></ul></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="bind%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#bind%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../BoundStatement/">BoundStatement</a></code> bind <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Creates a new BoundStatement object for this prepared statement. </p>
+<p> This method do not bind any values to any of the prepared variables. Said values need to be bound on the resulting statement using BoundStatement’s setters methods (<code><a href="../BoundStatement/#setInt%28int%2C+int%29">BoundStatement#setInt</a></code>, <code><a href="../BoundStatement/#setLong%28int%2C+long%29">BoundStatement#setLong</a></code>, …).</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../BoundStatement/">BoundStatement</a></code></td>
+<td>
+<p>the newly created <code>BoundStatement</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setRoutingKey%28ByteBuffer%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setRoutingKey%28ByteBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PreparedStatement</a></code> setRoutingKey <big>(</big><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> routingKey<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets the routing key for this prepared statement. </p>
+<p> While you can provide a fixed routing key for all executions of this prepared statement with this method, it is not mandatory to provide one through this method. This method should only be used if the partition key of the prepared query is not part of the prepared variables (that is if the partition key is fixed). </p>
+<p> Note that if the partition key is part of the prepared variables, the routing key will be automatically computed once those variables are bound. </p>
+<p> If the partition key is neither fixed nor part of the prepared variables (e.g. a composite partition key where only some of the components are bound), the routing key can also be set on each bound statement.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>routingKey</var></td>
+<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
+<td>
+<p>the raw (binary) value to use as routing key.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PreparedStatement</a></code></td>
+<td>
+<p>this <code>PreparedStatement</code> object.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">See Also:</dt>
+<dd class="tag-content"><ul class="see">
+<li><a href="../Statement/#getRoutingKey%28%29">Statement#getRoutingKey</a></li>
+<li><a href="../BoundStatement/#getRoutingKey%28%29">BoundStatement#getRoutingKey</a></li>
+</ul></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setRoutingKey%28ByteBuffer...%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setRoutingKey%28ByteBuffer...%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PreparedStatement</a></code> setRoutingKey <big>(</big><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>[] routingKeyComponents&#8230;<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets the routing key for this query. </p>
+<p> See <code><a href="#setRoutingKey%28ByteBuffer%29">PreparedStatement#setRoutingKey(ByteBuffer)</a></code> for more information. This method is a variant for when the query partition key is composite and the routing key must be built from multiple values.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>routingKeyComponents</var></td>
+<td>
+<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>[]</td>
+<td>
+<p>the raw (binary) values to compose to obtain the routing key.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PreparedStatement</a></code></td>
+<td>
+<p>this <code>PreparedStatement</code> object.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">See Also:</dt>
+<dd class="tag-content"><ul class="see"><li><a href="../Statement/#getRoutingKey%28%29">Statement#getRoutingKey</a></li></ul></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getRoutingKey%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getRoutingKey%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> getRoutingKey <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the routing key set for this query.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
+<td>
+<p>the routing key for this query or <code>null</code> if none has been explicitly set on this PreparedStatement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setConsistencyLevel%28ConsistencyLevel%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setConsistencyLevel%28ConsistencyLevel%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PreparedStatement</a></code> setConsistencyLevel <big>(</big><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> consistency<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets a default consistency level for all bound statements created from this prepared statement. </p>
+<p> If no consistency level is set through this method, the bound statement created from this object will use the default consistency level (ONE). </p>
+<p> Changing the default consistency level is not retroactive, it only applies to BoundStatement created after the change.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>consistency</var></td>
+<td><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code></td>
+<td>
+<p>the default consistency level to set.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PreparedStatement</a></code></td>
+<td>
+<p>this <code>PreparedStatement</code> object.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getConsistencyLevel%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getConsistencyLevel%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> getConsistencyLevel <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the default consistency level set through <code><a href="#setConsistencyLevel%28ConsistencyLevel%29">PreparedStatement#setConsistencyLevel</a></code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code></td>
+<td>
+<p>the default consistency level. Returns <code>null</code> if no consistency level has been set through this object <code>setConsistencyLevel</code> method.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setSerialConsistencyLevel%28ConsistencyLevel%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setSerialConsistencyLevel%28ConsistencyLevel%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PreparedStatement</a></code> setSerialConsistencyLevel <big>(</big><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> serialConsistency<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Sets a default serial consistency level for all bound statements created from this prepared statement. </p>
+<p> If no serial consistency level is set through this method, the bound statement created from this object will use the default serial consistency level (SERIAL). </p>
+<p> Changing the default serial consistency level is not retroactive, it only applies to BoundStatement created after the change.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>serialConsistency</var></td>
+<td><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code></td>
+<td>
+<p>the default serial consistency level to set.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>serialConsistency</code> is not one of <code>ConsistencyLevel.SERIAL</code> or <code>ConsistencyLevel.LOCAL_SERIAL</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PreparedStatement</a></code></td>
+<td>
+<p>this <code>PreparedStatement</code> object.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getSerialConsistencyLevel%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getSerialConsistencyLevel%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> getSerialConsistencyLevel <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the default serial consistency level set through <code><a href="#setSerialConsistencyLevel%28ConsistencyLevel%29">PreparedStatement#setSerialConsistencyLevel</a></code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code></td>
+<td>
+<p>the default serial consistency level. Returns <code>null</code> if no consistency level has been set through this object <code>setSerialConsistencyLevel</code> method.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getQueryString%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getQueryString%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> getQueryString <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the string of the query that was prepared to yield this <code>PreparedStatement</code>. </p>
+<p> Note that a CQL3 query may be implicitly applied to the current keyspace (that is, if the keyspace is not explicitly qualified in the query itself). For prepared queries, the current keyspace used is the one at the time of the preparation, not the one at execution time. The current keyspace at the time of the preparation can be retrieved through <code><a href="#getQueryKeyspace%28%29">PreparedStatement#getQueryKeyspace</a></code>.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the query that was prepared to yield this <code>PreparedStatement</code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getQueryKeyspace%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getQueryKeyspace%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> getQueryKeyspace <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the keyspace at the time that this prepared statement was prepared, (that is the one on which this statement applies unless it specified a keyspace explicitly).</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the keyspace at the time that this statement was prepared or <code>null</code> if no keyspace was set when the query was prepared (which is possible since keyspaces can be explicitly qualified in queries and so may not require a current keyspace to be set).</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="enableTracing%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#enableTracing%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PreparedStatement</a></code> enableTracing <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Convenience method to enables tracing for all bound statements created from this prepared statement.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PreparedStatement</a></code></td>
+<td>
+<p>this <code>Query</code> object.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="disableTracing%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#disableTracing%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PreparedStatement</a></code> disableTracing <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Convenience method to disable tracing for all bound statements created from this prepared statement.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PreparedStatement</a></code></td>
+<td>
+<p>this <code>PreparedStatement</code> object.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="isTracing%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#isTracing%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>boolean</code> isTracing <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns whether tracing is enabled for this prepared statement, i.e. if BoundStatement created from it will use tracing by default.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>boolean</code></td>
+<td>
+<p><code>true</code> if this prepared statement has tracing enabled, <code>false</code> otherwise.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="setRetryPolicy%28RetryPolicy%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#setRetryPolicy%28RetryPolicy%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">PreparedStatement</a></code> setRetryPolicy <big>(</big><code><a href="../../com.datastax.driver.core.policies/RetryPolicy/">RetryPolicy</a></code> policy<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Convenience method to set a default retry policy for the <code>BoundStatement</code> created from this prepared statement. </p>
+<p> Note that this method is completely optional. By default, the retry policy used is the one returned <code><a href="../../com.datastax.driver.core.policies/Policies/#getRetryPolicy%28%29">Policies#getRetryPolicy</a></code> in the cluster configuration. This method is only useful if you want to override this default policy for the <code>BoundStatement</code> created from this <code>PreparedStatement</code>. to punctually override the default policy for this request.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>policy</var></td>
+<td><code><a href="../../com.datastax.driver.core.policies/RetryPolicy/">RetryPolicy</a></code></td>
+<td>
+<p>the retry policy to use for this prepared statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">PreparedStatement</a></code></td>
+<td>
+<p>this <code>PreparedStatement</code> object.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getRetryPolicy%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getRetryPolicy%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../../com.datastax.driver.core.policies/RetryPolicy/">RetryPolicy</a></code> getRetryPolicy <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the retry policy sets for this prepared statement, if any.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../../com.datastax.driver.core.policies/RetryPolicy/">RetryPolicy</a></code></td>
+<td>
+<p>the retry policy sets specifically for this prepared statement or <code>null</code> if none have been set.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getPreparedId%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getPreparedId%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../PreparedId/">PreparedId</a></code> getPreparedId <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Returns the prepared Id for this statement.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../PreparedId/">PreparedId</a></code></td>
+<td>
+<p>the PreparedId corresponding to this statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc">
+<li><a href="#implemented-by">Implemented By
+</a></li>
+<li><a href="#methods">Methods
+</a></li>
+</ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../../js/jquery.js"></script>
+    <script src="../../../../js/bootstrap.js"></script>
+    <script src="../../../../js/angular.js"></script>
+    <script src="../../../../js/mousetrap.js"></script>
+    <script src="../../../../js/hotkeys.js"></script>
+    <script src="../../../../js/ZeroClipboard.js"></script>
+    <script src="../../../../js/lunr.js"></script>
+    <script src="../../../../js/app.js"></script>
+  </body>
+</html>
