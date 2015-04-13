@@ -29,7 +29,5 @@ links:
   - title: Releases
     href:  https://github.com/datastax/java-driver/releases
 versions:
-  - name: 2.0.10
-    ref:  '2.0.10'
   - name: 2.1.5
     ref:  '2.1.5'
