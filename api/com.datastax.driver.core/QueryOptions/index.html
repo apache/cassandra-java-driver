@@ -37,13 +37,12 @@
         <div class="collapse navbar-collapse" ng-controller="search">
           <ul class="nav navbar-nav">
             
-            <li>
-              <a href="../../../">Introduction</a>
-            </li>
+            
             
             <li>
               <a href="../../../features/">Features</a>
             </li>
+            
             
             <li class="active">
               <a href="../../">API docs</a>
@@ -52,7 +51,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -68,26 +67,10 @@
           <nav class="crumbs">
             <ol class="breadcrumb">
               
-              <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
-                  
-                    <li class="disabled"><a href="./">2.0.10</a></li>
-                  
-                    <li><a href="../../../2.1.5/api/com.datastax.driver.core/QueryOptions/">2.1.5</a></li>
-                  
-                  </ul>
-                </div>
-              </li>
               
               
               
-              
-              <li><a href="../../../">Introduction</a></li>
+              <li><a href="../../../">Home</a></li>
               
               
               
@@ -99,7 +82,7 @@
               
               
               
-              <li><a href="../">com.datastax.driver.core</a></li>
+              <li><a href="../">c.d.d.core</a></li>
               
               
               
@@ -141,7 +124,7 @@
       <code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> <var>DEFAULT_CONSISTENCY_LEVEL</var>
     </div>
     <div class="panel-body field-body">
-      <p>The default consistency level for queries: <code><a href="../ConsistencyLevel/#ONE">ConsistencyLevel#ONE</a></code>.</p>
+      <p>The default consistency level for queries: <code>ConsistencyLevel.ONE</code>.</p>
 
       <dl class="dl-horizontal notes">
 <dt><span class="label label-info">Final</span></dt>
@@ -158,7 +141,7 @@
       <code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> <var>DEFAULT_SERIAL_CONSISTENCY_LEVEL</var>
     </div>
     <div class="panel-body field-body">
-      <p>The default serial consistency level for conditional updates: <code><a href="../ConsistencyLevel/#SERIAL">ConsistencyLevel#SERIAL</a></code>.</p>
+      <p>The default serial consistency level for conditional updates: <code>ConsistencyLevel.SERIAL</code>.</p>
 
       <dl class="dl-horizontal notes">
 <dt><span class="label label-info">Final</span></dt>
@@ -198,7 +181,7 @@
       QueryOptions <big>(</big><big>)</big>
     </div>
     <div class="panel-body constructor-body">
-      <p>Creates a new <code><a href="./">QueryOptions</a></code> instance using the <code><a href="#DEFAULT_CONSISTENCY_LEVEL">QueryOptions#DEFAULT_CONSISTENCY_LEVEL</a></code>, <code><a href="#DEFAULT_SERIAL_CONSISTENCY_LEVEL">QueryOptions#DEFAULT_SERIAL_CONSISTENCY_LEVEL</a></code> and <code><a href="#DEFAULT_FETCH_SIZE">QueryOptions#DEFAULT_FETCH_SIZE</a></code>.</p>
+      <p>Creates a new <code>QueryOptions</code> instance using the <code>DEFAULT_CONSISTENCY_LEVEL</code>, <code>DEFAULT_SERIAL_CONSISTENCY_LEVEL</code> and <code>DEFAULT_FETCH_SIZE</code>.</p>
 
       
     </div>
@@ -423,7 +406,7 @@
 <tr>
 <td><code><a href="../../com.datastax.driver.core.exceptions/UnsupportedFeatureException/">UnsupportedFeatureException</a></code></td>
 <td>
-<p>if version 1 of the native protocol is in use and <code>fetchSize != Integer.MAX_VALUE</code> as paging is not supported by version 1 of the protocol. See <code><a href="../Cluster.Builder/#withProtocolVersion%28int%29">Cluster.Builder#withProtocolVersion</a></code> for more details on protocol versions.</p>
+<p>if version 1 of the native protocol is in use and <code>fetchSize != Integer.MAX_VALUE</code> as paging is not supported by version 1 of the protocol. See <code><a href="../Cluster.Builder/#withProtocolVersion%28ProtocolVersion%29">Cluster.Builder#withProtocolVersion</a></code> for more details on protocol versions.</p>
 </td>
 </tr>
 </tbody>

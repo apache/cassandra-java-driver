@@ -37,13 +37,12 @@
         <div class="collapse navbar-collapse" ng-controller="search">
           <ul class="nav navbar-nav">
             
-            <li>
-              <a href="../../../">Introduction</a>
-            </li>
+            
             
             <li>
               <a href="../../../features/">Features</a>
             </li>
+            
             
             <li class="active">
               <a href="../../">API docs</a>
@@ -52,7 +51,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -68,26 +67,10 @@
           <nav class="crumbs">
             <ol class="breadcrumb">
               
-              <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
-                  
-                    <li class="disabled"><a href="./">2.0.10</a></li>
-                  
-                    <li><a href="../../../2.1.5/api/com.datastax.driver.core/ProtocolOptions/">2.1.5</a></li>
-                  
-                  </ul>
-                </div>
-              </li>
               
               
               
-              
-              <li><a href="../../../">Introduction</a></li>
+              <li><a href="../../../">Home</a></li>
               
               
               
@@ -99,7 +82,7 @@
               
               
               
-              <li><a href="../">com.datastax.driver.core</a></li>
+              <li><a href="../">c.d.d.core</a></li>
               
               
               
@@ -169,10 +152,31 @@
     </div>
   </div>
   
+  <div class="panel panel-default member-definition" id="NEWEST_SUPPORTED_PROTOCOL_VERSION">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#NEWEST_SUPPORTED_PROTOCOL_VERSION" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> <var>NEWEST_SUPPORTED_PROTOCOL_VERSION</var>
+    </div>
+    <div class="panel-body field-body">
+      <p>The newest version of the protocol that this version of the driver support.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-warning">Deprecated</span></dt>
+<dd>
+<p>This is provided for backward compatibility; use <code><a href="../../../com.datastax.driver.core/ProtocolVersion/#NEWEST_SUPPORTED">ProtocolVersion#NEWEST_SUPPORTED</a></code> instead.</p>
+</dd>
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
   <div class="panel panel-default member-definition" id="initialProtocolVersion">
     <div class="panel-heading field-heading">
       <a class="anchor" href="#initialProtocolVersion" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>int</code> <var>initialProtocolVersion</var>
+      <code><a href="../ProtocolVersion/">ProtocolVersion</a></code> <var>initialProtocolVersion</var>
     </div>
     <div class="panel-body field-body">
       
@@ -230,10 +234,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="ProtocolOptions%28int%2C+int%2C+int%2C+SSLOptions%2C+AuthProvider%29">
+  <div class="panel panel-default member-definition" id="ProtocolOptions%28int%2C+ProtocolVersion%2C+int%2C+SSLOptions%2C+AuthProvider%29">
     <div class="panel-heading constructor-heading">
-      <a class="anchor" href="#ProtocolOptions%28int%2C+int%2C+int%2C+SSLOptions%2C+AuthProvider%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      ProtocolOptions <big>(</big><code>int</code> port, <code>int</code> protocolVersion, <code>int</code> maxSchemaAgreementWaitSeconds, <code><a href="../SSLOptions/">SSLOptions</a></code> sslOptions, <code><a href="../AuthProvider/">AuthProvider</a></code> authProvider<big>)</big>
+      <a class="anchor" href="#ProtocolOptions%28int%2C+ProtocolVersion%2C+int%2C+SSLOptions%2C+AuthProvider%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      ProtocolOptions <big>(</big><code>int</code> port, <code><a href="../ProtocolVersion/">ProtocolVersion</a></code> protocolVersion, <code>int</code> maxSchemaAgreementWaitSeconds, <code><a href="../SSLOptions/">SSLOptions</a></code> sslOptions, <code><a href="../AuthProvider/">AuthProvider</a></code> authProvider<big>)</big>
     </div>
     <div class="panel-body constructor-body">
       <p>Creates a new <code>ProtocolOptions</code> instance using the provided port and SSL context.</p>
@@ -256,9 +260,9 @@
 </tr>
 <tr>
 <td><var>protocolVersion</var></td>
-<td><code>int</code></td>
+<td><code><a href="../ProtocolVersion/">ProtocolVersion</a></code></td>
 <td>
-<p>the protocol version to use. This can be a negative number, in which case the version uses will be the biggest version supported by the <em>first</em> node the driver connects to. Otherwise, it must be either 1 or 2 to force using a particular protocol version. See <code><a href="../Cluster.Builder/#withProtocolVersion%28int%29">Cluster.Builder#withProtocolVersion</a></code> for more details.</p>
+<p>the protocol version to use. This can be <code>null</code>, in which case the version used will be the biggest version supported by the <em>first</em> node the driver connects to. See <code><a href="../Cluster.Builder/#withProtocolVersion%28ProtocolVersion%29">Cluster.Builder#withProtocolVersion</a></code> for more details.</p>
 </td>
 </tr>
 <tr>
@@ -281,6 +285,67 @@
 </td>
 </tr>
 </tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="ProtocolOptions%28int%2C+int%2C+SSLOptions%2C+AuthProvider%29">
+    <div class="panel-heading constructor-heading">
+      <a class="anchor" href="#ProtocolOptions%28int%2C+int%2C+SSLOptions%2C+AuthProvider%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      ProtocolOptions <big>(</big><code>int</code> port, <code>int</code> protocolVersion, <code><a href="../SSLOptions/">SSLOptions</a></code> sslOptions, <code><a href="../AuthProvider/">AuthProvider</a></code> authProvider<big>)</big>
+    </div>
+    <div class="panel-body constructor-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-warning">Deprecated</span></dt>
+<dd>
+<p>This is provided for backward compatibility; use <code><code>#ProtocolOptions(int, ProtocolVersion, int, SSLOptions, AuthProvider))</code></code> instead.</p>
+</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>port</var></td>
+<td><code>int</code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>protocolVersion</var></td>
+<td><code>int</code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>sslOptions</var></td>
+<td><code><a href="../SSLOptions/">SSLOptions</a></code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>authProvider</var></td>
+<td><code><a href="../AuthProvider/">AuthProvider</a></code></td>
+<td></td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>protocolVersion</code> does not correspond to any known version.</p>
+</td>
+</tr></tbody>
 </table></dd>
 </dl>
     </div>
@@ -354,10 +419,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="getProtocolVersion%28%29">
+  <div class="panel panel-default member-definition" id="getProtocolVersionEnum%28%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#getProtocolVersion%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>int</code> getProtocolVersion <big>(</big><big>)</big>
+      <a class="anchor" href="#getProtocolVersionEnum%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../ProtocolVersion/">ProtocolVersion</a></code> getProtocolVersionEnum <big>(</big><big>)</big>
     </div>
     <div class="panel-body method-body">
       <p>The protocol version used by the Cluster instance.</p>
@@ -370,10 +435,40 @@
 <th class="details">Details</th>
 </tr></thead>
 <tbody><tr>
-<td><code>int</code></td>
+<td><code><a href="../ProtocolVersion/">ProtocolVersion</a></code></td>
 <td>
-<p>the protocol version in use. This might return a negative value if a particular version hasn’t been forced by the user (using say {Cluster.Builder#withProtocolVersion}) <em>and</em> this Cluster instance has not yet connected to any node (but as soon as the Cluster instance is connected, this is guaranteed to return either 1 or 2). Note that nodes that do not support this protocol version will be ignored.</p>
+<p>the protocol version in use. This might return <code>null</code> if a particular version hasn’t been forced by the user (using say {Cluster.Builder#withProtocolVersion}) <em>and</em> this Cluster instance has not yet connected to any node (but as soon as the Cluster instance is connected, this is guaranteed to return a non-null value). Note that nodes that do not support this protocol version will be ignored.</p>
 </td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getProtocolVersion%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getProtocolVersion%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> getProtocolVersion <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>The protocol version used by the Cluster instance, as a number.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-warning">Deprecated</span></dt>
+<dd>
+<p>This is provided for backward compatibility, use <code><a href="#getProtocolVersionEnum%28%29">ProtocolOptions#getProtocolVersionEnum()</a></code> instead.</p>
+</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code>int</code></td>
+<td></td>
 </tr></tbody>
 </table></dd>
 </dl>

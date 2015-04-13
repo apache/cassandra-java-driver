@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - SchemaBuilder</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            
+            
+            <li>
+              <a href="../../../features/">Features</a>
+            </li>
+            
+            
+            <li class="active">
+              <a href="../../">API docs</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              
+              
+              
+              <li><a href="../../../">Home</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../../">API docs</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">c.d.d.c.schemabuilder</a></li>
+              
+              
+              
+              
+              
+              <li class="active">SchemaBuilder</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<div class="page-header">
+  <h1 id="class-schemabuilder">
+    <small>class</small>
+    <abbr title="com.datastax.driver.core.schemabuilder.SchemaBuilder">SchemaBuilder</abbr>
+  <a class="anchor" href="#class-schemabuilder" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h1>
+</div>
+
+<p>Static methods to build a CQL3 DDL statement. </p>
+<p> The provided builders perform very little validation of the built query. There is thus no guarantee that a built query is valid, and it is definitively possible to create invalid queries. </p>
+<p> Note that it could be convenient to use an ‘import static’ to use the methods of this class.</p>
+
+<h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-parent">
+  <code><abbr title="java.lang.Object">Object</abbr></code>
+</div>
+
+
+
+
+
+<h2 id="methods">Methods<a class="anchor" href="#methods" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+<div class="class-methods">
+  
+  <div class="panel panel-default member-definition" id="createTable%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#createTable%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Create/">Create</a></code> createTable <big>(</big><code><abbr title="java.lang.String">String</abbr></code> tableName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Start building a new CREATE TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>tableName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the table to create.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Create/">Create</a></code></td>
+<td>
+<p>an in-construction CREATE TABLE statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="createTable%28String%2C+String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#createTable%28String%2C+String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Create/">Create</a></code> createTable <big>(</big><code><abbr title="java.lang.String">String</abbr></code> keyspaceName, <code><abbr title="java.lang.String">String</abbr></code> tableName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Start building a new CREATE TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>keyspaceName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the keyspace to be used.</p>
+</td>
+</tr>
+<tr>
+<td><var>tableName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the table to create.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Create/">Create</a></code></td>
+<td>
+<p>an in-construction CREATE TABLE statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="alterTable%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#alterTable%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Alter/">Alter</a></code> alterTable <big>(</big><code><abbr title="java.lang.String">String</abbr></code> tableName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Start building a new ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>tableName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the table to be altered.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Alter/">Alter</a></code></td>
+<td>
+<p>an in-construction ALTER TABLE statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="alterTable%28String%2C+String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#alterTable%28String%2C+String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Alter/">Alter</a></code> alterTable <big>(</big><code><abbr title="java.lang.String">String</abbr></code> keyspaceName, <code><abbr title="java.lang.String">String</abbr></code> tableName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Start building a new ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>keyspaceName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the keyspace to be used.</p>
+</td>
+</tr>
+<tr>
+<td><var>tableName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the table to be altered.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Alter/">Alter</a></code></td>
+<td>
+<p>an in-construction ALTER TABLE statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="dropTable%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#dropTable%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Drop/">Drop</a></code> dropTable <big>(</big><code><abbr title="java.lang.String">String</abbr></code> tableName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Start building a new DROP TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>tableName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the table to be dropped.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Drop/">Drop</a></code></td>
+<td>
+<p>an in-construction DROP TABLE statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="dropTable%28String%2C+String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#dropTable%28String%2C+String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Drop/">Drop</a></code> dropTable <big>(</big><code><abbr title="java.lang.String">String</abbr></code> keyspaceName, <code><abbr title="java.lang.String">String</abbr></code> tableName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Start building a new DROP TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>keyspaceName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the keyspace to be used.</p>
+</td>
+</tr>
+<tr>
+<td><var>tableName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the table to be dropped.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Drop/">Drop</a></code></td>
+<td>
+<p>an in-construction DROP TABLE statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="createIndex%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#createIndex%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../CreateIndex/">CreateIndex</a></code> createIndex <big>(</big><code><abbr title="java.lang.String">String</abbr></code> indexName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Start building a new CREATE INDEX statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>indexName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the table to create.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../CreateIndex/">CreateIndex</a></code></td>
+<td>
+<p>an in-construction CREATE INDEX statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="dropIndex%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#dropIndex%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Drop/">Drop</a></code> dropIndex <big>(</big><code><abbr title="java.lang.String">String</abbr></code> indexName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Start building a new DROP INDEX statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>indexName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the index to be dropped.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Drop/">Drop</a></code></td>
+<td>
+<p>an in-construction DROP INDEX statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="dropIndex%28String%2C+String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#dropIndex%28String%2C+String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Drop/">Drop</a></code> dropIndex <big>(</big><code><abbr title="java.lang.String">String</abbr></code> keyspaceName, <code><abbr title="java.lang.String">String</abbr></code> indexName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Start building a new DROP INDEX statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>keyspaceName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the keyspace to be used.</p>
+</td>
+</tr>
+<tr>
+<td><var>indexName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the index to be dropped.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Drop/">Drop</a></code></td>
+<td>
+<p>an in-construction DROP INDEX statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="createType%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#createType%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../CreateType/">CreateType</a></code> createType <big>(</big><code><abbr title="java.lang.String">String</abbr></code> typeName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Start building a new CREATE TYPE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>typeName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the custom type to create.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../CreateType/">CreateType</a></code></td>
+<td>
+<p>an in-construction CREATE TYPE statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="createType%28String%2C+String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#createType%28String%2C+String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../CreateType/">CreateType</a></code> createType <big>(</big><code><abbr title="java.lang.String">String</abbr></code> keyspaceName, <code><abbr title="java.lang.String">String</abbr></code> typeName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Start building a new CREATE TYPE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>keyspaceName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the keyspace to be used.</p>
+</td>
+</tr>
+<tr>
+<td><var>typeName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the custom type to create.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../CreateType/">CreateType</a></code></td>
+<td>
+<p>an in-construction CREATE TYPE statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="dropType%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#dropType%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Drop/">Drop</a></code> dropType <big>(</big><code><abbr title="java.lang.String">String</abbr></code> typeName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Start building a new DROP TYPE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>typeName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the type to be dropped.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Drop/">Drop</a></code></td>
+<td>
+<p>an in-construction DROP TYPE statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="dropType%28String%2C+String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#dropType%28String%2C+String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../Drop/">Drop</a></code> dropType <big>(</big><code><abbr title="java.lang.String">String</abbr></code> keyspaceName, <code><abbr title="java.lang.String">String</abbr></code> typeName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Start building a new DROP TYPE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>keyspaceName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the keyspace to be used.</p>
+</td>
+</tr>
+<tr>
+<td><var>typeName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the type to be dropped.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../Drop/">Drop</a></code></td>
+<td>
+<p>an in-construction DROP TYPE statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="frozen%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#frozen%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../UDTType/">UDTType</a></code> frozen <big>(</big><code><abbr title="java.lang.String">String</abbr></code> udtName<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Build the datatype representation of a frozen UDT, to include in a schema builder statement. </p>
+<p> <code>frozen("foo")</code> will produce <code>frozen<foo></foo>.</code></p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>udtName</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name of the UDT.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../UDTType/">UDTType</a></code></td>
+<td>
+<p>the type.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="udtLiteral%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#udtLiteral%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../UDTType/">UDTType</a></code> udtLiteral <big>(</big><code><abbr title="java.lang.String">String</abbr></code> literal<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Build the datatype representation of a complex UDT type, to include in a schema builder statement. </p>
+<p> As of Cassandra 2.1, this method is not strictly necessary because <code><a href="../Create/">Create</a></code> and <code><a href="../Alter/">Alter</a></code> provide specialized methods to express simple collections of UDTs, but future versions will make it possible to use types such as <code>map, map, frozen<user>&gt;&gt;</user>.</code></p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>literal</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the type literal as it will appear in the final CQL statement.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../UDTType/">UDTType</a></code></td>
+<td>
+<p>the type.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="sizedTieredStategy%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#sizedTieredStategy%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.CompactionOptions.SizeTieredCompactionStrategyOptions/">SizeTieredCompactionStrategyOptions</a></code> sizedTieredStategy <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Create options for the size-tiered compaction strategy, for use in a CREATE or ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.CompactionOptions.SizeTieredCompactionStrategyOptions/">SizeTieredCompactionStrategyOptions</a></code></td>
+<td>
+<p>the options.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="leveledStrategy%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#leveledStrategy%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.CompactionOptions.LeveledCompactionStrategyOptions/">LeveledCompactionStrategyOptions</a></code> leveledStrategy <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Create options for the leveled compaction strategy, to use in a CREATE or ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.CompactionOptions.LeveledCompactionStrategyOptions/">LeveledCompactionStrategyOptions</a></code></td>
+<td>
+<p>the options.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="dateTieredStrategy%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#dateTieredStrategy%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.CompactionOptions.DateTieredCompactionStrategyOptions/">DateTieredCompactionStrategyOptions</a></code> dateTieredStrategy <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Create options for the date-tiered compaction strategy, to use in a CREATE or ALTER TABLE statement. </p>
+<p> This strategy was introduced in Cassandra 2.1.1.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.CompactionOptions.DateTieredCompactionStrategyOptions/">DateTieredCompactionStrategyOptions</a></code></td>
+<td>
+<p>the options.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="noCompression%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#noCompression%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.CompressionOptions/">CompressionOptions</a></code> noCompression <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Create options for the <code>NONE</code> compression strategy, to use in a CREATE or ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.CompressionOptions/">CompressionOptions</a></code></td>
+<td>
+<p>the options.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="lz4%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#lz4%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.CompressionOptions/">CompressionOptions</a></code> lz4 <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Create options for the LZ4 compression strategy, to use in a CREATE or ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.CompressionOptions/">CompressionOptions</a></code></td>
+<td>
+<p>the options.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="snappy%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#snappy%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.CompressionOptions/">CompressionOptions</a></code> snappy <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Create options for the Snappy compression strategy, to use in a CREATE or ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.CompressionOptions/">CompressionOptions</a></code></td>
+<td>
+<p>the options.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="deflate%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#deflate%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.CompressionOptions/">CompressionOptions</a></code> deflate <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Create options for the Deflate compression strategy, to use in a CREATE or ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.CompressionOptions/">CompressionOptions</a></code></td>
+<td>
+<p>the options.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="noSpeculativeRetry%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#noSpeculativeRetry%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.SpeculativeRetryValue/">SpeculativeRetryValue</a></code> noSpeculativeRetry <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Create the speculative retry strategy that never retries reads, to use in a CREATE or ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.SpeculativeRetryValue/">SpeculativeRetryValue</a></code></td>
+<td>
+<p>the strategy.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="always%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#always%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.SpeculativeRetryValue/">SpeculativeRetryValue</a></code> always <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Create the speculative retry strategy that retries reads of all replicas, to use in a CREATE or ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.SpeculativeRetryValue/">SpeculativeRetryValue</a></code></td>
+<td>
+<p>the strategy.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="percentile%28int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#percentile%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.SpeculativeRetryValue/">SpeculativeRetryValue</a></code> percentile <big>(</big><code>int</code> percentile<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Create the speculative retry strategy that retries based on the effect on throughput and latency, to use in a CREATE or ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>percentile</var></td>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.SpeculativeRetryValue/">SpeculativeRetryValue</a></code></td>
+<td>
+<p>the strategy.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="millisecs%28int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#millisecs%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.SpeculativeRetryValue/">SpeculativeRetryValue</a></code> millisecs <big>(</big><code>int</code> millisecs<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Create the speculative retry strategy that retries after a given delay, to use in a CREATE or ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>millisecs</var></td>
+<td><code>int</code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.SpeculativeRetryValue/">SpeculativeRetryValue</a></code></td>
+<td>
+<p>the strategy.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="noRows%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#noRows%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.CachingRowsPerPartition/">CachingRowsPerPartition</a></code> noRows <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Return the row caching strategy that never caches rows (<code>none</code>, to use in a CREATE or ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.CachingRowsPerPartition/">CachingRowsPerPartition</a></code></td>
+<td>
+<p>the strategy.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="allRows%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#allRows%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.CachingRowsPerPartition/">CachingRowsPerPartition</a></code> allRows <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Return the row caching strategy that caches all rows (<code>all</code>), to use in a CREATE or ALTER TABLE statement. </p>
+<p> <strong>Be careful when choosing this option, you can starve Cassandra memory quickly if your partition is very large.</strong></p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.CachingRowsPerPartition/">CachingRowsPerPartition</a></code></td>
+<td>
+<p>the strategy.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="rows%28int%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#rows%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TableOptions.CachingRowsPerPartition/">CachingRowsPerPartition</a></code> rows <big>(</big><code>int</code> rowNumber<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Return the row caching strategy that caches a given number of rows, to use in a CREATE or ALTER TABLE statement.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>rowNumber</var></td>
+<td><code>int</code></td>
+<td>
+<p>the number of rows to cache.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TableOptions.CachingRowsPerPartition/">CachingRowsPerPartition</a></code></td>
+<td>
+<p>the strategy.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+</div>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc">
+<li><a href="#extends">Extends
+</a></li>
+<li><a href="#methods">Methods
+</a></li>
+</ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>

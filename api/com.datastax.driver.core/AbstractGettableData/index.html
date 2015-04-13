@@ -37,13 +37,12 @@
         <div class="collapse navbar-collapse" ng-controller="search">
           <ul class="nav navbar-nav">
             
-            <li>
-              <a href="../../../">Introduction</a>
-            </li>
+            
             
             <li>
               <a href="../../../features/">Features</a>
             </li>
+            
             
             <li class="active">
               <a href="../../">API docs</a>
@@ -52,7 +51,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -68,26 +67,10 @@
           <nav class="crumbs">
             <ol class="breadcrumb">
               
-              <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
-                  
-                    <li class="disabled"><a href="./">2.0.10</a></li>
-                  
-                    <li><a href="../../../2.1.5/api/com.datastax.driver.core/AbstractGettableData/">2.1.5</a></li>
-                  
-                  </ul>
-                </div>
-              </li>
               
               
               
-              
-              <li><a href="../../../">Introduction</a></li>
+              <li><a href="../../../">Home</a></li>
               
               
               
@@ -99,7 +82,7 @@
               
               
               
-              <li><a href="../">com.datastax.driver.core</a></li>
+              <li><a href="../">c.d.d.core</a></li>
               
               
               
@@ -128,7 +111,7 @@
 <h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 <div class="class-parent">
-  <code><abbr title="java.lang.Object">Object</abbr></code>
+  <code><a href="../AbstractGettableByIndexData/">AbstractGettableByIndexData</a></code>
 </div>
 
 <h2 id="implements">Implements<a class="anchor" href="#implements" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
@@ -146,46 +129,26 @@
 <div class="class-children">
   <ul class="list-inline">
   
-    <li><code><a href="../ArrayBackedRow/">ArrayBackedRow</a></code></li>
+    <li><code><a href="../AbstractData/">AbstractData</a></code></li>
   
-    <li><code><a href="../BoundStatement.DataWrapper/">DataWrapper</a></code></li>
+    <li><code><a href="../ArrayBackedRow/">ArrayBackedRow</a></code></li>
   
   </ul>
 </div>
 
-<h2 id="fields">Fields<a class="anchor" href="#fields" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-</h2>
-<div class="class-fields">
-  
-  <div class="panel panel-default member-definition" id="metadata">
-    <div class="panel-heading field-heading">
-      <a class="anchor" href="#metadata" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><a href="../ColumnDefinitions/">ColumnDefinitions</a></code> <var>metadata</var>
-    </div>
-    <div class="panel-body field-body">
-      
-      <dl class="dl-horizontal notes">
-<dt><span class="label label-warning">Protected</span></dt>
-<dd>This field is protected</dd>
-<dt><span class="label label-info">Final</span></dt>
-<dd>This field is final</dd>
-</dl>
-    </div>
-  </div>
-  
-</div>
 
 <h2 id="constructors">Constructors<a class="anchor" href="#constructors" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 <div class="class-constructors">
   
-  <div class="panel panel-default member-definition" id="AbstractGettableData%28ColumnDefinitions%29">
+  <div class="panel panel-default member-definition" id="AbstractGettableData%28ProtocolVersion%29">
     <div class="panel-heading constructor-heading">
-      <a class="anchor" href="#AbstractGettableData%28ColumnDefinitions%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      AbstractGettableData <big>(</big><code><a href="../ColumnDefinitions/">ColumnDefinitions</a></code> metadata<big>)</big>
+      <a class="anchor" href="#AbstractGettableData%28ProtocolVersion%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      AbstractGettableData <big>(</big><code><a href="../ProtocolVersion/">ProtocolVersion</a></code> protocolVersion<big>)</big>
     </div>
     <div class="panel-body constructor-body">
-      
+      <p>Creates a new AbstractGettableData object.</p>
+
       <dl class="dl-horizontal notes">
 <dt><span class="label label-warning">Protected</span></dt>
 <dd>This constructor is protected</dd>
@@ -199,9 +162,70 @@
 <th class="details">Details</th>
 </tr></thead>
 <tbody><tr>
-<td><var>metadata</var></td>
-<td><code><a href="../ColumnDefinitions/">ColumnDefinitions</a></code></td>
+<td><var>protocolVersion</var></td>
+<td><code><a href="../ProtocolVersion/">ProtocolVersion</a></code></td>
+<td>
+<p>the protocol version in which values returned by <code><a href="../AbstractGettableByIndexData/#getValue%28int%29">AbstractGettableData#getValue</a></code> will be returned. This must be a protocol version supported by this driver. In general, the correct value will be the value returned by <code><a href="../ProtocolOptions/#getProtocolVersion%28%29">ProtocolOptions#getProtocolVersion</a></code>.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>protocolVersion</code> is not a valid protocol version.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="AbstractGettableData%28int%29">
+    <div class="panel-heading constructor-heading">
+      <a class="anchor" href="#AbstractGettableData%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      AbstractGettableData <big>(</big><code>int</code> protocolVersion<big>)</big>
+    </div>
+    <div class="panel-body constructor-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-warning">Deprecated</span></dt>
+<dd>
+<p>This constructor is provided for backward compatibility, use <code><a href="#AbstractGettableData%28ProtocolVersion%29">AbstractGettableData#AbstractGettableData(ProtocolVersion)</a></code> instead.</p>
+</dd>
+<dt><span class="label label-warning">Protected</span></dt>
+<dd>This constructor is protected</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>protocolVersion</var></td>
+<td><code>int</code></td>
 <td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>protocolVersion</code> does not correspond to any known version.</p>
+</td>
 </tr></tbody>
 </table></dd>
 </dl>
@@ -214,13 +238,14 @@
 </h2>
 <div class="class-methods">
   
-  <div class="panel panel-default member-definition" id="getValue%28int%29">
+  <div class="panel panel-default member-definition" id="getIndexOf%28String%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#getValue%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> getValue <big>(</big><code>int</code> i<big>)</big>
+      <a class="anchor" href="#getIndexOf%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> getIndexOf <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the index corresponding to a given name.</p>
+
       <dl class="dl-horizontal notes">
 <dt><span class="label label-warning">Protected</span></dt>
 <dd>This method is protected</dd>
@@ -236,9 +261,24 @@
 <th class="details">Details</th>
 </tr></thead>
 <tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
-<td></td>
+<td><var>name</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td>
+<p>the name for which to return the index of.</p>
+</td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Throws:</dt>
+<dd class="tag-content"><table class="table table-striped throw">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
+<td>
+<p>if <code>name</code> is not valid name for this object.</p>
+</td>
 </tr></tbody>
 </table></dd>
 <dt class="tag-title">Returns:</dt>
@@ -248,44 +288,10 @@
 <th class="details">Details</th>
 </tr></thead>
 <tbody><tr>
-<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="isNull%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#isNull%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>boolean</code> isNull <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
 <td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code>boolean</code></td>
-<td></td>
+<td>
+<p>the index for the value coressponding to <code>name</code>.</p>
+</td>
 </tr></tbody>
 </table></dd>
 </dl>
@@ -298,7 +304,8 @@
       <code>boolean</code> isNull <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns whether the value for <code>name</code> is NULL.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -310,42 +317,6 @@
 <tbody><tr>
 <td><var>name</var></td>
 <td><code><abbr title="java.lang.String">String</abbr></code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code>boolean</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getBool%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getBool%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>boolean</code> getBool <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -370,7 +341,8 @@
       <code>boolean</code> getBool <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a boolean.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -400,49 +372,14 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="getInt%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getInt%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>int</code> getInt <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
   <div class="panel panel-default member-definition" id="getInt%28String%29">
     <div class="panel-heading method-heading">
       <a class="anchor" href="#getInt%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
       <code>int</code> getInt <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as an integer.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -465,42 +402,6 @@
 </tr></thead>
 <tbody><tr>
 <td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getLong%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getLong%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>long</code> getLong <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code>long</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -514,7 +415,8 @@
       <code>long</code> getLong <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a long.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -544,49 +446,14 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="getDate%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getDate%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.util.Date">Date</abbr></code> getDate <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code><abbr title="java.util.Date">Date</abbr></code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
   <div class="panel panel-default member-definition" id="getDate%28String%29">
     <div class="panel-heading method-heading">
       <a class="anchor" href="#getDate%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
       <code><abbr title="java.util.Date">Date</abbr></code> getDate <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a date.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -609,42 +476,6 @@
 </tr></thead>
 <tbody><tr>
 <td><code><abbr title="java.util.Date">Date</abbr></code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getFloat%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getFloat%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>float</code> getFloat <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code>float</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -658,7 +489,8 @@
       <code>float</code> getFloat <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a float.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -688,49 +520,14 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="getDouble%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getDouble%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>double</code> getDouble <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code>double</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
   <div class="panel panel-default member-definition" id="getDouble%28String%29">
     <div class="panel-heading method-heading">
       <a class="anchor" href="#getDouble%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
       <code>double</code> getDouble <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a double.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -753,42 +550,6 @@
 </tr></thead>
 <tbody><tr>
 <td><code>double</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getBytesUnsafe%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getBytesUnsafe%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> getBytesUnsafe <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -802,7 +563,9 @@
       <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> getBytesUnsafe <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a ByteBuffer.
+ Note: this method always return the bytes composing the value, even if the column is not of type BLOB. That is, this method never throw an InvalidTypeException. However, if the type is not BLOB, it is up to the caller to handle the returned value correctly.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -814,42 +577,6 @@
 <tbody><tr>
 <td><var>name</var></td>
 <td><code><abbr title="java.lang.String">String</abbr></code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getBytes%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getBytes%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> getBytes <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -874,7 +601,9 @@
       <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> getBytes <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a byte array. </p>
+<p> Note that this method validate that the column is of type BLOB. If you want to retrieve the bytes for any type, use <code><a href="../GettableByNameData/#getBytesUnsafe%28String%29">GettableByNameData#getBytesUnsafe(String)</a></code> instead.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -904,49 +633,14 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="getString%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getString%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.lang.String">String</abbr></code> getString <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code><abbr title="java.lang.String">String</abbr></code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
   <div class="panel panel-default member-definition" id="getString%28String%29">
     <div class="panel-heading method-heading">
       <a class="anchor" href="#getString%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
       <code><abbr title="java.lang.String">String</abbr></code> getString <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a string.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -969,42 +663,6 @@
 </tr></thead>
 <tbody><tr>
 <td><code><abbr title="java.lang.String">String</abbr></code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getVarint%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getVarint%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.math.BigInteger">BigInteger</abbr></code> getVarint <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code><abbr title="java.math.BigInteger">BigInteger</abbr></code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -1018,7 +676,8 @@
       <code><abbr title="java.math.BigInteger">BigInteger</abbr></code> getVarint <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a variable length integer.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -1048,49 +707,14 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="getDecimal%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getDecimal%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.math.BigDecimal">BigDecimal</abbr></code> getDecimal <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code><abbr title="java.math.BigDecimal">BigDecimal</abbr></code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
   <div class="panel panel-default member-definition" id="getDecimal%28String%29">
     <div class="panel-heading method-heading">
       <a class="anchor" href="#getDecimal%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
       <code><abbr title="java.math.BigDecimal">BigDecimal</abbr></code> getDecimal <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a variable length decimal.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -1113,42 +737,6 @@
 </tr></thead>
 <tbody><tr>
 <td><code><abbr title="java.math.BigDecimal">BigDecimal</abbr></code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getUUID%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getUUID%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.util.UUID">UUID</abbr></code> getUUID <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code><abbr title="java.util.UUID">UUID</abbr></code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -1162,7 +750,8 @@
       <code><abbr title="java.util.UUID">UUID</abbr></code> getUUID <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a UUID.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -1192,49 +781,14 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="getInet%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getInet%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.net.InetAddress">InetAddress</abbr></code> getInet <big>(</big><code>int</code> i<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code><abbr title="java.net.InetAddress">InetAddress</abbr></code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
   <div class="panel panel-default member-definition" id="getInet%28String%29">
     <div class="panel-heading method-heading">
       <a class="anchor" href="#getInet%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
       <code><abbr title="java.net.InetAddress">InetAddress</abbr></code> getInet <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as an InetAddress.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -1257,51 +811,6 @@
 </tr></thead>
 <tbody><tr>
 <td><code><abbr title="java.net.InetAddress">InetAddress</abbr></code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getList%28int%2C+Class%3CT%3E%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getList%28int%2C+Class%3CT%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.util.List">List</abbr></code>&lt;<code>T</code>&gt; getList <big>(</big><code>int</code> i, <code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>T</code>&gt; elementsClass<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody>
-<tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr>
-<tr>
-<td><var>elementsClass</var></td>
-<td>
-<code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>T</code>&gt;</td>
-<td></td>
-</tr>
-</tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td>
-<code><abbr title="java.util.List">List</abbr></code>&lt;<code>T</code>&gt;</td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -1315,7 +824,9 @@
       <code><abbr title="java.util.List">List</abbr></code>&lt;<code>T</code>&gt; getList <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name, <code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>T</code>&gt; elementsClass<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a list. </p>
+<p> If the type of the elements is generic, use <code><a href="../GettableByNameData/">GettableByNameData</a></code>.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -1354,13 +865,15 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="getSet%28int%2C+Class%3CT%3E%29">
+  <div class="panel panel-default member-definition" id="getList%28String%2C+%3Cany%3E%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#getSet%28int%2C+Class%3CT%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.util.Set">Set</abbr></code>&lt;<code>T</code>&gt; getSet <big>(</big><code>int</code> i, <code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>T</code>&gt; elementsClass<big>)</big>
+      <a class="anchor" href="#getList%28String%2C+%3Cany%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.List">List</abbr></code>&lt;<code>T</code>&gt; getList <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name, <code>&lt;any&gt;</code> elementsType<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a list. </p>
+<p> If the type of the elements is generic, use <code><a href="../GettableByNameData/">GettableByNameData</a></code>.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -1371,14 +884,13 @@
 </tr></thead>
 <tbody>
 <tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
+<td><var>name</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
 <td></td>
 </tr>
 <tr>
-<td><var>elementsClass</var></td>
-<td>
-<code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>T</code>&gt;</td>
+<td><var>elementsType</var></td>
+<td><code>&lt;any&gt;</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -1391,7 +903,7 @@
 </tr></thead>
 <tbody><tr>
 <td>
-<code><abbr title="java.util.Set">Set</abbr></code>&lt;<code>T</code>&gt;</td>
+<code><abbr title="java.util.List">List</abbr></code>&lt;<code>T</code>&gt;</td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -1405,7 +917,9 @@
       <code><abbr title="java.util.Set">Set</abbr></code>&lt;<code>T</code>&gt; getSet <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name, <code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>T</code>&gt; elementsClass<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a set. </p>
+<p> If the type of the elements is generic, use <code><a href="../GettableByNameData/">GettableByNameData</a></code>.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -1444,13 +958,15 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="getMap%28int%2C+Class%3CK%3E%2C+Class%3CV%3E%29">
+  <div class="panel panel-default member-definition" id="getSet%28String%2C+%3Cany%3E%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#getMap%28int%2C+Class%3CK%3E%2C+Class%3CV%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.util.Map">Map</abbr></code>&lt;<code>K</code>, <code>V</code>&gt; getMap <big>(</big><code>int</code> i, <code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>K</code>&gt; keysClass, <code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>V</code>&gt; valuesClass<big>)</big>
+      <a class="anchor" href="#getSet%28String%2C+%3Cany%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.Set">Set</abbr></code>&lt;<code>T</code>&gt; getSet <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name, <code>&lt;any&gt;</code> elementsType<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a set. </p>
+<p> If the type of the elements is generic, use <code><a href="../GettableByNameData/">GettableByNameData</a></code>.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -1461,20 +977,13 @@
 </tr></thead>
 <tbody>
 <tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
+<td><var>name</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
 <td></td>
 </tr>
 <tr>
-<td><var>keysClass</var></td>
-<td>
-<code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>K</code>&gt;</td>
-<td></td>
-</tr>
-<tr>
-<td><var>valuesClass</var></td>
-<td>
-<code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>V</code>&gt;</td>
+<td><var>elementsType</var></td>
+<td><code>&lt;any&gt;</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -1487,7 +996,7 @@
 </tr></thead>
 <tbody><tr>
 <td>
-<code><abbr title="java.util.Map">Map</abbr></code>&lt;<code>K</code>, <code>V</code>&gt;</td>
+<code><abbr title="java.util.Set">Set</abbr></code>&lt;<code>T</code>&gt;</td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -1501,7 +1010,9 @@
       <code><abbr title="java.util.Map">Map</abbr></code>&lt;<code>K</code>, <code>V</code>&gt; getMap <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name, <code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>K</code>&gt; keysClass, <code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>V</code>&gt; valuesClass<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a map. </p>
+<p> If the type of the keys and/or values is generic, use <code><a href="../GettableByNameData/">GettableByNameData</a></code>.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -1546,13 +1057,15 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="getObject%28int%29">
+  <div class="panel panel-default member-definition" id="getMap%28String%2C+%3Cany%3E%2C+%3Cany%3E%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#getObject%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.lang.Object">Object</abbr></code> getObject <big>(</big><code>int</code> i<big>)</big>
+      <a class="anchor" href="#getMap%28String%2C+%3Cany%3E%2C+%3Cany%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.Map">Map</abbr></code>&lt;<code>K</code>, <code>V</code>&gt; getMap <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name, <code>&lt;any&gt;</code> keysType, <code>&lt;any&gt;</code> valuesType<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Returns the value for <code>name</code> as a map. </p>
+<p> If the type of the keys and/or values is generic, use <code><a href="../GettableByNameData/">GettableByNameData</a></code>.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -1561,11 +1074,23 @@
 <th class="type">Type</th>
 <th class="details">Details</th>
 </tr></thead>
-<tbody><tr>
-<td><var>i</var></td>
-<td><code>int</code></td>
+<tbody>
+<tr>
+<td><var>name</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
 <td></td>
-</tr></tbody>
+</tr>
+<tr>
+<td><var>keysType</var></td>
+<td><code>&lt;any&gt;</code></td>
+<td></td>
+</tr>
+<tr>
+<td><var>valuesType</var></td>
+<td><code>&lt;any&gt;</code></td>
+<td></td>
+</tr>
+</tbody>
 </table></dd>
 <dt class="tag-title">Returns:</dt>
 <dd class="tag-content"><table class="table table-striped return">
@@ -1574,7 +1099,8 @@
 <th class="details">Details</th>
 </tr></thead>
 <tbody><tr>
-<td><code><abbr title="java.lang.Object">Object</abbr></code></td>
+<td>
+<code><abbr title="java.util.Map">Map</abbr></code>&lt;<code>K</code>, <code>V</code>&gt;</td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -1582,13 +1108,14 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="getObject%28String%29">
+  <div class="panel panel-default member-definition" id="getUDTValue%28String%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#getObject%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.lang.Object">Object</abbr></code> getObject <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
+      <a class="anchor" href="#getUDTValue%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../UDTValue/">UDTValue</a></code> getUDTValue <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>Return the value for <code>name</code> as a UDT value.</p>
+
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
 <dd class="tag-content"><table class="table table-striped param">
@@ -1610,7 +1137,44 @@
 <th class="details">Details</th>
 </tr></thead>
 <tbody><tr>
-<td><code><abbr title="java.lang.Object">Object</abbr></code></td>
+<td><code><a href="../UDTValue/">UDTValue</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getTupleValue%28String%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getTupleValue%28String%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../TupleValue/">TupleValue</a></code> getTupleValue <big>(</big><code><abbr title="java.lang.String">String</abbr></code> name<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>Return the value for <code>name</code> as a tuple value.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>name</var></td>
+<td><code><abbr title="java.lang.String">String</abbr></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../TupleValue/">TupleValue</a></code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -1640,8 +1204,6 @@
 <li><a href="#implements">Implements
 </a></li>
 <li><a href="#extended-by">Extended By
-</a></li>
-<li><a href="#fields">Fields
 </a></li>
 <li><a href="#constructors">Constructors
 </a></li>

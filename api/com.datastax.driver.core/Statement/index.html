@@ -37,13 +37,12 @@
         <div class="collapse navbar-collapse" ng-controller="search">
           <ul class="nav navbar-nav">
             
-            <li>
-              <a href="../../../">Introduction</a>
-            </li>
+            
             
             <li>
               <a href="../../../features/">Features</a>
             </li>
+            
             
             <li class="active">
               <a href="../../">API docs</a>
@@ -52,7 +51,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -68,26 +67,10 @@
           <nav class="crumbs">
             <ol class="breadcrumb">
               
-              <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
-                  
-                    <li class="disabled"><a href="./">2.0.10</a></li>
-                  
-                    <li><a href="../../../2.1.5/api/com.datastax.driver.core/Statement/">2.1.5</a></li>
-                  
-                  </ul>
-                </div>
-              </li>
               
               
               
-              
-              <li><a href="../../../">Introduction</a></li>
+              <li><a href="../../../">Home</a></li>
               
               
               
@@ -99,7 +82,7 @@
               
               
               
-              <li><a href="../">com.datastax.driver.core</a></li>
+              <li><a href="../">c.d.d.core</a></li>
               
               
               
@@ -427,7 +410,7 @@
       <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> getRoutingKey <big>(</big><big>)</big>
     </div>
     <div class="panel-body method-body">
-      <p>Returns the routing key (in binary raw form) to use for token aware  routing of this query. </p>
+      <p>Returns the routing key (in binary raw form) to use for token aware routing of this query. </p>
 <p> The routing key is optional in that implementers are free to return <code>null</code>. The routing key is an hint used for token-aware routing (see <code><a href="../../com.datastax.driver.core.policies/TokenAwarePolicy/">TokenAwarePolicy</a></code>), and if provided should correspond to the binary value for the query partition key. However, not providing a routing key never causes a query to fail and if the load balancing policy used is not token aware, then the routing key can be safely ignored.</p>
 
       <dl class="dl-horizontal notes">
@@ -560,7 +543,7 @@
       <p>Sets the query fetch size. </p>
 <p> The fetch size controls how much resulting rows will be retrieved simultaneously (the goal being to avoid loading too much results in memory for queries yielding large results). Please note that while value as low as 1 can be used, it is <em>highly</em> discouraged to use such a low value in practice as it will yield very poor performance. If in doubt, leaving the default is probably a good idea. </p>
 <p> Only <code>SELECT</code> queries only ever make use of that setting. </p>
-<p> Note: Paging is not supported with the native protocol version 1. If you call this method with <code>fetchSize &gt; 0</code> and <code>fetchSize != Integer.MAX_VALUE</code> and the protocol version is in use (i.e. if you’ve force version 1 through <code><a href="../Cluster.Builder/#withProtocolVersion%28int%29">Cluster.Builder#withProtocolVersion</a></code> or you use Cassandra 1.2), you will get <code><a href="../UnsupportedProtocolVersionException/">UnsupportedProtocolVersionException</a></code> when submitting this statement for execution.</p>
+<p> Note: Paging is not supported with the native protocol version 1. If you call this method with <code>fetchSize &gt; 0</code> and <code>fetchSize != Integer.MAX_VALUE</code> and the protocol version is in use (i.e. if you’ve force version 1 through <code><a href="../Cluster.Builder/#withProtocolVersion%28ProtocolVersion%29">Cluster.Builder#withProtocolVersion</a></code> or you use Cassandra 1.2), you will get <code><a href="../UnsupportedProtocolVersionException/">UnsupportedProtocolVersionException</a></code> when submitting this statement for execution.</p>
 
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
@@ -621,17 +604,16 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="setPagingState%28PagingState%29">
+  <div class="panel panel-default member-definition" id="setDefaultTimestamp%28long%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#setPagingState%28PagingState%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><a href="./">Statement</a></code> setPagingState <big>(</big><code><a href="../PagingState/">PagingState</a></code> pagingState<big>)</big>
+      <a class="anchor" href="#setDefaultTimestamp%28long%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">Statement</a></code> setDefaultTimestamp <big>(</big><code>long</code> defaultTimestamp<big>)</big>
     </div>
     <div class="panel-body method-body">
-      <p>Sets the paging state. </p>
-<p> This will cause the next execution of this statement to fetch results from a given page, rather than restarting from the beginning. </p>
-<p> You get the paging state from a previous execution of the statement. This is typically used to iterate in a “stateless” manner (e.g. across HTTP requests): </p>
-<pre> <code>Statement st = new SimpleStatement("your query"); ResultSet rs = session.execute(st.setFetchSize(20)); int available = rs.getAvailableWithoutFetching(); for (int i = 0; i  available; i++) { Row row = rs.one(); // Do something with row (e.g. display it to the user...) } // Get state and serialize as string or byte[] to store it for the next execution // (e.g. pass it as a parameter in the "next page" URI) PagingState pagingState = rs.getExecutionInfo().getPagingState(); String savedState = pagingState.toString();
- // Next execution: // Get serialized state back (e.g. get URI parameter) String savedState = ... Statement st = new SimpleStatement("your query"); st.setPagingState(PagingState.fromString(savedState)); ResultSet rs = session.execute(st.setFetchSize(20)); int available = rs.getAvailableWithoutFetching(); for (int i = 0; i  available; i++) { ... } </code> </pre> <p> Note that the paging state can only be reused between perfectly identical statements (same query string, same bound parameters). Altering the contents of the paging state or trying to set it on a different statement will cause this method to fail.</p>
+      <p>Sets the default timestamp for this query (in microseconds since the epoch). </p>
+<p> This feature is only available when version <code><a href="../ProtocolVersion/#V3">V3</a></code> or higher of the native protocol is in use. With earlier versions, calling this method has no effect. </p>
+<p> The actual timestamp that will be used for this query is, in order of preference: </p>
+<ul> <li>the timestamp specified directly in the CQL query string (using the <code>USING TIMESTAMP</code> syntax);</li> <li>the timestamp specified through this method, if different from <code><code>Long#MIN_VALUE</code></code>;</li> <li>the timestamp returned by the <code><a href="../TimestampGenerator/">TimestampGenerator</a></code> currently in use, if different from <code><code>Long#MIN_VALUE</code></code>.</li> </ul> If none of these apply, no timestamp will be sent with the query and Cassandra will generate a server-side one (similar to the pre-V3 behavior).
 
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
@@ -642,23 +624,10 @@
 <th class="details">Details</th>
 </tr></thead>
 <tbody><tr>
-<td><var>pagingState</var></td>
-<td><code><a href="../PagingState/">PagingState</a></code></td>
+<td><var>defaultTimestamp</var></td>
+<td><code>long</code></td>
 <td>
-<p>the paging state to set, or <code>null</code> to remove any state that was previously set on this statement.</p>
-</td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Throws:</dt>
-<dd class="tag-content"><table class="table table-striped throw">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code><a href="../../com.datastax.driver.core.exceptions/PagingStateException/">PagingStateException</a></code></td>
-<td>
-<p>if the paging state does not match this statement.</p>
+<p>the default timestamp for this query (must be strictly positive).</p>
 </td>
 </tr></tbody>
 </table></dd>
@@ -675,17 +644,20 @@
 </td>
 </tr></tbody>
 </table></dd>
+<dt class="tag-title">See Also:</dt>
+<dd class="tag-content"><ul class="see"><li><a href="../Cluster.Builder/#withTimestampGenerator%28TimestampGenerator%29">Cluster.Builder#withTimestampGenerator(TimestampGenerator)</a></li></ul></dd>
 </dl>
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="getPagingState%28%29">
+  <div class="panel panel-default member-definition" id="getDefaultTimestamp%28%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#getPagingState%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> getPagingState <big>(</big><big>)</big>
+      <a class="anchor" href="#getDefaultTimestamp%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>long</code> getDefaultTimestamp <big>(</big><big>)</big>
     </div>
     <div class="panel-body method-body">
-      
+      <p>The default timestamp for this query.</p>
+
       <dl class="tags">
 <dt class="tag-title">Returns:</dt>
 <dd class="tag-content"><table class="table table-striped return">
@@ -694,8 +666,10 @@
 <th class="details">Details</th>
 </tr></thead>
 <tbody><tr>
-<td><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code></td>
-<td></td>
+<td><code>long</code></td>
+<td>
+<p>the default timestamp (in microseconds since the epoch).</p>
+</td>
 </tr></tbody>
 </table></dd>
 </dl>

@@ -37,13 +37,12 @@
         <div class="collapse navbar-collapse" ng-controller="search">
           <ul class="nav navbar-nav">
             
-            <li>
-              <a href="../../../">Introduction</a>
-            </li>
+            
             
             <li>
               <a href="../../../features/">Features</a>
             </li>
+            
             
             <li class="active">
               <a href="../../">API docs</a>
@@ -52,7 +51,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -68,26 +67,10 @@
           <nav class="crumbs">
             <ol class="breadcrumb">
               
-              <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
-                  
-                    <li class="disabled"><a href="./">2.0.10</a></li>
-                  
-                    <li><a href="../../../2.1.5/api/com.datastax.driver.core/StreamIdGenerator/">2.1.5</a></li>
-                  
-                  </ul>
-                </div>
-              </li>
               
               
               
-              
-              <li><a href="../../../">Introduction</a></li>
+              <li><a href="../../../">Home</a></li>
               
               
               
@@ -99,7 +82,7 @@
               
               
               
-              <li><a href="../">com.datastax.driver.core</a></li>
+              <li><a href="../">c.d.d.core</a></li>
               
               
               
@@ -121,7 +104,9 @@
 </h1>
 </div>
 
-<p>Handle assigning stream id to message.</p>
+<p>Manages a set of integer identifiers. </p>
+<p> Clients can borrow an id with <code><a href="#next%28%29">StreamIdGenerator#next()</a></code>, and return it to the set with <code><a href="#release%28int%29">StreamIdGenerator#release(int)</a></code>. It is guaranteed that a given id can’t be borrowed by two clients at the same time. This class is thread-safe and non-blocking. </p>
+<p> Implementation notes: we use an atomic long array where each bit represents an id. It is set to 1 if the id is available, 0 otherwise. When looking for an id, we find a long that has remaining 1’s and pick the rightmost one. To minimize the average time to find that long, we search the array in a round-robin fashion.</p>
 
 <h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
@@ -135,10 +120,26 @@
 </h2>
 <div class="class-fields">
   
-  <div class="panel panel-default member-definition" id="MAX_STREAM_PER_CONNECTION">
+  <div class="panel panel-default member-definition" id="MAX_STREAM_PER_CONNECTION_V2">
     <div class="panel-heading field-heading">
-      <a class="anchor" href="#MAX_STREAM_PER_CONNECTION" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>int</code> <var>MAX_STREAM_PER_CONNECTION</var> = <code>128</code>
+      <a class="anchor" href="#MAX_STREAM_PER_CONNECTION_V2" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> <var>MAX_STREAM_PER_CONNECTION_V2</var> = <code>128</code>
+    </div>
+    <div class="panel-body field-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-info">Final</span></dt>
+<dd>This field is final</dd>
+<dt><span class="label label-default">Static</span></dt>
+<dd>This field is static</dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="MAX_STREAM_PER_CONNECTION_V3">
+    <div class="panel-heading field-heading">
+      <a class="anchor" href="#MAX_STREAM_PER_CONNECTION_V3" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>int</code> <var>MAX_STREAM_PER_CONNECTION_V3</var> = <code>32768</code>
     </div>
     <div class="panel-body field-body">
       
@@ -153,26 +154,50 @@
   
 </div>
 
-<h2 id="constructors">Constructors<a class="anchor" href="#constructors" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-</h2>
-<div class="class-constructors">
-  
-  <div class="panel panel-default member-definition" id="StreamIdGenerator%28%29">
-    <div class="panel-heading constructor-heading">
-      <a class="anchor" href="#StreamIdGenerator%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      StreamIdGenerator <big>(</big><big>)</big>
-    </div>
-    <div class="panel-body constructor-body">
-      
-      
-    </div>
-  </div>
-  
-</div>
 
 <h2 id="methods">Methods<a class="anchor" href="#methods" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 <div class="class-methods">
+  
+  <div class="panel panel-default member-definition" id="newInstance%28ProtocolVersion%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#newInstance%28ProtocolVersion%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="./">StreamIdGenerator</a></code> newInstance <big>(</big><code><a href="../ProtocolVersion/">ProtocolVersion</a></code> version<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>version</var></td>
+<td><code><a href="../ProtocolVersion/">ProtocolVersion</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="./">StreamIdGenerator</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
   
   <div class="panel panel-default member-definition" id="next%28%29">
     <div class="panel-heading method-heading">
@@ -339,85 +364,6 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="atomicGetAndSetFirstAvailable%28int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#atomicGetAndSetFirstAvailable%28int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>int</code> atomicGetAndSetFirstAvailable <big>(</big><code>int</code> idx<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><var>idx</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code>int</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="atomicClear%28int%2C+int%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#atomicClear%28int%2C+int%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> atomicClear <big>(</big><code>int</code> idx, <code>int</code> toClear<big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Parameters:</dt>
-<dd class="tag-content"><table class="table table-striped param">
-<thead><tr>
-<th class="name">Name</th>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody>
-<tr>
-<td><var>idx</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr>
-<tr>
-<td><var>toClear</var></td>
-<td><code>int</code></td>
-<td></td>
-</tr>
-</tbody>
-</table></dd>
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code>void</code></td>
-<td></td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
 </div>
 
 
@@ -438,8 +384,6 @@
 <li><a href="#extends">Extends
 </a></li>
 <li><a href="#fields">Fields
-</a></li>
-<li><a href="#constructors">Constructors
 </a></li>
 <li><a href="#methods">Methods
 </a></li>

@@ -9,7 +9,7 @@
     <meta name="description" content="High performance Java client for Apache Cassandra">
     <meta name="author" content="DataStax">
 
-    <title>Java Driver for Apache Cassandra - com.datastax.driver.core</title>
+    <title>Java Driver for Apache Cassandra - c.d.d.core</title>
 
     <link rel="icon" href="../../favicon.ico">
     <link rel="apple-touch-icon" href="../../favicon.png">
@@ -37,13 +37,12 @@
         <div class="collapse navbar-collapse" ng-controller="search">
           <ul class="nav navbar-nav">
             
-            <li>
-              <a href="../../">Introduction</a>
-            </li>
+            
             
             <li>
               <a href="../../features/">Features</a>
             </li>
+            
             
             <li class="active">
               <a href="../">API docs</a>
@@ -52,7 +51,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -68,26 +67,10 @@
           <nav class="crumbs">
             <ol class="breadcrumb">
               
-              <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
-                  
-                    <li class="disabled"><a href="./">2.0.10</a></li>
-                  
-                    <li><a href="../../2.1.5/api/com.datastax.driver.core/">2.1.5</a></li>
-                  
-                  </ul>
-                </div>
-              </li>
               
               
               
-              
-              <li><a href="../../">Introduction</a></li>
+              <li><a href="../../">Home</a></li>
               
               
               
@@ -99,7 +82,7 @@
               
               
               
-              <li class="active">com.datastax.driver.core</li>
+              <li class="active">c.d.d.core</li>
               
               
               
@@ -144,21 +127,27 @@
   
     <li><code><a href="Message.Response.Type/" title="com.datastax.driver.core.Message.Response.Type (enum)">Message.Response.Type</a></code></li>
   
-    <li><code><a href="PooledConnection.State/" title="com.datastax.driver.core.PooledConnection.State (enum)">PooledConnection.State</a></code></li>
+    <li><code><a href="ProtocolEvent.SchemaChange.Change/" title="com.datastax.driver.core.ProtocolEvent.SchemaChange.Change (enum)">ProtocolEvent.SchemaChange.Change</a></code></li>
   
-    <li><code><a href="ProtocolEvent.Type/" title="com.datastax.driver.core.ProtocolEvent.Type (enum)">ProtocolEvent.Type</a></code></li>
-  
-    <li><code><a href="ProtocolEvent.TopologyChange.Change/" title="com.datastax.driver.core.ProtocolEvent.TopologyChange.Change (enum)">ProtocolEvent.TopologyChange.Change</a></code></li>
+    <li><code><a href="ProtocolEvent.SchemaChange.Target/" title="com.datastax.driver.core.ProtocolEvent.SchemaChange.Target (enum)">ProtocolEvent.SchemaChange.Target</a></code></li>
   
     <li><code><a href="ProtocolEvent.StatusChange.Status/" title="com.datastax.driver.core.ProtocolEvent.StatusChange.Status (enum)">ProtocolEvent.StatusChange.Status</a></code></li>
   
-    <li><code><a href="ProtocolEvent.SchemaChange.Change/" title="com.datastax.driver.core.ProtocolEvent.SchemaChange.Change (enum)">ProtocolEvent.SchemaChange.Change</a></code></li>
+    <li><code><a href="ProtocolEvent.TopologyChange.Change/" title="com.datastax.driver.core.ProtocolEvent.TopologyChange.Change (enum)">ProtocolEvent.TopologyChange.Change</a></code></li>
+  
+    <li><code><a href="ProtocolEvent.Type/" title="com.datastax.driver.core.ProtocolEvent.Type (enum)">ProtocolEvent.Type</a></code></li>
   
     <li><code><a href="ProtocolOptions.Compression/" title="com.datastax.driver.core.ProtocolOptions.Compression (enum)">ProtocolOptions.Compression</a></code></li>
+  
+    <li><code><a href="ProtocolVersion/" title="com.datastax.driver.core.ProtocolVersion (enum)">ProtocolVersion</a></code></li>
+  
+    <li><code><a href="Requests.QueryFlag/" title="com.datastax.driver.core.Requests.QueryFlag (enum)">Requests.QueryFlag</a></code></li>
   
     <li><code><a href="Responses.Result.Kind/" title="com.datastax.driver.core.Responses.Result.Kind (enum)">Responses.Result.Kind</a></code></li>
   
     <li><code><a href="Responses.Result.SchemaChange.Change/" title="com.datastax.driver.core.Responses.Result.SchemaChange.Change (enum)">Responses.Result.SchemaChange.Change</a></code></li>
+  
+    <li><code><a href="Responses.Result.SchemaChange.Target/" title="com.datastax.driver.core.Responses.Result.SchemaChange.Target (enum)">Responses.Result.SchemaChange.Target</a></code></li>
   
     <li><code><a href="TableMetadata.Order/" title="com.datastax.driver.core.TableMetadata.Order (enum)">TableMetadata.Order</a></code></li>
   
@@ -172,17 +161,23 @@
 <div class="package-interfaces">
   <ul class="list-inline">
   
+    <li><code><a href="AuthProvider/" title="com.datastax.driver.core.AuthProvider (interface)">AuthProvider</a></code></li>
+  
     <li><code><a href="Authenticator/" title="com.datastax.driver.core.Authenticator (interface)">Authenticator</a></code></li>
   
-    <li><code><a href="AuthProvider/" title="com.datastax.driver.core.AuthProvider (interface)">AuthProvider</a></code></li>
+    <li><code><a href="Clock/" title="com.datastax.driver.core.Clock (interface)">Clock</a></code></li>
   
     <li><code><a href="Cluster.Initializer/" title="com.datastax.driver.core.Cluster.Initializer (interface)">Cluster.Initializer</a></code></li>
   
-    <li><code><a href="Connection.ResponseCallback/" title="com.datastax.driver.core.Connection.ResponseCallback (interface)">Connection.ResponseCallback</a></code></li>
-  
     <li><code><a href="Connection.DefaultResponseHandler/" title="com.datastax.driver.core.Connection.DefaultResponseHandler (interface)">Connection.DefaultResponseHandler</a></code></li>
   
+    <li><code><a href="Connection.ResponseCallback/" title="com.datastax.driver.core.Connection.ResponseCallback (interface)">Connection.ResponseCallback</a></code></li>
+  
     <li><code><a href="ConvictionPolicy.Factory/" title="com.datastax.driver.core.ConvictionPolicy.Factory (interface)">ConvictionPolicy.Factory</a></code></li>
+  
+    <li><code><a href="GettableByIndexData/" title="com.datastax.driver.core.GettableByIndexData (interface)">GettableByIndexData</a></code></li>
+  
+    <li><code><a href="GettableByNameData/" title="com.datastax.driver.core.GettableByNameData (interface)">GettableByNameData</a></code></li>
   
     <li><code><a href="GettableData/" title="com.datastax.driver.core.GettableData (interface)">GettableData</a></code></li>
   
@@ -208,6 +203,14 @@
   
     <li><code><a href="Session.State/" title="com.datastax.driver.core.Session.State (interface)">Session.State</a></code></li>
   
+    <li><code><a href="SettableByIndexData/" title="com.datastax.driver.core.SettableByIndexData (interface)">SettableByIndexData</a></code></li>
+  
+    <li><code><a href="SettableByNameData/" title="com.datastax.driver.core.SettableByNameData (interface)">SettableByNameData</a></code></li>
+  
+    <li><code><a href="SettableData/" title="com.datastax.driver.core.SettableData (interface)">SettableData</a></code></li>
+  
+    <li><code><a href="TimestampGenerator/" title="com.datastax.driver.core.TimestampGenerator (interface)">TimestampGenerator</a></code></li>
+  
   </ul>
 </div>
 
@@ -216,7 +219,15 @@
 <div class="package-classes">
   <ul class="list-inline">
   
+    <li><code><a href="AbstractAddressableByIndexData/" title="com.datastax.driver.core.AbstractAddressableByIndexData (klass)">AbstractAddressableByIndexData</a></code></li>
+  
+    <li><code><a href="AbstractData/" title="com.datastax.driver.core.AbstractData (klass)">AbstractData</a></code></li>
+  
+    <li><code><a href="AbstractGettableByIndexData/" title="com.datastax.driver.core.AbstractGettableByIndexData (klass)">AbstractGettableByIndexData</a></code></li>
+  
     <li><code><a href="AbstractGettableData/" title="com.datastax.driver.core.AbstractGettableData (klass)">AbstractGettableData</a></code></li>
+  
+    <li><code><a href="AbstractMonotonicTimestampGenerator/" title="com.datastax.driver.core.AbstractMonotonicTimestampGenerator (klass)">AbstractMonotonicTimestampGenerator</a></code></li>
   
     <li><code><a href="AbstractReconnectionHandler/" title="com.datastax.driver.core.AbstractReconnectionHandler (klass)">AbstractReconnectionHandler</a></code></li>
   
@@ -225,6 +236,8 @@
     <li><code><a href="ArrayBackedResultSet/" title="com.datastax.driver.core.ArrayBackedResultSet (klass)">ArrayBackedResultSet</a></code></li>
   
     <li><code><a href="ArrayBackedRow/" title="com.datastax.driver.core.ArrayBackedRow (klass)">ArrayBackedRow</a></code></li>
+  
+    <li><code><a href="AtomicMonotonicTimestampGenerator/" title="com.datastax.driver.core.AtomicMonotonicTimestampGenerator (klass)">AtomicMonotonicTimestampGenerator</a></code></li>
   
     <li><code><a href="BatchStatement/" title="com.datastax.driver.core.BatchStatement (klass)">BatchStatement</a></code></li>
   
@@ -236,11 +249,11 @@
   
     <li><code><a href="BusyConnectionException/" title="com.datastax.driver.core.BusyConnectionException (klass)">BusyConnectionException</a></code></li>
   
+    <li><code><a href="CBUtil/" title="com.datastax.driver.core.CBUtil (klass)">CBUtil</a></code></li>
+  
     <li><code><a href="CassandraTypeParser/" title="com.datastax.driver.core.CassandraTypeParser (klass)">CassandraTypeParser</a></code></li>
   
     <li><code><a href="CassandraTypeParser.ParseResult/" title="com.datastax.driver.core.CassandraTypeParser.ParseResult (klass)">CassandraTypeParser.ParseResult</a></code></li>
-  
-    <li><code><a href="CBUtil/" title="com.datastax.driver.core.CBUtil (klass)">CBUtil</a></code></li>
   
     <li><code><a href="CloseFuture/" title="com.datastax.driver.core.CloseFuture (klass)">CloseFuture</a></code></li>
   
@@ -250,9 +263,9 @@
   
     <li><code><a href="Cluster.Builder/" title="com.datastax.driver.core.Cluster.Builder (klass)">Cluster.Builder</a></code></li>
   
-    <li><code><a href="Cluster.Manager/" title="com.datastax.driver.core.Cluster.Manager (klass)">Cluster.Manager</a></code></li>
-  
     <li><code><a href="Cluster.ConnectionReaper/" title="com.datastax.driver.core.Cluster.ConnectionReaper (klass)">Cluster.ConnectionReaper</a></code></li>
+  
+    <li><code><a href="Cluster.Manager/" title="com.datastax.driver.core.Cluster.Manager (klass)">Cluster.Manager</a></code></li>
   
     <li><code><a href="ClusterNameMismatchException/" title="com.datastax.driver.core.ClusterNameMismatchException (klass)">ClusterNameMismatchException</a></code></li>
   
@@ -292,7 +305,7 @@
   
     <li><code><a href="DefaultResultSetFuture/" title="com.datastax.driver.core.DefaultResultSetFuture (klass)">DefaultResultSetFuture</a></code></li>
   
-    <li><code><a href="DelegatingCluster/" title="com.datastax.driver.core.DelegatingCluster (klass)">DelegatingCluster</a></code></li>
+    <li><code><a href="DynamicConnectionPool/" title="com.datastax.driver.core.DynamicConnectionPool (klass)">DynamicConnectionPool</a></code></li>
   
     <li><code><a href="ExceptionCatchingRunnable/" title="com.datastax.driver.core.ExceptionCatchingRunnable (klass)">ExceptionCatchingRunnable</a></code></li>
   
@@ -300,21 +313,25 @@
   
     <li><code><a href="Frame/" title="com.datastax.driver.core.Frame (klass)">Frame</a></code></li>
   
-    <li><code><a href="Frame.Header/" title="com.datastax.driver.core.Frame.Header (klass)">Frame.Header</a></code></li>
+    <li><code><a href="Frame.Compressor/" title="com.datastax.driver.core.Frame.Compressor (klass)">Frame.Compressor</a></code></li>
   
     <li><code><a href="Frame.Decoder/" title="com.datastax.driver.core.Frame.Decoder (klass)">Frame.Decoder</a></code></li>
   
-    <li><code><a href="Frame.Encoder/" title="com.datastax.driver.core.Frame.Encoder (klass)">Frame.Encoder</a></code></li>
+    <li><code><a href="Frame.DecoderV1/" title="com.datastax.driver.core.Frame.DecoderV1 (klass)">Frame.DecoderV1</a></code></li>
+  
+    <li><code><a href="Frame.DecoderV3/" title="com.datastax.driver.core.Frame.DecoderV3 (klass)">Frame.DecoderV3</a></code></li>
   
     <li><code><a href="Frame.Decompressor/" title="com.datastax.driver.core.Frame.Decompressor (klass)">Frame.Decompressor</a></code></li>
   
-    <li><code><a href="Frame.Compressor/" title="com.datastax.driver.core.Frame.Compressor (klass)">Frame.Compressor</a></code></li>
+    <li><code><a href="Frame.Encoder/" title="com.datastax.driver.core.Frame.Encoder (klass)">Frame.Encoder</a></code></li>
+  
+    <li><code><a href="Frame.Header/" title="com.datastax.driver.core.Frame.Header (klass)">Frame.Header</a></code></li>
   
     <li><code><a href="FrameCompressor/" title="com.datastax.driver.core.FrameCompressor (klass)">FrameCompressor</a></code></li>
   
-    <li><code><a href="FrameCompressor.SnappyCompressor/" title="com.datastax.driver.core.FrameCompressor.SnappyCompressor (klass)">FrameCompressor.SnappyCompressor</a></code></li>
-  
     <li><code><a href="FrameCompressor.LZ4Compressor/" title="com.datastax.driver.core.FrameCompressor.LZ4Compressor (klass)">FrameCompressor.LZ4Compressor</a></code></li>
+  
+    <li><code><a href="FrameCompressor.SnappyCompressor/" title="com.datastax.driver.core.FrameCompressor.SnappyCompressor (klass)">FrameCompressor.SnappyCompressor</a></code></li>
   
     <li><code><a href="Host/" title="com.datastax.driver.core.Host (klass)">Host</a></code></li>
   
@@ -328,13 +345,13 @@
   
     <li><code><a href="Message/" title="com.datastax.driver.core.Message (klass)">Message</a></code></li>
   
-    <li><code><a href="Message.Request/" title="com.datastax.driver.core.Message.Request (klass)">Message.Request</a></code></li>
-  
-    <li><code><a href="Message.Response/" title="com.datastax.driver.core.Message.Response (klass)">Message.Response</a></code></li>
-  
     <li><code><a href="Message.ProtocolDecoder/" title="com.datastax.driver.core.Message.ProtocolDecoder (klass)">Message.ProtocolDecoder</a></code></li>
   
     <li><code><a href="Message.ProtocolEncoder/" title="com.datastax.driver.core.Message.ProtocolEncoder (klass)">Message.ProtocolEncoder</a></code></li>
+  
+    <li><code><a href="Message.Request/" title="com.datastax.driver.core.Message.Request (klass)">Message.Request</a></code></li>
+  
+    <li><code><a href="Message.Response/" title="com.datastax.driver.core.Message.Response (klass)">Message.Response</a></code></li>
   
     <li><code><a href="Metadata/" title="com.datastax.driver.core.Metadata (klass)">Metadata</a></code></li>
   
@@ -346,13 +363,9 @@
   
     <li><code><a href="MetricsOptions/" title="com.datastax.driver.core.MetricsOptions (klass)">MetricsOptions</a></code></li>
   
-    <li><code><a href="NettyOptions/" title="com.datastax.driver.core.NettyOptions (klass)">NettyOptions</a></code></li>
-  
-    <li><code><a href="NettyUtil/" title="com.datastax.driver.core.NettyUtil (klass)">NettyUtil</a></code></li>
-  
     <li><code><a href="OperationTimedOutException/" title="com.datastax.driver.core.OperationTimedOutException (klass)">OperationTimedOutException</a></code></li>
   
-    <li><code><a href="PagingState/" title="com.datastax.driver.core.PagingState (klass)">PagingState</a></code></li>
+    <li><code><a href="ParseUtils/" title="com.datastax.driver.core.ParseUtils (klass)">ParseUtils</a></code></li>
   
     <li><code><a href="PlainTextAuthProvider/" title="com.datastax.driver.core.PlainTextAuthProvider (klass)">PlainTextAuthProvider</a></code></li>
   
@@ -364,19 +377,15 @@
   
     <li><code><a href="ProtocolEvent/" title="com.datastax.driver.core.ProtocolEvent (klass)">ProtocolEvent</a></code></li>
   
-    <li><code><a href="ProtocolEvent.TopologyChange/" title="com.datastax.driver.core.ProtocolEvent.TopologyChange (klass)">ProtocolEvent.TopologyChange</a></code></li>
+    <li><code><a href="ProtocolEvent.SchemaChange/" title="com.datastax.driver.core.ProtocolEvent.SchemaChange (klass)">ProtocolEvent.SchemaChange</a></code></li>
   
     <li><code><a href="ProtocolEvent.StatusChange/" title="com.datastax.driver.core.ProtocolEvent.StatusChange (klass)">ProtocolEvent.StatusChange</a></code></li>
   
-    <li><code><a href="ProtocolEvent.SchemaChange/" title="com.datastax.driver.core.ProtocolEvent.SchemaChange (klass)">ProtocolEvent.SchemaChange</a></code></li>
+    <li><code><a href="ProtocolEvent.TopologyChange/" title="com.datastax.driver.core.ProtocolEvent.TopologyChange (klass)">ProtocolEvent.TopologyChange</a></code></li>
   
     <li><code><a href="ProtocolOptions/" title="com.datastax.driver.core.ProtocolOptions (klass)">ProtocolOptions</a></code></li>
   
     <li><code><a href="ProtocolV1Authenticator/" title="com.datastax.driver.core.ProtocolV1Authenticator (klass)">ProtocolV1Authenticator</a></code></li>
-  
-    <li><code><a href="QueryLogger/" title="com.datastax.driver.core.QueryLogger (klass)">QueryLogger</a></code></li>
-  
-    <li><code><a href="QueryLogger.Builder/" title="com.datastax.driver.core.QueryLogger.Builder (klass)">QueryLogger.Builder</a></code></li>
   
     <li><code><a href="QueryOptions/" title="com.datastax.driver.core.QueryOptions (klass)">QueryOptions</a></code></li>
   
@@ -388,9 +397,9 @@
   
     <li><code><a href="ReplicationStrategy/" title="com.datastax.driver.core.ReplicationStrategy (klass)">ReplicationStrategy</a></code></li>
   
-    <li><code><a href="ReplicationStrategy.SimpleStrategy/" title="com.datastax.driver.core.ReplicationStrategy.SimpleStrategy (klass)">ReplicationStrategy.SimpleStrategy</a></code></li>
-  
     <li><code><a href="ReplicationStrategy.NetworkTopologyStrategy/" title="com.datastax.driver.core.ReplicationStrategy.NetworkTopologyStrategy (klass)">ReplicationStrategy.NetworkTopologyStrategy</a></code></li>
+  
+    <li><code><a href="ReplicationStrategy.SimpleStrategy/" title="com.datastax.driver.core.ReplicationStrategy.SimpleStrategy (klass)">ReplicationStrategy.SimpleStrategy</a></code></li>
   
     <li><code><a href="RequestHandler/" title="com.datastax.driver.core.RequestHandler (klass)">RequestHandler</a></code></li>
   
@@ -398,55 +407,61 @@
   
     <li><code><a href="Requests/" title="com.datastax.driver.core.Requests (klass)">Requests</a></code></li>
   
-    <li><code><a href="Requests.Startup/" title="com.datastax.driver.core.Requests.Startup (klass)">Requests.Startup</a></code></li>
-  
-    <li><code><a href="Requests.Credentials/" title="com.datastax.driver.core.Requests.Credentials (klass)">Requests.Credentials</a></code></li>
-  
-    <li><code><a href="Requests.Options/" title="com.datastax.driver.core.Requests.Options (klass)">Requests.Options</a></code></li>
-  
-    <li><code><a href="Requests.Query/" title="com.datastax.driver.core.Requests.Query (klass)">Requests.Query</a></code></li>
-  
-    <li><code><a href="Requests.Execute/" title="com.datastax.driver.core.Requests.Execute (klass)">Requests.Execute</a></code></li>
-  
-    <li><code><a href="Requests.QueryProtocolOptions/" title="com.datastax.driver.core.Requests.QueryProtocolOptions (klass)">Requests.QueryProtocolOptions</a></code></li>
+    <li><code><a href="Requests.AuthResponse/" title="com.datastax.driver.core.Requests.AuthResponse (klass)">Requests.AuthResponse</a></code></li>
   
     <li><code><a href="Requests.Batch/" title="com.datastax.driver.core.Requests.Batch (klass)">Requests.Batch</a></code></li>
   
+    <li><code><a href="Requests.BatchProtocolOptions/" title="com.datastax.driver.core.Requests.BatchProtocolOptions (klass)">Requests.BatchProtocolOptions</a></code></li>
+  
+    <li><code><a href="Requests.Credentials/" title="com.datastax.driver.core.Requests.Credentials (klass)">Requests.Credentials</a></code></li>
+  
+    <li><code><a href="Requests.Execute/" title="com.datastax.driver.core.Requests.Execute (klass)">Requests.Execute</a></code></li>
+  
+    <li><code><a href="Requests.Options/" title="com.datastax.driver.core.Requests.Options (klass)">Requests.Options</a></code></li>
+  
     <li><code><a href="Requests.Prepare/" title="com.datastax.driver.core.Requests.Prepare (klass)">Requests.Prepare</a></code></li>
+  
+    <li><code><a href="Requests.Query/" title="com.datastax.driver.core.Requests.Query (klass)">Requests.Query</a></code></li>
+  
+    <li><code><a href="Requests.QueryProtocolOptions/" title="com.datastax.driver.core.Requests.QueryProtocolOptions (klass)">Requests.QueryProtocolOptions</a></code></li>
   
     <li><code><a href="Requests.Register/" title="com.datastax.driver.core.Requests.Register (klass)">Requests.Register</a></code></li>
   
-    <li><code><a href="Requests.AuthResponse/" title="com.datastax.driver.core.Requests.AuthResponse (klass)">Requests.AuthResponse</a></code></li>
+    <li><code><a href="Requests.Startup/" title="com.datastax.driver.core.Requests.Startup (klass)">Requests.Startup</a></code></li>
   
     <li><code><a href="Responses/" title="com.datastax.driver.core.Responses (klass)">Responses</a></code></li>
   
-    <li><code><a href="Responses.Error/" title="com.datastax.driver.core.Responses.Error (klass)">Responses.Error</a></code></li>
+    <li><code><a href="Responses.AuthChallenge/" title="com.datastax.driver.core.Responses.AuthChallenge (klass)">Responses.AuthChallenge</a></code></li>
   
-    <li><code><a href="Responses.Ready/" title="com.datastax.driver.core.Responses.Ready (klass)">Responses.Ready</a></code></li>
+    <li><code><a href="Responses.AuthSuccess/" title="com.datastax.driver.core.Responses.AuthSuccess (klass)">Responses.AuthSuccess</a></code></li>
   
     <li><code><a href="Responses.Authenticate/" title="com.datastax.driver.core.Responses.Authenticate (klass)">Responses.Authenticate</a></code></li>
   
-    <li><code><a href="Responses.Supported/" title="com.datastax.driver.core.Responses.Supported (klass)">Responses.Supported</a></code></li>
+    <li><code><a href="Responses.Error/" title="com.datastax.driver.core.Responses.Error (klass)">Responses.Error</a></code></li>
+  
+    <li><code><a href="Responses.Event/" title="com.datastax.driver.core.Responses.Event (klass)">Responses.Event</a></code></li>
+  
+    <li><code><a href="Responses.Ready/" title="com.datastax.driver.core.Responses.Ready (klass)">Responses.Ready</a></code></li>
   
     <li><code><a href="Responses.Result/" title="com.datastax.driver.core.Responses.Result (klass)">Responses.Result</a></code></li>
   
-    <li><code><a href="Responses.Result.Void/" title="com.datastax.driver.core.Responses.Result.Void (klass)">Responses.Result.Void</a></code></li>
-  
-    <li><code><a href="Responses.Result.SetKeyspace/" title="com.datastax.driver.core.Responses.Result.SetKeyspace (klass)">Responses.Result.SetKeyspace</a></code></li>
+    <li><code><a href="Responses.Result.Prepared/" title="com.datastax.driver.core.Responses.Result.Prepared (klass)">Responses.Result.Prepared</a></code></li>
   
     <li><code><a href="Responses.Result.Rows/" title="com.datastax.driver.core.Responses.Result.Rows (klass)">Responses.Result.Rows</a></code></li>
   
     <li><code><a href="Responses.Result.Rows.Metadata/" title="com.datastax.driver.core.Responses.Result.Rows.Metadata (klass)">Responses.Result.Rows.Metadata</a></code></li>
   
-    <li><code><a href="Responses.Result.Prepared/" title="com.datastax.driver.core.Responses.Result.Prepared (klass)">Responses.Result.Prepared</a></code></li>
-  
     <li><code><a href="Responses.Result.SchemaChange/" title="com.datastax.driver.core.Responses.Result.SchemaChange (klass)">Responses.Result.SchemaChange</a></code></li>
   
-    <li><code><a href="Responses.Event/" title="com.datastax.driver.core.Responses.Event (klass)">Responses.Event</a></code></li>
+    <li><code><a href="Responses.Result.SetKeyspace/" title="com.datastax.driver.core.Responses.Result.SetKeyspace (klass)">Responses.Result.SetKeyspace</a></code></li>
   
-    <li><code><a href="Responses.AuthChallenge/" title="com.datastax.driver.core.Responses.AuthChallenge (klass)">Responses.AuthChallenge</a></code></li>
+    <li><code><a href="Responses.Result.Void/" title="com.datastax.driver.core.Responses.Result.Void (klass)">Responses.Result.Void</a></code></li>
   
-    <li><code><a href="Responses.AuthSuccess/" title="com.datastax.driver.core.Responses.AuthSuccess (klass)">Responses.AuthSuccess</a></code></li>
+    <li><code><a href="Responses.Supported/" title="com.datastax.driver.core.Responses.Supported (klass)">Responses.Supported</a></code></li>
+  
+    <li><code><a href="SSLOptions/" title="com.datastax.driver.core.SSLOptions (klass)">SSLOptions</a></code></li>
+  
+    <li><code><a href="ServerSideTimestampGenerator/" title="com.datastax.driver.core.ServerSideTimestampGenerator (klass)">ServerSideTimestampGenerator</a></code></li>
   
     <li><code><a href="SessionManager/" title="com.datastax.driver.core.SessionManager (klass)">SessionManager</a></code></li>
   
@@ -454,19 +469,23 @@
   
     <li><code><a href="SimpleStatement/" title="com.datastax.driver.core.SimpleStatement (klass)">SimpleStatement</a></code></li>
   
-    <li><code><a href="SocketOptions/" title="com.datastax.driver.core.SocketOptions (klass)">SocketOptions</a></code></li>
+    <li><code><a href="SingleConnectionPool/" title="com.datastax.driver.core.SingleConnectionPool (klass)">SingleConnectionPool</a></code></li>
   
-    <li><code><a href="SSLOptions/" title="com.datastax.driver.core.SSLOptions (klass)">SSLOptions</a></code></li>
+    <li><code><a href="SocketOptions/" title="com.datastax.driver.core.SocketOptions (klass)">SocketOptions</a></code></li>
   
     <li><code><a href="Statement/" title="com.datastax.driver.core.Statement (klass)">Statement</a></code></li>
   
     <li><code><a href="StreamIdGenerator/" title="com.datastax.driver.core.StreamIdGenerator (klass)">StreamIdGenerator</a></code></li>
+  
+    <li><code><a href="SystemClock/" title="com.datastax.driver.core.SystemClock (klass)">SystemClock</a></code></li>
   
     <li><code><a href="SystemProperties/" title="com.datastax.driver.core.SystemProperties (klass)">SystemProperties</a></code></li>
   
     <li><code><a href="TableMetadata/" title="com.datastax.driver.core.TableMetadata (klass)">TableMetadata</a></code></li>
   
     <li><code><a href="TableMetadata.Options/" title="com.datastax.driver.core.TableMetadata.Options (klass)">TableMetadata.Options</a></code></li>
+  
+    <li><code><a href="ThreadLocalMonotonicTimestampGenerator/" title="com.datastax.driver.core.ThreadLocalMonotonicTimestampGenerator (klass)">ThreadLocalMonotonicTimestampGenerator</a></code></li>
   
     <li><code><a href="Token/" title="com.datastax.driver.core.Token (klass)">Token</a></code></li>
   
@@ -482,15 +501,19 @@
   
     <li><code><a href="TransportException/" title="com.datastax.driver.core.TransportException (klass)">TransportException</a></code></li>
   
+    <li><code><a href="TupleType/" title="com.datastax.driver.core.TupleType (klass)">TupleType</a></code></li>
+  
+    <li><code><a href="TupleValue/" title="com.datastax.driver.core.TupleValue (klass)">TupleValue</a></code></li>
+  
     <li><code><a href="TypeCodec/" title="com.datastax.driver.core.TypeCodec (klass)">TypeCodec</a></code></li>
   
-    <li><code><a href="TypeCodec.StringCodec/" title="com.datastax.driver.core.TypeCodec.StringCodec (klass)">TypeCodec.StringCodec</a></code></li>
+    <li><code><a href="TypeCodec.BigIntegerCodec/" title="com.datastax.driver.core.TypeCodec.BigIntegerCodec (klass)">TypeCodec.BigIntegerCodec</a></code></li>
   
-    <li><code><a href="TypeCodec.LongCodec/" title="com.datastax.driver.core.TypeCodec.LongCodec (klass)">TypeCodec.LongCodec</a></code></li>
+    <li><code><a href="TypeCodec.BooleanCodec/" title="com.datastax.driver.core.TypeCodec.BooleanCodec (klass)">TypeCodec.BooleanCodec</a></code></li>
   
     <li><code><a href="TypeCodec.BytesCodec/" title="com.datastax.driver.core.TypeCodec.BytesCodec (klass)">TypeCodec.BytesCodec</a></code></li>
   
-    <li><code><a href="TypeCodec.BooleanCodec/" title="com.datastax.driver.core.TypeCodec.BooleanCodec (klass)">TypeCodec.BooleanCodec</a></code></li>
+    <li><code><a href="TypeCodec.DateCodec/" title="com.datastax.driver.core.TypeCodec.DateCodec (klass)">TypeCodec.DateCodec</a></code></li>
   
     <li><code><a href="TypeCodec.DecimalCodec/" title="com.datastax.driver.core.TypeCodec.DecimalCodec (klass)">TypeCodec.DecimalCodec</a></code></li>
   
@@ -502,21 +525,31 @@
   
     <li><code><a href="TypeCodec.IntCodec/" title="com.datastax.driver.core.TypeCodec.IntCodec (klass)">TypeCodec.IntCodec</a></code></li>
   
-    <li><code><a href="TypeCodec.DateCodec/" title="com.datastax.driver.core.TypeCodec.DateCodec (klass)">TypeCodec.DateCodec</a></code></li>
-  
-    <li><code><a href="TypeCodec.UUIDCodec/" title="com.datastax.driver.core.TypeCodec.UUIDCodec (klass)">TypeCodec.UUIDCodec</a></code></li>
-  
-    <li><code><a href="TypeCodec.TimeUUIDCodec/" title="com.datastax.driver.core.TypeCodec.TimeUUIDCodec (klass)">TypeCodec.TimeUUIDCodec</a></code></li>
-  
-    <li><code><a href="TypeCodec.BigIntegerCodec/" title="com.datastax.driver.core.TypeCodec.BigIntegerCodec (klass)">TypeCodec.BigIntegerCodec</a></code></li>
-  
     <li><code><a href="TypeCodec.ListCodec/" title="com.datastax.driver.core.TypeCodec.ListCodec (klass)">TypeCodec.ListCodec</a></code></li>
   
-    <li><code><a href="TypeCodec.SetCodec/" title="com.datastax.driver.core.TypeCodec.SetCodec (klass)">TypeCodec.SetCodec</a></code></li>
+    <li><code><a href="TypeCodec.LongCodec/" title="com.datastax.driver.core.TypeCodec.LongCodec (klass)">TypeCodec.LongCodec</a></code></li>
   
     <li><code><a href="TypeCodec.MapCodec/" title="com.datastax.driver.core.TypeCodec.MapCodec (klass)">TypeCodec.MapCodec</a></code></li>
   
+    <li><code><a href="TypeCodec.SetCodec/" title="com.datastax.driver.core.TypeCodec.SetCodec (klass)">TypeCodec.SetCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.StringCodec/" title="com.datastax.driver.core.TypeCodec.StringCodec (klass)">TypeCodec.StringCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.TimeUUIDCodec/" title="com.datastax.driver.core.TypeCodec.TimeUUIDCodec (klass)">TypeCodec.TimeUUIDCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.TupleCodec/" title="com.datastax.driver.core.TypeCodec.TupleCodec (klass)">TypeCodec.TupleCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.UDTCodec/" title="com.datastax.driver.core.TypeCodec.UDTCodec (klass)">TypeCodec.UDTCodec</a></code></li>
+  
+    <li><code><a href="TypeCodec.UUIDCodec/" title="com.datastax.driver.core.TypeCodec.UUIDCodec (klass)">TypeCodec.UUIDCodec</a></code></li>
+  
+    <li><code><a href="UDTValue/" title="com.datastax.driver.core.UDTValue (klass)">UDTValue</a></code></li>
+  
     <li><code><a href="UnsupportedProtocolVersionException/" title="com.datastax.driver.core.UnsupportedProtocolVersionException (klass)">UnsupportedProtocolVersionException</a></code></li>
+  
+    <li><code><a href="UserType/" title="com.datastax.driver.core.UserType (klass)">UserType</a></code></li>
+  
+    <li><code><a href="UserType.Field/" title="com.datastax.driver.core.UserType.Field (klass)">UserType.Field</a></code></li>
   
     <li><code><a href="VersionNumber/" title="com.datastax.driver.core.VersionNumber (klass)">VersionNumber</a></code></li>
   
@@ -563,7 +596,23 @@
                   <ol class="nav nav-pills nav-stacked">
                   
                     <li>
+                      <a href="AbstractAddressableByIndexData/">AbstractAddressableByIndexData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="AbstractData/">AbstractData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="AbstractGettableByIndexData/">AbstractGettableByIndexData</a>
+                    </li>
+                  
+                    <li>
                       <a href="AbstractGettableData/">AbstractGettableData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="AbstractMonotonicTimestampGenerator/">AbstractMonotonicTimestampGenerator</a>
                     </li>
                   
                     <li>
@@ -580,6 +629,10 @@
                   
                     <li>
                       <a href="ArrayBackedRow/">ArrayBackedRow</a>
+                    </li>
+                  
+                    <li>
+                      <a href="AtomicMonotonicTimestampGenerator/">AtomicMonotonicTimestampGenerator</a>
                     </li>
                   
                     <li>
@@ -624,6 +677,10 @@
                   
                     <li>
                       <a href="CassandraTypeParser.ParseResult/">CassandraTypeParser.ParseResult</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Clock/">Clock</a>
                     </li>
                   
                     <li>
@@ -755,7 +812,7 @@
                     </li>
                   
                     <li>
-                      <a href="DelegatingCluster/">DelegatingCluster</a>
+                      <a href="DynamicConnectionPool/">DynamicConnectionPool</a>
                     </li>
                   
                     <li>
@@ -780,6 +837,14 @@
                   
                     <li>
                       <a href="Frame.Decoder/">Frame.Decoder</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Frame.DecoderV1/">Frame.DecoderV1</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Frame.DecoderV3/">Frame.DecoderV3</a>
                     </li>
                   
                     <li>
@@ -808,6 +873,14 @@
                   
                     <li>
                       <a href="FrameCompressor.SnappyCompressor/">FrameCompressor.SnappyCompressor</a>
+                    </li>
+                  
+                    <li>
+                      <a href="GettableByIndexData/">GettableByIndexData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="GettableByNameData/">GettableByNameData</a>
                     </li>
                   
                     <li>
@@ -907,19 +980,11 @@
                     </li>
                   
                     <li>
-                      <a href="NettyOptions/">NettyOptions</a>
-                    </li>
-                  
-                    <li>
-                      <a href="NettyUtil/">NettyUtil</a>
-                    </li>
-                  
-                    <li>
                       <a href="OperationTimedOutException/">OperationTimedOutException</a>
                     </li>
                   
                     <li>
-                      <a href="PagingState/">PagingState</a>
+                      <a href="ParseUtils/">ParseUtils</a>
                     </li>
                   
                     <li>
@@ -928,10 +993,6 @@
                   
                     <li>
                       <a href="PooledConnection/">PooledConnection</a>
-                    </li>
-                  
-                    <li>
-                      <a href="PooledConnection.State/">PooledConnection.State</a>
                     </li>
                   
                     <li>
@@ -956,6 +1017,10 @@
                   
                     <li>
                       <a href="ProtocolEvent.SchemaChange.Change/">ProtocolEvent.SchemaChange.Change</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ProtocolEvent.SchemaChange.Target/">ProtocolEvent.SchemaChange.Target</a>
                     </li>
                   
                     <li>
@@ -991,11 +1056,7 @@
                     </li>
                   
                     <li>
-                      <a href="QueryLogger/">QueryLogger</a>
-                    </li>
-                  
-                    <li>
-                      <a href="QueryLogger.Builder/">QueryLogger.Builder</a>
+                      <a href="ProtocolVersion/">ProtocolVersion</a>
                     </li>
                   
                     <li>
@@ -1051,6 +1112,10 @@
                     </li>
                   
                     <li>
+                      <a href="Requests.BatchProtocolOptions/">Requests.BatchProtocolOptions</a>
+                    </li>
+                  
+                    <li>
                       <a href="Requests.Credentials/">Requests.Credentials</a>
                     </li>
                   
@@ -1068,6 +1133,10 @@
                   
                     <li>
                       <a href="Requests.Query/">Requests.Query</a>
+                    </li>
+                  
+                    <li>
+                      <a href="Requests.QueryFlag/">Requests.QueryFlag</a>
                     </li>
                   
                     <li>
@@ -1139,6 +1208,10 @@
                     </li>
                   
                     <li>
+                      <a href="Responses.Result.SchemaChange.Target/">Responses.Result.SchemaChange.Target</a>
+                    </li>
+                  
+                    <li>
                       <a href="Responses.Result.SetKeyspace/">Responses.Result.SetKeyspace</a>
                     </li>
                   
@@ -1167,6 +1240,10 @@
                     </li>
                   
                     <li>
+                      <a href="ServerSideTimestampGenerator/">ServerSideTimestampGenerator</a>
+                    </li>
+                  
+                    <li>
                       <a href="Session/">Session</a>
                     </li>
                   
@@ -1179,11 +1256,27 @@
                     </li>
                   
                     <li>
+                      <a href="SettableByIndexData/">SettableByIndexData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SettableByNameData/">SettableByNameData</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SettableData/">SettableData</a>
+                    </li>
+                  
+                    <li>
                       <a href="SimpleJSONParser/">SimpleJSONParser</a>
                     </li>
                   
                     <li>
                       <a href="SimpleStatement/">SimpleStatement</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SingleConnectionPool/">SingleConnectionPool</a>
                     </li>
                   
                     <li>
@@ -1196,6 +1289,10 @@
                   
                     <li>
                       <a href="StreamIdGenerator/">StreamIdGenerator</a>
+                    </li>
+                  
+                    <li>
+                      <a href="SystemClock/">SystemClock</a>
                     </li>
                   
                     <li>
@@ -1212,6 +1309,14 @@
                   
                     <li>
                       <a href="TableMetadata.Order/">TableMetadata.Order</a>
+                    </li>
+                  
+                    <li>
+                      <a href="ThreadLocalMonotonicTimestampGenerator/">ThreadLocalMonotonicTimestampGenerator</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TimestampGenerator/">TimestampGenerator</a>
                     </li>
                   
                     <li>
@@ -1240,6 +1345,14 @@
                   
                     <li>
                       <a href="TransportException/">TransportException</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TupleType/">TupleType</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TupleValue/">TupleValue</a>
                     </li>
                   
                     <li>
@@ -1307,11 +1420,31 @@
                     </li>
                   
                     <li>
+                      <a href="TypeCodec.TupleCodec/">TypeCodec.TupleCodec</a>
+                    </li>
+                  
+                    <li>
+                      <a href="TypeCodec.UDTCodec/">TypeCodec.UDTCodec</a>
+                    </li>
+                  
+                    <li>
                       <a href="TypeCodec.UUIDCodec/">TypeCodec.UUIDCodec</a>
                     </li>
                   
                     <li>
+                      <a href="UDTValue/">UDTValue</a>
+                    </li>
+                  
+                    <li>
                       <a href="UnsupportedProtocolVersionException/">UnsupportedProtocolVersionException</a>
+                    </li>
+                  
+                    <li>
+                      <a href="UserType/">UserType</a>
+                    </li>
+                  
+                    <li>
+                      <a href="UserType.Field/">UserType.Field</a>
                     </li>
                   
                     <li>

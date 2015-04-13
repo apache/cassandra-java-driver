@@ -37,13 +37,12 @@
         <div class="collapse navbar-collapse" ng-controller="search">
           <ul class="nav navbar-nav">
             
-            <li>
-              <a href="../../../">Introduction</a>
-            </li>
+            
             
             <li>
               <a href="../../../features/">Features</a>
             </li>
+            
             
             <li class="active">
               <a href="../../">API docs</a>
@@ -52,7 +51,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -68,26 +67,10 @@
           <nav class="crumbs">
             <ol class="breadcrumb">
               
-              <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
-                  
-                    <li class="disabled"><a href="./">2.0.10</a></li>
-                  
-                    <li><a href="../../../2.1.5/api/com.datastax.driver.core/Configuration/">2.1.5</a></li>
-                  
-                  </ul>
-                </div>
-              </li>
               
               
               
-              
-              <li><a href="../../../">Introduction</a></li>
+              <li><a href="../../../">Home</a></li>
               
               
               
@@ -99,7 +82,7 @@
               
               
               
-              <li><a href="../">com.datastax.driver.core</a></li>
+              <li><a href="../">c.d.d.core</a></li>
               
               
               
@@ -122,7 +105,7 @@
 </div>
 
 <p>The configuration of the cluster. It configures the following: </p>
-<ul> <li>Cassandra protocol level configuration (compression).</li> <li>Connection pooling configurations.</li> <li>low-level TCP configuration options (tcpNoDelay, keepAlive, …).</li> <li>Metrics related options.</li> <li>Query related options (default consistency level, fetchSize, …).</li> <li>Netty layer customization options.</li> </ul> This is also where you get the configured policies, though those cannot be changed (they are set during the built of the Cluster object).
+<ul> <li>Cassandra protocol level configuration (compression).</li> <li>Connection pooling configurations.</li> <li>low-level TCP configuration options (tcpNoDelay, keepAlive, …).</li> <li>Metrics related options.</li> <li>Query related options (default consistency level, fetchSize, …).</li> </ul> This is also where you get the configured policies, though those cannot be changed (they are set during the built of the Cluster object).
 
 <h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
@@ -148,10 +131,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="Configuration%28Policies%2C+ProtocolOptions%2C+PoolingOptions%2C+SocketOptions%2C+MetricsOptions%2C+QueryOptions%2C+NettyOptions%29">
+  <div class="panel panel-default member-definition" id="Configuration%28Policies%2C+ProtocolOptions%2C+PoolingOptions%2C+SocketOptions%2C+MetricsOptions%2C+QueryOptions%29">
     <div class="panel-heading constructor-heading">
-      <a class="anchor" href="#Configuration%28Policies%2C+ProtocolOptions%2C+PoolingOptions%2C+SocketOptions%2C+MetricsOptions%2C+QueryOptions%2C+NettyOptions%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      Configuration <big>(</big><code><a href="../../com.datastax.driver.core.policies/Policies/">Policies</a></code> policies, <code><a href="../ProtocolOptions/">ProtocolOptions</a></code> protocolOptions, <code><a href="../PoolingOptions/">PoolingOptions</a></code> poolingOptions, <code><a href="../SocketOptions/">SocketOptions</a></code> socketOptions, <code><a href="../MetricsOptions/">MetricsOptions</a></code> metricsOptions, <code><a href="../QueryOptions/">QueryOptions</a></code> queryOptions, <code><a href="../NettyOptions/">NettyOptions</a></code> nettyOptions<big>)</big>
+      <a class="anchor" href="#Configuration%28Policies%2C+ProtocolOptions%2C+PoolingOptions%2C+SocketOptions%2C+MetricsOptions%2C+QueryOptions%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      Configuration <big>(</big><code><a href="../../com.datastax.driver.core.policies/Policies/">Policies</a></code> policies, <code><a href="../ProtocolOptions/">ProtocolOptions</a></code> protocolOptions, <code><a href="../PoolingOptions/">PoolingOptions</a></code> poolingOptions, <code><a href="../SocketOptions/">SocketOptions</a></code> socketOptions, <code><a href="../MetricsOptions/">MetricsOptions</a></code> metricsOptions, <code><a href="../QueryOptions/">QueryOptions</a></code> queryOptions<big>)</big>
     </div>
     <div class="panel-body constructor-body">
       <p>Creates a configuration with the specified parameters.</p>
@@ -205,13 +188,6 @@
 <td><code><a href="../QueryOptions/">QueryOptions</a></code></td>
 <td>
 <p>defaults related to queries.</p>
-</td>
-</tr>
-<tr>
-<td><var>nettyOptions</var></td>
-<td><code><a href="../NettyOptions/">NettyOptions</a></code></td>
-<td>
-<p>the <code><a href="../NettyOptions/">NettyOptions</a></code> instance to use</p>
 </td>
 </tr>
 </tbody>
@@ -412,32 +388,6 @@
 <td><code><a href="../QueryOptions/">QueryOptions</a></code></td>
 <td>
 <p>the queries options.</p>
-</td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getNettyOptions%28%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getNettyOptions%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><a href="../NettyOptions/">NettyOptions</a></code> getNettyOptions <big>(</big><big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      <p>Returns the <code><a href="../NettyOptions/">NettyOptions</a></code> instance for this configuration.</p>
-
-      <dl class="tags">
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code><a href="../NettyOptions/">NettyOptions</a></code></td>
-<td>
-<p>the <code><a href="../NettyOptions/">NettyOptions</a></code> instance for this configuration.</p>
 </td>
 </tr></tbody>
 </table></dd>

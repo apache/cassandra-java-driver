@@ -37,13 +37,12 @@
         <div class="collapse navbar-collapse" ng-controller="search">
           <ul class="nav navbar-nav">
             
-            <li>
-              <a href="../../../">Introduction</a>
-            </li>
+            
             
             <li>
               <a href="../../../features/">Features</a>
             </li>
+            
             
             <li class="active">
               <a href="../../">API docs</a>
@@ -52,7 +51,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -68,26 +67,10 @@
           <nav class="crumbs">
             <ol class="breadcrumb">
               
-              <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
-                  
-                    <li class="disabled"><a href="./">2.0.10</a></li>
-                  
-                    <li><a href="../../../2.1.5/api/com.datastax.driver.core.querybuilder/BuiltStatement/">2.1.5</a></li>
-                  
-                  </ul>
-                </div>
-              </li>
               
               
               
-              
-              <li><a href="../../../">Introduction</a></li>
+              <li><a href="../../../">Home</a></li>
               
               
               
@@ -99,7 +82,7 @@
               
               
               
-              <li><a href="../">com.datastax.driver.core.querybuilder</a></li>
+              <li><a href="../">c.d.d.c.querybuilder</a></li>
               
               
               
@@ -360,10 +343,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="buildQueryString%28List%3CByteBuffer%3E%29">
+  <div class="panel panel-default member-definition" id="buildQueryString%28List%3CObject%3E%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#buildQueryString%28List%3CByteBuffer%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.lang.StringBuilder">StringBuilder</abbr></code> buildQueryString <big>(</big><code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>&gt; variables<big>)</big>
+      <a class="anchor" href="#buildQueryString%28List%3CObject%3E%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.StringBuilder">StringBuilder</abbr></code> buildQueryString <big>(</big><code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.Object">Object</abbr></code>&gt; variables<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -382,7 +365,7 @@
 <tbody><tr>
 <td><var>variables</var></td>
 <td>
-<code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>&gt;</td>
+<code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.Object">Object</abbr></code>&gt;</td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -621,10 +604,47 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="getValues%28%29">
+  <div class="panel panel-default member-definition" id="getValues%28ProtocolVersion%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#getValues%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>[] getValues <big>(</big><big>)</big>
+      <a class="anchor" href="#getValues%28ProtocolVersion%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>[] getValues <big>(</big><code><a href="../../com.datastax.driver.core/ProtocolVersion/">ProtocolVersion</a></code> protocolVersion<big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><var>protocolVersion</var></td>
+<td><code><a href="../../com.datastax.driver.core/ProtocolVersion/">ProtocolVersion</a></code></td>
+<td></td>
+</tr></tbody>
+</table></dd>
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td>
+<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>[]</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="hasValues%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#hasValues%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>boolean</code> hasValues <big>(</big><big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -636,8 +656,7 @@
 <th class="details">Details</th>
 </tr></thead>
 <tbody><tr>
-<td>
-<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>[]</td>
+<td><code>boolean</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -668,6 +687,30 @@
     </div>
   </div>
   
+  <div class="panel panel-default member-definition" id="getRawValues%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getRawValues%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.Object">Object</abbr></code>&gt; getRawValues <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td>
+<code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.Object">Object</abbr></code>&gt;</td>
+<td></td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
   <div class="panel panel-default member-definition" id="setForceNoValues%28boolean%29">
     <div class="panel-heading method-heading">
       <a class="anchor" href="#setForceNoValues%28boolean%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
@@ -675,7 +718,7 @@
     </div>
     <div class="panel-body method-body">
       <p>Allows to force this builder to not generate values (through its <code>getValues()</code> method). </p>
-<p> By default (and unless the protocol version 1 is in use, see below) and for performance reasons, the query builder will not serialize all values provided to strings. This means that the <code><a href="#getQueryString%28%29">BuiltStatement#getQueryString</a></code> may return a query string with bind markers (where and when is at the discretion of the builder) and <code><a href="#getValues%28%29">BuiltStatement#getValues</a></code> will return the binary values for those markers. This method allows to force the builder to not generate binary values but rather to serialize them all in the query string. In practice, this means that if you call <code>setForceNoValues(true)</code>, you are guaranteed that <code>getValues()</code> will return <code>null</code> and that the string returned by <code>getQueryString()</code> will contain no other bind markers than the one inputted by the user. </p>
+<p> By default (and unless the protocol version 1 is in use, see below) and for performance reasons, the query builder will not serialize all values provided to strings. This means that the <code><a href="#getQueryString%28%29">BuiltStatement#getQueryString</a></code> may return a query string with bind markers (where and when is at the discretion of the builder) and <code><a href="#getValues%28ProtocolVersion%29">BuiltStatement#getValues</a></code> will return the binary values for those markers. This method allows to force the builder to not generate binary values but rather to serialize them all in the query string. In practice, this means that if you call <code>setForceNoValues(true)</code>, you are guaranteed that <code>getValues()</code> will return <code>null</code> and that the string returned by <code>getQueryString()</code> will contain no other bind markers than the one inputted by the user. </p>
 <p> If the native protocol version 1 is in use, the driver will default to not generating values since those are not supported by that version of the protocol. In practice, the driver will automatically call this method with <code>true</code> as argument prior to execution. Hence, calling this method when the protocol version 1 is in use is basically a no-op. </p>
 <p> Note that this method is mainly useful for debugging purpose. In general, the default behavior should be the correct and most efficient one.</p>
 

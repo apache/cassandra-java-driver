@@ -37,13 +37,12 @@
         <div class="collapse navbar-collapse" ng-controller="search">
           <ul class="nav navbar-nav">
             
-            <li>
-              <a href="../../../">Introduction</a>
-            </li>
+            
             
             <li>
               <a href="../../../features/">Features</a>
             </li>
+            
             
             <li class="active">
               <a href="../../">API docs</a>
@@ -52,7 +51,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -68,26 +67,10 @@
           <nav class="crumbs">
             <ol class="breadcrumb">
               
-              <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
-                  
-                    <li class="disabled"><a href="./">2.0.10</a></li>
-                  
-                    <li><a href="../../../2.1.5/api/com.datastax.driver.core.querybuilder/QueryBuilder/">2.1.5</a></li>
-                  
-                  </ul>
-                </div>
-              </li>
               
               
               
-              
-              <li><a href="../../../">Introduction</a></li>
+              <li><a href="../../../">Home</a></li>
               
               
               
@@ -99,7 +82,7 @@
               
               
               
-              <li><a href="../">com.datastax.driver.core.querybuilder</a></li>
+              <li><a href="../">c.d.d.c.querybuilder</a></li>
               
               
               
@@ -123,7 +106,7 @@
 
 <p>Static methods to build a CQL3 query. </p>
 <p> The queries built by this builder will provide a value for the <code><a href="../../com.datastax.driver.core/Statement/#getRoutingKey%28%29">Statement#getRoutingKey</a></code> method only when a <code><a href="../../com.datastax.driver.core/TableMetadata/">TableMetadata</a></code> is provided to the builder. It is thus advised to do so if a <code><a href="../../com.datastax.driver.core.policies/TokenAwarePolicy/">TokenAwarePolicy</a></code> is in use. </p>
-<p> The provider builders perform very little validation of the built query. There is thus no guarantee that a built query is valid, and it is definitively possible to create invalid queries. </p>
+<p> The provided builders perform very little validation of the built query. There is thus no guarantee that a built query is valid, and it is definitively possible to create invalid queries. </p>
 <p> Note that it could be convenient to use an ‘import static’ to use the methods of this class.</p>
 
 <h2 id="extends">Extends<a class="anchor" href="#extends" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
@@ -1748,7 +1731,7 @@
 <tbody><tr>
 <td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
 <td>
-<p>if <code>timestamp &gt; 0</code>.</p>
+<p>if <code>timestamp  0</code>.</p>
 </td>
 </tr></tbody>
 </table></dd>
@@ -1851,7 +1834,7 @@
 <tbody><tr>
 <td><code><abbr title="java.lang.IllegalArgumentException">IllegalArgumentException</abbr></code></td>
 <td>
-<p>if <code>ttl &gt; 0</code>.</p>
+<p>if <code>ttl  0</code>.</p>
 </td>
 </tr></tbody>
 </table></dd>

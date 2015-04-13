@@ -37,13 +37,12 @@
         <div class="collapse navbar-collapse" ng-controller="search">
           <ul class="nav navbar-nav">
             
-            <li>
-              <a href="../../../">Introduction</a>
-            </li>
+            
             
             <li>
               <a href="../../../features/">Features</a>
             </li>
+            
             
             <li class="active">
               <a href="../../">API docs</a>
@@ -52,7 +51,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -68,26 +67,10 @@
           <nav class="crumbs">
             <ol class="breadcrumb">
               
-              <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
-                  
-                    <li class="disabled"><a href="./">2.0.10</a></li>
-                  
-                    <li><a href="../../../2.1.5/api/com.datastax.driver.core.policies/Policies/">2.1.5</a></li>
-                  
-                  </ul>
-                </div>
-              </li>
               
               
               
-              
-              <li><a href="../../../">Introduction</a></li>
+              <li><a href="../../../">Home</a></li>
               
               
               
@@ -99,7 +82,7 @@
               
               
               
-              <li><a href="../">com.datastax.driver.core.policies</a></li>
+              <li><a href="../">c.d.d.c.policies</a></li>
               
               
               
@@ -154,7 +137,7 @@
     </div>
     <div class="panel-body constructor-body">
       <p>Creates a new <code>Policies</code> object using the provided policies. </p>
-<p> This constructor use the default <code><a href="../IdentityTranslater/">IdentityTranslater</a></code>.</p>
+<p> This constructor use the default <code><a href="../IdentityTranslater/">IdentityTranslater</a></code> and <code><a href="../../com.datastax.driver.core/TimestampGenerator/">TimestampGenerator</a></code>.</p>
 
       <dl class="tags">
 <dt class="tag-title">Parameters:</dt>
@@ -235,6 +218,64 @@
 <td><code><a href="../AddressTranslater/">AddressTranslater</a></code></td>
 <td>
 <p>the address translater to use.</p>
+</td>
+</tr>
+</tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="Policies%28LoadBalancingPolicy%2C+ReconnectionPolicy%2C+RetryPolicy%2C+AddressTranslater%2C+TimestampGenerator%29">
+    <div class="panel-heading constructor-heading">
+      <a class="anchor" href="#Policies%28LoadBalancingPolicy%2C+ReconnectionPolicy%2C+RetryPolicy%2C+AddressTranslater%2C+TimestampGenerator%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      Policies <big>(</big><code><a href="../LoadBalancingPolicy/">LoadBalancingPolicy</a></code> loadBalancingPolicy, <code><a href="../ReconnectionPolicy/">ReconnectionPolicy</a></code> reconnectionPolicy, <code><a href="../RetryPolicy/">RetryPolicy</a></code> retryPolicy, <code><a href="../AddressTranslater/">AddressTranslater</a></code> addressTranslater, <code><a href="../../com.datastax.driver.core/TimestampGenerator/">TimestampGenerator</a></code> timestampGenerator<big>)</big>
+    </div>
+    <div class="panel-body constructor-body">
+      <p>Creates a new <code>Policies</code> object using the provided policies.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Parameters:</dt>
+<dd class="tag-content"><table class="table table-striped param">
+<thead><tr>
+<th class="name">Name</th>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><var>loadBalancingPolicy</var></td>
+<td><code><a href="../LoadBalancingPolicy/">LoadBalancingPolicy</a></code></td>
+<td>
+<p>the load balancing policy to use.</p>
+</td>
+</tr>
+<tr>
+<td><var>reconnectionPolicy</var></td>
+<td><code><a href="../ReconnectionPolicy/">ReconnectionPolicy</a></code></td>
+<td>
+<p>the reconnection policy to use.</p>
+</td>
+</tr>
+<tr>
+<td><var>retryPolicy</var></td>
+<td><code><a href="../RetryPolicy/">RetryPolicy</a></code></td>
+<td>
+<p>the retry policy to use.</p>
+</td>
+</tr>
+<tr>
+<td><var>addressTranslater</var></td>
+<td><code><a href="../AddressTranslater/">AddressTranslater</a></code></td>
+<td>
+<p>the address translater to use.</p>
+</td>
+</tr>
+<tr>
+<td><var>timestampGenerator</var></td>
+<td><code><a href="../../com.datastax.driver.core/TimestampGenerator/">TimestampGenerator</a></code></td>
+<td>
+<p>the timestamp generator to use.</p>
 </td>
 </tr>
 </tbody>
@@ -350,7 +391,7 @@
     </div>
     <div class="panel-body method-body">
       <p>The default address translater. </p>
-<p> The default address tanslater is <code><a href="../IdentityTranslater/">IdentityTranslater</a></code>.</p>
+<p> The default address translater is <code><a href="../IdentityTranslater/">IdentityTranslater</a></code>.</p>
 
       <dl class="dl-horizontal notes">
 <dt><span class="label label-default">Static</span></dt>
@@ -367,6 +408,37 @@
 <td><code><a href="../AddressTranslater/">AddressTranslater</a></code></td>
 <td>
 <p>the default address translater.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="defaultTimestampGenerator%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#defaultTimestampGenerator%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../../com.datastax.driver.core/TimestampGenerator/">TimestampGenerator</a></code> defaultTimestampGenerator <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>The default timestamp generator. </p>
+<p> This is an instance of <code><a href="../../com.datastax.driver.core/ServerSideTimestampGenerator/">ServerSideTimestampGenerator</a></code>.</p>
+
+      <dl class="dl-horizontal notes">
+<dt><span class="label label-default">Static</span></dt>
+<dd>This method is static</dd>
+</dl>
+<dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../../com.datastax.driver.core/TimestampGenerator/">TimestampGenerator</a></code></td>
+<td>
+<p>the default timestamp generator.</p>
 </td>
 </tr></tbody>
 </table></dd>
@@ -474,6 +546,32 @@
 <td><code><a href="../AddressTranslater/">AddressTranslater</a></code></td>
 <td>
 <p>the address translater in use.</p>
+</td>
+</tr></tbody>
+</table></dd>
+</dl>
+    </div>
+  </div>
+  
+  <div class="panel panel-default member-definition" id="getTimestampGenerator%28%29">
+    <div class="panel-heading method-heading">
+      <a class="anchor" href="#getTimestampGenerator%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../../com.datastax.driver.core/TimestampGenerator/">TimestampGenerator</a></code> getTimestampGenerator <big>(</big><big>)</big>
+    </div>
+    <div class="panel-body method-body">
+      <p>The timestamp generator to use.</p>
+
+      <dl class="tags">
+<dt class="tag-title">Returns:</dt>
+<dd class="tag-content"><table class="table table-striped return">
+<thead><tr>
+<th class="type">Type</th>
+<th class="details">Details</th>
+</tr></thead>
+<tbody><tr>
+<td><code><a href="../../com.datastax.driver.core/TimestampGenerator/">TimestampGenerator</a></code></td>
+<td>
+<p>the timestamp generator to use.</p>
 </td>
 </tr></tbody>
 </table></dd>

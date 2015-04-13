@@ -37,13 +37,12 @@
         <div class="collapse navbar-collapse" ng-controller="search">
           <ul class="nav navbar-nav">
             
-            <li>
-              <a href="../../../">Introduction</a>
-            </li>
+            
             
             <li>
               <a href="../../../features/">Features</a>
             </li>
+            
             
             <li class="active">
               <a href="../../">API docs</a>
@@ -52,7 +51,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -68,26 +67,10 @@
           <nav class="crumbs">
             <ol class="breadcrumb">
               
-              <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
-                  
-                    <li class="disabled"><a href="./">2.0.10</a></li>
-                  
-                    <li><a href="../../../2.1.5/api/com.datastax.driver.core/Metrics/">2.1.5</a></li>
-                  
-                  </ul>
-                </div>
-              </li>
               
               
               
-              
-              <li><a href="../../../">Introduction</a></li>
+              <li><a href="../../../">Home</a></li>
               
               
               
@@ -99,7 +82,7 @@
               
               
               
-              <li><a href="../">com.datastax.driver.core</a></li>
+              <li><a href="../">c.d.d.core</a></li>
               
               
               
@@ -326,133 +309,6 @@
 <td><code>&lt;any&gt;</code></td>
 <td>
 <p>The total number of currently opened connections to Cassandra hosts.</p>
-</td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getTrashedConnections%28%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getTrashedConnections%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>&lt;any&gt;</code> getTrashedConnections <big>(</big><big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      <p>Returns the total number of currently “trashed” connections to Cassandra hosts. </p>
-<p> When the load to a host decreases, the driver will reclaim some connections in order to save resources. No requests are sent to these connections anymore, but they are kept open for an additional amount of time (<code><a href="../PoolingOptions/#getIdleTimeoutSeconds%28%29">PoolingOptions#getIdleTimeoutSeconds()</a></code>), in case the load goes up again. This metric counts connections in that state.</p>
-
-      <dl class="tags">
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code>&lt;any&gt;</code></td>
-<td>
-<p>The total number of currently trashed connections to Cassandra hosts.</p>
-</td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getExecutorQueueDepth%28%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getExecutorQueueDepth%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>&lt;any&gt;</code> getExecutorQueueDepth <big>(</big><big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code>&lt;any&gt;</code></td>
-<td>
-<p>The number of queued up tasks in the non-blocking executor (Cassandra Java Driver workers).</p>
-</td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getBlockingExecutorQueueDepth%28%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getBlockingExecutorQueueDepth%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>&lt;any&gt;</code> getBlockingExecutorQueueDepth <big>(</big><big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code>&lt;any&gt;</code></td>
-<td>
-<p>The number of queued up tasks in the blocking executor (Cassandra Java Driver blocking tasks worker).</p>
-</td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getReconnectionSchedulerQueueSize%28%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getReconnectionSchedulerQueueSize%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>&lt;any&gt;</code> getReconnectionSchedulerQueueSize <big>(</big><big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code>&lt;any&gt;</code></td>
-<td>
-<p>The size of the work queue for the reconnection scheduler (Reconnection).  A queue size &gt; 0 does not necessarily indicate a backlog as some tasks may not have been scheduled to execute yet.</p>
-</td>
-</tr></tbody>
-</table></dd>
-</dl>
-    </div>
-  </div>
-  
-  <div class="panel panel-default member-definition" id="getTaskSchedulerQueueSize%28%29">
-    <div class="panel-heading method-heading">
-      <a class="anchor" href="#getTaskSchedulerQueueSize%28%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>&lt;any&gt;</code> getTaskSchedulerQueueSize <big>(</big><big>)</big>
-    </div>
-    <div class="panel-body method-body">
-      
-      <dl class="tags">
-<dt class="tag-title">Returns:</dt>
-<dd class="tag-content"><table class="table table-striped return">
-<thead><tr>
-<th class="type">Type</th>
-<th class="details">Details</th>
-</tr></thead>
-<tbody><tr>
-<td><code>&lt;any&gt;</code></td>
-<td>
-<p>The size of the work queue for the task scheduler (Scheduled Tasks).  A queue size &gt; 0 does not necessarily indicate a backlog as some tasks may not have been scheduled to execute yet.</p>
 </td>
 </tr></tbody>
 </table></dd>

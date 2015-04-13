@@ -37,13 +37,12 @@
         <div class="collapse navbar-collapse" ng-controller="search">
           <ul class="nav navbar-nav">
             
-            <li>
-              <a href="../../../">Introduction</a>
-            </li>
+            
             
             <li>
               <a href="../../../features/">Features</a>
             </li>
+            
             
             <li class="active">
               <a href="../../">API docs</a>
@@ -52,7 +51,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -68,26 +67,10 @@
           <nav class="crumbs">
             <ol class="breadcrumb">
               
-              <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
-                  
-                    <li class="disabled"><a href="./">2.0.10</a></li>
-                  
-                    <li><a href="../../../2.1.5/api/com.datastax.driver.core/CBUtil/">2.1.5</a></li>
-                  
-                  </ul>
-                </div>
-              </li>
               
               
               
-              
-              <li><a href="../../../">Introduction</a></li>
+              <li><a href="../../../">Home</a></li>
               
               
               
@@ -99,7 +82,7 @@
               
               
               
-              <li><a href="../">com.datastax.driver.core</a></li>
+              <li><a href="../">c.d.d.core</a></li>
               
               
               
@@ -121,7 +104,7 @@
 </h1>
 </div>
 
-<p>ByteBuf utility methods.</p>
+<p>ChannelBuffer utility methods.</p>
 <dl class="dl-horizontal notes">
 <dt><span class="label label-info">Abstract</span></dt>
 <dd>This class is abstract</dd>
@@ -140,10 +123,10 @@
 </h2>
 <div class="class-methods">
   
-  <div class="panel panel-default member-definition" id="readString%28ByteBuf%29">
+  <div class="panel panel-default member-definition" id="readString%28ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#readString%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.lang.String">String</abbr></code> readString <big>(</big><code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#readString%28ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> readString <big>(</big><code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -161,7 +144,7 @@
 </tr></thead>
 <tbody><tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -180,10 +163,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="writeString%28String%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="writeString%28String%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#writeString%28String%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> writeString <big>(</big><code><abbr title="java.lang.String">String</abbr></code> str, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#writeString%28String%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeString <big>(</big><code><abbr title="java.lang.String">String</abbr></code> str, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -207,7 +190,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -267,10 +250,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="readLongString%28ByteBuf%29">
+  <div class="panel panel-default member-definition" id="readLongString%28ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#readLongString%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.lang.String">String</abbr></code> readLongString <big>(</big><code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#readLongString%28ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.lang.String">String</abbr></code> readLongString <big>(</big><code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -288,7 +271,7 @@
 </tr></thead>
 <tbody><tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -307,10 +290,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="writeLongString%28String%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="writeLongString%28String%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#writeLongString%28String%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> writeLongString <big>(</big><code><abbr title="java.lang.String">String</abbr></code> str, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#writeLongString%28String%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeLongString <big>(</big><code><abbr title="java.lang.String">String</abbr></code> str, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -334,7 +317,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -394,10 +377,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="readBytes%28ByteBuf%29">
+  <div class="panel panel-default member-definition" id="readBytes%28ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#readBytes%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>byte</code>[] readBytes <big>(</big><code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#readBytes%28ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>byte</code>[] readBytes <big>(</big><code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -415,7 +398,7 @@
 </tr></thead>
 <tbody><tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -435,10 +418,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="writeBytes%28byte%5B%5D%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="writeBytes%28byte%5B%5D%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#writeBytes%28byte%5B%5D%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> writeBytes <big>(</big><code>byte</code>[] bytes, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#writeBytes%28byte%5B%5D%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeBytes <big>(</big><code>byte</code>[] bytes, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -463,7 +446,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -524,10 +507,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="readConsistencyLevel%28ByteBuf%29">
+  <div class="panel panel-default member-definition" id="readConsistencyLevel%28ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#readConsistencyLevel%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> readConsistencyLevel <big>(</big><code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#readConsistencyLevel%28ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> readConsistencyLevel <big>(</big><code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -545,7 +528,7 @@
 </tr></thead>
 <tbody><tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -564,10 +547,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="writeConsistencyLevel%28ConsistencyLevel%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="writeConsistencyLevel%28ConsistencyLevel%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#writeConsistencyLevel%28ConsistencyLevel%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> writeConsistencyLevel <big>(</big><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> consistency, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#writeConsistencyLevel%28ConsistencyLevel%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeConsistencyLevel <big>(</big><code><a href="../ConsistencyLevel/">ConsistencyLevel</a></code> consistency, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -591,7 +574,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -651,10 +634,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="readEnumValue%28Class%3CT%3E%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="readEnumValue%28Class%3CT%3E%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#readEnumValue%28Class%3CT%3E%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>T</code> readEnumValue <big>(</big><code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>T</code>&gt; enumType, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#readEnumValue%28Class%3CT%3E%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>T</code> readEnumValue <big>(</big><code><abbr title="java.lang.Class">Class</abbr></code>&lt;<code>T</code>&gt; enumType, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -679,7 +662,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -699,10 +682,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="writeEnumValue%28T%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="writeEnumValue%28T%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#writeEnumValue%28T%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> writeEnumValue <big>(</big><code>T</code> enumValue, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#writeEnumValue%28T%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeEnumValue <big>(</big><code>T</code> enumValue, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -726,7 +709,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -786,10 +769,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="readUUID%28ByteBuf%29">
+  <div class="panel panel-default member-definition" id="readUUID%28ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#readUUID%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.util.UUID">UUID</abbr></code> readUUID <big>(</big><code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#readUUID%28ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.UUID">UUID</abbr></code> readUUID <big>(</big><code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -807,7 +790,7 @@
 </tr></thead>
 <tbody><tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -826,10 +809,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="writeUUID%28UUID%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="writeUUID%28UUID%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#writeUUID%28UUID%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> writeUUID <big>(</big><code><abbr title="java.util.UUID">UUID</abbr></code> uuid, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#writeUUID%28UUID%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeUUID <big>(</big><code><abbr title="java.util.UUID">UUID</abbr></code> uuid, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -853,7 +836,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -913,10 +896,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="readStringList%28ByteBuf%29">
+  <div class="panel panel-default member-definition" id="readStringList%28ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#readStringList%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>&gt; readStringList <big>(</big><code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#readStringList%28ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>&gt; readStringList <big>(</big><code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -934,7 +917,7 @@
 </tr></thead>
 <tbody><tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -954,10 +937,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="writeStringList%28List%3CString%3E%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="writeStringList%28List%3CString%3E%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#writeStringList%28List%3CString%3E%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> writeStringList <big>(</big><code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>&gt; l, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#writeStringList%28List%3CString%3E%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeStringList <big>(</big><code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>&gt; l, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -982,7 +965,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -1043,10 +1026,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="readStringMap%28ByteBuf%29">
+  <div class="panel panel-default member-definition" id="readStringMap%28ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#readStringMap%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.lang.String">String</abbr></code>&gt; readStringMap <big>(</big><code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#readStringMap%28ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.lang.String">String</abbr></code>&gt; readStringMap <big>(</big><code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -1064,7 +1047,7 @@
 </tr></thead>
 <tbody><tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -1084,10 +1067,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="writeStringMap%28Map%3CString%2C+String%3E%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="writeStringMap%28Map%3CString%2C+String%3E%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#writeStringMap%28Map%3CString%2C+String%3E%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> writeStringMap <big>(</big><code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.lang.String">String</abbr></code>&gt; m, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#writeStringMap%28Map%3CString%2C+String%3E%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeStringMap <big>(</big><code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.lang.String">String</abbr></code>&gt; m, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -1112,7 +1095,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -1173,10 +1156,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="readStringToStringListMap%28ByteBuf%29">
+  <div class="panel panel-default member-definition" id="readStringToStringListMap%28ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#readStringToStringListMap%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.util.List">List</abbr></code>&gt; readStringToStringListMap <big>(</big><code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#readStringToStringListMap%28ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.util.List">List</abbr></code>&gt; readStringToStringListMap <big>(</big><code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -1194,7 +1177,7 @@
 </tr></thead>
 <tbody><tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -1214,10 +1197,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="writeStringToStringListMap%28Map%3CString%2C+List%3CString%3E%3E%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="writeStringToStringListMap%28Map%3CString%2C+List%3CString%3E%3E%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#writeStringToStringListMap%28Map%3CString%2C+List%3CString%3E%3E%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> writeStringToStringListMap <big>(</big><code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.util.List">List</abbr></code>&gt; m, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#writeStringToStringListMap%28Map%3CString%2C+List%3CString%3E%3E%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeStringToStringListMap <big>(</big><code><abbr title="java.util.Map">Map</abbr></code>&lt;<code><abbr title="java.lang.String">String</abbr></code>, <code><abbr title="java.util.List">List</abbr></code>&gt; m, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -1242,7 +1225,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -1303,10 +1286,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="readValue%28ByteBuf%29">
+  <div class="panel panel-default member-definition" id="readValue%28ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#readValue%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> readValue <big>(</big><code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#readValue%28ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> readValue <big>(</big><code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -1324,7 +1307,7 @@
 </tr></thead>
 <tbody><tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -1343,10 +1326,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="writeValue%28byte%5B%5D%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="writeValue%28byte%5B%5D%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#writeValue%28byte%5B%5D%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> writeValue <big>(</big><code>byte</code>[] bytes, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#writeValue%28byte%5B%5D%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeValue <big>(</big><code>byte</code>[] bytes, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -1371,7 +1354,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -1391,10 +1374,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="writeValue%28ByteBuffer%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="writeValue%28ByteBuffer%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#writeValue%28ByteBuffer%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> writeValue <big>(</big><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> bytes, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#writeValue%28ByteBuffer%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeValue <big>(</big><code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code> bytes, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -1418,7 +1401,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -1519,10 +1502,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="readValueList%28ByteBuf%29">
+  <div class="panel panel-default member-definition" id="readValueList%28ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#readValueList%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>&gt; readValueList <big>(</big><code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#readValueList%28ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>&gt; readValueList <big>(</big><code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -1540,7 +1523,7 @@
 </tr></thead>
 <tbody><tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -1560,10 +1543,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="writeValueList%28List%3CByteBuffer%3E%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="writeValueList%28List%3CByteBuffer%3E%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#writeValueList%28List%3CByteBuffer%3E%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> writeValueList <big>(</big><code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>&gt; values, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#writeValueList%28List%3CByteBuffer%3E%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeValueList <big>(</big><code><abbr title="java.util.List">List</abbr></code>&lt;<code><abbr title="java.nio.ByteBuffer">ByteBuffer</abbr></code>&gt; values, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -1588,7 +1571,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -1649,10 +1632,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="readInet%28ByteBuf%29">
+  <div class="panel panel-default member-definition" id="readInet%28ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#readInet%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code> readInet <big>(</big><code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#readInet%28ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code> readInet <big>(</big><code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -1670,7 +1653,7 @@
 </tr></thead>
 <tbody><tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
@@ -1689,10 +1672,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="writeInet%28InetSocketAddress%2C+ByteBuf%29">
+  <div class="panel panel-default member-definition" id="writeInet%28InetSocketAddress%2C+ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#writeInet%28InetSocketAddress%2C+ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>void</code> writeInet <big>(</big><code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code> inet, <code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#writeInet%28InetSocketAddress%2C+ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>void</code> writeInet <big>(</big><code><abbr title="java.net.InetSocketAddress">InetSocketAddress</abbr></code> inet, <code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -1716,7 +1699,7 @@
 </tr>
 <tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -1776,10 +1759,10 @@
     </div>
   </div>
   
-  <div class="panel panel-default member-definition" id="readRawBytes%28ByteBuf%29">
+  <div class="panel panel-default member-definition" id="readRawBytes%28ChannelBuffer%29">
     <div class="panel-heading method-heading">
-      <a class="anchor" href="#readRawBytes%28ByteBuf%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-      <code>byte</code>[] readRawBytes <big>(</big><code>ByteBuf</code> cb<big>)</big>
+      <a class="anchor" href="#readRawBytes%28ChannelBuffer%29" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+      <code>byte</code>[] readRawBytes <big>(</big><code>ChannelBuffer</code> cb<big>)</big>
     </div>
     <div class="panel-body method-body">
       
@@ -1797,7 +1780,7 @@
 </tr></thead>
 <tbody><tr>
 <td><var>cb</var></td>
-<td><code>ByteBuf</code></td>
+<td><code>ChannelBuffer</code></td>
 <td></td>
 </tr></tbody>
 </table></dd>
