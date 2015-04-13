@@ -119,7 +119,6 @@ class HostConnectionPool {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    isClosing = true;
                     initFuture.setException(t);
                     forceClose(connectionFutures, manager.executor());
                 }
