@@ -280,13 +280,18 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
             public String getKeyspace() {
                 return null;
             }
+
+            @Override
+            public String toString() {
+                return "weird statement";
+            }
         };
         // when
         queryLogger = QueryLogger.builder(mock(Cluster.class)).build();
         queryLogger.update(null, unknownStatement, null, 0);
         // then
         String line = normalAppender.get();
-        assertThat(line).contains(UNKNOWN_STATEMENT);
+        assertThat(line).contains("weird statement");
     }
 
     // Tests for different log levels
@@ -510,6 +515,32 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
             .contains(ipOfNode(1))
             .contains("SELEC" + TRUNCATED_OUTPUT)
             .doesNotContain(query);
+    }
+
+    @Test(groups = "short")
+    public void should_show_total_statements_for_batches_even_if_query_truncated() throws Exception {
+        // given
+        normal.setLevel(DEBUG);
+        queryLogger = QueryLogger.builder(cluster)
+            .withMaxQueryStringLength(5)
+            .build();
+        cluster.register(queryLogger);
+        // when
+        String query1 = "UPDATE test SET c_text = ? WHERE pk = ?";
+        String query2 = "UPDATE test SET c_int = ? WHERE pk = ?";
+        BatchStatement batch = new BatchStatement();
+        batch.add(session.prepare(query1).bind("foo", 42));
+        batch.add(session.prepare(query2).bind(12345, 43));
+        session.execute(batch);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+            .contains("Query completed normally")
+            .contains(ipOfNode(1))
+            .contains("BEGIN" + TRUNCATED_OUTPUT)
+            .doesNotContain(query1)
+            .doesNotContain(query2)
+            .contains(" [2 statements");
     }
 
     @Test(groups = "short")
