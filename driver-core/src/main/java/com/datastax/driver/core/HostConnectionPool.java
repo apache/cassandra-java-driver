@@ -94,7 +94,10 @@ class HostConnectionPool {
 
         this.connections = new CopyOnWriteArrayList<PooledConnection>();
         this.open = new AtomicInteger();
+        this.initFuture = SettableFuture.create();
+    }
 
+    public void initAsync() {
         // Create initial core connections
         final List<ListenableFuture<PooledConnection>> connectionFutures =
             Lists.newArrayListWithCapacity(options().getCoreConnectionsPerHost(hostDistance));
@@ -106,7 +109,6 @@ class HostConnectionPool {
         // We could expose allConnectionsFuture directly so this is a bit superfluous, but it avoids
         // leaking the list of connections.  We also don't want to mark initialization as complete until open
         // has been set.
-        initFuture = SettableFuture.create();
         Futures.addCallback(allConnectionsFuture,
             new FutureCallback<List<PooledConnection>>() {
                 @Override

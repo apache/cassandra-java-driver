@@ -21,10 +21,12 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +38,7 @@ import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.datastax.driver.core.utils.MoreFutures.FailureCallback;
+import com.datastax.driver.core.utils.MoreFutures.SuccessCallback;
 
 /**
  * Driver implementation of the Session interface.
@@ -48,8 +51,6 @@ class SessionManager extends AbstractSession {
     final ConcurrentMap<Host, HostConnectionPool> pools;
     final HostConnectionPool.PoolState poolsState;
     final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
-
-    private final Striped<Lock> poolCreationLocks = Striped.lazyWeakLock(5);
 
     private volatile boolean isInit;
     private volatile boolean isClosing;
@@ -205,68 +206,57 @@ class SessionManager extends AbstractSession {
             return MoreFutures.VOID_SUCCESS;
 
         final HostConnectionPool newPool = new HostConnectionPool(host, distance, SessionManager.this);
-        Futures.addCallback(newPool.initFuture, new FutureCallback<Void>() {
+        newPool.initAsync();
+        HostConnectionPool previous = pools.put(host, newPool);
+        if (previous == null) {
+            logger.debug("Added connection pool for {}", host);
+        } else {
+            logger.debug("Renewed connection pool for {}", host);
+            previous.closeAsync();
+        }
+
+        Futures.addCallback(newPool.initFuture, new SuccessCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                // Only add the newly-created pool when it is fully initialized
-                HostConnectionPool previous = pools.put(host, newPool);
-                if (previous == null) {
-                    logger.debug("Added connection pool for {}", host);
-                } else {
-                    logger.debug("Renewed connection pool for {}", host);
-                    previous.closeAsync();
-                }
                 // If we raced with a session shutdown, ensure that the pool will be closed.
                 if (isClosing)
                     newPool.closeAsync();
             }
-            @Override
-            public void onFailure(Throwable t) {
-                logger.error("Error creating pool to " + host, t);
-            }
-        }, executor());
+        });
 
         return newPool.initFuture;
     }
 
-    // Replace pool for a given only if it's the given previous value (which can be null)
-    // Note that the goal of this function is to make sure that 2 concurrent thread calling
-    // maybeAddPool don't end up creating 2 HostConnectionPool. We can't rely on the pools
-    // ConcurrentMap only for that since it's the duplicate HostConnectionPool creation we
-    // want to avoid
+    // Replace pool for a given host only if it's the given previous value (which can be null)
     // This returns a future if the replacement was successful, or null if we raced.
-    private ListenableFuture<Void> replacePool(final Host host, HostDistance distance, HostConnectionPool condition) {
+    private ListenableFuture<Void> replacePool(final Host host, HostDistance distance, HostConnectionPool previous) {
         if (isClosing)
             return MoreFutures.VOID_SUCCESS;
-
-        Lock l = poolCreationLocks.get(host);
-        l.lock();
-        try {
-            HostConnectionPool previous = pools.get(host);
-            if (previous != condition)
+        final HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
+        if(previous == null) {
+            if(pools.putIfAbsent(host, newPool) != null) {
                 return null;
-
-            final HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
-            return Futures.transform(newPool.initFuture, new AsyncFunction<Void, Void>() {
-                @Override
-                public ListenableFuture<Void> apply(Void input) throws Exception {
-                    // Only add the newly-created pool when it is fully initialized
-                    HostConnectionPool previous = pools.put(host, newPool);
-                    if (previous != null && !previous.isClosed()) {
-                        logger.warn("Replacing a pool that wasn't closed. Closing it now, but this was not expected.");
-                        previous.closeAsync();
-                    }
-                    // If we raced with a session shutdown, ensure that the pool will be closed.
-                    if (isClosing) {
-                        newPool.closeAsync();
-                    }
-                    return MoreFutures.VOID_SUCCESS;
-                }
-
-            }, executor());
-        } finally {
-            l.unlock();
+            }
+        } else {
+            if(!pools.replace(host, previous, newPool)) {
+                return null;
+            };
+            if (!previous.isClosed()) {
+                logger.warn("Replacing a pool that wasn't closed. Closing it now, but this was not expected.");
+                previous.closeAsync();
+            }
         }
+        newPool.initAsync();
+        Futures.addCallback(newPool.initFuture, new SuccessCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                // If we raced with a session shutdown, ensure that the pool will be closed.
+                if (isClosing) {
+                    newPool.closeAsync();
+                }
+            }
+        });
+        return newPool.initFuture;
     }
 
     // Returns a failed future if there was problem creating the pool
