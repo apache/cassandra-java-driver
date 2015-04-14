@@ -196,35 +196,49 @@ class SessionManager extends AbstractSession {
         return cluster.manager.blockingExecutor;
     }
 
-    // Returns a failed future if there was problem creating the pool
-    ListenableFuture<Void> forceRenewPool(final Host host, ListeningExecutorService executor) {
+    // Returns whether there was problem creating the pool
+    ListenableFuture<Boolean> forceRenewPool(final Host host, ListeningExecutorService executor) {
         final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
-            return MoreFutures.VOID_SUCCESS;
+            return Futures.immediateFuture(true);
 
         if (isClosing)
-            return MoreFutures.VOID_SUCCESS;
+            return Futures.immediateFuture(false);
 
         final HostConnectionPool newPool = new HostConnectionPool(host, distance, SessionManager.this);
         newPool.initAsync();
-        HostConnectionPool previous = pools.put(host, newPool);
-        if (previous == null) {
-            logger.debug("Added connection pool for {}", host);
-        } else {
-            logger.debug("Renewed connection pool for {}", host);
-            previous.closeAsync();
-        }
 
-        Futures.addCallback(newPool.initFuture, new SuccessCallback<Void>() {
+        final SettableFuture<Boolean> future = SettableFuture.create();
+
+        Futures.addCallback(newPool.initFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
                 // If we raced with a session shutdown, ensure that the pool will be closed.
-                if (isClosing)
+                HostConnectionPool previous = pools.put(host, newPool);
+                if (previous == null) {
+                    logger.debug("Added connection pool for {}", host);
+                } else {
+                    logger.debug("Renewed connection pool for {}", host);
+                    previous.closeAsync();
+                }
+
+                // If we raced with a session shutdown, ensure that the pool will be closed.
+                if (isClosing) {
                     newPool.closeAsync();
+                    pools.remove(host);
+                    future.set(false);
+                } else {
+                    future.set(true);
+                }
+            }
+            @Override
+            public void onFailure(Throwable t) {
+                logger.error("Error creating pool to " + host, t);
+                future.set(false);
             }
         });
 
-        return newPool.initFuture;
+        return future;
     }
 
     // Replace pool for a given host only if it's the given previous value (which can be null)
@@ -246,14 +260,22 @@ class SessionManager extends AbstractSession {
                 previous.closeAsync();
             }
         }
+
         newPool.initAsync();
-        Futures.addCallback(newPool.initFuture, new SuccessCallback<Void>() {
+
+        Futures.addCallback(newPool.initFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
                 // If we raced with a session shutdown, ensure that the pool will be closed.
                 if (isClosing) {
                     newPool.closeAsync();
+                    pools.remove(host);
                 }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                pools.remove(host);
             }
         });
         return newPool.initFuture;
