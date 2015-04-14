@@ -28,7 +28,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
@@ -73,10 +72,13 @@ class HostConnectionPool {
 
     private final AtomicInteger scheduledForCreation = new AtomicInteger();
 
-    private volatile boolean isClosing;
     private final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
     final SettableFuture<Void> initFuture;
+
+    enum InitializationStatus { INITIALIZING, READY, INIT_FAILED, CLOSING }
+
+    private volatile InitializationStatus initializationStatus = InitializationStatus.INITIALIZING;
 
     public HostConnectionPool(final Host host, HostDistance hostDistance, final SessionManager manager) {
         assert hostDistance != HostDistance.IGNORED;
@@ -116,11 +118,13 @@ class HostConnectionPool {
                     connections.addAll(l);
                     open.set(l.size());
                     logger.trace("Created connection pool to host {}", host);
+                    initializationStatus = InitializationStatus.READY;
                     initFuture.set(null);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
+                    initializationStatus = InitializationStatus.INIT_FAILED;
                     initFuture.setException(t);
                     forceClose(connectionFutures, manager.executor());
                 }
@@ -149,10 +153,10 @@ class HostConnectionPool {
     }
 
     public PooledConnection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
-        if (!initFuture.isDone())
+        if (initializationStatus == InitializationStatus.INITIALIZING)
             throw new ConnectionException(host.getSocketAddress(), "Pool is initializing.");
 
-        if (isClosing)
+        if (initializationStatus != InitializationStatus.READY)
             // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
             // That being said, maybe having a specific exception could be cleaner.
             throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
@@ -381,7 +385,7 @@ class HostConnectionPool {
                 break;
         }
 
-        if (isClosing) {
+        if (initializationStatus != InitializationStatus.READY) {
             open.decrementAndGet();
             return false;
         }
@@ -398,7 +402,7 @@ class HostConnectionPool {
             newConnection.state.compareAndSet(RESURRECTING, OPEN); // no-op if it was already OPEN
 
             // We might have raced with pool shutdown since the last check; ensure the connection gets closed in case the pool did not do it.
-            if (isClosing && !newConnection.isClosed()) {
+            if (initializationStatus != InitializationStatus.READY && !newConnection.isClosed()) {
                 close(newConnection);
                 open.decrementAndGet();
                 return false;
@@ -543,7 +547,7 @@ class HostConnectionPool {
         if (future != null)
             return future;
 
-        isClosing = true;
+        initializationStatus = InitializationStatus.CLOSING;
 
         // Wake up all threads that wait
         signalAllAvailableConnection();
