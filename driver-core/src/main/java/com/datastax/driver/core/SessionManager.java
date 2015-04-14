@@ -204,25 +204,27 @@ class SessionManager extends AbstractSession {
         if (isClosing)
             return MoreFutures.VOID_SUCCESS;
 
-        HostConnectionPool newPool = new HostConnectionPool(host, distance, SessionManager.this);
-        HostConnectionPool previous = pools.put(host, newPool);
-        if (previous == null) {
-            logger.debug("Added connection pool for {}", host);
-        } else {
-            logger.debug("Renewed connection pool for {}", host);
-            previous.closeAsync();
-        }
-
-        // If we raced with a session shutdown, ensure that the pool will be closed.
-        if (isClosing)
-            newPool.closeAsync();
-
-        Futures.addCallback(newPool.initFuture, new FailureCallback<Void>() {
+        final HostConnectionPool newPool = new HostConnectionPool(host, distance, SessionManager.this);
+        Futures.addCallback(newPool.initFuture, new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                // Only add the newly-created pool when it is fully initialized
+                HostConnectionPool previous = pools.put(host, newPool);
+                if (previous == null) {
+                    logger.debug("Added connection pool for {}", host);
+                } else {
+                    logger.debug("Renewed connection pool for {}", host);
+                    previous.closeAsync();
+                }
+                // If we raced with a session shutdown, ensure that the pool will be closed.
+                if (isClosing)
+                    newPool.closeAsync();
+            }
             @Override
             public void onFailure(Throwable t) {
                 logger.error("Error creating pool to " + host, t);
             }
-        });
+        }, executor());
 
         return newPool.initFuture;
     }
@@ -233,7 +235,7 @@ class SessionManager extends AbstractSession {
     // ConcurrentMap only for that since it's the duplicate HostConnectionPool creation we
     // want to avoid
     // This returns a future if the replacement was successful, or null if we raced.
-    private ListenableFuture<Void> replacePool(Host host, HostDistance distance, HostConnectionPool condition) {
+    private ListenableFuture<Void> replacePool(final Host host, HostDistance distance, HostConnectionPool condition) {
         if (isClosing)
             return MoreFutures.VOID_SUCCESS;
 
@@ -244,20 +246,24 @@ class SessionManager extends AbstractSession {
             if (previous != condition)
                 return null;
 
-            HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
-            previous = pools.put(host, newPool);
-            if (previous != null && !previous.isClosed()) {
-                logger.warn("Replacing a pool that wasn't closed. Closing it now, but this was not expected.");
-                previous.closeAsync();
-            }
+            final HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
+            return Futures.transform(newPool.initFuture, new AsyncFunction<Void, Void>() {
+                @Override
+                public ListenableFuture<Void> apply(Void input) throws Exception {
+                    // Only add the newly-created pool when it is fully initialized
+                    HostConnectionPool previous = pools.put(host, newPool);
+                    if (previous != null && !previous.isClosed()) {
+                        logger.warn("Replacing a pool that wasn't closed. Closing it now, but this was not expected.");
+                        previous.closeAsync();
+                    }
+                    // If we raced with a session shutdown, ensure that the pool will be closed.
+                    if (isClosing) {
+                        newPool.closeAsync();
+                    }
+                    return MoreFutures.VOID_SUCCESS;
+                }
 
-            // If we raced with a session shutdown, ensure that the pool will be closed.
-            if (isClosing) {
-                newPool.closeAsync();
-                return MoreFutures.VOID_SUCCESS;
-            }
-
-            return newPool.initFuture;
+            }, executor());
         } finally {
             l.unlock();
         }
