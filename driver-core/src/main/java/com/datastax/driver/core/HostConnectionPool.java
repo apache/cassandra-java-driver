@@ -126,16 +126,14 @@ class HostConnectionPool {
                 public void onFailure(Throwable t) {
                     initializationStatus = InitializationStatus.INIT_FAILED;
                     initFuture.setException(t);
-                    forceClose(connectionFutures, manager.executor());
+                    forceClose(connectionFutures);
                 }
-            },
-            manager.executor()
-        );
+            });
 
     }
 
     // Clean up if we got an error at construction time but still created part of the core connections
-    private void forceClose(List<ListenableFuture<PooledConnection>> l, ListeningExecutorService executor) {
+    private void forceClose(List<ListenableFuture<PooledConnection>> l) {
         for (ListenableFuture<PooledConnection> future : l) {
             if (!future.isDone())
                 future.cancel(true);
@@ -144,7 +142,7 @@ class HostConnectionPool {
                 public void onSuccess(PooledConnection connection) {
                     connection.closeAsync().force();
                 }
-            }, executor);
+            });
         }
     }
 
