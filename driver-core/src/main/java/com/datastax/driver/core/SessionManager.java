@@ -79,7 +79,7 @@ class SessionManager extends AbstractSession {
     }
 
     private void createPoolsInParallel(Collection<Host> hosts) {
-        List<ListenableFuture<Void>> futures = Lists.newArrayListWithCapacity(hosts.size());
+        List<ListenableFuture<Boolean>> futures = Lists.newArrayListWithCapacity(hosts.size());
         for (Host host : hosts)
             if (host.state != Host.State.DOWN)
                 futures.add(maybeAddPool(host, executor()));
@@ -281,25 +281,31 @@ class SessionManager extends AbstractSession {
         return newPool.initFuture;
     }
 
-    // Returns a failed future if there was problem creating the pool
-    ListenableFuture<Void> maybeAddPool(final Host host, ListeningExecutorService executor) {
+    // Returns whether there was problem creating the pool
+    ListenableFuture<Boolean> maybeAddPool(final Host host, ListeningExecutorService executor) {
         final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
-            return MoreFutures.VOID_SUCCESS;
+            return Futures.immediateFuture(true);
 
         HostConnectionPool previous = pools.get(host);
         if (previous != null && !previous.isClosed())
-            return MoreFutures.VOID_SUCCESS;
+            return Futures.immediateFuture(true);
 
         while (true) {
             previous = pools.get(host);
             if (previous != null && !previous.isClosed())
-                return MoreFutures.VOID_SUCCESS;
+                return Futures.immediateFuture(true);
 
+            final SettableFuture<Boolean> future = SettableFuture.create();
             ListenableFuture<Void> newPoolInit = replacePool(host, distance, previous);
             if (newPoolInit != null) {
-                logger.debug("Added connection pool for {}", host);
-                Futures.addCallback(newPoolInit, new FailureCallback<Void>() {
+                Futures.addCallback(newPoolInit, new FutureCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        logger.debug("Added connection pool for {}", host);
+                        future.set(true);
+                    }
+
                     @Override
                     public void onFailure(Throwable t) {
                         if (t instanceof UnsupportedProtocolVersionException) {
@@ -312,9 +318,10 @@ class SessionManager extends AbstractSession {
                         } else {
                             logger.error("Error creating pool to " + host, t);
                         }
+                        future.set(false);
                     }
                 }, executor);
-                return newPoolInit;
+                return future;
             }
         }
     }
