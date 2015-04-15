@@ -51,7 +51,6 @@ import static io.netty.handler.timeout.IdleState.ALL_IDLE;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.utils.MoreFutures;
-import com.datastax.driver.core.utils.MoreFutures.FailureCallback;
 
 // For LoggingHandler
 //import org.jboss.netty.handler.logging.LoggingHandler;
@@ -83,7 +82,7 @@ class Connection {
 
     private volatile boolean isDefunct;
 
-    final ListenableFuture<Void> initFuture;
+    final SettableFuture<Void> initFuture;
     private final AtomicReference<ConnectionCloseFuture> closeFuture = new AtomicReference<ConnectionCloseFuture>();
 
     /**
@@ -132,16 +131,33 @@ class Connection {
             throw e;
         }
 
-        ListeningExecutorService executor = factory.manager.executor;
-        this.initFuture = Futures.transform(channelReadyFuture,
+        ListenableFuture<Void> initializeTransportFuture = Futures.transform(channelReadyFuture,
             onChannelReady(protocolVersion, executor),
             executor);
 
-        // Make sure the connection gets properly closed if we get an exception during initialization
-        Futures.addCallback(this.initFuture, new FailureCallback<Void>() {
+        this.initFuture = SettableFuture.create();
+        Futures.addCallback(initializeTransportFuture, new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                initFuture.set(null);
+            }
+
             @Override
             public void onFailure(Throwable t) {
-                closeAsync().force();
+                // Make sure the connection gets properly closed.
+                if (t instanceof ClusterNameMismatchException || t instanceof UnsupportedProtocolVersionException) {
+                    // These exceptions cause the node to be ignored, so just propagate
+                    closeAsync().force();
+                    initFuture.setException(t);
+                } else {
+                    // Defunct to ensure that the error will be signaled (marking the host down)
+                    ConnectionException ce = (t instanceof ConnectionException)
+                        ? (ConnectionException)t
+                        : new ConnectionException(Connection.this.address,
+                        String.format("Unexpected error during transport initialization (%s)", t),
+                        t);
+                    initFuture.setException(defunct(ce));
+                }
             }
         }, executor);
     }
@@ -180,7 +196,7 @@ class Connection {
                         // Testing for a specific string is a tad fragile but well, we don't have much choice
                         if (error.code == ExceptionCode.PROTOCOL_ERROR && error.message.contains("Invalid or unsupported protocol version"))
                             throw unsupportedProtocolVersionException(protocolVersion);
-                        throw defunct(new TransportException(address, String.format("Error initializing connection: %s", error.message)));
+                        throw new TransportException(address, String.format("Error initializing connection: %s", error.message));
                     case AUTHENTICATE:
                         Authenticator authenticator = factory.authProvider.newAuthenticator(address);
                         if (protocolVersion == 1)
@@ -194,7 +210,7 @@ class Connection {
                         else
                             return authenticateV2(authenticator, executor);
                     default:
-                        throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type)));
+                        throw new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type));
                 }
             }
         };
@@ -242,9 +258,9 @@ class Connection {
                             case READY:
                                 return checkClusterName(executor);
                             case ERROR:
-                                throw defunct(new AuthenticationException(address, ((Responses.Error)authResponse).message));
+                                throw new AuthenticationException(address, ((Responses.Error)authResponse).message);
                             default:
-                                throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to a CREDENTIALS message", authResponse.type)));
+                                throw new TransportException(address, String.format("Unexpected %s response message from server to a CREDENTIALS message", authResponse.type));
                         }
                     }
                 },
@@ -303,9 +319,9 @@ class Connection {
                         if (message.startsWith("java.lang.ArrayIndexOutOfBoundsException: 15"))
                             message = String.format("Cannot use authenticator %s with protocol version 1, "
                                 + "only plain text authentication is supported with this protocol version", authenticator);
-                        throw defunct(new AuthenticationException(address, message));
+                        throw new AuthenticationException(address, message);
                     default:
-                        throw defunct(new TransportException(address, String.format("Unexpected %s response message from server to authentication message", authResponse.type)));
+                        throw new TransportException(address, String.format("Unexpected %s response message from server to authentication message", authResponse.type));
                 }
             }
         };
