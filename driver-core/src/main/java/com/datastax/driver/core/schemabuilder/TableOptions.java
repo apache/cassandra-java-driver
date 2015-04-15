@@ -30,7 +30,7 @@ import com.google.common.base.Strings;
  *
  * @param <T> the concrete sub-class of {@link com.datastax.driver.core.schemabuilder.TableOptions}
  *
- * @see <a href="http://www.datastax.com/documentation/cql/3.1/cql/cql_reference/tabProp.html" target="_blank">details on table options</a>
+ * @see <a href="http://docs.datastax.com/en/cql/3.1/cql/cql_reference/tabProp.html" target="_blank">details on table options</a>
  */
 public abstract class TableOptions<T extends TableOptions> extends SchemaStatement {
 
@@ -295,7 +295,7 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
      * @param populateIOOnCacheFlush whether to populate IO cache on flush of sstables.
      * @return this {@code TableOptions} object.
      *
-     * @see <a href="http://www.datastax.com/documentation/cassandra/2.0/cassandra/configuration/configCassandra_yaml_r.html?scroll=reference_ds_qfg_n1r_1k__compaction_preheat_key_cache">the global option compaction_preheat_key_cache</a>
+     * @see <a href="http://docs.datastax.com/en/cassandra/2.0/cassandra/configuration/configCassandra_yaml_r.html?scroll=reference_ds_qfg_n1r_1k__compaction_preheat_key_cache">the global option compaction_preheat_key_cache</a>
      */
     public T populateIOCacheOnFlush(Boolean populateIOOnCacheFlush) {
         this.populateIOOnCacheFlush = Optional.fromNullable(populateIOOnCacheFlush);
