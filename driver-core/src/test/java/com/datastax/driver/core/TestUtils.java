@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -30,6 +31,9 @@ import org.scassandra.ScassandraFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.SkipException;
+
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.WhiteListPolicy;
 
 /**
  * A number of static fields/methods handy for tests.
@@ -431,5 +435,17 @@ public abstract class TestUtils {
         } else {
             return 2;
         }
+    }
+
+    /**
+     * @return a {@Cluster} instance that connects only to the control host of the given cluster.
+     */
+    public static Cluster buildControlCluster(Cluster cluster) {
+        Host controlHost = cluster.manager.controlConnection.connectedHost();
+        List<InetSocketAddress> singleAddress = Collections.singletonList(controlHost.getSocketAddress());
+        return Cluster.builder()
+            .addContactPointsWithPorts(singleAddress)
+            .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), singleAddress))
+            .build();
     }
 }

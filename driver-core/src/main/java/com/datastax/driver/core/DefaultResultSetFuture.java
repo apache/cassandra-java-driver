@@ -91,7 +91,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                         else
                                             keyspace.removeTable(scc.columnFamily);
                                     }
-                                    this.setResult(rs);
+                                    session.cluster.manager.waitForSchemaAgreementAndSignal(connection, this, rs);
                                     break;
                                 case UPDATED:
                                     if (scc.columnFamily.isEmpty()) {
