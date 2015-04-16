@@ -143,8 +143,10 @@ class Connection {
             throw e;
         }
 
+        Executor initExecutor = factory.manager.configuration.getPoolingOptions().getInitializationExecutor();
+
         ListenableFuture<Void> initializeTransportFuture = Futures.transform(channelReadyFuture,
-            onChannelReady(protocolVersion));
+            onChannelReady(protocolVersion, initExecutor), initExecutor);
 
         // Fallback on initializeTransportFuture so we can properly propagate specific exceptions.
         ListenableFuture<Void> initFuture = Futures.withFallback(initializeTransportFuture, new FutureFallback<Void>() {
@@ -167,7 +169,7 @@ class Connection {
                 }
                 return future;
             }
-        });
+        }, initExecutor);
 
         // If initFuture fails, close the connection.  This is needed as withFallback doesn't account for cancel.
         Futures.addCallback(initFuture, new FutureCallback<Void>() {
@@ -182,7 +184,7 @@ class Connection {
                     closeAsync().force();
                 }
             }
-        });
+        }, initExecutor);
 
         return initFuture;
     }
@@ -196,25 +198,25 @@ class Connection {
         return " (" + msg + ')';
     }
 
-    private AsyncFunction<Void, Void> onChannelReady(final int protocolVersion) {
+    private AsyncFunction<Void, Void> onChannelReady(final int protocolVersion, final Executor initExecutor) {
         return new AsyncFunction<Void, Void>() {
             @Override
             public ListenableFuture<Void> apply(Void input) throws Exception {
                 ProtocolOptions.Compression compression = factory.configuration.getProtocolOptions().getCompression();
                 Future startupResponseFuture = write(new Requests.Startup(compression));
                 return Futures.transform(startupResponseFuture,
-                    onStartupResponse(protocolVersion));
+                    onStartupResponse(protocolVersion, initExecutor), initExecutor);
             }
         };
     }
 
-    private AsyncFunction<Message.Response, Void> onStartupResponse(final int protocolVersion) {
+    private AsyncFunction<Message.Response, Void> onStartupResponse(final int protocolVersion, final Executor initExecutor) {
         return new AsyncFunction<Message.Response, Void>() {
             @Override
             public ListenableFuture<Void> apply(Message.Response response) throws Exception {
                 switch (response.type) {
                     case READY:
-                        return checkClusterName();
+                        return checkClusterName(initExecutor);
                     case ERROR:
                         Responses.Error error = (Responses.Error)response;
                         // Testing for a specific string is a tad fragile but well, we don't have much choice
@@ -226,13 +228,13 @@ class Connection {
                         if (protocolVersion == 1)
                         {
                             if (authenticator instanceof ProtocolV1Authenticator)
-                                return authenticateV1(authenticator);
+                                return authenticateV1(authenticator, initExecutor);
                             else
                                 // DSE 3.x always uses SASL authentication backported from protocol v2
-                                return authenticateV2(authenticator);
+                                return authenticateV2(authenticator, initExecutor);
                         }
                         else
-                            return authenticateV2(authenticator);
+                            return authenticateV2(authenticator, initExecutor);
                     default:
                         throw new TransportException(address, String.format("Unexpected %s response message from server to a STARTUP message", response.type));
                 }
@@ -243,7 +245,7 @@ class Connection {
     // Due to C* gossip bugs, system.peers may report nodes that are gone from the cluster.
     // If these nodes have been recommissionned to another cluster and are up, nothing prevents the driver from connecting
     // to them. So we check that the cluster the node thinks it belongs to is our cluster (JAVA-397).
-    private ListenableFuture<Void> checkClusterName() {
+    private ListenableFuture<Void> checkClusterName(final Executor executor) {
         final String expected = factory.manager.metadata.clusterName;
 
         // At initialization, the cluster is not known yet
@@ -263,13 +265,13 @@ class Connection {
                             throw new ClusterNameMismatchException(address, actual, expected);
                         return MoreFutures.VOID_SUCCESS;
                     }
-                });
+                }, executor);
         } catch (Exception e) {
             return Futures.immediateFailedFuture(e);
         }
     }
 
-    private ListenableFuture<Void> authenticateV1(Authenticator authenticator) {
+    private ListenableFuture<Void> authenticateV1(Authenticator authenticator, final Executor executor) {
         Requests.Credentials creds = new Requests.Credentials(((ProtocolV1Authenticator)authenticator).getCredentials());
         try {
             Future authResponseFuture = write(creds);
@@ -279,34 +281,33 @@ class Connection {
                     public ListenableFuture<Void> apply(Message.Response authResponse) throws Exception {
                         switch (authResponse.type) {
                             case READY:
-                                return checkClusterName();
+                                return checkClusterName(executor);
                             case ERROR:
                                 throw new AuthenticationException(address, ((Responses.Error)authResponse).message);
                             default:
                                 throw new TransportException(address, String.format("Unexpected %s response message from server to a CREDENTIALS message", authResponse.type));
                         }
                     }
-                });
+                }, executor);
         } catch (Exception e) {
             return Futures.immediateFailedFuture(e);
         }
     }
 
-    private ListenableFuture<Void> authenticateV2(final Authenticator authenticator) {
+    private ListenableFuture<Void> authenticateV2(final Authenticator authenticator, final Executor executor) {
         byte[] initialResponse = authenticator.initialResponse();
         if (null == initialResponse)
             initialResponse = EMPTY_BYTE_ARRAY;
 
         try {
             Future authResponseFuture = write(new Requests.AuthResponse(initialResponse));
-            return Futures.transform(authResponseFuture,
-                onV2AuthResponse(authenticator));
+            return Futures.transform(authResponseFuture, onV2AuthResponse(authenticator, executor), executor);
         } catch (Exception e) {
             return Futures.immediateFailedFuture(e);
         }
     }
 
-    private AsyncFunction<Message.Response, Void> onV2AuthResponse(final Authenticator authenticator) {
+    private AsyncFunction<Message.Response, Void> onV2AuthResponse(final Authenticator authenticator, final Executor executor) {
         return new AsyncFunction<Message.Response, Void>() {
             @Override
             public ListenableFuture<Void> apply(Message.Response authResponse) throws Exception {
@@ -314,20 +315,19 @@ class Connection {
                     case AUTH_SUCCESS:
                         logger.trace("{} Authentication complete", this);
                         authenticator.onAuthenticationSuccess(((Responses.AuthSuccess)authResponse).token);
-                        return checkClusterName();
+                        return checkClusterName(executor);
                     case AUTH_CHALLENGE:
                         byte[] responseToServer = authenticator.evaluateChallenge(((Responses.AuthChallenge)authResponse).token);
                         if (responseToServer == null) {
                             // If we generate a null response, then authentication has completed, proceed without
                             // sending a further response back to the server.
                             logger.trace("{} Authentication complete (No response to server)", this);
-                            return checkClusterName();
+                            return checkClusterName(executor);
                         } else {
                             // Otherwise, send the challenge response back to the server
                             logger.trace("{} Sending Auth response to challenge", this);
                             Future nextResponseFuture = write(new Requests.AuthResponse(responseToServer));
-                            return Futures.transform(nextResponseFuture,
-                                onV2AuthResponse(authenticator));
+                            return Futures.transform(nextResponseFuture, onV2AuthResponse(authenticator, executor), executor);
                         }
                     case ERROR:
                         // This is not very nice, but we're trying to identify if we

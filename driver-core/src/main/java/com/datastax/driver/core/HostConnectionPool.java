@@ -18,10 +18,7 @@ package com.datastax.driver.core;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
@@ -105,6 +102,8 @@ class HostConnectionPool {
             connectionFutures.add(connection.initAsync());
         }
 
+        Executor initExecutor = manager.cluster.manager.configuration.getPoolingOptions().getInitializationExecutor();
+
         ListenableFuture<List<Void>> allConnectionsFuture = Futures.allAsList(connectionFutures);
 
         final SettableFuture<Void> initFuture = SettableFuture.create();
@@ -131,7 +130,7 @@ class HostConnectionPool {
                 forceClose(connections);
                 initFuture.setException(t);
             }
-        });
+        }, initExecutor);
         return initFuture;
     }
 
