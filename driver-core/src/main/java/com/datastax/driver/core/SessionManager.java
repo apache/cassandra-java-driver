@@ -74,7 +74,7 @@ class SessionManager extends AbstractSession {
         createPoolsInParallel(hosts);
 
         isInit = true;
-        updateCreatedPools(executor());
+        updateCreatedPools();
         return this;
     }
 
@@ -82,7 +82,7 @@ class SessionManager extends AbstractSession {
         List<ListenableFuture<Boolean>> futures = Lists.newArrayListWithCapacity(hosts.size());
         for (Host host : hosts)
             if (host.state != Host.State.DOWN)
-                futures.add(maybeAddPool(host, executor()));
+                futures.add(maybeAddPool(host));
         try {
             Futures.successfulAsList(futures).get();
         } catch (ExecutionException e) {
@@ -197,7 +197,7 @@ class SessionManager extends AbstractSession {
     }
 
     // Returns whether there was problem creating the pool
-    ListenableFuture<Boolean> forceRenewPool(final Host host, ListeningExecutorService executor) {
+    ListenableFuture<Boolean> forceRenewPool(final Host host) {
         final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
             return Futures.immediateFuture(true);
@@ -282,7 +282,7 @@ class SessionManager extends AbstractSession {
     }
 
     // Returns whether there was problem creating the pool
-    ListenableFuture<Boolean> maybeAddPool(final Host host, ListeningExecutorService executor) {
+    ListenableFuture<Boolean> maybeAddPool(final Host host) {
         final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
             return Futures.immediateFuture(true);
@@ -320,7 +320,7 @@ class SessionManager extends AbstractSession {
                         }
                         future.set(false);
                     }
-                }, executor);
+                });
                 return future;
             }
         }
@@ -342,7 +342,7 @@ class SessionManager extends AbstractSession {
      * This method ensures that all hosts for which a pool should exist
      * have one, and hosts that shouldn't don't.
      */
-    void updateCreatedPools(ListeningExecutorService executor) {
+    void updateCreatedPools() {
         // This method does nothing during initialization. Some hosts may be non-responsive but not yet marked DOWN; if
         // we execute the code below we would try to create their pool over and over again.
         // It's called explicitly at the end of init(), once isInit has been set to true.
@@ -361,7 +361,7 @@ class SessionManager extends AbstractSession {
 
                 if (pool == null) {
                     if (dist != HostDistance.IGNORED && h.state == Host.State.UP)
-                        poolCreationFutures.add(maybeAddPool(h, executor));
+                        poolCreationFutures.add(maybeAddPool(h));
                 } else if (dist != pool.hostDistance) {
                     if (dist == HostDistance.IGNORED) {
                         toRemove.add(h);
@@ -392,7 +392,7 @@ class SessionManager extends AbstractSession {
         }
     }
 
-    void updateCreatedPools(Host h, ListeningExecutorService executor) {
+    void updateCreatedPools(Host h) {
         HostDistance dist = loadBalancingPolicy().distance(h);
         HostConnectionPool pool = pools.get(h);
 
@@ -400,7 +400,7 @@ class SessionManager extends AbstractSession {
             if (pool == null) {
                 if (dist != HostDistance.IGNORED && h.state == Host.State.UP)
                     try {
-                        maybeAddPool(h, executor).get();
+                        maybeAddPool(h).get();
                     } catch (ExecutionException e) {
                         // Ignore, maybeAddPool has already handled the error
                     }
@@ -423,7 +423,7 @@ class SessionManager extends AbstractSession {
         // Note that with well behaved balancing policy (that ignore dead nodes), the removePool call is not necessary
         // since updateCreatedPools should take care of it. But better protect against non well behaving policies.
         removePool(host).force().get();
-        updateCreatedPools(MoreExecutors.sameThreadExecutor());
+        updateCreatedPools();
     }
 
     void onSuspected(Host host) {

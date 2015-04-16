@@ -1474,7 +1474,7 @@ public class Cluster implements Closeable {
 
                 List<ListenableFuture<Boolean>> futures = Lists.newArrayListWithCapacity(sessions.size());
                 for (SessionManager s : sessions)
-                    futures.add(s.forceRenewPool(host, poolCreationExecutor));
+                    futures.add(s.forceRenewPool(host));
 
                 // Only mark the node up once all session have re-added their pool (if the load-balancing
                 // policy says it should), so that Host.isUp() don't return true before we're reconnected
@@ -1507,7 +1507,7 @@ public class Cluster implements Closeable {
                 // Now, check if there isn't pools to create/remove following the addition.
                 // We do that now only so that it's not called before we've set the node up.
                 for (SessionManager s : sessions)
-                    s.updateCreatedPools(blockingExecutor);
+                    s.updateCreatedPools();
 
             } finally {
                 host.notificationsLock.unlock();
@@ -1821,7 +1821,7 @@ public class Cluster implements Closeable {
 
                 List<ListenableFuture<Boolean>> futures = Lists.newArrayListWithCapacity(sessions.size());
                 for (SessionManager s : sessions)
-                    futures.add(s.maybeAddPool(host, blockingExecutor));
+                    futures.add(s.maybeAddPool(host));
 
                 // Only mark the node up once all session have added their pool (if the load-balancing
                 // policy says it should), so that Host.isUp() don't return true before we're reconnected
@@ -1854,7 +1854,7 @@ public class Cluster implements Closeable {
                 // Now, check if there isn't pools to create/remove following the addition.
                 // We do that now only so that it's not called before we've set the node up.
                 for (SessionManager s : sessions)
-                    s.updateCreatedPools(blockingExecutor);
+                    s.updateCreatedPools();
 
             } finally {
                 host.notificationsLock.unlock();
@@ -2203,7 +2203,7 @@ public class Cluster implements Closeable {
                 controlConnection.reconnect();
 
             for (SessionManager s : sessions)
-                s.updateCreatedPools(executor);
+                s.updateCreatedPools();
         }
 
         void refreshConnectedHost(Host host) {
@@ -2213,7 +2213,7 @@ public class Cluster implements Closeable {
                 controlConnection.reconnect();
 
             for (SessionManager s : sessions)
-                s.updateCreatedPools(host, executor);
+                s.updateCreatedPools(host);
         }
 
         private class ClusterCloseFuture extends CloseFuture.Forwarding {
