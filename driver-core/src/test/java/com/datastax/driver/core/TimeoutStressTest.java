@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.utils.SocketChannelMonitor;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -37,8 +36,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Iterables.size;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TimeoutStressTest {
@@ -50,7 +47,7 @@ public class TimeoutStressTest {
 
     // How long the test should run for, may want to consider running for longer periods to time to check for leaks
     // that could occur over very tiny timing windows.
-    static final long DURATION = 240000;
+    static final long DURATION = 60000;
 
     // Configured read timeout - this may need to be tuned to the host system running the test.
     static final int READ_TIMEOUT_IN_MS = 50;
@@ -72,15 +69,6 @@ public class TimeoutStressTest {
     static List<InetSocketAddress> nodes;
 
     static PreparedStatement statement;
-
-    static final Predicate<Connection> OPEN_CONNECTIONS = new Predicate<Connection>() {
-        @Override
-        public boolean apply(Connection input) {
-            // Capture Connections that have inFlight requests.  These will be eventually closed
-            // but potentially remain open.
-            return input.inFlight.get() > 0;
-        }
-    };
 
     @BeforeClass(groups = "long")
     public void beforeClass() throws Exception {
@@ -117,6 +105,29 @@ public class TimeoutStressTest {
         }
     }
 
+    /**
+     * <p>
+     * Validates that under extreme timeout conditions the driver is able to properly maintain connection pools in
+     * addition to not leaking connections.
+     *
+     * <p>
+     * Does the following:
+     * <ol>
+     *     <li>Creates a table and loads 30k rows in a single partition.</li>
+     *     <li>Sets the connection and read timeout {@link SocketOptions} to very low values.</li>
+     *     <li>Spawns workers that concurrently execute queries.</li>
+     *     <li>For some duration, repeatedly measures number of open socket connections and warns if exceeded.</li>
+     *     <li>After a duration, resets {@link SocketOptions} to defaults.</li>
+     *     <li>Wait for 20 seconds for reaper to remove old connections and restore pools.</li>
+     *     <li>Ensure pools are restored.</li>
+     *     <li>Shutdown session and ensure that there remains only 1 open connection.</li>
+     * </ol>
+     *
+     * @test_category connection:connection_pool
+     * @expected_result no connections leak and all host pools are maintained.
+     * @jira_ticket JAVA-692
+     * @since 2.0.10, 2.1.6
+     */
     @Test(groups = "long")
     public void host_state_should_be_maintained_with_timeouts() {
         // Set very low timeouts.
@@ -148,29 +159,33 @@ public class TimeoutStressTest {
                 // reaper for cleanup later.
                 Collection<SocketChannel> openChannels = channelMonitor.openChannels(nodes);
 
-                int maximumExpected = maxConnections + openConnectionsInReaper();
                 // Ensure that we don't exceed maximum connections.  Log as warning as there will be a bit of a timing
                 // factor between retrieving open connections and checking the reaper.
-                if(openChannels.size() > maximumExpected) {
-                    logger.warn("{} of open channels: {} exceeds maximum expected: {}", openChannels.size(),
-                            maximumExpected, openChannels);
+                if(openChannels.size() > maxConnections) {
+                    logger.warn("{} of open channels: {} exceeds maximum expected: {}.  " +
+                                    "This could be because there are connections to be cleaned up in the reaper.",
+                            openChannels.size(), maxConnections, openChannels);
                 }
             }
         } finally {
             stopped.set(true);
 
-            logger.debug("Sleeping 20 seconds to allow connection reaper to clean up connections.");
+            // Reset socket timeouts to allow pool to recover.
+            cluster.getConfiguration().getSocketOptions()
+                    .setConnectTimeoutMillis(SocketOptions.DEFAULT_CONNECT_TIMEOUT_MILLIS);
+            cluster.getConfiguration().getSocketOptions()
+                    .setReadTimeoutMillis(SocketOptions.DEFAULT_READ_TIMEOUT_MILLIS);
+
+            logger.debug("Sleeping 20 seconds to allow connection reaper to clean up connections " +
+                    "and for the pools to recover.");
             Uninterruptibles.sleepUninterruptibly(20, TimeUnit.SECONDS);
 
             Collection<SocketChannel> openChannels = channelMonitor.openChannels(nodes);
             assertThat(openChannels.size())
                     .as("Number of open connections does not meet expected: %s", openChannels)
-                    .isLessThanOrEqualTo(maxConnections);
+                    .isEqualTo(maxConnections);
 
             session.close();
-
-            logger.debug("Sleeping 20 seconds to allow connection reaper to clean up connections.");
-            Uninterruptibles.sleepUninterruptibly(20, TimeUnit.SECONDS);
 
             openChannels = channelMonitor.openChannels(nodes);
             assertThat(openChannels.size())
@@ -179,10 +194,6 @@ public class TimeoutStressTest {
 
             workerPool.shutdown();
         }
-    }
-
-    private int openConnectionsInReaper() {
-        return size(filter(Lists.newArrayList(cluster.manager.reaper.connections.keySet()), OPEN_CONNECTIONS));
     }
 
     /**
