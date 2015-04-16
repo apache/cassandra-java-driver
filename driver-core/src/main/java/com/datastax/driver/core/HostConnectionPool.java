@@ -28,6 +28,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.datastax.driver.core.utils.MoreFutures;
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
@@ -74,8 +76,6 @@ class HostConnectionPool {
 
     private final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
-    final SettableFuture<Void> initFuture;
-
     enum InitializationStatus { INITIALIZING, READY, INIT_FAILED, CLOSING }
 
     private volatile InitializationStatus initializationStatus = InitializationStatus.INITIALIZING;
@@ -96,53 +96,53 @@ class HostConnectionPool {
 
         this.connections = new CopyOnWriteArrayList<PooledConnection>();
         this.open = new AtomicInteger();
-        this.initFuture = SettableFuture.create();
     }
 
-    public void initAsync() {
+    public ListenableFuture<Void> initAsync() {
         // Create initial core connections
-        final List<ListenableFuture<PooledConnection>> connectionFutures =
-            Lists.newArrayListWithCapacity(options().getCoreConnectionsPerHost(hostDistance));
-        for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++)
-            connectionFutures.add(manager.connectionFactory().openAsync(this));
+        int capacity = options().getCoreConnectionsPerHost(hostDistance);
+        final List<PooledConnection> connections =  Lists.newArrayListWithCapacity(capacity);
+        final List<ListenableFuture<Void>> connectionFutures = Lists.newArrayListWithCapacity(capacity);
+        for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++) {
+            PooledConnection connection = manager.connectionFactory().newConnection(this);
+            connections.add(connection);
+            connectionFutures.add(connection.initAsync());
+        }
 
-        ListenableFuture<List<PooledConnection>> allConnectionsFuture = Futures.allAsList(connectionFutures);
+        ListenableFuture<List<Void>> allConnectionsFuture = Futures.allAsList(connectionFutures);
 
-        // We could expose allConnectionsFuture directly so this is a bit superfluous, but it avoids
-        // leaking the list of connections.  We also don't want to mark initialization as complete until open
-        // has been set.
-        Futures.addCallback(allConnectionsFuture,
-            new FutureCallback<List<PooledConnection>>() {
-                @Override
-                public void onSuccess(List<PooledConnection> l) {
-                    connections.addAll(l);
+        final SettableFuture<Void> initFuture = SettableFuture.create();
+        Futures.addCallback(allConnectionsFuture, new FutureCallback<List<Void>>() {
+            @Override
+            public void onSuccess(List<Void> l) {
+                // If the pool was closed, close connections and raise an exception when Close completes.
+                if(isClosed()) {
+                    initializationStatus = InitializationStatus.INIT_FAILED;
+                    initFuture.setException(new ConnectionException(host.getSocketAddress(), "Pool was closed."));
+                    forceClose(connections);
+                } else {
+                    HostConnectionPool.this.connections.addAll(connections);
                     open.set(l.size());
                     logger.trace("Created connection pool to host {}", host);
                     initializationStatus = InitializationStatus.READY;
                     initFuture.set(null);
                 }
+            }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    initializationStatus = InitializationStatus.INIT_FAILED;
-                    initFuture.setException(t);
-                    forceClose(connectionFutures);
-                }
-            });
-
+            @Override
+            public void onFailure(Throwable t) {
+                initializationStatus = InitializationStatus.INIT_FAILED;
+                forceClose(connections);
+                initFuture.setException(t);
+            }
+        });
+        return initFuture;
     }
 
     // Clean up if we got an error at construction time but still created part of the core connections
-    private void forceClose(List<ListenableFuture<PooledConnection>> l) {
-        for (ListenableFuture<PooledConnection> future : l) {
-            if (!future.isDone())
-                future.cancel(true);
-            Futures.addCallback(future, new SuccessCallback<PooledConnection>() {
-                @Override
-                public void onSuccess(PooledConnection connection) {
-                    connection.closeAsync().force();
-                }
-            });
+    private void forceClose(List<PooledConnection> connections) {
+        for (PooledConnection connection : connections) {
+            connection.closeAsync().force();
         }
     }
 

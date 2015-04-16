@@ -80,9 +80,9 @@ class Connection {
     private final AtomicInteger writer = new AtomicInteger(0);
     private volatile String keyspace;
 
+    private volatile boolean isInitialized;
     private volatile boolean isDefunct;
 
-    final SettableFuture<Void> initFuture;
     private final AtomicReference<ConnectionCloseFuture> closeFuture = new AtomicReference<ConnectionCloseFuture>();
 
     /**
@@ -94,6 +94,11 @@ class Connection {
         this.address = address;
         this.factory = factory;
         this.name = name;
+    }
+
+    public ListenableFuture<Void> initAsync() {
+        if (factory.isShutdown)
+            return Futures.immediateFailedFuture(new ConnectionException(address, "Connection factory is shut down"));
 
         int protocolVersion = factory.protocolVersion == 1 ? 1 : 2;
         final SettableFuture<Void> channelReadyFuture = SettableFuture.create();
@@ -102,9 +107,9 @@ class Connection {
             Bootstrap bootstrap = factory.newBootstrap();
             ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
             bootstrap.handler(
-                new Initializer(this, protocolVersion, protocolOptions.getCompression().compressor(), protocolOptions.getSSLOptions(),
-                    factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds(),
-                    factory.configuration.getNettyOptions()));
+                    new Initializer(this, protocolVersion, protocolOptions.getCompression().compressor(), protocolOptions.getSSLOptions(),
+                            factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds(),
+                            factory.configuration.getNettyOptions()));
 
             ChannelFuture future = bootstrap.connect(address);
 
@@ -114,13 +119,21 @@ class Connection {
                 public void operationComplete(ChannelFuture future) throws Exception {
                     writer.decrementAndGet();
                     channel = future.channel();
+                    if(isClosed()) {
+                        channel.close().addListener(new ChannelFutureListener() {
+                            @Override
+                            public void operationComplete(ChannelFuture future) throws Exception {
+                                channelReadyFuture.setException(new TransportException(Connection.this.address, "Connection closed during initialization."));
+                            }
+                        });
+                    }
                     Connection.this.factory.allChannels.add(channel);
                     if (!future.isSuccess()) {
                         if (logger.isDebugEnabled())
                             logger.debug(String.format("%s Error connecting to %s%s", Connection.this, Connection.this.address, extractMessage(future.cause())));
-                        channelReadyFuture.setException(defunct(new TransportException(Connection.this.address, "Cannot connect", future.cause())));
+                        channelReadyFuture.setException(new TransportException(Connection.this.address, "Cannot connect", future.cause()));
                     } else {
-                        logger.trace("{} Connection opened successfully", Connection.this);
+                        logger.debug("{} Connection opened successfully", Connection.this);
                         channel.closeFuture().addListener(new ChannelCloseListener());
                         channelReadyFuture.set(null);
                     }
@@ -132,33 +145,47 @@ class Connection {
         }
 
         ListenableFuture<Void> initializeTransportFuture = Futures.transform(channelReadyFuture,
-            onChannelReady(protocolVersion));
+                onChannelReady(protocolVersion));
 
-        this.initFuture = SettableFuture.create();
-        Futures.addCallback(initializeTransportFuture, new FutureCallback<Void>() {
+        // Fallback on initializeTransportFuture so we can properly propagate specific exceptions.
+        ListenableFuture<Void> initFuture = Futures.withFallback(initializeTransportFuture, new FutureFallback<Void>() {
             @Override
-            public void onSuccess(Void result) {
-                initFuture.set(null);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
+            public ListenableFuture<Void> create(Throwable t) throws Exception {
+                SettableFuture<Void> future = SettableFuture.create();
                 // Make sure the connection gets properly closed.
                 if (t instanceof ClusterNameMismatchException || t instanceof UnsupportedProtocolVersionException) {
                     // These exceptions cause the node to be ignored, so just propagate
                     closeAsync().force();
-                    initFuture.setException(t);
+                    future.setException(t);
                 } else {
                     // Defunct to ensure that the error will be signaled (marking the host down)
                     ConnectionException ce = (t instanceof ConnectionException)
-                        ? (ConnectionException)t
-                        : new ConnectionException(Connection.this.address,
-                        String.format("Unexpected error during transport initialization (%s)", t),
-                        t);
-                    initFuture.setException(defunct(ce));
+                            ? (ConnectionException)t
+                            : new ConnectionException(Connection.this.address,
+                            String.format("Unexpected error during transport initialization (%s)", t),
+                            t);
+                    future.setException(defunct(ce));
+                }
+                return future;
+            }
+        });
+
+        // If initFuture fails, close the connection.  This is needed as withFallback doesn't account for cancel.
+        Futures.addCallback(initFuture, new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                isInitialized = true;
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                if(!isClosed()) {
+                    closeAsync().force();
                 }
             }
         });
+
+        return initFuture;
     }
 
     private static String extractMessage(Throwable t) {
@@ -354,7 +381,7 @@ class Connection {
                 this instanceof PooledConnection &&
                 (((PooledConnection)this).pool == null || !((PooledConnection)this).pool.isClosed());
 
-            boolean markSuspected = initFuture.isDone() && !belongsToReconnectingPool;
+            boolean markSuspected = isInitialized && !belongsToReconnectingPool;
 
             // This will trigger onDown, including when the defunct Connection is part of a reconnection attempt, which is redundant.
             // This is not too much of a problem since calling onDown on a node that is already down has no effect.
@@ -645,7 +672,7 @@ class Connection {
             Connection connection = new Connection(name, address, this);
             // This method opens the connection synchronously, so wait until it's initialized
             try {
-                connection.initFuture.get();
+                connection.initAsync().get();
                 return connection;
             } catch (ExecutionException e) {
                 throw launderAsyncInitException(e);
@@ -657,30 +684,22 @@ class Connection {
          */
         public PooledConnection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
             try {
-                return openAsync(pool).get();
+                PooledConnection connection = newConnection(pool);
+                connection.initAsync().get();
+                return connection;
             } catch (ExecutionException e) {
                 throw launderAsyncInitException(e);
             }
         }
 
         /**
-         * Same as open, but initializes the connection asynchronously.
+         * Creates a new connection and associates it to the provided connection pool, but does not start it.
          */
-        public ListenableFuture<PooledConnection> openAsync(HostConnectionPool pool) {
+        public PooledConnection newConnection(HostConnectionPool pool) {
             InetSocketAddress address = pool.host.getSocketAddress();
-
-            if (isShutdown)
-                return Futures.immediateFailedFuture(new ConnectionException(address, "Connection factory is shut down"));
-
             String name = address.toString() + '-' + getIdGenerator(pool.host).getAndIncrement();
 
-            final PooledConnection connection = new PooledConnection(name, address, this, pool);
-            return Futures.transform(connection.initFuture, new Function<Void, PooledConnection>() {
-                @Override
-                public PooledConnection apply(Void input) {
-                    return connection;
-                }
-            });
+            return new PooledConnection(name, address, this, pool);
         }
 
         static RuntimeException launderAsyncInitException(ExecutionException e) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
@@ -980,7 +999,7 @@ class Connection {
         public void operationComplete(ChannelFuture future) throws Exception {
             // If we've closed the channel client side then we don't really want to defunct the connection, but
             // if there is remaining thread waiting on us, we still want to wake them up
-            if (!initFuture.isDone() || isClosed()) {
+            if (!isInitialized || isClosed()) {
                 dispatcher.errorOutAllHandler(new TransportException(address, "Channel has been closed"));
                 // we still want to force so that the future completes
                 Connection.this.closeAsync().force();

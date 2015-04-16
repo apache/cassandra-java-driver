@@ -206,11 +206,11 @@ class SessionManager extends AbstractSession {
             return Futures.immediateFuture(false);
 
         final HostConnectionPool newPool = new HostConnectionPool(host, distance, SessionManager.this);
-        newPool.initAsync();
+        ListenableFuture<Void> poolInitFuture = newPool.initAsync();
 
         final SettableFuture<Boolean> future = SettableFuture.create();
 
-        Futures.addCallback(newPool.initFuture, new FutureCallback<Void>() {
+        Futures.addCallback(poolInitFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
                 // If we raced with a session shutdown, ensure that the pool will be closed.
@@ -261,9 +261,9 @@ class SessionManager extends AbstractSession {
             }
         }
 
-        newPool.initAsync();
+        ListenableFuture<Void> poolInitFuture = newPool.initAsync();
 
-        Futures.addCallback(newPool.initFuture, new FutureCallback<Void>() {
+        Futures.addCallback(poolInitFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
                 // If we raced with a session shutdown, ensure that the pool will be closed.
@@ -278,7 +278,7 @@ class SessionManager extends AbstractSession {
                 pools.remove(host);
             }
         });
-        return newPool.initFuture;
+        return poolInitFuture;
     }
 
     // Returns whether there was problem creating the pool
