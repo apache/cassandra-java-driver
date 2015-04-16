@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.*;
@@ -107,9 +106,9 @@ class Connection {
             Bootstrap bootstrap = factory.newBootstrap();
             ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
             bootstrap.handler(
-                    new Initializer(this, protocolVersion, protocolOptions.getCompression().compressor(), protocolOptions.getSSLOptions(),
-                            factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds(),
-                            factory.configuration.getNettyOptions()));
+                new Initializer(this, protocolVersion, protocolOptions.getCompression().compressor(), protocolOptions.getSSLOptions(),
+                    factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds(),
+                    factory.configuration.getNettyOptions()));
 
             ChannelFuture future = bootstrap.connect(address);
 
@@ -119,7 +118,7 @@ class Connection {
                 public void operationComplete(ChannelFuture future) throws Exception {
                     writer.decrementAndGet();
                     channel = future.channel();
-                    if(isClosed()) {
+                    if (isClosed()) {
                         channel.close().addListener(new ChannelFutureListener() {
                             @Override
                             public void operationComplete(ChannelFuture future) throws Exception {
@@ -145,7 +144,7 @@ class Connection {
         }
 
         ListenableFuture<Void> initializeTransportFuture = Futures.transform(channelReadyFuture,
-                onChannelReady(protocolVersion));
+            onChannelReady(protocolVersion));
 
         // Fallback on initializeTransportFuture so we can properly propagate specific exceptions.
         ListenableFuture<Void> initFuture = Futures.withFallback(initializeTransportFuture, new FutureFallback<Void>() {
@@ -160,10 +159,10 @@ class Connection {
                 } else {
                     // Defunct to ensure that the error will be signaled (marking the host down)
                     ConnectionException ce = (t instanceof ConnectionException)
-                            ? (ConnectionException)t
-                            : new ConnectionException(Connection.this.address,
-                            String.format("Unexpected error during transport initialization (%s)", t),
-                            t);
+                        ? (ConnectionException)t
+                        : new ConnectionException(Connection.this.address,
+                        String.format("Unexpected error during transport initialization (%s)", t),
+                        t);
                     future.setException(defunct(ce));
                 }
                 return future;
@@ -179,7 +178,7 @@ class Connection {
 
             @Override
             public void onFailure(Throwable t) {
-                if(!isClosed()) {
+                if (!isClosed()) {
                     closeAsync().force();
                 }
             }
@@ -797,11 +796,8 @@ class Connection {
         void start() {
             if (!running.get() && running.compareAndSet(false, true)) {
                 EventLoop eventLoop = eventLoopRef.get();
-                if(eventLoop == null) {
-                    return;
-                } else {
+                if (eventLoop != null)
                     eventLoop.execute(this);
-                }
             }
         }
 

@@ -28,15 +28,12 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.datastax.driver.core.utils.MoreFutures;
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.utils.MoreFutures.SuccessCallback;
 
 import static com.datastax.driver.core.PooledConnection.State.GONE;
 import static com.datastax.driver.core.PooledConnection.State.OPEN;
@@ -76,9 +73,8 @@ class HostConnectionPool {
 
     private final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
-    enum InitializationStatus { INITIALIZING, READY, INIT_FAILED, CLOSING }
-
-    private volatile InitializationStatus initializationStatus = InitializationStatus.INITIALIZING;
+    private enum Phase { INITIALIZING, READY, INIT_FAILED, CLOSING }
+    private volatile Phase phase = Phase.INITIALIZING;
 
     public HostConnectionPool(final Host host, HostDistance hostDistance, final SessionManager manager) {
         assert hostDistance != HostDistance.IGNORED;
@@ -101,7 +97,7 @@ class HostConnectionPool {
     public ListenableFuture<Void> initAsync() {
         // Create initial core connections
         int capacity = options().getCoreConnectionsPerHost(hostDistance);
-        final List<PooledConnection> connections =  Lists.newArrayListWithCapacity(capacity);
+        final List<PooledConnection> connections = Lists.newArrayListWithCapacity(capacity);
         final List<ListenableFuture<Void>> connectionFutures = Lists.newArrayListWithCapacity(capacity);
         for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++) {
             PooledConnection connection = manager.connectionFactory().newConnection(this);
@@ -116,22 +112,22 @@ class HostConnectionPool {
             @Override
             public void onSuccess(List<Void> l) {
                 // If the pool was closed, close connections and raise an exception when Close completes.
-                if(isClosed()) {
-                    initializationStatus = InitializationStatus.INIT_FAILED;
+                if (isClosed()) {
+                    phase = Phase.INIT_FAILED;
                     initFuture.setException(new ConnectionException(host.getSocketAddress(), "Pool was closed."));
                     forceClose(connections);
                 } else {
                     HostConnectionPool.this.connections.addAll(connections);
                     open.set(l.size());
                     logger.trace("Created connection pool to host {}", host);
-                    initializationStatus = InitializationStatus.READY;
+                    phase = Phase.READY;
                     initFuture.set(null);
                 }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                initializationStatus = InitializationStatus.INIT_FAILED;
+                phase = Phase.INIT_FAILED;
                 forceClose(connections);
                 initFuture.setException(t);
             }
@@ -151,10 +147,10 @@ class HostConnectionPool {
     }
 
     public PooledConnection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
-        if (initializationStatus == InitializationStatus.INITIALIZING)
+        if (phase == Phase.INITIALIZING)
             throw new ConnectionException(host.getSocketAddress(), "Pool is initializing.");
 
-        if (initializationStatus != InitializationStatus.READY)
+        if (phase != Phase.READY)
             // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
             // That being said, maybe having a specific exception could be cleaner.
             throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
@@ -383,7 +379,7 @@ class HostConnectionPool {
                 break;
         }
 
-        if (initializationStatus != InitializationStatus.READY) {
+        if (phase != Phase.READY) {
             open.decrementAndGet();
             return false;
         }
@@ -400,7 +396,7 @@ class HostConnectionPool {
             newConnection.state.compareAndSet(RESURRECTING, OPEN); // no-op if it was already OPEN
 
             // We might have raced with pool shutdown since the last check; ensure the connection gets closed in case the pool did not do it.
-            if (initializationStatus != InitializationStatus.READY && !newConnection.isClosed()) {
+            if (phase != Phase.READY && !newConnection.isClosed()) {
                 close(newConnection);
                 open.decrementAndGet();
                 return false;
@@ -545,7 +541,7 @@ class HostConnectionPool {
         if (future != null)
             return future;
 
-        initializationStatus = InitializationStatus.CLOSING;
+        phase = Phase.CLOSING;
 
         // Wake up all threads that wait
         signalAllAvailableConnection();

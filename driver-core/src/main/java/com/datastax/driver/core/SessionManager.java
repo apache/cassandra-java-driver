@@ -20,13 +20,10 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +34,6 @@ import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.utils.MoreFutures;
-import com.datastax.driver.core.utils.MoreFutures.FailureCallback;
-import com.datastax.driver.core.utils.MoreFutures.SuccessCallback;
 
 /**
  * Driver implementation of the Session interface.
@@ -231,6 +226,7 @@ class SessionManager extends AbstractSession {
                     future.set(true);
                 }
             }
+
             @Override
             public void onFailure(Throwable t) {
                 logger.error("Error creating pool to " + host, t);
@@ -246,15 +242,16 @@ class SessionManager extends AbstractSession {
     private ListenableFuture<Void> replacePool(final Host host, HostDistance distance, HostConnectionPool previous) {
         if (isClosing)
             return MoreFutures.VOID_SUCCESS;
+
         final HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
-        if(previous == null) {
-            if(pools.putIfAbsent(host, newPool) != null) {
+        if (previous == null) {
+            if (pools.putIfAbsent(host, newPool) != null) {
                 return null;
             }
         } else {
-            if(!pools.replace(host, previous, newPool)) {
+            if (!pools.replace(host, previous, newPool)) {
                 return null;
-            };
+            }
             if (!previous.isClosed()) {
                 logger.warn("Replacing a pool that wasn't closed. Closing it now, but this was not expected.");
                 previous.closeAsync();
