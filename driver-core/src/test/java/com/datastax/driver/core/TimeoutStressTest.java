@@ -71,6 +71,8 @@ public class TimeoutStressTest {
 
     static List<InetSocketAddress> nodes;
 
+    static PreparedStatement statement;
+
     static final Predicate<Connection> OPEN_CONNECTIONS = new Predicate<Connection>() {
         @Override
         public boolean apply(Connection input) {
@@ -150,7 +152,7 @@ public class TimeoutStressTest {
                 // Ensure that we don't exceed maximum connections.  Log as warning as there will be a bit of a timing
                 // factor between retrieving open connections and checking the reaper.
                 if(openChannels.size() > maximumExpected) {
-                    logger.warn("{} of open channels: {} exceeds maximum expected: {}: {}", openChannels.size(),
+                    logger.warn("{} of open channels: {} exceeds maximum expected: {}", openChannels.size(),
                             maximumExpected, openChannels);
                 }
             }
@@ -187,16 +189,17 @@ public class TimeoutStressTest {
      * Creates the testks schema with a 'record' table and preloads 30k records.
      */
     private static void setupSchema(Session session) throws InterruptedException, ExecutionException, TimeoutException {
-        logger.info("Creating keyspace");
+        logger.debug("Creating keyspace");
         session.execute("create KEYSPACE if not exists " + KEYSPACE +
                 " WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 3}");
         session.execute("use " + KEYSPACE);
 
-        logger.info("Creating table");
+        logger.debug("Creating table");
         session.execute("create table if NOT EXISTS record (\n"
                 + "  name text,\n"
                 + "  phone text,\n"
-                + "  PRIMARY KEY ((name))\n"
+                + "  value text,\n"
+                + "  PRIMARY KEY (name, phone)\n"
                 + ");");
 
         int records = 30000;
@@ -204,14 +207,16 @@ public class TimeoutStressTest {
 
         for (int i = 0; i < records; i++) {
             if (i % 1000 == 0)
-                logger.info("Inserting record {}.", i);
+                logger.debug("Inserting record {}.", i);
             futures.add(session.executeAsync(
-                    "insert into record (name, phone) values (?, ?)", Integer.toString(i), "test"));
+                    "insert into record (name, phone, value) values (?, ?, ?)", "0", Integer.toString(i), "test"));
         }
 
-        logger.info("Completed inserting data.  Waiting up to 30 for inserts to complete seconds before proceeding.");
+        statement = session.prepare("select * from " + KEYSPACE + ".record where name=? limit 1000;");
+
+        logger.debug("Completed inserting data.  Waiting up to 30 for inserts to complete seconds before proceeding.");
         Futures.allAsList(futures).get(30, TimeUnit.SECONDS);
-        logger.info("Inserts complete.");
+        logger.debug("Inserts complete.");
     }
 
     public static class TimeoutStressWorker implements Runnable {
@@ -229,16 +234,18 @@ public class TimeoutStressTest {
 
         @Override
         public void run() {
+
             while(!stopped.get()) {
-                executedQueries.incrementAndGet();
                 try {
                     concurrentQueries.acquire();
-                    ResultSetFuture future = session.executeAsync("select * from record limit 1000;");
+                    ResultSetFuture future = session.executeAsync(statement.bind("0"));
                     Futures.addCallback(future, new FutureCallback<ResultSet>() {
 
                         @Override
                         public void onSuccess(ResultSet result) {
                             concurrentQueries.release();
+                            if(executedQueries.incrementAndGet() % 1000 == 0)
+                                logger.debug("Successfully executed {}.  rows: {}", executedQueries.get(), result.getAvailableWithoutFetching());
                         }
 
                         @Override
