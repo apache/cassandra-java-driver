@@ -56,10 +56,10 @@ public class HostConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster 
         HostConnectionPool pool = createPool(2, 2);
 
         assertThat(pool.connections.size()).isEqualTo(2);
-        List<PooledConnection> coreConnections = Lists.newArrayList(pool.connections);
+        List<Connection> coreConnections = Lists.newArrayList(pool.connections);
 
         for (int i = 0; i < 256; i++) {
-            PooledConnection connection = pool.borrowConnection(100, MILLISECONDS);
+            Connection connection = pool.borrowConnection(100, MILLISECONDS);
             assertThat(coreConnections).contains(connection);
         }
 
@@ -85,17 +85,17 @@ public class HostConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster 
         HostConnectionPool pool = createPool(1, 2);
 
         assertThat(pool.connections.size()).isEqualTo(1);
-        List<PooledConnection> coreConnections = Lists.newArrayList(pool.connections);
+        List<Connection> coreConnections = Lists.newArrayList(pool.connections);
 
         //
         for (int i = 0; i < 128; i++) {
-            PooledConnection connection = pool.borrowConnection(100, MILLISECONDS);
+            Connection connection = pool.borrowConnection(100, MILLISECONDS);
             assertThat(coreConnections).contains(connection);
         }
 
         // Borrow more and ensure the connection returned is a non-core connection.
         for (int i = 0; i < 128; i++) {
-            PooledConnection connection = pool.borrowConnection(100, MILLISECONDS);
+            Connection connection = pool.borrowConnection(100, MILLISECONDS);
             assertThat(coreConnections).doesNotContain(connection);
         }
 
@@ -121,7 +121,7 @@ public class HostConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster 
             .setIdleTimeoutSeconds(20);
 
         HostConnectionPool pool = createPool(1, 2);
-        PooledConnection core = pool.connections.get(0);
+        Connection core = pool.connections.get(0);
 
         // Fill core connection
         for (int i = 0; i < 128; i++)
@@ -148,14 +148,14 @@ public class HostConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster 
             .setIdleTimeoutSeconds(20);
 
         HostConnectionPool pool = createPool(1, 2);
-        PooledConnection connection1 = pool.connections.get(0);
+        Connection connection1 = pool.connections.get(0);
 
         for (int i = 0; i < 101; i++)
             assertThat(pool.borrowConnection(100, MILLISECONDS)).isEqualTo(connection1);
 
         TimeUnit.MILLISECONDS.sleep(100);
         assertThat(pool.connections).hasSize(2);
-        PooledConnection connection2 = pool.connections.get(1);
+        Connection connection2 = pool.connections.get(1);
 
         assertThat(connection1.inFlight.get()).isEqualTo(101);
         assertThat(connection2.inFlight.get()).isEqualTo(0);
@@ -205,14 +205,14 @@ public class HostConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster 
             .setIdleTimeoutSeconds(20);
 
         HostConnectionPool pool = createPool(1, 2);
-        PooledConnection connection1 = pool.connections.get(0);
+        Connection connection1 = pool.connections.get(0);
 
         for (int i = 0; i < 101; i++)
             assertThat(pool.borrowConnection(100, MILLISECONDS)).isEqualTo(connection1);
 
         TimeUnit.MILLISECONDS.sleep(100);
         assertThat(pool.connections).hasSize(2);
-        PooledConnection connection2 = pool.connections.get(1);
+        Connection connection2 = pool.connections.get(1);
 
         assertThat(connection1.inFlight.get()).isEqualTo(101);
         assertThat(connection2.inFlight.get()).isEqualTo(0);
@@ -247,7 +247,7 @@ public class HostConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster 
         TimeUnit.MILLISECONDS.sleep(100);
 
         // Borrow again to get the new connection
-        PooledConnection connection3 = pool.borrowConnection(100, MILLISECONDS);
+        Connection connection3 = pool.borrowConnection(100, MILLISECONDS);
         assertThat(connection3)
             .isNotEqualTo(connection2) // should not be the full connection
             .isNotEqualTo(connection1); // should not be the previously trashed one
@@ -267,7 +267,7 @@ public class HostConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster 
             .setIdleTimeoutSeconds(20);
 
         HostConnectionPool pool = createPool(1, 2);
-        PooledConnection connection1 = pool.connections.get(0);
+        Connection connection1 = pool.connections.get(0);
 
         // Fill core connection enough to trigger creation of another one
         for (int i = 0; i < 110; i++)
@@ -314,7 +314,7 @@ public class HostConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster 
     public void should_trash_on_returning_connection_with_insufficient_streams()
         throws ConnectionException, TimeoutException, InterruptedException {
         HostConnectionPool pool = createPool(1, 2);
-        PooledConnection core = pool.connections.get(0);
+        Connection core = pool.connections.get(0);
 
         for (int i = 0; i < 128; i++)
             assertThat(pool.borrowConnection(100, MILLISECONDS)).isEqualTo(core);
@@ -323,7 +323,7 @@ public class HostConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster 
         assertThat(pool.connections).hasSize(2);
 
         // Grab the new non-core connection and replace it with a spy.
-        PooledConnection extra1 = spy(pool.connections.get(1));
+        Connection extra1 = spy(pool.connections.get(1));
         pool.connections.set(1, extra1);
 
         // Borrow 10 times to ensure pool is utilized.

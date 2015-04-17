@@ -15,6 +15,11 @@
  */
 package com.datastax.driver.core;
 
+import java.util.concurrent.Executor;
+
+import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.MoreExecutors;
+
 /**
  * Options related to connection pooling.
  * <p>
@@ -53,6 +58,8 @@ public class PoolingOptions {
     private static final int DEFAULT_POOL_TIMEOUT_MILLIS = 5000;
     private static final int DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30;
 
+    private static final Executor DEFAULT_INITIALIZATION_EXECUTOR = MoreExecutors.sameThreadExecutor();
+
     private volatile Cluster.Manager manager;
 
     private final int[] maxSimultaneousRequests = new int[]{ DEFAULT_MAX_REQUESTS, DEFAULT_MAX_REQUESTS, 0 };
@@ -63,6 +70,8 @@ public class PoolingOptions {
     private volatile int idleTimeoutSeconds = DEFAULT_IDLE_TIMEOUT_SECONDS;
     private volatile int poolTimeoutMillis = DEFAULT_POOL_TIMEOUT_MILLIS;
     private volatile int heartbeatIntervalSeconds = DEFAULT_HEARTBEAT_INTERVAL_SECONDS;
+
+    private volatile Executor initializationExecutor = DEFAULT_INITIALIZATION_EXECUTOR;
 
     public PoolingOptions() {}
 
@@ -305,6 +314,42 @@ public class PoolingOptions {
             throw new IllegalArgumentException("Heartbeat interval must be positive");
 
         this.heartbeatIntervalSeconds = heartbeatIntervalSeconds;
+        return this;
+    }
+
+    /**
+     * Returns the executor to use for connection initialization.
+     *
+     * @return the executor.
+     * @see #setInitializationExecutor(java.util.concurrent.Executor)
+     */
+    public Executor getInitializationExecutor() {
+        return initializationExecutor;
+    }
+
+    /**
+     * Sets the executor to use for connection initialization.
+     * <p>
+     * Connections are open in a completely asynchronous manner. Since initializing the transport
+     * requires separate CQL queries, the futures representing the completion of these queries are
+     * transformed and chained. This executor is where these transformations happen.
+     * <p>
+     * <b>This is an advanced option, which should be rarely needed in practice.</b> It defaults to
+     * Guava's {@code MoreExecutors.sameThreadExecutor()}, which results in running the transformations
+     * on the network I/O threads; this is fine if the transformations are fast and not I/O bound
+     * (which is the case by default).
+     * One reason why you might want to provide a custom executor is if you use authentication with
+     * a custom {@link com.datastax.driver.core.Authenticator} implementation that performs blocking
+     * calls.
+     *
+     * @param initializationExecutor the executor to use
+     * @return this {@code PoolingOptions}
+     *
+     * @throws java.lang.NullPointerException if the executor is null
+     */
+    public PoolingOptions setInitializationExecutor(Executor initializationExecutor) {
+        Preconditions.checkNotNull(initializationExecutor);
+        this.initializationExecutor = initializationExecutor;
         return this;
     }
 

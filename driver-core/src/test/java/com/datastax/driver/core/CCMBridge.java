@@ -489,7 +489,7 @@ public class CCMBridge {
 
                     ports = new int[5];
                     for (int i = 0; i < 5; i++) {
-                        ports[i] = TestUtils.findAvailablePort(10000 + i);
+                        ports[i] = TestUtils.findAvailablePort(11000 + i);
                     }
 
                     ccmBridge.bootstrapNodeWithPorts(1, ports[0], ports[1], ports[2], ports[3], ports[4]);

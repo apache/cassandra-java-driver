@@ -72,7 +72,7 @@ public class RequestHandlerTest {
                 }
             }
 
-            PooledConnection connection = getSingleConnection(session);
+            Connection connection = getSingleConnection(session);
             assertThat(connection.inFlight.get()).isEqualTo(0);
         } finally {
             if (cluster != null)
@@ -81,7 +81,7 @@ public class RequestHandlerTest {
         }
     }
 
-    private PooledConnection getSingleConnection(Session session) {
+    private Connection getSingleConnection(Session session) {
         HostConnectionPool pool = ((SessionManager)session).pools.values().iterator().next();
         return pool.connections.get(0);
     }
