@@ -192,6 +192,19 @@ public class Host {
     }
 
     /**
+     * Returns a description of the host's state, as seen by the driver.
+     * <p>
+     * This is exposed for debugging purposes only; the format of this string might
+     * change between driver versions, so clients should not make any assumptions
+     * about it.
+     *
+     * @return a description of the host's state.
+     */
+    public String getState() {
+        return state.name();
+    }
+
+    /**
      * Returns a {@code ListenableFuture} representing the completion of the first
      * reconnection attempt after a node has been suspected.
      * <p>
