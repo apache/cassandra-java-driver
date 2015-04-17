@@ -125,16 +125,17 @@ class Connection {
                                 channelReadyFuture.setException(new TransportException(Connection.this.address, "Connection closed during initialization."));
                             }
                         });
-                    }
-                    Connection.this.factory.allChannels.add(channel);
-                    if (!future.isSuccess()) {
-                        if (logger.isDebugEnabled())
-                            logger.debug(String.format("%s Error connecting to %s%s", Connection.this, Connection.this.address, extractMessage(future.cause())));
-                        channelReadyFuture.setException(new TransportException(Connection.this.address, "Cannot connect", future.cause()));
                     } else {
-                        logger.debug("{} Connection opened successfully", Connection.this);
-                        channel.closeFuture().addListener(new ChannelCloseListener());
-                        channelReadyFuture.set(null);
+                        Connection.this.factory.allChannels.add(channel);
+                        if (!future.isSuccess()) {
+                            if (logger.isDebugEnabled())
+                                logger.debug(String.format("%s Error connecting to %s%s", Connection.this, Connection.this.address, extractMessage(future.cause())));
+                            channelReadyFuture.setException(new TransportException(Connection.this.address, "Cannot connect", future.cause()));
+                        } else {
+                            logger.debug("{} Connection opened successfully", Connection.this);
+                            channel.closeFuture().addListener(new ChannelCloseListener());
+                            channelReadyFuture.set(null);
+                        }
                     }
                 }
             });

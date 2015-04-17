@@ -110,14 +110,13 @@ class HostConnectionPool {
         Futures.addCallback(allConnectionsFuture, new FutureCallback<List<Void>>() {
             @Override
             public void onSuccess(List<Void> l) {
-                // If the pool was closed, close connections and raise an exception when Close completes.
+                HostConnectionPool.this.connections.addAll(connections);
+                open.set(l.size());
                 if (isClosed()) {
-                    phase = Phase.INIT_FAILED;
-                    initFuture.setException(new ConnectionException(host.getSocketAddress(), "Pool was closed."));
+                    initFuture.setException(new ConnectionException(host.getSocketAddress(), "Pool was closed during initialization"));
+                    // we're not sure if closeAsync() saw the connections, so ensure they get closed
                     forceClose(connections);
                 } else {
-                    HostConnectionPool.this.connections.addAll(connections);
-                    open.set(l.size());
                     logger.trace("Created connection pool to host {}", host);
                     phase = Phase.READY;
                     initFuture.set(null);
@@ -152,7 +151,7 @@ class HostConnectionPool {
         if (phase != Phase.READY)
             // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
             // That being said, maybe having a specific exception could be cleaner.
-            throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
+            throw new ConnectionException(host.getSocketAddress(), "Pool is " + phase);
 
         if (connections.isEmpty()) {
             for (int i = 0; i < options().getCoreConnectionsPerHost(hostDistance); i++) {
