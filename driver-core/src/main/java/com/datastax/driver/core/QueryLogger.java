@@ -162,9 +162,6 @@ public class QueryLogger implements LatencyTracker {
     @VisibleForTesting
     static final String FURTHER_PARAMS_OMITTED = " [further parameters omitted]";
 
-    @VisibleForTesting
-    static final String UNKNOWN_STATEMENT = "??Unknown Statement??";
-
     private final Cluster cluster;
 
     private volatile long slowQueryLatencyThresholdMillis = DEFAULT_SLOW_QUERY_THRESHOLD_MS;
@@ -456,8 +453,27 @@ public class QueryLogger implements LatencyTracker {
 
     private String statementAsString(Statement statement) {
         StringBuilder sb = new StringBuilder();
+        if (statement instanceof BatchStatement) {
+            BatchStatement bs = (BatchStatement)statement;
+            int statements = bs.getStatements().size();
+            int boundValues = countBoundValues(bs);
+            sb.append("[" + statements + " statements, " + boundValues + " bound values] ");
+        } else if (statement instanceof BoundStatement) {
+            int boundValues = ((BoundStatement)statement).values.length;
+            sb.append("[" + boundValues + " bound values] ");
+        }
+
         append(statement, sb, maxQueryStringLength);
         return sb.toString();
+    }
+
+    private int countBoundValues(BatchStatement bs) {
+        int count = 0;
+        for (Statement s : bs.getStatements()) {
+            if (s instanceof BoundStatement)
+                count += ((BoundStatement)s).values.length;
+        }
+        return count;
     }
 
     private int appendParameters(BoundStatement statement, StringBuilder buffer, int remaining) {
@@ -541,8 +557,9 @@ public class QueryLogger implements LatencyTracker {
             }
             remaining = append(" APPLY BATCH", buffer, remaining);
         } else {
-            // Unknown types of statement - should not happen
-            remaining = append(UNKNOWN_STATEMENT, buffer, remaining);
+            // Unknown types of statement
+            // Call toString() as a last resort
+            remaining = append(statement.toString(), buffer, remaining);
         }
         if (buffer.charAt(buffer.length() - 1) != ';') {
             remaining = append(";", buffer, remaining);
@@ -551,16 +568,17 @@ public class QueryLogger implements LatencyTracker {
     }
 
     private int append(CharSequence str, StringBuilder buffer, int remaining) {
-        if (remaining == -1) {
+        if (remaining == -2) {
+            // capacity exceeded
+        } else if (remaining == -1) {
+            // unlimited capacity
             buffer.append(str);
-        } else if (remaining > 0) {
-            if (str.length() > remaining) {
-                buffer.append(str, 0, remaining).append(TRUNCATED_OUTPUT);
-                remaining = 0;
-            } else {
-                buffer.append(str);
-                remaining -= str.length();
-            }
+        } else if (str.length() > remaining) {
+            buffer.append(str, 0, remaining).append(TRUNCATED_OUTPUT);
+            remaining = -2;
+        } else {
+            buffer.append(str);
+            remaining -= str.length();
         }
         return remaining;
     }
