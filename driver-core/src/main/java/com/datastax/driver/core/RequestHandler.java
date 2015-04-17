@@ -571,7 +571,7 @@ class RequestHandler implements Connection.ResponseCallback {
             }
             setFinalException(connection, exception);
         } catch (Exception e) {
-            // This shouldn't happen, but if it does, we want to signal the callback, not let him hang indefinitively
+            // This shouldn't happen, but if it does, we want to signal the callback, not let it hang indefinitely
             setFinalException(null, new DriverInternalError("An unexpected error happened while handling exception " + exception, e));
         } finally {
             if (queriedHost != null && statement != Statement.DEFAULT)
@@ -590,16 +590,12 @@ class RequestHandler implements Connection.ResponseCallback {
         }
 
         Host queriedHost = current;
-        // If a query times out, we consider that the host is unstable, so we defunct
-        // the connection to mark it down.
         OperationTimedOutException timeoutException = new OperationTimedOutException(connection.address);
         try {
-            connection.defunct(timeoutException);
-
             logError(connection.address, timeoutException);
             retry(false, null);
         } catch (Exception e) {
-            // This shouldn't happen, but if it does, we want to signal the callback, not let him hang indefinitively
+            // This shouldn't happen, but if it does, we want to signal the callback, not let it hang indefinitely
             setFinalException(null, new DriverInternalError("An unexpected error happened while handling timeout", e));
         } finally {
             if (queriedHost != null && statement != Statement.DEFAULT)

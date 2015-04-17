@@ -41,6 +41,8 @@ CHANGELOG
 - [improvement] Make connection and pool creation fully async (JAVA-692)
 - [improvement] Optimize connection use after reconnection (JAVA-505)
 - [improvement] Remove "suspected" mechanism (JAVA-617)
+- [improvement] Don't mark connection defunct on client timeout (reverts
+  JAVA-425)
 
 Merged from 2.0.9_fixes branch:
 
