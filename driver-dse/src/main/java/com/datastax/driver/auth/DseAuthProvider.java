@@ -34,9 +34,9 @@ import java.net.InetSocketAddress;
  * <code>login.config.url.n</code> entry in the <code>java.security</code> properties
  * file.
  * <p>
- * See <a href="http://docs.oracle.com/javase/1.4.2/docs/guide/security/jaas/tutorials/LoginConfigFile.html">http://docs.oracle.com/javase/1.4.2/docs/guide/security/jaas/tutorials/LoginConfigFile.html</a>
- * for further details on the Login configuration file and
- * <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/security/jaas/tutorials/GeneralAcnOnly.html">http://docs.oracle.com/javase/6/docs/technotes/guides/security/jaas/tutorials/GeneralAcnOnly.html</a>
+ * See the following documents for further details on the 
+ * <a href="https://docs.oracle.com/javase/6/docs/technotes/guides/security/jgss/tutorials/LoginConfigFile.html">JAAS Login Configuration File</a> and the
+ * <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/security/jaas/tutorials/GeneralAcnOnly.html">JAAS Authentication Tutorial</a>
  * for more on JAAS in general.
  *
  * <h1>Authentication using ticket cache</h1>
