@@ -20,10 +20,10 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +33,7 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
+import com.datastax.driver.core.utils.MoreFutures;
 
 /**
  * Driver implementation of the Session interface.
@@ -45,8 +46,6 @@ class SessionManager extends AbstractSession {
     final ConcurrentMap<Host, HostConnectionPool> pools;
     final HostConnectionPool.PoolState poolsState;
     final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
-
-    private final Striped<Lock> poolCreationLocks = Striped.lazyWeakLock(5);
 
     private volatile boolean isInit;
     private volatile boolean isClosing;
@@ -67,47 +66,25 @@ class SessionManager extends AbstractSession {
 
         // Create pools to initial nodes (and wait for them to be created)
         Collection<Host> hosts = cluster.getMetadata().allHosts();
-        if (cluster.manager.sessions.size() == 1) {
-            // We only do it in parallel if this is the first session (meaning that the cluster just initialized).
-            createPoolsInParallel(hosts);
-        } else {
-            // Otherwise, we don't want to fill executor() because this is also where up/down notifications are processed,
-            // it's important that existing sessions get them in a timely manner. So we create the pools one by one:
-            createPoolsSequentially(hosts);
-        }
+        createPoolsInParallel(hosts);
 
         isInit = true;
-        updateCreatedPools(executor());
+        updateCreatedPools();
         return this;
     }
 
     private void createPoolsInParallel(Collection<Host> hosts) {
-        List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(hosts.size());
+        List<ListenableFuture<Boolean>> futures = Lists.newArrayListWithCapacity(hosts.size());
         for (Host host : hosts)
             if (host.state != Host.State.DOWN)
-                futures.add(maybeAddPool(host, executor()));
-        ListenableFuture<List<Boolean>> f = Futures.allAsList(futures);
+                futures.add(maybeAddPool(host));
         try {
-            f.get();
+            Futures.successfulAsList(futures).get();
         } catch (ExecutionException e) {
-            // This is not supposed to happen
-            throw new DriverInternalError(e);
+            // Won't happen because we used successfulAsList
+            // And if a particular pool failed, maybeAddPool already handled it
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-        }
-    }
-
-    private void createPoolsSequentially(Collection<Host> hosts) {
-        for (Host host : cluster.getMetadata().allHosts()) {
-            try {
-                if (host.state != Host.State.DOWN)
-                    maybeAddPool(host, executor()).get();
-            } catch (ExecutionException e) {
-                // This is not supposed to happen
-                throw new DriverInternalError(e);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
         }
     }
 
@@ -215,77 +192,94 @@ class SessionManager extends AbstractSession {
     }
 
     // Returns whether there was problem creating the pool
-    ListenableFuture<Boolean> forceRenewPool(final Host host, ListeningExecutorService executor) {
+    ListenableFuture<Boolean> forceRenewPool(final Host host) {
         final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
             return Futures.immediateFuture(true);
 
-        // Creating a pool is somewhat long since it has to create the connection, so do it asynchronously.
-        return executor.submit(new Callable<Boolean>() {
-            public Boolean call() {
-                while (true) {
-                    try {
-                        if (isClosing)
-                            return true;
+        if (isClosing)
+            return Futures.immediateFuture(false);
 
-                        HostConnectionPool newPool = new HostConnectionPool(host, distance, SessionManager.this);
-                        HostConnectionPool previous = pools.put(host, newPool);
-                        if (previous == null) {
-                            logger.debug("Added connection pool for {}", host);
-                        } else {
-                            logger.debug("Renewed connection pool for {}", host);
-                            previous.closeAsync();
-                        }
+        final HostConnectionPool newPool = new HostConnectionPool(host, distance, SessionManager.this);
+        ListenableFuture<Void> poolInitFuture = newPool.initAsync();
 
-                        // If we raced with a session shutdown, ensure that the pool will be closed.
-                        if (isClosing)
-                            newPool.closeAsync();
+        final SettableFuture<Boolean> future = SettableFuture.create();
 
-                        return true;
-                    } catch (Exception e) {
-                        logger.error("Error creating pool to " + host, e);
-                        return false;
-                    }
+        Futures.addCallback(poolInitFuture, new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                // If we raced with a session shutdown, ensure that the pool will be closed.
+                HostConnectionPool previous = pools.put(host, newPool);
+                if (previous == null) {
+                    logger.debug("Added connection pool for {}", host);
+                } else {
+                    logger.debug("Renewed connection pool for {}", host);
+                    previous.closeAsync();
+                }
+
+                // If we raced with a session shutdown, ensure that the pool will be closed.
+                if (isClosing) {
+                    newPool.closeAsync();
+                    pools.remove(host);
+                    future.set(false);
+                } else {
+                    future.set(true);
                 }
             }
+
+            @Override
+            public void onFailure(Throwable t) {
+                logger.error("Error creating pool to " + host, t);
+                future.set(false);
+            }
         });
+
+        return future;
     }
 
-    // Replace pool for a given only if it's the given previous value (which can be null)
-    // Note that the goal of this function is to make sure that 2 concurrent thread calling
-    // maybeAddPool don't end up creating 2 HostConnectionPool. We can't rely on the pools
-    // ConcurrentMap only for that since it's the duplicate HostConnectionPool creation we
-    // want to avoid
-    private boolean replacePool(Host host, HostDistance distance, HostConnectionPool condition) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+    // Replace pool for a given host only if it's the given previous value (which can be null)
+    // This returns a future if the replacement was successful, or null if we raced.
+    private ListenableFuture<Void> replacePool(final Host host, HostDistance distance, HostConnectionPool previous) {
         if (isClosing)
-            return true;
+            return MoreFutures.VOID_SUCCESS;
 
-        Lock l = poolCreationLocks.get(host);
-        l.lock();
-        try {
-            HostConnectionPool previous = pools.get(host);
-            if (previous != condition)
-                return false;
-
-            HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
-            previous = pools.put(host, newPool);
-            if (previous != null && !previous.isClosed()) {
+        final HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
+        if (previous == null) {
+            if (pools.putIfAbsent(host, newPool) != null) {
+                return null;
+            }
+        } else {
+            if (!pools.replace(host, previous, newPool)) {
+                return null;
+            }
+            if (!previous.isClosed()) {
                 logger.warn("Replacing a pool that wasn't closed. Closing it now, but this was not expected.");
                 previous.closeAsync();
             }
-
-            // If we raced with a session shutdown, ensure that the pool will be closed.
-            if (isClosing)
-                newPool.closeAsync();
-
-            return true;
-        } finally {
-            l.unlock();
         }
+
+        ListenableFuture<Void> poolInitFuture = newPool.initAsync();
+
+        Futures.addCallback(poolInitFuture, new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                // If we raced with a session shutdown, ensure that the pool will be closed.
+                if (isClosing) {
+                    newPool.closeAsync();
+                    pools.remove(host);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                pools.remove(host);
+            }
+        });
+        return poolInitFuture;
     }
 
     // Returns whether there was problem creating the pool
-    ListenableFuture<Boolean> maybeAddPool(final Host host, ListeningExecutorService executor) {
+    ListenableFuture<Boolean> maybeAddPool(final Host host) {
         final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
             return Futures.immediateFuture(true);
@@ -294,34 +288,39 @@ class SessionManager extends AbstractSession {
         if (previous != null && !previous.isClosed())
             return Futures.immediateFuture(true);
 
-        // Creating a pool is somewhat long since it has to create the connection, so do it asynchronously.
-        return executor.submit(new Callable<Boolean>() {
-            public Boolean call() {
-                try {
-                    while (true) {
-                        HostConnectionPool previous = pools.get(host);
-                        if (previous != null && !previous.isClosed())
-                            return true;
+        while (true) {
+            previous = pools.get(host);
+            if (previous != null && !previous.isClosed())
+                return Futures.immediateFuture(true);
 
-                        if (replacePool(host, distance, previous)) {
-                            logger.debug("Added connection pool for {}", host);
-                            return true;
-                        }
+            final SettableFuture<Boolean> future = SettableFuture.create();
+            ListenableFuture<Void> newPoolInit = replacePool(host, distance, previous);
+            if (newPoolInit != null) {
+                Futures.addCallback(newPoolInit, new FutureCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        logger.debug("Added connection pool for {}", host);
+                        future.set(true);
                     }
-                } catch (UnsupportedProtocolVersionException e) {
-                    cluster.manager.logUnsupportedVersionProtocol(host);
-                    cluster.manager.triggerOnDown(host, false);
-                    return false;
-                } catch (ClusterNameMismatchException e) {
-                    cluster.manager.logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
-                    cluster.manager.triggerOnDown(host, false);
-                    return false;
-                } catch (Exception e) {
-                    logger.error("Error creating pool to " + host, e);
-                    return false;
-                }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        if (t instanceof UnsupportedProtocolVersionException) {
+                            cluster.manager.logUnsupportedVersionProtocol(host);
+                            cluster.manager.triggerOnDown(host, false);
+                        } else if (t instanceof ClusterNameMismatchException) {
+                            ClusterNameMismatchException e = (ClusterNameMismatchException)t;
+                            cluster.manager.logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
+                            cluster.manager.triggerOnDown(host, false);
+                        } else {
+                            logger.error("Error creating pool to " + host, t);
+                        }
+                        future.set(false);
+                    }
+                });
+                return future;
             }
-        });
+        }
     }
 
     CloseFuture removePool(Host host) {
@@ -340,7 +339,7 @@ class SessionManager extends AbstractSession {
      * This method ensures that all hosts for which a pool should exist
      * have one, and hosts that shouldn't don't.
      */
-    void updateCreatedPools(ListeningExecutorService executor) {
+    void updateCreatedPools() {
         // This method does nothing during initialization. Some hosts may be non-responsive but not yet marked DOWN; if
         // we execute the code below we would try to create their pool over and over again.
         // It's called explicitly at the end of init(), once isInit has been set to true.
@@ -359,7 +358,7 @@ class SessionManager extends AbstractSession {
 
                 if (pool == null) {
                     if (dist != HostDistance.IGNORED && h.state == Host.State.UP)
-                        poolCreationFutures.add(maybeAddPool(h, executor));
+                        poolCreationFutures.add(maybeAddPool(h));
                 } else if (dist != pool.hostDistance) {
                     if (dist == HostDistance.IGNORED) {
                         toRemove.add(h);
@@ -371,7 +370,12 @@ class SessionManager extends AbstractSession {
             }
 
             // Wait pool creation before removing, so we don't lose connectivity
-            Futures.allAsList(poolCreationFutures).get();
+            try {
+                Futures.successfulAsList(poolCreationFutures).get();
+            } catch (ExecutionException e) {
+                // Won't happen because we used successfulAsList
+                // And if a particular pool failed, maybeAddPool already handled it
+            }
 
             List<ListenableFuture<?>> poolRemovalFutures = new ArrayList<ListenableFuture<?>>(toRemove.size());
             for (Host h : toRemove)
@@ -385,14 +389,18 @@ class SessionManager extends AbstractSession {
         }
     }
 
-    void updateCreatedPools(Host h, ListeningExecutorService executor) {
+    void updateCreatedPools(Host h) {
         HostDistance dist = loadBalancingPolicy().distance(h);
         HostConnectionPool pool = pools.get(h);
 
         try {
             if (pool == null) {
                 if (dist != HostDistance.IGNORED && h.state == Host.State.UP)
-                    maybeAddPool(h, executor).get();
+                    try {
+                        maybeAddPool(h).get();
+                    } catch (ExecutionException e) {
+                        // Ignore, maybeAddPool has already handled the error
+                    }
             } else if (dist != pool.hostDistance) {
                 if (dist == HostDistance.IGNORED) {
                     removePool(h).get();
@@ -412,7 +420,7 @@ class SessionManager extends AbstractSession {
         // Note that with well behaved balancing policy (that ignore dead nodes), the removePool call is not necessary
         // since updateCreatedPools should take care of it. But better protect against non well behaving policies.
         removePool(host).force().get();
-        updateCreatedPools(MoreExecutors.sameThreadExecutor());
+        updateCreatedPools();
     }
 
     void onSuspected(Host host) {

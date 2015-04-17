@@ -1472,42 +1472,39 @@ public class Cluster implements Closeable {
 
                 logger.trace("Adding/renewing host pools for newly UP host {}", host);
 
-                List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
+                List<ListenableFuture<Boolean>> futures = Lists.newArrayListWithCapacity(sessions.size());
                 for (SessionManager s : sessions)
-                    futures.add(s.forceRenewPool(host, poolCreationExecutor));
+                    futures.add(s.forceRenewPool(host));
 
-                // Only mark the node up once all session have re-added their pool (if the load-balancing
-                // policy says it should), so that Host.isUp() don't return true before we're reconnected
-                // to the node.
-                ListenableFuture<List<Boolean>> f = Futures.allAsList(futures);
-                Futures.addCallback(f, new FutureCallback<List<Boolean>>() {
-                    public void onSuccess(List<Boolean> poolCreationResults) {
-                        // If any of the creation failed, they will have signaled a connection failure
-                        // which will trigger a reconnection to the node. So don't bother marking UP.
-                        if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
-                            logger.debug("Connection pool cannot be created, not marking {} UP", host);
-                            return;
-                        }
+                try {
+                    // Only mark the node up once all session have re-added their pool (if the load-balancing
+                    // policy says it should), so that Host.isUp() don't return true before we're reconnected
+                    // to the node.
+                    List<Boolean> poolCreationResults = Futures.allAsList(futures).get();
 
-                        host.setUp();
-
-                        for (Host.StateListener listener : listeners)
-                            listener.onUp(host);
+                    // If any of the creation failed, they will have signaled a connection failure
+                    // which will trigger a reconnection to the node. So don't bother marking UP.
+                    if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
+                        logger.debug("Connection pool cannot be created, not marking {} UP", host);
+                        return;
                     }
 
-                    public void onFailure(Throwable t) {
-                        // That future is not really supposed to throw unexpected exceptions
-                        if (!(t instanceof InterruptedException))
-                            logger.error("Unexpected error while marking node UP: while this shouldn't happen, this shouldn't be critical", t);
-                    }
-                });
+                    host.setUp();
 
-                f.get();
+                    for (Host.StateListener listener : listeners)
+                        listener.onUp(host);
+
+                } catch (ExecutionException e) {
+                    Throwable t = e.getCause();
+                    // That future is not really supposed to throw unexpected exceptions
+                    if (!(t instanceof InterruptedException))
+                        logger.error("Unexpected error while marking node UP: while this shouldn't happen, this shouldn't be critical", t);
+                }
 
                 // Now, check if there isn't pools to create/remove following the addition.
                 // We do that now only so that it's not called before we've set the node up.
                 for (SessionManager s : sessions)
-                    s.updateCreatedPools(blockingExecutor);
+                    s.updateCreatedPools();
 
             } finally {
                 host.notificationsLock.unlock();
@@ -1819,42 +1816,39 @@ public class Cluster implements Closeable {
 
                 controlConnection.onAdd(host);
 
-                List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(sessions.size());
+                List<ListenableFuture<Boolean>> futures = Lists.newArrayListWithCapacity(sessions.size());
                 for (SessionManager s : sessions)
-                    futures.add(s.maybeAddPool(host, blockingExecutor));
+                    futures.add(s.maybeAddPool(host));
 
-                // Only mark the node up once all session have added their pool (if the load-balancing
-                // policy says it should), so that Host.isUp() don't return true before we're reconnected
-                // to the node.
-                ListenableFuture<List<Boolean>> f = Futures.allAsList(futures);
-                Futures.addCallback(f, new FutureCallback<List<Boolean>>() {
-                    public void onSuccess(List<Boolean> poolCreationResults) {
-                        // If any of the creation failed, they will have signaled a connection failure
-                        // which will trigger a reconnection to the node. So don't bother marking UP.
-                        if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
-                            logger.debug("Connection pool cannot be created, not marking {} UP", host);
-                            return;
-                        }
+                try {
+                    // Only mark the node up once all session have added their pool (if the load-balancing
+                    // policy says it should), so that Host.isUp() don't return true before we're reconnected
+                    // to the node.
+                    List<Boolean> poolCreationResults = Futures.allAsList(futures).get();
 
-                        host.setUp();
-
-                        for (Host.StateListener listener : listeners)
-                            listener.onAdd(host);
+                    // If any of the creation failed, they will have signaled a connection failure
+                    // which will trigger a reconnection to the node. So don't bother marking UP.
+                    if (Iterables.any(poolCreationResults, Predicates.equalTo(false))) {
+                        logger.debug("Connection pool cannot be created, not marking {} UP", host);
+                        return;
                     }
 
-                    public void onFailure(Throwable t) {
-                        // That future is not really supposed to throw unexpected exceptions
-                        if (!(t instanceof InterruptedException))
-                            logger.error("Unexpected error while adding node: while this shouldn't happen, this shouldn't be critical", t);
-                    }
-                });
+                    host.setUp();
 
-                f.get();
+                    for (Host.StateListener listener : listeners)
+                        listener.onAdd(host);
+
+                } catch (ExecutionException e) {
+                    Throwable t = e.getCause();
+                    // That future is not really supposed to throw unexpected exceptions
+                    if (!(t instanceof InterruptedException))
+                        logger.error("Unexpected error while adding node: while this shouldn't happen, this shouldn't be critical", t);
+                }
 
                 // Now, check if there isn't pools to create/remove following the addition.
                 // We do that now only so that it's not called before we've set the node up.
                 for (SessionManager s : sessions)
-                    s.updateCreatedPools(blockingExecutor);
+                    s.updateCreatedPools();
 
             } finally {
                 host.notificationsLock.unlock();
@@ -2221,7 +2215,7 @@ public class Cluster implements Closeable {
                 controlConnection.reconnect();
 
             for (SessionManager s : sessions)
-                s.updateCreatedPools(executor);
+                s.updateCreatedPools();
         }
 
         void refreshConnectedHost(Host host) {
@@ -2231,7 +2225,7 @@ public class Cluster implements Closeable {
                 controlConnection.reconnect();
 
             for (SessionManager s : sessions)
-                s.updateCreatedPools(host, executor);
+                s.updateCreatedPools(host);
         }
 
         private class ClusterCloseFuture extends CloseFuture.Forwarding {
@@ -2311,7 +2305,8 @@ public class Cluster implements Closeable {
         private static final int INTERVAL_MS = 15000;
 
         private final ScheduledExecutorService executor;
-        private final Map<Connection, Long> connections = new ConcurrentHashMap<Connection, Long>();
+        @VisibleForTesting
+        final Map<Connection, Long> connections = new ConcurrentHashMap<Connection, Long>();
 
         private volatile boolean shutdown;
 
