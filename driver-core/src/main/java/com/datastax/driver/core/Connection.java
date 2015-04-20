@@ -182,12 +182,12 @@ class Connection {
                     future.setException(t);
                 } else {
                     // Defunct to ensure that the error will be signaled (marking the host down)
-                    ConnectionException ce = (t instanceof ConnectionException)
-                        ? (ConnectionException)t
+                    Exception e = (t instanceof ConnectionException || t instanceof DriverException || t instanceof InterruptedException)
+                        ? (Exception)t
                         : new ConnectionException(Connection.this.address,
                         String.format("Unexpected error during transport initialization (%s)", t),
                         t);
-                    future.setException(defunct(ce));
+                    future.setException(defunct(e));
                 }
                 return future;
             }
