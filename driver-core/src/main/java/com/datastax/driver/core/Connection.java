@@ -16,6 +16,8 @@
 package com.datastax.driver.core;
 
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
+
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.concurrent.*;
@@ -26,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
+
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -94,7 +97,7 @@ class Connection {
             ProtocolOptions protocolOptions = factory.configuration.getProtocolOptions();
             ProtocolVersion protocolVersion = factory.protocolVersion == null ? ProtocolVersion.NEWEST_SUPPORTED : factory.protocolVersion;
             bootstrap.setPipelineFactory(new PipelineFactory(this, protocolVersion, protocolOptions.getCompression().compressor, protocolOptions.getSSLOptions(),
-                factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds(), factory.timer));
+                factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds(), factory.timer, address));
 
             ChannelFuture future = bootstrap.connect(address);
 
@@ -1002,13 +1005,16 @@ class Connection {
         private final FrameCompressor compressor;
         private final SSLOptions sslOptions;
         private final ChannelHandler idleStateHandler;
+        private final InetSocketAddress remoteAddress;
 
-        public PipelineFactory(Connection connection, ProtocolVersion protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds, HashedWheelTimer timer) {
+        public PipelineFactory(Connection connection, ProtocolVersion protocolVersion, FrameCompressor compressor, 
+                SSLOptions sslOptions, int heartBeatIntervalSeconds, HashedWheelTimer timer, InetSocketAddress remoteAddress) {
             this.connection = connection;
             this.protocolVersion = protocolVersion;
             this.compressor = compressor;
             this.sslOptions = sslOptions;
             this.idleStateHandler = new IdleStateHandler(timer, 0, 0, heartBeatIntervalSeconds);
+            this.remoteAddress = remoteAddress;
         }
 
         @Override
@@ -1016,7 +1022,20 @@ class Connection {
             ChannelPipeline pipeline = Channels.pipeline();
 
             if (sslOptions != null) {
-                SSLEngine engine = sslOptions.context.createSSLEngine();
+                SSLEngine engine;
+                if (sslOptions.enableEndpointVerification) {
+                    // SSLEngine needs to be created using the remote address in order to make hostname verification work
+                    // as I'm not 100% sure about any side effects of the mentioned "internal session reuse" for that case,
+                    // we just use the host in case the endpoint verification option is explictly set (false by default)
+                    engine = sslOptions.context.createSSLEngine(this.remoteAddress.getHostString(), this.remoteAddress.getPort());
+                    
+                    // enabled hostname verification based on RFC 6125
+                    SSLParameters sslParameters = engine.getSSLParameters();
+                    sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+                    engine.setSSLParameters(sslParameters);
+                } else {
+                    engine = sslOptions.context.createSSLEngine();
+                }
                 engine.setUseClientMode(true);
                 engine.setEnabledCipherSuites(sslOptions.cipherSuites);
                 SslHandler handler = new SslHandler(engine);
