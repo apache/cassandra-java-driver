@@ -954,7 +954,8 @@ class Connection {
         protected void channelRead0(ChannelHandlerContext ctx, Message.Response response) throws Exception {
             int streamId = response.getStreamId();
 
-            logger.trace("{} received: {}", Connection.this, asDebugString(response));
+            if(logger.isTraceEnabled())
+                logger.trace("{} received: {}", Connection.this, asDebugString(response));
 
             if (streamId < 0) {
                 factory.defaultHandler.handle(response);
