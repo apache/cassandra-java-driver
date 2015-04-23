@@ -201,12 +201,12 @@ public class TimeoutStressTest {
      */
     private static void setupSchema(Session session) throws InterruptedException, ExecutionException, TimeoutException {
         logger.debug("Creating keyspace");
-        session.execute("create KEYSPACE if not exists " + KEYSPACE +
+        session.execute("create KEYSPACE " + KEYSPACE +
                 " WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 3}");
         session.execute("use " + KEYSPACE);
 
         logger.debug("Creating table");
-        session.execute("create table if NOT EXISTS record (\n"
+        session.execute("create table record (\n"
                 + "  name text,\n"
                 + "  phone text,\n"
                 + "  value text,\n"
@@ -216,11 +216,12 @@ public class TimeoutStressTest {
         int records = 30000;
         List<ResultSetFuture> futures = Lists.newArrayListWithExpectedSize(records);
 
+        PreparedStatement insertStmt = session.prepare("insert into record (name, phone, value) values (?, ?, ?)");
+
         for (int i = 0; i < records; i++) {
             if (i % 1000 == 0)
                 logger.debug("Inserting record {}.", i);
-            futures.add(session.executeAsync(
-                    "insert into record (name, phone, value) values (?, ?, ?)", "0", Integer.toString(i), "test"));
+            futures.add(session.executeAsync(insertStmt.bind("0", Integer.toString(i), "test")));
         }
 
         statement = session.prepare("select * from " + KEYSPACE + ".record where name=? limit 1000;");

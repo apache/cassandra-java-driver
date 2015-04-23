@@ -517,6 +517,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
             .doesNotContain(query);
     }
 
+    @CassandraVersion(major=2.0)
     @Test(groups = "short")
     public void should_show_total_statements_for_batches_even_if_query_truncated() throws Exception {
         // given
@@ -563,6 +564,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
             .doesNotContain(TRUNCATED_OUTPUT);
     }
 
+    @CassandraVersion(major=2.0)
     @Test(groups = "short")
     public void should_truncate_parameter_when_max_length_exceeded() throws Exception {
         // given
