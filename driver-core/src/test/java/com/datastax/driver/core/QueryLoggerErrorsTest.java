@@ -89,7 +89,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
         // given
         slow.setLevel(DEBUG);
         queryLogger = builder(cluster)
-            .withSlowQueryLatencyThresholdMillis(10)
+            .withConstantThreshold(10)
             .build();
         cluster.register(queryLogger);
         String query = "SELECT foo FROM bar";

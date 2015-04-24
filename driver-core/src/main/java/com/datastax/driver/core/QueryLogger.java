@@ -20,6 +20,7 @@ import java.util.List;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
+import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * <pre>
  * Cluster cluster = ...
  * QueryLogger queryLogger = QueryLogger.builder(cluster)
- *     .withSlowQueryLatencyThresholdMillis(...)
+ *     .withConstantThreshold(...)
  *     .withMaxQueryStringLength(...)
  *     .build();
  * cluster.register(queryLogger);
@@ -54,9 +55,9 @@ import org.slf4j.LoggerFactory;
  *
  * <ol>
  *     <li>{@link #NORMAL_LOGGER}: used to log normal queries, i.e., queries that completed successfully
- *     within a {@link #getSlowQueryLatencyThresholdMillis() configurable threshold in milliseconds}.</li>
+ *     within a configurable threshold in milliseconds.</li>
  *     <li>{@link #SLOW_LOGGER}: used to log slow queries, i.e., queries that completed successfully
- *     but that took longer than a {@link #getSlowQueryLatencyThresholdMillis() configurable threshold in milliseconds} to complete.</li>
+ *     but that took longer than a configurable threshold in milliseconds to complete.</li>
  *     <li>{@link #ERROR_LOGGER}: used to log unsuccessful queries, i.e.,
  *     queries that did not completed normally and threw an exception.
  *     Note this this logger will also print the full stack trace of the reported exception.</li>
@@ -66,7 +67,7 @@ import org.slf4j.LoggerFactory;
  * The appropriate logger is chosen according to the following algorithm:
  * <ol>
  *     <li>if an exception has been thrown: use {@link #ERROR_LOGGER};</li>
- *     <li>otherwise, if the reported latency is greater than {@link #getSlowQueryLatencyThresholdMillis()} the configured threshold in milliseconds}: use {@link #SLOW_LOGGER};</li>
+ *     <li>otherwise, if the reported latency is greater than the configured threshold in milliseconds: use {@link #SLOW_LOGGER};</li>
  *     <li>otherwise, use {@link #NORMAL_LOGGER}.</li>
  * </ol>
  *
@@ -76,17 +77,48 @@ import org.slf4j.LoggerFactory;
  * then the query parameters (if any) will be logged as well (names and actual values).
  *
  * <p>
+ * <strong>Constant thresholds vs. Dynamic thresholds</strong>
+ * <p>
+ * Currently the QueryLogger can track slow queries in two different ways:
+ * using a constant threshold in milliseconds (which is the default behavior),
+ * or using a dynamic threshold based on per-host percentiles computed by
+ * {@link PerHostPercentileTracker}.
+ * <p>
+ * <b>Note that the dynamic threshold version is currently provided as a beta preview: it hasn't been extensively
+ * tested yet, and the API is still subject to change.</b> To use it, you must first obtain and register
+ * an instance of {@link PerHostPercentileTracker}, then create your QueryLogger as follows:
+ *
+ * <pre>
+ * Cluster cluster = ...
+ * // create an instance of PerHostPercentileTracker and register it
+ * PerHostPercentileTracker tracker = ...;
+ * cluster.register(tracker);
+ * // create an instance of QueryLogger and register it
+ * QueryLogger queryLogger = QueryLogger.builder(cluster)
+ *     .withDynamicThreshold(tracker, ...)
+ *     .withMaxQueryStringLength(...)
+ *     .build();
+ * cluster.register(queryLogger);
+ * </pre>
+
+ * <p>
  * This class is thread-safe.
  *
  * @since 2.0.10
  */
-public class QueryLogger implements LatencyTracker {
+public abstract class QueryLogger implements LatencyTracker {
 
     /**
-     * The default threshold in milliseconds beyond which queries are considered 'slow'
+     * The default latency threshold in milliseconds beyond which queries are considered 'slow'
      * and logged as such by the driver.
      */
     public static final long DEFAULT_SLOW_QUERY_THRESHOLD_MS = 5000;
+
+    /**
+     * The default latency percentile beyond which queries are considered 'slow'
+     * and logged as such by the driver.
+     */
+    public static final double DEFAULT_SLOW_QUERY_THRESHOLD_PERCENTILE = 99.0;
 
     /**
      * The default maximum length of a CQL query string that can be logged verbatim
@@ -113,7 +145,7 @@ public class QueryLogger implements LatencyTracker {
 
     /**
      * The logger used to log normal queries, i.e., queries that completed successfully
-     * within a configurable threshold in milliseconds (see {@link #getSlowQueryLatencyThresholdMillis()}).
+     * within a configurable threshold in milliseconds.
      * <p>
      * This logger is activated by setting its level to {@code DEBUG} or {@code TRACE}.
      * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement},
@@ -125,8 +157,7 @@ public class QueryLogger implements LatencyTracker {
 
     /**
      * The logger used to log slow queries, i.e., queries that completed successfully
-     * but whose execution time exceeded a configurable threshold in milliseconds
-     * (see {@link #getSlowQueryLatencyThresholdMillis()}).
+     * but whose execution time exceeded a configurable threshold in milliseconds.
      * <p>
      * This logger is activated by setting its level to {@code DEBUG} or {@code TRACE}.
      * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement},
@@ -152,7 +183,9 @@ public class QueryLogger implements LatencyTracker {
 
     private static final String NORMAL_TEMPLATE = "[%s] [%s] Query completed normally, took %s ms: %s";
 
-    private static final String SLOW_TEMPLATE = "[%s] [%s] Query too slow, took %s ms: %s";
+    private static final String SLOW_TEMPLATE_MILLIS = "[%s] [%s] Query too slow, took %s ms: %s";
+
+    private static final String SLOW_TEMPLATE_PERCENTILE = "[%s] [%s] Query too slow, took %s ms (%s percentile = %s ms): %s";
 
     private static final String ERROR_TEMPLATE = "[%s] [%s] Query error after %s ms: %s";
 
@@ -162,22 +195,22 @@ public class QueryLogger implements LatencyTracker {
     @VisibleForTesting
     static final String FURTHER_PARAMS_OMITTED = " [further parameters omitted]";
 
-    private final Cluster cluster;
+    protected final Cluster cluster;
 
-    private volatile long slowQueryLatencyThresholdMillis = DEFAULT_SLOW_QUERY_THRESHOLD_MS;
+    protected volatile int maxQueryStringLength;
 
-    private volatile int maxQueryStringLength = DEFAULT_MAX_QUERY_STRING_LENGTH;
+    protected volatile int maxParameterValueLength;
 
-    private volatile int maxParameterValueLength = DEFAULT_MAX_PARAMETER_VALUE_LENGTH;
-
-    private volatile int maxLoggedParameters = DEFAULT_MAX_LOGGED_PARAMETERS;
+    protected volatile int maxLoggedParameters;
 
     /**
      * Private constructor. Instances of QueryLogger should be obtained via the {@link #builder(Cluster)} method.
-     * @param cluster The cluster this logger is attached to
      */
-    private QueryLogger(Cluster cluster) {
+    private QueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters) {
         this.cluster = cluster;
+        this.maxQueryStringLength = maxQueryStringLength;
+        this.maxParameterValueLength = maxParameterValueLength;
+        this.maxLoggedParameters = maxLoggedParameters;
     }
 
     /**
@@ -186,7 +219,6 @@ public class QueryLogger implements LatencyTracker {
      * This is a convenience method for {@code new QueryLogger.Builder()}.
      *
      * @param cluster the {@link Cluster} this QueryLogger will be attached to.
-     *                Note: this parameter is currently not used, but it is included in the public API in anticipation of future use.
      * @return the new QueryLogger builder.
      * @throws NullPointerException if {@code cluster} is {@code null}.
      */
@@ -196,28 +228,221 @@ public class QueryLogger implements LatencyTracker {
     }
 
     /**
-     * Helper class to build {@link QueryLogger} instances with a fluent API.
+     * A QueryLogger that uses a constant threshold in milliseconds
+     * to track slow queries.
+     * This implementation is the default and should be preferred to {@link DynamicThresholdQueryLogger}
+     * which is still in beta state.
      */
-    public static class Builder {
+    public static class ConstantThresholdQueryLogger extends QueryLogger {
 
-        private final QueryLogger instance;
+        private volatile long slowQueryLatencyThresholdMillis;
 
-        public Builder(Cluster cluster) {
-            instance = new QueryLogger(cluster);
+        private ConstantThresholdQueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, long slowQueryLatencyThresholdMillis) {
+            super(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters);
+            this.setSlowQueryLatencyThresholdMillis(slowQueryLatencyThresholdMillis);
+        }
+
+        /**
+         * Return the threshold in milliseconds beyond which queries are considered 'slow'
+         * and logged as such by the driver.
+         * The default value is {@link #DEFAULT_SLOW_QUERY_THRESHOLD_MS}.
+         *
+         * @return The threshold in milliseconds beyond which queries are considered 'slow'
+         * and logged as such by the driver.
+         */
+        public long getSlowQueryLatencyThresholdMillis() {
+            return slowQueryLatencyThresholdMillis;
         }
 
         /**
          * Set the threshold in milliseconds beyond which queries are considered 'slow'
          * and logged as such by the driver.
-         * The default for this setting is {@link #DEFAULT_SLOW_QUERY_THRESHOLD_MS}.
          *
          * @param slowQueryLatencyThresholdMillis Slow queries threshold in milliseconds.
          *                                        It must be strictly positive.
-         * @return this {@link Builder} instance (for method chaining).
          * @throws IllegalArgumentException if {@code slowQueryLatencyThresholdMillis <= 0}.
          */
-        public Builder withSlowQueryLatencyThresholdMillis(long slowQueryLatencyThresholdMillis) {
-            instance.setSlowQueryLatencyThresholdMillis(slowQueryLatencyThresholdMillis);
+        public void setSlowQueryLatencyThresholdMillis(long slowQueryLatencyThresholdMillis) {
+            if (slowQueryLatencyThresholdMillis <= 0)
+                throw new IllegalArgumentException("Invalid slowQueryLatencyThresholdMillis, should be > 0, got " + slowQueryLatencyThresholdMillis);
+            this.slowQueryLatencyThresholdMillis = slowQueryLatencyThresholdMillis;
+        }
+
+        @Override
+        protected void maybeLogNormalOrSlowQuery(Host host, Statement statement, long latencyMs) {
+            if (latencyMs > slowQueryLatencyThresholdMillis) {
+                maybeLogSlowQuery(host, statement, latencyMs);
+            } else {
+                maybeLogNormalQuery(host, statement, latencyMs);
+            }
+        }
+
+        protected void maybeLogSlowQuery(Host host, Statement statement, long latencyMs) {
+            if (SLOW_LOGGER.isDebugEnabled()) {
+                String message = String.format(SLOW_TEMPLATE_MILLIS, cluster.getClusterName(), host, latencyMs, statementAsString(statement));
+                logQuery(statement, null, SLOW_LOGGER, message);
+            }
+        }
+    }
+
+    /**
+     * A QueryLogger that uses a dynamic threshold in milliseconds
+     * to track slow queries.
+     * <p>
+     * Dynamic thresholds are based on per-host latency percentiles, as computed
+     * by {@link PerHostPercentileTracker}.
+     * <p>
+     * <b>This class is currently provided as a beta preview: it hasn't been extensively tested yet, and the API is still subject
+     * to change.</b>
+     */
+    @Beta
+    public static class DynamicThresholdQueryLogger extends QueryLogger {
+
+        private volatile double slowQueryLatencyThresholdPercentile;
+
+        private volatile PerHostPercentileTracker perHostPercentileLatencyTracker;
+
+        private DynamicThresholdQueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, double slowQueryLatencyThresholdPercentile, PerHostPercentileTracker perHostPercentileLatencyTracker) {
+            super(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters);
+            this.setSlowQueryLatencyThresholdPercentile(slowQueryLatencyThresholdPercentile);
+            this.setPerHostPercentileLatencyTracker(perHostPercentileLatencyTracker);
+        }
+
+        /**
+         * Return the {@link PerHostPercentileTracker} instance to use for recording per-host latency histograms.
+         * Cannot be {@code null}.
+         *
+         * @return the {@link PerHostPercentileTracker} instance to use.
+         */
+        public PerHostPercentileTracker getPerHostPercentileLatencyTracker() {
+            return perHostPercentileLatencyTracker;
+        }
+
+        /**
+         * Set the {@link PerHostPercentileTracker} instance to use for recording per-host latency histograms.
+         * Cannot be {@code null}.
+         *
+         * @param perHostPercentileLatencyTracker the {@link PerHostPercentileTracker} instance to use.
+         * @throws IllegalArgumentException if {@code perHostPercentileLatencyTracker == null}.
+         */
+        public void setPerHostPercentileLatencyTracker(PerHostPercentileTracker perHostPercentileLatencyTracker) {
+            if (perHostPercentileLatencyTracker == null)
+                throw new IllegalArgumentException("perHostPercentileLatencyTracker cannot be null");
+            this.perHostPercentileLatencyTracker = perHostPercentileLatencyTracker;
+        }
+
+        /**
+         * Return the threshold percentile beyond which queries are considered 'slow'
+         * and logged as such by the driver.
+         * The default value is {@link #DEFAULT_SLOW_QUERY_THRESHOLD_PERCENTILE}.
+         *
+         * @return threshold percentile beyond which queries are considered 'slow'
+         * and logged as such by the driver.
+         */
+        public double getSlowQueryLatencyThresholdPercentile() {
+            return slowQueryLatencyThresholdPercentile;
+        }
+
+        /**
+         * Set the threshold percentile beyond which queries are considered 'slow'
+         * and logged as such by the driver.
+         *
+         * @param slowQueryLatencyThresholdPercentile Slow queries threshold percentile.
+         *                                        It must be comprised between 0 inclusive and 100 exclusive.
+         * @throws IllegalArgumentException if {@code slowQueryLatencyThresholdPercentile < 0 || slowQueryLatencyThresholdPercentile >= 100}.
+         */
+        public void setSlowQueryLatencyThresholdPercentile(double slowQueryLatencyThresholdPercentile) {
+            if (slowQueryLatencyThresholdPercentile < 0.0 || slowQueryLatencyThresholdPercentile >= 100.0)
+                throw new IllegalArgumentException("Invalid slowQueryLatencyThresholdPercentile, should be >= 0 and < 100, got " + slowQueryLatencyThresholdPercentile);
+            this.slowQueryLatencyThresholdPercentile = slowQueryLatencyThresholdPercentile;
+        }
+
+        @Override
+        protected void maybeLogNormalOrSlowQuery(Host host, Statement statement, long latencyMs) {
+            long threshold = perHostPercentileLatencyTracker.getLatencyAtPercentile(host, slowQueryLatencyThresholdPercentile);
+            if (threshold >= 0 && latencyMs > threshold) {
+                maybeLogSlowQuery(host, statement, latencyMs, threshold);
+            } else {
+                maybeLogNormalQuery(host, statement, latencyMs);
+            }
+        }
+
+        protected void maybeLogSlowQuery(Host host, Statement statement, long latencyMs, long threshold) {
+            if (SLOW_LOGGER.isDebugEnabled()) {
+                String message = String.format(SLOW_TEMPLATE_PERCENTILE, cluster.getClusterName(), host, latencyMs, slowQueryLatencyThresholdPercentile, threshold, statementAsString(statement));
+                logQuery(statement, null, SLOW_LOGGER, message);
+            }
+        }
+    }
+
+    /**
+     * Helper class to build {@link QueryLogger} instances with a fluent API.
+     */
+    public static class Builder {
+
+        private final Cluster cluster;
+
+        private int maxQueryStringLength = DEFAULT_MAX_QUERY_STRING_LENGTH;
+
+        private int maxParameterValueLength = DEFAULT_MAX_PARAMETER_VALUE_LENGTH;
+
+        private int maxLoggedParameters = DEFAULT_MAX_LOGGED_PARAMETERS;
+
+        private long slowQueryLatencyThresholdMillis = DEFAULT_SLOW_QUERY_THRESHOLD_MS;
+
+        private double slowQueryLatencyThresholdPercentile = DEFAULT_SLOW_QUERY_THRESHOLD_PERCENTILE;
+
+        private PerHostPercentileTracker perHostPercentileLatencyTracker;
+
+        private boolean constantThreshold = true;
+
+        public Builder(Cluster cluster) {
+            this.cluster = cluster;
+        }
+
+        /**
+         * Enables slow query latency tracking based on constant thresholds.
+         * <p>
+         * Note: You should either use {@link #withConstantThreshold(long) constant thresholds}
+         * or {@link #withDynamicThreshold(PerHostPercentileTracker, double) dynamic thresholds},
+         * not both.
+         *
+         * @param slowQueryLatencyThresholdMillis The threshold in milliseconds beyond which queries are considered 'slow'
+         *                                        and logged as such by the driver.
+         *                                        The default value is {@link #DEFAULT_SLOW_QUERY_THRESHOLD_MS}
+         * @return this {@link Builder} instance (for method chaining).
+         */
+        public Builder withConstantThreshold(long slowQueryLatencyThresholdMillis) {
+            this.slowQueryLatencyThresholdMillis = slowQueryLatencyThresholdMillis;
+            constantThreshold = true;
+            return this;
+        }
+
+        /**
+         * Enables slow query latency tracking based on dynamic thresholds.
+         * <p>
+         * Dynamic thresholds are based on per-host latency percentiles, as computed
+         * by {@link PerHostPercentileTracker}.
+         * <p>
+         * Note: You should either use {@link #withConstantThreshold(long) constant thresholds}
+         * or {@link #withDynamicThreshold(PerHostPercentileTracker, double) dynamic thresholds},
+         * not both.
+         * <p>
+         * <b>This feature is currently provided as a beta preview: it hasn't been extensively tested yet, and the API is still subject
+         * to change.</b>
+         *
+         * @param perHostPercentileLatencyTracker the {@link PerHostPercentileTracker} instance to use for recording per-host latency histograms.
+         *                                        Cannot be {@code null}.
+         * @param slowQueryLatencyThresholdPercentile Slow queries threshold percentile.
+         *                                        It must be comprised between 0 inclusive and 100 exclusive.
+         *                                        The default value is {@link #DEFAULT_SLOW_QUERY_THRESHOLD_PERCENTILE}
+         * @return this {@link Builder} instance (for method chaining).
+         */
+        @Beta
+        public Builder withDynamicThreshold(PerHostPercentileTracker perHostPercentileLatencyTracker, double slowQueryLatencyThresholdPercentile) {
+            this.perHostPercentileLatencyTracker = perHostPercentileLatencyTracker;
+            this.slowQueryLatencyThresholdPercentile = slowQueryLatencyThresholdPercentile;
+            constantThreshold = false;
             return this;
         }
 
@@ -225,18 +450,17 @@ public class QueryLogger implements LatencyTracker {
          * Set the maximum length of a CQL query string that can be logged verbatim
          * by the driver. Query strings longer than this value will be truncated
          * when logged.
-         * The default for this setting is {@link #DEFAULT_MAX_QUERY_STRING_LENGTH}.
          *
          * @param maxQueryStringLength The maximum length of a CQL query string
          *                             that can be logged verbatim by the driver.
          *                             It must be strictly positive or {@code -1},
          *                             in which case the query is never truncated
          *                             (use with care).
+         *                             The default value is {@link #DEFAULT_MAX_QUERY_STRING_LENGTH}.
          * @return this {@link Builder} instance (for method chaining).
-         * @throws IllegalArgumentException if {@code maxQueryStringLength <= 0 && maxQueryStringLength != -1}.
          */
         public Builder withMaxQueryStringLength(int maxQueryStringLength) {
-            instance.setMaxQueryStringLength(maxQueryStringLength);
+            this.maxQueryStringLength = maxQueryStringLength;
             return this;
         }
 
@@ -244,18 +468,17 @@ public class QueryLogger implements LatencyTracker {
          * Set the maximum length of a query parameter value that can be logged verbatim
          * by the driver. Parameter values longer than this value will be truncated
          * when logged.
-         * The default for this setting is {@link #DEFAULT_MAX_PARAMETER_VALUE_LENGTH}.
          *
          * @param maxParameterValueLength The maximum length of a query parameter value
          *                                that can be logged verbatim by the driver.
          *                                It must be strictly positive or {@code -1},
          *                                in which case the parameter value is never truncated
          *                                (use with care).
+         *                                The default value is {@link #DEFAULT_MAX_PARAMETER_VALUE_LENGTH}.
          * @return this {@link Builder} instance (for method chaining).
-         * @throws IllegalArgumentException if {@code maxParameterValueLength <= 0 && maxParameterValueLength != -1}.
          */
         public Builder withMaxParameterValueLength(int maxParameterValueLength) {
-            instance.setMaxParameterValueLength(maxParameterValueLength);
+            this.maxParameterValueLength = maxParameterValueLength;
             return this;
         }
 
@@ -263,58 +486,41 @@ public class QueryLogger implements LatencyTracker {
          * Set the maximum number of query parameters that can be logged
          * by the driver. Queries with a number of parameters higher than this value
          * will not have all their parameters logged.
-         * The default for this setting is {@link #DEFAULT_MAX_LOGGED_PARAMETERS}.
          *
          * @param maxLoggedParameters The maximum number of query parameters that can be logged
          *                            by the driver. It must be strictly positive or {@code -1},
          *                            in which case all parameters will be logged, regardless of their number
          *                            (use with care).
+         *                            The default value is {@link #DEFAULT_MAX_LOGGED_PARAMETERS}.
          * @return this {@link Builder} instance (for method chaining).
-         * @throws IllegalArgumentException if {@code maxLoggedParameters <= 0 && maxLoggedParameters != -1}.
          */
         public Builder withMaxLoggedParameters(int maxLoggedParameters) {
-            instance.setMaxLoggedParameters(maxLoggedParameters);
+            this.maxLoggedParameters = maxLoggedParameters;
             return this;
         }
 
+        /**
+         * Build the {@link QueryLogger} instance.
+         * @return the {@link QueryLogger} instance.
+         * @throws IllegalArgumentException if the builder is unable to build a valid instance due to incorrect settings.
+         */
         public QueryLogger build() {
-            return instance;
+            if(constantThreshold) {
+                return new ConstantThresholdQueryLogger(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdMillis);
+            } else {
+                return new DynamicThresholdQueryLogger(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdPercentile, perHostPercentileLatencyTracker);
+            }
         }
+
     }
 
     // Getters and Setters
 
     /**
-     * Return the threshold in milliseconds beyond which queries are considered 'slow'
-     * and logged as such by the driver.
-     * The default for this setting is {@link #DEFAULT_SLOW_QUERY_THRESHOLD_MS}.
-     *
-     * @return The threshold in milliseconds beyond which queries are considered 'slow'
-     * and logged as such by the driver.
-     */
-    public long getSlowQueryLatencyThresholdMillis() {
-        return slowQueryLatencyThresholdMillis;
-    }
-
-    /**
-     * Set the threshold in milliseconds beyond which queries are considered 'slow'
-     * and logged as such by the driver.
-     *
-     * @param slowQueryLatencyThresholdMillis Slow queries threshold in milliseconds.
-     *                                        It must be strictly positive.
-     * @throws IllegalArgumentException if {@code slowQueryLatencyThresholdMillis <= 0}.
-     */
-    public void setSlowQueryLatencyThresholdMillis(long slowQueryLatencyThresholdMillis) {
-        if (slowQueryLatencyThresholdMillis <= 0)
-            throw new IllegalArgumentException("Invalid slowQueryLatencyThresholdMillis, should be > 0, got " + slowQueryLatencyThresholdMillis);
-        this.slowQueryLatencyThresholdMillis = slowQueryLatencyThresholdMillis;
-    }
-
-    /**
      * Return the maximum length of a CQL query string that can be logged verbatim
      * by the driver. Query strings longer than this value will be truncated
      * when logged.
-     * The default for this setting is {@link #DEFAULT_MAX_QUERY_STRING_LENGTH}.
+     * The default value is {@link #DEFAULT_MAX_QUERY_STRING_LENGTH}.
      *
      * @return The maximum length of a CQL query string that can be logged verbatim
      * by the driver.
@@ -345,7 +551,7 @@ public class QueryLogger implements LatencyTracker {
      * Return the maximum length of a query parameter value that can be logged verbatim
      * by the driver. Parameter values longer than this value will be truncated
      * when logged.
-     * The default for this setting is {@link #DEFAULT_MAX_PARAMETER_VALUE_LENGTH}.
+     * The default value is {@link #DEFAULT_MAX_PARAMETER_VALUE_LENGTH}.
      *
      * @return The maximum length of a query parameter value that can be logged verbatim
      * by the driver.
@@ -376,7 +582,7 @@ public class QueryLogger implements LatencyTracker {
      * Return the maximum number of query parameters that can be logged
      * by the driver. Queries with a number of parameters higher than this value
      * will not have all their parameters logged.
-     * The default for this setting is {@link #DEFAULT_MAX_LOGGED_PARAMETERS}.
+     * The default value is {@link #DEFAULT_MAX_LOGGED_PARAMETERS}.
      *
      * @return The maximum number of query parameters that can be logged
      * by the driver.
@@ -407,51 +613,54 @@ public class QueryLogger implements LatencyTracker {
      */
     @Override
     public void update(Host host, Statement statement, Exception exception, long newLatencyNanos) {
-        Logger logger;
-        String template;
         long latencyMs = NANOSECONDS.toMillis(newLatencyNanos);
         if (exception == null) {
-            if (latencyMs > slowQueryLatencyThresholdMillis) {
-                logger = SLOW_LOGGER;
-                template = SLOW_TEMPLATE;
-            } else {
-                logger = NORMAL_LOGGER;
-                template = NORMAL_TEMPLATE;
-            }
+            maybeLogNormalOrSlowQuery(host, statement, latencyMs);
         } else {
-            logger = ERROR_LOGGER;
-            template = ERROR_TEMPLATE;
+            maybeLogErrorQuery(host, statement, exception, latencyMs);
         }
-        logQuery(host, statement, exception, latencyMs, logger, template);
     }
 
-    private void logQuery(Host host, Statement statement, Exception exception, long latencyMs, Logger logger, String template) {
-        if (logger.isDebugEnabled()) {
-            String message = String.format(template, cluster.getClusterName(), host, latencyMs, statementAsString(statement));
-            boolean showParameterValues = logger.isTraceEnabled();
-            if (showParameterValues) {
-                StringBuilder params = new StringBuilder();
-                if (statement instanceof BoundStatement) {
-                    appendParameters((BoundStatement)statement, params, maxLoggedParameters);
-                } else if (statement instanceof BatchStatement) {
-                    BatchStatement batchStatement = (BatchStatement)statement;
-                    int remaining = maxLoggedParameters;
-                    for (Statement inner : batchStatement.getStatements()) {
-                        if (inner instanceof BoundStatement) {
-                            remaining = appendParameters((BoundStatement)inner, params, remaining);
-                        }
+    protected abstract void maybeLogNormalOrSlowQuery(Host host, Statement statement, long latencyMs);
+
+    protected void maybeLogNormalQuery(Host host, Statement statement, long latencyMs) {
+        if (NORMAL_LOGGER.isDebugEnabled()) {
+            String message = String.format(NORMAL_TEMPLATE, cluster.getClusterName(), host, latencyMs, statementAsString(statement));
+            logQuery(statement, null, NORMAL_LOGGER, message);
+        }
+    }
+
+    protected void maybeLogErrorQuery(Host host, Statement statement, Exception exception, long latencyMs) {
+        if (ERROR_LOGGER.isDebugEnabled()) {
+            String message = String.format(ERROR_TEMPLATE, cluster.getClusterName(), host, latencyMs, statementAsString(statement));
+            logQuery(statement, exception, ERROR_LOGGER, message);
+        }
+    }
+
+    protected void logQuery(Statement statement, Exception exception, Logger logger, String message) {
+        boolean showParameterValues = logger.isTraceEnabled();
+        if (showParameterValues) {
+            StringBuilder params = new StringBuilder();
+            if (statement instanceof BoundStatement) {
+                appendParameters((BoundStatement)statement, params, maxLoggedParameters);
+            } else if (statement instanceof BatchStatement) {
+                BatchStatement batchStatement = (BatchStatement)statement;
+                int remaining = maxLoggedParameters;
+                for (Statement inner : batchStatement.getStatements()) {
+                    if (inner instanceof BoundStatement) {
+                        remaining = appendParameters((BoundStatement)inner, params, remaining);
                     }
                 }
-                if (params.length() > 0)
-                    params.append("]");
-                logger.trace(message + params, exception);
-            } else {
-                logger.debug(message, exception);
             }
+            if (params.length() > 0)
+                params.append("]");
+            logger.trace(message + params, exception);
+        } else {
+            logger.debug(message, exception);
         }
     }
 
-    private String statementAsString(Statement statement) {
+    protected String statementAsString(Statement statement) {
         StringBuilder sb = new StringBuilder();
         if (statement instanceof BatchStatement) {
             BatchStatement bs = (BatchStatement)statement;
@@ -467,7 +676,7 @@ public class QueryLogger implements LatencyTracker {
         return sb.toString();
     }
 
-    private int countBoundValues(BatchStatement bs) {
+    protected int countBoundValues(BatchStatement bs) {
         int count = 0;
         for (Statement s : bs.getStatements()) {
             if (s instanceof BoundStatement)
@@ -476,7 +685,7 @@ public class QueryLogger implements LatencyTracker {
         return count;
     }
 
-    private int appendParameters(BoundStatement statement, StringBuilder buffer, int remaining) {
+    protected int appendParameters(BoundStatement statement, StringBuilder buffer, int remaining) {
         if (remaining == 0)
             return 0;
         ColumnDefinitions metadata = statement.preparedStatement().getVariables();
@@ -504,7 +713,7 @@ public class QueryLogger implements LatencyTracker {
         return remaining;
     }
 
-    private String parameterValueAsString(ColumnDefinitions.Definition definition, ByteBuffer raw) {
+    protected String parameterValueAsString(ColumnDefinitions.Definition definition, ByteBuffer raw) {
         String valueStr;
         if (raw == null || raw.remaining() == 0) {
             valueStr = "NULL";
@@ -534,7 +743,7 @@ public class QueryLogger implements LatencyTracker {
         return valueStr;
     }
 
-    private int append(Statement statement, StringBuilder buffer, int remaining) {
+    protected int append(Statement statement, StringBuilder buffer, int remaining) {
         if (statement instanceof StatementWrapper)
             statement = ((StatementWrapper)statement).getWrappedStatement();
 
@@ -570,7 +779,7 @@ public class QueryLogger implements LatencyTracker {
         return remaining;
     }
 
-    private int append(CharSequence str, StringBuilder buffer, int remaining) {
+    protected int append(CharSequence str, StringBuilder buffer, int remaining) {
         if (remaining == -2) {
             // capacity exceeded
         } else if (remaining == -1) {

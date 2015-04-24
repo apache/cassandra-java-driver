@@ -45,6 +45,8 @@ CHANGELOG
   JAVA-425)
 - [new feature] Speculative query executions (JAVA-561)
 - [bug] Release connection before completing the ResultSetFuture (JAVA-666)
+- [new feature BETA] Percentile-based variant of query logger and speculative
+  executions (JAVA-723)
 
 Merged from 2.0.9_fixes branch:
 

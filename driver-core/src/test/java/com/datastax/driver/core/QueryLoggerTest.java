@@ -135,7 +135,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
         // given
         normal.setLevel(DEBUG);
         queryLogger = QueryLogger.builder(cluster)
-            .withSlowQueryLatencyThresholdMillis(Long.MAX_VALUE)
+            .withConstantThreshold(Long.MAX_VALUE)
             .build();
         cluster.register(queryLogger);
         String query = "SELECT c_text FROM test WHERE pk = 42";
@@ -154,7 +154,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
         // given
         normal.setLevel(DEBUG);
         queryLogger = QueryLogger.builder(cluster)
-            .withSlowQueryLatencyThresholdMillis(Long.MAX_VALUE)
+            .withConstantThreshold(Long.MAX_VALUE)
             .build();
         cluster.register(queryLogger);
         String query = "SELECT * FROM test where pk = ?";
@@ -176,7 +176,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
         // given
         normal.setLevel(DEBUG);
         queryLogger = QueryLogger.builder(cluster)
-            .withSlowQueryLatencyThresholdMillis(Long.MAX_VALUE)
+            .withConstantThreshold(Long.MAX_VALUE)
             .withMaxQueryStringLength(Integer.MAX_VALUE)
             .build();
         cluster.register(queryLogger);
@@ -207,7 +207,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
         // given
         normal.setLevel(DEBUG);
         queryLogger = QueryLogger.builder(cluster)
-            .withSlowQueryLatencyThresholdMillis(Long.MAX_VALUE)
+            .withConstantThreshold(Long.MAX_VALUE)
             .withMaxQueryStringLength(Integer.MAX_VALUE)
             .build();
         cluster.register(queryLogger);
@@ -242,7 +242,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
         // given
         normal.setLevel(DEBUG);
         queryLogger = QueryLogger.builder(cluster)
-                .withSlowQueryLatencyThresholdMillis(Long.MAX_VALUE)
+                .withConstantThreshold(Long.MAX_VALUE)
                 .withMaxQueryStringLength(Integer.MAX_VALUE)
                 .build();
         cluster.register(queryLogger);
@@ -348,7 +348,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
         // given
         normal.setLevel(DEBUG);
         queryLogger = QueryLogger.builder(cluster)
-            .withSlowQueryLatencyThresholdMillis(Long.MAX_VALUE)
+            .withConstantThreshold(Long.MAX_VALUE)
             .withMaxQueryStringLength(Integer.MAX_VALUE)
             .build();
         cluster.register(queryLogger);
@@ -376,7 +376,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder(cluster)
-            .withSlowQueryLatencyThresholdMillis(Long.MAX_VALUE)
+            .withConstantThreshold(Long.MAX_VALUE)
             .withMaxQueryStringLength(Integer.MAX_VALUE)
             .build();
         cluster.register(queryLogger);
