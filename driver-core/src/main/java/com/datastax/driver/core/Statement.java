@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 
 import com.datastax.driver.core.exceptions.PagingStateException;
 import com.datastax.driver.core.policies.RetryPolicy;
+import com.datastax.driver.core.querybuilder.BuiltStatement;
 
 /**
  * An executable query.
@@ -47,10 +48,9 @@ public abstract class Statement {
     private volatile ConsistencyLevel serialConsistency;
     private volatile boolean traceQuery;
     private volatile int fetchSize;
-
     private volatile RetryPolicy retryPolicy;
-
     private volatile ByteBuffer pagingState;
+    protected volatile Boolean idempotent;
 
     // We don't want to expose the constructor, because the code relies on this being only sub-classed by RegularStatement, BoundStatement and BatchStatement
     Statement() {
@@ -325,5 +325,50 @@ public abstract class Statement {
 
     ByteBuffer getPagingState() {
         return pagingState;
+    }
+
+    /**
+     * Sets whether this statement is idempotent.
+     * <p>
+     * See {@link #isIdempotent()} for more explanations about this property.
+     *
+     * @param idempotent the new value.
+     * @return this {@code Statement} object.
+     */
+    public Statement setIdempotent(boolean idempotent) {
+        this.idempotent = idempotent;
+        return this;
+    }
+
+    /**
+     * Whether this statement is idempotent, i.e. whether it can be applied multiple times
+     * without changing the result beyond the initial application.
+     * <p>
+     * Idempotence plays a role in {@link com.datastax.driver.core.policies.SpeculativeExecutionPolicy speculative executions}.
+     * If a statement is <em>not idempotent</em>, the driver will not schedule speculative
+     * executions for it.
+     * <p>
+     * Note that this method can return {@code null}, in which case the driver will default to
+     * {@link QueryOptions#getDefaultIdempotence()}.
+     * <p>
+     * By default, this method returns {@code null} for all statements, except for
+     * {@link BuiltStatement}s, where the value will be inferred from the query: if it updates
+     * counters or prepends/appends to a list, the result will be {@code false}, otherwise it
+     * will be {@code true}. In all cases, calling {@link #setIdempotent(boolean)} forces a
+     * value that overrides every other mechanism.
+     *
+     * @return whether this statement is idempotent, or {@code null} to use
+     * {@link QueryOptions#getDefaultIdempotence()}.
+     */
+    public Boolean isIdempotent() {
+        return idempotent;
+    }
+
+    boolean isIdempotentWithDefault(QueryOptions queryOptions) {
+        Boolean myValue = this.isIdempotent();
+        if (myValue != null)
+            return myValue;
+        else
+            return queryOptions.getDefaultIdempotence();
     }
 }

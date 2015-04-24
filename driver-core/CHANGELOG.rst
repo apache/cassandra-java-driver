@@ -43,6 +43,8 @@ CHANGELOG
 - [improvement] Remove "suspected" mechanism (JAVA-617)
 - [improvement] Don't mark connection defunct on client timeout (reverts
   JAVA-425)
+- [new feature] Speculative query executions (JAVA-561)
+- [bug] Release connection before completing the ResultSetFuture (JAVA-666)
 
 Merged from 2.0.9_fixes branch:
 

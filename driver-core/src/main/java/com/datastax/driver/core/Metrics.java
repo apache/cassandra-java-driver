@@ -18,10 +18,9 @@ package com.datastax.driver.core;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.MetricRegistryListener;
-
 import com.codahale.metrics.*;
+
+import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 
 /**
  * Metrics exposed by the driver.
@@ -286,6 +285,8 @@ public class Metrics {
         private final Counter ignoresOnReadTimeout = registry.counter("ignores-on-read-timeout");
         private final Counter ignoresOnUnavailable = registry.counter("ignores-on-unavailable");
 
+        private final Counter speculativeExecutions = registry.counter("speculative-executions");
+
         /**
          * Returns the number of connection to Cassandra nodes errors.
          * <p>
@@ -444,6 +445,17 @@ public class Metrics {
          */
         public Counter getIgnoresOnUnavailable() {
             return ignoresOnUnavailable;
+        }
+
+        /**
+         * Returns the number of times a speculative execution was started
+         * because a previous execution did not complete within the delay
+         * specified by {@link SpeculativeExecutionPolicy}.
+         *
+         * @return the number of speculative executions.
+         */
+        public Counter getSpeculativeExecutions() {
+            return speculativeExecutions;
         }
     }
 }

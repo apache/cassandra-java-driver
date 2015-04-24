@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
@@ -571,6 +572,7 @@ public class Cluster implements Closeable {
         private ReconnectionPolicy reconnectionPolicy;
         private RetryPolicy retryPolicy;
         private AddressTranslater addressTranslater;
+        private SpeculativeExecutionPolicy speculativeExecutionPolicy;
 
         private ProtocolOptions.Compression compression = ProtocolOptions.Compression.NONE;
         private SSLOptions sslOptions = null;
@@ -871,7 +873,7 @@ public class Cluster implements Closeable {
          * Configures the address translater to use for the new cluster.
          * <p>
          * See {@link AddressTranslater} for more detail on address translation,
-         * but the default tanslater, {@link IdentityTranslater}, should be
+         * but the default translater, {@link IdentityTranslater}, should be
          * correct in most cases. If unsure, stick to the default.
          *
          * @param translater the translater to use.
@@ -879,6 +881,20 @@ public class Cluster implements Closeable {
          */
         public Builder withAddressTranslater(AddressTranslater translater) {
             this.addressTranslater = translater;
+            return this;
+        }
+
+        /**
+         * Configures the speculative execution policy to use for the new cluster.
+         * <p>
+         * If no policy is set through this method, {@link Policies#defaultSpeculativeExecutionPolicy()}
+         * will be used instead.
+         *
+         * @param policy the policy to use.
+         * @return this Builder.
+         */
+        public Builder withSpeculativeExecutionPolicy(SpeculativeExecutionPolicy policy) {
+            this.speculativeExecutionPolicy = policy;
             return this;
         }
 
@@ -1067,9 +1083,10 @@ public class Cluster implements Closeable {
         public Configuration getConfiguration() {
             Policies policies = new Policies(
                 loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
-                reconnectionPolicy == null ? Policies.defaultReconnectionPolicy() : reconnectionPolicy,
-                retryPolicy == null ? Policies.defaultRetryPolicy() : retryPolicy,
-                addressTranslater == null ? Policies.defaultAddressTranslater() : addressTranslater
+                Objects.firstNonNull(reconnectionPolicy, Policies.defaultReconnectionPolicy()),
+                Objects.firstNonNull(retryPolicy, Policies.defaultRetryPolicy()),
+                Objects.firstNonNull(addressTranslater, Policies.defaultAddressTranslater()),
+                Objects.firstNonNull(speculativeExecutionPolicy, Policies.defaultSpeculativeExecutionPolicy())
             );
             return new Configuration(policies,
                                      new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider).setCompression(compression),
@@ -1299,6 +1316,10 @@ public class Cluster implements Closeable {
 
         LoadBalancingPolicy loadBalancingPolicy() {
             return configuration.getPolicies().getLoadBalancingPolicy();
+        }
+
+        SpeculativeExecutionPolicy speculativeRetryPolicy() {
+            return configuration.getPolicies().getSpeculativeExecutionPolicy();
         }
 
         ReconnectionPolicy reconnectionPolicy() {

@@ -33,6 +33,7 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
+import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 import com.datastax.driver.core.utils.MoreFutures;
 
 /**
@@ -177,6 +178,10 @@ class SessionManager extends AbstractSession {
 
     LoadBalancingPolicy loadBalancingPolicy() {
         return cluster.manager.loadBalancingPolicy();
+    }
+
+    SpeculativeExecutionPolicy speculativeRetryPolicy() {
+        return cluster.manager.speculativeRetryPolicy();
     }
 
     ReconnectionPolicy reconnectionPolicy() {
@@ -476,6 +481,9 @@ class SessionManager extends AbstractSession {
         if (pagingState == null) {
             usedPagingState = statement.getPagingState();
         }
+
+        if (statement instanceof StatementWrapper)
+            statement = ((StatementWrapper)statement).getWrappedStatement();
 
         if (statement instanceof RegularStatement) {
             RegularStatement rs = (RegularStatement)statement;
