@@ -55,6 +55,7 @@
     <metrics.version>3.0.2</metrics.version>
     <snappy.version>1.0.5</snappy.version>
     <lz4.version>1.2.0</lz4.version>
+    <hdr.version>2.1.4</hdr.version>
     <!-- test dependency versions -->
     <testng.version>6.8.8</testng.version>
     <assertj.version>1.7.0</assertj.version>
