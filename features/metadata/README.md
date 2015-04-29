@@ -1,13 +1,19 @@
 ## Metadata
 
 The driver maintains global information about the Cassandra cluster it
-is connected to. It is available via `Cluster#getMetadata()`.
+is connected to. It is available via
+[Cluster#getMetadata()][getMetadata].
+
+[getMetadata]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Cluster.html#getMetadata()
 
 ### Schema metadata
 
-Use `getKeyspace(String)` or `getKeyspaces()` to get keyspace-level
-metadata. From there you can access the keyspace's objects (tables, and
-UDTs and UDFs if relevant).
+Use [getKeyspace(String)][getKeyspace] or [getKeyspaces()][getKeyspaces]
+to get keyspace-level metadata. From there you can access the keyspace's
+objects (tables, and UDTs and UDFs if relevant).
+
+[getKeyspace]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getKeyspace(java.lang.String)
+[getKeyspaces]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getKeyspaces()
 
 #### Refreshes
 
@@ -103,3 +109,63 @@ The on-demand check does not retry, it only queries system tables once
 (so `maxSchemaAgreementWaitSeconds` does not apply). If you need
 retries, you'll have to schedule them yourself (for example with a
 custom executor).
+
+Check out the API docs for the features in this section:
+
+* [withMaxSchemaAgreementWaitSeconds(int)](http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Cluster.Builder.html#withMaxSchemaAgreementWaitSeconds(int))
+* [isSchemaInAgreement()](http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/ExecutionInfo.html#isSchemaInAgreement())
+* [checkSchemaAgreement()](http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#checkSchemaAgreement())
+
+
+### Token metadata
+
+This feature is probably of less interest to regular driver users, but
+it will be useful if you're writing an analytics client on top of the
+driver.
+
+[Metadata][metadata] exposes a number of methods to manipulate tokens
+and ranges: [getTokenRanges()][getTokenRanges], [getTokenRanges(String
+keyspace, Host host)][getTokenRanges2], [getReplicas(String keyspace,
+TokenRange range)][getReplicas], [newToken(String)][newToken] and
+[newTokenRange(Token start, Token end)][newTokenRange].
+
+[TokenRange][TokenRange] provides various operations on ranges
+(splitting, merging, etc.).
+
+Each host exposes its primary tokens as [getTokens()][getTokens].
+
+Finally, you can inject tokens in CQL queries with
+[BoundStatement#setToken][setToken], and retrieve them from results with
+[Row#getToken][getToken] and [Row#getPartitionKeyToken][getPKToken].
+
+As an example, here is how you could compute the splits to partition a
+job (pseudocode):
+
+```
+metadata = cluster.getMetadata()
+for range : metadata.getTokenRanges() {
+    hosts = metadata.getReplicas(keyspace, range)
+    int n = estimateNumberOfSplits() // more on that below
+    for split : range.splitEvenly(n)
+        // pick a host to process split
+}
+```
+
+For `estimateNumberOfSplits`, you need a way to estimate the total
+number of partition keys (this is what analytics clients would
+traditionally do with the Thrift operation `describe_splits_ex`).
+Starting with Cassandra 2.1.5, this information is available in a system
+table (see
+[CASSANDRA-7688](https://issues.apache.org/jira/browse/CASSANDRA-7688)).
+
+[metadata]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html
+[getTokenRanges]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getTokenRanges()
+[getTokenRanges2]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getTokenRanges(java.lang.String,%20com.datastax.driver.core.Host)
+[getReplicas]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getReplicas(java.lang.String,%20com.datastax.driver.core.TokenRange)
+[newToken]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#newToken(java.lang.String)
+[newTokenRange]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#newTokenRange(com.datastax.driver.core.Token,%20com.datastax.driver.core.Token)
+[TokenRange]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/TokenRange.html
+[getTokens]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Host.html#getTokens()
+[setToken]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/BoundStatement.html#setToken(int,%20com.datastax.driver.core.Token)
+[getToken]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Row.html#getToken(int)
+[getPKToken]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Row.html#getPartitionKeyToken()
