@@ -52,7 +52,7 @@ public class SpeculativeExecutionTest {
         cluster = Cluster.builder()
             .addContactPoint(CCMBridge.ipOfNode(2))
             .withLoadBalancingPolicy(loadBalancingPolicy)
-            .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(1, speculativeExecutionDelay))
+            .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(speculativeExecutionDelay, 1))
             .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
             .withRetryPolicy(new CustomRetryPolicy())
             .build();
