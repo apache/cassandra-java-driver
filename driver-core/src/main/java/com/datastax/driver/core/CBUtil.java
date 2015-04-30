@@ -264,7 +264,9 @@ abstract class CBUtil {
         }
 
         cb.writeInt(bytes.remaining());
+        int oldPosition = bytes.position();
         cb.writeBytes(bytes.duplicate());
+        bytes.position(oldPosition);
     }
 
     public static int sizeOfValue(byte[] bytes) {
