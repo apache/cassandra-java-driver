@@ -265,7 +265,7 @@ abstract class CBUtil {
 
         cb.writeInt(bytes.remaining());
         int oldPosition = bytes.position();
-        cb.writeBytes(bytes.duplicate());
+        cb.writeBytes(bytes);
         bytes.position(oldPosition);
     }
 
