@@ -204,12 +204,13 @@ abstract class Message {
             boolean isTracing = frame.header.flags.contains(Frame.Header.Flag.TRACING);
             UUID tracingId = isTracing ? CBUtil.readUUID(frame.body) : null;
 
-            Response response = Response.Type.fromOpcode(frame.header.opcode).decoder(frame.header.version).decode(frame.body);
-            frame.body.release();
-
-            response.setTracingId(tracingId).setStreamId(frame.header.streamId);
-
-            out.add(response);
+            try {
+                Response response = Response.Type.fromOpcode(frame.header.opcode).decoder(frame.header.version).decode(frame.body);
+                response.setTracingId(tracingId).setStreamId(frame.header.streamId);
+                out.add(response);
+            } finally {
+                frame.body.release();
+            }
         }
     }
 
