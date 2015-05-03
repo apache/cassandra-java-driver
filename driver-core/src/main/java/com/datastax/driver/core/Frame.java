@@ -140,7 +140,8 @@ class Frame {
                     return null;
                 }
                 // Do not deallocate `frame` just yet, because it is stored as Frame.body and will be used
-                // in Message.ProtocolDecoder (we deallocate it there).
+                // in Message.ProtocolDecoder or Frame.Decompressor if compression is enabled (we deallocate
+                // it there).
                 return Frame.create(frame);
             } catch (CorruptedFrameException e) {
                 throw new DriverInternalError(e.getMessage());
@@ -179,9 +180,18 @@ class Frame {
 
         @Override
         protected void decode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
-            out.add(frame.header.flags.contains(Header.Flag.COMPRESSED)
-                ? compressor.decompress(frame)
-                : frame);
+            if (frame.header.flags.contains(Header.Flag.COMPRESSED)) {
+                // All decompressors allocate a new buffer for the decompressed data, so this is the last time
+                // we have a reference to the compressed body (and therefore a chance to release it).
+                ByteBuf compressedBody = frame.body;
+                try {
+                    out.add(compressor.decompress(frame));
+                } finally {
+                    compressedBody.release();
+                }
+            } else {
+                out.add(frame);
+            }
         }
     }
 
@@ -201,7 +211,13 @@ class Frame {
                 out.add(frame);
             } else {
                 frame.header.flags.add(Header.Flag.COMPRESSED);
-                out.add(compressor.compress(frame));
+                // See comment in decode()
+                ByteBuf uncompressedBody = frame.body;
+                try {
+                    out.add(compressor.compress(frame));
+                } finally {
+                    uncompressedBody.release();
+                }
             }
         }
     }
