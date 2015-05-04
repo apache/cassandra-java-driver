@@ -180,8 +180,8 @@ could get away with less core connections.
 [pooling_options]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html
 [lbp]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
 [msrpct]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)
-[rtm]:http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis()
-[exec_async]:http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)
-[ptm]:http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis(int)
-[nhae]:http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html
-[get_state]:http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Session.html#getState()
+[rtm]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis()
+[exec_async]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)
+[ptm]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis(int)
+[nhae]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html
+[get_state]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.html#getState()

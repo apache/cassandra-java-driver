@@ -26,15 +26,15 @@ exclusively Cassandra's binary protocol and Cassandra Query Language v3.
 * Works with any cluster size
 * [Query builder][query_builder]
 
-[sync]: http://datastax.com/drivers/java/2.0/com/datastax/driver/core/Session.html#execute(com.datastax.driver.core.Statement)
-[async]: http://datastax.com/drivers/java/2.0/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)
-[simple_st]: http://datastax.com/drivers/java/2.0/com/datastax/driver/core/SimpleStatement.html
-[prepared_st]: http://datastax.com/drivers/java/2.0/com/datastax/driver/core/Session.html#prepare(com.datastax.driver.core.RegularStatement)
-[batch_st]: http://datastax.com/drivers/java/2.0/com/datastax/driver/core/BatchStatement.html
+[sync]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.html#execute(com.datastax.driver.core.Statement)
+[async]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)
+[simple_st]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/SimpleStatement.html
+[prepared_st]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.html#prepare(com.datastax.driver.core.RegularStatement)
+[batch_st]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/BatchStatement.html
 [pool]: features/pooling/
-[lbp]: http://datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
-[retry_policy]: http://datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/RetryPolicy.html
-[query_builder]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/querybuilder/QueryBuilder.html
+[lbp]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
+[retry_policy]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/RetryPolicy.html
+[query_builder]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/querybuilder/QueryBuilder.html
 
 The driver architecture is based on layers. At the bottom lies the driver core.
 This core handles everything related to the connections to a Cassandra
@@ -57,8 +57,8 @@ Please refer to the README of each module for more information.
 - MAILING LIST: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
 - IRC: #datastax-drivers on [irc.freenode.net](http://freenode.net)
 - TWITTER: Follow the latest news about DataStax Drivers - [@olim7t](http://twitter.com/olim7t), [@mfiguiere](http://twitter.com/mfiguiere)
-- DOCS: http://www.datastax.com/documentation/developer/java-driver/2.0/index.html
-- API: http://www.datastax.com/drivers/java/2.0
+- DOCS: http://docs.datastax.com/en/developer/java-driver/2.0/java-driver/whatsNew2.html
+- API: http://docs.datastax.com/en/drivers/java/2.0
 - CHANGELOG: https://github.com/datastax/java-driver/blob/2.0/driver-core/CHANGELOG.rst
 
 ## What's new in 2.0.10
@@ -102,8 +102,8 @@ to avoid the explicit dependency to Netty.
 The Java client driver 2.0 ([branch 2.0](https://github.com/datastax/java-driver/tree/2.0)) is compatible with Apache
 Cassandra 1.2 and 2.0, but some features are available only when using Apache Cassandra 2.0 (e.g. result set paging,
 [BatchStatement](https://github.com/datastax/java-driver/blob/2.0/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java), 
-[lightweight transactions](http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_ltweight_transaction_t.html) 
--- see [What's new in Cassandra 2.0](http://www.datastax.com/documentation/cassandra/2.0/cassandra/features/features_key_c.html)). 
+[lightweight transactions](http://docs.datastax.com/en/cql/3.1/cql/cql_using/use_ltweight_transaction_t.html)
+-- see [What's new in Cassandra 2.0](http://docs.datastax.com/en/cassandra/2.0/cassandra/features/features_key_c.html)).
 Trying to use these with a cluster running Cassandra 1.2 will result in 
 an [UnsupportedFeatureException](https://github.com/datastax/java-driver/blob/2.0/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java) being thrown.
 

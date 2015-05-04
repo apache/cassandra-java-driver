@@ -38,8 +38,8 @@ Notes:
   reasons, the `close()` method will be merged in `AddressTranslater` in a
   future release.
 
-[at]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/AddressTranslater.html
-[cat]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/CloseableAddressTranslater.html
+[at]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/AddressTranslater.html
+[cat]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/CloseableAddressTranslater.html
 
 ### EC2 multi-region
 
@@ -64,4 +64,4 @@ This class performs a reverse DNS lookup of the origin address, to find the doma
 target instance. Then it performs a forward DNS lookup of the domain name; the EC2 DNS does the
 private/public switch automatically based on location.
 
-[ec2]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/EC2MultiRegionAddressTranslater.html
+[ec2]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/EC2MultiRegionAddressTranslater.html
