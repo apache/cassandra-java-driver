@@ -18,23 +18,27 @@ package com.datastax.driver.core;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Describes a Column.
  */
 public class ColumnMetadata {
 
-    private static final String COLUMN_NAME = "column_name";
-    private static final String VALIDATOR = "validator";
-    private static final String COMPONENT_INDEX = "component_index";
-    private static final String KIND = "type";
+    static final String COLUMN_NAME = "column_name";
+    static final String VALIDATOR = "validator";
+    static final String COMPONENT_INDEX = "component_index";
+    static final String KIND = "type";
 
-    private static final String INDEX_TYPE = "index_type";
-    private static final String INDEX_OPTIONS = "index_options";
-    private static final String INDEX_NAME = "index_name";
+    static final String INDEX_TYPE = "index_type";
+    static final String INDEX_OPTIONS = "index_options";
+    static final String INDEX_NAME = "index_name";
     private static final String CUSTOM_INDEX_CLASS = "class_name";
 
+    private static final String INDEX_MAP_KEYS = "index_keys";
+    private static final String INDEX_MAP_ENTRIES = "index_keys_and_values";
     private final TableMetadata table;
     private final String name;
     private final DataType type;
@@ -110,12 +114,16 @@ public class ColumnMetadata {
 
         private final ColumnMetadata column;
         private final String name;
-        private final String customClassName; // will be null, unless it's a custom index
+        private final Map<String, String> indexOptions;
 
-        private IndexMetadata(ColumnMetadata column, String name, String customClassName) {
+        private IndexMetadata(ColumnMetadata column, String name) {
+            this(column, name, null);
+        }
+
+        private IndexMetadata(ColumnMetadata column, String name, Map<String, String> indexOptions) {
             this.column = column;
             this.name = name;
-            this.customClassName = customClassName;
+            this.indexOptions = indexOptions;
         }
 
         /**
@@ -146,7 +154,7 @@ public class ColumnMetadata {
          * @return {@code true} if this metadata represents a custom index.
          */
         public boolean isCustomIndex() {
-            return customClassName != null;
+            return getIndexClassName() != null;
         }
 
         /**
@@ -156,7 +164,54 @@ public class ColumnMetadata {
          * custom index if {@code isCustomIndex() == true}, {@code null} otherwise.
          */
         public String getIndexClassName() {
-            return customClassName;
+            return getOption(CUSTOM_INDEX_CLASS);
+        }
+
+        /**
+         * Return whether this index is a 'KEYS' index on a map, e.g.,
+         * CREATE INDEX ON mytable (KEYS(mymap))
+         * 
+         * @return {@code true} if this is a 'KEYS' index on a map.
+         */
+        public boolean isKeys() {
+            return getOption(INDEX_MAP_KEYS) != null;
+        }
+
+        /**
+         * Return whether this index is a 'FULL' index on a frozen collection, e.g.,
+         * CREATE INDEX ON mytable (FULL(mymap))
+         * 
+         * @return {@code true} if this is a 'FULL' index on a frozen collection.
+         */
+        public boolean isFull() {
+            /*
+             * This check is analogous to the Cassandra counterpart
+             * in IndexTarget#fromColumnDefinition.
+             */
+            return !isKeys()
+                && !isEntries()
+                && column.getType().isCollection()
+                && column.getType().isFrozen();
+        }
+
+        /**
+         * Return whether this index is a 'ENTRIES' index on a map, e.g.,
+         * CREATE INDEX ON mytable (ENTRIES(mymap))
+         * 
+         * @return {@code true} if this is an 'ENTRIES' index on a map.
+         */
+        public boolean isEntries() {
+            return getOption(INDEX_MAP_ENTRIES) != null;
+        }
+
+        /**
+         * Return the value for the given option name.
+         * 
+         * @param name Option name
+         * @return Option value
+         */
+        public String getOption(String name) {
+            return indexOptions != null ? indexOptions.get(name) : null;
         }
 
         /**
@@ -173,8 +228,46 @@ public class ColumnMetadata {
             String cfName = Metadata.escapeId(table.getName());
             String colName = Metadata.escapeId(column.getName());
             return isCustomIndex()
-                 ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s';", name, ksName, cfName, colName, customClassName)
-                 : String.format("CREATE INDEX %s ON %s.%s (%s);", name, ksName, cfName, colName);
+                ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s' WITH OPTIONS = %s;",
+                    name, ksName, cfName, colName, getIndexClassName(), getOptionsAsCql())
+                : String.format("CREATE INDEX %s ON %s.%s (%s);", name, ksName, cfName, getIndexFunction(colName));
+        }
+
+        /**
+         * Builds a JSON object based on the index options map.
+         * 
+         * @return String representation of the JSON object containing the index options,
+         *         similar to what Cassandra stores in the 'index_options' column of the 'schema_columns' table
+         *         in the 'system' keyspace.
+         */
+        private String getOptionsAsCql() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("{");
+            Iterator<Entry<String, String>> it = indexOptions.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<String, String> option = it.next();
+                builder.append(String.format("'%s' : '%s'", option.getKey(), option.getValue()));
+                if (it.hasNext())
+                    builder.append(", ");
+            }
+            builder.append("}");
+            return builder.toString();
+        }
+
+        /**
+         * Wraps the column name with the appropriate index function (KEYS, FULL, ENTRIES),
+         * if necessary.
+         * 
+         * @return Column name wrapped with the appropriate index function.
+         */
+        private String getIndexFunction(String colName) {
+            if (isKeys())
+                return String.format("KEYS(%s)", colName);
+            else if (isFull())
+                return String.format("FULL(%s)", colName);
+            else if (isEntries())
+                return String.format("ENTRIES(%s)", colName);
+            return colName;
         }
 
         private static IndexMetadata build(ColumnMetadata column, Map<String, String> indexColumns) {
@@ -185,11 +278,11 @@ public class ColumnMetadata {
             if (type == null)
                 return null;
 
-            if (!type.equalsIgnoreCase("CUSTOM") || !indexColumns.containsKey(INDEX_OPTIONS))
-                return new IndexMetadata(column, indexColumns.get(INDEX_NAME), null);
+            if (!indexColumns.containsKey(INDEX_OPTIONS))
+                return new IndexMetadata(column, indexColumns.get(INDEX_NAME));
 
             Map<String, String> indexOptions = SimpleJSONParser.parseStringMap(indexColumns.get(INDEX_OPTIONS));
-            return new IndexMetadata(column, indexColumns.get(INDEX_NAME), indexOptions.get(CUSTOM_INDEX_CLASS));
+            return new IndexMetadata(column, indexColumns.get(INDEX_NAME), indexOptions);
         }
     }
 
@@ -224,8 +317,8 @@ public class ColumnMetadata {
 
             String name = row.getString(COLUMN_NAME);
             Kind kind = version.getMajor() < 2 || row.isNull(KIND)
-                      ? Kind.REGULAR
-                      : Enum.valueOf(Kind.class, row.getString(KIND).toUpperCase());
+                ? Kind.REGULAR
+                : Enum.valueOf(Kind.class, row.getString(KIND).toUpperCase());
             int componentIndex = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
             String validatorStr = row.getString(VALIDATOR);
             boolean reversed = CassandraTypeParser.isReversed(validatorStr);
