@@ -1,7 +1,17 @@
 ## Features
 
-This documentation is a work in progress. Use the "Read More" menu on the right hand side to browse currently documented features.
+This part of the documentation is organized into sub-sections covering
+specific topics.
 
-You can also refer to the
-[user documentation](http://www.datastax.com/documentation/developer/java-driver/2.1/java-driver/whatsNew2.html)
+If you're reading this from the [generated HTML documentation on
+github.io](http://datastax.github.io/java-driver/), use the "Read More"
+menu on the right hand side. If you're [browsing the source files on
+github.com](https://github.com/datastax/java-driver/tree/2.0/features),
+simply navigate to each sub-directory.
+
+This is a work in progress: new sections will be added to cover existing
+features or document new ones.
+
+You can also find more help in the legacy
+[user documentation](http://www.datastax.com/documentation/developer/java-driver/2.0/java-driver/whatsNew2.html)
 on the DataStax website.

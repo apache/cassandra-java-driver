@@ -31,7 +31,7 @@ exclusively Cassandra's binary protocol and Cassandra Query Language v3.
 [simple_st]: http://datastax.com/drivers/java/2.0/com/datastax/driver/core/SimpleStatement.html
 [prepared_st]: http://datastax.com/drivers/java/2.0/com/datastax/driver/core/Session.html#prepare(com.datastax.driver.core.RegularStatement)
 [batch_st]: http://datastax.com/drivers/java/2.0/com/datastax/driver/core/BatchStatement.html
-[pool]: http://datastax.com/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html
+[pool]: features/pooling/
 [lbp]: http://datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
 [retry_policy]: http://datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/RetryPolicy.html
 [query_builder]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/querybuilder/QueryBuilder.html
