@@ -110,17 +110,17 @@ exclusively Cassandra’s binary protocol and Cassandra Query Language v3.</p>
 
 <ul>
 <li>
-<a href="http://datastax.com/drivers/java/2.0/com/datastax/driver/core/Session.html#execute(com.datastax.driver.core.Statement)">Sync</a> and <a href="http://datastax.com/drivers/java/2.0/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)">Async</a> API</li>
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.html#execute(com.datastax.driver.core.Statement)">Sync</a> and <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)">Async</a> API</li>
 <li>
-<a href="http://datastax.com/drivers/java/2.0/com/datastax/driver/core/SimpleStatement.html">Simple</a>, <a href="http://datastax.com/drivers/java/2.0/com/datastax/driver/core/Session.html#prepare(com.datastax.driver.core.RegularStatement)">Prepared</a>, and <a href="http://datastax.com/drivers/java/2.0/com/datastax/driver/core/BatchStatement.html">Batch</a> statements</li>
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/SimpleStatement.html">Simple</a>, <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.html#prepare(com.datastax.driver.core.RegularStatement)">Prepared</a>, and <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/BatchStatement.html">Batch</a> statements</li>
 <li>Asynchronous IO, parallel execution, request pipelining</li>
 <li><a href="features/pooling/">Connection pooling</a></li>
 <li>Auto node discovery</li>
 <li>Automatic reconnection</li>
-<li>Configurable <a href="http://datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html">load balancing</a> and <a href="http://datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/RetryPolicy.html">retry policies</a>
+<li>Configurable <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html">load balancing</a> and <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/RetryPolicy.html">retry policies</a>
 </li>
 <li>Works with any cluster size</li>
-<li><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/querybuilder/QueryBuilder.html">Query builder</a></li>
+<li><a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/querybuilder/QueryBuilder.html">Query builder</a></li>
 </ul>
 
 <p>The driver architecture is based on layers. At the bottom lies the driver core.
@@ -151,9 +151,9 @@ only meant for demonstration purposes.</li>
 </li>
 <li>TWITTER: Follow the latest news about DataStax Drivers - <a href="http://twitter.com/olim7t">@olim7t</a>, <a href="http://twitter.com/mfiguiere">@mfiguiere</a>
 </li>
-<li>DOCS: <a href="http://www.datastax.com/documentation/developer/java-driver/2.0/index.html">http://www.datastax.com/documentation/developer/java-driver/2.0/index.html</a>
+<li>DOCS: <a href="http://docs.datastax.com/en/developer/java-driver/2.0/java-driver/whatsNew2.html">http://docs.datastax.com/en/developer/java-driver/2.0/java-driver/whatsNew2.html</a>
 </li>
-<li>API: <a href="http://www.datastax.com/drivers/java/2.0">http://www.datastax.com/drivers/java/2.0</a>
+<li>API: <a href="http://docs.datastax.com/en/drivers/java/2.0">http://docs.datastax.com/en/drivers/java/2.0</a>
 </li>
 <li>CHANGELOG: <a href="https://github.com/datastax/java-driver/blob/2.0/driver-core/CHANGELOG.rst">https://github.com/datastax/java-driver/blob/2.0/driver-core/CHANGELOG.rst</a>
 </li>
@@ -204,8 +204,8 @@ to avoid the explicit dependency to Netty.</p>
 <p>The Java client driver 2.0 (<a href="https://github.com/datastax/java-driver/tree/2.0">branch 2.0</a>) is compatible with Apache
 Cassandra 1.2 and 2.0, but some features are available only when using Apache Cassandra 2.0 (e.g. result set paging,
 <a href="https://github.com/datastax/java-driver/blob/2.0/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java">BatchStatement</a>, 
-<a href="http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_ltweight_transaction_t.html">lightweight transactions</a> 
-– see <a href="http://www.datastax.com/documentation/cassandra/2.0/cassandra/features/features_key_c.html">What’s new in Cassandra 2.0</a>). 
+<a href="http://docs.datastax.com/en/cql/3.1/cql/cql_using/use_ltweight_transaction_t.html">lightweight transactions</a>
+– see <a href="http://docs.datastax.com/en/cassandra/2.0/cassandra/features/features_key_c.html">What’s new in Cassandra 2.0</a>).
 Trying to use these with a cluster running Cassandra 1.2 will result in 
 an <a href="https://github.com/datastax/java-driver/blob/2.0/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java">UnsupportedFeatureException</a> being thrown.</p>
 

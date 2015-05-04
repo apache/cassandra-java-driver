@@ -106,12 +106,12 @@
 
 <p>The driver maintains global information about the Cassandra cluster it
 is connected to. It is available via
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Cluster.html#getMetadata()">Cluster#getMetadata()</a>.</p>
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Cluster.html#getMetadata()">Cluster#getMetadata()</a>.</p>
 
 <h3 id="schema-metadata">Schema metadata<a class="anchor" href="#schema-metadata" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<p>Use <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getKeyspace(java.lang.String)">getKeyspace(String)</a> or <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getKeyspaces()">getKeyspaces()</a>
+<p>Use <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getKeyspace(java.lang.String)">getKeyspace(String)</a> or <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getKeyspaces()">getKeyspaces()</a>
 to get keyspace-level metadata. From there you can access the keyspace’s
 objects (tables, and UDTs and UDFs if relevant).</p>
 
@@ -182,9 +182,9 @@ custom executor).</p>
 <p>Check out the API docs for the features in this section:</p>
 
 <ul>
-<li><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Cluster.Builder.html#withMaxSchemaAgreementWaitSeconds(int)">withMaxSchemaAgreementWaitSeconds(int)</a></li>
-<li><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/ExecutionInfo.html#isSchemaInAgreement()">isSchemaInAgreement()</a></li>
-<li><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#checkSchemaAgreement()">checkSchemaAgreement()</a></li>
+<li><a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Cluster.Builder.html#withMaxSchemaAgreementWaitSeconds(int)">withMaxSchemaAgreementWaitSeconds(int)</a></li>
+<li><a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/ExecutionInfo.html#isSchemaInAgreement()">isSchemaInAgreement()</a></li>
+<li><a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Metadata.html#checkSchemaAgreement()">checkSchemaAgreement()</a></li>
 </ul>
 
 <h3 id="token-metadata">Token metadata<a class="anchor" href="#token-metadata" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
@@ -194,20 +194,20 @@ custom executor).</p>
 it will be useful if you’re writing an analytics client on top of the
 driver.</p>
 
-<p><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html">Metadata</a> exposes a number of methods to manipulate tokens
-and ranges: <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getTokenRanges()">getTokenRanges()</a>, <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getTokenRanges(java.lang.String,%20com.datastax.driver.core.Host)">getTokenRanges(String
-keyspace, Host host)</a>, <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getReplicas(java.lang.String,%20com.datastax.driver.core.TokenRange)">getReplicas(String keyspace,
-TokenRange range)</a>, <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#newToken(java.lang.String)">newToken(String)</a> and
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#newTokenRange(com.datastax.driver.core.Token,%20com.datastax.driver.core.Token)">newTokenRange(Token start, Token end)</a>.</p>
+<p><a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Metadata.html">Metadata</a> exposes a number of methods to manipulate tokens
+and ranges: <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getTokenRanges()">getTokenRanges()</a>, <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getTokenRanges(java.lang.String,%20com.datastax.driver.core.Host)">getTokenRanges(String
+keyspace, Host host)</a>, <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getReplicas(java.lang.String,%20com.datastax.driver.core.TokenRange)">getReplicas(String keyspace,
+TokenRange range)</a>, <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Metadata.html#newToken(java.lang.String)">newToken(String)</a> and
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Metadata.html#newTokenRange(com.datastax.driver.core.Token,%20com.datastax.driver.core.Token)">newTokenRange(Token start, Token end)</a>.</p>
 
-<p><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/TokenRange.html">TokenRange</a> provides various operations on ranges
+<p><a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/TokenRange.html">TokenRange</a> provides various operations on ranges
 (splitting, merging, etc.).</p>
 
-<p>Each host exposes its primary tokens as <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Host.html#getTokens()">getTokens()</a>.</p>
+<p>Each host exposes its primary tokens as <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Host.html#getTokens()">getTokens()</a>.</p>
 
 <p>Finally, you can inject tokens in CQL queries with
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/BoundStatement.html#setToken(int,%20com.datastax.driver.core.Token)">BoundStatement#setToken</a>, and retrieve them from results with
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Row.html#getToken(int)">Row#getToken</a> and <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Row.html#getPartitionKeyToken()">Row#getPartitionKeyToken</a>.</p>
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/BoundStatement.html#setToken(int,%20com.datastax.driver.core.Token)">BoundStatement#setToken</a>, and retrieve them from results with
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Row.html#getToken(int)">Row#getToken</a> and <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Row.html#getPartitionKeyToken()">Row#getPartitionKeyToken</a>.</p>
 
 <p>As an example, here is how you could compute the splits to partition a
 job (pseudocode):</p>

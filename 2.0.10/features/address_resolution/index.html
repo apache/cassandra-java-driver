@@ -114,7 +114,7 @@ reachable directly by the driver, or should not be the preferred address to use
 (for instance, it might be a private IP, but some clients  may have to use a public IP, or
 go through a router).</p>
 
-<h3 id="the-addresstranslater-interface">The <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/AddressTranslater.html">AddressTranslater</a> interface<a class="anchor" href="#the-addresstranslater-interface" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="the-addresstranslater-interface">The <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/AddressTranslater.html">AddressTranslater</a> interface<a class="anchor" href="#the-addresstranslater-interface" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>This interface allows you to deal with such cases, by transforming the address sent by a
@@ -135,7 +135,7 @@ Cassandra node to another address to be used by the driver for connection.</p>
 <ul>
 <li>the contact points provided while creating the <code>Cluster</code> are not translated, only addresses
 retrieved from or sent by Cassandra nodes are;</li>
-<li>you might want to implement <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/CloseableAddressTranslater.html">CloseableAddressTranslater</a> if your
+<li>you might want to implement <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/CloseableAddressTranslater.html">CloseableAddressTranslater</a> if your
 implementation has state that should be cleaned up when the <code>Cluster</code>
 shuts down. This is provided as a separate interface for historical
 reasons, the <code>close()</code> method will be merged in <code>AddressTranslater</code> in a
@@ -145,7 +145,7 @@ future release.</li>
 <h3 id="ec2-multi-region">EC2 multi-region<a class="anchor" href="#ec2-multi-region" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<p><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/EC2MultiRegionAddressTranslater.html">EC2MultiRegionAddressTranslater</a> is provided out of the box. It
+<p><a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/EC2MultiRegionAddressTranslater.html">EC2MultiRegionAddressTranslater</a> is provided out of the box. It
 helps optimize network costs when your infrastructure (both Cassandra
 nodes <em>and</em> clients) is distributed across multiple Amazon EC2 regions:</p>
 

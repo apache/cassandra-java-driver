@@ -138,14 +138,14 @@ there is no way to guarantee that only one node will apply the mutation.</p>
 </ul>
 
 <p>In the driver, this is determined by
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Statement.html#isIdempotent()">Statement#isIdempotent()</a>.  Unfortunately, the driver
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Statement.html#isIdempotent()">Statement#isIdempotent()</a>.  Unfortunately, the driver
 doesn’t parse query strings, so in most cases it has no information
 about what the query actually does. Therefore:</p>
 
 <ul>
 <li>
 <strong><code>Statement#isIdempotent()</code> is only computed automatically for
-statements built with <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/querybuilder/QueryBuilder.html">QueryBuilder</a></strong>. Note that there
+statements built with <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/querybuilder/QueryBuilder.html">QueryBuilder</a></strong>. Note that there
 is a known issue in 2.0.10 where calls to <code>now()</code> or <code>uuid()</code> are not
 taken into account (see
 <a href="https://datastax-oss.atlassian.net/browse/JAVA-733">JAVA-733</a>). If
@@ -173,14 +173,14 @@ default cluster-wide:</p>
 </h3>
 
 <p>Speculative executions are controlled by an instance of
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/SpeculativeExecutionPolicy.html">SpeculativeExecutionPolicy</a> provided when initializing the
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/SpeculativeExecutionPolicy.html">SpeculativeExecutionPolicy</a> provided when initializing the
 <code>Cluster</code>.  This policy defines the threshold after which a new
 speculative execution will be triggered.</p>
 
 <p>Two implementations are provided with the driver:</p>
 
 <h4 id="constantspeculativeexecutionpolicy">
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/ConstantSpeculativeExecutionPolicy.html">ConstantSpeculativeExecutionPolicy</a><a class="anchor" href="#constantspeculativeexecutionpolicy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/ConstantSpeculativeExecutionPolicy.html">ConstantSpeculativeExecutionPolicy</a><a class="anchor" href="#constantspeculativeexecutionpolicy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>This simple policy uses a constant threshold:</p>
@@ -205,7 +205,7 @@ another speculative execution on a third node.</li>
 </ul>
 
 <h4 id="percentilespeculativeexecutionpolicy">
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy.html">PercentileSpeculativeExecutionPolicy</a><a class="anchor" href="#percentilespeculativeexecutionpolicy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy.html">PercentileSpeculativeExecutionPolicy</a><a class="anchor" href="#percentilespeculativeexecutionpolicy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>This policy sets the threshold at a given latency percentile for the
@@ -224,7 +224,7 @@ explicitly depend on it:</p>
   <span class="nt">&lt;version&gt;</span>2.1.4<span class="nt">&lt;/version&gt;</span>
 <span class="nt">&lt;/dependency&gt;</span>
 </code></pre>
-<p>Then create an instance of <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/PerHostPercentileTracker.html">PerHostPercentileTracker</a> that will collect
+<p>Then create an instance of <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PerHostPercentileTracker.html">PerHostPercentileTracker</a> that will collect
 latency statistics for your <code>Cluster</code>:</p>
 <pre class="highlight"><code><span class="c1">// There are more options than shown here, please refer to the API docs</span>
 <span class="c1">// for more information</span>
@@ -268,7 +268,7 @@ create a single tracker object and share it with both components.</p>
 <li>on an internal error, it will try the next host;</li>
 <li>when the consistency level could not be reached (<code>unavailable</code> error
 or read or write timeout), it will delegate the decision to
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/RetryPolicy.html">RetryPolicy</a>, which might trigger a retry on the same
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/RetryPolicy.html">RetryPolicy</a>, which might trigger a retry on the same
 host.</li>
 </ul>
 
@@ -288,9 +288,9 @@ individual requests, so throughput will not necessarily improve.</p>
 
 <p>You can monitor how many speculative executions were triggered with the
 <code>speculative-executions</code> metric (exposed in the Java API as
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metrics.Errors.html#getSpeculativeExecutions()">cluster.getMetrics().getErrors().getSpeculativeExecutions()</a>).
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Metrics.Errors.html#getSpeculativeExecutions()">cluster.getMetrics().getErrors().getSpeculativeExecutions()</a>).
 It should only be a few percents of the total number of requests
-(<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metrics.html#getRequestsTimer()">cluster.getMetrics().getRequestsTimer().getCount()</a>).</p>
+(<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Metrics.html#getRequestsTimer()">cluster.getMetrics().getRequestsTimer().getCount()</a>).</p>
 
 <h4 id="stream-id-exhaustion">Stream id exhaustion<a class="anchor" href="#stream-id-exhaustion" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
@@ -307,7 +307,7 @@ one. If requests are often cancelled, so will see connections being
 recycled at a high rate.</p>
 
 <p>One way to detect this is to monitor open connections per host
-(<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Session.State.html">Session.getState().getOpenConnections(host)</a>) against
+(<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.State.html">Session.getState().getOpenConnections(host)</a>) against
 TCP connections at the OS level. If open connections stay constant but
 you see many TCP connections in closing states, you might be running
 into this issue. Try raising the speculative execution threshold.</p>
@@ -318,7 +318,7 @@ version 3 (driver 2.1.2 or above with Cassandra 2.1 or above), there are
 32K stream ids per connection, so higher cancellation rates can be
 sustained. If you’re unsure of which native protocol version you’re
 using, you can check with
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion()">cluster.getConfiguration().getProtocolOptions().getProtocolVersion()</a>.</p>
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion()">cluster.getConfiguration().getProtocolOptions().getProtocolVersion()</a>.</p>
 
 <h4 id="request-ordering-and-client-timestamps">Request ordering and client timestamps<a class="anchor" href="#request-ordering-and-client-timestamps" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>

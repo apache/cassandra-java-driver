@@ -203,7 +203,7 @@ seconds, it can be customized with the following method:</p>
 use the new interval. Most users will want to do this at startup.</p>
 
 <p>The heartbeat interval should be set higher than
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis()">SocketOptions.readTimeoutMillis</a>:
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis()">SocketOptions.readTimeoutMillis</a>:
 the read timeout is the maximum time that the driver waits for a regular
 query to complete, therefore the connection should not be considered
 idle before it has elapsed.</p>
@@ -222,22 +222,22 @@ acquire a connection from this host’s pool. If the pool is busy (i.e.
 all connections are already handling their maximum number of in flight
 requests), the client thread will block for a while, until a connection
 becomes available (note that this will block even if you’re using the
-asynchronous API, like <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)">Session.executeAsync</a>).</p>
+asynchronous API, like <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)">Session.executeAsync</a>).</p>
 
 <p>The time that the driver blocks is controlled by
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis(int)">PoolingOptions.setPoolTimeoutMillis</a>. If there is still no connection
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis(int)">PoolingOptions.setPoolTimeoutMillis</a>. If there is still no connection
 available after this timeout, the driver will try the next host.</p>
 
 <p>For some applications, blocking is not acceptable, and it is preferable
 to fail fast if the request cannot be fulfilled. If that’s your case,
 set the pool timeout to 0. If all hosts are busy, you will get a
-<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html">NoHostAvailableException</a> (if you look at the exception’s details, you
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html">NoHostAvailableException</a> (if you look at the exception’s details, you
 will see a <code>java.util.concurrent.TimeoutException</code> for each host).</p>
 
 <h3 id="monitoring-and-tuning-the-pool">Monitoring and tuning the pool<a class="anchor" href="#monitoring-and-tuning-the-pool" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<p>The easiest way to monitor pool usage is with <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Session.html#getState()">Session.getState</a>. Here’s
+<p>The easiest way to monitor pool usage is with <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.html#getState()">Session.getState</a>. Here’s
 a simple example that will print the number of open connections, active
 requests, and maximum capacity for each host, every 5 seconds:</p>
 <pre class="highlight"><code><span class="n">ScheduledExecutorService</span> <span class="n">scheduled</span> <span class="o">=</span> <span class="n">Executors</span><span class="o">.</span><span class="na">newScheduledThreadPool</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
