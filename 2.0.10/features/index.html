@@ -9,7 +9,7 @@
     <meta name="description" content="High performance Java client for Apache Cassandra">
     <meta name="author" content="DataStax">
 
-    <title>Java Driver for Apache Cassandra - Using the shaded JAR</title>
+    <title>Java Driver for Apache Cassandra - Features</title>
 
     <link rel="icon" href="../../favicon.ico">
     <link rel="apple-touch-icon" href="../../favicon.png">
@@ -32,7 +32,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="../../">Java Driver for Apache Cassandra</a>
+          <a class="navbar-brand" href="../">Java Driver for Apache Cassandra</a>
         </div>
         <div class="collapse navbar-collapse" ng-controller="search">
           <ul class="nav navbar-nav">
@@ -40,18 +40,13 @@
             
             
             <li class="active">
-              <a href="../">Features</a>
-            </li>
-            
-            
-            <li>
-              <a href="../../api/">API docs</a>
+              <a href="./">Features</a>
             </li>
             
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -70,14 +65,14 @@
               <li>
                 <div class="dropdown">
                   <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.1.5
+                    2.0.10
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">2.1.5</a></li>
+                    <li><a href="../../features/">2.1.5</a></li>
                   
-                    <li><a href="../../2.0.10/features/shaded_jar/">2.0.10</a></li>
+                    <li class="disabled"><a href="./">2.0.10</a></li>
                   
                   </ul>
                 </div>
@@ -86,19 +81,13 @@
               
               
               
-              <li><a href="../../">Home</a></li>
+              <li><a href="../">Home</a></li>
               
               
               
               
               
-              <li><a href="../">Features</a></li>
-              
-              
-              
-              
-              
-              <li class="active">Using the shaded JAR</li>
+              <li class="active">Features</li>
               
               
               
@@ -106,57 +95,24 @@
           </nav>
           
 
-<h2 id="using-the-shaded-jar">Using the shaded JAR<a class="anchor" href="#using-the-shaded-jar" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h2 id="features">Features<a class="anchor" href="#features" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 
-<p>The default driver JAR depends on <a href="http://netty.io/">Netty</a>, which is
-used internally for networking.</p>
+<p>This part of the documentation is organized into sub-sections covering
+specific topics.</p>
 
-<p>This explicit dependency can be a problem if your application already
-uses another Netty version. To avoid conflicts, we provide a “shaded”
-version of the JAR, which bundles the Netty classes under a different
-package name:</p>
-<pre><code>&lt;dependency&gt;
-  &lt;groupId&gt;${project.groupId}&lt;/groupId&gt;
-  &lt;artifactId&gt;cassandra-driver-core&lt;/artifactId&gt;
-  &lt;version&gt;2.1.5&lt;/version&gt;
-  &lt;classifier&gt;shaded&lt;/classifier&gt;
-  &lt;!-- Because the shaded JAR uses the original POM, you still need
-       to exclude this dependency explicitly: --&gt;
-  &lt;exclusions&gt;
-    &lt;exclusion&gt;
-      &lt;groupId&gt;io.netty&lt;/groupId&gt;
-      &lt;artifactId&gt;*&lt;/artifactId&gt;
-    &lt;/exclusion&gt;
-  &lt;/exclusions&gt;
-&lt;/dependency&gt;
-</code></pre>
-<p>If you also use the mapper, you need to remove its dependency to the
-non-shaded JAR:</p>
-<pre><code>&lt;dependency&gt;
-  &lt;groupId&gt;com.datastax.cassandra&lt;/groupId&gt;
-  &lt;artifactId&gt;cassandra-driver-core&lt;/artifactId&gt;
-  &lt;version&gt;2.1.5&lt;/version&gt;
-  &lt;classifier&gt;shaded&lt;/classifier&gt;
-  &lt;exclusions&gt;
-    &lt;exclusion&gt;
-      &lt;groupId&gt;io.netty&lt;/groupId&gt;
-      &lt;artifactId&gt;*&lt;/artifactId&gt;
-    &lt;/exclusion&gt;
-  &lt;/exclusions&gt;
-&lt;/dependency&gt;
-&lt;dependency&gt;
-  &lt;groupId&gt;com.datastax.cassandra&lt;/groupId&gt;
-  &lt;artifactId&gt;cassandra-driver-mapping&lt;/artifactId&gt;
-  &lt;version&gt;2.1.5&lt;/version&gt;
-  &lt;exclusions&gt;
-    &lt;exclusion&gt;
-      &lt;groupId&gt;com.datastax.cassandra&lt;/groupId&gt;
-      &lt;artifactId&gt;cassandra-driver-core&lt;/artifactId&gt;
-    &lt;/exclusion&gt;
-  &lt;/exclusions&gt;
-&lt;/dependency&gt;
-</code></pre>
+<p>If you’re reading this from the <a href="../">generated HTML documentation on
+github.io</a>, use the “Read More”
+menu on the right hand side. If you’re <a href="https://github.com/datastax/java-driver/tree/2.0/features">browsing the source files on
+github.com</a>,
+simply navigate to each sub-directory.</p>
+
+<p>This is a work in progress: new sections will be added to cover existing
+features or document new ones.</p>
+
+<p>You can also find more help in the legacy
+<a href="http://www.datastax.com/documentation/developer/java-driver/2.0/java-driver/whatsNew2.html">user documentation</a>
+on the DataStax website.</p>
 
 
         </div>
@@ -172,12 +128,57 @@ non-shaded JAR:</p>
               </div>
               <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
                 <div class="panel-body">
-                  <ol class="nav nav-pills nav-stacked toc"><li><a href="#using-the-shaded-jar">Using the shaded JAR
+                  <ol class="nav nav-pills nav-stacked toc"><li><a href="#features">Features
 </a></li></ol>
                 </div>
               </div>
             </div>
 
+            
+            <div id="read-more-panel" class="panel panel-default">
+              <div id="read-more-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#read-more" aria-expanded="true" aria-controls="read-more">
+                    Read More<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="read-more" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="read-more-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked">
+                  
+                    <li>
+                      <a href="address_resolution/">Address resolution</a>
+                    </li>
+                  
+                    <li>
+                      <a href="pooling/">Connection pooling</a>
+                    </li>
+                  
+                    <li>
+                      <a href="logging/">Logging</a>
+                    </li>
+                  
+                    <li>
+                      <a href="metadata/">Metadata</a>
+                    </li>
+                  
+                    <li>
+                      <a href="paging/">Paging</a>
+                    </li>
+                  
+                    <li>
+                      <a href="speculative_execution/">Speculative query execution</a>
+                    </li>
+                  
+                    <li>
+                      <a href="shaded_jar/">Using the shaded JAR</a>
+                    </li>
+                  
+                  </ol>
+                </div>
+              </div>
+            </div>
             
           </div>
         </div>

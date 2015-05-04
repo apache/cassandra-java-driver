@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Metadata</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            
+            
+            <li class="active">
+              <a href="../">Features</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.0.10
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../../">2.1.5</a></li>
+                  
+                    <li class="disabled"><a href="./">2.0.10</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../">Home</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">Features</a></li>
+              
+              
+              
+              
+              
+              <li class="active">Metadata</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<h2 id="metadata">Metadata<a class="anchor" href="#metadata" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p>The driver maintains global information about the Cassandra cluster it
+is connected to. It is available via
+<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Cluster.html#getMetadata()">Cluster#getMetadata()</a>.</p>
+
+<h3 id="schema-metadata">Schema metadata<a class="anchor" href="#schema-metadata" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>Use <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getKeyspace(java.lang.String)">getKeyspace(String)</a> or <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getKeyspaces()">getKeyspaces()</a>
+to get keyspace-level metadata. From there you can access the keyspace’s
+objects (tables, and UDTs and UDFs if relevant).</p>
+
+<h4 id="refreshes">Refreshes<a class="anchor" href="#refreshes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>Schema metadata gets refreshed in the following circumstances:</p>
+
+<ul>
+<li>
+<strong>schema changes via the driver</strong>: after successfully executing a
+schema-altering query (ex: <code>CREATE TABLE</code>), the driver waits for
+schema agreement (see below), then refreshes the schema.</li>
+<li>
+<strong>third-party schema changes</strong>: if another client (cqlsh, other driver
+instance…) changes the schema, the driver gets notified by Cassandra
+via a push notification. It refreshes the schema directly (there is no
+need to wait for schema agreement since Cassandra has already done it).</li>
+</ul>
+
+<h4 id="schema-agreement">Schema agreement<a class="anchor" href="#schema-agreement" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>Schema changes need to be propagated to all nodes in the cluster. Once
+they have settled on a common version, we say that they are in
+agreement.</p>
+
+<p>As explained above, the driver waits for schema agreement after
+executing a schema-altering query. This is to ensure that subsequent
+requests (which might get routed to different nodes) see an up-to-date
+version of the schema.</p>
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAjAAAAGWCAIAAADpPi5WAAA1d0lEQVR42u2d%0AfVAVV5r/FVBAUDEBkRKNL0jwLeKIBo1GMxI1FVIao4lOQhZHUXZ9rcIVXF9Y%0AJ2DUKZnVUhzNhoyyZqMiCnGNS5US2MRVR5xoWOIwKoqvQQmCKALi7/cUp+y6%0Ac+/t5oLAVfh8/rD6nO57+vR5vvf59unbHNv8PwAAgGeANgwBAABgSAAAABaG%0A9BgAAKDZwZAAAABDAgAAwJAAAABDAgAAwJAAAABDAgAAwJAAAABDAgAAwJAA%0AAABDAgAAwJAAAABDAgAAwJAAAABDAgAAwJAAAABDAgAAwJAAAABDAgAAwJAA%0AAABDAgAAwJAAAABDAgAAwJAAAABDAgAAwJAagYKCgrNnz965c4d4A0ArJz8/%0AX/Lh3bt3MaS6SUxMjIuLy8zMbMQ2J0+e3KZNm23btqniggULBgwY8NVXXzXi%0AKZqiTXi+2Lt3b9wT4uPjk5KSvv/+++rqapTTGjh37pzE/eOPPw4NDY2MjFy7%0Adm1WVtaz2dVhw4ZJPjx48CCGVLd1t6nlV7/6VdMZkojGy8vriy++aHCDxcXF%0AJ0+ePH/+vFbz9G3C846SWbt27VxdXds8YciQIadOnTL4FMp53qmpqYmKinJy%0AcpJw9+3bd9y4cZ6enrL94YcfYkjPtyHFxMS0b9/e2dlZxisnJ6eJDOnpkTsg%0AaXD16tV8G8FMZmvWrJHt0tLS//3f/x08eLDUeHt7//LLL4xPS0USi0S5U6dO%0A6enpWuXFixcbMYNhSHagqqrKx8dn+vTpM2bMkPGaP3++6d7o6OiRI0empqZ+%0A+umngwYN6t+/f0JCgo17zQxJO1g7YPfu3WPHjpWz9+vXT2bcqjI5OXnmzJkB%0AAQHS2sKFC3/88UetXlKMNOjr6yvtiPKstvn555+/9tprcuTQoUOXL19+//59%0As7N/9tlnQUFBo0aNMv0UtAxDUvz8888ODg5SGRsbaxr6+Ph4EdWxY8fMlLNh%0AwwbZ/uSTT7QWMjIyNI3JnbioWjQjQh0/fryW76w2C82WtTw8PCTEMvhWD9BL%0AI8Ldu3flUyEhIZIlAgMDN23aZFxv0JRxVqmurl6xYsXLtaxbt07aNDUkq/ox%0AOFdrMSQZIBmmI0eOyJdQNiTMDx48MPu2i7dLkPz8/NTzkF27dtm+VzMks+LK%0AlSul6OjoKEa4aNGi119/XdVPqWXz5s2zZ8+WAyZOnKjqMzMzVUQl6suWLbt5%0A86ZlmzLVk+KLL764atWqAQMGyLaE/NGjR9qRUnR3dx84cKC60ocPH/LdbnmG%0AJIwYMUIqZZepSsWlRKVHjx41U47kAtnu0qWLpnxRoNxgqe3FixfL3tGjR4uo%0A5H68Y8eOJSUles1C8/DXv/5VZZsLFy5YPUAvjQizZs1SNVu3bpXMo91D69Ub%0ANGWcVaQRqZFd4j3ic6rDmiFZ1Y/BuVqLIb3zzjsvvfSSZG25E+zdu7eMgri0%0A2YjLPEamGnLMtGnT1JfT9r1WDenq1avq4e+ePXv0OiYNvvDCC23btr1165be%0AIzurbX733XdSrKysFClI8csvv9SO7Nu3r2qta9euUiSJtFRDklsWqZQ7GO0A%0Af39/UYhV5Yjy+/TpI8X/+I//kKLc64iQNm7cKNuXL192rOX27dtSjIiIkMO2%0Ab9+u1yw0D4cOHZLBl+QgX3PjIy3TiNzRymfXr19vdqRevUFTBllFBKN+BDl8%0A+LDSmLpFNjMkPf1YnqtVGNL169flyxYeHp5Ty29/+1sZo3Hjxuk9dpOvohS7%0AdevWgL2mRaUnFxeX8vJysy6VlZVt2bIlLCzszTffVBFVT07qNKSvv/5atl1d%0AXTWNSgtSExUVpR0p9z6mz3NNnz5DSzKkhQsXSuXbb7+tHZCYmGj5KU2c8nEp%0A/vrXv1ZP8Nq3b19UVCTbaWlpUi+zopm1qDm6uJ1es9A8yE2nmnD8/PPPVg8w%0ASCM7duxQnx06dGhSUpL2QqZevUFTBlklOztbPQEqLS013WtmSGb6MThXqzCk%0A+Pj4NhaILefn51v93n7xxRdSlBlVA/aaFvft2yfbnTt3NrvBkeCpX6RDQ0Nj%0AY2PVY2IbDUm1KbcVcjOi9r733nvar2JmncGQWrYhBQcHm92LmL1cY1Z55coV%0ABwcHUf6FCxcCAgJEOap+//796i4nOjo65gmitMdN8M4O2M6dO3dUsrL6FTZO%0AI0JWVtbw4cNVC1OnTjWoN27KIKuon0Lc3Nw0Y7NqSKb6qbPbLdyQJHGr1yVP%0AmSA3iTIKy5cvtzpq6pGFuHcD9poW8/LyVNSPHDli2iX1/demaD179jQNiXqa%0Av2TJEqtpRWszNzdX7fX19dXuXzCk1mNI6sZIbjD/9re/2WhIwoQJE6RGPev/%0Ar//6L1Wp/UWE3PBaPS+GZC8mTZok4y8ZXJuC2JhGNFJSUtT9d2FhoV69cVMG%0AWSUnJ0cp54cfflDPotQDPQNDsrHbLdaQ1G+5Zr/iqGD4+PhUVVVpoyaTHrkr%0A/PTTTzt06GA5psZ79V5qkBsQ9XwvLi5OQijznoqKitOnT6uzJycnT58+Xb0r%0Apc2Iv/nmGylKnCRyVl9qUG3K3bEcqaZTPXr0kFkwhtTiDUlupH73u9/JlOiN%0AN95Qj0r+8Ic/GDiHZeWXX36pMojcx5j+XW1YWJhU9unTRzwvNTVVbl3V+1cY%0Akn2RuWzHjh0lBL179964caN8l9etW/fWW29JXIzTiNw3y/EnTpzYuXOn1EvW%0AUinCar1xUwZZRSTk7++vUpzcSfv5+XXp0sXYkIzP1fIN6cMPP/T09DR706yy%0AstLUydWozZgxQ802XFxcxHjMvtXGe/UMqaSkRBTQvn17lQW8vb3VK9pz5syR%0Ae1sJxrx585YuXar2qid7EuMPPvhAvapw4MABq23Onj27Xbt2UiktSG766aef%0A6pQOtABDUqgXlqZMmSJpxXgqY1kp90MqZaxYscL0yPLycvE57a9uvby81ENj%0ADMnuXLlyRaKgXmVSfxw9ZMgQ9fq+QRqRSbCbm5uaQ8u0OCMjQ7WmV2/QlHFW%0AOXXqlNwQq1fvkpKS6nxkZ3yulm9Itn/bZdRqamoKCgrMhsZ4ry3IPEzudMwm%0A3eIrWs2tW7fMVsOTxHHt2rU629T+Agng6VEKLy4uZiieNSTt5Obm/uUvfzG7%0AtzZIIxLNwsLCe/fuWUbZar1xRjKWjbhmnQtZNcq5WpchNWAvAAA8+zw3hhQV%0AFRUUFJSSktKAvQAAgCEBAABgSAAAgCEBAABgSAAAgCEBAABgSAAAgCH9HWox%0APgAAaD1I5meG1DjIaHJ7AqgOUA6P7AgwoDoADAlDIjUAqgOUgyERYCCtAKAc%0ADInUAKgOUA6GRIABUB2gHAyJ1ACoDlAOhkSAAVAdoBwMidQAqA5QDoZEgAFQ%0AHaAcDInUAKgOUA6GRIABUB2gHAyJAAOqA5SDIRFgAFQHKAdDIsCA6gDlYEgE%0AGADVAcrBkAgwoDpAORgSAQZAdYByMCQCDKgOUA6GRIABUB2gHAyJAAOqA5SD%0AIRHgxuXcuXNxcXEff/xxaGhoZGTk2rVrs7KypH7v3r1xT/jjH/944cIF00+Z%0A7lVs3brVrOXExESpz8zMNK3ctm1bnA6yy8aWbWnHuBumJ4qPj09JSSkqKjLb%0AlZ2drfcR476hOiBfYUgEuH7U1NRERUU5OTlJB/r27Ttu3DhPT0/Z/vDDD2Xv%0A5MmTZbt9+/YODg5tannrrbe0z6q97dq16/CEwYMHmzaen5+vPvWrX/3KtD4w%0AMFAd7+rqqg6QDVUzZMgQW1q2sR3jbpheoDqgbdu2CxYsMN21Zs0aqx+ps2+o%0ADshXGBIBrh8yk5BTd+rUKT09Xau8ePFiTk6Olnx37dpVWlr61Vdfqawt0ynj%0AlK0RExMjud7Z2VkOUw2acfPmTdXmjRs3LJO+Qcs2tlNnN7QLLC4ujo2NlW1H%0AR8cHDx7UaUi29w3VAfkKQyLAdVNVVeXh4SGnjo+Pt3qAlq9V8aWXXpJiWlqa%0ALalZGvfx8Zk+ffqMGTPksPnz59vFkIy7YXqBGRkZsv3yyy/bMkPCkABDwpAI%0AcGPy17/+VeVxsx+HrOZrmULJtpubW3l5ueneqKioy0949OiR9tmDBw/K3iNH%0AjqhEL86nZh62G5Jey/UyJONuqBMlJCQcOHAgKChI9qakpNhiSLb3DdUB+QpD%0AIsB1c+jQIfXDSWVlpYEhDR48uHv37rLh7e393Xffme015c6dO9red955R2ZU%0Akqxramp69+4te5OTk+tlSHot18uQjLtheiK5uvPnz9c5E6pv31AdkK8wJAJc%0AN+IuKqX+/PPPBob0yiuvDBkyRDamTp1quTcsLOzwEzRju379uqOjY3h4eE4t%0Av/3tb+XIcePG1cuQrLZcL0OqsxvadCc2Nvbll192d3eXDVsMyfa+oTogX2FI%0ABLhu5NZe5XHTNxosk++uXbvu3r3r4+Mj23/605/qnEMI8fHxbSyQqVh+fr7t%0AhvT0vyHV2Q3TZ5IFBQXqdbu8vLzH/IYEgCFhSM3MpEmT1EO50tJSA0OS7d27%0Ad6v38S5dumScmmtqatQb5KdM+PWvfy0HL1++vNkMyZZumF5gRUWFt7e3FDds%0A2NAAQ5I+/Pd///fRo0cNtlEdkK8wJAKsy4ULFzp27Chn792798aNG2WqtG7d%0AurfeekvS7mOLt+zeeOMNKY4ZM0b9jK/2Sor/nQmSf48dOyb1e/bsMT1RSkqK%0AVMo0q6qqykZDsmy5XoZkSzfUid57772YmJixY8eqRr799lu9Ply7dk2vb//5%0An/8p9V26dJHP6m2jOiBfYUgE2IgrV65IklV/G6v+5HPIkCGffPKJpSH93//9%0An+yVmrVr1z629vO++kOfDz/80NPT8+HDh6Znqays7Nq1qxxw8OBBGw3JsuV6%0AGZIt3TA9kdT/5je/MXvLzowTJ07o9Q1DAvIVhkSAGwfJ1Lm5uX/5y1/MMjig%0AOgAMiQADoDpAORgSAYbnk/Dw8F9++QXVAfkKQyLAYH8h9erV69ixY6gOyFcY%0AEgEGOwtJERMTY7lWE6oD8hWGhCFBcxuSEBgYqP7IF9UB+QpDIsBgT0MSXFxc%0ANm/ejOqAfIUhEWCwsyEpQkJCCgsLUR2QrzAkDAnsbEiCu7v73r17UR2QrzCk%0Apw2w+m/0ABqMGFJiYiKGBBgShsQMCew5QwoODrb6dgOqA/IVhoQhQTMZkpOT%0AU2xsrN7736gOyFcYEqkBmsOQAgICjh8/juqAfIUhEWCwpyFFRkbWuYYQqgPy%0AFYZEaoAmFJKnp6fefwGM6oB8hSGRGqCZCA0NLSoqQnVAvsKQCDCgumeR/Pz8%0As2fP3r17l6CjHAyJ1ACozp4MGzbM7H8rBpSDIZEaANVhSLZSXFx88uTJ8+fP%0AoxwMiQADqsOQ7ElkZKR0e/Xq1SgHQyLAgOqaj7t378bHx4eEhHh7ewcGBm7a%0AtEnV19TUJCQkBAUF+fj4jB8/PicnR9VHR0ePHDkyNTX1s88+k72jRo2Sba21%0A6urqFStWvFzLunXrpEEDQ9Kakg70799f/feGeuc1a3n58uXy2ezsbLV37ty5%0AUszMzFTFd999V4q5ubnG12L12pOTk6Uo3fb19ZVGLl68iHIwJAIMqK45mDVr%0AlvRn4sSJW7duXbRokSRuVb948WKpHz169KpVqzp16tSxY8eSkhKpnzx5stRL%0ApnZ3dx84cKBse3h4PHz4UH1KWlAr+InZSKJXf5ulZ0iqKZlFOTg4+Pn5HT16%0A1OC8xi1Lf6SYkpKiij179pTiiRMnjK/F6rWLqykfFa9dtmzZzZs3UQ6GRIAB%0A1TUHknalP+vXrzetvHz5smMtt2/flmJERIQcs337ds1F+vbte+vWLSl27dpV%0AispL5GBnZ2cpHj58WM1LBgwYUKch+fv7X7161fi8dbZsYEgG12L12h/zyA5D%0AIsCA6uzCjh071Gxj6NChSUlJ1dXVUpmWliY1MpOYWYuaMch0QXMRmVKoj6tf%0A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%0AQ73G62UkNl5Fne0YdFKIiYmRGhm6VatWDRgwQB2phnHRokXqoahYmhiMym6a%0AIS1evFiKo0ePlg926tSpY8eOJSUlUj9r1izV261bt0oLz93fmbY8Q1JIBOWW%0ADkMijUKjjaRKzb///e8l3cvG999/L//26dNHdslM4r333jM7XhLrCy+80LZt%0A21u3blnN3XU+VbPFkMQmVftdu3aV4tGjR/Uab9ijtjqvwhZDstrJq1evOjk5%0ASfG7776TYmVlpdiPFL/88svbt287OzvL9uHDh9V8SNmVMqTLly871iKHSTEi%0AIkJ2bd++XbbFgGW7vs9O+f42tSGpe4u9e/diSBgSNM5I7tq1S/2M9Mknn/j4%0A+GhzptOnT8u/ckuuDisrK9uyZUtYWNibb76psqr2OK4pDEk7r/qVJT09vVEM%0AyfarsMWQrHby66+/lm1XV1exIrVXziU1UVFR2dnZsiGWU1paavpBZUhpaWmy%0ALbOimbWouaBMBGXXjh07VPobOnRoUlKS9srJ857NWwBiSImJiRgShgQNwfK9%0AVe1nJMmb06dPl5qPPvpIatSzO/U+myTQwYMHK9+KjY318PBoakPSWmtEQ6rX%0AVdhiSFY7uW/fPtmW6ZdMgNRemWVKzfz589VLjG5ubpqjmBrS/v37lZNFR0fH%0APEFaU0dmZWUNHz5cJcGpU6c+X6rT/q6ghc2QgoODrb7dgCFhSNBw1JTIwcHh%0A3/7t36QoN/5SbNu2bY8ePdQBKldqb+gpC9FL5eqHkCVLluidbsyYMXKA3PU/%0Arv1ZqF27drYbkmXjthtJva6iwYYkGUplK+01DV9fXzWdysnJUbt++OEHqb9+%0A/bp61qcMKT8/X+2ViZTe0ImLq9BY/ekCms2QnJyc5J5G7/1vDAlDgoajfkbS%0AXqg7c+aMKoaHh6sD1OM7Hx+f5ORkmUWpN/G0B1Zm2fmbb76RoqR7MQCrLzWs%0AXLlSDujXr9+8efO6d++ufmKx0ZAsG7fdSOp1FQ02JEFmMOr2WXqrpnRi7WVl%0AZTIx8vf3l2K3bt3EWf38/Lp06WL6UkNYWJj6AW/NmjWpqamS8tQLdRERERs3%0AbpQh2rlzpxzQoUMHFiS0oyEFBAQcP368FeYrDAlDag5UmuvYsaN6lCT/KpPY%0AtWuXdsycOXOcnZ0liYuLLF26VH0z1c8kZtlZPv7BBx+oFg4cOGB5OpkKjBgx%0A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%0ABkB1jAZjhSHxZQBUx2gwVhgSAQZAdYwGY4UhEWBAdYwGY4UhEWAAVMdoMFYY%0AEgEGVMdoMFYYEgEGQHWMBmOFIRFgQHWMBmOFIRFgAFTHaDBWGBIBBlTHaDBW%0AGBIBBkB1jTkaoOHh4YEhYUgAqA5QDoZEgAHVAWBIGBKpAVAdoBwMiQADaQUA%0A5WBIpAZAdYByMCQCDKQVBgFQDoZEagBUBygHQyLAAKgOUA6GRGoAVAcoB0Mi%0AwACoDlAOhkRqAFQHKAdDIsAAqA5QDoZEagBUBygHQyLAAKgOUA6GRIAB1QHK%0AwZAIMACqA5SDIRFgQHWAcjAkAgyA6gDlYEgEGFAdoBwMiQADoDpAORgSAQZU%0A16QUFxenpaX9+c9/fvDgQaM0WFBQcPbs2Tt37jRFb5u0cZSDIRFgQHV2Y/bs%0A2e3bt2/btq109eDBg43S5uTJk6W1bdu2NUWHm7RxlIMhEWBAdfbh6tWrYkU9%0AevS4cePG3/72t5s3b2JIKAdDIsCA6uzAH//4R+nh+++//xx5BoaEIRFggOdD%0AddHR0SNHjkxNTY2Pj+/fv/+xY8eksqamJiEhISgoyMfHZ/z48Tk5OVK5ZcuW%0Anj17Sg+9vLzkI+vXr6/Xx4W7d+/KYSEhId7e3oGBgZs2bTLzjM8++0w+NWrU%0AKGlQr8N6jQi7d+8eO3asnLRfv36hoaG2NK7XVXVdmZmZcXFxAwcOfPXVV9PT%0A0ysqKhYuXNi3b1+x5PPnz6sjk5OTZ86cGRAQIJcve3/88UfyFYZEgAHVNXwC%0AMWzYMAcHBz8/v6NHj0rl4sWLpXL06NGrVq3q1KlTx44dS0pKDh069Prrr0v9%0AoEGDli1btn///np9XOpnzZol9RMnTty6deuiRYvECUz7IAbg7u4u2V+2PTw8%0AHj58aLXDeo2sXLlS6h0dHWfMmCH10lVbGtfrqvqU+JC4b+/evWW7a9eukyZN%0Akmvs3LmzFMV7VAtTatm8efPs2bNVx8hXGBIBBlTXcEPy9/e/evWqqrl8+bJj%0ALbdv35ZiRESEHLB9+3bZXrt2rWyHh4c37OMyO5FtNbWy7IPMPG7duiVFSf1S%0AVN5midVG5OxOTk5Sv2fPHtsbN+iq+lRwcPD9+/eLi4vVSxzz58+XXTJVku1X%0AXnnF7ESPHj164YUX5Eh1IvIVhkSAAdU1xJASExO1mrS0NKmRucLMWgIDA6Uo%0AUyIDQ7Lx4zt27GhTy9ChQ5OSkqqrq00bkRmPKsp8S4qS96122GojMnuTGhcX%0Al/LycqsXaLVxg66qT6WkpKhPdenSRYpFRUWynZubK9sBAQFqV1lZ2ZYtW8LC%0Awt58801nZ2fZdfHiRfIVhkSAAdU10JBMf/Pfv3+/1Li6ukZHR8c8Yd++fQaG%0AZOPHhaysrOHDhytHmTp1qtVGjA3JaiPSvmx37ty5srLS+AJNGzfoqo2GVFpa%0AOnjwYCmGhobGxsZ6eHhgSBgSAQZU12iGlJ+fr3J9dna22cG2GJLBxzUk0csB%0Abdu2LSwsbIAhWTaSl5enTnrkyBHbDcmgqzYakrK0cePGqcPUSx8YEoZEgAHV%0ANY4hCWFhYVLZp0+fNWvWpKamyr2/epnNFkMy+HhERMTGjRtPnDixc+dOOaBD%0Ahw5lZWX1NSS9RmSqJMVu3brFxcXJZ1evXl1RUVFn43pdtdGQTp8+Lds+Pj7J%0AycnTp093cHAwfTxIvsKQCDCguqc1pPLy8qioKFdXVzWB8PLykvxuuyHpfTwk%0AJMTNzU1qnJ2dJ0yYkJGRUeckxhK9RkpKSsSr2rdvr07q7e19//79OhvX66rt%0AvyHNmTNHeiJWNG/evKVLl6p2LJ8ckq8wJAIMqK7h1NTUFBQUFBcXN+LHpbKw%0AsPDevXtP2TG9Rqqqqi5cuFBaWtqcVypeqJ3x1q1bdlk3D0MiNQCgOkA5GBIB%0ABlQHLZrw8PBffvkFQ8KQSA2A6sD+YujVq5dajQlDwpBIDYDqwJ5iUMTExNT5%0AX09hSKQGAFQHTW5IQmBgYF5eHoaEIQGgOrCzIamFkTZv3owhYUgAqA7sbEiK%0AkJAQtbwFhkRqAEB1YE9DEtzd3ffu3YshkRoA7Kk6tXYntHLEkEyXV8eQSA0A%0AqA7sMEMKDg62+nYDhkRqAEB10EyG5OTkFBsbq/f+N4ZEagBAddAchhQQEHD8%0A+PFWqBwMidQAqA6eIUOKjIyscw0hDInUAIDqoAnF4OnpWed/VIghkRoAUB00%0ALaGhoep/YMKQMCRSAzy7qisrK4uMjGS4AEMiwAD2VN3x48cDAgLQJ2BIBBjA%0AbqqrqqqKjY11cXFRv3UzXIAhEWAAO6guLy8vODjY9FVghgswJAIM0NyqS0xM%0AtFw3iOECDIkAAzSf6oqKikJDQ62uIsNwAYZEgAGaSXXp6emenp56i2wyXIAh%0AEWCAZlJdUlISK3yDQpSAIWFIAPZU3aVLl8aNG8cMCZghYUgAz4Tq1q5dq73t%0AjSEBhkSAAeypujNnzqi/h8WQAEMiwAB2Vt2DBw8WLFiAIQGGRIABngnVZWRk%0A+Pr6ok/AkAgwgP1VV1ZWNm3aNIYLMCQC3OooKCg4e/bsnTt3GApUBygHQyLA%0A9mTy5MkyGtu2bWMoUB2gHAyJAD8HhlRcXHzy5Mnz588zYqgOUA6GRIDtaUiR%0AkZFy2OrVqxkxVAcoB0Nq4QHevXv32LFjfXx8+vXrFxoaqtV//vnnr732mre3%0A99ChQ5cvX37//n1VHx0dPXLkyMzMzLi4uIEDB7766qvp6ekVFRULFy7s27fv%0A+++/r81m1JGpqamffvrpoEGD+vfvn5CQoGdINTU1sjcoKEh6Mn78+JycHKlM%0ATk6WDshhvr6+0tTFixf1jrSkurp6xYoVL9eybt06uQRpITs7W+2dO3euugpV%0AfPfdd6WYm5tr0BnTK4qPj5fLOXbs2L/+679KjRS18yYlJcm4/fzzz6gOyFcY%0AEgGuBytXrpQuOTo6zpgxY9GiRa+//rqqj4mJkfoXX3xx1apVAwYMkG1Ju48e%0APdKMRHzIy8urd+/est21a9dJkyb5+fl17txZiuJMppYzbNgwMRXZq/7MZdeu%0AXVYNafHixVIcPXq0nLFTp04dO3YsKSkRwwgMDJT6UaNGLVu27ObNm3pHWl6a%0AXI4c5u7uLi4SEhKizn7w4EG1Vy5HiikpKarYs2dPKZ44ccKgM6ZX5ODgIFd0%0A9OhRaVBqPD09Kysr5QAZoj59+rzzzjuoDshXGBIBrgdXr151cnKSLu3Zs8dq%0A/XfffSdFSbWS1qX45Zdfakk5ODhY5kzFxcVt27aV4vz58x/XLiMt26+88oqp%0A5cj0S46UTD1t2jSV5S0N6fLly4613L59W4oRERGya/v27Y8tHtkZHGmK7HV2%0AdpZdhw8fVjMeZau2GJLBKVSf/f39ZYjUB2VwxJilUqZNUty/f79sf/vtt6gO%0AyFcYEgGuB4cOHZL+uLi4lJeXm9Z//fXXUu/q6qru+oU333xTaqKiorSkrKXy%0ALl26SLGoqEi2c3NzZTsgIMDqHEhyuhS7detmuTctLU22ZSIysxY1K5IpkaUh%0AGRxpSnZ2tpr5lZaWqhqZ1thoSAanUH1OTEy0nIpNmTJFtmWKOXz4cFQH5CsM%0AiQDXj3379kl/OnfurBmPaf0LL7wgEwtV895772nToAYb0hdffCHFl156yXKv%0AmliIBUZHR8c8QbphaUgGR5qinqS5ublVV1fX15AMTmH1RYzTp09LZbt27Y4c%0AOWI53UR1QL7CkAhw3eTl5alfViSTWq3XfuRXi8ps3br1aQxJPfuSyZbl3vz8%0AfHVG7aUDDfVzzpIlS1TR4EhTcnJy1GE//PCDFK9fv961a1dTQxozZowUd+zY%0AIduZmZliJ5ohGZxC783AQYMGKQvv3bu3ZoGoDshXGBIBrgdTp05Vj9Hi4uLS%0A09NlIlJRUaHVBwcHf/PNN2qO0qNHj7KysgYYkkyJZHrx6aefdujQwdQSzJJ7%0AWFiYFPv06bNmzZrU1NTY2NhNmzZJvXRA6mUGIxMX9VKD3pGmiCv4+/urSxNL%0A8/PzU/3Uzq7e5ujXr9+8efO6d++ufiTTXmrQO4WeIW3YsEF5mGVPUB2QrzAk%0AAmwTJSUlMnFp3769yqfe3t7q9W6pnz17tpo3ODg4vPHGGz/99JOpkdhuSDNm%0AzFATLBcXF7ElvdlGeXl5VFSUq6ur6omXl5d6TCfW8sEHHyjDOHDggMGRZpw6%0AdUpMVP2fmElJSWaP7GQaNGLECPVCeVZWltlbdnqn0DMkmYE5OjrKDOnevXuo%0ADshXGBIBbjhVVVUXLlzQfv83q9f+Aqm+aOm7pqamoKDA7Jcqq6gji4uLzepl%0A3nbt2jVbjjQ75sqVK+oZmpkhKdSUq76dseT48eNi2ytWrEB1QL7CkAjws8gz%0AtVqdVUNqFMRoBw0a5OzsfOPGDVQH5CsMqaUFuKysLDIy8nm/2KioqKCgIO3h%0Ann0JCwuTzjTFXwjt27dPWv6Xf/kX0gpgSBhSSwvw8ePH1f8qzfcBSCuAcjAk%0A+wS4qqoqNjbWxcWF/0waSCuAcjAkuwU4Ly8vODi4jQl8H4C0AigHQ2ruACcm%0AJnp4eLT5e/g+AGkFUA6G1HwBLioqCg0NbWMNvg9AWgGUgyE1U4DT09M9PT3b%0A6MD3AUgrgHIwpGYKcFJSkuWTOoD6IirCkABDwpCeNsCXLl0aN24cMyQgrQDK%0AwZCeiQCvXbtWe9sbQwLSCqAcDMmeAT5z5oz6e1gMCUgrgHIwJDsH+MGDBwsW%0ALMCQgLQCKAdDeiYCnJGRof6/Br4PQFoBlIMh2TnAZWVl06ZN4/sApBVAORgS%0AAQZUBygHQyLAAKgOUA6GRIAB1QFgSAQYANUBysGQCDCgOgAMiQADoDpAORgS%0AAQZUB4AhtUqMV2UGQHWAcjAkAABoFWBIAACAIQEAAGBIAACAIQEAAGBIAACA%0AIQEAAGBIAACAIQEAAGBIAACAIQEAAGBIAACAIQEAAGBIAACAIQEAAGBIAACA%0AIQEAAGBIAACAIQEAAGBIAACAIQEAAGBIAACAIQEAAGBIAACAIQEAAGBIAACA%0AIQEAAGBIAACAIQEAAGBIAACAIWFIAADwDBkSAACAHcGQAAAAQwIAAHjC/weJ%0Avj8DNR3fTAAAAABJRU5ErkJggg==%0A" alt="Text Diagram" class="img-rounded img-thumbnail center-block ditaa">
+<p>The schema agreement wait is performed synchronously, so the <code>execute</code>
+call – or the completion of the <code>ResultSetFuture</code> if you use the async
+API – will only return after it has completed.</p>
+
+<p>The check is implemented by repeatedly querying system tables for the
+schema version reported by each node, until they all converge to the
+same value. If that doesn’t happen within a given timeout, the driver
+will give up waiting.  The default timeout is 10 seconds, it can be
+customized when building your cluster:</p>
+<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">withMaxSchemaAgreementWaitSeconds</span><span class="o">(</span><span class="mi">20</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>After executing a statement, you can check whether schema agreement was
+successful or timed out:</p>
+<pre class="highlight"><code><span class="n">ResultSet</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"CREATE TABLE..."</span><span class="o">);</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">rs</span><span class="o">.</span><span class="na">getExecutionInfo</span><span class="o">().</span><span class="na">isSchemaInAgreement</span><span class="o">())</span> <span class="o">{</span>
+    <span class="c1">// schema is in agreement</span>
+<span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+    <span class="c1">// schema agreement timed out</span>
+<span class="o">}</span>
+</code></pre>
+<p>You can also perform an on-demand check at any time:</p>
+<pre class="highlight"><code><span class="k">if</span> <span class="o">(</span><span class="n">cluster</span><span class="o">.</span><span class="na">getMetadata</span><span class="o">().</span><span class="na">checkSchemaAgreement</span><span class="o">())</span> <span class="o">{</span>
+    <span class="c1">// schema is in agreement</span>
+<span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+    <span class="c1">// schema is not in agreement</span>
+<span class="o">}</span>
+</code></pre>
+<p>The on-demand check does not retry, it only queries system tables once
+(so <code>maxSchemaAgreementWaitSeconds</code> does not apply). If you need
+retries, you’ll have to schedule them yourself (for example with a
+custom executor).</p>
+
+<p>Check out the API docs for the features in this section:</p>
+
+<ul>
+<li><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Cluster.Builder.html#withMaxSchemaAgreementWaitSeconds(int)">withMaxSchemaAgreementWaitSeconds(int)</a></li>
+<li><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/ExecutionInfo.html#isSchemaInAgreement()">isSchemaInAgreement()</a></li>
+<li><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#checkSchemaAgreement()">checkSchemaAgreement()</a></li>
+</ul>
+
+<h3 id="token-metadata">Token metadata<a class="anchor" href="#token-metadata" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>This feature is probably of less interest to regular driver users, but
+it will be useful if you’re writing an analytics client on top of the
+driver.</p>
+
+<p><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html">Metadata</a> exposes a number of methods to manipulate tokens
+and ranges: <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getTokenRanges()">getTokenRanges()</a>, <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getTokenRanges(java.lang.String,%20com.datastax.driver.core.Host)">getTokenRanges(String
+keyspace, Host host)</a>, <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#getReplicas(java.lang.String,%20com.datastax.driver.core.TokenRange)">getReplicas(String keyspace,
+TokenRange range)</a>, <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#newToken(java.lang.String)">newToken(String)</a> and
+<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Metadata.html#newTokenRange(com.datastax.driver.core.Token,%20com.datastax.driver.core.Token)">newTokenRange(Token start, Token end)</a>.</p>
+
+<p><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/TokenRange.html">TokenRange</a> provides various operations on ranges
+(splitting, merging, etc.).</p>
+
+<p>Each host exposes its primary tokens as <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Host.html#getTokens()">getTokens()</a>.</p>
+
+<p>Finally, you can inject tokens in CQL queries with
+<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/BoundStatement.html#setToken(int,%20com.datastax.driver.core.Token)">BoundStatement#setToken</a>, and retrieve them from results with
+<a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Row.html#getToken(int)">Row#getToken</a> and <a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Row.html#getPartitionKeyToken()">Row#getPartitionKeyToken</a>.</p>
+
+<p>As an example, here is how you could compute the splits to partition a
+job (pseudocode):</p>
+<pre><code>metadata = cluster.getMetadata()
+for range : metadata.getTokenRanges() {
+    hosts = metadata.getReplicas(keyspace, range)
+    int n = estimateNumberOfSplits() // more on that below
+    for split : range.splitEvenly(n)
+        // pick a host to process split
+}
+</code></pre>
+<p>For <code>estimateNumberOfSplits</code>, you need a way to estimate the total
+number of partition keys (this is what analytics clients would
+traditionally do with the Thrift operation <code>describe_splits_ex</code>).
+Starting with Cassandra 2.1.5, this information is available in a system
+table (see
+<a href="https://issues.apache.org/jira/browse/CASSANDRA-7688">CASSANDRA-7688</a>).</p>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc"><li>
+<a href="#metadata">Metadata
+</a><ol class="nav nav-pills nav-stacked">
+<li>
+<a href="#schema-metadata">Schema metadata
+</a><ol class="nav nav-pills nav-stacked">
+<li><a href="#refreshes">Refreshes
+</a></li>
+<li><a href="#schema-agreement">Schema agreement
+</a></li>
+</ol>
+</li>
+<li><a href="#token-metadata">Token metadata
+</a></li>
+</ol>
+</li></ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>
