@@ -1,0 +1,24 @@
+# This is provided on the 2.0 branch for convenience. Use docs.yaml from the
+# 2.1 branch to generate the docs for all versions.
+title:    Java Driver for Apache Cassandra
+summary:  High performance Java client for Apache Cassandra
+homepage: http://datastax.github.io/java-driver/
+sections:
+  - title:     Features
+    prefix:    /features
+    sources:
+      - type:  markdown
+        files: 'features/**/*.md'
+links:
+  - title: Code
+    href:  https://github.com/datastax/java-driver/
+  - title: Docs
+    href:  http://datastax.github.io/java-driver/
+  - title: Issues
+    href:  https://datastax-oss.atlassian.net/browse/JAVA/
+  - title: Mailing List
+    href:  https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
+  - title: IRC Channel
+    href:  irc://irc.freenode.net/datastax-drivers
+  - title: Releases
+    href:  https://github.com/datastax/java-driver/releases
