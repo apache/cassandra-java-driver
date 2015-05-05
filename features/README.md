@@ -13,5 +13,5 @@ This is a work in progress: new sections will be added to cover existing
 features or document new ones.
 
 You can also find more help in the legacy
-[user documentation](http://www.datastax.com/documentation/developer/java-driver/2.0/java-driver/whatsNew2.html)
+[user documentation](http://docs.datastax.com/en/developer/java-driver/2.0/java-driver/whatsNew2.html)
 on the DataStax website.

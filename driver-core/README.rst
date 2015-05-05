@@ -96,5 +96,5 @@ provided as "contact points". Even if only one host was provided, the driver
 would use this host to discover the other ones and use the whole cluster
 automatically. This is also true for new nodes joining the cluster.
 
-For now, please refer to the API reference (http://www.datastax.com/drivers/java/apidocs/).
+For now, please refer to the API reference (http://docs.datastax.com/en/drivers/java/2.0).
 More informations and documentation will come later.
