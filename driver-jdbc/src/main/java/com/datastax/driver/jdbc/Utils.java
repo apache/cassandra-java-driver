@@ -586,9 +586,8 @@ public class Utils
     
     @SuppressWarnings({ "boxing", "unchecked", "rawtypes" })
 	public static HashMap<?,?> parseMap(String kType, String vType, String value){
-    	//Class<?> kTypeClass = TypesMap.getTypeForComparator(kType).getClass(); 
-    	
-    	//Type t = Type.getObjectType(kType);
+    	//Parsing values looking like this : 
+    	//{key1:val1, key2:val2}
     	
     	Map zeMap = new HashMap();
     	String[] values = value.replace("{", "").replace("}", "").split(", ");
