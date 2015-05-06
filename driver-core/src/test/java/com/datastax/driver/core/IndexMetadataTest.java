@@ -194,8 +194,8 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             .isNotEntries()
             .isCustomIndex()
             .hasOption("foo", "bar")
-            .asCqlQuery("CREATE CUSTOM INDEX custom_index ON ks_1.indexing (text_column) "
-                + "USING 'dummy.DummyIndex' WITH OPTIONS = {'foo' : 'bar', 'class_name' : 'dummy.DummyIndex'};");
+            .asCqlQuery(String.format("CREATE CUSTOM INDEX custom_index ON %s.indexing (text_column) "
+                + "USING 'dummy.DummyIndex' WITH OPTIONS = {'foo' : 'bar', 'class_name' : 'dummy.DummyIndex'};", keyspace));
     }
 
     private ColumnDefinitions.Definition definition(String name, DataType type) {
