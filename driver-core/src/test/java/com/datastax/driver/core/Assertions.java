@@ -1,5 +1,7 @@
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.ColumnMetadata.IndexMetadata;
+
 /**
  * Augment AssertJ with custom assertions for the Java driver.
  */
@@ -18,5 +20,9 @@ public class Assertions extends org.assertj.core.api.Assertions{
 
     public static DataTypeAssert assertThat(DataType type) {
         return new DataTypeAssert(type);
+    }
+    
+    public static IndexMetadataAssert assertThat(IndexMetadata indexMetadata) {
+        return new IndexMetadataAssert(indexMetadata);
     }
 }

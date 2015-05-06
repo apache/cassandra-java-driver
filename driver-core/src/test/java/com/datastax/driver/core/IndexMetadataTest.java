@@ -1,5 +1,6 @@
 package com.datastax.driver.core;
 
+import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ColumnMetadata.COLUMN_NAME;
 import static com.datastax.driver.core.ColumnMetadata.COMPONENT_INDEX;
 import static com.datastax.driver.core.ColumnMetadata.INDEX_NAME;
@@ -14,7 +15,6 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.ColumnMetadata.IndexMetadata;
@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
 
 @CassandraVersion(
-    major = 2.1)
+    major = 1.2)
 public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
@@ -35,39 +35,63 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             + "map_values map<text, int>,"
             + "map_keys map<text, int>,"
             + "map_entries map<text, int>,"
-            + "map_full frozen<map<text, int>>,"
-            + "set_full frozen<set<text>>,"
-            + "list_full frozen<list<text>>,"
-            + "custom text)";
+            + "text_column text"
+            +
+            // Frozen collections was introduced only in C* 2.1.3
+            (cassandraVersion.compareTo(VersionNumber.parse("2.1.3")) >= 0
+            ?
+                ", map_full frozen<map<text, int>>,"
+                + "set_full frozen<set<text>>,"
+                + "list_full frozen<list<text>>);"
+            :
+                ")");
         return ImmutableList.of(createTable);
+    }
+    
+    @Test(
+        groups = "short")
+    public void should_not_flag_text_column_index_type() {
+        String createValuesIndex = String.format("CREATE INDEX text_column_index ON %s.indexing (text_column);", keyspace);
+        session.execute(createValuesIndex);
+        IndexMetadata index = getIndexForColumn("text_column");
+        assertThat(index).hasName("text_column_index")
+            .isNotKeys()
+            .isNotFull()
+            .isNotEntries()
+            .isNotCustomIndex()
+            .asCqlQuery(createValuesIndex);
     }
 
     @Test(
         groups = "short")
+    @CassandraVersion(
+        major = 2.1)
     public void should_not_flag_map_index_type() {
         String createValuesIndex = String.format("CREATE INDEX map_values_index ON %s.indexing (map_values);", keyspace);
         session.execute(createValuesIndex);
         IndexMetadata index = getIndexForColumn("map_values");
-        Assert.assertEquals(index.getName(), "map_values_index");
-        Assert.assertFalse(index.isKeys());
-        Assert.assertFalse(index.isFull());
-        Assert.assertFalse(index.isEntries());
-        Assert.assertFalse(index.isCustomIndex());
-        Assert.assertEquals(index.asCQLQuery(), createValuesIndex);
+        assertThat(index).hasName("map_values_index")
+            .isNotKeys()
+            .isNotFull()
+            .isNotEntries()
+            .isNotCustomIndex()
+            .asCqlQuery(createValuesIndex);
     }
 
     @Test(
         groups = "short")
+    @CassandraVersion(
+        major = 2.1)
     public void should_flag_map_index_type_as_keys() {
         String createKeysIndex = String.format("CREATE INDEX map_keys_index ON %s.indexing (KEYS(map_keys));", keyspace);
         session.execute(createKeysIndex);
         IndexMetadata index = getIndexForColumn("map_keys");
-        Assert.assertEquals(index.getName(), "map_keys_index");
-        Assert.assertTrue(index.isKeys());
-        Assert.assertFalse(index.isFull());
-        Assert.assertFalse(index.isEntries());
-        Assert.assertFalse(index.isCustomIndex());
-        Assert.assertEquals(index.asCQLQuery(), createKeysIndex);
+        assertThat(index).hasName("map_keys_index")
+            .isKeys()
+            .isNotFull()
+            .isNotEntries()
+            .isNotCustomIndex()
+            .asCqlQuery(createKeysIndex);
     }
 
     @Test(
@@ -79,12 +103,12 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         String createFullIndex = String.format("CREATE INDEX map_full_index ON %s.indexing (FULL(map_full));", keyspace);
         session.execute(createFullIndex);
         IndexMetadata index = getIndexForColumn("map_full");
-        Assert.assertEquals(index.getName(), "map_full_index");
-        Assert.assertFalse(index.isKeys());
-        Assert.assertTrue(index.isFull());
-        Assert.assertFalse(index.isEntries());
-        Assert.assertFalse(index.isCustomIndex());
-        Assert.assertEquals(index.asCQLQuery(), createFullIndex);
+        assertThat(index).hasName("map_full_index")
+            .isNotKeys()
+            .isFull()
+            .isNotEntries()
+            .isNotCustomIndex()
+            .asCqlQuery(createFullIndex);
     }
 
     @Test(
@@ -96,12 +120,12 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         String createFullIndex = String.format("CREATE INDEX set_full_index ON %s.indexing (FULL(set_full));", keyspace);
         session.execute(createFullIndex);
         IndexMetadata index = getIndexForColumn("set_full");
-        Assert.assertEquals(index.getName(), "set_full_index");
-        Assert.assertFalse(index.isKeys());
-        Assert.assertTrue(index.isFull());
-        Assert.assertFalse(index.isEntries());
-        Assert.assertFalse(index.isCustomIndex());
-        Assert.assertEquals(index.asCQLQuery(), createFullIndex);
+        assertThat(index).hasName("set_full_index")
+            .isNotKeys()
+            .isFull()
+            .isNotEntries()
+            .isNotCustomIndex()
+            .asCqlQuery(createFullIndex);
     }
 
     @Test(
@@ -113,12 +137,12 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         String createFullIndex = String.format("CREATE INDEX list_full_index ON %s.indexing (FULL(list_full));", keyspace);
         session.execute(createFullIndex);
         IndexMetadata index = getIndexForColumn("list_full");
-        Assert.assertEquals(index.getName(), "list_full_index");
-        Assert.assertFalse(index.isKeys());
-        Assert.assertTrue(index.isFull());
-        Assert.assertFalse(index.isEntries());
-        Assert.assertFalse(index.isCustomIndex());
-        Assert.assertEquals(index.asCQLQuery(), createFullIndex);
+        assertThat(index).hasName("list_full_index")
+            .isNotKeys()
+            .isFull()
+            .isNotEntries()
+            .isNotCustomIndex()
+            .asCqlQuery(createFullIndex);
     }
 
     @Test(
@@ -129,12 +153,12 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         String createEntriesIndex = String.format("CREATE INDEX map_entries_index ON %s.indexing (ENTRIES(map_entries));", keyspace);
         session.execute(createEntriesIndex);
         IndexMetadata index = getIndexForColumn("map_entries");
-        Assert.assertEquals(index.getName(), "map_entries_index");
-        Assert.assertFalse(index.isKeys());
-        Assert.assertFalse(index.isFull());
-        Assert.assertTrue(index.isEntries());
-        Assert.assertFalse(index.isCustomIndex());
-        Assert.assertEquals(index.asCQLQuery(), createEntriesIndex);
+        assertThat(index).hasName("map_entries_index")
+            .isNotKeys()
+            .isNotFull()
+            .isEntries()
+            .isNotCustomIndex()
+            .asCqlQuery(createEntriesIndex);
     }
 
     @Test(
@@ -153,7 +177,7 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 definition(INDEX_OPTIONS, text())
         });
         List<ByteBuffer> data = ImmutableList.of(
-            wrap("custom"), // column name
+            wrap("text_column"), // column name
             wrap(0), // component index
             wrap("regular"), // kind
             wrap("custom_index"), // index name
@@ -164,13 +188,14 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         Row row = ArrayBackedRow.fromData(defs, M3PToken.FACTORY, ProtocolVersion.V3, data);
         ColumnMetadata column = ColumnMetadata.fromRaw(table, Raw.fromRow(row, VersionNumber.parse("2.1")));
         IndexMetadata index = column.getIndex();
-        Assert.assertFalse(index.isKeys());
-        Assert.assertFalse(index.isFull());
-        Assert.assertFalse(index.isEntries());
-        Assert.assertTrue(index.isCustomIndex());
-        Assert.assertEquals(index.getOption("foo"), "bar");
-        Assert.assertEquals(index.asCQLQuery(), "CREATE CUSTOM INDEX custom_index ON ks_1.indexing (custom) "
-            + "USING 'dummy.DummyIndex' WITH OPTIONS = {'foo' : 'bar', 'class_name' : 'dummy.DummyIndex'};");
+        assertThat(index).hasName("custom_index")
+            .isNotKeys()
+            .isNotFull()
+            .isNotEntries()
+            .isCustomIndex()
+            .hasOption("foo", "bar")
+            .asCqlQuery("CREATE CUSTOM INDEX custom_index ON ks_1.indexing (text_column) "
+                + "USING 'dummy.DummyIndex' WITH OPTIONS = {'foo' : 'bar', 'class_name' : 'dummy.DummyIndex'};");
     }
 
     private ColumnDefinitions.Definition definition(String name, DataType type) {
