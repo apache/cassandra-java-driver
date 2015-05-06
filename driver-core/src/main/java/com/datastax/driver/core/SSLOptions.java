@@ -33,6 +33,7 @@ public class SSLOptions {
 
     final SSLContext context;
     final String[] cipherSuites;
+    final boolean enableEndpointVerification;
 
     /**
      * Creates default SSL options.
@@ -57,8 +58,20 @@ public class SSLOptions {
      * @param cipherSuites the cipher suites to use.
      */
     public SSLOptions(SSLContext context, String[] cipherSuites) {
+        this(context, cipherSuites, false);
+    }
+    
+    /**
+     * Creates SSL options that uses the provided SSL context and cipher suites.
+     *
+     * @param context the {@code SSLContext} to use.
+     * @param cipherSuites the cipher suites to use.
+     * @param enableEndpointVerification verify hostname the certificate was issued for and the actual hostname to connect
+     */
+    public SSLOptions(SSLContext context, String[] cipherSuites, boolean enableEndpointVerification) {
         this.context = context;
         this.cipherSuites = cipherSuites;
+        this.enableEndpointVerification = enableEndpointVerification;
     }
 
     private static SSLContext makeDefaultContext() throws IllegalStateException {

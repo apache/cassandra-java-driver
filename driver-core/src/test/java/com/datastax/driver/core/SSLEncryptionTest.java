@@ -44,6 +44,22 @@ public class SSLEncryptionTest extends SSLTestBase {
     public void should_not_connect_with_ssl_without_trusting_server_cert() throws Exception {
         connectWithSSLOptions(getSSLOptions(Optional.<String>absent(), Optional.<String>absent()));
     }
+    
+    /**
+     * <p>
+     * Validates that an SSL connection can not be established if the
+     * the cassandra node's certificate does not match the ip or hostname of the node (127.0.0.1). This will be checked by
+     * either using the CN or the Subject Alternative Name of the certificate. The test certificate does not have
+     * neither a matching CN or SAN set.
+     * </p>
+     *
+     * @test_category connection:ssl
+     * @expected_result Connection can not be established to a cassandra node after hostname verification.
+     */
+    @Test(groups="short", expectedExceptions={NoHostAvailableException.class})
+    public void should_not_connect_using_server_hostname_verification() throws Exception {
+        connectWithSSLOptions(getSSLOptions(Optional.<String>absent(), Optional.of(DEFAULT_CLIENT_TRUSTSTORE_PATH), true));
+    }
 
     /**
      * <p>

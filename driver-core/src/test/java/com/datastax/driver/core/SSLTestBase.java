@@ -73,7 +73,17 @@ public abstract class SSLTestBase {
      * server certificate validation and client certificate authentication.
      */
     public SSLOptions getSSLOptions(Optional<String> keyStorePath, Optional<String> trustStorePath) throws Exception {
-
+        return getSSLOptions(keyStorePath, trustStorePath, false);
+    }
+    
+    /**
+     * @param keyStorePath Path to keystore, if absent is not used.
+     * @param trustStorePath Path to truststore, if absent is not used.
+     * @param endpointVerification enables hostname verification
+     * @return {@link com.datastax.driver.core.SSLOptions} with the given keystore and truststore path's for
+     * server certificate validation and client certificate authentication.
+     */
+    public SSLOptions getSSLOptions(Optional<String> keyStorePath, Optional<String> trustStorePath, boolean endpointVerification) throws Exception {
         TrustManagerFactory tmf = null;
         if(trustStorePath.isPresent()) {
             KeyStore ks = KeyStore.getInstance("JKS");
@@ -95,6 +105,6 @@ public abstract class SSLTestBase {
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(kmf != null ? kmf.getKeyManagers() : null, tmf != null ? tmf.getTrustManagers() : null, new SecureRandom());
 
-        return new SSLOptions(sslContext, SSLOptions.DEFAULT_SSL_CIPHER_SUITES);
+        return new SSLOptions(sslContext, SSLOptions.DEFAULT_SSL_CIPHER_SUITES, endpointVerification);
     }
 }
