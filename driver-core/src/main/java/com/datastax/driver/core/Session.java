@@ -296,10 +296,12 @@ public interface Session extends Closeable {
      * This method has no particular effect if the session was already closed
      * (in which case the returned future will return immediately).
      * <p>
-     * Note that if you want to close the full {@code Cluster} instance
-     * this session is part of, you should use {@link Cluster#close} instead
-     * (which will call this method for all sessions but also release some
-     * additional resources).
+     * Note that this method does not close the corresponding {@code Cluster}
+     * instance (which holds additional resources, in particular internal
+     * executors that must be shut down in order for the client program to
+     * terminate).
+     * If you want to do so, use {@link Cluster#close}, but note that it will
+     * close all sessions created from that cluster.
      *
      * @return a future on the completion of the shutdown process.
      */
@@ -310,6 +312,13 @@ public interface Session extends Closeable {
      * that shutdown completes.
      * <p>
      * This method is a shortcut for {@code closeAsync().get()}.
+     * <p>
+     * Note that this method does not close the corresponding {@code Cluster}
+     * instance (which holds additional resources, in particular internal
+     * executors that must be shut down in order for the client program to
+     * terminate).
+     * If you want to do so, use {@link Cluster#close}, but note that it will
+     * close all sessions created from that cluster.
      */
     public void close();
 
