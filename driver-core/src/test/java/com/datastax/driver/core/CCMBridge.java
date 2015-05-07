@@ -279,7 +279,11 @@ public class CCMBridge {
     private void execute(String command, Object... args) {
         try {
             String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
-            logger.debug("Executing: " + fullCommand);
+            if(System.getProperty("os.name").toLowerCase().startsWith("win")){
+            	// fix to start ccm on windows platform
+            	fullCommand = "powershell -Command \"" + fullCommand + "\"";
+            }
+                        
             Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
             int retValue = p.waitFor();
 
@@ -309,7 +313,11 @@ public class CCMBridge {
     private void executeAndPrint(String command, Object... args) {
         try {
             String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
-            logger.debug("Executing: " + fullCommand);
+            if(System.getProperty("os.name").toLowerCase().startsWith("win")){
+            	// fix to start ccm on windows platform
+            	fullCommand = "powershell -Command \"" + fullCommand + "\"";
+            }
+            
             Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
             int retValue = p.waitFor();
 

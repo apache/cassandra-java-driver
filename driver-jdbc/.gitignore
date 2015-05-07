@@ -1,0 +1,36 @@
+# Eclipse meta-information
+.project
+.classpath
+.settings
+
+# IDEA meeta-information
+.idea
+*.iml
+*.ipr
+*.iws
+
+# Build directory
+target/
+build/
+bin/
+
+# SVN
+.svn
+
+# Gradle files
+.gradle
+
+# Backup files
+*~
+
+# Misc hidden files
+.DS_Store
+
+# class files
+*.class 
+
+# create an empty .gitignore file when you want to track an empty
+# directory but want to ignore its content. Example: to keep the 
+# "logs" dir do: "touch logs/.gitignore"
+#
+!.gitignore
