@@ -21,6 +21,9 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -122,18 +125,25 @@ public class NettyOptions {
      * {@link SocketOptions}s.
      * <p>
      * This is a good place to add extra {@link io.netty.channel.ChannelHandler ChannelOption}s to the boostrap; e.g.
-     * to replace the default {@link io.netty.buffer.ByteBufAllocator ByteBufAllocator} implementation with a custom one,
-     * do the following:
+     * plug a custom {@link io.netty.buffer.ByteBufAllocator ByteBufAllocator} implementation:
      *
      * <pre>
      * ByteBufAllocator myCustomByteBufAllocator = ...
-     * boostrap.option(ChannelOption.ALLOCATOR, myCustomByteBufAllocator);
+     *
+     * public void afterBootstrapInitialized(Bootstrap bootstrap) {
+     *     bootstrap.option(ChannelOption.ALLOCATOR, myCustomByteBufAllocator);
+     * }
      * </pre>
+     *
+     * Note that the default implementation of this method configures a pooled {@code ByteBufAllocator} (Netty 4.0
+     * defaults to unpooled). If you override this method to set unrelated options, make sure you call
+     * {@code super.afterBootstrapInitialized(bootstrap)}.
      *
      * @param bootstrap the {@link Bootstrap} being initialized.
      */
     public void afterBootstrapInitialized(Bootstrap bootstrap) {
-        //noop
+        // In Netty 4.1.x, pooled will be the default, so this won't be necessary anymore
+        bootstrap.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
     }
 
     /**
@@ -189,6 +199,4 @@ public class NettyOptions {
         // it is safe to reduce the quiet period to 0 seconds
         eventLoopGroup.shutdownGracefully(0, 15, SECONDS).syncUninterruptibly();
     }
-
-
 }
