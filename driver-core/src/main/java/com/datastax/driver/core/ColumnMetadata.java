@@ -234,11 +234,10 @@ public class ColumnMetadata {
         }
 
         /**
-         * Builds a JSON object based on the index options map.
+         * Builds a string representation of the custom index options.
          * 
-         * @return String representation of the JSON object containing the index options,
-         *         similar to what Cassandra stores in the 'index_options' column of the 'schema_columns' table
-         *         in the 'system' keyspace.
+         * @return String representation of the custom index options, similar to what Cassandra stores in
+         *         the 'index_options' column of the 'schema_columns' table in the 'system' keyspace.
          */
         private String getOptionsAsCql() {
             StringBuilder builder = new StringBuilder();
