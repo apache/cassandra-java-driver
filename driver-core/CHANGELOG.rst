@@ -4,6 +4,8 @@ CHANGELOG
 2.0.11:
 -------
 
+- [improvement] Use Netty's pooled ByteBufAllocator by default (JAVA-756)
+
 
 2.0.10:
 -------
