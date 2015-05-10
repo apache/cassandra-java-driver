@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ public abstract class Assignment extends Utils.Appendeable {
         return name;
     }
 
+    abstract boolean isIdempotent();
+
     static class SetAssignment extends Assignment {
 
         private final Object value;
@@ -57,6 +59,11 @@ public abstract class Assignment extends Utils.Appendeable {
         @Override
         boolean containsBindMarker() {
             return Utils.containsBindMarker(value);
+        }
+
+        @Override
+        boolean isIdempotent() {
+            return true;
         }
     }
 
@@ -87,6 +94,11 @@ public abstract class Assignment extends Utils.Appendeable {
         boolean containsBindMarker() {
             return Utils.containsBindMarker(value);
         }
+
+        @Override
+        boolean isIdempotent() {
+            return false;
+        }
     }
 
     static class ListPrependAssignment extends Assignment {
@@ -109,6 +121,11 @@ public abstract class Assignment extends Utils.Appendeable {
         @Override
         boolean containsBindMarker() {
             return Utils.containsBindMarker(value);
+        }
+
+        @Override
+        boolean isIdempotent() {
+            return false;
         }
     }
 
@@ -133,17 +150,28 @@ public abstract class Assignment extends Utils.Appendeable {
         boolean containsBindMarker() {
             return Utils.containsBindMarker(value);
         }
+
+        @Override
+        boolean isIdempotent() {
+            return true;
+        }
     }
 
     static class CollectionAssignment extends Assignment {
 
         private final Object collection;
         private final boolean isAdd;
+        private final boolean isIdempotent;
 
-        CollectionAssignment(String name, Object collection, boolean isAdd) {
+        CollectionAssignment(String name, Object collection, boolean isAdd, boolean isIdempotent) {
             super(name);
             this.collection = collection;
             this.isAdd = isAdd;
+            this.isIdempotent = isIdempotent;
+        }
+
+        CollectionAssignment(String name, Object collection, boolean isAdd) {
+            this(name, collection, isAdd, true);
         }
 
         @Override
@@ -156,6 +184,11 @@ public abstract class Assignment extends Utils.Appendeable {
         @Override
         boolean containsBindMarker() {
             return Utils.containsBindMarker(collection);
+        }
+
+        @Override
+        public boolean isIdempotent() {
+            return isIdempotent;
         }
     }
 
@@ -181,6 +214,11 @@ public abstract class Assignment extends Utils.Appendeable {
         @Override
         boolean containsBindMarker() {
             return Utils.containsBindMarker(key) || Utils.containsBindMarker(value);
+        }
+
+        @Override
+        boolean isIdempotent() {
+            return true;
         }
     }
 }

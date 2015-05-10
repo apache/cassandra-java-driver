@@ -1,21 +1,17 @@
-Upgrade Guide to 2.0.0
-======================
+Upgrade Guide to 2.0
+====================
 
-The purpose of this guide is to detail the changes made by the version 2.0 of
-the Java Driver that are relevant to an upgrade from version 1.0. 
+The purpose of this guide is to detail the changes made by version 2.0 of
+the Java Driver.
 
-We used the opportunity of a major version bump to incorporate your feedback 
-and improve the API, to fix a number of inconsistencies and remove cruft. 
-Unfortunately this means there are some breaking changes, but the new API should 
+
+1.0 to 2.0
+----------
+
+We used the opportunity of a major version bump to incorporate your feedback
+and improve the API, to fix a number of inconsistencies and remove cruft.
+Unfortunately this means there are some breaking changes, but the new API should
 be both simpler and more complete.
-
-The first part goes into the breaking changes made to the API (upgraders from 1.0
-should review this section carefully), while the second part lists noteworthy
-but backward incompatible changes.
-
-
-Breaking API Changes
---------------------
 
 The following describes the changes for 2.0 that are breaking changes of the
 1.0 API. For ease of use, we distinguish two categories of API changes: the "main"
@@ -156,6 +152,27 @@ Other API Changes
     class.
 
 
+2.0.10
+------
+
+1. LatencyTracker#update now has a different signature and takes two new
+   parameters: the statement that has been executed (never null), and the exception
+   thrown while executing the query (or null, if the query executed successfully).
+   Existing implementations of this interface, once upgraded to the new method
+   signature, should continue to work as before.
+
+2. SocketOptions#getTcpNoDelay() is now TRUE by default (it was previously undefined).
+   This reflects the new behavior of Netty (which was upgraded from version 3.9.0 to
+   4.0.27): TCP_NODELAY is now turned on by default, instead of depending on the OS
+   default like in previous versions.
+
+3. Netty is not shaded anymore in the default Maven artifact. However we publish a
+   shaded artifact under a different classifier. See `Using the shaded JAR<http://datastax.github.io/java-driver/features/shaded_jar/>`_
+   for more information.
+
+4. The internal initialization sequence of the Cluster object has been slightly changed:
+   some fields that were previously initialized in the constructor are now set when
+   the init() method is called. This is unlikely to affect regular driver users.
 
 
 Features available only with Cassandra 2.0

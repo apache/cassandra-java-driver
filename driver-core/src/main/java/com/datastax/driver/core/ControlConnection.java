@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -620,31 +620,7 @@ class ControlConnection implements Host.StateListener {
         int maxSchemaAgreementWaitSeconds = cluster.configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds();
         while (elapsed < maxSchemaAgreementWaitSeconds * 1000) {
 
-            DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_PEERS));
-            DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_LOCAL));
-            connection.write(peersFuture);
-            connection.write(localFuture);
-
-            Set<UUID> versions = new HashSet<UUID>();
-
-            Row localRow = localFuture.get().one();
-            if (localRow != null && !localRow.isNull("schema_version"))
-                versions.add(localRow.getUUID("schema_version"));
-
-            for (Row row : peersFuture.get()) {
-
-                InetSocketAddress addr = addressToUseForPeerHost(row, connection.address, cluster, true);
-                if (addr == null || row.isNull("schema_version"))
-                    continue;
-
-                Host peer = cluster.metadata.getHost(addr);
-                if (peer != null && peer.isUp())
-                    versions.add(row.getUUID("schema_version"));
-            }
-
-            logger.debug("Checking for schema agreement: versions are {}", versions);
-
-            if (versions.size() <= 1)
+            if (checkSchemaAgreement(connection, cluster))
                 return true;
 
             // let's not flood the node too much
@@ -654,6 +630,42 @@ class ControlConnection implements Host.StateListener {
         }
 
         return false;
+    }
+
+    private static boolean checkSchemaAgreement(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, InterruptedException, ExecutionException {
+        DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_PEERS));
+        DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_LOCAL));
+        connection.write(peersFuture);
+        connection.write(localFuture);
+
+        Set<UUID> versions = new HashSet<UUID>();
+
+        Row localRow = localFuture.get().one();
+        if (localRow != null && !localRow.isNull("schema_version"))
+            versions.add(localRow.getUUID("schema_version"));
+
+        for (Row row : peersFuture.get()) {
+
+            InetSocketAddress addr = addressToUseForPeerHost(row, connection.address, cluster, true);
+            if (addr == null || row.isNull("schema_version"))
+                continue;
+
+            Host peer = cluster.metadata.getHost(addr);
+            if (peer != null && peer.isUp())
+                versions.add(row.getUUID("schema_version"));
+        }
+        logger.debug("Checking for schema agreement: versions are {}", versions);
+        return versions.size() <= 1;
+    }
+
+    boolean checkSchemaAgreement() {
+        Connection c = connectionRef.get();
+        try {
+            return c != null && checkSchemaAgreement(c, cluster);
+        } catch (Exception e) {
+            logger.warn("Error while checking schema agreement", e);
+            return false;
+        }
     }
 
     boolean isOpen() {

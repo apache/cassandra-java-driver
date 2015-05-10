@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -381,6 +381,19 @@ public class Metadata {
      */
     public Set<Host> getAllHosts() {
         return new HashSet<Host>(allHosts());
+    }
+
+    /**
+     * Checks whether hosts that are currently up agree on the schema definition.
+     * <p>
+     * This method performs a one-time check only, without any form of retry; therefore {@link Cluster.Builder#withMaxSchemaAgreementWaitSeconds(int)}
+     * does not apply in this case.
+     *
+     * @return {@code true} if all hosts agree on the schema; {@code false} if they don't agree, or if the check could not be performed
+     * (for example, if the control connection is down).
+     */
+    public boolean checkSchemaAgreement() {
+        return cluster.controlConnection.checkSchemaAgreement();
     }
 
     /**

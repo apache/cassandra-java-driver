@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.datastax.driver.core;
 
 import java.io.IOException;
 
+import io.netty.buffer.Unpooled;
 import net.jpountz.lz4.LZ4Factory;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xerial.snappy.Snappy;
@@ -60,7 +60,7 @@ abstract class FrameCompressor {
             byte[] output = new byte[Snappy.maxCompressedLength(input.length)];
 
             int written = Snappy.compress(input, 0, input.length, output, 0);
-            return frame.with(ChannelBuffers.wrappedBuffer(output, 0, written));
+            return frame.with(Unpooled.wrappedBuffer(output, 0, written));
         }
 
         public Frame decompress(Frame frame) throws IOException {
@@ -71,7 +71,7 @@ abstract class FrameCompressor {
 
             byte[] output = new byte[Snappy.uncompressedLength(input)];
             int size = Snappy.uncompress(input, 0, input.length, output, 0);
-            return frame.with(ChannelBuffers.wrappedBuffer(output, 0, size));
+            return frame.with(Unpooled.wrappedBuffer(output, 0, size));
         }
     }
 
@@ -98,6 +98,7 @@ abstract class FrameCompressor {
 
         private LZ4Compressor() {
             final LZ4Factory lz4Factory = LZ4Factory.fastestInstance();
+            logger.info("Using {}", lz4Factory.toString());
             compressor = lz4Factory.fastCompressor();
             decompressor = lz4Factory.fastDecompressor();
         }
@@ -115,7 +116,7 @@ abstract class FrameCompressor {
 
             try {
                 int written = compressor.compress(input, 0, input.length, output, INTEGER_BYTES, maxCompressedLength);
-                return frame.with(ChannelBuffers.wrappedBuffer(output, 0, INTEGER_BYTES + written));
+                return frame.with(Unpooled.wrappedBuffer(output, 0, INTEGER_BYTES + written));
             } catch (Exception e) {
                 throw new IOException(e);
             }
@@ -136,7 +137,7 @@ abstract class FrameCompressor {
                 if (read != input.length - INTEGER_BYTES)
                     throw new IOException("Compressed lengths mismatch");
 
-                return frame.with(ChannelBuffers.wrappedBuffer(output));
+                return frame.with(Unpooled.wrappedBuffer(output));
             } catch (Exception e) {
                 throw new IOException(e);
             }

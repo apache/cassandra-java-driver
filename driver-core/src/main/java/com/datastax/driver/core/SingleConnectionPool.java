@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,11 +29,16 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.utils.MoreFutures;
+
+import static com.datastax.driver.core.Connection.State.GONE;
+import static com.datastax.driver.core.Connection.State.OPEN;
+import static com.datastax.driver.core.Connection.State.TRASHED;
 
 /**
  * A connection pool with a a single connection.
@@ -48,7 +54,7 @@ class SingleConnectionPool extends HostConnectionPool {
     // following threshold, we just replace the connection by a new one.
     private static final int MIN_AVAILABLE_STREAMS = 32768 * 3 / 4;
 
-    volatile AtomicReference<PooledConnection> connectionRef = new AtomicReference<PooledConnection>();
+    volatile AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
     private final AtomicBoolean open = new AtomicBoolean();
     private final Set<Connection> trash = new CopyOnWriteArraySet<Connection>();
 
@@ -60,7 +66,7 @@ class SingleConnectionPool extends HostConnectionPool {
 
     private final AtomicBoolean scheduledForCreation = new AtomicBoolean();
 
-    public SingleConnectionPool(Host host, HostDistance hostDistance, SessionManager manager) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+    public SingleConnectionPool(Host host, HostDistance hostDistance, SessionManager manager) {
         super(host, hostDistance, manager);
 
         this.newConnectionTask = new Runnable() {
@@ -70,18 +76,47 @@ class SingleConnectionPool extends HostConnectionPool {
                 scheduledForCreation.set(false);
             }
         };
+    }
 
-        // Create initial core connections
-        try {
-            connectionRef.set(manager.connectionFactory().open(this));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            // If asked to interrupt, we can skip opening core connections, the pool will still work.
-            // But we ignore otherwise cause I'm not sure we can do much better currently.
+    @Override
+    ListenableFuture<Void> initAsync(Connection reusedConnection) {
+        final Connection connection;
+        ListenableFuture<Void> connectionFuture;
+        if (reusedConnection != null && reusedConnection.setPool(this)) {
+            connection = reusedConnection;
+            connectionFuture = MoreFutures.VOID_SUCCESS;
+        } else {
+            connection = manager.connectionFactory().newConnection(this);
+            connectionFuture = connection.initAsync();
         }
-        this.open.set(true);
 
-        logger.trace("Created connection pool to host {}", host);
+        Executor initExecutor = manager.cluster.manager.configuration.getPoolingOptions().getInitializationExecutor();
+
+        final SettableFuture<Void> initFuture = SettableFuture.create();
+        Futures.addCallback(connectionFuture, new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                connectionRef.set(connection);
+                open.set(true);
+                if (isClosed()) {
+                    initFuture.setException(new ConnectionException(host.getSocketAddress(), "Pool was closed during initialization"));
+                    // we're not sure if closeAsync() saw the connection, so ensure it gets closed
+                    connection.closeAsync().force();
+                } else {
+                    logger.trace("Created connection pool to host {}", host);
+                    phase = Phase.READY;
+                    initFuture.set(null);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                phase = Phase.INIT_FAILED;
+                initFuture.setException(t);
+            }
+        }, initExecutor);
+
+        return initFuture;
     }
 
     private PoolingOptions options() {
@@ -89,13 +124,16 @@ class SingleConnectionPool extends HostConnectionPool {
     }
 
     @Override
-    public PooledConnection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
-        if (isClosed())
+    public Connection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
+        if (phase == Phase.INITIALIZING)
+            throw new ConnectionException(host.getSocketAddress(), "Pool is initializing.");
+
+        if (phase != Phase.READY)
             // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
             // That being said, maybe having a specific exception could be cleaner.
-            throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
+            throw new ConnectionException(host.getSocketAddress(), "Pool is " + phase);
 
-        PooledConnection connection = connectionRef.get();
+        Connection connection = connectionRef.get();
         if (connection == null) {
             if (scheduledForCreation.compareAndSet(false, true))
                 manager.blockingExecutor().submit(newConnectionTask);
@@ -155,7 +193,7 @@ class SingleConnectionPool extends HostConnectionPool {
         }
     }
 
-    private PooledConnection waitForConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
+    private Connection waitForConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
         if (timeout == 0)
             throw new TimeoutException();
 
@@ -173,7 +211,7 @@ class SingleConnectionPool extends HostConnectionPool {
             if (isClosed())
                 throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
 
-            PooledConnection connection = connectionRef.get();
+            Connection connection = connectionRef.get();
             // If we race with shutdown, connection could be null. In that case we just loop and we'll throw on the next
             // iteration anyway
             if (connection != null) {
@@ -196,7 +234,7 @@ class SingleConnectionPool extends HostConnectionPool {
     }
 
     @Override
-    public void returnConnection(PooledConnection connection) {
+    public void returnConnection(Connection connection) {
         if (isClosed()) {
             close(connection);
             return;
@@ -224,14 +262,14 @@ class SingleConnectionPool extends HostConnectionPool {
 
     // Trash the connection and create a new one, but we don't call trashConnection
     // directly because we want to make sure the connection is always trashed.
-    private void replaceConnection(PooledConnection connection) {
-        if (connection.markForTrash.compareAndSet(false, true))
+    private void replaceConnection(Connection connection) {
+        if (!connection.state.compareAndSet(OPEN, TRASHED))
             open.set(false);
         maybeSpawnNewConnection();
         doTrashConnection(connection);
     }
 
-    private void doTrashConnection(PooledConnection connection) {
+    private void doTrashConnection(Connection connection) {
         trash.add(connection);
         connectionRef.compareAndSet(connection, null);
 
@@ -243,7 +281,7 @@ class SingleConnectionPool extends HostConnectionPool {
         if (!open.compareAndSet(false, true))
             return false;
 
-        if (isClosed()) {
+        if (phase != Phase.READY) {
             open.set(false);
             return false;
         }
@@ -288,8 +326,8 @@ class SingleConnectionPool extends HostConnectionPool {
     }
 
     @Override
-    public void replaceDefunctConnection(final PooledConnection connection) {
-        if (connection.markForTrash.compareAndSet(false, true))
+    public void replaceDefunctConnection(final Connection connection) {
+        if (connection.state.compareAndSet(OPEN, GONE))
             open.set(false);
         connectionRef.compareAndSet(connection, null);
         connection.closeAsync();
@@ -301,28 +339,33 @@ class SingleConnectionPool extends HostConnectionPool {
         });
     }
 
+    @Override
+    void cleanupIdleConnections(long now) {
+    }
+
     private void close(final Connection connection) {
         connection.closeAsync();
     }
 
     protected CloseFuture makeCloseFuture() {
+        phase = Phase.CLOSING;
+
         // Wake up all threads that wait
         signalAllAvailableConnection();
 
-        CloseFuture future = new CloseFuture.Forwarding(discardConnection());
-        return future;
+        return new CloseFuture.Forwarding(discardConnection());
     }
 
     private List<CloseFuture> discardConnection() {
 
         List<CloseFuture> futures = new ArrayList<CloseFuture>();
 
-        final PooledConnection connection = connectionRef.get();
+        final Connection connection = connectionRef.get();
         if (connection != null) {
             CloseFuture future = connection.closeAsync();
             future.addListener(new Runnable() {
                 public void run() {
-                    if (connection.markForTrash.compareAndSet(false, true))
+                    if (connection.state.compareAndSet(OPEN, GONE))
                         open.set(false);
                 }
             }, MoreExecutors.sameThreadExecutor());
@@ -347,8 +390,13 @@ class SingleConnectionPool extends HostConnectionPool {
     }
 
     @Override
+    int trashed() {
+        return trash.size();
+    }
+
+    @Override
     public int inFlightQueriesCount() {
-        PooledConnection connection = connectionRef.get();
+        Connection connection = connectionRef.get();
         return connection == null ? 0 : connection.inFlight.get();
     }
 }

@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingDeque;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -29,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.utils.MoreFutures;
 
 /**
  * Default implementation of a result set, backed by an ArrayDeque of ArrayList.
@@ -183,7 +183,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         }
 
         public ListenableFuture<Void> fetchMoreResults() {
-            return Futures.immediateFuture(null);
+            return MoreFutures.VOID_SUCCESS;
         }
 
         public ExecutionInfo getExecutionInfo() {
@@ -234,7 +234,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
             // that this will never change, so apply the generic check by peeking at the first row.
             super(metadata, tokenFactory, rows.peek(), protocolVersion);
             this.currentPage = rows;
-            this.infos.offer(info);
+            this.infos.offer(info.withPagingState(pagingState, protocolVersion).withStatement(statement));
 
             this.fetchState = new FetchingState(pagingState, null);
             this.session = session;
@@ -293,7 +293,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
         private ListenableFuture<Void> fetchMoreResults(FetchingState fetchState) {
             if (fetchState == null)
-                return Futures.immediateFuture(null);
+                return MoreFutures.VOID_SUCCESS;
 
             if (fetchState.inProgress != null)
                 return fetchState.inProgress;
@@ -328,9 +328,10 @@ abstract class ArrayBackedResultSet implements ResultSet {
                             case RESULT:
                                 Responses.Result rm = (Responses.Result)response;
                                 info = update(info, rm, MultiPage.this.session);
-
                                 if (rm.kind == Responses.Result.Kind.ROWS) {
                                     Responses.Result.Rows rows = (Responses.Result.Rows)rm;
+                                    if (rows.metadata.pagingState != null)
+                                        info = info.withPagingState(rows.metadata.pagingState, protocolVersion).withStatement(statement);
                                     MultiPage.this.nextPages.offer(rows.data);
                                     MultiPage.this.fetchState = rows.metadata.pagingState == null ? null : new FetchingState(rows.metadata.pagingState, null);
                                 } else if (rm.kind == Responses.Result.Kind.VOID) {

@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -23,12 +23,12 @@ import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 public class QueryOptions {
 
     /**
-     * The default consistency level for queries: {@code ConsistencyLevel.ONE}.
+     * The default consistency level for queries: {@link ConsistencyLevel#ONE}.
      */
     public static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.ONE;
 
     /**
-     * The default serial consistency level for conditional updates: {@code ConsistencyLevel.SERIAL}.
+     * The default serial consistency level for conditional updates: {@link ConsistencyLevel#SERIAL}.
      */
     public static final ConsistencyLevel DEFAULT_SERIAL_CONSISTENCY_LEVEL = ConsistencyLevel.SERIAL;
 
@@ -37,14 +37,20 @@ public class QueryOptions {
      */
     public static final int DEFAULT_FETCH_SIZE = 5000;
 
+    /**
+     * The default value for {@link #getDefaultIdempotence()}: {@code false}.
+     */
+    public static final boolean DEFAULT_IDEMPOTENCE = false;
+
     private volatile ConsistencyLevel consistency = DEFAULT_CONSISTENCY_LEVEL;
     private volatile ConsistencyLevel serialConsistency = DEFAULT_SERIAL_CONSISTENCY_LEVEL;
     private volatile int fetchSize = DEFAULT_FETCH_SIZE;
+    private volatile boolean defaultIdempotence = DEFAULT_IDEMPOTENCE;
     private volatile Cluster.Manager manager;
 
     /**
-     * Creates a new {@code QueryOptions} instance using the {@code DEFAULT_CONSISTENCY_LEVEL},
-     * {@code DEFAULT_SERIAL_CONSISTENCY_LEVEL} and {@code DEFAULT_FETCH_SIZE}.
+     * Creates a new {@link QueryOptions} instance using the {@link #DEFAULT_CONSISTENCY_LEVEL},
+     * {@link #DEFAULT_SERIAL_CONSISTENCY_LEVEL} and {@link #DEFAULT_FETCH_SIZE}.
      */
     public QueryOptions() {}
 
@@ -137,5 +143,30 @@ public class QueryOptions {
      */
     public int getFetchSize() {
         return fetchSize;
+    }
+
+    /**
+     * Sets the default idempotence for queries.
+     * <p>
+     * This will be used for statements for which {@link com.datastax.driver.core.Statement#isIdempotent()}
+     * returns {@code null}.
+     *
+     * @param defaultIdempotence the new value to set as default idempotence.
+     * @return this {@code QueryOptions} instance.
+     */
+    public QueryOptions setDefaultIdempotence(boolean defaultIdempotence) {
+        this.defaultIdempotence = defaultIdempotence;
+        return this;
+    }
+
+    /**
+     * The default idempotence for queries.
+     * <p>
+     * It defaults to {@link #DEFAULT_IDEMPOTENCE}.
+     *
+     * @return the default idempotence for queries.
+     */
+    public boolean getDefaultIdempotence() {
+        return defaultIdempotence;
     }
 }

@@ -57,8 +57,20 @@ public class MailboxServiceIT {
         return mavenBundle("com.google.guava", "guava", "14.0.1");
     }
 
-    private MavenArtifactProvisionOption nettyBundle() {
-        return mavenBundle("io.netty", "netty", "3.9.0.Final");
+    private CompositeOption nettyBundles() {
+        final String nettyVersion = "4.0.27.Final";
+        return new CompositeOption() {
+
+            @Override public Option[] getOptions() {
+                return options(
+                    mavenBundle("io.netty", "netty-buffer", nettyVersion),
+                    mavenBundle("io.netty", "netty-codec", nettyVersion),
+                    mavenBundle("io.netty", "netty-common", nettyVersion),
+                    mavenBundle("io.netty", "netty-handler", nettyVersion),
+                    mavenBundle("io.netty", "netty-transport", nettyVersion)
+                );
+            }
+        };
     }
 
     private CompositeOption defaultOptions() {
@@ -92,7 +104,7 @@ public class MailboxServiceIT {
         return options(
             driverBundle(),
             guavaBundle(),
-            nettyBundle(),
+            nettyBundles(),
             defaultOptions()
         );
     }
@@ -101,7 +113,7 @@ public class MailboxServiceIT {
     public Option[] guava15Config() {
         return options(
             driverBundle(),
-            nettyBundle(),
+            nettyBundles(),
             guavaBundle().version("15.0"),
             defaultOptions()
         );
@@ -111,7 +123,7 @@ public class MailboxServiceIT {
     public Option[] guava16Config() {
         return options(
             driverBundle(),
-            nettyBundle(),
+            nettyBundles(),
             guavaBundle().version("16.0.1"),
             defaultOptions()
         );
@@ -121,7 +133,7 @@ public class MailboxServiceIT {
     public Option[] guava17Config() {
         return options(
             driverBundle(),
-            nettyBundle(),
+            nettyBundles(),
             guavaBundle().version("17.0"),
             defaultOptions()
         );
@@ -131,7 +143,7 @@ public class MailboxServiceIT {
     public Option[] guava18Config() {
         return options(
             driverBundle(),
-            nettyBundle(),
+            nettyBundles(),
             guavaBundle().version("18.0"),
             defaultOptions()
         );

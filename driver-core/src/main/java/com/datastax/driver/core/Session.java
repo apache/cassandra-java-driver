@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import java.io.Closeable;
 import java.util.Collection;
-import java.util.Map;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -297,10 +296,12 @@ public interface Session extends Closeable {
      * This method has no particular effect if the session was already closed
      * (in which case the returned future will return immediately).
      * <p>
-     * Note that if you want to close the full {@code Cluster} instance
-     * this session is part of, you should use {@link Cluster#close} instead
-     * (which will call this method for all sessions but also release some
-     * additional resources).
+     * Note that this method does not close the corresponding {@code Cluster}
+     * instance (which holds additional resources, in particular internal
+     * executors that must be shut down in order for the client program to
+     * terminate).
+     * If you want to do so, use {@link Cluster#close}, but note that it will
+     * close all sessions created from that cluster.
      *
      * @return a future on the completion of the shutdown process.
      */
@@ -311,6 +312,13 @@ public interface Session extends Closeable {
      * that shutdown completes.
      * <p>
      * This method is a shortcut for {@code closeAsync().get()}.
+     * <p>
+     * Note that this method does not close the corresponding {@code Cluster}
+     * instance (which holds additional resources, in particular internal
+     * executors that must be shut down in order for the client program to
+     * terminate).
+     * If you want to do so, use {@link Cluster#close}, but note that it will
+     * close all sessions created from that cluster.
      */
     public void close();
 
@@ -376,12 +384,29 @@ public interface Session extends Closeable {
 
         /**
          * The number of open connections to a given host.
+         * <p>
+         * Note that this refers to <em>active</em> connections. The actual number of connections also
+         * includes {@link #getTrashedConnections(Host)}.
          *
          * @param host the host to get open connections for.
          * @return The number of open connections to {@code host}. If the session
          * is not connected to that host, 0 is returned.
          */
         public int getOpenConnections(Host host);
+
+        /**
+         * The number of "trashed" connections to a given host.
+         * <p>
+         * When the load to a host decreases, the driver will reclaim some connections in order to save
+         * resources. No requests are sent to these connections anymore, but they are kept open for an
+         * additional amount of time ({@link PoolingOptions#getIdleTimeoutSeconds()}), in case the load
+         * goes up again. This method counts connections in that state.
+         *
+         * @param host the host to get trashed connections for.
+         * @return The number of trashed connections to {@code host}. If the session
+         * is not connected to that host, 0 is returned.
+         */
+        public int getTrashedConnections(Host host);
 
         /**
          * The number of queries that are currently being executed though a given host.

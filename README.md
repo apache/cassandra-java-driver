@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/datastax/java-driver.svg?branch=2.1)](https://travis-ci.org/datastax/java-driver)
 
-*If you're reading this on GitHub, please note that this is the readme
+*If you're reading this on github.com, please note that this is the readme
 for the development version and that some features described here might
 not yet have been released. You can find the documentation for latest
 version through [Java driver
@@ -10,21 +10,39 @@ docs](http://datastax.github.io/java-driver/) or via the release tags,
 [e.g.
 2.1.5](https://github.com/datastax/java-driver/tree/2.1.5).*
 
-A Java client driver for Apache Cassandra. This driver works exclusively with
-the Cassandra Query Language version 3 (CQL3) and Cassandra's binary protocol.
+A modern, [feature-rich](features/) and highly tunable Java client
+library for Apache Cassandra (1.2+) and DataStax Enterprise (3.1+) using
+exclusively Cassandra's binary protocol and Cassandra Query Language v3.
 
-- JIRA: https://datastax-oss.atlassian.net/browse/JAVA
-- MAILING LIST: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
-- IRC: #datastax-drivers on [irc.freenode.net](http://freenode.net)
-- TWITTER: Follow the latest news about DataStax Drivers - [@olim7t](http://twitter.com/olim7t), [@mfiguiere](http://twitter.com/mfiguiere)
-- DOCS: http://www.datastax.com/documentation/developer/java-driver/2.1/index.html
-- API: http://www.datastax.com/drivers/java/2.1
-- CHANGELOG: https://github.com/datastax/java-driver/blob/2.1/driver-core/CHANGELOG.rst
+**Features:**
+
+* [Sync][sync] and [Async][async] API
+* [Simple][simple_st], [Prepared][prepared_st], and [Batch][batch_st] statements
+* Asynchronous IO, parallel execution, request pipelining
+* [Connection pooling][pool]
+* Auto node discovery
+* Automatic reconnection
+* Configurable [load balancing][lbp] and [retry policies][retry_policy]
+* Works with any cluster size
+* [Query builder][query_builder]
+* [Object mapper][mapper]
+
+
+[sync]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#execute(com.datastax.driver.core.Statement)
+[async]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)
+[simple_st]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SimpleStatement.html
+[prepared_st]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#prepare(com.datastax.driver.core.RegularStatement)
+[batch_st]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BatchStatement.html
+[pool]: features/pooling/
+[lbp]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/LoadBalancingPolicy.html
+[retry_policy]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/RetryPolicy.html
+[query_builder]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/querybuilder/QueryBuilder.html
+[mapper]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/mapping/MappingManager.html 
 
 The driver architecture is based on layers. At the bottom lies the driver core.
 This core handles everything related to the connections to a Cassandra
 cluster (for example, connection pool, discovering new nodes, etc.) and exposes a simple,
-relatively low-level API on top of which higher level layer can be built.
+relatively low-level API on top of which higher level layers can be built.
 
 The driver contains the following modules:
 
@@ -35,26 +53,40 @@ The driver contains the following modules:
 
 Please refer to the README of each module for more information.
 
+**Community:**
+
+- JIRA: https://datastax-oss.atlassian.net/browse/JAVA
+- MAILING LIST: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
+- IRC: #datastax-drivers on [irc.freenode.net](http://freenode.net)
+- TWITTER: Follow the latest news about DataStax Drivers - [@olim7t](http://twitter.com/olim7t), [@mfiguiere](http://twitter.com/mfiguiere)
+- DOCS: http://www.datastax.com/documentation/developer/java-driver/2.1/index.html
+- API: http://www.datastax.com/drivers/java/2.1
+- CHANGELOG: https://github.com/datastax/java-driver/blob/2.1/driver-core/CHANGELOG.rst
+
 ## Maven
 
 The last release of the driver is available on Maven Central. You can install
 it in your application using the following Maven dependency:
 
-    <dependency>
-      <groupId>com.datastax.cassandra</groupId>
-      <artifactId>cassandra-driver-core</artifactId>
-      <version>2.1.5</version>
-    </dependency>
+```xml
+<dependency>
+  <groupId>com.datastax.cassandra</groupId>
+  <artifactId>cassandra-driver-core</artifactId>
+  <version>2.1.5</version>
+</dependency>
+```
 
 Note that the object mapper is published as a separate artifact:
 
-    <dependency>
-      <groupId>com.datastax.cassandra</groupId>
-      <artifactId>cassandra-driver-mapping</artifactId>
-      <version>2.1.5</version>
-    </dependency>
+```xml
+<dependency>
+  <groupId>com.datastax.cassandra</groupId>
+  <artifactId>cassandra-driver-mapping</artifactId>
+  <version>2.1.5</version>
+</dependency>
+```
 
-We also provide a [shaded JAR](http://datastax.github.io/java-driver/features/shaded_jar/)
+We also provide a [shaded JAR](features/shaded_jar/)
 to avoid the explicit dependency to Netty.
 
 ## Compatibility
@@ -87,10 +119,8 @@ If you are having issues connecting to the cluster (seeing `NoHostAvailableConne
 [connection requirements](https://github.com/datastax/java-driver/wiki/Connection-requirements).
 
 
-
-
 ## License
-Copyright 2012-2014, DataStax
+Copyright 2012-2015, DataStax
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

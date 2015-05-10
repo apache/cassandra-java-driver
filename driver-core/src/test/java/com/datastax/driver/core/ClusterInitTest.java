@@ -1,29 +1,40 @@
+/*
+ *      Copyright (C) 2012-2015 DataStax Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
+import com.datastax.driver.core.querybuilder.Insert;
+import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.collect.Lists;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.atMost;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
-import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
-import com.datastax.driver.core.querybuilder.Insert;
-import com.datastax.driver.core.utils.UUIDs;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.datastax.driver.core.FakeHost.Behavior.THROWING_CONNECT_TIMEOUTS;
-
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.*;
 
 public class ClusterInitTest {
     private static final Logger logger = LoggerFactory.getLogger(ClusterInitTest.class);
@@ -92,6 +103,31 @@ public class ClusterInitTest {
                 fakeHost.stop();
             if (ccm != null)
                 ccm.remove();
+        }
+    }
+
+    /**
+     * <p>
+     * Validates that a Cluster that was never able to successfully establish connection a session can be closed
+     * properly.
+     *
+     * @test_category connection
+     * @expected_result Cluster closes within 1 second.
+     */
+    @Test(groups="unit")
+    public void should_be_able_to_close_cluster_that_never_successfully_connected() throws Exception {
+        Cluster cluster = Cluster.builder()
+                .addContactPointsWithPorts(Collections.singleton(new InetSocketAddress("127.0.0.1", 65534)))
+                .build();
+        try {
+            cluster.connect();
+            fail("Should not have been able to connect.");
+        } catch(NoHostAvailableException e) {} // Expected.
+        CloseFuture closeFuture = cluster.closeAsync();
+        try {
+            closeFuture.get(1, TimeUnit.SECONDS);
+        } catch(TimeoutException e) {
+            fail("Close Future did not complete quickly.");
         }
     }
 

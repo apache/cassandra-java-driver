@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@ package com.datastax.driver.core;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
 
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 import com.datastax.driver.core.ProtocolEvent.SchemaChange;
 import com.datastax.driver.core.ProtocolEvent.SchemaChange.Change;
@@ -37,7 +36,7 @@ class Responses {
 
         public static final Message.Decoder<Error> decoder = new Message.Decoder<Error>() {
             @Override
-            public Error decode(ChannelBuffer body, ProtocolVersion version) {
+            public Error decode(ByteBuf body, ProtocolVersion version) {
                 ExceptionCode code = ExceptionCode.fromValue(body.readInt());
                 String msg = CBUtil.readString(body);
                 Object infos = null;
@@ -93,8 +92,8 @@ class Responses {
                 case PROTOCOL_ERROR:   return new DriverInternalError("An unexpected protocol error occurred. This is a bug in this library, please report: " + message);
                 case BAD_CREDENTIALS:  return new AuthenticationException(host, message);
                 case UNAVAILABLE:      return ((UnavailableException)infos).copy(); // We copy to have a nice stack trace
-                case OVERLOADED:       return new DriverInternalError(String.format("Queried host (%s) was overloaded; this shouldn't happen, another node should have been tried", host));
-                case IS_BOOTSTRAPPING: return new DriverInternalError(String.format("Queried host (%s) was bootstrapping; this shouldn't happen, another node should have been tried", host));
+                case OVERLOADED:       return new OverloadedException(host, message);
+                case IS_BOOTSTRAPPING: return new BootstrappingException(host, message);
                 case TRUNCATE_ERROR:   return new TruncateException(message);
                 case WRITE_TIMEOUT:    return ((WriteTimeoutException)infos).copy();
                 case READ_TIMEOUT:     return ((ReadTimeoutException)infos).copy();
@@ -103,7 +102,7 @@ class Responses {
                 case INVALID:          return new InvalidQueryException(message);
                 case CONFIG_ERROR:     return new InvalidConfigurationInQueryException(message);
                 case ALREADY_EXISTS:   return ((AlreadyExistsException)infos).copy();
-                case UNPREPARED:       return new DriverInternalError(String.format("A prepared query was submitted on %s but was not known of that node; this shouldn't happen, the query should have been re-prepared", host));
+                case UNPREPARED:       return new UnpreparedException(host, message);
                 default:               return new DriverInternalError(String.format("Unknown protocol error code %s returned by %s. The error message was: %s", code, host, message));
             }
         }
@@ -117,7 +116,7 @@ class Responses {
     public static class Ready extends Message.Response {
 
         public static final Message.Decoder<Ready> decoder = new Message.Decoder<Ready>() {
-            public Ready decode(ChannelBuffer body, ProtocolVersion version) {
+            public Ready decode(ByteBuf body, ProtocolVersion version) {
                 // TODO: Would it be cool to return a singleton? Check we don't need to
                 // set the streamId or something
                 return new Ready();
@@ -137,7 +136,7 @@ class Responses {
     public static class Authenticate extends Message.Response {
 
         public static final Message.Decoder<Authenticate> decoder = new Message.Decoder<Authenticate>() {
-            public Authenticate decode(ChannelBuffer body, ProtocolVersion version) {
+            public Authenticate decode(ByteBuf body, ProtocolVersion version) {
                 String authenticator = CBUtil.readString(body);
                 return new Authenticate(authenticator);
             }
@@ -159,7 +158,7 @@ class Responses {
     public static class Supported extends Message.Response {
 
         public static final Message.Decoder<Supported> decoder = new Message.Decoder<Supported>() {
-            public Supported decode(ChannelBuffer body, ProtocolVersion version) {
+            public Supported decode(ByteBuf body, ProtocolVersion version) {
                 return new Supported(CBUtil.readStringToStringListMap(body));
             }
         };
@@ -195,7 +194,7 @@ class Responses {
     public static abstract class Result extends Message.Response {
 
         public static final Message.Decoder<Result> decoder = new Message.Decoder<Result>() {
-            public Result decode(ChannelBuffer body, ProtocolVersion version) {
+            public Result decode(ByteBuf body, ProtocolVersion version) {
                 Kind kind = Kind.fromId(body.readInt());
                 return kind.subDecoder.decode(body, version);
             }
@@ -252,7 +251,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body, ProtocolVersion version) {
+                public Result decode(ByteBuf body, ProtocolVersion version) {
                     return new Void();
                 }
             };
@@ -272,7 +271,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body, ProtocolVersion version) {
+                public Result decode(ByteBuf body, ProtocolVersion version) {
                     return new SetKeyspace(CBUtil.readString(body));
                 }
             };
@@ -324,7 +323,7 @@ class Responses {
                     this.pagingState = pagingState;
                 }
 
-                public static Metadata decode(ChannelBuffer body) {
+                public static Metadata decode(ByteBuf body) {
 
                     // flags & column count
                     EnumSet<Flag> flags = Flag.deserialize(body.readInt());
@@ -378,7 +377,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body, ProtocolVersion version) {
+                public Result decode(ByteBuf body, ProtocolVersion version) {
 
                     Metadata metadata = Metadata.decode(body);
 
@@ -441,14 +440,14 @@ class Responses {
         public static class Prepared extends Result {
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body, ProtocolVersion version) {
+                public Result decode(ByteBuf body, ProtocolVersion version) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
                     Rows.Metadata metadata = Rows.Metadata.decode(body);
                     Rows.Metadata resultMetadata = decodeResultMetadata(body, version);
                     return new Prepared(id, metadata, resultMetadata);
                 }
 
-                private Metadata decodeResultMetadata(ChannelBuffer body, ProtocolVersion version) {
+                private Metadata decodeResultMetadata(ByteBuf body, ProtocolVersion version) {
                     switch (version) {
                         case V1:
                             return Rows.Metadata.EMPTY;
@@ -489,7 +488,7 @@ class Responses {
             public final String name;
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ChannelBuffer body, ProtocolVersion version)
+                public Result decode(ByteBuf body, ProtocolVersion version)
                 {
                     // Note: the CREATE KEYSPACE/TABLE/TYPE SCHEMA_CHANGE response is different from the SCHEMA_CHANGE EVENT type
                     Change change;
@@ -514,7 +513,7 @@ class Responses {
                     }
                 }
 
-                private Target maybeReadTarget(ChannelBuffer body, ProtocolVersion version) {
+                private Target maybeReadTarget(ByteBuf body, ProtocolVersion version) {
                     switch (version) {
                         case V1:
                         case V2:
@@ -545,7 +544,7 @@ class Responses {
     public static class Event extends Message.Response {
 
         public static final Message.Decoder<Event> decoder = new Message.Decoder<Event>() {
-            public Event decode(ChannelBuffer body, ProtocolVersion version) {
+            public Event decode(ByteBuf body, ProtocolVersion version) {
                 return new Event(ProtocolEvent.deserialize(body, version));
             }
         };
@@ -566,7 +565,7 @@ class Responses {
     public static class AuthChallenge extends Message.Response {
 
         public static final Message.Decoder<AuthChallenge> decoder = new Message.Decoder<AuthChallenge>() {
-            public AuthChallenge decode(ChannelBuffer body, ProtocolVersion version) {
+            public AuthChallenge decode(ByteBuf body, ProtocolVersion version) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
                     return new AuthChallenge(null);
@@ -588,7 +587,7 @@ class Responses {
     public static class AuthSuccess extends Message.Response {
 
         public static final Message.Decoder<AuthSuccess> decoder = new Message.Decoder<AuthSuccess>() {
-            public AuthSuccess decode(ChannelBuffer body, ProtocolVersion version) {
+            public AuthSuccess decode(ByteBuf body, ProtocolVersion version) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
                     return new AuthSuccess(null);

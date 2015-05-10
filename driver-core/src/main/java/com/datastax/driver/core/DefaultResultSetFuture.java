@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                                 keyspace.removeUserType(scc.name);
                                             break;
                                     }
-                                    this.setResult(rs);
+                                    session.cluster.manager.waitForSchemaAgreementAndSignal(connection, this, rs);
                                     break;
                                 case UPDATED:
                                     switch (scc.target) {
@@ -275,7 +275,9 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
         if (!super.cancel(mayInterruptIfRunning))
             return false;
 
-        handler.cancel();
+        if(handler != null) {
+            handler.cancel();
+        }
         return true;
     }
 

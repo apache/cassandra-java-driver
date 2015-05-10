@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
@@ -166,7 +166,7 @@ public abstract class DataType {
         this.name = name;
     }
 
-    static DataType decode(ChannelBuffer buffer) {
+    static DataType decode(ByteBuf buffer) {
         Name name = Name.fromProtocolId(buffer.readUnsignedShort());
         switch (name) {
             case CUSTOM:

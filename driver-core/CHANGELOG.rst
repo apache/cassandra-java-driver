@@ -4,8 +4,38 @@ CHANGELOG
 2.1.6:
 ------
 
-- [new feature] Add getObject to BoundStatement, Row, UDTValue and TupleValue
-  (JAVA-584)
+Merged from 2.0 branch:
+
+- [new feature] Add getObject to BoundStatement and Row (JAVA-584)
+- [improvement] Improve connection pool resizing algorithm (JAVA-419)
+- [bug] Fix race condition between pool expansion and shutdown (JAVA-599)
+- [improvement] Upgrade Netty to 4.0.27 (JAVA-622)
+- [improvement] Coalesce frames before flushing them to the connection
+  (JAVA-562)
+- [improvement] Rename threads to indicate that they are for the driver
+  (JAVA-583)
+- [new feature] Expose paging state (JAVA-550)
+- [new feature] Slow Query Logger (JAVA-646)
+- [improvement] Exclude some errors from measurements in LatencyAwarePolicy
+  (JAVA-698)
+- [bug] Fix issue when executing a PreparedStatement from another cluster
+  (JAVA-641)
+- [improvement] Log keyspace xxx does not exist at WARN level (JAVA-534)
+- [improvement] Allow Cluster subclasses to delegate to another instance
+  (JAVA-619)
+- [new feature] Expose an API to check for schema agreement after a
+  schema-altering statement (JAVA-669)
+- [improvement] Make connection and pool creation fully async (JAVA-692)
+- [improvement] Optimize connection use after reconnection (JAVA-505)
+- [improvement] Remove "suspected" mechanism (JAVA-617)
+- [improvement] Don't mark connection defunct on client timeout (reverts
+  JAVA-425)
+- [new feature] Speculative query executions (JAVA-561)
+- [bug] Release connection before completing the ResultSetFuture (JAVA-666)
+- [new feature BETA] Percentile-based variant of query logger and speculative
+  executions (JAVA-723)
+- [bug] Fix buffer leaks when compression is enabled (JAVA-734).
+- [improvement] Use Netty's pooled ByteBufAllocator by default (JAVA-756)
 
 
 2.1.5:
@@ -188,6 +218,66 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] Avoid classloader leak in Tomcat (JAVA-343)
 - [bug] Avoid deadlock in onAdd/onUp (JAVA-387)
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
+
+
+2.0.10:
+-------
+
+- [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
+- [improvement] Add connection heartbeat (JAVA-533)
+- [improvement] Reduce level of logs on missing rpc_address (JAVA-568)
+- [improvement] Expose node token and range information (JAVA-312, JAVA-681)
+- [bug] Fix cluster name mismatch check at startup (JAVA-595)
+- [bug] Fix guava dependency when using OSGI (JAVA-620)
+- [bug] Fix handling of DROP events when ks name is case-sensitive (JAVA-678)
+- [improvement] Use List<?> instead of List<Object> in QueryBuilder API
+  (JAVA-631)
+- [improvement] Exclude Netty POM from META-INF in shaded JAR (JAVA-654)
+- [bug] Quote single quotes contained in table comments in asCQLQuery method
+  (JAVA-655)
+- [bug] Empty TokenRange returned in a one token cluster (JAVA-684)
+- [improvement] Expose TokenRange#contains (JAVA-687)
+- [new feature] Expose values of BoundStatement (JAVA-547)
+- [new feature] Add getObject to BoundStatement and Row (JAVA-584)
+- [improvement] Improve connection pool resizing algorithm (JAVA-419)
+- [bug] Fix race condition between pool expansion and shutdown (JAVA-599)
+- [improvement] Upgrade Netty to 4.0.27 (JAVA-622)
+- [improvement] Coalesce frames before flushing them to the connection
+  (JAVA-562)
+- [improvement] Rename threads to indicate that they are for the driver
+  (JAVA-583)
+- [new feature] Expose paging state (JAVA-550)
+- [new feature] Slow Query Logger (JAVA-646)
+- [improvement] Exclude some errors from measurements in LatencyAwarePolicy
+  (JAVA-698)
+- [bug] Fix issue when executing a PreparedStatement from another cluster
+  (JAVA-641)
+- [improvement] Log keyspace xxx does not exist at WARN level (JAVA-534)
+- [improvement] Allow Cluster subclasses to delegate to another instance
+  (JAVA-619)
+- [new feature] Expose an API to check for schema agreement after a
+  schema-altering statement (JAVA-669)
+- [improvement] Make connection and pool creation fully async (JAVA-692)
+- [improvement] Optimize connection use after reconnection (JAVA-505)
+- [improvement] Remove "suspected" mechanism (JAVA-617)
+- [improvement] Don't mark connection defunct on client timeout (reverts
+  JAVA-425)
+- [new feature] Speculative query executions (JAVA-561)
+- [bug] Release connection before completing the ResultSetFuture (JAVA-666)
+- [new feature BETA] Percentile-based variant of query logger and speculative
+  executions (JAVA-723)
+- [bug] Fix buffer leaks when compression is enabled (JAVA-734).
+
+Merged from 2.0.9_fixes branch:
+
+- [bug] Prevent race between cancellation and query completion (JAVA-614)
+- [bug] Prevent cancel and timeout from cancelling unrelated ResponseHandler if
+  streamId was already released and reused (JAVA-632).
+- [bug] Fix issue when newly opened pool fails before we could mark the node UP
+  (JAVA-642)
+- [bug] Fix unwanted LBP notifications when a contact host is down (JAVA-613)
+- [bug] Fix edge cases where a connection was released twice (JAVA-651).
+- [bug] Fix edge cases in query cancellation (JAVA-653).
 
 
 2.0.9.2:

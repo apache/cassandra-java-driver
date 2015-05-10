@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -104,6 +104,29 @@ public final class Bytes {
      * Converts a blob to its CQL hex string representation.
      * <p>
      * A CQL blob string representation consist of the hexadecimal
+     * representation of the blob bytes.
+     *
+     * @param bytes the blob/bytes to convert to a string.
+     * @return the CQL string representation of {@code bytes}. If {@code bytes}
+     * is {@code null}, this method returns {@code null}.
+     */
+    public static String toRawHexString(ByteBuffer bytes) {
+        if (bytes == null)
+            return null;
+
+        if (bytes.remaining() == 0) {
+            return "";
+        }
+
+
+        char[] array = new char[2 * (bytes.remaining())];
+        return toRawHexString(bytes, array, 0);
+    }
+
+    /**
+     * Converts a blob to its CQL hex string representation.
+     * <p>
+     * A CQL blob string representation consist of the hexadecimal
      * representation of the blob bytes prefixed by "0x".
      *
      * @param byteArray the blob/bytes array to convert to a string.
@@ -165,7 +188,7 @@ public final class Bytes {
         bytes.duplicate().get(array);
         return array;
     }
-
+    
     private static String toRawHexString(ByteBuffer bytes, char[] array, int offset) {
         int size = bytes.remaining();
         int bytesOffset = bytes.position();
@@ -178,7 +201,19 @@ public final class Bytes {
         return wrapCharArray(array);
     }
 
-    static byte[] fromRawHexString(String str, int strOffset) {
+    /**
+     * Converts a CQL hex string representation into a byte array.
+     * <p>
+     * A CQL blob string representation consist of the hexadecimal
+     * representation of the blob bytes.
+     *
+     * @param str the string converted in hex representation.
+     * @param strOffset he offset for starting the string conversion
+     *
+     * @return the byte array which the String was representing.
+     */
+
+    public static byte[] fromRawHexString(String str, int strOffset) {
         byte[] bytes = new byte[(str.length() - strOffset) / 2];
         for (int i = 0; i < bytes.length; i++) {
             byte halfByte1 = charToByte[str.charAt(strOffset + i * 2)];

@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -28,9 +28,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closer;
 import com.google.common.io.Files;
+import org.apache.commons.exec.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
@@ -70,6 +72,36 @@ public class CCMBridge {
     public static final String DEFAULT_SERVER_KEYSTORE_PATH = "/server.keystore";
 
     private static final File DEFAULT_SERVER_KEYSTORE_FILE = createTempStore(DEFAULT_SERVER_KEYSTORE_PATH);
+
+    /**
+     * The environment variables to use when invoking CCM.  Inherits the current processes environment, but will also
+     * prepend to the PATH variable the value of the 'ccm.path' property and set JAVA_HOME variable to the
+     * 'ccm.java.home' variable.
+     *
+     * At times it is necessary to use a separate java install for CCM then what is being used for running tests.
+     * For example, if you want to run tests with JDK 6 but against Cassandra 2.0, which requires JDK 7.
+     */
+    private static final Map<String,String> ENVIRONMENT_MAP;
+
+    static {
+        // Inherit the current environment.
+        Map<String,String> envMap = Maps.newHashMap(new ProcessBuilder().environment());
+        // If ccm.path is set, override the PATH variable with it.
+        String ccmPath = System.getProperty("ccm.path");
+        if(ccmPath != null) {
+            String existingPath = envMap.get("PATH");
+            if(existingPath == null) {
+                existingPath = "";
+            }
+            envMap.put("PATH", ccmPath + ":" + existingPath);
+        }
+        // If ccm.java.home is set, override the JAVA_HOME variable with it.
+        String ccmJavaHome = System.getProperty("ccm.java.home");
+        if(ccmJavaHome != null) {
+            envMap.put("JAVA_HOME", ccmJavaHome);
+        }
+        ENVIRONMENT_MAP = ImmutableMap.copyOf(envMap);
+    }
 
     static final File CASSANDRA_DIR;
     static final String CASSANDRA_VERSION;
@@ -226,14 +258,6 @@ public class CCMBridge {
         execute("ccm node%d remove", n);
     }
 
-    public void ring() {
-        ring(1);
-    }
-
-    public void ring(int n) {
-        executeAndPrint("ccm node%d ring", n);
-    }
-
     public void bootstrapNode(int n) {
         bootstrapNode(n, null);
     }
@@ -280,48 +304,29 @@ public class CCMBridge {
         try {
             String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
             logger.debug("Executing: " + fullCommand);
-            Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
-            int retValue = p.waitFor();
+            CommandLine cli = CommandLine.parse(fullCommand);
+            Executor executor = new DefaultExecutor();
 
+            LogOutputStream outStream = new LogOutputStream() {
+                @Override protected void processLine(String line, int logLevel) {
+                    logger.debug("ccmout> " + line);
+                }
+            };
+            LogOutputStream errStream = new LogOutputStream() {
+                @Override protected void processLine(String line, int logLevel) {
+                    logger.error("ccmerr> " + line);
+                }
+            };
+
+            ExecuteStreamHandler streamHandler = new PumpStreamHandler(outStream, errStream);
+            executor.setStreamHandler(streamHandler);
+
+            int retValue = executor.execute(cli, ENVIRONMENT_MAP);
             if (retValue != 0) {
-                BufferedReader outReader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                BufferedReader errReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-
-                String line = outReader.readLine();
-                while (line != null) {
-                    logger.info("out> " + line);
-                    line = outReader.readLine();
-                }
-                line = errReader.readLine();
-                while (line != null) {
-                    logger.error("err> " + line);
-                    line = errReader.readLine();
-                }
+                logger.error("Non-zero exit code ({}) returned from executing ccm command: {}", retValue, fullCommand);
                 throw new RuntimeException();
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void executeAndPrint(String command, Object... args) {
-        try {
-            String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
-            logger.debug("Executing: " + fullCommand);
-            Process p = runtime.exec(fullCommand, null, CASSANDRA_DIR);
-            int retValue = p.waitFor();
-
-            BufferedReader outReaderOutput = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String line = outReaderOutput.readLine();
-            while (line != null) {
-                System.out.println(line);
-                line = outReaderOutput.readLine();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -484,7 +489,7 @@ public class CCMBridge {
 
                     ports = new int[5];
                     for (int i = 0; i < 5; i++) {
-                        ports[i] = TestUtils.findAvailablePort(10000 + i);
+                        ports[i] = TestUtils.findAvailablePort(11000 + i);
                     }
 
                     ccmBridge.bootstrapNodeWithPorts(1, ports[0], ports[1], ports[2], ports[3], ports[4]);

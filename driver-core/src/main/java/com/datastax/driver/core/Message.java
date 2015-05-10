@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
  */
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.UUID;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
-import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToMessageDecoder;
+import io.netty.handler.codec.MessageToMessageEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,12 +38,12 @@ abstract class Message {
     protected static final Logger logger = LoggerFactory.getLogger(Message.class);
 
     public interface Coder<R extends Request> {
-        public void encode(R request, ChannelBuffer dest, ProtocolVersion version);
+        public void encode(R request, ByteBuf dest, ProtocolVersion version);
         public int encodedSize(R request, ProtocolVersion version);
     }
 
     public interface Decoder<R extends Response> {
-        public R decode(ChannelBuffer body, ProtocolVersion version);
+        public R decode(ByteBuf body, ProtocolVersion version);
     }
 
     private volatile int streamId;
@@ -93,6 +94,41 @@ abstract class Message {
 
         public boolean isTracingRequested() {
             return tracingRequested;
+        }
+
+        ConsistencyLevel consistency() {
+            switch (this.type) {
+                case QUERY:   return ((Requests.Query)this).options.consistency;
+                case EXECUTE: return ((Requests.Execute)this).options.consistency;
+                case BATCH:   return ((Requests.Batch)this).options.consistency;
+                default:      return null;
+            }
+        }
+
+        ConsistencyLevel serialConsistency() {
+            switch (this.type) {
+                case QUERY:   return ((Requests.Query)this).options.serialConsistency;
+                case EXECUTE: return ((Requests.Execute)this).options.serialConsistency;
+                case BATCH:   return ((Requests.Batch)this).options.serialConsistency;
+                default:      return null;
+            }
+        }
+
+        long defaultTimestamp() {
+            switch (this.type) {
+                case QUERY:   return ((Requests.Query)this).options.defaultTimestamp;
+                case EXECUTE: return ((Requests.Execute)this).options.defaultTimestamp;
+                case BATCH:   return ((Requests.Batch)this).options.defaultTimestamp;
+                default:      return 0;
+            }
+        }
+
+        ByteBuffer pagingState() {
+            switch (this.type) {
+                case QUERY:   return ((Requests.Query)this).options.pagingState;
+                case EXECUTE: return ((Requests.Execute)this).options.pagingState;
+                default:      return null;
+            }
         }
     }
 
@@ -156,21 +192,26 @@ abstract class Message {
         }
     }
 
-    public static class ProtocolDecoder extends OneToOneDecoder {
+    @ChannelHandler.Sharable
+    public static class ProtocolDecoder extends MessageToMessageDecoder<Frame> {
 
-        public Object decode(ChannelHandlerContext ctx, Channel channel, Object msg) {
-            assert msg instanceof Frame : "Expecting frame, got " + msg;
-
-            Frame frame = (Frame)msg;
+        @Override
+        protected void decode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
             boolean isTracing = frame.header.flags.contains(Frame.Header.Flag.TRACING);
             UUID tracingId = isTracing ? CBUtil.readUUID(frame.body) : null;
 
-            Response response = Response.Type.fromOpcode(frame.header.opcode).decoder.decode(frame.body, frame.header.version);
-            return response.setTracingId(tracingId).setStreamId(frame.header.streamId);
+            try {
+                Response response = Response.Type.fromOpcode(frame.header.opcode).decoder.decode(frame.body, frame.header.version);
+                response.setTracingId(tracingId).setStreamId(frame.header.streamId);
+                out.add(response);
+            } finally {
+                frame.body.release();
+            }
         }
     }
 
-    public static class ProtocolEncoder extends OneToOneEncoder {
+    @ChannelHandler.Sharable
+    public static class ProtocolEncoder extends MessageToMessageEncoder<Request> {
 
         private final ProtocolVersion protocolVersion;
 
@@ -178,21 +219,18 @@ abstract class Message {
             this.protocolVersion = version;
         }
 
-        @SuppressWarnings("unchecked")
-        public Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) {
-            assert msg instanceof Request : "Expecting request, got " + msg;
-
-            Request request = (Request)msg;
-
+        @Override
+        protected void encode(ChannelHandlerContext ctx, Request request, List<Object> out) throws Exception {
             EnumSet<Frame.Header.Flag> flags = EnumSet.noneOf(Frame.Header.Flag.class);
             if (request.isTracingRequested())
                 flags.add(Frame.Header.Flag.TRACING);
 
+            @SuppressWarnings("unchecked")
             Coder<Request> coder = (Coder<Request>)request.type.coder;
-            ChannelBuffer body = ChannelBuffers.buffer(coder.encodedSize(request, protocolVersion));
+            ByteBuf body = ctx.alloc().buffer(coder.encodedSize(request, protocolVersion));
             coder.encode(request, body, protocolVersion);
 
-            return Frame.create(protocolVersion, request.type.opcode, request.getStreamId(), flags, body);
+            out.add(Frame.create(protocolVersion, request.type.opcode, request.getStreamId(), flags, body));
         }
     }
 }
