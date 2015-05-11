@@ -636,8 +636,8 @@ class SessionManager extends AbstractSession {
                 }
 
                 openConnections[i] = p.opened();
-                trashedConnections[i] = p.inFlightQueriesCount();
-                inFlightQueries[i] = p.trashed();
+                inFlightQueries[i] = p.inFlightQueriesCount();
+                trashedConnections[i] = p.trashed();
                 i++;
             }
         }
