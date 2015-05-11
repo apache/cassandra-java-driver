@@ -11,7 +11,7 @@ connection to handle multiple simultaneous requests:
 * the driver writes a request containing the stream id and the query on
   the connection, and then proceeds without waiting for the response (if
   you're using the asynchronous API, this is when the driver will send you
-  back a [ResultSetFuture][result_set_future]). 
+  back a [ResultSetFuture][result_set_future]).
   Once the request has been written to the
   connection, we say that it is *in flight*;
 * at some point, Cassandra will send back a response on the connection.
@@ -19,21 +19,23 @@ connection to handle multiple simultaneous requests:
   trigger a callback that will complete the corresponding query (this is
   the point where your `ResultSetFuture` will get completed).
 
-Version 2.0.x of the driver uses version 1 of the binary protocol when
-connecting to Cassandra 1.2, and version 2 when connecting to Cassandra
-2.0 or higher. In both cases, that gives you **128 stream ids per
-connection**.
+To increase the number of concurrent requests, we use a pool of
+connections to each host.  **For each `Session` object, there is one
+connection pool per connected host**.
 
-Because the number of stream ids per connection is limited, we use a
-pool with multiple connections to each host. **For each `Session`
-object, there is one connection pool per connected host**. The number of
-connections per pool depends on the configuration, this will be
-described in the next section.
+The number of connections and stream ids depends on the [native protocol
+version](../native_protocol/):
+
+* **protocol v2 or below**: there are **128 stream ids per connection.**
+  The number of connections per pool is configurable (this will be
+  described in the next section).
+* v3 or above: there are **up to 32768 stream ids per connection**, and
+  **1 connection per pool**.
 
 ```ditaa
-+-------+1   n+-------+1   n+----+1   n+----------+1   128+-------+
-|Cluster+-----+Session+-----+Pool+-----+Connection+-------+Request+
-+-------+     +-------+     +----+     +----------+       +-------+
++-------+1   n+-------+1   n+----+1   n/1+----------+1   128/32K+-------+
+|Cluster+-----+Session+-----+Pool+-------+Connection+-----------+Request+
++-------+     +-------+     +----+       +----------+           +-------+
 ```
 
 ### Configuring the connection pool
@@ -60,7 +62,7 @@ PoolingOptions poolingOptions = cluster.getConfiguration().getPoolingOptions();
 // customize options...
 ```
 
-#### Pool size
+#### Pool size (protocol v2 only)
 
 Connection pools have a variable size, which gets adjusted automatically
 depending on the current load. There will always be at least a *core*
@@ -82,12 +84,30 @@ when you try to set both values at once.
 [JAVA-662](https://datastax-oss.atlassian.net/browse/JAVA-662) will
 address this issue.
 
-[PoolingOptions.setMaxSimultaneousRequestsPerConnectionThreshold][msrpct] 
+[PoolingOptions.setMaxSimultaneousRequestsPerConnectionThreshold][msrpct]
 has a slightly misleading name: it does not limit the number of requests per
 connection, but only determines the threshold that triggers the creation
 of a new connection when the pool is not at its maximum capacity. In
 general, you shouldn't have to change its default value.
 
+#### Number of simultaneous requests per host (protocol v3 only)
+
+Protocol v3 uses a single connection per host. While the number of
+simultaneous requests can go up to 32768, it is limited by
+[PoolingOptions.setMaxSimultaneousRequestsPerHostThreshold][msrpht]. The
+goal of this option is to throttle the load that each client can
+generate on the server. By default, it is set to 1024 for local hosts,
+and 256 for remote hosts (this was chosen to match the capacity of a v2
+pool with the default configuration).
+
+If your performance tests show that your cluster can handle a higher
+load, you can raise this threshold:
+
+```java
+poolingOptions
+    .setMaxSimultaneousRequestsPerHostThreshold(HostDistance.LOCAL, 20000)
+    .setMaxSimultaneousRequestsPerHostThreshold(HostDistance.REMOTE, 1000);
+```
 
 #### Heartbeat
 
@@ -151,16 +171,37 @@ a simple example that will print the number of open connections, active
 requests, and maximum capacity for each host, every 5 seconds:
 
 ```java
+final LoadBalancingPolicy loadBalancingPolicy =
+    cluster.getConfiguration().getPolicies().getLoadBalancingPolicy();
+PoolingOptions poolingOptions = cluster.getConfiguration().getPoolingOptions();
+ProtocolOptions protocolOptions = cluster.getConfiguration().getProtocolOptions();
+
+final Map<HostDistance, Integer> requestsPerConnection;
+ProtocolVersion protocolVersion = protocolOptions.getProtocolVersionEnum();
+if (protocolVersion == ProtocolVersion.V3) {
+    requestsPerConnection = ImmutableMap.of(
+        HostDistance.LOCAL,
+        poolingOptions.getMaxSimultaneousRequestsPerHostThreshold(HostDistance.LOCAL),
+        HostDistance.REMOTE,
+        poolingOptions.getMaxSimultaneousRequestsPerHostThreshold(HostDistance.REMOTE));
+} else {
+    requestsPerConnection = ImmutableMap.of(
+        HostDistance.LOCAL, 128,
+        HostDistance.REMOTE, 128);
+}
+
 ScheduledExecutorService scheduled = Executors.newScheduledThreadPool(1);
 scheduled.scheduleAtFixedRate(new Runnable() {
     @Override
     public void run() {
         Session.State state = session.getState();
         for (Host host : state.getConnectedHosts()) {
+            HostDistance distance = loadBalancingPolicy.distance(host);
             int connections = state.getOpenConnections(host);
             int inFlightQueries = state.getInFlightQueries(host);
             System.out.printf("%s connections=%d current load=%d max load=%d%n",
-                host, connections, inFlightQueries, connections * 128);
+                host, connections, inFlightQueries,
+                connections * requestsPerConnection.get(distance));
         }
     }
 }, 5, 5, TimeUnit.SECONDS);
@@ -172,16 +213,20 @@ tool.
 
 If you find that the current load stays close or equal to the maximum
 load at all time, it's a sign that your connection pools are saturated
-and you should raise the max connections per host. On the other hand, if
-the load is often less than core * 128, your pools are underused and you
-could get away with less core connections.
+and you should raise the max connections per host (protocol v2) or max
+requests per host (protocol v3).
 
-[result_set_future]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/ResultSetFuture.html
-[pooling_options]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html
-[lbp]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
-[msrpct]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)
-[rtm]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis()
-[exec_async]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)
-[ptm]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis(int)
-[nhae]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html
-[get_state]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.html#getState()
+If you're using protocol v2 and the load is often less than core * 128,
+your pools are underused and you could get away with less core
+connections.
+
+[result_set_future]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ResultSetFuture.html
+[pooling_options]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html
+[lbp]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/LoadBalancingPolicy.html
+[msrpct]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)
+[msrpht]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerHostThreshold(com.datastax.driver.core.HostDistance,%20int)
+[rtm]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis()
+[exec_async]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)
+[ptm]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis(int)
+[nhae]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/exceptions/NoHostAvailableException.html
+[get_state]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#getState()
