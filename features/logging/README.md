@@ -110,11 +110,10 @@ and provide hints about what's going wrong.
 
 ### Logging query latencies
 
-Version 2.0.10 of the driver introduces a new feature: the `QueryLogger`.
-
-This new API provides clients with the ability to log queries executed by the driver,
-and especially, it allows client to track slow queries, i.e. queries that take longer to
-complete than a configured threshold in milliseconds.
+The `QueryLogger` provides clients with the ability to log queries
+executed by the driver, and especially, it allows client to track slow
+queries, i.e. queries that take longer to complete than a configured
+threshold in milliseconds.
 
 To turn on this feature, you first need to instantiate and register a `QueryLogger` instance:
 
@@ -179,7 +178,7 @@ Currently the `QueryLogger` can be configured to track slow queries using either
 a constant threshold in milliseconds (which is the default behavior), or 
 a dynamic threshold based on per-host latency percentiles, as computed by `PerHostPercentileTracker`.
 
-**Dynamic thresholds are still a beta feature as of version 2.0.10: they
+**Dynamic thresholds are still a beta feature as of version 2.1.6: they
 haven't been extensively tested yet, and the API is still subject to
 change.**
 
@@ -301,4 +300,4 @@ It also turns on slow query tracing as described above.
 </log4j:configuration>
 ```
 
-[query_logger]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/QueryLogger.html
+[query_logger]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryLogger.html

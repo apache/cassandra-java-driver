@@ -171,5 +171,5 @@ if (nextPage != null) {
 }
 ```
 
-[result_set]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/ResultSet.html
-[paging_state]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PagingState.html
+[result_set]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ResultSet.html
+[paging_state]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PagingState.html

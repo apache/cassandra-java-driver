@@ -79,7 +79,7 @@ about what the query actually does. Therefore:
 
 * **`Statement#isIdempotent()` is only computed automatically for
   statements built with [QueryBuilder][QueryBuilder]**. Note that there
-  is a known issue in 2.0.10 where calls to `now()` or `uuid()` are not
+  is a known issue in 2.1.6 where calls to `now()` or `uuid()` are not
   taken into account (see
   [JAVA-733](https://datastax-oss.atlassian.net/browse/JAVA-733)). If
   you're using these CQL functions with built statements, force
@@ -106,8 +106,8 @@ default cluster-wide:
 cluster.getConfiguration().getQueryOptions().setDefaultIdempotence(true);
 ```
 
-[isIdempotent]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Statement.html#isIdempotent()
-[QueryBuilder]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/querybuilder/QueryBuilder.html
+[isIdempotent]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Statement.html#isIdempotent()
+[QueryBuilder]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/querybuilder/QueryBuilder.html
 
 ### Enabling speculative executions
 
@@ -116,7 +116,7 @@ Speculative executions are controlled by an instance of
 `Cluster`.  This policy defines the threshold after which a new
 speculative execution will be triggered.
 
-[sep]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/SpeculativeExecutionPolicy.html
+[sep]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/SpeculativeExecutionPolicy.html
 
 Two implementations are provided with the driver:
 
@@ -144,14 +144,14 @@ way:
 * if no response has been received at t0 + 1000 milliseconds, start
   another speculative execution on a third node.
 
-[csep]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/ConstantSpeculativeExecutionPolicy.html
+[csep]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/ConstantSpeculativeExecutionPolicy.html
 
 #### [PercentileSpeculativeExecutionPolicy][psep]
 
 This policy sets the threshold at a given latency percentile for the
 current host, based on recent statistics.
 
-**As of 2.0.10, this class is provided as a beta preview: it hasn't been
+**As of 2.1.6, this class is provided as a beta preview: it hasn't been
 extensively tested yet, and the API is still subject to change.**
 
 First and foremost, make sure that the [HdrHistogram][hdr] library (used
@@ -205,9 +205,9 @@ Note that `PerHostPercentileTracker` may also be used with a slow query
 logger (see the [Logging](../logging/) section). In that case, you would
 create a single tracker object and share it with both components.
 
-[psep]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy.html
+[psep]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy.html
 [hdr]: http://hdrhistogram.github.io/HdrHistogram/
-[phpt]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PerHostPercentileTracker.html
+[phpt]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PerHostPercentileTracker.html
 
 #### Using your own
 
@@ -261,7 +261,7 @@ client           driver          exec1  exec2
 The only impact is that all executions of the same query always share
 the same query plan, so each host will be used by at most one execution.
 
-[retry_policy]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/RetryPolicy.html
+[retry_policy]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/RetryPolicy.html
 
 ### Tuning and practical details
 
@@ -276,8 +276,8 @@ You can monitor how many speculative executions were triggered with the
 It should only be a few percents of the total number of requests
 ([cluster.getMetrics().getRequestsTimer().getCount()][request_metric]).
 
-[se_metric]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Metrics.Errors.html#getSpeculativeExecutions()
-[request_metric]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Metrics.html#getRequestsTimer()
+[se_metric]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metrics.Errors.html#getSpeculativeExecutions()
+[request_metric]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metrics.html#getRequestsTimer()
 
 #### Stream id exhaustion
 
@@ -306,8 +306,8 @@ sustained. If you're unsure of which native protocol version you're
 using, you can check with
 [cluster.getConfiguration().getProtocolOptions().getProtocolVersion()][protocol_version].
 
-[session_state]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.State.html
-[protocol_version]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion()
+[session_state]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.State.html
+[protocol_version]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion()
 
 #### Request ordering and client timestamps
 
