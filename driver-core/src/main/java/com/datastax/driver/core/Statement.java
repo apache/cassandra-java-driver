@@ -267,8 +267,9 @@ public abstract class Statement {
      * This will cause the next execution of this statement to fetch results from a given
      * page, rather than restarting from the beginning.
      * <p>
-     * You get the paging state from a previous execution of the statement. This is typically
-     * used to iterate in a "stateless" manner (e.g. across HTTP requests):
+     * You get the paging state from a previous execution of the statement (see
+     * {@link ExecutionInfo#getPagingState()}.
+     * This is typically used to iterate in a "stateless" manner (e.g. across HTTP requests):
      * <pre>
      * {@code
      * Statement st = new SimpleStatement("your query");
@@ -296,9 +297,17 @@ public abstract class Statement {
      * }
      * </pre>
      * <p>
-     * Note that the paging state can only be reused between perfectly identical statements
+     * The paging state can only be reused between perfectly identical statements
      * (same query string, same bound parameters). Altering the contents of the paging state
      * or trying to set it on a different statement will cause this method to fail.
+     * <p>
+     * Note that, due to internal implementation details, the paging state is not portable
+     * across native protocol versions (see the
+     * <a href="http://datastax.github.io/java-driver/features/native_protocol">online documentation</a>
+     * for more explanations about the native protocol).
+     * This means that {@code PagingState} instances generated with an old version won't work
+     * with a higher version. If that is a problem for you, consider using the "unsafe" API (see
+     * {@link #setPagingStateUnsafe(byte[])}).
      *
      * @param pagingState the paging state to set, or {@code null} to remove any state that was
      *                    previously set on this statement.
@@ -319,6 +328,30 @@ public abstract class Statement {
                     + "this means that either the paging state contents were altered, "
                     + "or you're trying to apply it to a different statement");
             }
+        }
+        return this;
+    }
+
+    /**
+     * Sets the paging state.
+     * <p>
+     * Contrary to {@link #setPagingState(PagingState)}, this method takes the "raw" form of the
+     * paging state (previously extracted with {@link ExecutionInfo#getPagingStateUnsafe()}.
+     * It won't validate that this statement matches the one that the paging state was extracted from.
+     * If the paging state was altered in any way, you will get unpredictable behavior from
+     * Cassandra (ranging from wrong results to a query failure). If you decide to use this variant,
+     * it is strongly recommended to add your own validation (for example, signing the raw state with
+     * a private key).
+     *
+     * @param pagingState the paging state to set, or {@code null} to remove any state that was
+     *                    previously set on this statement.
+     * @return this {@code Statement} object.
+     */
+    public Statement setPagingStateUnsafe(byte[] pagingState) {
+        if (pagingState == null) {
+            this.pagingState = null;
+        } else {
+            this.pagingState = ByteBuffer.wrap(pagingState);
         }
         return this;
     }
