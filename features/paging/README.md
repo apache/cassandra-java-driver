@@ -173,3 +173,45 @@ if (nextPage != null) {
 
 [result_set]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/ResultSet.html
 [paging_state]:http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PagingState.html
+
+Due to internal implementation details, `PagingState` instances are not
+portable across [native protocol](../native_protocol/) versions. This
+could become a problem in the following scenario:
+
+* you're using the driver 2.0.x and Cassandra 2.0.x, and therefore
+  native protocol v2;
+* a user bookmarks a link to your web service that contains a serialized
+  paging state;
+* you upgrade your server stack to use the driver 2.1.x and Cassandra
+  2.1.x, so you're now using protocol v3;
+* the user tries to reload their bookmark, but the paging state was
+  serialized with protocol v2, so trying to reuse it will fail.
+
+If this is not acceptable for you, you might want to consider the unsafe
+API described in the next section.
+
+#### Unsafe API
+
+As an alternative to the standard API, there are two methods that
+manipulate a raw `byte[]` instead of a `PagingState` object:
+
+* [ExecutionInfo#getPagingStateUnsafe()][gpsu]
+* [Statement#setPagingStateUnsafe(byte[])][spsu]
+
+These low-level methods perform no validation on their arguments;
+therefore nothing protects you from reusing a paging state that was
+generated from a different statement, or altered in any way. This could
+result in sending a corrupt paging state to Cassandra, with
+unpredictable consequences (ranging from wrong results to a query
+failure).
+
+There are two situations where you might want to use the unsafe API:
+
+* you never expose the paging state to end users and you are confident
+  that it won't get altered;
+* you want portability across protocol versions and/or you prefer
+  implementing your own validation logic (for example, signing the raw
+  state with a private key).
+
+[gpsu]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/ExecutionInfo.html#getPagingStateUnsafe()
+[spsu]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Statement.html#setPagingStateUnsafe(byte[])
