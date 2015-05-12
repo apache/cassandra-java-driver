@@ -15,29 +15,52 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.policies.AddressTranslater;
+import com.datastax.driver.core.policies.CloseableAddressTranslater;
+import com.datastax.driver.core.policies.CloseableLoadBalancingPolicy;
+import com.datastax.driver.core.policies.IdentityTranslater;
+import com.datastax.driver.core.policies.LatencyAwarePolicy;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import com.datastax.driver.core.policies.Policies;
+import com.datastax.driver.core.policies.ReconnectionPolicy;
+import com.datastax.driver.core.policies.RetryPolicy;
+import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
+import com.google.common.base.Predicates;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.MapMaker;
+import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.common.util.concurrent.Uninterruptibles;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
-import com.google.common.base.Predicates;
-import com.google.common.collect.*;
-import com.google.common.util.concurrent.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.datastax.driver.core.policies.*;
 
 /**
  * Information and known state of a Cassandra cluster.
@@ -727,7 +750,7 @@ public class Cluster implements Closeable {
         }
 
         /**
-         * Adds a contact point.
+         * Adds a contact point - or many if it host resolves to multiple <code>InetAddress</code>s (A records).
          * <p>
          * Contact points are addresses of Cassandra nodes that the driver uses
          * to discover the cluster topology. Only one contact point is required
@@ -742,6 +765,10 @@ public class Cluster implements Closeable {
          * running Cassandra in a  multiple data-center setting, it is a good idea to
          * only provided contact points that are in the same datacenter than the client,
          * or to provide manually the load balancing policy that suits your need.
+         * <p>
+         * If the host name points to a dns records with multiple a-records, all InetAddresses
+         * returned will be used. Make sure that all resulting <code>InetAddress</code>s returned
+         * points to the same cluster and datacenter.
          *
          * @param address the address of the node to connect to
          * @return this Builder.
@@ -759,7 +786,7 @@ public class Cluster implements Closeable {
                 throw new NullPointerException();
 
             try {
-                this.rawAddresses.add(InetAddress.getByName(address));
+                addContactPoints(InetAddress.getAllByName(address));
                 return this;
             } catch (UnknownHostException e) {
                 throw new IllegalArgumentException(e.getMessage());
