@@ -475,7 +475,6 @@ class DynamicConnectionPool extends HostConnectionPool {
                     addConnectionIfUnderMaximum();
                 }
             });
-        connection.closeAsync();
     }
 
     @Override

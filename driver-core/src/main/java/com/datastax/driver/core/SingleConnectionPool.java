@@ -96,14 +96,14 @@ class SingleConnectionPool extends HostConnectionPool {
         Futures.addCallback(connectionFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                connectionRef.set(connection);
-                open.set(true);
                 if (isClosed()) {
                     initFuture.setException(new ConnectionException(host.getSocketAddress(), "Pool was closed during initialization"));
                     // we're not sure if closeAsync() saw the connection, so ensure it gets closed
                     connection.closeAsync().force();
                 } else {
                     logger.trace("Created connection pool to host {}", host);
+                    connectionRef.set(connection);
+                    open.set(true);
                     phase = Phase.READY;
                     initFuture.set(null);
                 }
@@ -235,6 +235,8 @@ class SingleConnectionPool extends HostConnectionPool {
 
     @Override
     public void returnConnection(Connection connection) {
+        int inFlight = connection.inFlight.decrementAndGet();
+
         if (isClosed()) {
             close(connection);
             return;
@@ -245,8 +247,6 @@ class SingleConnectionPool extends HostConnectionPool {
             // closed the pool.
             return;
         }
-
-        int inFlight = connection.inFlight.decrementAndGet();
 
         if (trash.contains(connection)) {
             if (inFlight == 0 && trash.remove(connection))
@@ -264,14 +264,15 @@ class SingleConnectionPool extends HostConnectionPool {
     // directly because we want to make sure the connection is always trashed.
     private void replaceConnection(Connection connection) {
         if (!connection.state.compareAndSet(OPEN, TRASHED))
-            open.set(false);
+            return;
+        open.set(false);
         maybeSpawnNewConnection();
         doTrashConnection(connection);
     }
 
     private void doTrashConnection(Connection connection) {
-        trash.add(connection);
         connectionRef.compareAndSet(connection, null);
+        trash.add(connection);
 
         if (connection.inFlight.get() == 0 && trash.remove(connection))
             close(connection);
@@ -329,14 +330,13 @@ class SingleConnectionPool extends HostConnectionPool {
     public void replaceDefunctConnection(final Connection connection) {
         if (connection.state.compareAndSet(OPEN, GONE))
             open.set(false);
-        connectionRef.compareAndSet(connection, null);
-        connection.closeAsync();
-        manager.blockingExecutor().submit(new Runnable() {
-            @Override
-            public void run() {
-                addConnectionIfNeeded();
-            }
-        });
+        if (connectionRef.compareAndSet(connection, null))
+            manager.blockingExecutor().submit(new Runnable() {
+                @Override
+                public void run() {
+                    addConnectionIfNeeded();
+                }
+            });
     }
 
     @Override
@@ -379,7 +379,7 @@ class SingleConnectionPool extends HostConnectionPool {
         if (isClosed())
             return;
 
-        if (open.compareAndSet(false, true) && scheduledForCreation.compareAndSet(false, true)) {
+        if (!open.get() && scheduledForCreation.compareAndSet(false, true)) {
             manager.blockingExecutor().submit(newConnectionTask);
         }
     }
