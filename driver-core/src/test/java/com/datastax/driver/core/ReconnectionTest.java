@@ -262,6 +262,7 @@ public class ReconnectionTest {
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(5000))
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withSocketOptions(socketOptions)
+                .withProtocolVersion(TestUtils.getDesiredProtocolVersion())
                 .build();
             // Create two sessions to have multiple pools
             cluster.connect();
