@@ -110,6 +110,7 @@ public class RecommissionedNodeTest {
 
         // Node 1 should now be DOWN with no reconnection attempt
         assertThat(mainCluster).host(1)
+            .goesDownWithin(10, TimeUnit.SECONDS)
             .hasState(DOWN)
             .isNotReconnectingFromDown();
     }
@@ -133,6 +134,7 @@ public class RecommissionedNodeTest {
 
         // Node 1 should now be DOWN with no reconnection attempt
         assertThat(mainCluster).host(1)
+            .goesDownWithin(10, TimeUnit.SECONDS)
             .hasState(DOWN)
             .isNotReconnectingFromDown();
     }
