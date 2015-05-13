@@ -715,7 +715,8 @@ public class Cluster implements Closeable {
         }
 
         /**
-         * Adds a contact point.
+         * Adds a contact point - or many if it host resolves to multiple
+         * <code>InetAddress</code>s (A records).
          * <p>
          * Contact points are addresses of Cassandra nodes that the driver uses
          * to discover the cluster topology. Only one contact point is required
@@ -725,13 +726,17 @@ public class Cluster implements Closeable {
          * the driver cannot initialize itself correctly.
          * <p>
          * Note that by default (that is, unless you use the {@link #withLoadBalancingPolicy})
-         * method of this builder), the first succesfully contacted host will be use
+         * method of this builder), the first succesfully contacted host will be used
          * to define the local data-center for the client. If follows that if you are
          * running Cassandra in a  multiple data-center setting, it is a good idea to
-         * only provided contact points that are in the same datacenter than the client,
+         * only provide contact points that are in the same datacenter than the client,
          * or to provide manually the load balancing policy that suits your need.
-         *
-         * @param address the address of the node to connect to
+         * <p>
+         * If the host name points to a DNS record with multiple a-records, all InetAddresses
+         * returned will be used. Make sure that all resulting <code>InetAddress</code>s returned
+         * point to the same cluster and datacenter.
+
+         * @param address the address of the node(s) to connect to
          * @return this Builder.
          *
          * @throws IllegalArgumentException if no IP address for {@code address}
@@ -747,7 +752,7 @@ public class Cluster implements Closeable {
                 throw new NullPointerException();
 
             try {
-                this.rawAddresses.add(InetAddress.getByName(address));
+                addContactPoints(InetAddress.getAllByName(address));
                 return this;
             } catch (UnknownHostException e) {
                 throw new IllegalArgumentException(e.getMessage());
