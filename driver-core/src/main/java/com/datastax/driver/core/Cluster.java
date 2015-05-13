@@ -769,6 +769,38 @@ public class Cluster implements Closeable {
         }
 
         /**
+         * Adds a contact point - or many if it host resolves to multiple <code>InetAddress</code>s (A records).
+         * <p>
+         *
+         * If the host name points to a dns records with multiple a-records, all InetAddresses
+         * returned will be used. Make sure that all resulting <code>InetAddress</code>s returned
+         * points to the same cluster and datacenter.
+         * <p>
+         * See {@link Builder#addContactPoint} for more details on contact
+         * points and thrown exceptions
+         *
+         * @param address address of the nodes to look up InetAddresses from to add as contact points.
+         * @return this Builder.
+         *
+         *
+         * @see Builder#addContactPoint
+         */
+        public Builder addContactPoints(String address) {
+            // We explicitely check for nulls because InetAdress.getByName() will happily
+            // accept it and use localhost (while a null here almost likely mean a user error,
+            // not "connect to localhost")
+            if (address == null)
+                throw new NullPointerException();
+
+            try {
+                addContactPoints(InetAddress.getAllByName(address));
+            } catch (UnknownHostException e) {
+                throw new IllegalArgumentException(e.getMessage());
+            }
+            return this;
+        }
+
+        /**
          * Adds contact points.
          * <p>
          * See {@link Builder#addContactPoint} for more details on contact
