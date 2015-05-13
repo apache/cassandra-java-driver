@@ -45,7 +45,10 @@ public class DynamicConnectionPoolTest extends CCMBridge.PerClassSingleNodeClust
 
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withProtocolVersion(ProtocolVersion.V2);
+        // Use version 2 at highest.
+        ProtocolVersion versionToUse = TestUtils.getDesiredProtocolVersion();
+        versionToUse = versionToUse == ProtocolVersion.V3 ? ProtocolVersion.V2 : versionToUse;
+        return builder.withProtocolVersion(versionToUse);
     }
 
     /**

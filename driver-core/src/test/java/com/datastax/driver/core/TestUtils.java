@@ -434,14 +434,16 @@ public abstract class TestUtils {
     /**
      * @return The desired target protocol version based on the 'cassandra.version' System property.
      */
-    public static int getDesiredProtocolVersion() {
+    public static ProtocolVersion getDesiredProtocolVersion() {
         String version = System.getProperty("cassandra.version");
         String[] versionArray = version.split("\\.|-");
         double major = Double.parseDouble(versionArray[0] + "." + versionArray[1]);
         if(major < 2.0) {
-            return 1;
+            return ProtocolVersion.V1;
+        } else if (major < 2.1) {
+            return ProtocolVersion.V2;
         } else {
-            return 2;
+            return ProtocolVersion.V3;
         }
     }
 
