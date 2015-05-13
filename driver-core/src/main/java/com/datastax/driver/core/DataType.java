@@ -363,24 +363,24 @@ public abstract class DataType {
     }
 
     /**
-     * Returns the type of lists of "not frozen" {@code elementType} elements.
+     * Returns the type of "not frozen" lists of {@code elementType} elements.
      * <p>
      * This is a shorthand for {@code list(elementType, false);}.
      *
      * @param elementType the type of the list elements.
-     * @return the type of lists of "not frozen" {@code elementType} elements.
+     * @return the type of "not frozen" lists of {@code elementType} elements.
      */
     public static DataType list(DataType elementType) {
         return list(elementType, false);
     }
 
     /**
-     * Returns the type of lists of frozen {@code elementType} elements.
+     * Returns the type of frozen lists of {@code elementType} elements.
      * <p>
      * This is a shorthand for {@code list(elementType, true);}.
      *
      * @param elementType the type of the list elements.
-     * @return the type of lists of frozen {@code elementType} elements.
+     * @return the type of frozen lists of {@code elementType} elements.
      */
     public static DataType frozenList(DataType elementType) {
         return list(elementType, true);
@@ -403,7 +403,7 @@ public abstract class DataType {
      * This is a shorthand for {@code set(elementType, false);}.
      *
      * @param elementType the type of the set elements.
-     * @return the type of sets of "not frozen" {@code elementType} elements.
+     * @return the type of "not frozen" sets of {@code elementType} elements.
      */
     public static DataType set(DataType elementType) {
         return set(elementType, false);
