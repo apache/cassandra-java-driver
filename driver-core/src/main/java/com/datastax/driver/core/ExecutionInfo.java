@@ -18,6 +18,8 @@ package com.datastax.driver.core;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import com.datastax.driver.core.utils.Bytes;
+
 /**
  * Basic information on the execution of a query.
  */
@@ -143,6 +145,22 @@ public class ExecutionInfo {
         if (this.pagingState == null)
             return null;
         return new PagingState(this.pagingState, this.statement, this.protocolVersion);
+    }
+
+    /**
+     * Returns the "raw" paging state of the query.
+     *
+     * Contrary to {@link #getPagingState()}, there will be no validation when
+     * this is later reinjected into a statement.
+     *
+     * @return the paging state or null if there is no next page.
+     *
+     * @see Statement#setPagingStateUnsafe(byte[])
+     */
+    public byte[] getPagingStateUnsafe() {
+        if (this.pagingState == null)
+            return null;
+        return Bytes.getArray(this.pagingState);
     }
 
     /**

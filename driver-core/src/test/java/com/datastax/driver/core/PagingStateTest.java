@@ -209,5 +209,26 @@ public class PagingStateTest extends CCMBridge.PerClassSingleNodeCluster {
         batch.setPagingState(emptyStatement);
     }
 
+    /**
+     * Validates that the "unsafe" paging state can be reused with the same Statement.
+     *
+     * @test_category paging
+     * @expected_result {@link ResultSet} from the query with the provided raw paging state starts from the
+     *  subsequent row from the first query.
+     */
+    @Test(groups = "short")
+    public void should_complete_when_using_unsafe_paging_state() {
+        SimpleStatement st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
+        ResultSet result = session.execute(st.setFetchSize(20));
+        int pageSize = result.getAvailableWithoutFetching();
+        byte[] savedPagingState = result.getExecutionInfo().getPagingStateUnsafe();
+
+        st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
+        result = session.execute(st.setFetchSize(20).setPagingStateUnsafe(savedPagingState));
+
+        //We have the result starting from the next page we stopped
+        assertThat(result.one().getInt("v")).isEqualTo(pageSize);
+    }
+
 }
 
