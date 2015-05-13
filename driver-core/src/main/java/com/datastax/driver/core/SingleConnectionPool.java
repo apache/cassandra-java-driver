@@ -96,22 +96,22 @@ class SingleConnectionPool extends HostConnectionPool {
         Futures.addCallback(connectionFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                connectionRef.set(connection);
+                open.set(true);
                 if (isClosed()) {
                     initFuture.setException(new ConnectionException(host.getSocketAddress(), "Pool was closed during initialization"));
                     // we're not sure if closeAsync() saw the connection, so ensure it gets closed
                     connection.closeAsync().force();
                 } else {
                     logger.trace("Created connection pool to host {}", host);
-                    connectionRef.set(connection);
-                    open.set(true);
-                    phase = Phase.READY;
+                    phase.compareAndSet(Phase.INITIALIZING, Phase.READY);
                     initFuture.set(null);
                 }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                phase = Phase.INIT_FAILED;
+                phase.compareAndSet(Phase.INITIALIZING, Phase.INIT_FAILED);
                 initFuture.setException(t);
             }
         }, initExecutor);
@@ -125,9 +125,7 @@ class SingleConnectionPool extends HostConnectionPool {
 
     @Override
     public Connection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
-        if (phase == Phase.INITIALIZING)
-            throw new ConnectionException(host.getSocketAddress(), "Pool is initializing.");
-
+        Phase phase = this.phase.get();
         if (phase != Phase.READY)
             // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
             // That being said, maybe having a specific exception could be cleaner.
@@ -282,14 +280,24 @@ class SingleConnectionPool extends HostConnectionPool {
         if (!open.compareAndSet(false, true))
             return false;
 
-        if (phase != Phase.READY) {
+        if (phase.get() != Phase.READY) {
             open.set(false);
             return false;
         }
 
         // Now really open the connection
         try {
-            connectionRef.set(manager.connectionFactory().open(this));
+            logger.debug("Creating new connection on busy pool to {}", host);
+            Connection newConnection = manager.connectionFactory().open(this);
+            connectionRef.set(newConnection);
+
+            // We might have raced with pool shutdown since the last check; ensure the connection gets closed in case the pool did not do it.
+            if (isClosed() && !newConnection.isClosed()) {
+                close(newConnection);
+                this.open.set(false);
+                return false;
+            }
+
             signalAvailableConnection();
             return true;
         } catch (InterruptedException e) {
@@ -322,7 +330,6 @@ class SingleConnectionPool extends HostConnectionPool {
         if (!scheduledForCreation.compareAndSet(false, true))
             return;
 
-        logger.debug("Creating new connection on busy pool to {}", host);
         manager.blockingExecutor().submit(newConnectionTask);
     }
 
@@ -348,8 +355,6 @@ class SingleConnectionPool extends HostConnectionPool {
     }
 
     protected CloseFuture makeCloseFuture() {
-        phase = Phase.CLOSING;
-
         // Wake up all threads that wait
         signalAllAvailableConnection();
 

@@ -47,7 +47,7 @@ abstract class HostConnectionPool {
     protected final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
     protected enum Phase { INITIALIZING, READY, INIT_FAILED, CLOSING }
-    protected volatile Phase phase = Phase.INITIALIZING;
+    protected final AtomicReference<Phase> phase = new AtomicReference<Phase>(Phase.INITIALIZING);
 
     protected HostConnectionPool(Host host, HostDistance hostDistance, SessionManager manager) {
         assert hostDistance != HostDistance.IGNORED;
@@ -90,6 +90,8 @@ abstract class HostConnectionPool {
         CloseFuture future = closeFuture.get();
         if (future != null)
             return future;
+
+        phase.set(Phase.CLOSING);
 
         future = makeCloseFuture();
 

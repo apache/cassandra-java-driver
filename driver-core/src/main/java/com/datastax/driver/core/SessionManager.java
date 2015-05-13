@@ -214,7 +214,6 @@ class SessionManager extends AbstractSession {
         Futures.addCallback(poolInitFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                // If we raced with a session shutdown, ensure that the pool will be closed.
                 HostConnectionPool previous = pools.put(host, newPool);
                 if (previous == null) {
                     logger.debug("Added connection pool for {}", host);
