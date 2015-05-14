@@ -6,6 +6,7 @@ CHANGELOG
 
 - [improvement] Use Netty's pooled ByteBufAllocator by default (JAVA-756)
 - [improvement] Expose "unsafe" paging state API (JAVA-759)
+- [bug] Fix getObject by name (JAVA-767)
 
 
 2.0.10:
