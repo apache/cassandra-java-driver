@@ -72,7 +72,7 @@ class HostConnectionPool {
     private final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
     private enum Phase { INITIALIZING, READY, INIT_FAILED, CLOSING }
-    private volatile Phase phase = Phase.INITIALIZING;
+    private final AtomicReference<Phase> phase = new AtomicReference<Phase>(Phase.INITIALIZING);
 
     public HostConnectionPool(final Host host, HostDistance hostDistance, final SessionManager manager){
         assert hostDistance != HostDistance.IGNORED;
@@ -134,14 +134,14 @@ class HostConnectionPool {
                     forceClose(connections);
                 } else {
                     logger.trace("Created connection pool to host {}", host);
-                    phase = Phase.READY;
+                    phase.compareAndSet(Phase.INITIALIZING, Phase.READY);
                     initFuture.set(null);
                 }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                phase = Phase.INIT_FAILED;
+                phase.compareAndSet(Phase.INITIALIZING, Phase.INIT_FAILED);
                 forceClose(connections);
                 initFuture.setException(t);
             }
@@ -161,9 +161,7 @@ class HostConnectionPool {
     }
 
     public Connection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
-        if (phase == Phase.INITIALIZING)
-            throw new ConnectionException(host.getSocketAddress(), "Pool is initializing.");
-
+        Phase phase = this.phase.get();
         if (phase != Phase.READY)
             // Note: throwing a ConnectionException is probably fine in practice as it will trigger the creation of a new host.
             // That being said, maybe having a specific exception could be cleaner.
@@ -393,7 +391,7 @@ class HostConnectionPool {
                 break;
         }
 
-        if (phase != Phase.READY) {
+        if (phase.get() != Phase.READY) {
             open.decrementAndGet();
             return false;
         }
@@ -410,7 +408,7 @@ class HostConnectionPool {
             newConnection.state.compareAndSet(RESURRECTING, OPEN); // no-op if it was already OPEN
 
             // We might have raced with pool shutdown since the last check; ensure the connection gets closed in case the pool did not do it.
-            if (phase != Phase.READY && !newConnection.isClosed()) {
+            if (isClosed() && !newConnection.isClosed()) {
                 close(newConnection);
                 open.decrementAndGet();
                 return false;
@@ -555,7 +553,7 @@ class HostConnectionPool {
         if (future != null)
             return future;
 
-        phase = Phase.CLOSING;
+        phase.set(Phase.CLOSING);
 
         // Wake up all threads that wait
         signalAllAvailableConnection();
