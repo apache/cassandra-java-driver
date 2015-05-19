@@ -83,6 +83,11 @@ public class CCMBridge {
      */
     private static final Map<String,String> ENVIRONMENT_MAP;
 
+    /**
+     * The command to use to launch CCM
+     */
+    private static final String CCM_COMMAND;
+
     static {
         // Inherit the current environment.
         Map<String,String> envMap = Maps.newHashMap(new ProcessBuilder().environment());
@@ -93,14 +98,34 @@ public class CCMBridge {
             if(existingPath == null) {
                 existingPath = "";
             }
-            envMap.put("PATH", ccmPath + ":" + existingPath);
+            envMap.put("PATH", ccmPath + File.pathSeparator + existingPath);
         }
+
+        if (isWindows()) {
+            CCM_COMMAND = "cmd /c ccm.py";
+        } else {
+            CCM_COMMAND = "ccm";
+        }
+
         // If ccm.java.home is set, override the JAVA_HOME variable with it.
         String ccmJavaHome = System.getProperty("ccm.java.home");
         if(ccmJavaHome != null) {
             envMap.put("JAVA_HOME", ccmJavaHome);
         }
         ENVIRONMENT_MAP = ImmutableMap.copyOf(envMap);
+    }
+
+    /**
+     * Checks if the operating system is a Windows one
+     * @return <code>true</code> if the operating system is a Windows one, <code>false</code> otherwise.
+     */
+    private static boolean isWindows() {
+
+        String osName = System.getProperty("os.name");
+        if (osName == null) {
+            return false;
+        }
+        return osName.startsWith("Windows");
     }
 
     static final File CASSANDRA_DIR;
@@ -170,7 +195,7 @@ public class CCMBridge {
         checkArgument(!"current".equals(name.toLowerCase()),
             "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
-        bridge.execute("ccm create %s -b -i %s %s " + Joiner.on(" ").join(options), name, IP_PREFIX, CASSANDRA_VERSION);
+        bridge.execute(CCM_COMMAND + " create %s -b -i %s %s " + Joiner.on(" ").join(options), name, IP_PREFIX, CASSANDRA_VERSION);
         return bridge;
     }
 
@@ -178,7 +203,7 @@ public class CCMBridge {
         checkArgument(!"current".equals(name.toLowerCase()),
             "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
-        bridge.execute("ccm create %s -n %d -s -i %s -b %s " + Joiner.on(" ").join(options), name, nbNodes, IP_PREFIX, CASSANDRA_VERSION);
+        bridge.execute(CCM_COMMAND + " create %s -n %d -s -i %s -b %s " + Joiner.on(" ").join(options), name, nbNodes, IP_PREFIX, CASSANDRA_VERSION);
         return bridge;
     }
 
@@ -186,7 +211,7 @@ public class CCMBridge {
         checkArgument(!"current".equals(name.toLowerCase()),
             "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
-        bridge.execute("ccm create %s -n %d -s -i %s -b -v %s ", name, nbNodes, IP_PREFIX, cassandraVersion);
+        bridge.execute(CCM_COMMAND + " create %s -n %d -s -i %s -b -v %s ", name, nbNodes, IP_PREFIX, cassandraVersion);
         return bridge;
     }
 
@@ -194,7 +219,7 @@ public class CCMBridge {
         checkArgument(!"current".equals(name.toLowerCase()),
             "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
-        bridge.execute("ccm create %s -n %d:%d -s -i %s -b %s", name, nbNodesDC1, nbNodesDC2, IP_PREFIX, CASSANDRA_VERSION);
+        bridge.execute(CCM_COMMAND + " create %s -n %d:%d -s -i %s -b %s", name, nbNodesDC1, nbNodesDC2, IP_PREFIX, CASSANDRA_VERSION);
         return bridge;
     }
 
@@ -207,55 +232,55 @@ public class CCMBridge {
     }
 
     public void start() {
-        execute("ccm start --wait-other-notice --wait-for-binary-proto");
+        execute(CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto");
     }
 
     public void stop() {
-        execute("ccm stop");
+        execute(CCM_COMMAND + " stop");
     }
 
     public void forceStop() {
-        execute("ccm stop --not-gently");
+        execute(CCM_COMMAND + " stop --not-gently");
     }
 
     public void start(int n) {
         logger.info("Starting: " + IP_PREFIX + n);
-        execute("ccm node%d start --wait-other-notice --wait-for-binary-proto", n);
+        execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto", n);
     }
 
     public void start(int n, String option) {
         logger.info("Starting: " + IP_PREFIX + n + " with " + option);
-        execute("ccm node%d start --wait-other-notice --wait-for-binary-proto --jvm_arg=%s", n, option);
+        execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto --jvm_arg=%s", n, option);
     }
 
     public void stop(int n) {
         logger.info("Stopping: " + IP_PREFIX + n);
-        execute("ccm node%d stop", n);
+        execute(CCM_COMMAND + " node%d stop", n);
     }
 
     public void stop(String clusterName) {
         logger.info("Stopping Cluster : "+clusterName);
-        execute("ccm stop "+clusterName);
+        execute(CCM_COMMAND + " stop "+clusterName);
     }
 
     public void forceStop(int n) {
         logger.info("Force stopping: " + IP_PREFIX + n);
-        execute("ccm node%d stop --not-gently", n);
+        execute(CCM_COMMAND + " node%d stop --not-gently", n);
     }
 
     public void remove() {
         stop();
-        execute("ccm remove");
+        execute(CCM_COMMAND + " remove");
     }
 
     public void remove(String clusterName) {
         stop(clusterName);
-        execute("ccm remove " + clusterName);
+        execute(CCM_COMMAND + " remove " + clusterName);
     }
 
     public void remove(int n) {
         logger.info("Removing: " + IP_PREFIX + n);
-        execute("ccm node%d remove", n);
+        execute(CCM_COMMAND + " node%d remove", n);
     }
 
     public void bootstrapNode(int n) {
@@ -264,10 +289,10 @@ public class CCMBridge {
 
     public void bootstrapNode(int n, String dc) {
         if (dc == null)
-            execute("ccm add node%d -i %s%d -j %d -r %d -b -s", n, IP_PREFIX, n, 7000 + 100 * n, 8000 + 100 * n);
+            execute(CCM_COMMAND + " add node%d -i %s%d -j %d -r %d -b -s", n, IP_PREFIX, n, 7000 + 100 * n, 8000 + 100 * n);
         else
-            execute("ccm add node%d -i %s%d -j %d -b -d %s -s", n, IP_PREFIX, n, 7000 + 100 * n, dc);
-        execute("ccm node%d start --wait-other-notice --wait-for-binary-proto", n);
+            execute(CCM_COMMAND + " add node%d -i %s%d -j %d -b -d %s -s", n, IP_PREFIX, n, 7000 + 100 * n, dc);
+        execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto", n);
     }
 
     public void bootstrapNodeWithPorts(int n, int thriftPort, int storagePort, int binaryPort, int jmxPort, int remoteDebugPort) {
@@ -275,13 +300,13 @@ public class CCMBridge {
         String storageItf = IP_PREFIX + n + ":" + storagePort;
         String binaryItf = IP_PREFIX + n + ":" + binaryPort;
         String remoteLogItf = IP_PREFIX + n + ":" + remoteDebugPort;
-        execute("ccm add node%d -i %s%d -b -t %s -l %s --binary-itf %s -j %d -r %s -s",
+        execute(CCM_COMMAND + " add node%d -i %s%d -b -t %s -l %s --binary-itf %s -j %d -r %s -s",
             n, IP_PREFIX, n, thriftItf, storageItf, binaryItf, jmxPort, remoteLogItf);
-        execute("ccm node%d start --wait-other-notice --wait-for-binary-proto", n);
+        execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto", n);
     }
 
     public void decommissionNode(int n) {
-        execute("ccm node%d decommission", n);
+        execute(CCM_COMMAND + " node%d decommission", n);
     }
 
     public void updateConfig(String name, String value) {
@@ -293,16 +318,17 @@ public class CCMBridge {
         for (Map.Entry<String, String> entry : configs.entrySet()) {
             confStr.append(entry.getKey() + ":" + entry.getValue() + " ");
         }
-        execute("ccm updateconf " + confStr);
+        execute(CCM_COMMAND + " updateconf " + confStr);
     }
 
     public void populate(int n) {
-        execute("ccm populate -n %d -i %s", n, IP_PREFIX);
+        execute(CCM_COMMAND + " populate -n %d -i %s", n, IP_PREFIX);
     }
 
     private void execute(String command, Object... args) {
+
+        String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
         try {
-            String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
             logger.debug("Executing: " + fullCommand);
             CommandLine cli = CommandLine.parse(fullCommand);
             Executor executor = new DefaultExecutor();
@@ -327,7 +353,7 @@ public class CCMBridge {
                 throw new RuntimeException();
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(String.format("The command %s failed to execute", fullCommand), e);
         }
     }
 
