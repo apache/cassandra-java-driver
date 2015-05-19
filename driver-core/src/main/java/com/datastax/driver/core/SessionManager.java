@@ -454,7 +454,11 @@ class SessionManager extends AbstractSession {
         if (serialConsistency == null)
             serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
 
-        return makeRequestMessage(statement, consistency, serialConsistency, pagingState);
+        Message.Request request = makeRequestMessage(statement, consistency, serialConsistency, pagingState);
+        if (statement.isTracing())
+            request.setTracingRequested();
+
+        return request;
     }
 
     Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState) {
@@ -569,8 +573,6 @@ class SessionManager extends AbstractSession {
     }
 
     ResultSetFuture executeQuery(Message.Request msg, Statement statement) {
-        if (statement.isTracing())
-            msg.setTracingRequested();
 
         DefaultResultSetFuture future = new DefaultResultSetFuture(this, msg);
         execute(future, statement);
