@@ -46,7 +46,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10.1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -65,7 +65,7 @@
               <li>
                 <div class="dropdown">
                   <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10
+                    2.0.10.1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
@@ -74,9 +74,9 @@
                   
                     <li><a href="../../../2.1.5/">2.1.5</a></li>
                   
-                    <li><a href="../../../2.0.10.1/features/paging/">2.0.10.1</a></li>
+                    <li class="disabled"><a href="./">2.0.10.1</a></li>
                   
-                    <li class="disabled"><a href="./">2.0.10</a></li>
+                    <li><a href="../../../2.0.10/features/paging/">2.0.10</a></li>
                   
                   </ul>
                 </div>
@@ -235,6 +235,51 @@ implementation for our web service:</p>
     <span class="n">renderNextPageLink</span><span class="o">(</span><span class="n">nextPage</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
 <span class="o">}</span>
 </code></pre>
+<p>Due to internal implementation details, <code>PagingState</code> instances are not
+portable across <a href="../native_protocol/">native protocol</a> versions. This
+could become a problem in the following scenario:</p>
+
+<ul>
+<li>you’re using the driver 2.0.x and Cassandra 2.0.x, and therefore
+native protocol v2;</li>
+<li>a user bookmarks a link to your web service that contains a serialized
+paging state;</li>
+<li>you upgrade your server stack to use the driver 2.1.x and Cassandra
+2.1.x, so you’re now using protocol v3;</li>
+<li>the user tries to reload their bookmark, but the paging state was
+serialized with protocol v2, so trying to reuse it will fail.</li>
+</ul>
+
+<p>If this is not acceptable for you, you might want to consider the unsafe
+API described in the next section.</p>
+
+<h4 id="unsafe-api">Unsafe API<a class="anchor" href="#unsafe-api" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>As an alternative to the standard API, there are two methods that
+manipulate a raw <code>byte[]</code> instead of a <code>PagingState</code> object:</p>
+
+<ul>
+<li><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/ExecutionInfo.html#getPagingStateUnsafe()">ExecutionInfo#getPagingStateUnsafe()</a></li>
+<li><a href="http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/Statement.html#setPagingStateUnsafe(byte%5B%5D)">Statement#setPagingStateUnsafe(byte[])</a></li>
+</ul>
+
+<p>These low-level methods perform no validation on their arguments;
+therefore nothing protects you from reusing a paging state that was
+generated from a different statement, or altered in any way. This could
+result in sending a corrupt paging state to Cassandra, with
+unpredictable consequences (ranging from wrong results to a query
+failure).</p>
+
+<p>There are two situations where you might want to use the unsafe API:</p>
+
+<ul>
+<li>you never expose the paging state to end users and you are confident
+that it won’t get altered;</li>
+<li>you want portability across protocol versions and/or you prefer
+implementing your own validation logic (for example, signing the raw
+state with a private key).</li>
+</ul>
 
 
         </div>
@@ -257,8 +302,11 @@ implementation for our web service:</p>
 </a></li>
 <li><a href="#result-set-iteration">Result set iteration
 </a></li>
-<li><a href="#manual-paging">Manual paging
-</a></li>
+<li>
+<a href="#manual-paging">Manual paging
+</a><ol class="nav nav-pills nav-stacked"><li><a href="#unsafe-api">Unsafe API
+</a></li></ol>
+</li>
 </ol>
 </li></ol>
                 </div>
