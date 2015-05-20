@@ -8,7 +8,7 @@ not yet have been released. You can find the documentation for latest
 version through [Java driver
 docs](http://datastax.github.io/java-driver/) or via the release tags,
 [e.g.
-2.0.10](https://github.com/datastax/java-driver/tree/2.0.10).*
+2.0.10.1](https://github.com/datastax/java-driver/tree/2.0.10.1).*
 
 A modern, [feature-rich](features/) and highly tunable Java client
 library for Apache Cassandra (1.2+) and DataStax Enterprise (3.1+) using
@@ -61,25 +61,6 @@ Please refer to the README of each module for more information.
 - API: http://docs.datastax.com/en/drivers/java/2.0
 - CHANGELOG: https://github.com/datastax/java-driver/blob/2.0/driver-core/CHANGELOG.rst
 
-## What's new in 2.0.10
-
-* [Speculative query execution](features/speculative_execution/)
-* [Query logger](features/logging/#logging-query-latencies)
-* Access to the [paging state](features/paging/#manual-paging)
-* Don't mark hosts down on client timeouts, and remove "suspected"
-  mechanism
-* Upgrade to Netty 4 and internal improvements around connection
-  handling
-* New connection pool resizing algorithm
-* [Connection heartbeat](features/pooling/#heartbeat)
-* Address translation for [EC2
-  multi-region](features/address_resolution/#ec2-multi-region) deployments
-* Changes to [dependency shading](features/shaded_jar/), and fixes to
-  OSGI deployment descriptors
-* Expose [token metadata](features/metadata/#token-metadata)
-
-For the full list of tickets, refer to the
-[changelog](https://github.com/datastax/java-driver/blob/2.0/driver-core/CHANGELOG.rst).
 
 ## Maven
 
@@ -90,7 +71,7 @@ it in your application using the following Maven dependency:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>2.0.10</version>
+  <version>2.0.10.1</version>
 </dependency>
 ```
 
