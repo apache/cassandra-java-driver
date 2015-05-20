@@ -60,7 +60,7 @@ it in your application using the following Maven dependency::
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>2.1.5</version>
+      <version>2.1.6</version>
     </dependency>
 
 
