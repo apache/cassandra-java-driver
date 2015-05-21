@@ -348,6 +348,14 @@ public class Select extends BuiltStatement {
         public abstract SelectionOrAlias column(String name);
 
         /**
+         * Selects the provided raw expression.
+         *
+         * @param rawString the raw expression to add.
+         * @return this in-build SELECT statement
+         */
+        public abstract SelectionOrAlias raw(String rawString);
+
+        /**
          * Selects the write time of provided column.
          * <p>
          * This is a shortcut for {@code fcall("writetime", QueryBuilder.column(name))}.
@@ -468,6 +476,11 @@ public class Select extends BuiltStatement {
          */
         public SelectionOrAlias column(String name) {
             return queueName(name);
+        }
+
+        @Override
+        public SelectionOrAlias raw(String rawString) {
+            return queueName(QueryBuilder.raw(rawString));
         }
 
         /**

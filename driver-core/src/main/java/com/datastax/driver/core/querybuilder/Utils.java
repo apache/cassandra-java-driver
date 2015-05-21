@@ -307,6 +307,8 @@ abstract class Utils {
             Alias alias = (Alias)name;
             appendName(alias.column, sb);
             sb.append(" AS ").append(alias.alias);
+        } else if (name instanceof RawString) {
+            sb.append(((RawString)name).str);
         } else {
             throw new IllegalArgumentException(String.format("Invalid column %s of type unknown of the query builder", name));
         }

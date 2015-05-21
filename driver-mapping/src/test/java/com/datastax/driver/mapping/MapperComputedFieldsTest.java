@@ -1,0 +1,318 @@
+/*
+ *      Copyright (C) 2012-2015 DataStax Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+package com.datastax.driver.mapping;
+
+import java.util.Collection;
+
+import com.google.common.collect.Lists;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import static org.assertj.core.api.Assertions.fail;
+
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.mapping.annotations.*;
+
+import static com.datastax.driver.core.Assertions.assertThat;
+
+/**
+ * Tests to ensure validity of {@link com.datastax.driver.mapping.annotations.Computed}
+ * annotation to map computed fields.
+ */
+@SuppressWarnings("unused")
+public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluster {
+
+    @Override
+    protected Collection<String> getTableDefinitions() {
+        return Lists.newArrayList(
+            "CREATE TABLE user (login text primary key, name text)",
+            "INSERT INTO user (login, name) VALUES ('testlogin', 'test name')");
+    }
+
+    MappingManager mappingManager;
+    Mapper<User> userMapper;
+
+    @BeforeMethod(groups = "short")
+    void setup() {
+        mappingManager = new MappingManager(session);
+        userMapper = mappingManager.mapper(User.class);
+    }
+
+    @Test(groups = "short")
+    void should_save_and_get_entity_with_computed_fields() {
+        long writeTime = System.currentTimeMillis() * 1000;
+        User newUser = new User("testlogin2", "blah");
+        newUser.setWriteTime(1); // will be ignored
+
+        userMapper.save(newUser);
+
+        User fetched = userMapper.get("testlogin2");
+        assertThat(fetched.getLogin()).isEqualTo("testlogin2");
+        assertThat(fetched.getName()).isEqualTo("blah");
+        // write time should be within 30 seconds.
+        assertThat(fetched.getWriteTime()).isGreaterThanOrEqualTo(writeTime).isLessThan(writeTime + 30000000L);
+        assertThat(fetched.getTtl()).isNull(); // TTL should be null since it was not set.
+
+        // Overwrite with TTL
+        session.execute("insert into user (login, name) values ('testlogin2', 'blah') using TTL 600");
+        fetched = userMapper.get("testlogin2");
+        assertThat(fetched.getWriteTime()).isGreaterThanOrEqualTo(writeTime).isLessThan(writeTime + 30000000L);
+        assertThat(fetched.getTtl()).isBetween(570, 600); // TTL should be within 30 secs.
+
+        // cleanup
+        userMapper.delete(newUser);
+    }
+
+    @Test(groups = "short")
+    void should_add_aliases_for_fields_in_select_queries() {
+        BoundStatement bs = (BoundStatement)userMapper.getQuery("test");
+        assertThat(bs.preparedStatement().getQueryString())
+            .contains("SELECT", "\"login\" AS col1", "\"name\" AS col2", "writetime(\"name\") AS col3");
+    }
+
+    @Test(groups = "short")
+    public void should_map_aliased_resultset_to_objects() {
+        Statement getQuery = userMapper.getQuery("testlogin");
+        getQuery.setConsistencyLevel(ConsistencyLevel.QUORUM);
+        ResultSet rs = session.execute(getQuery);
+
+        Result<User> result = userMapper.mapAliased(rs);
+        User user = result.one();
+
+        assertThat(user.getLogin()).isEqualTo("testlogin");
+    }
+
+    @Test(groups = "short")
+    void should_map_unaliased_resultset_to_objects() {
+        UserAccessor userAccessor = mappingManager.createAccessor(UserAccessor.class);
+        ResultSet rs = userAccessor.all();
+
+        Result<User> result = userMapper.map(rs);
+        User user = result.one();
+        assertThat(user.getLogin()).isEqualTo("testlogin");
+        assertThat(user.getWriteTime()).isEqualTo(0);
+    }
+
+    @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
+    void should_fail_if_computed_field_is_not_right_type() {
+        mappingManager.mapper(User_WrongComputedType.class);
+    }
+
+    @Test(groups = "short")
+    void should_fail_if_computed_field_marked_with_column_annotation() {
+        Mapper<User_WrongAnnotationForComputed> mapper = mappingManager.mapper(User_WrongAnnotationForComputed.class);
+        try {
+            mapper.save(new User_WrongAnnotationForComputed("test", "foo"));
+            fail("Expected an InvalidQueryException");
+        } catch (InvalidQueryException e) {/*expected*/}
+
+        try {
+            User_WrongAnnotationForComputed saved = mapper.get(42);
+            fail("Expected an InvalidQueryException");
+        } catch (InvalidQueryException e) {/*expected*/}
+    }
+
+    @Table(name = "user")
+    public static class User {
+        @PartitionKey
+        private String login;
+        private String name;
+
+        public User() {
+        }
+
+        public User(String login, String name) {
+            this.login = login;
+            this.name = name;
+        }
+
+        // quotes in the column name inserted on purpose
+        // to test the alias generation mechanism
+        @Computed(formula = "writetime(\"name\")")
+        long writeTime;
+
+        @Computed(formula = "ttl(name)")
+        Integer ttl;
+
+        public String getLogin() {
+            return login;
+        }
+
+        public void setLogin(String login) {
+            this.login = login;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public long getWriteTime() {
+            return writeTime;
+        }
+
+        public void setWriteTime(long writeTime) {
+            this.writeTime = writeTime;
+        }
+
+        public Integer getTtl() {
+            return ttl;
+        }
+
+        public void setTtl(Integer ttl) {
+            this.ttl = ttl;
+        }
+    }
+
+    @Accessor
+    interface UserAccessor {
+        @Query("select * from user")
+        ResultSet all();
+    }
+
+    @Table(name = "key_value")
+    public static class KeyValue {
+        @PartitionKey
+        private int key;
+        private String v;
+
+        @Computed(formula = "writetime(\"v\")")
+        long writeTime;
+
+        @Computed(formula = "ttl(v)")
+        Integer ttl;
+
+        public KeyValue() {
+        }
+
+        public KeyValue(int k, String val) {
+            this.key = k;
+            this.v = val;
+        }
+
+        public int getKey() {
+            return this.key;
+        }
+
+        public void setKey(int pk) {
+            this.key = pk;
+        }
+
+        public String getV() {
+            return this.v;
+        }
+
+        public void setV(String val) {
+            this.v = val;
+        }
+
+        public long getWriteTime() {
+            return this.writeTime;
+        }
+
+        public void setWriteTime(long pk) {
+            this.writeTime = pk;
+        }
+
+        public Integer getTtl() {
+            return this.ttl;
+        }
+
+        public void setTtl(Integer ttl) {
+            this.ttl = ttl;
+        }
+    }
+
+    @Table(name = "user")
+    public static class User_WrongComputedType {
+        @PartitionKey
+        private String login;
+        private String name;
+
+        @Column(name = "writetime(v)")
+        byte writeTime;
+
+        public String getLogin() {
+            return login;
+        }
+
+        public void setLogin(String login) {
+            this.login = login;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public byte getWriteTime() {
+            return writeTime;
+        }
+
+        public void setWriteTime(byte writeTime) {
+            this.writeTime = writeTime;
+        }
+    }
+
+    @Table(name = "user")
+    public static class User_WrongAnnotationForComputed {
+        @PartitionKey
+        private String login;
+        private String name;
+
+        @Column(name = "writetime(v)")
+        long writeTime;
+
+        public User_WrongAnnotationForComputed() {
+        }
+
+        public User_WrongAnnotationForComputed(String login, String name) {
+            this.login = login;
+            this.name = name;
+        }
+
+        public String getLogin() {
+            return login;
+        }
+
+        public void setLogin(String login) {
+            this.login = login;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public long getWriteTime() {
+            return writeTime;
+        }
+
+        public void setWriteTime(long writeTime) {
+            this.writeTime = writeTime;
+        }
+    }
+}

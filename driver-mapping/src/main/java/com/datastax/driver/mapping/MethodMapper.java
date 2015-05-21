@@ -142,8 +142,8 @@ class MethodMapper {
                 return future;
 
             return mapOne
-                 ? Futures.transform(future, returnMapper.mapOneFunction)
-                 : Futures.transform(future, returnMapper.mapAllFunction);
+                 ? Futures.transform(future, returnMapper.mapOneFunctionWithoutAliases)
+                 : Futures.transform(future, returnMapper.mapAllFunctionWithoutAliases);
         } else {
             ResultSet rs = session.execute(bs);
             if (returnMapper == null)
