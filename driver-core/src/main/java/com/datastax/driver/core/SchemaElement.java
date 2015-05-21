@@ -16,5 +16,5 @@
 package com.datastax.driver.core;
 
 enum SchemaElement {
-    KEYSPACE, TABLE, TYPE
+    KEYSPACE, TABLE, TYPE, FUNCTION, AGGREGATE
 }

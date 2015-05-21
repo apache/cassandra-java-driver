@@ -7,6 +7,7 @@
 - [new feature] Distinguish NULL and UNSET values (JAVA-777)
 - [new feature] Expose server-side warnings on ExecutionInfo (JAVA-780)
 - [new feature] Expose new read/write failure exceptions (JAVA-749)
+- [new feature] Expose function and aggregate metadata (JAVA-747)
 
 Merged from 2.1 branch:
 

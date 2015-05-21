@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -31,8 +32,6 @@ import org.slf4j.LoggerFactory;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
-import static com.datastax.driver.core.SchemaElement.TABLE;
-import static com.datastax.driver.core.SchemaElement.TYPE;
 
 /**
  * Keeps metadata on the connected cluster, including known nodes and schema definitions.
@@ -56,39 +55,19 @@ public class Metadata {
     }
 
     // Synchronized to make it easy to detect dropped keyspaces
-    synchronized void rebuildSchema(SchemaElement targetType, String targetKeyspace, String targetName, ResultSet ks, ResultSet udts, ResultSet cfs, ResultSet cols, VersionNumber cassandraVersion) {
+    synchronized void rebuildSchema(SchemaElement targetType, String targetKeyspace, String targetName,
+                                    ResultSet ks, ResultSet udts, ResultSet cfs,
+                                    ResultSet cols, ResultSet functions, ResultSet aggregates,
+                                    VersionNumber cassandraVersion) {
 
-        Map<String, List<Row>> cfDefs = new HashMap<String, List<Row>>();
-        Map<String, List<Row>> udtDefs = new HashMap<String, List<Row>>();
-        Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = new HashMap<String, Map<String, Map<String, ColumnMetadata.Raw>>>();
 
-        // Gather cf defs
-        if (cfs != null) {
-            for (Row row : cfs) {
-                String ksName = row.getString(KeyspaceMetadata.KS_NAME);
-                List<Row> l = cfDefs.get(ksName);
-                if (l == null) {
-                    l = new ArrayList<Row>();
-                    cfDefs.put(ksName, l);
-                }
-                l.add(row);
-            }
-        }
-
-        // Gather udt defs
-        if (udts != null) {
-            for (Row row : udts) {
-                String ksName = row.getString(KeyspaceMetadata.KS_NAME);
-                List<Row> l = udtDefs.get(ksName);
-                if (l == null) {
-                    l = new ArrayList<Row>();
-                    udtDefs.put(ksName, l);
-                }
-                l.add(row);
-            }
-        }
+        Map<String, List<Row>> udtDefs = groupByKeyspace(udts);
+        Map<String, List<Row>> cfDefs = groupByKeyspace(cfs);
+        Map<String, List<Row>> functionDefs = groupByKeyspace(functions);
+        Map<String, List<Row>> aggregateDefs = groupByKeyspace(aggregates);
 
         // Gather columns per Cf
+        Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = new HashMap<String, Map<String, Map<String, ColumnMetadata.Raw>>>();
         if (cols != null) {
             for (Row row : cols) {
                 String ksName = row.getString(KeyspaceMetadata.KS_NAME);
@@ -118,6 +97,12 @@ public class Metadata {
                 if (cfDefs.containsKey(ksName)) {
                     buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), cassandraVersion);
                 }
+                if (functionDefs.containsKey(ksName)) {
+                    buildFunctionMetadata(ksm, functionDefs.get(ksName));
+                }
+                if (aggregateDefs.containsKey(ksName)) {
+                    buildAggregateMetadata(ksm, aggregateDefs.get(ksName), cluster.protocolVersion());
+                }
                 addedKs.add(ksName);
                 keyspaces.put(ksName, ksm);
             }
@@ -131,33 +116,56 @@ public class Metadata {
                         iter.remove();
                 }
             }
-        } else if (targetType == TABLE) {
+        } else {
             assert targetKeyspace != null;
             KeyspaceMetadata ksm = keyspaces.get(targetKeyspace);
 
             // If we update a keyspace we don't know about, something went
             // wrong. Log an error an schedule a full schema rebuilt.
             if (ksm == null) {
-                logger.error(String.format("Asked to rebuild table %s.%s but I don't know keyspace %s", targetKeyspace, targetName, targetKeyspace));
-                cluster.submitSchemaRefresh(null, null, null);
+                logger.error(String.format("Asked to rebuild %s %s.%s but I don't know keyspace %s", targetType, targetKeyspace, targetName, targetKeyspace));
+                cluster.submitSchemaRefresh(null, null, null, null);
                 return;
             }
 
-            if (cfDefs.containsKey(targetKeyspace))
-                buildTableMetadata(ksm, cfDefs.get(targetKeyspace), colsDefs.get(targetKeyspace), cassandraVersion);
-        } else if (targetType == TYPE) {
-            assert targetKeyspace != null;
-            KeyspaceMetadata ksm = keyspaces.get(targetKeyspace);
-
-            if (ksm == null) {
-                logger.error(String.format("Asked to rebuild type %s.%s but I don't know keyspace %s", targetKeyspace, targetName, targetKeyspace));
-                cluster.submitSchemaRefresh(null, null, null);
-                return;
+            switch (targetType) {
+                case TABLE:
+                    if (cfDefs.containsKey(targetKeyspace))
+                        buildTableMetadata(ksm, cfDefs.get(targetKeyspace), colsDefs.get(targetKeyspace), cassandraVersion);
+                    break;
+                case TYPE:
+                    if (udtDefs.containsKey(targetKeyspace))
+                        ksm.addUserTypes(udtDefs.get(targetKeyspace));
+                    break;
+                case FUNCTION:
+                    if (functionDefs.containsKey(targetKeyspace))
+                        buildFunctionMetadata(ksm, functionDefs.get(targetKeyspace));
+                    break;
+                case AGGREGATE:
+                    if (functionDefs.containsKey(targetKeyspace))
+                        buildAggregateMetadata(ksm, aggregateDefs.get(targetKeyspace), cluster.protocolVersion());
+                    break;
+                default:
+                    logger.warn("Unexpected element type to rebuild: {}", targetType);
             }
-
-            if (udtDefs.containsKey(targetKeyspace))
-                ksm.addUserTypes(udtDefs.get(targetKeyspace));
         }
+    }
+
+    private Map<String, List<Row>> groupByKeyspace(ResultSet rs) {
+        if (rs == null)
+            return Collections.emptyMap();
+
+        Map<String, List<Row>> result = new HashMap<String, List<Row>>();
+        for (Row row : rs) {
+            String ksName = row.getString(KeyspaceMetadata.KS_NAME);
+            List<Row> l = result.get(ksName);
+            if (l == null) {
+                l = new ArrayList<Row>();
+                result.put(ksName, l);
+            }
+            l.add(row);
+        }
+        return result;
     }
 
     private void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, VersionNumber cassandraVersion) {
@@ -193,6 +201,17 @@ public class Metadata {
             }
         }
     }
+
+    private void buildFunctionMetadata(KeyspaceMetadata ksm, List<Row> rows) {
+        for (Row row : rows)
+            FunctionMetadata.build(ksm, row);
+    }
+
+    private void buildAggregateMetadata(KeyspaceMetadata ksm, List<Row> rows, ProtocolVersion protocolVersion) {
+        for (Row row : rows)
+            AggregateMetadata.build(ksm, row, protocolVersion);
+    }
+
 
     synchronized void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
         if (allTokens.isEmpty())
@@ -250,6 +269,15 @@ public class Metadata {
         // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
         return lowercaseId.matcher(ident).matches() ? ident : quote(ident);
     }
+
+    // Builds the internal name of a function/aggregate
+    // Note that if simpleName comes from the user, the caller must call handleId on it before passing it to this method
+    static String fullFunctionName(String simpleName, Collection<?> argumentTypes) {
+        return String.format("%s(%s)",
+            simpleName, COMMAS.join(argumentTypes));
+    }
+
+    static final Joiner COMMAS = Joiner.on(",");
 
     /**
      * Quote a keyspace, table or column identifier to make it case sensitive.

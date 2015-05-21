@@ -72,7 +72,10 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                             switch (scc.change) {
                                 case CREATED:
                                 case UPDATED:
-                                    session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.targetType, scc.targetKeyspace, scc.targetName);
+                                    // TODO generate signature for function/aggregate events
+                                    String signature = null;
+
+                                    session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.targetType, scc.targetKeyspace, scc.targetName, signature);
                                     break;
                                 case DROPPED:
                                     KeyspaceMetadata keyspace;

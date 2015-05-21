@@ -18,6 +18,9 @@ package com.datastax.driver.core;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+
 /**
  * Describes a keyspace defined in this cluster.
  */
@@ -34,12 +37,13 @@ public class KeyspaceMetadata {
     private final ReplicationStrategy strategy;
     private final Map<String, String> replication;
 
-    // TODO: I don't think we change those, so there is probably no need for ConcurrentHashMap. Check if
-    // that's the case.
     private final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
     private final Map<String, UserType> userTypes = new ConcurrentHashMap<String, UserType>();
+    final Map<String, FunctionMetadata> functions = new ConcurrentHashMap<String, FunctionMetadata>();
+    private final Map<String, AggregateMetadata> aggregates = new ConcurrentHashMap<String, AggregateMetadata>();
 
-    private KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
+    @VisibleForTesting
+    KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
         this.name = name;
         this.durableWrites = durableWrites;
         this.replication = replication;
@@ -136,7 +140,7 @@ public class KeyspaceMetadata {
      * keyspace.
      */
     public Collection<UserType> getUserTypes() {
-        return Collections.<UserType>unmodifiableCollection(userTypes.values());
+        return Collections.unmodifiableCollection(userTypes.values());
     }
 
     void addUserTypes(List<Row> udtRows) {
@@ -148,6 +152,82 @@ public class KeyspaceMetadata {
 
     void removeUserType(String userType) {
         userTypes.remove(userType);
+    }
+
+    /**
+     * Returns the definition of a function in this keyspace.
+     *
+     * @param name the name of the function.
+     * @param argumentTypes the types of the function's arguments.
+     *
+     * @return the function definition if it exists in this keyspace, {@code null} otherwise.
+     */
+    public FunctionMetadata getFunction(String name, Collection<DataType> argumentTypes) {
+        return functions.get(Metadata.fullFunctionName(Metadata.handleId(name), argumentTypes));
+    }
+
+    /**
+     * Returns the definition of a function in this keyspace.
+     *
+     * @param name the name of the function.
+     * @param argumentTypes the types of the function's arguments.
+     *
+     * @return the function definition if it exists in this keyspace, {@code null} otherwise.
+     */
+    public FunctionMetadata getFunction(String name, DataType... argumentTypes) {
+        return getFunction(name, Lists.newArrayList(argumentTypes));
+    }
+
+    /**
+     * Returns the functions defined in this keyspace.
+     *
+     * @return a collection of the definition for the functions defined in this
+     * keyspace.
+     */
+    public Collection<FunctionMetadata> getFunctions() {
+        return Collections.unmodifiableCollection(functions.values());
+    }
+
+    void removeFunction(String fullName) {
+        functions.remove(fullName);
+    }
+
+    /**
+     * Returns the definition of an aggregate in this keyspace.
+     *
+     * @param name the name of the aggregate.
+     * @param argumentTypes the types of the aggregate's arguments.
+     *
+     * @return the aggregate definition if it exists in this keyspace, {@code null} otherwise.
+     */
+    public AggregateMetadata getAggregate(String name, Collection<DataType> argumentTypes) {
+        return aggregates.get(Metadata.fullFunctionName(Metadata.handleId(name), argumentTypes));
+    }
+
+    /**
+     * Returns the definition of an aggregate in this keyspace.
+     *
+     * @param name the name of the aggregate.
+     * @param argumentTypes the types of the aggregate's arguments.
+     *
+     * @return the aggregate definition if it exists in this keyspace, {@code null} otherwise.
+     */
+    public AggregateMetadata getAggregate(String name, DataType... argumentTypes) {
+        return getAggregate(name, Lists.newArrayList(argumentTypes));
+    }
+
+    /**
+     * Returns the aggregates defined in this keyspace.
+     *
+     * @return a collection of the definition for the aggregates defined in this
+     * keyspace.
+     */
+    public Collection<AggregateMetadata> getAggregates() {
+        return Collections.unmodifiableCollection(aggregates.values());
+    }
+
+    void removeAggregate(String fullName) {
+        functions.remove(fullName);
     }
 
     /**
@@ -174,6 +254,12 @@ public class KeyspaceMetadata {
 
         for (TableMetadata tm : tables.values())
             sb.append('\n').append(tm.exportAsString()).append('\n');
+
+        for (FunctionMetadata fm: functions.values())
+            sb.append('\n').append(fm.exportAsString()).append('\n');
+
+        for (AggregateMetadata am: aggregates.values())
+            sb.append('\n').append(am.exportAsString()).append('\n');
 
         return sb.toString();
     }
@@ -209,6 +295,14 @@ public class KeyspaceMetadata {
 
     void add(TableMetadata tm) {
         tables.put(tm.getName(), tm);
+    }
+
+    void add(FunctionMetadata function) {
+        functions.put(function.getFullName(), function);
+    }
+
+    void add(AggregateMetadata aggregate) {
+        aggregates.put(aggregate.getFullName(), aggregate);
     }
 
     ReplicationStrategy replicationStrategy() {

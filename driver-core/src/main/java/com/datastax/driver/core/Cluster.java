@@ -2007,31 +2007,31 @@ public class Cluster implements Closeable {
             }
         }
 
-        public void submitSchemaRefresh(final SchemaElement targetType, final String targetKeyspace, final String targetName) {
+        public void submitSchemaRefresh(final SchemaElement targetType, final String targetKeyspace, final String targetName, final String signature) {
             logger.trace("Submitting schema refresh");
             executor.submit(new ExceptionCatchingRunnable() {
                 @Override
                 public void runMayThrow() throws InterruptedException, ExecutionException {
-                    controlConnection.refreshSchema(targetType, targetKeyspace, targetName);
+                    controlConnection.refreshSchema(targetType, targetKeyspace, targetName, signature);
                 }
             });
         }
 
         // refresh the schema using the provided connection, and notice the future with the provided resultset once done
-        public void refreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final SchemaElement target, final String keyspace, final String name) {
+        public void refreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final SchemaElement target, final String keyspace, final String name, final String signature) {
             if (logger.isDebugEnabled())
                 logger.debug("Refreshing schema for {}{}",
                     target == null ? "everything" : keyspace,
                     (target == KEYSPACE) ? "" : "." + name + " (" + target + ")");
 
-            maybeRefreshSchemaAndSignal(connection, future, rs, target, keyspace, name);
+            maybeRefreshSchemaAndSignal(connection, future, rs, target, keyspace, name, signature);
         }
 
         public void waitForSchemaAgreementAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs) {
-            maybeRefreshSchemaAndSignal(connection, future, rs, null, null, null);
+            maybeRefreshSchemaAndSignal(connection, future, rs, null, null, null, null);
         }
 
-        private void maybeRefreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final SchemaElement targetType, final String targetKeyspace, final String targetName) {
+        private void maybeRefreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final SchemaElement targetType, final String targetKeyspace, final String targetName, final String signature) {
             final boolean refreshSchema = (targetKeyspace != null); // if false, only wait for schema agreement
 
             executor.submit(new Runnable() {
@@ -2045,11 +2045,11 @@ public class Cluster implements Closeable {
                         if (!schemaInAgreement)
                             logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds());
                         if (refreshSchema)
-                            ControlConnection.refreshSchema(connection, targetType, targetKeyspace, targetName, Manager.this, false);
+                            ControlConnection.refreshSchema(connection, targetType, targetKeyspace, targetName, signature, Manager.this, false);
                     } catch (Exception e) {
                         if (refreshSchema) {
                             logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
-                            submitSchemaRefresh(targetType, targetKeyspace, targetName);
+                            submitSchemaRefresh(targetType, targetKeyspace, targetName, signature);
                         } else {
                             logger.warn("Error while waiting for schema agreement", e);
                         }
@@ -2173,7 +2173,10 @@ public class Cluster implements Closeable {
                     switch (scc.change) {
                         case CREATED:
                         case UPDATED:
-                            submitSchemaRefresh(scc.targetType, scc.targetKeyspace, scc.targetName);
+                            // TODO generate signature for function/aggregate events
+                            String signature = null;
+
+                            submitSchemaRefresh(scc.targetType, scc.targetKeyspace, scc.targetName, signature);
                             break;
                         case DROPPED:
                             KeyspaceMetadata keyspace;
