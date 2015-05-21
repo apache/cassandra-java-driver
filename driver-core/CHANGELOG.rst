@@ -4,8 +4,21 @@ CHANGELOG
 2.0.11:
 -------
 
+Merged from 2.0.10_fixes branch:
+
 - [improvement] Use Netty's pooled ByteBufAllocator by default (JAVA-756)
 - [improvement] Expose "unsafe" paging state API (JAVA-759)
+- [bug] Fix getObject by name (JAVA-767)
+- [bug] Prevent race during pool initialization (JAVA-768)
+
+
+2.0.10.1:
+---------
+
+- [improvement] Use Netty's pooled ByteBufAllocator by default (JAVA-756)
+- [improvement] Expose "unsafe" paging state API (JAVA-759)
+- [bug] Fix getObject by name (JAVA-767)
+- [bug] Prevent race during pool initialization (JAVA-768)
 
 
 2.0.10:

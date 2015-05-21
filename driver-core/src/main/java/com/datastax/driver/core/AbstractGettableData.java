@@ -310,6 +310,6 @@ abstract class AbstractGettableData implements GettableData {
     }
 
     public Object getObject(String name) {
-        return getValue(metadata.getFirstIdx(name));
+        return getObject(metadata.getFirstIdx(name));
     }
 }
