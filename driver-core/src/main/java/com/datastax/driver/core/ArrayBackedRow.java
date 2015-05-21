@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
@@ -24,6 +25,13 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
  * Implementation of a Row backed by an ArrayList.
  */
 class ArrayBackedRow extends AbstractGettableData implements Row {
+
+    /**
+     * A pattern to parse (non-aliased) token column names of the form token(x).
+     * Note that starting from Cassandra 2.2 built-in functions are declared in
+     * the system keyspace, so the function name is prefixed with "system.".
+     */
+    private static final Pattern TOKEN_COLUMN_NAME = Pattern.compile("(system\\.)?token(.*)");
 
     private final ColumnDefinitions metadata;
     private final Token.Factory tokenFactory;
@@ -90,7 +98,7 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
     public Token getPartitionKeyToken() {
         int i = 0;
         for (ColumnDefinitions.Definition column : metadata) {
-            if (column.getName().matches("token(.*)"))
+            if (TOKEN_COLUMN_NAME.matcher(column.getName()).matches())
                 return getToken(i);
             i++;
         }

@@ -422,8 +422,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null || value.remaining() == 0)
             return null;
 
-        // UDT always use the protocol V3 to encode values
-        return (UDTValue)type.codec(ProtocolVersion.V3).deserialize(value);
+        return (UDTValue)type.codec(protocolVersion).deserialize(value);
     }
 
     /**
@@ -440,8 +439,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null || value.remaining() == 0)
             return null;
 
-        // tuples always use the protocol V3 to encode values
-        return (TupleValue)type.codec(ProtocolVersion.V3).deserialize(value);
+        return (TupleValue)type.codec(protocolVersion).deserialize(value);
     }
 
     /**

@@ -25,33 +25,61 @@ import io.netty.handler.codec.*;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
+/**
+ * A frame for the CQL binary protocol.
+ * <p>
+ * Each frame contains a fixed size header (8 bytes for V1 and V2, 9 bytes for V3 and V4)
+ * followed by a variable size body. The content of the body depends
+ * on the header opcode value (the body can in particular be empty for some
+ * opcode values).
+ * <p>
+ * The protocol distinguishes 2 types of frames: requests and responses. Requests
+ * are those frames sent by the clients to the server, response are the ones sent
+ * by the server. Note however that the protocol supports server pushes (events)
+ * so responses does not necessarily come right after a client request.
+ * <p>
+ * Frames for protocol versions 1+2 are defined as:
+ *
+ * <pre>
+ *  0         8        16        24        32
+ * +---------+---------+---------+---------+
+ * | version |  flags  | stream  | opcode  |
+ * +---------+---------+---------+---------+
+ * |                length                 |
+ * +---------+---------+---------+---------+
+ * |                                       |
+ * .            ...  body ...              .
+ * .                                       .
+ * .                                       .
+ * +---------------------------------------- *
+ *</pre>
+ *
+ * Frames for protocol versions 3+4 are defined as:
+ *
+ * <pre>
+ * 0         8        16        24        32         40
+ * +---------+---------+---------+---------+---------+
+ * | version |  flags  |      stream       | opcode  |
+ * +---------+---------+---------+---------+---------+
+ * |                length                 |
+ * +---------+---------+---------+---------+
+ * |                                       |
+ * .            ...  body ...              .
+ * .                                       .
+ * .                                       .
+ * +----------------------------------------
+ * </pre>
+ *
+ * @see "https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v1.spec"
+ * @see "https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v2.spec"
+ * @see "https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v3.spec"
+ * @see "https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v4.spec"
+ */
 class Frame {
 
     public final Header header;
     public final ByteBuf body;
 
-    /**
-     * On-wire frame.
-     * Frames for protocol versions 1+2 are defined as:
-     *
-     *   0         8        16        24        32
-     *   +---------+---------+---------+---------+
-     *   | version |  flags  | stream  | opcode  |
-     *   +---------+---------+---------+---------+
-     *   |                length                 |
-     *   +---------+---------+---------+---------+
-     *
-     * Frames for protocol version 3 are defined as:
-     *
-     *   0         8        16        24        32
-     *   +---------+---------+---------+---------+
-     *   | version |  flags  |      stream       |
-     *   +---------+---------+---------+---------+
-     *   | opcode  |      length                 |
-     *   +---------+---------+---------+---------+
-     *   | length  |
-     *   +---------+
-     */
     private Frame(Header header, ByteBuf body) {
         this.header = header;
         this.body = body;
@@ -82,6 +110,7 @@ class Frame {
             case V2:
                 return fullFrame.readByte();
             case V3:
+            case V4:
                 return fullFrame.readShort();
             default:
                 throw version.unsupported();
@@ -111,12 +140,18 @@ class Frame {
             this.opcode = opcode;
         }
 
+        /**
+         * Return the expected frame header length in bytes according to the protocol version in use.
+         * @param version the protocol version in use
+         * @return the expected frame header length in bytes
+         */
         public static int lengthFor(ProtocolVersion version) {
             switch (version) {
                 case V1:
                 case V2:
                     return 8;
                 case V3:
+                case V4:
                     return 9;
                 default:
                     throw version.unsupported();
@@ -231,6 +266,7 @@ class Frame {
                     header.writeByte(streamId);
                     break;
                 case V3:
+                case V4:
                     header.writeShort(streamId);
                     break;
                 default:

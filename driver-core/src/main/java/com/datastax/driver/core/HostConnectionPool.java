@@ -34,6 +34,7 @@ abstract class HostConnectionPool {
             case V2:
                 return new DynamicConnectionPool(host, hostDistance, manager);
             case V3:
+            case V4:
                 return new SingleConnectionPool(host, hostDistance, manager);
             default:
                 throw version.unsupported();

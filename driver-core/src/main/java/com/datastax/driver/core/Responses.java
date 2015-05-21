@@ -453,6 +453,7 @@ class Responses {
                             return Rows.Metadata.EMPTY;
                         case V2:
                         case V3:
+                        case V4:
                             return Rows.Metadata.decode(body);
                         default:
                             throw version.unsupported();
@@ -502,6 +503,7 @@ class Responses {
                             target = name.isEmpty() ? KEYSPACE : TABLE;
                             return new SchemaChange(change, target, keyspace, name);
                         case V3:
+                        case V4:
                             change = CBUtil.readEnumValue(Change.class, body);
                             target = CBUtil.readEnumValue(SchemaElement.class, body);
                             keyspace = CBUtil.readString(body);
