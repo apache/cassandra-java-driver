@@ -21,12 +21,12 @@ import java.util.*;
 
 import io.netty.buffer.ByteBuf;
 
-import com.datastax.driver.core.ProtocolEvent.SchemaChange;
-import com.datastax.driver.core.ProtocolEvent.SchemaChange.Change;
-import com.datastax.driver.core.ProtocolEvent.SchemaChange.Target;
 import com.datastax.driver.core.Responses.Result.Rows.Metadata;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.Bytes;
+
+import static com.datastax.driver.core.SchemaElement.KEYSPACE;
+import static com.datastax.driver.core.SchemaElement.TABLE;
 
 class Responses {
 
@@ -480,19 +480,18 @@ class Responses {
         public static class SchemaChange extends Result {
 
             public enum Change { CREATED, UPDATED, DROPPED }
-            public enum Target { KEYSPACE, TABLE, TYPE }
 
             public final Change change;
-            public final Target target;
-            public final String keyspace;
-            public final String name;
+            public final SchemaElement targetType;
+            public final String targetKeyspace;
+            public final String targetName;
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
                 public Result decode(ByteBuf body, ProtocolVersion version)
                 {
                     // Note: the CREATE KEYSPACE/TABLE/TYPE SCHEMA_CHANGE response is different from the SCHEMA_CHANGE EVENT type
                     Change change;
-                    Target target;
+                    SchemaElement target;
                     String keyspace, name;
                     switch (version) {
                         case V1:
@@ -500,43 +499,31 @@ class Responses {
                             change = CBUtil.readEnumValue(Change.class, body);
                             keyspace = CBUtil.readString(body);
                             name = CBUtil.readString(body);
-                            target = name.isEmpty() ? Target.KEYSPACE : Target.TABLE;
+                            target = name.isEmpty() ? KEYSPACE : TABLE;
                             return new SchemaChange(change, target, keyspace, name);
                         case V3:
                             change = CBUtil.readEnumValue(Change.class, body);
-                            target = CBUtil.readEnumValue(Target.class, body);
+                            target = CBUtil.readEnumValue(SchemaElement.class, body);
                             keyspace = CBUtil.readString(body);
-                            name = (target == Target.KEYSPACE) ? "" : CBUtil.readString(body);
+                            name = (target == KEYSPACE) ? "" : CBUtil.readString(body);
                             return new SchemaChange(change, target, keyspace, name);
-                        default:
-                            throw version.unsupported();
-                    }
-                }
-
-                private Target maybeReadTarget(ByteBuf body, ProtocolVersion version) {
-                    switch (version) {
-                        case V1:
-                        case V2:
-                            return null;
-                        case V3:
-                            return CBUtil.readEnumValue(Target.class, body);
                         default:
                             throw version.unsupported();
                     }
                 }
             };
 
-            private SchemaChange(Change change, Target target, String keyspace, String name) {
+            private SchemaChange(Change change, SchemaElement targetType, String targetKeyspace, String targetName) {
                 super(Kind.SCHEMA_CHANGE);
                 this.change = change;
-                this.target = target;
-                this.keyspace = keyspace;
-                this.name = name;
+                this.targetType = targetType;
+                this.targetKeyspace = targetKeyspace;
+                this.targetName = targetName;
             }
 
             @Override
             public String toString() {
-                return "RESULT schema change " + change + " on " + target + ' ' + keyspace + (name.isEmpty() ? "" : '.' + name);
+                return "RESULT schema change " + change + " on " + targetType + ' ' + targetKeyspace + (targetName.isEmpty() ? "" : '.' + targetName);
             }
         }
     }

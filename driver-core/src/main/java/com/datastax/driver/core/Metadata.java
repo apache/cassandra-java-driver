@@ -30,6 +30,10 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
+import static com.datastax.driver.core.SchemaElement.KEYSPACE;
+import static com.datastax.driver.core.SchemaElement.TABLE;
+import static com.datastax.driver.core.SchemaElement.TYPE;
+
 /**
  * Keeps metadata on the connected cluster, including known nodes and schema definitions.
  */
@@ -52,7 +56,7 @@ public class Metadata {
     }
 
     // Synchronized to make it easy to detect dropped keyspaces
-    synchronized void rebuildSchema(String keyspaceName, String tableName, String udtName, ResultSet ks, ResultSet udts, ResultSet cfs, ResultSet cols, VersionNumber cassandraVersion) {
+    synchronized void rebuildSchema(SchemaElement targetType, String targetKeyspace, String targetName, ResultSet ks, ResultSet udts, ResultSet cfs, ResultSet cols, VersionNumber cassandraVersion) {
 
         Map<String, List<Row>> cfDefs = new HashMap<String, List<Row>>();
         Map<String, List<Row>> udtDefs = new HashMap<String, List<Row>>();
@@ -104,7 +108,7 @@ public class Metadata {
             }
         }
 
-        if (tableName == null && udtName == null) { // Refresh one or all keyspaces
+        if (targetType == null || targetType == KEYSPACE) { // Refresh one or all keyspaces
             assert ks != null;
             Set<String> addedKs = new HashSet<String>();
             for (Row ksRow : ks) {
@@ -120,39 +124,39 @@ public class Metadata {
 
             // If keyspace is null, it means we're rebuilding from scratch, so
             // remove anything that was not just added as it means it's a dropped keyspace
-            if (keyspaceName == null) {
+            if (targetKeyspace == null) {
                 Iterator<String> iter = keyspaces.keySet().iterator();
                 while (iter.hasNext()) {
                     if (!addedKs.contains(iter.next()))
                         iter.remove();
                 }
             }
-        } else if (tableName != null) {
-            assert keyspaceName != null;
-            KeyspaceMetadata ksm = keyspaces.get(keyspaceName);
+        } else if (targetType == TABLE) {
+            assert targetKeyspace != null;
+            KeyspaceMetadata ksm = keyspaces.get(targetKeyspace);
 
             // If we update a keyspace we don't know about, something went
             // wrong. Log an error an schedule a full schema rebuilt.
             if (ksm == null) {
-                logger.error(String.format("Asked to rebuild table %s.%s but I don't know keyspace %s", keyspaceName, tableName, keyspaceName));
+                logger.error(String.format("Asked to rebuild table %s.%s but I don't know keyspace %s", targetKeyspace, targetName, targetKeyspace));
                 cluster.submitSchemaRefresh(null, null, null);
                 return;
             }
 
-            if (cfDefs.containsKey(keyspaceName))
-                buildTableMetadata(ksm, cfDefs.get(keyspaceName), colsDefs.get(keyspaceName), cassandraVersion);
-        } else { // udtName != null
-            assert keyspaceName != null;
-            KeyspaceMetadata ksm = keyspaces.get(keyspaceName);
+            if (cfDefs.containsKey(targetKeyspace))
+                buildTableMetadata(ksm, cfDefs.get(targetKeyspace), colsDefs.get(targetKeyspace), cassandraVersion);
+        } else if (targetType == TYPE) {
+            assert targetKeyspace != null;
+            KeyspaceMetadata ksm = keyspaces.get(targetKeyspace);
 
             if (ksm == null) {
-                logger.error(String.format("Asked to rebuild type %s.%s but I don't know keyspace %s", keyspaceName, udtName, keyspaceName));
+                logger.error(String.format("Asked to rebuild type %s.%s but I don't know keyspace %s", targetKeyspace, targetName, targetKeyspace));
                 cluster.submitSchemaRefresh(null, null, null);
                 return;
             }
 
-            if (udtDefs.containsKey(keyspaceName))
-                ksm.addUserTypes(udtDefs.get(keyspaceName));
+            if (udtDefs.containsKey(targetKeyspace))
+                ksm.addUserTypes(udtDefs.get(targetKeyspace));
         }
     }
 
