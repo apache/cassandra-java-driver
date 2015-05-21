@@ -336,16 +336,17 @@ class ControlConnection implements Host.StateListener {
                 whereClause += " AND type_name = '" + targetName + '\'';
         }
 
-        DefaultResultSetFuture ksFuture = (targetType == null || targetType == KEYSPACE)
+        boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);
+        DefaultResultSetFuture ksFuture = isSchemaOrKeyspace
                                         ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_KEYSPACES + whereClause))
                                         : null;
-        DefaultResultSetFuture udtFuture = (targetType == KEYSPACE && supportsUdts(cassandraVersion) || targetType == TYPE)
+        DefaultResultSetFuture udtFuture = (isSchemaOrKeyspace && supportsUdts(cassandraVersion) || targetType == TYPE)
                                          ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_USERTYPES + whereClause))
                                          : null;
-        DefaultResultSetFuture cfFuture = (targetType == KEYSPACE || targetType == TABLE)
+        DefaultResultSetFuture cfFuture = (isSchemaOrKeyspace || targetType == TABLE)
                                         ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause))
                                         : null;
-        DefaultResultSetFuture colsFuture = (targetType == KEYSPACE || targetType == TABLE)
+        DefaultResultSetFuture colsFuture = (isSchemaOrKeyspace || targetType == TABLE)
                                           ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMNS + whereClause))
                                           : null;
 
@@ -374,7 +375,7 @@ class ControlConnection implements Host.StateListener {
 
         // If we rebuild all from scratch or have an updated keyspace, rebuild the token map since some replication on some keyspace
         // may have changed
-        if (targetType == null || targetType == KEYSPACE)
+        if (isSchemaOrKeyspace)
             refreshNodeListAndTokenMap(connection, cluster, false, false);
     }
 
