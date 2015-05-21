@@ -19,6 +19,9 @@ import java.net.InetSocketAddress;
 
 import io.netty.buffer.ByteBuf;
 
+import static com.datastax.driver.core.SchemaElement.KEYSPACE;
+import static com.datastax.driver.core.SchemaElement.TABLE;
+
 class ProtocolEvent {
 
     public enum Type { TOPOLOGY_CHANGE, STATUS_CHANGE, SCHEMA_CHANGE }
@@ -95,25 +98,24 @@ class ProtocolEvent {
     public static class SchemaChange extends ProtocolEvent {
 
         public enum Change { CREATED, UPDATED, DROPPED }
-        public enum Target { KEYSPACE, TABLE, TYPE }
 
         public final Change change;
-        public final Target target;
-        public final String keyspace;
-        public final String name;
+        public final SchemaElement targetType;
+        public final String targetKeyspace;
+        public final String targetName;
 
-        public SchemaChange(Change change, Target target, String keyspace, String name) {
+        public SchemaChange(Change change, SchemaElement targetType, String targetKeyspace, String targetName) {
             super(Type.SCHEMA_CHANGE);
             this.change = change;
-            this.target = target;
-            this.keyspace = keyspace;
-            this.name = name;
+            this.targetType = targetType;
+            this.targetKeyspace = targetKeyspace;
+            this.targetName = targetName;
         }
 
         // Assumes the type has already been deserialized
         private static SchemaChange deserializeEvent(ByteBuf bb, ProtocolVersion version) {
             Change change;
-            Target target;
+            SchemaElement target;
             String keyspace, name;
             switch (version) {
                 case V1:
@@ -121,13 +123,13 @@ class ProtocolEvent {
                     change = CBUtil.readEnumValue(Change.class, bb);
                     keyspace = CBUtil.readString(bb);
                     name = CBUtil.readString(bb);
-                    target = name.isEmpty() ? Target.KEYSPACE : Target.TABLE;
+                    target = name.isEmpty() ? KEYSPACE : TABLE;
                     return new SchemaChange(change, target, keyspace, name);
                 case V3:
                     change = CBUtil.readEnumValue(Change.class, bb);
-                    target = CBUtil.readEnumValue(Target.class, bb);
+                    target = CBUtil.readEnumValue(SchemaElement.class, bb);
                     keyspace = CBUtil.readString(bb);
-                    name = (target == Target.KEYSPACE) ? "" : CBUtil.readString(bb);
+                    name = (target == KEYSPACE) ? "" : CBUtil.readString(bb);
                     return new SchemaChange(change, target, keyspace, name);
                 default:
                     throw version.unsupported();
@@ -136,7 +138,7 @@ class ProtocolEvent {
 
         @Override
         public String toString() {
-            return change.toString() + ' ' + target + ' ' + keyspace + (name.isEmpty() ? "" : '.' + name);
+            return change.toString() + ' ' + targetType + ' ' + targetKeyspace + (targetName.isEmpty() ? "" : '.' + targetName);
         }
     }
 

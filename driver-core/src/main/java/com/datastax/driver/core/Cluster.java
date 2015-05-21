@@ -30,7 +30,6 @@ import com.google.common.base.Objects;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +37,8 @@ import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.*;
+
+import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 
 /**
  * Information and known state of a Cassandra cluster.
@@ -2006,30 +2007,32 @@ public class Cluster implements Closeable {
             }
         }
 
-        public void submitSchemaRefresh(final String keyspace, final String table, final String udt) {
+        public void submitSchemaRefresh(final SchemaElement targetType, final String targetKeyspace, final String targetName) {
             logger.trace("Submitting schema refresh");
             executor.submit(new ExceptionCatchingRunnable() {
                 @Override
                 public void runMayThrow() throws InterruptedException, ExecutionException {
-                    controlConnection.refreshSchema(keyspace, table, udt);
+                    controlConnection.refreshSchema(targetType, targetKeyspace, targetName);
                 }
             });
         }
 
         // refresh the schema using the provided connection, and notice the future with the provided resultset once done
-        public void refreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final String keyspace, final String table, final String udt) {
+        public void refreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final SchemaElement target, final String keyspace, final String name) {
             if (logger.isDebugEnabled())
-                logger.debug("Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : '.' + table);
+                logger.debug("Refreshing schema for {}{}",
+                    target == null ? "everything" : keyspace,
+                    (target == KEYSPACE) ? "" : "." + name + " (" + target + ")");
 
-            maybeRefreshSchemaAndSignal(connection, future, rs, keyspace, table, udt);
+            maybeRefreshSchemaAndSignal(connection, future, rs, target, keyspace, name);
         }
 
         public void waitForSchemaAgreementAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs) {
             maybeRefreshSchemaAndSignal(connection, future, rs, null, null, null);
         }
 
-        private void maybeRefreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final String keyspace, final String table, final String udt) {
-            final boolean refreshSchema = (keyspace != null); // if false, only wait for schema agreement
+        private void maybeRefreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final SchemaElement targetType, final String targetKeyspace, final String targetName) {
+            final boolean refreshSchema = (targetKeyspace != null); // if false, only wait for schema agreement
 
             executor.submit(new Runnable() {
                 @Override
@@ -2042,11 +2045,11 @@ public class Cluster implements Closeable {
                         if (!schemaInAgreement)
                             logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds());
                         if (refreshSchema)
-                            ControlConnection.refreshSchema(connection, keyspace, table, udt, Manager.this, false);
+                            ControlConnection.refreshSchema(connection, targetType, targetKeyspace, targetName, Manager.this, false);
                     } catch (Exception e) {
                         if (refreshSchema) {
                             logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
-                            submitSchemaRefresh(keyspace, table, udt);
+                            submitSchemaRefresh(targetType, targetKeyspace, targetName);
                         } else {
                             logger.warn("Error while waiting for schema agreement", e);
                         }
@@ -2169,52 +2172,30 @@ public class Cluster implements Closeable {
                     ProtocolEvent.SchemaChange scc = (ProtocolEvent.SchemaChange)event;
                     switch (scc.change) {
                         case CREATED:
-                            switch (scc.target) {
-                                case KEYSPACE:
-                                    submitSchemaRefresh(scc.keyspace, null, null);
-                                    break;
-                                case TABLE:
-                                    submitSchemaRefresh(scc.keyspace, scc.name, null);
-                                    break;
-                                case TYPE:
-                                    submitSchemaRefresh(scc.keyspace, null, scc.name);
-                                    break;
-                            }
+                        case UPDATED:
+                            submitSchemaRefresh(scc.targetType, scc.targetKeyspace, scc.targetName);
                             break;
                         case DROPPED:
                             KeyspaceMetadata keyspace;
-                            switch (scc.target) {
+                            switch (scc.targetType) {
                                 case KEYSPACE:
-                                    manager.metadata.removeKeyspace(scc.keyspace);
+                                    manager.metadata.removeKeyspace(scc.targetKeyspace);
                                     break;
                                 case TABLE:
-                                    keyspace = manager.metadata.getKeyspaceInternal(scc.keyspace);
+                                    keyspace = manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
                                     if (keyspace == null)
                                         logger.warn("Received a DROPPED notification for table {}.{}, but this keyspace is unknown in our metadata",
-                                            scc.keyspace, scc.name);
+                                            scc.targetKeyspace, scc.targetName);
                                     else
-                                        keyspace.removeTable(scc.name);
+                                        keyspace.removeTable(scc.targetName);
                                     break;
                                 case TYPE:
-                                    keyspace = manager.metadata.getKeyspaceInternal(scc.keyspace);
+                                    keyspace = manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
                                     if (keyspace == null)
                                         logger.warn("Received a DROPPED notification for UDT {}.{}, but this keyspace is unknown in our metadata",
-                                            scc.keyspace, scc.name);
+                                            scc.targetKeyspace, scc.targetName);
                                     else
-                                        keyspace.removeUserType(scc.name);
-                                    break;
-                            }
-                            break;
-                        case UPDATED:
-                            switch (scc.target) {
-                                case KEYSPACE:
-                                    submitSchemaRefresh(scc.keyspace, null, null);
-                                    break;
-                                case TABLE:
-                                    submitSchemaRefresh(scc.keyspace, scc.name, null);
-                                    break;
-                                case TYPE:
-                                    submitSchemaRefresh(scc.keyspace, null, scc.name);
+                                        keyspace.removeUserType(scc.targetName);
                                     break;
                             }
                             break;

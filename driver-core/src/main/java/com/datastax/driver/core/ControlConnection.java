@@ -32,6 +32,10 @@ import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
+import static com.datastax.driver.core.SchemaElement.KEYSPACE;
+import static com.datastax.driver.core.SchemaElement.TABLE;
+import static com.datastax.driver.core.SchemaElement.TYPE;
+
 class ControlConnection implements Host.StateListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ControlConnection.class);
@@ -284,16 +288,16 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    public void refreshSchema(String keyspace, String table, String udt) throws InterruptedException {
+    public void refreshSchema(SchemaElement targetType, String targetKeyspace, String targetName) throws InterruptedException {
         logger.debug("[Control connection] Refreshing schema for {}{}",
-            keyspace == null ? "everything" : keyspace,
-            table == null ? (udt == null ? "" : '.' + udt + " (UDT)") : '.' + table + " (table)");
+            targetType == null ? "everything" : targetKeyspace,
+            (targetType == KEYSPACE) ? "" : "." + targetName + " (" + targetType + ")");
         try {
             Connection c = connectionRef.get();
             // At startup, when we add the initial nodes, this will be null, which is ok
             if (c == null)
                 return;
-            refreshSchema(c, keyspace, table, udt, cluster, false);
+            refreshSchema(c, targetType, targetKeyspace, targetName, cluster, false);
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing schema ({})", e.getMessage());
             signalError();
@@ -308,7 +312,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    static void refreshSchema(Connection connection, String keyspace, String table, String udt, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    static void refreshSchema(Connection connection, SchemaElement targetType, String targetKeyspace, String targetName, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         Host host = cluster.metadata.getHost(connection.address);
         // Neither host, nor it's version should be null. But instead of dying if there is a race or something, we can kind of try to infer
         // a Cassandra version from the protocol version (this is not full proof, we can have the protocol 1 against C* 2.0+, but it's worth
@@ -324,24 +328,24 @@ class ControlConnection implements Host.StateListener {
 
         // Make sure we're up to date on schema
         String whereClause = "";
-        if (keyspace != null) {
-            whereClause = " WHERE keyspace_name = '" + keyspace + '\'';
-            if (table != null)
-                whereClause += " AND columnfamily_name = '" + table + '\'';
-            else if (udt != null)
-                whereClause += " AND type_name = '" + udt + '\'';
+        if (targetType != null) {
+            whereClause = " WHERE keyspace_name = '" + targetKeyspace + '\'';
+            if (targetType == TABLE)
+                whereClause += " AND columnfamily_name = '" + targetName + '\'';
+            else if (targetType == TYPE)
+                whereClause += " AND type_name = '" + targetName + '\'';
         }
 
-        DefaultResultSetFuture ksFuture = (table == null && udt == null)
+        DefaultResultSetFuture ksFuture = (targetType == null || targetType == KEYSPACE)
                                         ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_KEYSPACES + whereClause))
                                         : null;
-        DefaultResultSetFuture udtFuture = table == null && (cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1))
+        DefaultResultSetFuture udtFuture = (targetType == KEYSPACE && supportsUdts(cassandraVersion) || targetType == TYPE)
                                          ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_USERTYPES + whereClause))
                                          : null;
-        DefaultResultSetFuture cfFuture = udt == null
+        DefaultResultSetFuture cfFuture = (targetType == KEYSPACE || targetType == TABLE)
                                         ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause))
                                         : null;
-        DefaultResultSetFuture colsFuture = udt == null
+        DefaultResultSetFuture colsFuture = (targetType == KEYSPACE || targetType == TABLE)
                                           ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMNS + whereClause))
                                           : null;
 
@@ -355,7 +359,7 @@ class ControlConnection implements Host.StateListener {
             connection.write(colsFuture);
 
         try {
-            cluster.metadata.rebuildSchema(keyspace, table, udt,
+            cluster.metadata.rebuildSchema(targetType, targetKeyspace, targetName,
                                            ksFuture == null ? null : ksFuture.get(),
                                            udtFuture == null ? null : udtFuture.get(),
                                            cfFuture == null ? null : cfFuture.get(),
@@ -368,10 +372,14 @@ class ControlConnection implements Host.StateListener {
             logger.error("Error parsing schema from Cassandra system tables: the schema in Cluster#getMetadata() will appear incomplete or stale", e);
         }
 
-        // If the table is null, we either rebuild all from scratch or have an updated keyspace. In both case, rebuild the token map
-        // since some replication on some keyspace may have changed
-        if (table == null)
+        // If we rebuild all from scratch or have an updated keyspace, rebuild the token map since some replication on some keyspace
+        // may have changed
+        if (targetType == null || targetType == KEYSPACE)
             refreshNodeListAndTokenMap(connection, cluster, false, false);
+    }
+
+    private static boolean supportsUdts(VersionNumber cassandraVersion) {
+        return cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1);
     }
 
     public void refreshNodeListAndTokenMap() {
