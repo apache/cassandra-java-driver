@@ -70,3 +70,34 @@ IntelliJ IDEA
 - Select ``src/main/config/ide/intellij-code-style.jar``.
 
 This should add a new Code Style scheme called "java-driver".
+
+Running the tests
+-----------------
+
+We use TestNG. There are 3 test categories:
+
+- "unit": pure Java unit tests.
+- "short" and "long": integration tests that launch Cassandra instances.
+
+The Maven build uses profiles named after the categories to choose which tests to run::
+
+    mvn test -Pshort
+
+The default is "unit". Each profile runs the ones before it ("short" runs unit, etc.)
+
+Integration tests use `CCM https://github.com/pcmanus/ccm`_ to bootstrap Cassandra instances.
+Two Maven properties control its execution:
+
+- ``cassandra.version``: the Cassandra version. This has a default value in the root POM,
+  you can override it on the command line (``-Dcassandra.version=...``).
+- ``ipprefix``: the prefix of the IP addresses that the Cassandra instances will bind to (see
+  below). This defaults to ``127.0.1.``.
+
+
+CCM launches multiple Cassandra instances on localhost by binding to different addresses. The
+driver uses up to 6 different instances (127.0.1.1 to 127.0.1.6 with the default prefix).
+You'll need to define loopback aliases for this to work, on Mac OS X your can do it with:
+
+    sudo ifconfig lo0 alias 127.0.1.1 up
+    sudo ifconfig lo0 alias 127.0.1.2 up
+    ...
