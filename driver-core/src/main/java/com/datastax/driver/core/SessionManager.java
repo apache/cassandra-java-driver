@@ -93,12 +93,16 @@ class SessionManager extends AbstractSession {
         return poolsState.keyspace;
     }
 
+    @Override
     public ResultSetFuture executeAsync(Statement statement) {
         return executeQuery(makeRequestMessage(statement, null), statement);
     }
 
-    public ListenableFuture<PreparedStatement> prepareAsync(String query) {
-        Connection.Future future = new Connection.Future(new Requests.Prepare(query));
+    @Override
+    protected ListenableFuture<PreparedStatement> prepareAsync(String query, Map<String, ByteBuffer> customPayload) {
+        Requests.Prepare request = new Requests.Prepare(query);
+        request.setCustomPayload(customPayload);
+        Connection.Future future = new Connection.Future(request);
         execute(future, Statement.DEFAULT);
         return toPreparedStatement(query, future);
     }
@@ -501,6 +505,7 @@ class SessionManager extends AbstractSession {
         if (statement instanceof StatementWrapper)
             statement = ((StatementWrapper)statement).getWrappedStatement();
 
+        Message.Request request;
         if (statement instanceof RegularStatement) {
             RegularStatement rs = (RegularStatement)statement;
 
@@ -519,7 +524,7 @@ class SessionManager extends AbstractSession {
             String qString = rs.getQueryString();
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false,
                                                                                       fetchSize, usedPagingState, scl, defaultTimestamp);
-            return new Requests.Query(qString, options);
+            request = new Requests.Query(qString, options);
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
             if (!cluster.manager.preparedQueries.containsKey(bs.statement.getPreparedId().id)) {
@@ -531,7 +536,7 @@ class SessionManager extends AbstractSession {
             boolean skipMetadata = protoVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.wrapper.values), skipMetadata,
                                                                                       fetchSize, usedPagingState, scl, defaultTimestamp);
-            return new Requests.Execute(bs.statement.getPreparedId().id, options);
+            request = new Requests.Execute(bs.statement.getPreparedId().id, options);
         } else {
             assert statement instanceof BatchStatement : statement;
             assert pagingState == null;
@@ -544,8 +549,11 @@ class SessionManager extends AbstractSession {
                 bs.ensureAllSet();
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protoVersion);
             Requests.BatchProtocolOptions options = new Requests.BatchProtocolOptions(cl, scl, defaultTimestamp);
-            return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, options);
+            request = new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, options);
         }
+
+        request.setCustomPayload(statement.getOutgoingPayload());
+        return request;
     }
 
     /**

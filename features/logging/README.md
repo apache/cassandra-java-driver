@@ -107,6 +107,9 @@ and provide hints about what's going wrong.
         * Authentication progress
         * Sending requests
         * Receiving responses
+* `com.datastax.driver.core.Message`
+    * TRACE
+        * Custom payloads
 
 ### Logging query latencies
 

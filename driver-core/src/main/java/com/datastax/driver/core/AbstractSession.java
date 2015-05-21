@@ -16,10 +16,13 @@
 package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 
 /**
  * Abstract implementation of the Session interface.
@@ -96,11 +99,19 @@ public abstract class AbstractSession implements Session {
      * {@inheritDoc}
      */
     @Override
+    public ListenableFuture<PreparedStatement> prepareAsync(String query) {
+        return prepareAsync(query, null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ListenableFuture<PreparedStatement> prepareAsync(final RegularStatement statement) {
         if (statement.hasValues())
             throw new IllegalArgumentException("A statement to prepare should not have values");
 
-        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.toString());
+        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.toString(), statement.getOutgoingPayload());
         return Futures.transform(prepared, new Function<PreparedStatement, PreparedStatement>() {
             @Override
             public PreparedStatement apply(PreparedStatement prepared) {
@@ -111,11 +122,21 @@ public abstract class AbstractSession implements Session {
                 if (statement.isTracing())
                     prepared.enableTracing();
                 prepared.setRetryPolicy(statement.getRetryPolicy());
-
+                prepared.setOutgoingPayload(statement.getOutgoingPayload());
                 return prepared;
             }
         });
     }
+
+    /**
+     * Prepares the provided query string asynchronously,
+     * sending along the provided custom payload, if any.
+     *
+     * @param query the CQL query string to prepare
+     * @param customPayload the custom payload to send along the query, or {@code null} if no payload is to be sent
+     * @return a future on the prepared statement corresponding to {@code query}.
+     */
+    protected abstract ListenableFuture<PreparedStatement> prepareAsync(String query, Map<String, ByteBuffer> customPayload);
 
     /**
      * {@inheritDoc}

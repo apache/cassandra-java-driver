@@ -102,3 +102,6 @@ To avoid this issue, you can use one the following workarounds:
 * [client-side timestamps](../query_timestamps/)
 
 #### v3 to v4
+
+* custom payloads (see
+  [Custom payloads](../custom_payloads/))

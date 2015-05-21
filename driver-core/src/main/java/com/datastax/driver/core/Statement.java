@@ -16,6 +16,9 @@
 package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
 
 import com.datastax.driver.core.exceptions.PagingStateException;
 import com.datastax.driver.core.policies.RetryPolicy;
@@ -29,6 +32,12 @@ import com.datastax.driver.core.querybuilder.BuiltStatement;
  * whether to trace the query, ...).
  */
 public abstract class Statement {
+
+    /**
+     * A special ByteBuffer value that can be used with custom payloads
+     * to denote a null value in a payload map.
+     */
+    public static final ByteBuffer NULL_PAYLOAD_VALUE = ByteBuffer.allocate(0);
 
     // An exception to the RegularStatement, BoundStatement or BatchStatement rule above. This is
     // used when preparing a statement and for other internal queries. Do not expose publicly.
@@ -52,6 +61,7 @@ public abstract class Statement {
     private volatile RetryPolicy retryPolicy;
     private volatile ByteBuffer pagingState;
     protected volatile Boolean idempotent;
+    private volatile Map<String, ByteBuffer> outgoingPayload;
 
     // We don't want to expose the constructor, because the code relies on this being only sub-classed by RegularStatement, BoundStatement and BatchStatement
     Statement() {
@@ -444,5 +454,33 @@ public abstract class Statement {
             return myValue;
         else
             return queryOptions.getDefaultIdempotence();
+    }
+
+    Map<String, ByteBuffer> getOutgoingPayload() {
+        return outgoingPayload;
+    }
+
+    /**
+     * Set the given outgoing payload on this statement.
+     * Each time this statement is executed, this payload will be included in the query request.
+     * <p>
+     * This method makes a defensive copy of the given map, but its values
+     * remain inherently mutable. Care should be taken not to modify the original map
+     * once it is passed to this method.
+     * <p>
+     * This feature is only available with {@link ProtocolVersion#V4} or above.
+     * Trying to include custom payloads in requests sent by the driver
+     * under lower protocol versions will result in an
+     * {@link com.datastax.driver.core.exceptions.UnsupportedFeatureException}
+     * (wrapped in a {@link com.datastax.driver.core.exceptions.NoHostAvailableException}).
+     *
+     * @param payload the outgoing payload to include with this statement,
+     *                or {@code null} to clear any previously entered payload.
+     * @return this {@link Statement} object.
+     * @since 2.2
+     */
+    public Statement setOutgoingPayload(Map<String, ByteBuffer> payload) {
+        this.outgoingPayload = payload == null ? null : ImmutableMap.copyOf(payload);
+        return this;
     }
 }

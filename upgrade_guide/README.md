@@ -3,6 +3,32 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
+### 2.2.0
+
+#### User API Changes
+
+1. Custom payloads (JAVA-779). The methods listed below were added to the public API:
+
+   * ``Statement#getOutgoingPayload()``
+   * ``Statement#setOutgoingPayload(Map<String,ByteBuffer>)``
+   * ``PreparedStatement#getIncomingPayload()``
+   * ``PreparedStatement#getOutgoingPayload()``
+   * ``PreparedStatement#setOutgoingPayload(Map<String,ByteBuffer>)``
+   * ``ExecutionInfo#getIncomingPayload()``
+   * ``AbstractSession#prepareAsync(String, Map<String,ByteBuffer>)``
+   
+   Binary compatibility: 
+   
+   * ``Statement``, ``DefaultPreparedStatement`` and ``ExecutionInfo`` 
+   remain binary-compatible in spite of API changes;
+   * ``PreparedStatement`` and ``AbstractSession`` _break binary compatibility_;
+   if you have custom implementations you will have to adapt them accordingly.
+   
+   Note that custom payloads can only
+   be used with protocol versions >= 4; trying to set a payload under lower protocol
+   versions will result in an ``UnsupportedFeatureException``.
+   
+   
 ### 2.1.2
 
 2.1.2 brings important internal changes with native protocol v3 support, but
