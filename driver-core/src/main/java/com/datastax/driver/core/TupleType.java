@@ -39,7 +39,7 @@ public class TupleType extends DataType {
     @SuppressWarnings("unchecked")
     @Override
     TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
-        return (TypeCodec)TypeCodec.tupleOf(this);
+        return (TypeCodec)TypeCodec.tupleOf(this, protocolVersion);
     }
 
     /**

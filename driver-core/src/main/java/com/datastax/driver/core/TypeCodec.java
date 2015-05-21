@@ -79,6 +79,7 @@ abstract class TypeCodec<T> {
 
         private static final PrimitiveCollectionCodecs primitiveCollectionCodecsV2 = new PrimitiveCollectionCodecs(ProtocolVersion.V2);
         private static final PrimitiveCollectionCodecs primitiveCollectionCodecsV3 = new PrimitiveCollectionCodecs(ProtocolVersion.V3);
+        private static final PrimitiveCollectionCodecs primitiveCollectionCodecsV4 = new PrimitiveCollectionCodecs(ProtocolVersion.V4);
 
         static PrimitiveCollectionCodecs forVersion(ProtocolVersion version) {
             // This happens during protocol negociation, when the version is not known yet.
@@ -92,6 +93,8 @@ abstract class TypeCodec<T> {
                     return primitiveCollectionCodecsV2;
                 case V3:
                     return primitiveCollectionCodecsV3;
+                case V4:
+                    return primitiveCollectionCodecsV4;
                 default:
                     throw version.unsupported();
             }
@@ -135,12 +138,12 @@ abstract class TypeCodec<T> {
         return codec != null ? (TypeCodec)codec : new MapCodec<Object, Object>(keys.codec(protocolVersion), values.codec(protocolVersion), protocolVersion);
     }
 
-    static UDTCodec udtOf(UserType definition) {
-        return new UDTCodec(definition);
+    static UDTCodec udtOf(UserType definition, ProtocolVersion protocolVersion) {
+        return new UDTCodec(definition, protocolVersion);
     }
 
-    static TupleCodec tupleOf(TupleType type) {
-        return new TupleCodec(type);
+    static TupleCodec tupleOf(TupleType type, ProtocolVersion protocolVersion) {
+        return new TupleCodec(type, protocolVersion);
     }
 
     /* This is ugly, but not sure how we can do much better/faster
@@ -252,6 +255,7 @@ abstract class TypeCodec<T> {
                 output.putShort((short)elements);
                 break;
             case V3:
+            case V4:
                 output.putInt(elements);
                 break;
             default:
@@ -270,6 +274,7 @@ abstract class TypeCodec<T> {
             case V2:
                 return getUnsignedShort(input);
             case V3:
+            case V4:
                 return input.getInt();
             default:
                 throw version.unsupported();
@@ -282,6 +287,7 @@ abstract class TypeCodec<T> {
             case V2:
                 return 2;
             case V3:
+            case V4:
                 return 4;
             default:
                 throw version.unsupported();
@@ -297,6 +303,7 @@ abstract class TypeCodec<T> {
                 output.put(value.duplicate());
                 break;
             case V3:
+            case V4:
                 if (value == null) {
                     output.putInt(-1);
                 } else {
@@ -324,6 +331,7 @@ abstract class TypeCodec<T> {
                 size = getUnsignedShort(input);
                 break;
             case V3:
+            case V4:
                 size = input.getInt();
                 break;
             default:
@@ -341,6 +349,7 @@ abstract class TypeCodec<T> {
                     throw new IllegalArgumentException("Native protocol version 2 supports only elements with size up to 65535 bytes - but element size is " + elemSize + " bytes");
                 return 2 + elemSize;
             case V3:
+            case V4:
                 return value == null ? 4 : 4 + value.remaining();
             default:
                 throw version.unsupported();
@@ -1193,8 +1202,12 @@ abstract class TypeCodec<T> {
 
         private final UserType definition;
 
-        public UDTCodec(UserType definition) {
+        @SuppressWarnings("unused")
+        private final ProtocolVersion protocolVersion;
+
+        public UDTCodec(UserType definition, ProtocolVersion protocolVersion) {
             this.definition = definition;
+            this.protocolVersion = protocolVersion;
         }
 
         @Override
@@ -1242,9 +1255,11 @@ abstract class TypeCodec<T> {
     static class TupleCodec extends TypeCodec<TupleValue> {
 
         private final TupleType type;
+        private final ProtocolVersion protocolVersion;
 
-        public TupleCodec(TupleType type) {
+        public TupleCodec(TupleType type, ProtocolVersion protocolVersion) {
             this.type = type;
+            this.protocolVersion = protocolVersion;
         }
 
         @Override
@@ -1270,7 +1285,7 @@ abstract class TypeCodec<T> {
                 }
 
                 DataType dt = type.getComponentTypes().get(i);
-                v.setBytesUnsafe(i, dt.serialize(dt.parse(value.substring(idx, n)), ProtocolVersion.V3));
+                v.setBytesUnsafe(i, dt.serialize(dt.parse(value.substring(idx, n)), protocolVersion));
                 idx = n;
                 i += 1;
 

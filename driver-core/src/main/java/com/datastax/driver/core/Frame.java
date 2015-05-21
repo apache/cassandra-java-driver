@@ -51,6 +51,16 @@ class Frame {
      *   +---------+---------+---------+---------+
      *   | length  |
      *   +---------+
+     *
+     * Frames for protocol version 4 are defined as:
+     *
+     * 0         8        16        24        32         40
+     * +---------+---------+---------+---------+---------+
+     * | version |  flags  |      stream       | opcode  |
+     * +---------+---------+---------+---------+---------+
+     * |                length                 |
+     * +---------+---------+---------+---------+
+     *
      */
     private Frame(Header header, ByteBuf body) {
         this.header = header;
@@ -82,6 +92,7 @@ class Frame {
             case V2:
                 return fullFrame.readByte();
             case V3:
+            case V4:
                 return fullFrame.readShort();
             default:
                 throw version.unsupported();
@@ -111,12 +122,18 @@ class Frame {
             this.opcode = opcode;
         }
 
+        /**
+         * Return the expected frame header length in bytes according to the protocol version in use.
+         * @param version the protocol version in use
+         * @return the expected frame header length in bytes
+         */
         public static int lengthFor(ProtocolVersion version) {
             switch (version) {
                 case V1:
                 case V2:
                     return 8;
                 case V3:
+                case V4:
                     return 9;
                 default:
                     throw version.unsupported();
@@ -231,6 +248,7 @@ class Frame {
                     header.writeByte(streamId);
                     break;
                 case V3:
+                case V4:
                     header.writeShort(streamId);
                     break;
                 default:
