@@ -35,8 +35,9 @@ public enum ProtocolVersion {
 
     /**
      * The most recent protocol version supported by the driver.
+     * TODO change to V4 when protocol is fully implemented.
      */
-    public static ProtocolVersion NEWEST_SUPPORTED = V4;
+    public static ProtocolVersion NEWEST_SUPPORTED = V3;
 
     private final VersionNumber minCassandraVersion;
     private final int asInt;
