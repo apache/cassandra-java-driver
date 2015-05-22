@@ -115,7 +115,7 @@ If you want to use a retry policy, add a "retry" argument to the jdbc url as fol
 
 Or for a Fallthrough Retry Policy::
 
-    jdbc:cassandra://host1--host2--host3:9042/keyspace1?loadbalancing=FallthroughRetryPolicy
+    jdbc:cassandra://host1--host2--host3:9042/keyspace1?retry=FallthroughRetryPolicy
 
 
 Specifying reconnection policies
