@@ -16,6 +16,7 @@
 package com.datastax.driver.mapping;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.google.common.base.Objects;
@@ -29,7 +30,8 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 class QueryType {
 
-    private enum Kind { SAVE, GET, DEL, SLICE, REVERSED_SLICE };
+    private enum Kind {SAVE, GET, DEL, SLICE, REVERSED_SLICE}
+
     private final Kind kind;
 
     // For slices
@@ -58,100 +60,120 @@ class QueryType {
         return new QueryType(reversed ? Kind.REVERSED_SLICE : Kind.SLICE, startBoundSize, startInclusive, endBoundSize, endInclusive);
     }
 
-    String makePreparedQueryString(TableMetadata table, EntityMapper<?> mapper) {
+    String makePreparedQueryString(TableMetadata table, EntityMapper<?> mapper, Collection<Mapper.Option> options) {
         switch (kind) {
-            case SAVE:
-                {
-                    Insert insert = table == null
-                                  ? insertInto(mapper.getKeyspace(), mapper.getTable())
-                                  : insertInto(table);
-                    for (ColumnMapper<?> cm : mapper.allColumns())
-                        if (cm.kind != ColumnMapper.Kind.COMPUTED)
-                            insert.value(cm.getColumnName(), bindMarker());
-                    return insert.toString();
+            case SAVE: {
+                Insert insert = table == null
+                    ? insertInto(mapper.getKeyspace(), mapper.getTable())
+                    : insertInto(table);
+                for (ColumnMapper<?> cm : mapper.allColumns())
+                    if (cm.kind != ColumnMapper.Kind.COMPUTED)
+                        insert.value(cm.getColumnName(), bindMarker());
+                
+                Insert.Options usings = insert.using();
+                for (Mapper.Option opt : options) {
+                    if (opt.isValidFor(QueryType.SAVE)) {
+                        if (opt.isIncludedInQuery())
+                            opt.appendTo(usings);
+                    } else
+                        throw new IllegalArgumentException(String.format("Cannot use %s in this type of query : %s", opt.getClass().getName(), QueryType.SAVE));
                 }
-            case GET:
-                {
-                    Select.Selection selection = select();
-                    for (ColumnMapper cm : mapper.allColumns()) {
-                        Select.SelectionOrAlias column = (cm.kind == ColumnMapper.Kind.COMPUTED)
-                            ? ((Select.SelectionOrAlias)selection).raw(cm.getColumnName())
-                            : selection.column(cm.getColumnName());
+                return insert.toString();
+            }
+            case GET: {
+                Select.Selection selection = select();
+                for (ColumnMapper cm : mapper.allColumns()) {
+                    Select.SelectionOrAlias column = (cm.kind == ColumnMapper.Kind.COMPUTED)
+                        ? ((Select.SelectionOrAlias)selection).raw(cm.getColumnName())
+                        : selection.column(cm.getColumnName());
 
-                        if (cm.getAlias() == null) {
-                            selection = column;
-                        } else {
-                            selection = column.as(cm.getAlias());
-                        }
-                    }
-                    Select select;
-                    if (table == null) {
-                        select = selection.from(mapper.getKeyspace(), mapper.getTable());
+                    if (cm.getAlias() == null) {
+                        selection = column;
                     } else {
-                        select = selection.from(table);
+                        selection = column.as(cm.getAlias());
                     }
-                    Select.Where where = select.where();
-                    for (int i = 0; i < mapper.primaryKeySize(); i++)
-                        where.and(eq(mapper.getPrimaryKeyColumn(i).getColumnName(), bindMarker()));
-                    return select.toString();
                 }
-            case DEL:
-                {
-                    Delete delete = table == null
-                                  ? delete().all().from(mapper.getKeyspace(), mapper.getTable())
-                                  : delete().all().from(table);
-                    Delete.Where where = delete.where();
-                    for (int i = 0; i < mapper.primaryKeySize(); i++)
-                        where.and(eq(mapper.getPrimaryKeyColumn(i).getColumnName(), bindMarker()));
-                    return delete.toString();
+                Select select;
+                if (table == null) {
+                    select = selection.from(mapper.getKeyspace(), mapper.getTable());
+                } else {
+                    select = selection.from(table);
                 }
+                Select.Where where = select.where();
+                for (int i = 0; i < mapper.primaryKeySize(); i++)
+                    where.and(eq(mapper.getPrimaryKeyColumn(i).getColumnName(), bindMarker()));
+            
+                for (Mapper.Option opt : options) {
+                    if (!opt.isValidFor(QueryType.GET)) {
+                        throw new IllegalArgumentException(String.format("Cannot use %s in this type of query : %s", opt.getClass().getName(), QueryType.DEL));
+                    }
+                }
+                return select.toString();
+            }
+            case DEL: {
+                Delete delete = table == null
+                    ? delete().all().from(mapper.getKeyspace(), mapper.getTable())
+                    : delete().all().from(table);
+                Delete.Where where = delete.where();
+                for (int i = 0; i < mapper.primaryKeySize(); i++)
+                    where.and(eq(mapper.getPrimaryKeyColumn(i).getColumnName(), bindMarker()));
+                Delete.Options usings = delete.using();
+                for (Mapper.Option opt : options) {
+                    if (opt.isValidFor(QueryType.DEL)) {
+                        if (opt.isIncludedInQuery())
+                            opt.appendTo(usings);
+                    } else {
+                        throw new IllegalArgumentException(String.format("Cannot use %s in this type of query : %s", opt.getClass().getName(), QueryType.DEL));
+                    }
+                }
+                return delete.toString();
+            }
             case SLICE:
-            case REVERSED_SLICE:
-                {
-                    Select select = table == null
-                                  ? select().all().from(mapper.getKeyspace(), mapper.getTable())
-                                  : select().all().from(table);
-                    Select.Where where = select.where();
-                    for (int i = 0; i < mapper.partitionKeys.size(); i++)
-                        where.and(eq(mapper.partitionKeys.get(i).getColumnName(), bindMarker()));
+            case REVERSED_SLICE: {
+                Select select = table == null
+                    ? select().all().from(mapper.getKeyspace(), mapper.getTable())
+                    : select().all().from(table);
+                Select.Where where = select.where();
+                for (int i = 0; i < mapper.partitionKeys.size(); i++)
+                    where.and(eq(mapper.partitionKeys.get(i).getColumnName(), bindMarker()));
 
-                    if (startBoundSize > 0) {
-                        if (startBoundSize == 1) {
-                            String name = mapper.clusteringColumns.get(0).getColumnName();
-                            where.and(startInclusive ? gte(name, bindMarker()) : gt(name, bindMarker()));
-                        } else {
-                            List<String> names = new ArrayList<String>(startBoundSize);
-                            List<Object> values = new ArrayList<Object>(startBoundSize);
-                            for (int i = 0; i < startBoundSize; i++) {
-                                names.add(mapper.clusteringColumns.get(i).getColumnName());
-                                values.add(bindMarker());
-                            }
-                            where.and(startInclusive ? gte(names, values) : gt(names, values));
+                if (startBoundSize > 0) {
+                    if (startBoundSize == 1) {
+                        String name = mapper.clusteringColumns.get(0).getColumnName();
+                        where.and(startInclusive ? gte(name, bindMarker()) : gt(name, bindMarker()));
+                    } else {
+                        List<String> names = new ArrayList<String>(startBoundSize);
+                        List<Object> values = new ArrayList<Object>(startBoundSize);
+                        for (int i = 0; i < startBoundSize; i++) {
+                            names.add(mapper.clusteringColumns.get(i).getColumnName());
+                            values.add(bindMarker());
                         }
+                        where.and(startInclusive ? gte(names, values) : gt(names, values));
                     }
-
-                    if (endBoundSize > 0) {
-                        if (endBoundSize == 1) {
-                            String name = mapper.clusteringColumns.get(0).getColumnName();
-                            where.and(endInclusive ? gte(name, bindMarker()) : gt(name, bindMarker()));
-                        } else {
-                            List<String> names = new ArrayList<String>(endBoundSize);
-                            List<Object> values = new ArrayList<Object>(endBoundSize);
-                            for (int i = 0; i < endBoundSize; i++) {
-                                names.add(mapper.clusteringColumns.get(i).getColumnName());
-                                values.add(bindMarker());
-                            }
-                            where.and(endInclusive ? lte(names, values) : lt(names, values));
-                        }
-                    }
-
-                    select = select.limit(bindMarker());
-
-                    if (kind == Kind.REVERSED_SLICE)
-                        select = select.orderBy(desc(mapper.clusteringColumns.get(0).getColumnName()));
-
-                    return select.toString();
                 }
+
+                if (endBoundSize > 0) {
+                    if (endBoundSize == 1) {
+                        String name = mapper.clusteringColumns.get(0).getColumnName();
+                        where.and(endInclusive ? gte(name, bindMarker()) : gt(name, bindMarker()));
+                    } else {
+                        List<String> names = new ArrayList<String>(endBoundSize);
+                        List<Object> values = new ArrayList<Object>(endBoundSize);
+                        for (int i = 0; i < endBoundSize; i++) {
+                            names.add(mapper.clusteringColumns.get(i).getColumnName());
+                            values.add(bindMarker());
+                        }
+                        where.and(endInclusive ? lte(names, values) : lt(names, values));
+                    }
+                }
+
+                select = select.limit(bindMarker());
+
+                if (kind == Kind.REVERSED_SLICE)
+                    select = select.orderBy(desc(mapper.clusteringColumns.get(0).getColumnName()));
+
+                return select.toString();
+            }
         }
         throw new AssertionError();
     }
@@ -175,4 +197,5 @@ class QueryType {
     public int hashCode() {
         return Objects.hashCode(kind, startBoundSize, startInclusive, endBoundSize, endInclusive);
     }
+
 }
