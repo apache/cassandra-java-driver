@@ -29,7 +29,7 @@ import com.datastax.driver.mapping.EnumType;
  * The optional {@link EnumType} value defined how the enumeration must be
  * persisted.
  */
-@Target(ElementType.FIELD)
+@Target(value = {ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Enumerated {
     /**
