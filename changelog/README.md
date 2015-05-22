@@ -19,6 +19,8 @@
 - [improvement] Use same pool implementation for protocol v2 and v3
   (JAVA-738).
 - [improvement] Support CONTAINS / CONTAINS KEY in QueryBuilder (JAVA-677)
+- [improvement] Add USING options in mapper for delete and save
+  operations (JAVA-477/JAVA-540)
 
 Merged from 2.0 branch:
 
