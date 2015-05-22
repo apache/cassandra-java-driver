@@ -23,6 +23,7 @@ import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static com.datastax.driver.core.ConsistencyLevel.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -33,7 +34,6 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 
-import static com.datastax.driver.core.ConsistencyLevel.TWO;
 import static com.datastax.driver.core.ProtocolVersion.V1;
 import static com.datastax.driver.mapping.Mapper.Option;
 
@@ -55,9 +55,9 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
-    void should_use_save_options() {
+    void should_use_save_options() throws Exception {
         Long tsValue = futureTimestamp();
-        mapper.saveAsync(new User(42, "helloworld"), Option.timestamp(tsValue), Option.tracing(true));
+        mapper.save(new User(42, "helloworld"), Option.timestamp(tsValue), Option.tracing(true));
         assertThat(mapper.get(42).getV()).isEqualTo("helloworld");
         Long tsReturned = session.execute("SELECT writetime(v) FROM user WHERE key=" + 42).one().getLong(0);
         assertThat(tsReturned).isEqualTo(tsValue);
@@ -69,21 +69,24 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
         User todelete = new User(45, "todelete");
         mapper.save(todelete);
         Option opt = Option.timestamp(35);
-        BoundStatement bs = (BoundStatement)mapper.deleteQuery(45, opt, Option.consistencyLevel(ConsistencyLevel.ALL));
+        BoundStatement bs = (BoundStatement)mapper.deleteQuery(45, opt, Option.consistencyLevel(QUORUM));
         assertThat(bs.preparedStatement().getQueryString()).contains("USING TIMESTAMP");
+        assertThat(bs.getConsistencyLevel()).isEqualTo(QUORUM);
     }
 
     @Test(groups = "short", expectedExceptions = {IllegalArgumentException.class})
     @CassandraVersion(major = 2.0)
     void should_use_get_options() {
-        User todelete = new User(45, "toget");
-        mapper.save(todelete);
+        User user = new User(45, "toget");
+        mapper.save(user);
 
-        Option opt = Option.tracing(true);
-        BoundStatement bs = (BoundStatement)mapper.getQuery(45, opt);
+        BoundStatement bs = (BoundStatement)mapper.getQuery(45, Option.tracing(true), Option.consistencyLevel(ALL));
         assertThat(bs.isTracing()).isTrue();
+        assertThat(bs.getConsistencyLevel()).isEqualTo(ALL);
 
-        User us = mapper.mapAliased(session.execute(bs)).one();
+        ResultSet rs = session.execute(bs);
+        assertThat(rs.getExecutionInfo().getQueryTrace()).isNotNull();
+        User us = mapper.mapAliased(rs).one();
         assertThat(us.getV()).isEqualTo("toget");
 
         mapper.getQuery(45, Option.timestamp(1337));
@@ -131,6 +134,27 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
         mapper.resetDefaultGetOptions();
         bs = (BoundStatement)mapper.getQuery(46);
         assertThat(bs.isTracing()).isFalse();
+    }
+
+    @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
+    void should_prioritize_option_over_model_consistency() {
+        // Generate Write Query and ensure User model writeConsistency is used.
+        User user = new User(1859, "Steve");
+        Statement saveDefault = mapper.saveQuery(user);
+        assertThat(saveDefault.getConsistencyLevel()).isEqualTo(ONE);
+
+        // Generate Write Query and ensure provided Option for consistencyLevel is used.
+        Statement saveProvidedCL = mapper.saveQuery(user, Option.consistencyLevel(QUORUM));
+        assertThat(saveProvidedCL.getConsistencyLevel()).isEqualTo(QUORUM);
+
+        // Generate Read Query and ensure User model readConsistency is used.
+        Statement readDefault = mapper.getQuery(1859);
+        assertThat(readDefault.getConsistencyLevel()).isEqualTo(LOCAL_ONE);
+
+        // Generate Ready Query and ensure provided Option for consistencyLevel is used.
+        Statement readProvidedCL = mapper.getQuery(1859, Option.consistencyLevel(LOCAL_QUORUM));
+        assertThat(readProvidedCL.getConsistencyLevel()).isEqualTo(LOCAL_QUORUM);
     }
 
     @Test(groups = "short")
@@ -333,14 +357,14 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     private static void assertFirstNodeUnavailable(ExecutionException e) {
         Throwable cause = e.getCause();
         assertThat(cause).isInstanceOf(NoHostAvailableException.class);
-        assertFirstNodeUnavailable((NoHostAvailableException)cause);
+        assertFirstNodeUnavailable((NoHostAvailableException) cause);
     }
 
     private static long futureTimestamp() {
         return (System.currentTimeMillis() + 1000) * 1000;
     }
 
-    @Table(name = "user", writeConsistency = "ONE")
+    @Table(name = "user", readConsistency = "LOCAL_ONE", writeConsistency = "ONE")
     public static class User {
         @PartitionKey
         private int key;

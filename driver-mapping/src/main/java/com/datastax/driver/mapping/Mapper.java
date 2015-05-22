@@ -32,8 +32,11 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.datastax.driver.mapping.Mapper.Option.SaveNullFields;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Computed;
+
+import static com.datastax.driver.mapping.Mapper.Option.Type.SAVE_NULL_FIELDS;
 
 /**
  * An object handling the mapping of a particular class.
@@ -100,16 +103,16 @@ public class Mapper<T> {
         return manager.getSession();
     }
 
-    PreparedStatement getPreparedQuery(QueryType type, EnumMap<Option.Type, Option> options) {
+    PreparedStatement getPreparedQuery(QueryType type, Set<ColumnMapper<?>> columns, EnumMap<Option.Type, Option> options) {
 
-        MapperQueryKey pqk = new MapperQueryKey(type, options);
+        MapperQueryKey pqk = new MapperQueryKey(type, columns, options);
 
         PreparedStatement stmt = preparedQueries.get(pqk);
         if (stmt == null) {
             synchronized (preparedQueries) {
                 stmt = preparedQueries.get(pqk);
                 if (stmt == null) {
-                    String queryString = type.makePreparedQueryString(tableMetadata, mapper, manager, options.values());
+                    String queryString = type.makePreparedQueryString(tableMetadata, mapper, manager, columns, options.values());
                     logger.debug("Preparing query {}", queryString);
                     stmt = session().prepare(queryString);
                     Map<MapperQueryKey, PreparedStatement> newQueries = new HashMap<MapperQueryKey, PreparedStatement>(preparedQueries);
@@ -119,6 +122,10 @@ public class Mapper<T> {
             }
         }
         return stmt;
+    }
+
+    PreparedStatement getPreparedQuery(QueryType type, EnumMap<Option.Type, Option> options) {
+        return getPreparedQuery(type, Collections.<ColumnMapper<?>>emptySet(), options);
     }
 
     /**
@@ -180,13 +187,22 @@ public class Mapper<T> {
     }
 
     private Statement saveQuery(T entity, EnumMap<Option.Type, Option> options) {
-        BoundStatement bs = getPreparedQuery(QueryType.SAVE, options).bind();
-        int i = 0;
+        Map<ColumnMapper<?>, Object> values = new HashMap<ColumnMapper<?>, Object>();
+        boolean saveNullFields = shouldSaveNullFields(options);
+
         for (ColumnMapper<T> cm : mapper.allColumns()) {
-            if (cm.kind != ColumnMapper.Kind.COMPUTED) {
-                Object value = cm.getValue(entity);
-                bs.setBytesUnsafe(i++, value == null ? null : cm.getDataType().serialize(value, protocolVersion));
+            Object value = cm.getValue(entity);
+            if (cm.kind != ColumnMapper.Kind.COMPUTED && (saveNullFields || value != null)) {
+                values.put(cm, value);
             }
+        }
+
+        BoundStatement bs = getPreparedQuery(QueryType.SAVE, values.keySet(), options).bind();
+        int i = 0;
+        for (Map.Entry<ColumnMapper<?>, Object> entry : values.entrySet()) {
+            DataType type = entry.getKey().getDataType();
+            Object value = entry.getValue();
+            bs.setBytesUnsafe(i++, value == null ? null : type.serialize(value, protocolVersion));
         }
 
         if (mapper.writeConsistency != null)
@@ -198,6 +214,11 @@ public class Mapper<T> {
         }
 
         return bs;
+    }
+
+    private static boolean shouldSaveNullFields(EnumMap<Option.Type, Option> options) {
+        SaveNullFields option = (SaveNullFields)options.get(SAVE_NULL_FIELDS);
+        return option == null || option.saveNullFields;
     }
 
     /**
@@ -307,8 +328,7 @@ public class Mapper<T> {
             if (value == null) {
                 throw new IllegalArgumentException(String.format("Invalid null value for PRIMARY KEY column %s (argument %d)", column.getColumnName(), i));
             }
-            bs.setBytesUnsafe(i, column.getDataType().serialize(value, protocolVersion));
-            i++;
+            bs.setBytesUnsafe(i++, column.getDataType().serialize(value, protocolVersion));
         }
 
         if (mapper.readConsistency != null)
@@ -709,7 +729,7 @@ public class Mapper<T> {
      */
     public static abstract class Option {
 
-        enum Type {TTL, TIMESTAMP, CL, TRACING}
+        enum Type {TTL, TIMESTAMP, CL, TRACING, SAVE_NULL_FIELDS}
 
         final Type type;
 
@@ -760,13 +780,31 @@ public class Mapper<T> {
         }
 
         /**
-         * Creates a new Option object to enable query tracing for a mapper operation.
+         * Creates a new Option object to enable query tracing for a mapper operation. This
+         * is valid for save, delete and get operations.
          *
          * @param enabled whether to enable tracing.
          * @return the option.
          */
         public static Option tracing(boolean enabled) {
             return new Tracing(enabled);
+        }
+
+        /**
+         * Creates a new Option object to specify whether null entity fields should be included in
+         * insert queries. This option is valid only for save operations.
+         *
+         * If this option is not specified, it defaults to {@code true} (null fields are saved).
+         *
+         * @param enabled whether to include null fields in queries.
+         * @return the option.
+         */
+        public static Option saveNullFields(boolean enabled){
+            return new SaveNullFields(enabled);
+        }
+
+        public Type getType(){
+            return this.type;
         }
 
         abstract void appendTo(Insert.Options usings);
@@ -908,16 +946,55 @@ public class Mapper<T> {
                 return false;
             }
         }
+
+        static class SaveNullFields extends Option {
+
+            private boolean saveNullFields;
+
+            SaveNullFields(boolean saveNullFields) {
+                super(SAVE_NULL_FIELDS);
+                this.saveNullFields = saveNullFields;
+            }
+
+            @Override
+            void appendTo(Insert.Options usings) {
+                throw new UnsupportedOperationException("shouldn't be called");
+            }
+
+            @Override
+            void appendTo(Delete.Options usings) {
+                throw new UnsupportedOperationException("shouldn't be called");
+            }
+
+            @Override
+            void addToPreparedStatement(BoundStatement bs, int i) {
+                // nothing to do
+            }
+
+            @Override
+            void checkValidFor(QueryType qt, MappingManager manager) {
+                checkArgument(qt == QueryType.SAVE, "SaveNullFields option is only allowed in save queries");
+            }
+
+            @Override
+            boolean isIncludedInQuery() {
+                return false;
+            }
+        }
+
     }
 
     private static class MapperQueryKey {
         private final QueryType queryType;
         private final EnumSet<Option.Type> optionTypes;
+        private final Set<ColumnMapper<?>> columns;
 
-        MapperQueryKey(QueryType queryType, EnumMap<Option.Type, Option> options) {
+        MapperQueryKey(QueryType queryType, Set<ColumnMapper<?>> columnMappers, EnumMap<Option.Type, Option> options) {
             Preconditions.checkNotNull(queryType);
             Preconditions.checkNotNull(options);
+            Preconditions.checkNotNull(columnMappers);
             this.queryType = queryType;
+            this.columns = columnMappers;
             this.optionTypes = EnumSet.noneOf(Option.Type.class);
             for (Option opt : options.values()) {
                 if (opt.isIncludedInQuery())
@@ -932,13 +1009,14 @@ public class Mapper<T> {
             if (other instanceof MapperQueryKey) {
                 MapperQueryKey that = (MapperQueryKey)other;
                 return this.queryType.equals(that.queryType)
-                    && this.optionTypes.equals(that.optionTypes);
+                    && this.optionTypes.equals(that.optionTypes)
+                    && this.columns.equals(that.columns);
             }
             return false;
         }
 
         public int hashCode() {
-            return Objects.hashCode(queryType, optionTypes);
+            return Objects.hashCode(queryType, optionTypes, columns);
         }
     }
 }
