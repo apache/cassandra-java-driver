@@ -176,6 +176,8 @@ public abstract class DataType {
     }
     private static final Set<DataType> primitiveTypeSet = ImmutableSet.copyOf(primitiveTypeMap.values());
 
+    static final DataType LIST_OF_TEXT = DataType.list(DataType.text());
+
     protected DataType(DataType.Name name) {
         this.name = name;
     }

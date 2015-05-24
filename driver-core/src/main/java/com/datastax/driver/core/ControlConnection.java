@@ -288,7 +288,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    public void refreshSchema(SchemaElement targetType, String targetKeyspace, String targetName, String signature) throws InterruptedException {
+    public void refreshSchema(SchemaElement targetType, String targetKeyspace, String targetName, List<String> signature) throws InterruptedException {
         logger.debug("[Control connection] Refreshing schema for {}{}",
             targetType == null ? "everything" : targetKeyspace,
             (targetType == KEYSPACE) ? "" : "." + targetName + " (" + targetType + ")");
@@ -312,7 +312,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    static void refreshSchema(Connection connection, SchemaElement targetType, String targetKeyspace, String targetName, String signature, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    static void refreshSchema(Connection connection, SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         Host host = cluster.metadata.getHost(connection.address);
         // Neither host, nor it's version should be null. But instead of dying if there is a race or something, we can kind of try to infer
         // a Cassandra version from the protocol version (this is not full proof, we can have the protocol 1 against C* 2.0+, but it's worth
@@ -335,9 +335,9 @@ class ControlConnection implements Host.StateListener {
             else if (targetType == TYPE)
                 whereClause += " AND type_name = '" + targetName + '\'';
             else if (targetType == FUNCTION)
-                whereClause += " AND function_name = '" + targetName + "' AND signature = '" + signature + '\'';
+                whereClause += " AND function_name = '" + targetName + "' AND signature = " + DataType.LIST_OF_TEXT.format(targetSignature);
             else if (targetType == AGGREGATE)
-                whereClause += " AND aggregate_name = '" + targetName + "' AND signature = '" + signature + '\'';
+                whereClause += " AND aggregate_name = '" + targetName + "' AND signature = " + DataType.LIST_OF_TEXT.format(targetSignature);
         }
 
         boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);

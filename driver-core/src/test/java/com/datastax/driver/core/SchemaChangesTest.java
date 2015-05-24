@@ -42,7 +42,9 @@ public class SchemaChangesTest {
 
     @BeforeClass(groups = "short")
     public void setup() {
-        ccm = CCMBridge.create("schemaChangesTest", 1);
+        ccm = CCMBridge.create("schemaChangesTest");
+        ccm.updateConfig("enable_user_defined_functions", "true");
+        ccm.bootstrapNode(1);
 
         cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
         cluster2 = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
@@ -131,6 +133,88 @@ public class SchemaChangesTest {
                 .isNull();
     }
 
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    @CassandraVersion(major = 2.2)
+    public void should_notify_of_function_creation(String keyspace) {
+        session.execute(String.format("CREATE FUNCTION %s.id(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return i;'", keyspace));
+
+        for (Metadata m : metadatas)
+            assertThat(m.getKeyspace(keyspace).getFunction("id", DataType.cint()))
+                .isNotNull();
+    }
+
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    @CassandraVersion(major = 2.2)
+    public void should_notify_of_function_update(String keyspace) {
+        session.execute(String.format("CREATE FUNCTION %s.id(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java "
+            + "AS 'return i;'", keyspace));
+
+        for (Metadata m : metadatas)
+            assertThat(m.getKeyspace(keyspace).getFunction("id", DataType.cint()).getBody())
+                .isEqualTo("return i;");
+
+        session.execute(String.format("CREATE OR REPLACE FUNCTION %s.id(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java "
+            + "AS 'return i + 1;'", keyspace));
+
+        for (Metadata m : metadatas)
+            assertThat(m.getKeyspace(keyspace).getFunction("id", DataType.cint()).getBody())
+                .isEqualTo("return i + 1;");
+    }
+
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    @CassandraVersion(major = 2.2)
+    public void should_notify_of_function_drop(String keyspace) {
+        session.execute(String.format("CREATE FUNCTION %s.id(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return i;'", keyspace));
+        session.execute(String.format("DROP FUNCTION %s.id", keyspace));
+
+        for (Metadata m : metadatas)
+            assertThat(m.getKeyspace(keyspace).getFunction("id", DataType.cint()))
+                .isNull();
+    }
+
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    @CassandraVersion(major = 2.2)
+    public void should_notify_of_aggregate_creation(String keyspace) {
+        session.execute(String.format("CREATE FUNCTION %s.plus(s int, v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java"
+            + " AS 'return s+v;'", keyspace));
+        session.execute(String.format("CREATE AGGREGATE %s.sum(int) SFUNC plus STYPE int INITCOND 0;", keyspace));
+
+        for (Metadata m : metadatas)
+            assertThat(m.getKeyspace(keyspace).getAggregate("sum", DataType.cint()))
+                .isNotNull();
+    }
+
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    @CassandraVersion(major = 2.2)
+    public void should_notify_of_aggregate_update(String keyspace) {
+        session.execute(String.format("CREATE FUNCTION %s.plus(s int, v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java"
+            + " AS 'return s+v;'", keyspace));
+        session.execute(String.format("CREATE AGGREGATE %s.sum(int) SFUNC plus STYPE int INITCOND 0", keyspace));
+
+        for (Metadata m : metadatas)
+            assertThat(m.getKeyspace(keyspace).getAggregate("sum", DataType.cint()).getInitCond())
+                .isEqualTo(0);
+
+        session.execute(String.format("CREATE OR REPLACE AGGREGATE %s.sum(int) SFUNC plus STYPE int INITCOND 1", keyspace));
+
+        for (Metadata m : metadatas)
+            assertThat(m.getKeyspace(keyspace).getAggregate("sum", DataType.cint()).getInitCond())
+                .isEqualTo(1);
+    }
+
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    @CassandraVersion(major = 2.2)
+    public void should_notify_of_aggregate_drop(String keyspace) {
+        session.execute(String.format("CREATE FUNCTION %s.plus(s int, v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java"
+            + " AS 'return s+v;'", keyspace));
+        session.execute(String.format("CREATE AGGREGATE %s.sum(int) SFUNC plus STYPE int INITCOND 0", keyspace));
+        session.execute(String.format("DROP AGGREGATE %s.sum", keyspace));
+
+        for (Metadata m : metadatas)
+            assertThat(m.getKeyspace(keyspace).getAggregate("sum", DataType.cint()))
+                .isNull();
+    }
+
     @DataProvider(name = "newKeyspaceName")
     public static Object[][] newKeyspaceName() {
         return new Object[][]{ { "lowercase2" }, { "\"CaseSensitive2\"" } };
@@ -182,6 +266,12 @@ public class SchemaChangesTest {
             session.executeAsync("DROP TABLE \"CaseSensitive\".table1"),
             session.executeAsync("DROP TYPE lowercase.type1"),
             session.executeAsync("DROP TYPE \"CaseSensitive\".type1"),
+            session.executeAsync("DROP FUNCTION lowercase.id"),
+            session.executeAsync("DROP FUNCTION \"CaseSensitive\".id"),
+            session.executeAsync("DROP FUNCTION lowercase.plus"),
+            session.executeAsync("DROP FUNCTION \"CaseSensitive\".plus"),
+            session.executeAsync("DROP AGGREGATE lowercase.sum"),
+            session.executeAsync("DROP AGGREGATE \"CaseSensitive\".sum"),
             session.executeAsync("DROP KEYSPACE lowercase2"),
             session.executeAsync("DROP KEYSPACE \"CaseSensitive2\"")
         ));
