@@ -46,6 +46,8 @@ abstract class TypeCodec<T> {
         primitiveCodecs.put(DataType.Name.DOUBLE,    DoubleCodec.instance);
         primitiveCodecs.put(DataType.Name.FLOAT,     FloatCodec.instance);
         primitiveCodecs.put(DataType.Name.INET,      InetCodec.instance);
+        primitiveCodecs.put(DataType.Name.TINYINT,   TinyIntCodec.instance);
+        primitiveCodecs.put(DataType.Name.SMALLINT,  SmallIntCodec.instance);
         primitiveCodecs.put(DataType.Name.INT,       IntCodec.instance);
         primitiveCodecs.put(DataType.Name.TEXT,      StringCodec.utf8Instance);
         primitiveCodecs.put(DataType.Name.TIMESTAMP, DateCodec.instance);
@@ -160,6 +162,10 @@ abstract class TypeCodec<T> {
             return DataType.blob();
 
         if (value instanceof Number) {
+            if (value instanceof Byte)
+                return DataType.tinyint();
+            if (value instanceof Short)
+                return DataType.smallint();
             if (value instanceof Integer)
                 return DataType.cint();
             if (value instanceof Long)
@@ -698,6 +704,94 @@ abstract class TypeCodec<T> {
             } catch (UnknownHostException e) {
                 throw new InvalidTypeException("Invalid bytes for inet value, got " + bytes.remaining() + " bytes");
             }
+        }
+    }
+
+    static class TinyIntCodec extends TypeCodec<Byte> {
+
+        public static final TinyIntCodec instance = new TinyIntCodec();
+
+        private TinyIntCodec() {}
+
+        @Override
+        public Byte parse(String value) {
+            try {
+                return Byte.parseByte(value);
+            } catch (NumberFormatException e) {
+                throw new InvalidTypeException(String.format("Cannot parse 8-bits int value from \"%s\"", value));
+            }
+        }
+
+        @Override
+        public String format(Byte value) {
+            return Byte.toString(value);
+        }
+
+        @Override
+        public ByteBuffer serialize(Byte value) {
+            return serializeNoBoxing(value);
+        }
+
+        public ByteBuffer serializeNoBoxing(byte value) {
+            ByteBuffer bb = ByteBuffer.allocate(1);
+            bb.put(0, value);
+            return bb;
+        }
+
+        @Override
+        public Byte deserialize(ByteBuffer bytes) {
+            return deserializeNoBoxing(bytes);
+        }
+
+        public byte deserializeNoBoxing(ByteBuffer bytes) {
+            if (bytes.remaining() != 1)
+                throw new InvalidTypeException("Invalid 8-bits integer value, expecting 1 byte but got " + bytes.remaining());
+
+            return bytes.get(bytes.position());
+        }
+    }
+
+    static class SmallIntCodec extends TypeCodec<Short> {
+
+        public static final SmallIntCodec instance = new SmallIntCodec();
+
+        private SmallIntCodec() {}
+
+        @Override
+        public Short parse(String value) {
+            try {
+                return Short.parseShort(value);
+            } catch (NumberFormatException e) {
+                throw new InvalidTypeException(String.format("Cannot parse 16-bits int value from \"%s\"", value));
+            }
+        }
+
+        @Override
+        public String format(Short value) {
+            return Short.toString(value);
+        }
+
+        @Override
+        public ByteBuffer serialize(Short value) {
+            return serializeNoBoxing(value);
+        }
+
+        public ByteBuffer serializeNoBoxing(short value) {
+            ByteBuffer bb = ByteBuffer.allocate(2);
+            bb.putShort(0, value);
+            return bb;
+        }
+
+        @Override
+        public Short deserialize(ByteBuffer bytes) {
+            return deserializeNoBoxing(bytes);
+        }
+
+        public Short deserializeNoBoxing(ByteBuffer bytes) {
+            if (bytes.remaining() != 2)
+                throw new InvalidTypeException("Invalid 16-bits integer value, expecting 2 bytes but got " + bytes.remaining());
+
+            return bytes.getShort(bytes.position());
         }
     }
 

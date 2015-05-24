@@ -53,6 +53,30 @@ public interface GettableByNameData {
     public boolean getBool(String name);
 
     /**
+     * Returns the value for {@code name} as a byte.
+     *
+     * @param name the name to retrieve.
+     * @return the value for {@code name} as a byte. If the value is NULL,
+     * {@code 0} is returned.
+     *
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws InvalidTypeException if value {@code name} is not of type TINYINT.
+     */
+    public byte getByte(String name);
+
+    /**
+     * Returns the value for {@code name} as a short.
+     *
+     * @param name the name to retrieve.
+     * @return the value for {@code name} as a short. If the value is NULL,
+     * {@code 0} is returned.
+     *
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws InvalidTypeException if value {@code name} is not of type SMALLINT.
+     */
+    public short getShort(String name);
+
+    /**
      * Returns the value for {@code name} as an integer.
      *
      * @param name the name to retrieve.

@@ -62,6 +62,10 @@ public class DataTypeTest {
                 return new String[]{ "2.39", "-12.0" };
             case INET:
                 return new String[]{ "'128.2.12.3'" };
+            case TINYINT:
+                return new String[]{ "-4", "44" };
+            case SMALLINT:
+                return new String[]{ "-3", "43" };
             case INT:
                 return new String[]{ "-2", "42" };
             case TIMEUUID:
@@ -101,6 +105,10 @@ public class DataTypeTest {
                 } catch (java.net.UnknownHostException e) {
                     throw new RuntimeException();
                 }
+            case TINYINT:
+                return new Object[]{ (byte)-4, (byte)44 };
+            case SMALLINT:
+                return new Object[]{ (short)-3, (short)43 };
             case INT:
                 return new Object[]{ -2, 42 };
             case TIMEUUID:

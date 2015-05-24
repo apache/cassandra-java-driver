@@ -326,6 +326,68 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     }
 
     /**
+     * Set the {@code i}th value to the provided byte.
+     *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
+     * @return this BoundStatement.
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
+     * @throws InvalidTypeException if column {@code i} is not of type TINYINT.
+     */
+    public BoundStatement setByte(int i, byte v) {
+        return wrapper.setByte(i, v);
+    }
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided byte.
+     *
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, all of them are set.
+     * @param v the value to set.
+     * @return this BoundStatement.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a prepared
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type TINYINT.
+     */
+    public BoundStatement setByte(String name, byte v) {
+        return wrapper.setByte(name, v);
+    }
+
+    /**
+     * Set the {@code i}th value to the provided short.
+     *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
+     * @return this BoundStatement.
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
+     * @throws InvalidTypeException if column {@code i} is not of type SMALLINT.
+     */
+    public BoundStatement setShort(int i, short v) {
+        return wrapper.setShort(i, v);
+    }
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided short.
+     *
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, all of them are set.
+     * @param v the value to set.
+     * @return this BoundStatement.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a prepared
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type SMALLINT.
+     */
+    public BoundStatement setShort(String name, short v) {
+        return wrapper.setShort(name, v);
+    }
+
+    /**
      * Set the {@code i}th value to the provided integer.
      *
      * @param i the index of the variable to set.
@@ -1063,6 +1125,34 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      */
     public boolean getBool(String name) {
         return wrapper.getBool(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public byte getByte(int i) {
+        return wrapper.getByte(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public byte getByte(String name) {
+        return wrapper.getByte(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public short getShort(int i) {
+        return wrapper.getShort(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public short getShort(String name) {
+        return wrapper.getShort(name);
     }
 
     /**

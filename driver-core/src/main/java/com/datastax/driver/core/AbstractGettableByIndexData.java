@@ -117,6 +117,34 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      * {@inheritDoc}
      */
     @Override
+    public byte getByte(int i) {
+        checkType(i, DataType.Name.TINYINT);
+
+        ByteBuffer value = getValue(i);
+        if (value == null || value.remaining() == 0)
+            return 0;
+
+        return TypeCodec.TinyIntCodec.instance.deserializeNoBoxing(value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public short getShort(int i) {
+        checkType(i, DataType.Name.SMALLINT);
+
+        ByteBuffer value = getValue(i);
+        if (value == null || value.remaining() == 0)
+            return 0;
+
+        return TypeCodec.SmallIntCodec.instance.deserializeNoBoxing(value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getInt(int i) {
         checkType(i, DataType.Name.INT);
 

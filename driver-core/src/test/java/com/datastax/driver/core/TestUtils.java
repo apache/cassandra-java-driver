@@ -85,14 +85,20 @@ public abstract class TestUtils {
             case INET:
                 bs.setInet(name, (InetAddress)value);
                 break;
+            case TINYINT:
+                bs.setByte(name, (Byte) value);
+                break;
+            case SMALLINT:
+                bs.setShort(name, (Short) value);
+                break;
             case INT:
-                bs.setInt(name, (Integer)value);
+                bs.setInt(name, (Integer) value);
                 break;
             case TEXT:
-                bs.setString(name, (String)value);
+                bs.setString(name, (String) value);
                 break;
             case TIMESTAMP:
-                bs.setDate(name, (Date)value);
+                bs.setDate(name, (Date) value);
                 break;
             case UUID:
                 bs.setUUID(name, (UUID)value);
@@ -141,6 +147,10 @@ public abstract class TestUtils {
                 return row.getFloat(name);
             case INET:
                 return row.getInet(name);
+            case TINYINT:
+                return row.getByte(name);
+            case SMALLINT:
+                return row.getShort(name);
             case INT:
                 return row.getInt(name);
             case TEXT:
@@ -188,6 +198,10 @@ public abstract class TestUtils {
                     return 3.142519f;
                 case INET:
                     return InetAddress.getByAddress(new byte[]{ (byte)127, (byte)0, (byte)0, (byte)1 });
+                case TINYINT:
+                    return (byte)25;
+                case SMALLINT:
+                    return (short)26;
                 case INT:
                     return 24;
                 case TEXT:
@@ -242,6 +256,10 @@ public abstract class TestUtils {
                     return Float.POSITIVE_INFINITY;
                 case INET:
                     return InetAddress.getByName("123.123.123.123");
+                case TINYINT:
+                    return Byte.MAX_VALUE;
+                case SMALLINT:
+                    return Short.MAX_VALUE;
                 case INT:
                     return Integer.MAX_VALUE;
                 case TEXT:

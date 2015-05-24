@@ -91,6 +91,60 @@ public interface Row extends GettableData {
     public boolean getBool(String name);
 
     /**
+     * Returns the {@code i}th value of this row as a byte.
+     *
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
+     * @return the value of the {@code i}th column in this row as a byte. If the
+     * value is NULL, {@code 0} is returned.
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
+     * @throws InvalidTypeException if column {@code i} is not of type TINYINT.
+     */
+    @Override
+    public byte getByte(int i);
+
+    /**
+     * Returns the value of column {@code name} as a byte.
+     *
+     * @param name the name of the column to retrieve.
+     * @return the value of column {@code name} as a byte. If the value is NULL,
+     * {@code 0} is returned.
+     *
+     * @throws IllegalArgumentException if {@code name} is not part of the
+     * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
+     * @throws InvalidTypeException if column {@code name} is not of type TINYINT.
+     */
+    @Override
+    public byte getByte(String name);
+
+    /**
+     * Returns the {@code i}th value of this row as a short.
+     *
+     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
+     * @return the value of the {@code i}th column in this row as a short. If the
+     * value is NULL, {@code 0} is returned.
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
+     * @throws InvalidTypeException if column {@code i} is not of type SMALLINT.
+     */
+    @Override
+    public short getShort(int i);
+
+    /**
+     * Returns the value of column {@code name} as a short.
+     *
+     * @param name the name of the column to retrieve.
+     * @return the value of column {@code name} as a short. If the value is NULL,
+     * {@code 0} is returned.
+     *
+     * @throws IllegalArgumentException if {@code name} is not part of the
+     * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
+     * @throws InvalidTypeException if column {@code name} is not of type SMALLINT.
+     */
+    @Override
+    public short getShort(String name);
+
+    /**
      * Returns the {@code i}th value of this row as an integer.
      *
      * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.

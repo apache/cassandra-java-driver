@@ -61,7 +61,9 @@ public abstract class DataType {
         MAP       (33, Map.class),
         UDT       (48, UDTValue.class),
         TUPLE     (49, TupleValue.class),
-        CUSTOM    (0,  ByteBuffer.class);
+        CUSTOM    (0,  ByteBuffer.class),
+        SMALLINT  (19, Short.class),
+        TINYINT   (20, Byte.class);
 
         final int protocolId;
         final Class<?> javaType;
@@ -125,6 +127,8 @@ public abstract class DataType {
          *   <tr><td>DOUBLE        </td><td>Double</td></tr>
          *   <tr><td>FLOAT         </td><td>Float</td></tr>
          *   <tr><td>INET          </td><td>InetAddress</td></tr>
+         *   <tr><td>TINYINT       </td><td>Byte</td></tr>
+         *   <tr><td>SMALLINT      </td><td>Short</td></tr>
          *   <tr><td>INT           </td><td>Integer</td></tr>
          *   <tr><td>LIST          </td><td>List</td></tr>
          *   <tr><td>MAP           </td><td>Map</td></tr>
@@ -286,6 +290,24 @@ public abstract class DataType {
      */
     public static DataType inet() {
         return primitiveTypeMap.get(Name.INET);
+    }
+
+    /**
+     * Returns the TINYINT type.
+     *
+     * @return The TINYINT type.
+     */
+    public static DataType tinyint() {
+        return primitiveTypeMap.get(Name.TINYINT);
+    }
+
+    /**
+     * Returns the SMALLINT type.
+     *
+     * @return The SMALLINT type.
+     */
+    public static DataType smallint() {
+        return primitiveTypeMap.get(Name.SMALLINT);
     }
 
     /**

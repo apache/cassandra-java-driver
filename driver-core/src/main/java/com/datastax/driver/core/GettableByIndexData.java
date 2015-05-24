@@ -54,6 +54,30 @@ public interface GettableByIndexData {
     public boolean getBool(int i);
 
     /**
+     * Returns the {@code i}th value as a byte.
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @return the value of the {@code i}th element as a byte. If the
+     * value is NULL, {@code 0} is returned.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type TINYINT.
+     */
+    public byte getByte(int i);
+
+    /**
+     * Returns the {@code i}th value as a short.
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @return the value of the {@code i}th element as a short. If the
+     * value is NULL, {@code 0} is returned.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type SMALLINT.
+     */
+    public short getShort(int i);
+
+    /**
      * Returns the {@code i}th value as an integer.
      *
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
