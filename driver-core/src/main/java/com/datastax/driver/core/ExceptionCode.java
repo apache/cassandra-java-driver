@@ -38,6 +38,7 @@ enum ExceptionCode {
     WRITE_TIMEOUT   (0x1100),
     READ_TIMEOUT    (0x1200),
     READ_FAILURE    (0x1300),
+    FUNCTION_FAILURE(0x1400),
     WRITE_FAILURE   (0x1500),
 
     // 2xx: problem validating the request

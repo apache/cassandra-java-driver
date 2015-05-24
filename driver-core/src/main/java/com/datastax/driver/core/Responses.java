@@ -119,6 +119,7 @@ class Responses {
                 case READ_TIMEOUT:     return ((ReadTimeoutException)infos).copy();
                 case WRITE_FAILURE:    return ((WriteFailureException)infos).copy();
                 case READ_FAILURE:     return ((ReadFailureException)infos).copy();
+                case FUNCTION_FAILURE: return new FunctionExecutionException(message);
                 case SYNTAX_ERROR:     return new SyntaxError(message);
                 case UNAUTHORIZED:     return new UnauthorizedException(message);
                 case INVALID:          return new InvalidQueryException(message);
