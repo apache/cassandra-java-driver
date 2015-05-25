@@ -33,17 +33,126 @@ public class UnsetValuesTest {
     private PreparedStatement prepared;
     private Session session;
 
-    @BeforeClass
-    public void createCcm() throws Exception {
+    @Test(groups = "short")
+    public void should_not_allow_unset_value_on_bound_statement_when_protocol_lesser_than_v4() {
+        try {
+            buildCluster(V3);
+            BoundStatement st1 = prepared.bind();
+            st1.setInt(0, 42);
+            // c2 is UNSET
+            try {
+                session.execute(st1);
+                fail("Should not have executed statement with UNSET values in protocol V3");
+            } catch (IllegalStateException e) {
+                assertThat(e.getMessage()).contains("Unset value at index 1");
+            }
+        } finally {
+            if(cluster != null) cluster.close();
+            if(ccm != null) ccm.remove();
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_not_allow_unset_value_on_batch_statement_when_protocol_lesser_than_v4() {
+        try {
+            buildCluster(V3);
+            BoundStatement st1 = prepared.bind();
+            st1.setInt(0, 42);
+            // c2 is UNSET
+            try {
+                session.execute(new BatchStatement().add(st1));
+                fail("Should not have executed statement with UNSET values in protocol V3");
+            } catch(IllegalStateException e) {
+                assertThat(e.getMessage()).contains("Unset value at index 1");
+            }
+        } finally {
+            if(cluster != null) cluster.close();
+            if(ccm != null) ccm.remove();
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_not_create_tombstone_when_unset_value_on_bound_statement_and_protocol_v4() {
+        try {
+            buildCluster(V4);
+            BoundStatement st1 = prepared.bind();
+            st1.setInt(0, 42);
+            // c2 is UNSET
+            session.execute(st1);
+            Statement st2 = new SimpleStatement("SELECT c2 from foo where c1 = 42");
+            st2.enableTracing();
+            ResultSet rows = session.execute(st2);
+            assertThat(rows.one().getString("c2")).isEqualTo("foo");
+            QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
+            checkEventsContain(queryTrace, "0 tombstone");
+        } finally {
+            if(cluster != null) cluster.close();
+            if(ccm != null) ccm.remove();
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_not_create_tombstone_when_unset_value_on_batch_statement_and_protocol_v4() {
+        try {
+            buildCluster(V4);
+            BoundStatement st1 = prepared.bind();
+            st1.setInt(0, 42);
+            // c2 is UNSET
+            session.execute(new BatchStatement().add(st1));
+            Statement st2 = new SimpleStatement("SELECT c2 from foo where c1 = 42");
+            st2.enableTracing();
+            ResultSet rows = session.execute(st2);
+            assertThat(rows.one().getString("c2")).isEqualTo("foo");
+            QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
+            checkEventsContain(queryTrace, "0 tombstone");
+        } finally {
+            if(cluster != null) cluster.close();
+            if(ccm != null) ccm.remove();
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_create_tombstone_when_null_value_on_bound_statement() {
+        try {
+            buildCluster(V4);
+            BoundStatement st1 = prepared.bind();
+            st1.setInt(0, 42);
+            st1.setString(1, null);
+            session.execute(st1);
+            Statement st2 = new SimpleStatement("SELECT c2 from foo where c1 = 42");
+            st2.enableTracing();
+            ResultSet rows = session.execute(st2);
+            assertThat(rows.one().getString("c2")).isNull();
+            QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
+            checkEventsContain(queryTrace, "1 tombstone");
+        } finally {
+            if(cluster != null) cluster.close();
+            if(ccm != null) ccm.remove();
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_create_tombstone_when_null_value_on_batch_statement() {
+        try {
+            buildCluster(V4);
+            BoundStatement st1 = prepared.bind();
+            st1.setInt(0, 42);
+            st1.setString(1, null);
+            session.execute(new BatchStatement().add(st1));
+            Statement st2 = new SimpleStatement("SELECT c2 from foo where c1 = 42");
+            st2.enableTracing();
+            ResultSet rows = session.execute(st2);
+            assertThat(rows.one().getString("c2")).isNull();
+            QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
+            checkEventsContain(queryTrace, "1 tombstone");
+        } finally {
+            if(cluster != null) cluster.close();
+            if(ccm != null) ccm.remove();
+        }
+    }
+
+    private void buildCluster(ProtocolVersion version) {
         ccm = CCMBridge.create("test", 1);
-    }
-
-    @AfterClass
-    public void closeCcm() throws Exception {
-        if(ccm != null) ccm.remove();
-    }
-
-    public void buildCluster(ProtocolVersion version) {
         cluster = Cluster.builder()
             .addContactPoint(CCMBridge.IP_PREFIX + 1)
             .withProtocolVersion(version).build();
@@ -56,103 +165,6 @@ public class UnsetValuesTest {
         st1.setInt(0, 42);
         st1.setString(1, "foo");
         session.execute(st1);
-    }
-
-    @AfterMethod
-    public void closeCluster() throws Exception {
-        if(cluster != null) cluster.close();
-    }
-
-    @Test(groups = "short")
-    public void should_not_allow_unset_value_on_bound_statement_when_protocol_lesser_than_v4() {
-        buildCluster(V3);
-        BoundStatement st1 = prepared.bind();
-        st1.setInt(0, 42);
-        // c2 is UNSET
-        try {
-            session.execute(st1);
-            fail("Should not have executed statement with UNSET values in protocol V3");
-        } catch(IllegalStateException e) {
-            assertThat(e.getMessage()).contains("Unset value at index 1");
-        }
-    }
-
-    @Test(groups = "short")
-    public void should_not_allow_unset_value_on_batch_statement_when_protocol_lesser_than_v4() {
-        buildCluster(V3);
-        BoundStatement st1 = prepared.bind();
-        st1.setInt(0, 42);
-        // c2 is UNSET
-        try {
-            session.execute(new BatchStatement().add(st1));
-            fail("Should not have executed statement with UNSET values in protocol V3");
-        } catch(IllegalStateException e) {
-            assertThat(e.getMessage()).contains("Unset value at index 1");
-        }
-    }
-
-    @Test(groups = "short")
-    public void should_not_create_tombstone_when_unset_value_on_bound_statement_and_protocol_v4() {
-        buildCluster(V4);
-        BoundStatement st1 = prepared.bind();
-        st1.setInt(0, 42);
-        // c2 is UNSET
-        session.execute(st1);
-        Statement st2 = new SimpleStatement("SELECT c2 from foo where c1 = 42");
-        st2.enableTracing();
-        ResultSet rows = session.execute(st2);
-        assertThat(rows.one().getString("c2")).isEqualTo("foo");
-        QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
-        checkEventsContain(queryTrace, "0 tombstone");
-        System.out.println(queryTrace.getEvents());
-    }
-
-    @Test(groups = "short")
-    public void should_not_create_tombstone_when_unset_value_on_batch_statement_and_protocol_v4() {
-        buildCluster(V4);
-        BoundStatement st1 = prepared.bind();
-        st1.setInt(0, 42);
-        // c2 is UNSET
-        session.execute(new BatchStatement().add(st1));
-        Statement st2 = new SimpleStatement("SELECT c2 from foo where c1 = 42");
-        st2.enableTracing();
-        ResultSet rows = session.execute(st2);
-        assertThat(rows.one().getString("c2")).isEqualTo("foo");
-        QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
-        checkEventsContain(queryTrace, "0 tombstone");
-        System.out.println(queryTrace.getEvents());
-    }
-
-    @Test(groups = "short")
-    public void should_create_tombstone_when_null_value_on_bound_statement() {
-        buildCluster(V4);
-        BoundStatement st1 = prepared.bind();
-        st1.setInt(0, 42);
-        st1.setString(1, null);
-        session.execute(st1);
-        Statement st2 = new SimpleStatement("SELECT c2 from foo where c1 = 42");
-        st2.enableTracing();
-        ResultSet rows = session.execute(st2);
-        assertThat(rows.one().getString("c2")).isNull();
-        QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
-        checkEventsContain(queryTrace, "1 tombstone");
-        System.out.println(queryTrace.getEvents());
-    }
-
-    @Test(groups = "short")
-    public void should_create_tombstone_when_null_value_on_batch_statement() {
-        buildCluster(V4);
-        BoundStatement st1 = prepared.bind();
-        st1.setInt(0, 42);
-        st1.setString(1, null);
-        session.execute(new BatchStatement().add(st1));
-        Statement st2 = new SimpleStatement("SELECT c2 from foo where c1 = 42");
-        st2.enableTracing();
-        ResultSet rows = session.execute(st2);
-        assertThat(rows.one().getString("c2")).isNull();
-        QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
-        checkEventsContain(queryTrace, "1 tombstone");
-        System.out.println(queryTrace.getEvents());
     }
 
     private boolean checkEventsContain(QueryTrace queryTrace, String toFind){
