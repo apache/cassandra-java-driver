@@ -44,7 +44,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * {@code null}, use {@link #setToNull(int) setToNull}.
  */
 public class BoundStatement extends Statement implements SettableData<BoundStatement>, GettableData {
-    private static final ByteBuffer UNSET = ByteBuffer.allocate(0);
+    static final ByteBuffer UNSET = ByteBuffer.allocate(0);
 
     final PreparedStatement statement;
 
