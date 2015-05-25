@@ -267,7 +267,7 @@ abstract class CBUtil { // TODO rename
             return;
         }
 
-        if(bytes == BoundStatement.UNSET) {
+        if (bytes == BoundStatement.UNSET) {
             cb.writeInt(-2);
             return;
         }
