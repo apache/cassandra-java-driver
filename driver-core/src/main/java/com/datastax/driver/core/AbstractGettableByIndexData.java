@@ -159,6 +159,34 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      * {@inheritDoc}
      */
     @Override
+    public int getSimpleDate(int i) {
+        checkType(i, DataType.Name.TIMESTAMP);
+
+        ByteBuffer value = getValue(i);
+        if (value == null || value.remaining() == 0)
+            return 0;
+
+        return TypeCodec.SimpleDateCodec.instance.deserializeNoBoxing(value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getTime(int i) {
+        checkType(i, DataType.Name.TIMESTAMP);
+
+        ByteBuffer value = getValue(i);
+        if (value == null || value.remaining() == 0)
+            return 0L;
+
+        return TypeCodec.TimeCodec.instance.deserializeNoBoxing(value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public float getFloat(int i) {
         checkType(i, DataType.Name.FLOAT);
 

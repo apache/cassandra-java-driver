@@ -90,6 +90,30 @@ public interface GettableByIndexData {
     public Date getDate(int i);
 
     /**
+     * Returns the {@code i}th value as a date as an int in days since epoch.
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @return the value of the {@code i}th element as a data. If the
+     * value is NULL, {@code 0} is returned.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type DATE.
+     */
+    public int getSimpleDate(int i);
+
+    /**
+     * Returns the {@code i}th value as a long in nanoseconds since midnight.
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @return the value of the {@code i}th element as a long. If the
+     * value is NULL, {@code 0L} is returned.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type TIME.
+     */
+    public long getTime(int i);
+
+    /**
      * Returns the {@code i}th value as a float.
      *
      * @param i the index ({@code 0 <= i < size()}) to retrieve.

@@ -103,6 +103,22 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
      * {@inheritDoc}
      */
     @Override
+    public int getSimpleDate(String name) {
+        return getSimpleDate(getIndexOf(name));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getTime(String name) {
+        return getTime(getIndexOf(name));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public float getFloat(String name) {
         return getFloat(getIndexOf(name));
     }

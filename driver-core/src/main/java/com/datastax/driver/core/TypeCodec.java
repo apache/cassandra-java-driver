@@ -23,10 +23,12 @@ import java.nio.*;
 import java.nio.charset.*;
 import java.text.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
+import com.datastax.driver.core.utils.Timestamps;
 
 abstract class TypeCodec<T> {
 
@@ -49,6 +51,8 @@ abstract class TypeCodec<T> {
         primitiveCodecs.put(DataType.Name.INT,       IntCodec.instance);
         primitiveCodecs.put(DataType.Name.TEXT,      StringCodec.utf8Instance);
         primitiveCodecs.put(DataType.Name.TIMESTAMP, DateCodec.instance);
+        primitiveCodecs.put(DataType.Name.DATE,      SimpleDateCodec.instance);
+        primitiveCodecs.put(DataType.Name.TIME,      TimeCodec.instance);
         primitiveCodecs.put(DataType.Name.UUID,      UUIDCodec.instance);
         primitiveCodecs.put(DataType.Name.VARCHAR,   StringCodec.utf8Instance);
         primitiveCodecs.put(DataType.Name.VARINT,    BigIntegerCodec.instance);
@@ -807,7 +811,7 @@ abstract class TypeCodec<T> {
             try {
                 return parseDate(value, iso8601Patterns);
             } catch (ParseException e) {
-                throw new InvalidTypeException(String.format("Cannot parse date value from \"%s\"", value));
+                throw new InvalidTypeException(String.format("Cannot parse timestamp value from \"%s\"", value));
             }
         }
 
@@ -824,6 +828,222 @@ abstract class TypeCodec<T> {
         @Override
         public Date deserialize(ByteBuffer bytes) {
             return new Date(LongCodec.instance.deserializeNoBoxing(bytes));
+        }
+    }
+
+    static class SimpleDateCodec extends TypeCodec<Integer> {
+
+        private static final String[] patterns = new String[] {
+            "yyyy-MM-dd",
+            "yyyy-MM-ddZ"
+        };
+
+        public static final SimpleDateCodec instance = new SimpleDateCodec();
+        private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
+
+        private SimpleDateCodec() {}
+
+        private static int parseDate(String str, final String[] parsePatterns) {
+            SimpleDateFormat parser = new SimpleDateFormat();
+            parser.setLenient(false);
+
+            ParsePosition pos = new ParsePosition(0);
+            for (String parsePattern : parsePatterns) {
+                parser.applyPattern(parsePattern);
+                pos.setIndex(0);
+
+                Date date = parser.parse(str, pos);
+                if (date != null && pos.getIndex() == str.length()) {
+                    long millis = date.getTime();
+                    return Timestamps.millisToSimpleDate(millis);
+                }
+            }
+            throw new IllegalArgumentException("Unable to parse the date: " + str);
+        }
+
+        @Override
+        public Integer parse(String value) {
+            if (IS_LONG_PATTERN.matcher(value).matches()) {
+                try {
+                    return Integer.parseInt(value);
+                } catch (NumberFormatException e) {
+                    throw new InvalidTypeException(String.format("Cannot parse date value from \"%s\"", value));
+                }
+            }
+
+            try {
+                return parseDate(value, patterns);
+            } catch (IllegalArgumentException e) {
+                throw new InvalidTypeException(String.format("Cannot parse date value from \"%s\"", value));
+            }
+        }
+
+        @Override
+        public String format(Integer value) {
+            return value.toString();
+        }
+
+        @Override
+        public ByteBuffer serialize(Integer value) {
+            return IntCodec.instance.serializeNoBoxing(value);
+        }
+
+        @Override
+        public Integer deserialize(ByteBuffer bytes) {
+            return IntCodec.instance.deserializeNoBoxing(bytes);
+        }
+
+        public ByteBuffer serializeNoBoxing(int value) {
+            return IntCodec.instance.serializeNoBoxing(value);
+        }
+
+        public int deserializeNoBoxing(ByteBuffer bytes) {
+            return IntCodec.instance.deserializeNoBoxing(bytes);
+        }
+    }
+
+    static class TimeCodec extends TypeCodec<Long> {
+
+        private static final Pattern timePattern = Pattern.compile("^-?\\d+$");
+        private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
+
+        public static final TimeCodec instance = new TimeCodec();
+
+        private TimeCodec() {}
+
+        // Time specific parsing loosely based on java.sql.Timestamp
+        private static Long parseTimeStrictly(String s) throws IllegalArgumentException
+        {
+            String nanos_s;
+
+            long hour;
+            long minute;
+            long second;
+            long a_nanos = 0;
+
+            String formatError = "Timestamp format must be hh:mm:ss[.fffffffff]";
+            String zeros = "000000000";
+
+            if (s == null)
+                throw new java.lang.IllegalArgumentException(formatError);
+            s = s.trim();
+
+            // Parse the time
+            int firstColon = s.indexOf(':');
+            int secondColon = s.indexOf(':', firstColon+1);
+
+            // Convert the time; default missing nanos
+            if (firstColon > 0 && secondColon > 0 && secondColon < s.length() - 1)
+            {
+                int period = s.indexOf('.', secondColon+1);
+                hour = Integer.parseInt(s.substring(0, firstColon));
+                if (hour < 0 || hour >= 24)
+                    throw new IllegalArgumentException("Hour out of bounds.");
+
+                minute = Integer.parseInt(s.substring(firstColon + 1, secondColon));
+                if (minute < 0 || minute >= 60)
+                    throw new IllegalArgumentException("Minute out of bounds.");
+
+                if (period > 0 && period < s.length() - 1)
+                {
+                    second = Integer.parseInt(s.substring(secondColon + 1, period));
+                    if (second < 0 || second >= 60)
+                        throw new IllegalArgumentException("Second out of bounds.");
+
+                    nanos_s = s.substring(period + 1);
+                    if (nanos_s.length() > 9)
+                        throw new IllegalArgumentException(formatError);
+                    if (!Character.isDigit(nanos_s.charAt(0)))
+                        throw new IllegalArgumentException(formatError);
+                    nanos_s = nanos_s + zeros.substring(0, 9 - nanos_s.length());
+                    a_nanos = Integer.parseInt(nanos_s);
+                }
+                else if (period > 0)
+                    throw new IllegalArgumentException(formatError);
+                else
+                {
+                    second = Integer.parseInt(s.substring(secondColon + 1));
+                    if (second < 0 || second >= 60)
+                        throw new IllegalArgumentException("Second out of bounds.");
+                }
+            }
+            else
+                throw new IllegalArgumentException(formatError);
+
+            long rawTime = 0;
+            rawTime += TimeUnit.HOURS.toNanos(hour);
+            rawTime += TimeUnit.MINUTES.toNanos(minute);
+            rawTime += TimeUnit.SECONDS.toNanos(second);
+            rawTime += a_nanos;
+            return rawTime;
+        }
+
+        private static Long parseTime(String value) throws ParseException {
+            // nano since start of day, raw
+            if (timePattern.matcher(value).matches())
+            {
+                try
+                {
+                    long result = Long.parseLong(value);
+                    if (result < 0 || result >= TimeUnit.DAYS.toNanos(1))
+                        throw new NumberFormatException("Input long out of bounds: " + value);
+                    return result;
+                }
+                catch (NumberFormatException e)
+                {
+                    throw new ParseException(String.format("Unable to make long (for time) from: '%s'", value), -1);
+                }
+            }
+
+            // Last chance, attempt to parse as time string
+            try
+            {
+                return parseTimeStrictly(value);
+            }
+            catch (IllegalArgumentException e1)
+            {
+                throw new ParseException(String.format("(TimeType) Unable to coerce '%s' to a formatted time (long)", value), -1);
+            }
+        }
+
+        @Override
+        public Long parse(String value) {
+            if (IS_LONG_PATTERN.matcher(value).matches()) {
+                try {
+                    return Long.parseLong(value);
+                } catch (NumberFormatException e) {
+                    throw new InvalidTypeException(String.format("Cannot parse time value from \"%s\"", value));
+                }
+            }
+
+            try {
+                return parseTime(value);
+            } catch (ParseException e) {
+                throw new InvalidTypeException(String.format("Cannot parse time value from \"%s\"", value));
+            }
+        }
+
+        @Override
+        public String format(Long value) {
+            return value.toString();
+        }
+
+        @Override
+        public ByteBuffer serialize(Long value) {
+            return LongCodec.instance.serializeNoBoxing(value);
+        }
+
+        @Override
+        public Long deserialize(ByteBuffer bytes) {
+            return LongCodec.instance.deserializeNoBoxing(bytes);
+        }
+
+        public ByteBuffer serializeNoBoxing(long value) {
+            return LongCodec.instance.serializeNoBoxing(value);
+        }
+
+        public long deserializeNoBoxing(ByteBuffer bytes) {
+            return LongCodec.instance.deserializeNoBoxing(bytes);
         }
     }
 

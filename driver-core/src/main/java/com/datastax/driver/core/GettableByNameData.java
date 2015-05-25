@@ -89,6 +89,30 @@ public interface GettableByNameData {
     public Date getDate(String name);
 
     /**
+     * Returns the value for {@code name} as a date as an int in days since epoch.
+     *
+     * @param name the name to retrieve.
+     * @return the value for {@code name} as a date. If the value is NULL,
+     * {@code 0} is returned.
+     *
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws InvalidTypeException if value {@code name} is not of type DATE.
+     */
+    public int getSimpleDate(String name);
+
+    /**
+     * Returns the value for {@code name} as a long in nanoseconds since midnight.
+     *
+     * @param name the name to retrieve.
+     * @return the value for {@code name} as a long. If the value is NULL,
+     * {@code 0L} is returned.
+     *
+     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws InvalidTypeException if value {@code name} is not of type TIME.
+     */
+    public long getTime(String name);
+
+    /**
      * Returns the value for {@code name} as a float.
      *
      * @param name the name to retrieve.

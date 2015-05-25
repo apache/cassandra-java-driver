@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+2.2.0-rc1:
+----------
+
+Merged from 2.1 branch:
+
+- [improvement] Unify "Target" enum for schema elements (JAVA-782)
+
+
 2.1.7:
 ------
 

@@ -88,6 +88,36 @@ public interface SettableByNameData<T extends SettableData<T>> {
 
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided date as an int in days since epoch.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not of type DATE.
+     */
+    public T setSimpleDate(String name, int v);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided time as a long in nanoseconds since midnight.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not of type TIME.
+     */
+    public T setTime(String name, long v);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
      * provided float.
      *
      * @param name the name of the value to set; if {@code name} is present multiple
