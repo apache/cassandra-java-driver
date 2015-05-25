@@ -139,15 +139,53 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setDate(int i, Date v) {
+        return setTimestamp(i, v);
+    }
+
+    public T setDate(String name, Date v) {
+        return setTimestamp(name, v);
+    }
+
+    public T setTimestamp(int i, Date v) {
         checkType(i, DataType.Name.TIMESTAMP);
         return setValue(i, v == null ? null : TypeCodec.DateCodec.instance.serialize(v));
     }
 
-    public T setDate(String name, Date v) {
+    public T setTimestamp(String name, Date v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = v == null ? null : TypeCodec.DateCodec.instance.serialize(v);
         for (int i = 0; i < indexes.length; i++) {
             checkType(indexes[i], DataType.Name.TIMESTAMP);
+            setValue(indexes[i], value);
+        }
+        return wrapped;
+    }
+
+    public T setDateWithoutTime(int i, DateWithoutTime v) {
+        checkType(i, DataType.Name.DATE);
+        return setValue(i, TypeCodec.SimpleDateCodec.instance.serialize(v));
+    }
+
+    public T setDateWithoutTime(String name, DateWithoutTime v) {
+        int[] indexes = getAllIndexesOf(name);
+        ByteBuffer value = TypeCodec.SimpleDateCodec.instance.serialize(v);
+        for (int i = 0; i < indexes.length; i++) {
+            checkType(indexes[i], DataType.Name.DATE);
+            setValue(indexes[i], value);
+        }
+        return wrapped;
+    }
+
+    public T setTime(int i, long v) {
+        checkType(i, DataType.Name.TIME);
+        return setValue(i, TypeCodec.TimeCodec.instance.serializeNoBoxing(v));
+    }
+
+    public T setTime(String name, long v) {
+        int[] indexes = getAllIndexesOf(name);
+        ByteBuffer value = TypeCodec.TimeCodec.instance.serializeNoBoxing(v);
+        for (int i = 0; i < indexes.length; i++) {
+            checkType(indexes[i], DataType.Name.TIME);
             setValue(indexes[i], value);
         }
         return wrapped;

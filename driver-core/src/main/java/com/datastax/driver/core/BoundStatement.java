@@ -459,9 +459,45 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
+     * @deprecated deprecated in favor of {@link #setTimestamp(int, Date)}
      */
+    @Deprecated
     public BoundStatement setDate(int i, Date v) {
-        return wrapper.setDate(i, v);
+        return wrapper.setTimestamp(i, v);
+    }
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided date.
+     *
+     * @param name the name of the variable to set; if multiple variables
+     * {@code name} are prepared, all of them are set.
+     * @param v the value to set.
+     * @return this BoundStatement.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a prepared
+     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not of type TIMESTAMP.
+     * @deprecated deprecated in favor of {@link #setTimestamp(String, Date)}
+     */
+    @Deprecated
+    public BoundStatement setDate(String name, Date v) {
+        return wrapper.setTimestamp(name, v);
+    }
+
+    /**
+     * Set the {@code i}th value to the provided date.
+     *
+     * @param i the index of the variable to set.
+     * @param v the value to set.
+     * @return this BoundStatement.
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
+     * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
+     */
+    public BoundStatement setTimestamp(int i, Date v) {
+        return wrapper.setTimestamp(i, v);
     }
 
     /**
@@ -478,8 +514,70 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type TIMESTAMP.
      */
-    public BoundStatement setDate(String name, Date v) {
-        return wrapper.setDate(name, v);
+    public BoundStatement setTimestamp(String name, Date v) {
+        return wrapper.setTimestamp(name, v);
+    }
+
+    /**
+     * Set the {@code i}th value to the provided date as an int in days since epoch.
+     *
+     * @param i the index of the value to set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type DATE.
+     */
+    public BoundStatement setDateWithoutTime(int i, DateWithoutTime v) {
+        return wrapper.setDateWithoutTime(i, v);
+    }
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided date as an int in days since epoch.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not of type DATE.
+     */
+    public BoundStatement setDateWithoutTime(String name, DateWithoutTime v) {
+        return wrapper.setDateWithoutTime(name, v);
+    }
+
+    /**
+     * Set the {@code i}th value to the provided time as a long in nanoseconds since midnight.
+     *
+     * @param i the index of the value to set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type TIME.
+     */
+    public BoundStatement setTime(int i, long v) {
+        return wrapper.setTime(i, v);
+    }
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided time as a long in nanoseconds since midnight.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not of type TIME.
+     */
+    public BoundStatement setTime(String name, long v) {
+        return wrapper.setTime(name, v);
     }
 
     /**
@@ -1186,15 +1284,58 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Deprecated
     public Date getDate(int i) {
-        return wrapper.getDate(i);
+        return wrapper.getTimestamp(i);
     }
 
     /**
      * {@inheritDoc}
      */
     public Date getDate(String name) {
-        return wrapper.getDate(name);
+        return wrapper.getTimestamp(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Date getTimestamp(int i) {
+        return wrapper.getTimestamp(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Date getTimestamp(String name) {
+        return wrapper.getTimestamp(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public DateWithoutTime getDateWithoutTime(int i) {
+        return wrapper.getDateWithoutTime(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public DateWithoutTime getDateWithoutTime(String name) {
+        return wrapper.getDateWithoutTime(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public long getTime(int i) {
+        return wrapper.getTime(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public long getTime(String name) {
+        return wrapper.getTime(name);
     }
 
     /**
