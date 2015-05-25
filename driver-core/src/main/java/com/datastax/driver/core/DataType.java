@@ -61,7 +61,9 @@ public abstract class DataType {
         MAP       (33, Map.class),
         UDT       (48, UDTValue.class),
         TUPLE     (49, TupleValue.class),
-        CUSTOM    (0,  ByteBuffer.class);
+        CUSTOM    (0,  ByteBuffer.class),
+        DATE      (17, Integer.class),
+        TIME      (18, Long.class);
 
         final int protocolId;
         final Class<?> javaType;
@@ -313,6 +315,24 @@ public abstract class DataType {
      */
     public static DataType timestamp() {
         return primitiveTypeMap.get(Name.TIMESTAMP);
+    }
+
+    /**
+     * Returns the DATE type.
+     *
+     * @return The DATE type.
+     */
+    public static DataType date() {
+        return primitiveTypeMap.get(Name.DATE);
+    }
+
+    /**
+     * Returns the TIME type.
+     *
+     * @return The TIME type.
+     */
+    public static DataType time() {
+        return primitiveTypeMap.get(Name.TIME);
     }
 
     /**

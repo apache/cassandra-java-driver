@@ -421,6 +421,68 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     }
 
     /**
+     * Set the {@code i}th value to the provided date as an int in days since epoch.
+     *
+     * @param i the index of the value to set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type DATE.
+     */
+    public BoundStatement setSimpleDate(int i, int v) {
+        return wrapper.setSimpleDate(i, v);
+    }
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided date as an int in days since epoch.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not of type DATE.
+     */
+    public BoundStatement setSimpleDate(String name, int v) {
+        return wrapper.setSimpleDate(name, v);
+    }
+
+    /**
+     * Set the {@code i}th value to the provided time as a long in nanoseconds since midnight.
+     *
+     * @param i the index of the value to set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type TIME.
+     */
+    public BoundStatement setTime(int i, long v) {
+        return wrapper.setTime(i, v);
+    }
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided time as a long in nanoseconds since midnight.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not of type TIME.
+     */
+    public BoundStatement setTime(String name, long v) {
+        return wrapper.setTime(name, v);
+    }
+
+    /**
      * Sets the {@code i}th value to the provided float.
      *
      * @param i the index of the variable to set.
@@ -1105,6 +1167,34 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      */
     public Date getDate(String name) {
         return wrapper.getDate(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int getSimpleDate(int i) {
+        return wrapper.getSimpleDate(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int getSimpleDate(String name) {
+        return wrapper.getSimpleDate(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public long getTime(int i) {
+        return wrapper.getTime(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public long getTime(String name) {
+        return wrapper.getTime(name);
     }
 
     /**

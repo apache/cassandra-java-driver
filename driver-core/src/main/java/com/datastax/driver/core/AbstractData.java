@@ -123,6 +123,36 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    public T setSimpleDate(int i, int v) {
+        checkType(i, DataType.Name.DATE);
+        return setValue(i, TypeCodec.SimpleDateCodec.instance.serializeNoBoxing(v));
+    }
+
+    public T setSimpleDate(String name, int v) {
+        int[] indexes = getAllIndexesOf(name);
+        ByteBuffer value = TypeCodec.SimpleDateCodec.instance.serializeNoBoxing(v);
+        for (int i = 0; i < indexes.length; i++) {
+            checkType(indexes[i], DataType.Name.DATE);
+            setValue(indexes[i], value);
+        }
+        return wrapped;
+    }
+
+    public T setTime(int i, long v) {
+        checkType(i, DataType.Name.TIME);
+        return setValue(i, TypeCodec.TimeCodec.instance.serializeNoBoxing(v));
+    }
+
+    public T setTime(String name, long v) {
+        int[] indexes = getAllIndexesOf(name);
+        ByteBuffer value = TypeCodec.TimeCodec.instance.serializeNoBoxing(v);
+        for (int i = 0; i < indexes.length; i++) {
+            checkType(indexes[i], DataType.Name.DATE);
+            setValue(indexes[i], value);
+        }
+        return wrapped;
+    }
+
     public T setFloat(int i, float v) {
         checkType(i, DataType.Name.FLOAT);
         return setValue(i, TypeCodec.FloatCodec.instance.serializeNoBoxing(v));

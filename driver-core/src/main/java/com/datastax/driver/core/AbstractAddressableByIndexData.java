@@ -62,6 +62,16 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         return setValue(i, v == null ? null : TypeCodec.DateCodec.instance.serialize(v));
     }
 
+    public T setSimpleDate(int i, int v) {
+        checkType(i, DataType.Name.DATE);
+        return setValue(i, TypeCodec.SimpleDateCodec.instance.serializeNoBoxing(v));
+    }
+
+    public T setTime(int i, long v) {
+        checkType(i, DataType.Name.TIME);
+        return setValue(i, TypeCodec.TimeCodec.instance.serializeNoBoxing(v));
+    }
+
     public T setFloat(int i, float v) {
         checkType(i, DataType.Name.FLOAT);
         return setValue(i, TypeCodec.FloatCodec.instance.serializeNoBoxing(v));

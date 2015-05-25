@@ -77,6 +77,30 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
     public T setDate(int i, Date v);
 
     /**
+     * Set the {@code i}th value to the provided date as an int in days since epoch.
+     *
+     * @param i the index of the value to set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type DATE.
+     */
+    public T setSimpleDate(int i, int v);
+
+    /**
+     * Set the {@code i}th value to the provided time as a long in nanoseconds since midnight.
+     *
+     * @param i the index of the value to set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type TIME.
+     */
+    public T setTime(int i, long v);
+
+    /**
      * Sets the {@code i}th value to the provided float.
      *
      * @param i the index of the value to set.
