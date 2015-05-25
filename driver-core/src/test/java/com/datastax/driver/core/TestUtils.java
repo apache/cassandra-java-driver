@@ -442,7 +442,10 @@ public abstract class TestUtils {
             return ProtocolVersion.V1;
         } else if (major < 2.1) {
             return ProtocolVersion.V2;
+        } else if (major < 2.2) {
+            return ProtocolVersion.V3;
         } else {
+            // TODO V4 when then entire protocol is implemented
             return ProtocolVersion.V3;
         }
     }

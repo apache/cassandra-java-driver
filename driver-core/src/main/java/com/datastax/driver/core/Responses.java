@@ -19,12 +19,14 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.google.common.collect.ImmutableList;
 import io.netty.buffer.ByteBuf;
 
 import com.datastax.driver.core.Responses.Result.Rows.Metadata;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.Bytes;
 
+import static com.datastax.driver.core.ProtocolVersion.V4;
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 import static com.datastax.driver.core.SchemaElement.TABLE;
 
@@ -311,30 +313,44 @@ class Responses {
                     }
                 }
 
-                static final Metadata EMPTY = new Metadata(0, null, null);
+                static final Metadata EMPTY = new Metadata(0, null, null, null);
 
                 public final int columnCount;
                 public final ColumnDefinitions columns; // Can be null if no metadata was asked by the query
                 public final ByteBuffer pagingState;
+                public final int[] pkIndices;
 
-                private Metadata(int columnCount, ColumnDefinitions columns, ByteBuffer pagingState) {
+                private Metadata(int columnCount, ColumnDefinitions columns, ByteBuffer pagingState, int[] pkIndices) {
                     this.columnCount = columnCount;
                     this.columns = columns;
                     this.pagingState = pagingState;
+                    this.pkIndices = pkIndices;
                 }
 
                 public static Metadata decode(ByteBuf body) {
+                    return decode(body, false);
+                }
+
+                public static Metadata decode(ByteBuf body, boolean withPkIndices) {
 
                     // flags & column count
                     EnumSet<Flag> flags = Flag.deserialize(body.readInt());
                     int columnCount = body.readInt();
+
+                    int[] pkIndices = null;
+                    int pkCount;
+                    if (withPkIndices && (pkCount = body.readInt()) > 0) {
+                        pkIndices = new int[pkCount];
+                        for (int i = 0; i < pkCount; i++)
+                            pkIndices[i] = (int)body.readShort();
+                    }
 
                     ByteBuffer state = null;
                     if (flags.contains(Flag.HAS_MORE_PAGES))
                         state = CBUtil.readValue(body);
 
                     if (flags.contains(Flag.NO_METADATA))
-                        return new Metadata(columnCount, null, state);
+                        return new Metadata(columnCount, null, state, pkIndices);
 
                     boolean globalTablesSpec = flags.contains(Flag.GLOBAL_TABLES_SPEC);
 
@@ -355,7 +371,7 @@ class Responses {
                         defs[i] = new ColumnDefinitions.Definition(ksName, cfName, name, type);
                     }
 
-                    return new Metadata(columnCount, new ColumnDefinitions(defs), state);
+                    return new Metadata(columnCount, new ColumnDefinitions(defs), state, pkIndices);
                 }
 
                 @Override
@@ -442,7 +458,8 @@ class Responses {
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
                 public Result decode(ByteBuf body, ProtocolVersion version) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
-                    Rows.Metadata metadata = Rows.Metadata.decode(body);
+                    boolean withPkIndices = version.compareTo(V4) >= 0;
+                    Rows.Metadata metadata = Rows.Metadata.decode(body, withPkIndices);
                     Rows.Metadata resultMetadata = decodeResultMetadata(body, version);
                     return new Prepared(id, metadata, resultMetadata);
                 }
@@ -453,6 +470,7 @@ class Responses {
                             return Rows.Metadata.EMPTY;
                         case V2:
                         case V3:
+                        case V4:
                             return Rows.Metadata.decode(body);
                         default:
                             throw version.unsupported();
@@ -502,6 +520,7 @@ class Responses {
                             target = name.isEmpty() ? KEYSPACE : TABLE;
                             return new SchemaChange(change, target, keyspace, name);
                         case V3:
+                        case V4:
                             change = CBUtil.readEnumValue(Change.class, body);
                             target = CBUtil.readEnumValue(SchemaElement.class, body);
                             keyspace = CBUtil.readString(body);
