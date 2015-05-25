@@ -26,6 +26,7 @@ import java.util.*;
 
 import static org.testng.Assert.fail;
 
+import com.datastax.driver.core.utils.Timestamps;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.slf4j.Logger;
@@ -98,7 +99,13 @@ public abstract class TestUtils {
                 bs.setString(name, (String) value);
                 break;
             case TIMESTAMP:
-                bs.setDate(name, (Date) value);
+                bs.setTimestamp(name, (Date) value);
+                break;
+            case DATE:
+                bs.setDateWithoutTime(name, (Date) value);
+                break;
+            case TIME:
+                bs.setTime(name, (Long) value);
                 break;
             case UUID:
                 bs.setUUID(name, (UUID)value);
@@ -156,7 +163,11 @@ public abstract class TestUtils {
             case TEXT:
                 return row.getString(name);
             case TIMESTAMP:
-                return row.getDate(name);
+                return row.getTimestamp(name);
+            case DATE:
+                return row.getDateWithoutTime(name);
+            case TIME:
+                return row.getTime(name);
             case UUID:
                 return row.getUUID(name);
             case VARCHAR:
@@ -208,6 +219,10 @@ public abstract class TestUtils {
                     return "A text string";
                 case TIMESTAMP:
                     return new Date(1352288289L);
+                case DATE:
+                    return new Date(Timestamps.simpleDateToMillis(-2147483648));
+                case TIME:
+                    return 54012123450000L;
                 case UUID:
                     return UUID.fromString("087E9967-CCDC-4A9B-9036-05930140A41B");
                 case VARCHAR:
@@ -266,6 +281,10 @@ public abstract class TestUtils {
                     return "résumé";
                 case TIMESTAMP:
                     return new Date(872835240000L);
+                case DATE:
+                    return new Date(Timestamps.simpleDateToMillis(-2147483648));
+                case TIME:
+                    return 54012123450000L;
                 case UUID:
                     return UUID.fromString("067e6162-3b6f-4ae2-a171-2470b63dff00");
                 case VARCHAR:

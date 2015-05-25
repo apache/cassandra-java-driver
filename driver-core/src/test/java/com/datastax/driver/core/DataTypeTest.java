@@ -23,6 +23,8 @@ import java.util.*;
 
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
+
+import com.datastax.driver.core.utils.Timestamps;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -51,6 +53,10 @@ public class DataTypeTest {
             case BIGINT:
             case TIMESTAMP:
                 return new String[]{ "42", "91294377723", "-133" };
+            case DATE:
+                return new String[]{ "2014-01-01", "1970-01-01" };
+            case TIME:
+                return new String[]{ "54012123450000", "0" };
             case BLOB:
                 return new String[]{ "0x2450", "0x" };
             case BOOLEAN:
@@ -90,6 +96,10 @@ public class DataTypeTest {
                 return new Object[]{ 42L, 91294377723L, -133L };
             case TIMESTAMP:
                 return new Object[]{ new Date(42L), new Date(91294377723L), new Date(-133L) };
+            case DATE:
+                return new Object[]{ new Date(Timestamps.simpleDateToMillis(-2147467577)) /* 2014-01-01 */, new Date(Timestamps.simpleDateToMillis(-2147483648)) /* 1970-01-01 */ };
+            case TIME:
+                return new Object[]{ 54012123450000L /* 15:00:12.123450000 */, 0L };
             case BLOB:
                 return new Object[]{ Bytes.fromHexString("0x2450"), ByteBuffer.allocate(0) };
             case BOOLEAN:

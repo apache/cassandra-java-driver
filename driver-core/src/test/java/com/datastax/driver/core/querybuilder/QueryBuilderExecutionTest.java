@@ -69,7 +69,7 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         assertEquals(1, rows.size());
 
         Row r1 = rows.get(0);
-        assertEquals(d, r1.getDate("t"));
+        assertEquals(d, r1.getTimestamp("t"));
     }
 
     @Test(groups = "unit")
