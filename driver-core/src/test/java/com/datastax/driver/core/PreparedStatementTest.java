@@ -19,18 +19,24 @@ import java.net.InetAddress;
 import java.util.*;
 
 import com.google.common.collect.ImmutableList;
+import org.junit.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.utils.CassandraVersion;
 
+import static com.datastax.driver.core.CCMBridge.ipOfNode;
+import static com.datastax.driver.core.ProtocolVersion.V3;
+import static com.datastax.driver.core.ProtocolVersion.V4;
 import static com.datastax.driver.core.TestUtils.*;
 
 /**
@@ -417,23 +423,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @Test(groups = "short", expectedExceptions = { IllegalStateException.class })
-    public void unboundVariableInBoundStatementTest() {
-        PreparedStatement ps = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
-        BoundStatement bs = ps.bind("k");
-        assertFalse(bs.isSet("i"));
-        session.execute(bs);
-    }
-
-    @Test(groups = "short", expectedExceptions = { IllegalStateException.class })
-    @CassandraVersion(major=2.0)
-    public void unboundVariableInBatchStatementTest() {
-        PreparedStatement ps = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
-        BatchStatement batch = new BatchStatement();
-        batch.add(ps.bind("k"));
-        session.execute(batch);
-    }
-
     @Test(groups="short")
     public void should_set_routing_key_on_case_insensitive_keyspace_and_table() {
         session.execute(String.format("CREATE TABLE %s.foo (i int PRIMARY KEY)",keyspace));
@@ -466,5 +455,156 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // We expect that the error gets detected without a roundtrip to the server, so use executeAsync
         session.executeAsync(bs);
+    }
+
+    /**
+     * Tests that, under protocol versions lesser that V4,
+     * it is NOT possible to execute a prepared statement with unbound values.
+     * Note that we have to force protocol version V3 because
+     * higher protocol versions would allow such unbound values to be sent.
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major=2.1)
+    public void should_not_allow_unbound_value_on_bound_statement_when_protocol_lesser_than_v4() {
+        Cluster cluster = Cluster.builder()
+            .addContactPointsWithPorts(Collections.singleton(hostAddress))
+            .withProtocolVersion(V3)
+            .build();
+        Session session = cluster.connect();
+        try {
+            PreparedStatement ps = session.prepare("INSERT INTO " + keyspace + "." + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+            BoundStatement bs = ps.bind("foo");
+            assertFalse(bs.isSet("i"));
+            session.execute(bs);
+            fail("Should not have executed statement with UNSET values in protocol V3");
+        } catch (IllegalStateException e) {
+            assertThat(e.getMessage()).contains("Unset value at index 1");
+        } finally {
+            session.close();
+            cluster.close();
+        }
+    }
+
+    /**
+     * Tests that, under protocol versions lesser that V4,
+     * it is NOT possible to execute a prepared statement with unbound values.
+     * Note that we have to force protocol version V3 because
+     * higher protocol versions would allow such unbound values to be sent.
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major=2.1)
+    public void should_not_allow_unbound_value_on_batch_statement_when_protocol_lesser_than_v4() {
+        Cluster cluster = Cluster.builder()
+            .addContactPointsWithPorts(Collections.singleton(hostAddress))
+            .withProtocolVersion(V3)
+            .build();
+        Session session = cluster.connect();
+        try {
+            PreparedStatement ps = session.prepare("INSERT INTO " + keyspace + "."  + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+            BatchStatement batch = new BatchStatement();
+            batch.add(ps.bind("foo"));
+            // i is UNSET
+            session.execute(batch);
+            fail("Should not have executed statement with UNSET values in protocol V3");
+        } catch (IllegalStateException e) {
+            assertThat(e.getMessage()).contains("Unset value at index 1");
+        } finally {
+            session.close();
+            cluster.close();
+        }
+    }
+
+    /**
+     * Tests that a tombstone is NOT crated when a column in a prepared statement
+     * is not bound (UNSET flag).
+     * This only works from protocol V4 onwards.
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major = 2.2)
+    public void should_not_create_tombstone_when_unbound_value_on_bound_statement_and_protocol_v4() {
+        PreparedStatement prepared = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+        BoundStatement st1 = prepared.bind();
+        st1.setString(0, "foo");
+        st1.setInt(1, 1234);
+        session.execute(st1);
+        BoundStatement st2 = prepared.bind();
+        st2.setString(0, "foo");
+        // i is UNSET
+        session.execute(st2);
+        Statement st3 = new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
+        st3.enableTracing();
+        ResultSet rows = session.execute(st3);
+        assertThat(rows.one().getInt("i")).isEqualTo(1234);
+        QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
+        checkEventsContain(queryTrace, "0 tombstone");
+    }
+
+    /**
+     * Tests that a tombstone is NOT crated when a column in a prepared statement
+     * is not bound (UNSET flag).
+     * This only works from protocol V4 onwards.
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major = 2.2)
+    public void should_not_create_tombstone_when_unbound_value_on_batch_statement_and_protocol_v4() {
+        PreparedStatement prepared = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+        BoundStatement st1 = prepared.bind();
+        st1.setString(0, "foo");
+        st1.setInt(1, 1234);
+        session.execute(new BatchStatement().add(st1));
+        BoundStatement st2 = prepared.bind();
+        st2.setString(0, "foo");
+        // i is UNSET
+        session.execute(new BatchStatement().add(st2));
+        Statement st3 = new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
+        st3.enableTracing();
+        ResultSet rows = session.execute(st3);
+        assertThat(rows.one().getInt("i")).isEqualTo(1234);
+        QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
+        checkEventsContain(queryTrace, "0 tombstone");
+    }
+
+    /**
+     * Tests that a tombstone is crated when binding a null value to a column in a prepared statement.
+     */
+    @Test(groups = "short")
+    public void should_create_tombstone_when_null_value_on_bound_statement() {
+        PreparedStatement prepared = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+        BoundStatement st1 = prepared.bind();
+        st1.setString(0, "foo");
+        st1.setToNull(1);
+        session.execute(st1);
+        Statement st2 = new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
+        st2.enableTracing();
+        ResultSet rows = session.execute(st2);
+        assertThat(rows.one().isNull(0)).isTrue();
+        QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
+        checkEventsContain(queryTrace, "1 tombstone");
+    }
+
+    /**
+     * Tests that a tombstone is crated when binding a null value to a column in a prepared statement.
+     */
+    @Test(groups = "short")
+    public void should_create_tombstone_when_null_value_on_batch_statement() {
+        PreparedStatement prepared = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+        BoundStatement st1 = prepared.bind();
+        st1.setString(0, "foo");
+        st1.setToNull(1);
+        session.execute(new BatchStatement().add(st1));
+        Statement st2 = new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
+        st2.enableTracing();
+        ResultSet rows = session.execute(st2);
+        assertThat(rows.one().isNull(0)).isTrue();
+        QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
+        checkEventsContain(queryTrace, "1 tombstone");
+    }
+
+    private boolean checkEventsContain(QueryTrace queryTrace, String toFind) {
+        for (QueryTrace.Event event : queryTrace.getEvents()) {
+            if (event.getDescription().contains(toFind))
+                return true;
+        }
+        return false;
     }
 }
