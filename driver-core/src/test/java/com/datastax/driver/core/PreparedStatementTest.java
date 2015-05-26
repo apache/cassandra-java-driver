@@ -19,8 +19,6 @@ import java.net.InetAddress;
 import java.util.*;
 
 import com.google.common.collect.ImmutableList;
-import org.junit.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,9 +32,7 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.utils.CassandraVersion;
 
-import static com.datastax.driver.core.CCMBridge.ipOfNode;
 import static com.datastax.driver.core.ProtocolVersion.V3;
-import static com.datastax.driver.core.ProtocolVersion.V4;
 import static com.datastax.driver.core.TestUtils.*;
 
 /**
