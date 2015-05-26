@@ -51,6 +51,7 @@ public class SpeculativeExecutionTest {
         loadBalancingPolicy = new SortingLoadBalancingPolicy();
         cluster = Cluster.builder()
             .addContactPoint(CCMBridge.ipOfNode(2))
+            .withProtocolVersion(ProtocolVersion.V2) // Scassandra does not support V3 nor V4 yet
             .withLoadBalancingPolicy(loadBalancingPolicy)
             .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(speculativeExecutionDelay, 1))
             .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))

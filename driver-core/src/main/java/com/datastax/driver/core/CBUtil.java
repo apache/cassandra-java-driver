@@ -267,6 +267,11 @@ abstract class CBUtil { // TODO rename
             return;
         }
 
+        if (bytes == BoundStatement.UNSET) {
+            cb.writeInt(-2);
+            return;
+        }
+
         cb.writeInt(bytes.remaining());
         cb.writeBytes(bytes.duplicate());
     }

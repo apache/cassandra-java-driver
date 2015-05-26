@@ -20,6 +20,8 @@ import java.util.List;
 
 import com.datastax.driver.core.policies.RetryPolicy;
 
+import static com.datastax.driver.core.ProtocolVersion.V4;
+
 public class DefaultPreparedStatement implements PreparedStatement{
 
     final PreparedId preparedId;
@@ -48,11 +50,21 @@ public class DefaultPreparedStatement implements PreparedStatement{
         if (defs.size() == 0)
             return new DefaultPreparedStatement(new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null, protocolVersion), query, queryKeyspace);
 
+        int[] pkIndices = (protocolVersion.compareTo(V4) >= 0)
+            ? msg.metadata.pkIndices
+            : computePkIndices(clusterMetadata, defs);
+
+        PreparedId prepId = new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, pkIndices, protocolVersion);
+
+        return new DefaultPreparedStatement(prepId, query, queryKeyspace);
+    }
+
+    private static int[] computePkIndices(Metadata clusterMetadata, ColumnDefinitions boundColumns) {
         List<ColumnMetadata> partitionKeyColumns = null;
         int[] pkIndexes = null;
-        KeyspaceMetadata km = clusterMetadata.getKeyspace(Metadata.quote(defs.getKeyspace(0)));
+        KeyspaceMetadata km = clusterMetadata.getKeyspace(Metadata.quote(boundColumns.getKeyspace(0)));
         if (km != null) {
-            TableMetadata tm = km.getTable(Metadata.quote(defs.getTable(0)));
+            TableMetadata tm = km.getTable(Metadata.quote(boundColumns.getTable(0)));
             if (tm != null) {
                 partitionKeyColumns = tm.getPartitionKey();
                 pkIndexes = new int[partitionKeyColumns.size()];
@@ -62,12 +74,10 @@ public class DefaultPreparedStatement implements PreparedStatement{
         }
 
         // Note: we rely on the fact CQL queries cannot span multiple tables. If that change, we'll have to get smarter.
-        for (int i = 0; i < defs.size(); i++)
-            maybeGetIndex(defs.getName(i), i, partitionKeyColumns, pkIndexes);
+        for (int i = 0; i < boundColumns.size(); i++)
+            maybeGetIndex(boundColumns.getName(i), i, partitionKeyColumns, pkIndexes);
 
-        PreparedId prepId = new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, allSet(pkIndexes) ? pkIndexes : null, protocolVersion);
-
-        return new DefaultPreparedStatement(prepId, query, queryKeyspace);
+        return allSet(pkIndexes) ? pkIndexes : null;
     }
 
     private static void maybeGetIndex(String name, int j, List<ColumnMetadata> pkColumns, int[] pkIndexes) {

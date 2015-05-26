@@ -21,11 +21,13 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import static com.datastax.driver.core.TestUtils.versionCheck;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 /**
@@ -203,9 +205,10 @@ public class LargeDataTest {
 
     /**
      * Test a batch that writes a row of size 10,000
+     * Since Cassandra 2.2 large batches are rejected, see CASSANDRA-8011.
      * @throws Throwable
      */
-    @Test(groups = "short")
+    @Test(groups = "short", expectedExceptions = InvalidQueryException.class)
     @CassandraVersion(major=2.0, minor=0, description="< 2.0 is skipped as 1.2 does not handle large batches well.")
     public void wideBatchRows() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
