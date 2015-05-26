@@ -63,6 +63,9 @@ abstract class Utils {
         if (value == QueryBuilder.bindMarker() || value instanceof FCall || value instanceof CName)
             return null;
 
+        if (value instanceof RawString)
+            return null;
+
         // We also don't serialize fixed size number types. The reason is that if we do it, we will
         // force a particular size (4 bytes for ints, ...) and for the query builder, we don't want
         // users to have to bother with that.
