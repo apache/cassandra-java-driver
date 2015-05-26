@@ -40,6 +40,8 @@ class Responses {
                 ExceptionCode code = ExceptionCode.fromValue(body.readInt());
                 String msg = CBUtil.readString(body);
                 Object infos = null;
+                ConsistencyLevel clt;
+                int received, blockFor;
                 switch (code) {
                     case UNAVAILABLE:
                         ConsistencyLevel clu = CBUtil.readConsistencyLevel(body);
@@ -49,15 +51,29 @@ class Responses {
                         break;
                     case WRITE_TIMEOUT:
                     case READ_TIMEOUT:
-                        ConsistencyLevel clt = CBUtil.readConsistencyLevel(body);
-                        int received = body.readInt();
-                        int blockFor = body.readInt();
+                        clt = CBUtil.readConsistencyLevel(body);
+                        received = body.readInt();
+                        blockFor = body.readInt();
                         if (code == ExceptionCode.WRITE_TIMEOUT) {
                             WriteType writeType = Enum.valueOf(WriteType.class, CBUtil.readString(body));
                             infos = new WriteTimeoutException(clt, writeType, received, blockFor);
                         } else {
                             byte dataPresent = body.readByte();
                             infos = new ReadTimeoutException(clt, received, blockFor, dataPresent != 0);
+                        }
+                        break;
+                    case WRITE_FAILURE:
+                    case READ_FAILURE:
+                        clt = CBUtil.readConsistencyLevel(body);
+                        received = body.readInt();
+                        blockFor = body.readInt();
+                        int failures = body.readInt();
+                        if (code == ExceptionCode.WRITE_FAILURE) {
+                            WriteType writeType = Enum.valueOf(WriteType.class, CBUtil.readString(body));
+                            infos = new WriteFailureException(clt, writeType, received, blockFor, failures);
+                        } else {
+                            byte dataPresent = body.readByte();
+                            infos = new ReadFailureException(clt, received, blockFor, failures, dataPresent != 0);
                         }
                         break;
                     case UNPREPARED:
@@ -97,6 +113,8 @@ class Responses {
                 case TRUNCATE_ERROR:   return new TruncateException(message);
                 case WRITE_TIMEOUT:    return ((WriteTimeoutException)infos).copy();
                 case READ_TIMEOUT:     return ((ReadTimeoutException)infos).copy();
+                case WRITE_FAILURE:    return ((WriteFailureException)infos).copy();
+                case READ_FAILURE:     return ((ReadFailureException)infos).copy();
                 case SYNTAX_ERROR:     return new SyntaxError(message);
                 case UNAUTHORIZED:     return new UnauthorizedException(message);
                 case INVALID:          return new InvalidQueryException(message);

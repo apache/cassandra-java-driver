@@ -18,27 +18,31 @@ package com.datastax.driver.core.exceptions;
 import com.datastax.driver.core.ConsistencyLevel;
 
 /**
- * A Cassandra timeout during a query.
+ * A failure to reach the required consistency level during the execution of a query.
  *
  * Such an exception is returned when the query has been tried by Cassandra but
- * cannot be achieved with the requested consistency level within the rpc
- * timeout set for Cassandra.
+ * cannot be achieved with the requested consistency level because either:
+ * <ul>
+ *     <li>the coordinator did not receive enough replica responses within the rpc timeout
+ *     set for Cassandra;</li>
+ *     <li>some replicas replied with an error.</li>
+ * </ul>.
  */
 @SuppressWarnings("serial")
-public abstract class QueryTimeoutException extends QueryExecutionException {
+public abstract class QueryConsistencyException extends QueryExecutionException {
 
     private final ConsistencyLevel consistency;
     private final int received;
     private final int required;
 
-    protected QueryTimeoutException(String msg, ConsistencyLevel consistency, int received, int required) {
+    protected QueryConsistencyException(String msg, ConsistencyLevel consistency, int received, int required) {
         super(msg);
         this.consistency = consistency;
         this.received = received;
         this.required = required;
     }
 
-    protected QueryTimeoutException(String msg, Throwable cause, ConsistencyLevel consistency, int received, int required) {
+    protected QueryConsistencyException(String msg, Throwable cause, ConsistencyLevel consistency, int received, int required) {
         super(msg, cause);
         this.consistency = consistency;
         this.received = received;
@@ -46,9 +50,9 @@ public abstract class QueryTimeoutException extends QueryExecutionException {
     }
 
     /**
-     * The consistency level of the operation that time outed.
+     * The consistency level of the operation that failed.
      *
-     * @return the consistency level of the operation that time outed.
+     * @return the consistency level of the operation that failed.
      */
     public ConsistencyLevel getConsistencyLevel() {
         return consistency;
@@ -56,10 +60,10 @@ public abstract class QueryTimeoutException extends QueryExecutionException {
 
     /**
      * The number of replica that had acknowledged/responded to the operation
-     * before it time outed.
+     * before it failed.
      *
      * @return the number of replica that had acknowledged/responded the
-     * operation before it time outed.
+     * operation before it failed.
      */
     public int getReceivedAcknowledgements() {
         return received;

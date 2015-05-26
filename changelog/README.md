@@ -12,6 +12,7 @@ Merged from 2.1 branch:
 
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)
 - [new feature] Expose server-side warnings on ExecutionInfo (JAVA-780)
+- [new feature] Expose new read/write failure exceptions (JAVA-749)
 
 
 ### 2.1.6
