@@ -34,11 +34,10 @@ import com.datastax.driver.core.Statement;
  *   find which host to query first, and which hosts to use as failover.</li>
  * </ul>
  * <p>
- * The {@code LoadBalancingPolicy} is a {@link com.datastax.driver.core.Host.StateListener}
- * and is thus informed of hosts up/down events. For efficiency purposes, the
- * policy is expected to exclude down hosts from query plans.
+ * The {@code LoadBalancingPolicy} is informed of hosts up/down events. For efficiency
+ * purposes, the policy is expected to exclude down hosts from query plans.
  */
-public interface LoadBalancingPolicy extends Host.StateListener {
+public interface LoadBalancingPolicy {
 
     /**
      * Initialize this load balancing policy.
@@ -89,6 +88,36 @@ public interface LoadBalancingPolicy extends Host.StateListener {
      * successfully to one of the host.
      */
     public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement);
+
+    /**
+     * Called when a new node is added to the cluster.
+     * <p>
+     * The newly added node should be considered up.
+     *
+     * @param host the host that has been newly added.
+     */
+    void onAdd(Host host);
+
+    /**
+     * Called when a node is determined to be up.
+     *
+     * @param host the host that has been detected up.
+     */
+    void onUp(Host host);
+
+    /**
+     * Called when a node is determined to be down.
+     *
+     * @param host the host that has been detected down.
+     */
+    void onDown(Host host);
+
+    /**
+     * Called when a node is removed from the cluster.
+     *
+     * @param host the removed host.
+     */
+    void onRemove(Host host);
 
     /**
      * Gets invoked at cluster shutdown.

@@ -31,6 +31,7 @@ import javax.naming.directory.InitialDirContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.exceptions.DriverException;
 
 /**
@@ -68,6 +69,11 @@ public class EC2MultiRegionAddressTranslator implements AddressTranslator {
     @VisibleForTesting
     EC2MultiRegionAddressTranslator(DirContext ctx) {
         this.ctx = ctx;
+    }
+
+    @Override
+    public void init(Cluster cluster) {
+        // nothing to do
     }
 
     @Override

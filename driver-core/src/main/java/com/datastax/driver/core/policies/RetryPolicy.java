@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.WriteType;
@@ -171,4 +172,18 @@ public interface RetryPolicy {
      * be thrown for the operation.
      */
     public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry);
+
+    /**
+     * Gets invoked at cluster startup.
+     *
+     * @param cluster the cluster that this policy is associated with.
+     */
+    void init(Cluster cluster);
+
+    /**
+     * Gets invoked at cluster shutdown.
+     *
+     * This gives the policy the opportunity to perform some cleanup, for instance stop threads that it might have started.
+     */
+    void close();
 }

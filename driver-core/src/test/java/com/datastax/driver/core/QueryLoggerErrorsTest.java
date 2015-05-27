@@ -88,7 +88,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     public void should_log_slow_queries() throws Exception {
         // given
         slow.setLevel(DEBUG);
-        queryLogger = builder(cluster)
+        queryLogger = builder()
             .withConstantThreshold(10)
             .build();
         cluster.register(queryLogger);
@@ -113,7 +113,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     public void should_log_timed_out_queries() throws Exception {
         // given
         error.setLevel(DEBUG);
-        queryLogger = builder(cluster).build();
+        queryLogger = builder().build();
         cluster.register(queryLogger);
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(1);
         String query = "SELECT foo FROM bar";
@@ -144,7 +144,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     public void should_log_read_timeout_errors() throws Exception {
         // given
         error.setLevel(DEBUG);
-        queryLogger = builder(cluster).build();
+        queryLogger = builder().build();
         cluster.register(queryLogger);
         String query = "SELECT foo FROM bar";
         primingClient.prime(
@@ -174,7 +174,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     public void should_log_write_timeout_errors() throws Exception {
         // given
         error.setLevel(DEBUG);
-        queryLogger = builder(cluster).build();
+        queryLogger = builder().build();
         cluster.register(queryLogger);
         String query = "UPDATE test SET foo = 'bar' where qix = ?";
         primingClient.prime(
@@ -204,7 +204,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     public void should_log_unavailable_errors() throws Exception {
         // given
         error.setLevel(DEBUG);
-        queryLogger = builder(cluster).build();
+        queryLogger = builder().build();
         cluster.register(queryLogger);
         String query = "SELECT foo FROM bar";
         primingClient.prime(

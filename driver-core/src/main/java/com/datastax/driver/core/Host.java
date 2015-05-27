@@ -285,27 +285,44 @@ public class Host {
          *
          * @param host the host that has been newly added.
          */
-        public void onAdd(Host host);
+        void onAdd(Host host);
 
         /**
          * Called when a node is determined to be up.
          *
          * @param host the host that has been detected up.
          */
-        public void onUp(Host host);
+        void onUp(Host host);
 
         /**
          * Called when a node is determined to be down.
          *
          * @param host the host that has been detected down.
          */
-        public void onDown(Host host);
+        void onDown(Host host);
 
         /**
          * Called when a node is removed from the cluster.
          *
          * @param host the removed host.
          */
-        public void onRemove(Host host);
+        void onRemove(Host host);
+
+        /**
+         * Gets invoked when the tracker is registered with a cluster, or at cluster startup if the
+         * tracker was registered at initialization with
+         * {@link com.datastax.driver.core.Cluster.Initializer#register(LatencyTracker)}.
+         *
+         * @param cluster the cluster that this tracker is registered with.
+         */
+        void onRegister(Cluster cluster);
+
+        /**
+         * Gets invoked when the tracker is unregistered from a cluster, or at cluster shutdown if
+         * the tracker was not unregistered.
+         *
+         * @param cluster the cluster that this tracker was registered with.
+         */
+        void onUnregister(Cluster cluster);
     }
 }

@@ -86,5 +86,11 @@ public class StateListenerTest {
         public void onDown(Host host) { downs.add(host); }
 
         public void onRemove(Host host) { removes.add(host); }
+
+        @Override
+        public void onRegister(Cluster cluster) {}
+
+        @Override
+        public void onUnregister(Cluster cluster) {}
     }
 }

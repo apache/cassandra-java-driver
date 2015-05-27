@@ -375,6 +375,7 @@ public class Cluster implements Closeable {
      */
     public Cluster register(Host.StateListener listener) {
         checkNotClosed(manager);
+        listener.onRegister(this);
         manager.listeners.add(listener);
         return this;
     }
@@ -390,6 +391,7 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(Host.StateListener listener) {
         checkNotClosed(manager);
+        listener.onUnregister(this);
         manager.listeners.remove(listener);
         return this;
     }
@@ -415,6 +417,7 @@ public class Cluster implements Closeable {
      */
     public Cluster register(LatencyTracker tracker) {
         checkNotClosed(manager);
+        tracker.onRegister(this);
         manager.trackers.add(tracker);
         return this;
     }
@@ -431,6 +434,7 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(LatencyTracker tracker) {
         checkNotClosed(manager);
+        tracker.onUnregister(this);
         manager.trackers.remove(tracker);
         return this;
     }
@@ -1275,6 +1279,16 @@ public class Cluster implements Closeable {
                 // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
                 // rack...) to initialize the load balancing policy
                 loadBalancingPolicy().init(Cluster.this, contactPointHosts);
+
+                speculativeExecutionPolicy().init(Cluster.this);
+                configuration.getPolicies().getRetryPolicy().init(Cluster.this);
+                reconnectionPolicy().init(Cluster.this);
+                configuration.getPolicies().getAddressTranslator().init(Cluster.this);
+                for (LatencyTracker tracker : trackers)
+                    tracker.onRegister(Cluster.this);
+                for (Host.StateListener listener : listeners)
+                    listener.onRegister(Cluster.this);
+
                 for (Host host : downContactPointHosts) {
                     loadBalancingPolicy().onDown(host);
                     for (Host.StateListener listener : listeners)
@@ -1339,7 +1353,7 @@ public class Cluster implements Closeable {
             return configuration.getPolicies().getLoadBalancingPolicy();
         }
 
-        SpeculativeExecutionPolicy speculativeRetryPolicy() {
+        SpeculativeExecutionPolicy speculativeExecutionPolicy() {
             return configuration.getPolicies().getSpeculativeExecutionPolicy();
         }
 
@@ -1395,10 +1409,15 @@ public class Cluster implements Closeable {
                 if (metrics != null)
                     metrics.shutdown();
 
-                // And the load balancing policy
                 loadBalancingPolicy().close();
-
+                speculativeExecutionPolicy().close();
+                configuration.getPolicies().getRetryPolicy().close();
+                reconnectionPolicy().close();
                 configuration.getPolicies().getAddressTranslator().close();
+                for (LatencyTracker tracker : trackers)
+                    tracker.onUnregister(Cluster.this);
+                for (Host.StateListener listener : listeners)
+                    listener.onUnregister(Cluster.this);
 
                 // Then we shutdown all connections
                 List<CloseFuture> futures = new ArrayList<CloseFuture>(sessions.size() + 1);

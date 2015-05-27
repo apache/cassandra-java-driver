@@ -135,7 +135,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_log_regular_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withConstantThreshold(Long.MAX_VALUE)
             .build();
         cluster.register(queryLogger);
@@ -154,7 +154,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_log_bound_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withConstantThreshold(Long.MAX_VALUE)
             .build();
         cluster.register(queryLogger);
@@ -176,7 +176,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_log_batch_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withConstantThreshold(Long.MAX_VALUE)
             .withMaxQueryStringLength(Integer.MAX_VALUE)
             .build();
@@ -207,7 +207,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_log_unlogged_batch_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withConstantThreshold(Long.MAX_VALUE)
             .withMaxQueryStringLength(Integer.MAX_VALUE)
             .build();
@@ -242,7 +242,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
                 .withConstantThreshold(Long.MAX_VALUE)
                 .withMaxQueryStringLength(Integer.MAX_VALUE)
                 .build();
@@ -288,7 +288,8 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
             }
         };
         // when
-        queryLogger = QueryLogger.builder(mock(Cluster.class)).build();
+        queryLogger = QueryLogger.builder().build();
+        queryLogger.onRegister(mock(Cluster.class));
         queryLogger.update(null, unknownStatement, null, 0);
         // then
         String line = normalAppender.get();
@@ -304,7 +305,8 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
         slow.setLevel(INFO);
         error.setLevel(INFO);
         // when
-        queryLogger = QueryLogger.builder(mock(Cluster.class)).build();
+        queryLogger = QueryLogger.builder().build();
+        queryLogger.onRegister(mock(Cluster.class));
         queryLogger.update(null, mock(BoundStatement.class), null, 0);
         // then
         assertThat(normalAppender.get()).isEmpty();
@@ -319,7 +321,8 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
         slow.setLevel(INFO);
         error.setLevel(INFO);
         // when
-        queryLogger = QueryLogger.builder(mock(Cluster.class)).build();
+        queryLogger = QueryLogger.builder().build();
+        queryLogger.onRegister(mock(Cluster.class));
         queryLogger.update(null, mock(BoundStatement.class), null, DEFAULT_SLOW_QUERY_THRESHOLD_MS + 1);
         // then
         assertThat(normalAppender.get()).isEmpty();
@@ -334,7 +337,8 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
         slow.setLevel(INFO);
         error.setLevel(INFO);
         // when
-        queryLogger = QueryLogger.builder(mock(Cluster.class)).build();
+        queryLogger = QueryLogger.builder().build();
+        queryLogger.onRegister(mock(Cluster.class));
         queryLogger.update(null, mock(BoundStatement.class), new DriverException("booh"), 0);
         // then
         assertThat(normalAppender.get()).isEmpty();
@@ -348,7 +352,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_log_normal_queries() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withConstantThreshold(Long.MAX_VALUE)
             .withMaxQueryStringLength(Integer.MAX_VALUE)
             .build();
@@ -376,7 +380,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_log_non_null_named_parameter() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withConstantThreshold(Long.MAX_VALUE)
             .withMaxQueryStringLength(Integer.MAX_VALUE)
             .build();
@@ -402,7 +406,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_log_non_null_positional_parameter() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster).build();
+        queryLogger = QueryLogger.builder().build();
         cluster.register(queryLogger);
         // when
         String query = "UPDATE test SET c_text = ? WHERE pk = ?";
@@ -425,7 +429,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_log_null_parameter() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster).build();
+        queryLogger = QueryLogger.builder().build();
         cluster.register(queryLogger);
         // when
         String query = "UPDATE test SET c_text = ? WHERE pk = ?";
@@ -449,7 +453,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_log_bound_statement_parameters_inside_batch_statement() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster).build();
+        queryLogger = QueryLogger.builder().build();
         cluster.register(queryLogger);
         // when
         String query1 = "UPDATE test SET c_text = ? WHERE pk = ?";
@@ -476,7 +480,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_log_all_parameter_types() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withMaxParameterValueLength(Integer.MAX_VALUE)
             .build();
         cluster.register(queryLogger);
@@ -502,7 +506,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_truncate_query_when_max_length_exceeded() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withMaxQueryStringLength(5)
             .build();
         cluster.register(queryLogger);
@@ -523,7 +527,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_show_total_statements_for_batches_even_if_query_truncated() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withMaxQueryStringLength(5)
             .build();
         cluster.register(queryLogger);
@@ -549,7 +553,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_not_truncate_query_when_max_length_unlimited() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withMaxQueryStringLength(-1)
             .build();
         cluster.register(queryLogger);
@@ -570,7 +574,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_truncate_parameter_when_max_length_exceeded() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withMaxParameterValueLength(5)
             .build();
         cluster.register(queryLogger);
@@ -594,7 +598,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_truncate_blob_parameter_when_max_length_exceeded() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withMaxParameterValueLength(6)
             .build();
         cluster.register(queryLogger);
@@ -618,7 +622,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_not_truncate_parameter_when_max_length_unlimited() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withMaxParameterValueLength(-1)
             .build();
         cluster.register(queryLogger);
@@ -642,7 +646,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_not_log_exceeding_number_of_parameters() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withMaxLoggedParameters(1)
             .build();
         cluster.register(queryLogger);
@@ -668,7 +672,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_not_log_exceeding_number_of_parameters_in_batch_statement() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withMaxLoggedParameters(1)
             .build();
         cluster.register(queryLogger);
@@ -697,7 +701,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_log_all_parameters_when_max_unlimited() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder()
             .withMaxLoggedParameters(-1)
             .build();
         cluster.register(queryLogger);

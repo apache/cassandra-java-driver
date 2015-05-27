@@ -195,7 +195,7 @@ public abstract class QueryLogger implements LatencyTracker {
     @VisibleForTesting
     static final String FURTHER_PARAMS_OMITTED = " [further parameters omitted]";
 
-    protected final Cluster cluster;
+    protected volatile Cluster cluster;
 
     private volatile ProtocolVersion protocolVersion;
 
@@ -208,8 +208,7 @@ public abstract class QueryLogger implements LatencyTracker {
     /**
      * Private constructor. Instances of QueryLogger should be obtained via the {@link #builder(Cluster)} method.
      */
-    private QueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters) {
-        this.cluster = cluster;
+    private QueryLogger(int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters) {
         this.maxQueryStringLength = maxQueryStringLength;
         this.maxParameterValueLength = maxParameterValueLength;
         this.maxLoggedParameters = maxLoggedParameters;
@@ -220,13 +219,21 @@ public abstract class QueryLogger implements LatencyTracker {
      * <p>
      * This is a convenience method for {@code new QueryLogger.Builder()}.
      *
-     * @param cluster the {@link Cluster} this QueryLogger will be attached to.
      * @return the new QueryLogger builder.
      * @throws NullPointerException if {@code cluster} is {@code null}.
      */
-    public static QueryLogger.Builder builder(Cluster cluster) {
-        if(cluster == null) throw new NullPointerException("QueryLogger.Builder: cluster parameter cannot be null");
-        return new QueryLogger.Builder(cluster);
+    public static QueryLogger.Builder builder() {
+        return new QueryLogger.Builder();
+    }
+
+    @Override
+    public void onRegister(Cluster cluster) {
+        this.cluster = cluster;
+    }
+
+    @Override
+    public void onUnregister(Cluster cluster) {
+        // nothing to do
     }
 
     /**
@@ -239,8 +246,8 @@ public abstract class QueryLogger implements LatencyTracker {
 
         private volatile long slowQueryLatencyThresholdMillis;
 
-        private ConstantThresholdQueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, long slowQueryLatencyThresholdMillis) {
-            super(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters);
+        private ConstantThresholdQueryLogger(int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, long slowQueryLatencyThresholdMillis) {
+            super(maxQueryStringLength, maxParameterValueLength, maxLoggedParameters);
             this.setSlowQueryLatencyThresholdMillis(slowQueryLatencyThresholdMillis);
         }
 
@@ -304,8 +311,8 @@ public abstract class QueryLogger implements LatencyTracker {
 
         private volatile PerHostPercentileTracker perHostPercentileLatencyTracker;
 
-        private DynamicThresholdQueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, double slowQueryLatencyThresholdPercentile, PerHostPercentileTracker perHostPercentileLatencyTracker) {
-            super(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters);
+        private DynamicThresholdQueryLogger(int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, double slowQueryLatencyThresholdPercentile, PerHostPercentileTracker perHostPercentileLatencyTracker) {
+            super(maxQueryStringLength, maxParameterValueLength, maxLoggedParameters);
             this.setSlowQueryLatencyThresholdPercentile(slowQueryLatencyThresholdPercentile);
             this.setPerHostPercentileLatencyTracker(perHostPercentileLatencyTracker);
         }
@@ -382,8 +389,6 @@ public abstract class QueryLogger implements LatencyTracker {
      */
     public static class Builder {
 
-        private final Cluster cluster;
-
         private int maxQueryStringLength = DEFAULT_MAX_QUERY_STRING_LENGTH;
 
         private int maxParameterValueLength = DEFAULT_MAX_PARAMETER_VALUE_LENGTH;
@@ -397,10 +402,6 @@ public abstract class QueryLogger implements LatencyTracker {
         private PerHostPercentileTracker perHostPercentileLatencyTracker;
 
         private boolean constantThreshold = true;
-
-        public Builder(Cluster cluster) {
-            this.cluster = cluster;
-        }
 
         /**
          * Enables slow query latency tracking based on constant thresholds.
@@ -508,9 +509,9 @@ public abstract class QueryLogger implements LatencyTracker {
          */
         public QueryLogger build() {
             if(constantThreshold) {
-                return new ConstantThresholdQueryLogger(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdMillis);
+                return new ConstantThresholdQueryLogger(maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdMillis);
             } else {
-                return new DynamicThresholdQueryLogger(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdPercentile, perHostPercentileLatencyTracker);
+                return new DynamicThresholdQueryLogger(maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdPercentile, perHostPercentileLatencyTracker);
             }
         }
 
@@ -615,6 +616,9 @@ public abstract class QueryLogger implements LatencyTracker {
      */
     @Override
     public void update(Host host, Statement statement, Exception exception, long newLatencyNanos) {
+        if (cluster == null)
+            throw new IllegalStateException("This method should only be called after the logger has been registered with a cluster");
+
         long latencyMs = NANOSECONDS.toMillis(newLatencyNanos);
         if (exception == null) {
             maybeLogNormalOrSlowQuery(host, statement, latencyMs);

@@ -121,5 +121,13 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
         @Override
         public void onRemove(Host host) {
         }
+
+        @Override
+        public void onRegister(Cluster cluster) {
+        }
+
+        @Override
+        public void onUnregister(Cluster cluster) {
+        }
     }
 }

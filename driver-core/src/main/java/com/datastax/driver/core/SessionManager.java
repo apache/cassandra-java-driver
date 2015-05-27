@@ -180,8 +180,8 @@ class SessionManager extends AbstractSession {
         return cluster.manager.loadBalancingPolicy();
     }
 
-    SpeculativeExecutionPolicy speculativeRetryPolicy() {
-        return cluster.manager.speculativeRetryPolicy();
+    SpeculativeExecutionPolicy speculativeExecutionPolicy() {
+        return cluster.manager.speculativeExecutionPolicy();
     }
 
     ReconnectionPolicy reconnectionPolicy() {

@@ -43,6 +43,13 @@ import com.datastax.driver.core.Cluster;
 public interface AddressTranslator {
 
     /**
+     * Initializes this address translator.
+     *
+     * @param cluster the {@code Cluster} instance for which the translator is created.
+     */
+    void init(Cluster cluster);
+
+    /**
      * Translates a Cassandra {@code rpc_address} to another address if necessary.
      *
      * @param address the address of a node as returned by Cassandra. Note that
@@ -55,7 +62,7 @@ public interface AddressTranslator {
      * address} will be used by the driver (it is thus equivalent to returing
      * {@code address} directly)
      */
-    public InetSocketAddress translate(InetSocketAddress address);
+    InetSocketAddress translate(InetSocketAddress address);
 
     /**
      * Called at {@link Cluster} shutdown.

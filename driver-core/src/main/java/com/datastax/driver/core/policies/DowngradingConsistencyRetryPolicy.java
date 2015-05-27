@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.WriteType;
@@ -193,5 +194,15 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
 
         // Tries the biggest CL that is expected to work
         return maxLikelyToWorkCL(aliveReplica);
+    }
+
+    @Override
+    public void init(Cluster cluster) {
+        // nothing to do
+    }
+
+    @Override
+    public void close() {
+        // nothing to do
     }
 }

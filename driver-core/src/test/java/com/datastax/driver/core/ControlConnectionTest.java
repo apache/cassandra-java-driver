@@ -23,10 +23,7 @@ import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
-import com.datastax.driver.core.policies.LoadBalancingPolicy;
-import com.datastax.driver.core.policies.Policies;
-import com.datastax.driver.core.policies.ReconnectionPolicy;
+import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.utils.CassandraVersion;
 
 public class ControlConnectionTest {
@@ -43,17 +40,7 @@ public class ControlConnectionTest {
 
         // Custom reconnection policy with a very large delay (longer than the test duration), to make sure we count
         // only the first reconnection attempt of each reconnection handler.
-        ReconnectionPolicy reconnectionPolicy = new ReconnectionPolicy() {
-            @Override
-            public ReconnectionSchedule newSchedule() {
-                return new ReconnectionSchedule() {
-                    @Override
-                    public long nextDelayMs() {
-                        return 60 * 1000;
-                    }
-                };
-            }
-        };
+        ReconnectionPolicy reconnectionPolicy = new ConstantReconnectionPolicy(60 * 1000);
 
         try {
             ccm = CCMBridge.create("test", 2);

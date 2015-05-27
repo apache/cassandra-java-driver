@@ -438,6 +438,16 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
         public void resetHost(Host host) {
             latencies.remove(host);
         }
+
+        @Override
+        public void onRegister(Cluster cluster) {
+            // nothing to do
+        }
+
+        @Override
+        public void onUnregister(Cluster cluster) {
+            // nothing to do
+        }
     }
 
     private static class TimestampedAverage {

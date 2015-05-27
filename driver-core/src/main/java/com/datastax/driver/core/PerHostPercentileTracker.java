@@ -314,4 +314,14 @@ public class PerHostPercentileTracker implements LatencyTracker {
         UnpreparedException.class,
         QueryValidationException.class // query validation also happens at early stages in the coordinator
     );
+
+    @Override
+    public void onRegister(Cluster cluster) {
+        // nothing to do
+    }
+
+    @Override
+    public void onUnregister(Cluster cluster) {
+        // nothing to do
+    }
 }
