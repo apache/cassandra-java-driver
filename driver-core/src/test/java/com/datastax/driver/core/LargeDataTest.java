@@ -58,7 +58,7 @@ public class LargeDataTest {
     }
 
     /*
-     * Test a batch that writes a row of size 10,000
+     * Test a batch that writes a row of size 4,000
      * @param c The cluster object
      * @param key The key value that will receive the data
      * @throws Throwable
@@ -66,7 +66,7 @@ public class LargeDataTest {
     private void testWideBatchRows(CCMBridge.CCMCluster c, int key) throws Throwable {
         // Write data
         Batch q = batch();
-        for (int i = 0; i < 10000; ++i) {
+        for (int i = 0; i < 4000; ++i) {
             q = q.add(insertInto("wide_batch_rows").value("k", key).value("i", i));
         }
         c.session.execute(q.setConsistencyLevel(ConsistencyLevel.QUORUM));
@@ -204,11 +204,10 @@ public class LargeDataTest {
     }
 
     /**
-     * Test a batch that writes a row of size 10,000
-     * Since Cassandra 2.2 large batches are rejected, see CASSANDRA-8011.
+     * Test a batch that writes a row of size 4,000 (just below the error threshold for 2.2).
      * @throws Throwable
      */
-    @Test(groups = "short", expectedExceptions = InvalidQueryException.class)
+    @Test(groups = "short")
     @CassandraVersion(major=2.0, minor=0, description="< 2.0 is skipped as 1.2 does not handle large batches well.")
     public void wideBatchRows() throws Throwable {
         Cluster.Builder builder = Cluster.builder();

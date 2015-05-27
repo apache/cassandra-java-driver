@@ -450,6 +450,15 @@ public abstract class TestUtils {
     }
 
     /**
+     * @param maximumAllowed The maximum protocol version to use.
+     * @return The desired protocolVersion or maximumAllowed if {@link #getDesiredProtocolVersion} is greater.
+     */
+    public static ProtocolVersion getDesiredProtocolVersion(ProtocolVersion maximumAllowed) {
+        ProtocolVersion versionToUse = getDesiredProtocolVersion();
+        return versionToUse.compareTo(maximumAllowed) > 0 ? maximumAllowed : versionToUse;
+    }
+
+    /**
      * @return a {@Cluster} instance that connects only to the control host of the given cluster.
      */
     public static Cluster buildControlCluster(Cluster cluster) {

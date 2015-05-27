@@ -454,17 +454,20 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     /**
-     * Tests that, under protocol versions lesser that V4,
+     * Tests that, under protocol versions lesser than V4,
      * it is NOT possible to execute a prepared statement with unbound values.
-     * Note that we have to force protocol version V3 because
+     * Note that we have to force protocol version to less than V4 because
      * higher protocol versions would allow such unbound values to be sent.
+     *
+     * @since 2.2.0
+     * @test_category prepared_statements:binding
+     * @jira_ticket JAVA-777
      */
     @Test(groups = "short")
-    @CassandraVersion(major=2.1)
     public void should_not_allow_unbound_value_on_bound_statement_when_protocol_lesser_than_v4() {
         Cluster cluster = Cluster.builder()
             .addContactPointsWithPorts(Collections.singleton(hostAddress))
-            .withProtocolVersion(V3)
+            .withProtocolVersion(TestUtils.getDesiredProtocolVersion(ProtocolVersion.V3))
             .build();
         Session session = cluster.connect();
         try {
@@ -484,15 +487,19 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Tests that, under protocol versions lesser that V4,
      * it is NOT possible to execute a prepared statement with unbound values.
-     * Note that we have to force protocol version V3 because
+     * Note that we have to force protocol version to less than V4 because
      * higher protocol versions would allow such unbound values to be sent.
+     *
+     * @since 2.2.0
+     * @test_category prepared_statements:binding
+     * @jira_ticket JAVA-777
      */
     @Test(groups = "short")
-    @CassandraVersion(major=2.1)
+    @CassandraVersion(major=2.0)
     public void should_not_allow_unbound_value_on_batch_statement_when_protocol_lesser_than_v4() {
         Cluster cluster = Cluster.builder()
             .addContactPointsWithPorts(Collections.singleton(hostAddress))
-            .withProtocolVersion(V3)
+            .withProtocolVersion(TestUtils.getDesiredProtocolVersion(ProtocolVersion.V3))
             .build();
         Session session = cluster.connect();
         try {
@@ -511,9 +518,13 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     /**
-     * Tests that a tombstone is NOT crated when a column in a prepared statement
+     * Tests that a tombstone is NOT created when a column in a prepared statement
      * is not bound (UNSET flag).
      * This only works from protocol V4 onwards.
+     *
+     * @since 2.2.0
+     * @test_category prepared_statements:binding
+     * @jira_ticket JAVA-777
      */
     @Test(groups = "short")
     @CassandraVersion(major = 2.2)
@@ -536,9 +547,13 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     /**
-     * Tests that a tombstone is NOT crated when a column in a prepared statement
+     * Tests that a tombstone is NOT created when a column in a prepared statement
      * is not bound (UNSET flag).
      * This only works from protocol V4 onwards.
+     *
+     * @since 2.2.0
+     * @test_category prepared_statements:binding
+     * @jira_ticket JAVA-777
      */
     @Test(groups = "short")
     @CassandraVersion(major = 2.2)
@@ -561,7 +576,11 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     /**
-     * Tests that a tombstone is crated when binding a null value to a column in a prepared statement.
+     * Tests that a tombstone is created when binding a null value to a column in a prepared statement.
+     *
+     * @since 2.2.0
+     * @test_category prepared_statements:binding
+     * @jira_ticket JAVA-777
      */
     @Test(groups = "short")
     public void should_create_tombstone_when_null_value_on_bound_statement() {
@@ -579,9 +598,14 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     /**
-     * Tests that a tombstone is crated when binding a null value to a column in a prepared statement.
+     * Tests that a tombstone is created when binding a null value to a column in a batch statement.
+     *
+     * @since 2.2.0
+     * @test_category prepared_statements:binding
+     * @jira_ticket JAVA-777
      */
     @Test(groups = "short")
+    @CassandraVersion(major=2.0)
     public void should_create_tombstone_when_null_value_on_batch_statement() {
         PreparedStatement prepared = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BoundStatement st1 = prepared.bind();
