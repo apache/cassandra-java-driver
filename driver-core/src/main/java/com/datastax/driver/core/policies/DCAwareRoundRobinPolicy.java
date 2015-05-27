@@ -19,9 +19,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.base.Joiner;
@@ -53,7 +50,7 @@ import com.datastax.driver.core.Statement;
  * incurs a slight overhead so the {@code LoadBalancingPolicy.RoundRobin}
  * policy could be preferred to this policy in that case.
  */
-public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLoadBalancingPolicy {
+public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
 
     private static final Logger logger = LoggerFactory.getLogger(DCAwareRoundRobinPolicy.class);
 

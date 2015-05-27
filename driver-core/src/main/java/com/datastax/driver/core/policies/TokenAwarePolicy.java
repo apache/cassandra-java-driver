@@ -46,7 +46,7 @@ import com.datastax.driver.core.*;
  * token aware policy, replicas from remote data centers may only be
  * returned after all the host of the local data center.
  */
-public class TokenAwarePolicy implements ChainableLoadBalancingPolicy, CloseableLoadBalancingPolicy {
+public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
     private final LoadBalancingPolicy childPolicy;
     private final boolean shuffleReplicas;
@@ -187,7 +187,6 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy, Closeable
 
     @Override
     public void close() {
-        if (childPolicy instanceof CloseableLoadBalancingPolicy)
-            ((CloseableLoadBalancingPolicy)childPolicy).close();
+        childPolicy.close();
     }
 }

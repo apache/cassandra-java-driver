@@ -28,7 +28,7 @@ import com.datastax.driver.core.Statement;
  *
  * NB: this is currently only used in tests, but could be provided as a convenience in the production code.
  */
-public abstract class DelegatingLoadBalancingPolicy implements ChainableLoadBalancingPolicy, CloseableLoadBalancingPolicy {
+public abstract class DelegatingLoadBalancingPolicy implements ChainableLoadBalancingPolicy {
     protected final LoadBalancingPolicy delegate;
 
     public DelegatingLoadBalancingPolicy(LoadBalancingPolicy delegate) {
@@ -70,7 +70,6 @@ public abstract class DelegatingLoadBalancingPolicy implements ChainableLoadBala
 
     @Override
     public void close() {
-        if (delegate instanceof CloseableLoadBalancingPolicy)
-            ((CloseableLoadBalancingPolicy)delegate).close();
+        delegate.close();
     }
 }

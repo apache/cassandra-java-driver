@@ -89,4 +89,11 @@ public interface LoadBalancingPolicy extends Host.StateListener {
      * successfully to one of the host.
      */
     public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement);
+
+    /**
+     * Gets invoked at cluster shutdown.
+     *
+     * This gives the policy the opportunity to perform some cleanup, for instance stop threads that it might have started.
+     */
+    void close();
 }

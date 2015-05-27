@@ -61,7 +61,7 @@ public class LoadBalancingPolicyRefreshTest {
         public void onRemove(Host h) {}
         public void onUp(Host h) {}
         public void onDown(Host h) {}
-        public void onSuspected(Host h) {}
+        public void close(){}
     }
 
     @Test(groups = "short")

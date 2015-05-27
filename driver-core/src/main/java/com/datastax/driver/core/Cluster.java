@@ -1396,9 +1396,7 @@ public class Cluster implements Closeable {
                     metrics.shutdown();
 
                 // And the load balancing policy
-                LoadBalancingPolicy loadBalancingPolicy = loadBalancingPolicy();
-                if (loadBalancingPolicy instanceof CloseableLoadBalancingPolicy)
-                    ((CloseableLoadBalancingPolicy)loadBalancingPolicy).close();
+                loadBalancingPolicy().close();
 
                 AddressTranslator translator = configuration.getPolicies().getAddressTranslator();
                 if (translator instanceof CloseableAddressTranslator)

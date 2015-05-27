@@ -60,7 +60,7 @@ import com.datastax.driver.core.exceptions.*;
  *
  * @since 1.0.4
  */
-public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy, CloseableLoadBalancingPolicy {
+public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
 
     private static final Logger logger = LoggerFactory.getLogger(LatencyAwarePolicy.class);
 
@@ -715,8 +715,7 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy, Closeab
 
     @Override
     public void close() {
-        if (childPolicy instanceof CloseableLoadBalancingPolicy)
-            ((CloseableLoadBalancingPolicy)childPolicy).close();
+        childPolicy.close();
         updaterService.shutdown();
     }
 }

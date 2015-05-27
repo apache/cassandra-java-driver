@@ -236,6 +236,9 @@ public class SpeculativeExecutionTest {
         public void onRemove(Host host) {
             onDown(host);
         }
+
+        @Override
+        public void close() {}
     }
 
     /**
