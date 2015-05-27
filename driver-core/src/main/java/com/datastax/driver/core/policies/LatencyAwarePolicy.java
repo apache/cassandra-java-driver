@@ -271,11 +271,6 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy, Closeab
     }
 
     @Override
-    public void onSuspected(Host host) {
-        childPolicy.onSuspected(host);
-    }
-
-    @Override
     public void onDown(Host host) {
         childPolicy.onDown(host);
         latencyTracker.resetHost(host);

@@ -358,10 +358,6 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
     }
 
     @Override
-    public void onSuspected(Host host) {
-    }
-
-    @Override
     public void onDown(Host host) {
         CopyOnWriteArrayList<Host> dcHosts = perDcLiveHosts.get(dc(host));
         if (dcHosts != null)

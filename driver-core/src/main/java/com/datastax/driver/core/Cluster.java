@@ -711,23 +711,6 @@ public class Cluster implements Closeable {
         }
 
         /**
-         * The native protocol version to use, as a number.
-         *
-         * @param version the native protocol version as a number.
-         * @return this Builder.
-         * @throws IllegalArgumentException if the number does not correspond to any known
-         * native protocol version.
-         *
-         * @deprecated This method is provided for backward compatibility. Use
-         * {@link #withProtocolVersion(ProtocolVersion)} instead.
-         */
-        @Deprecated
-        public Builder withProtocolVersion(int version) {
-            this.protocolVersion = ProtocolVersion.fromInt(version);
-            return this;
-        }
-
-        /**
          * Adds a contact point.
          * <p>
          * Contact points are addresses of Cassandra nodes that the driver uses

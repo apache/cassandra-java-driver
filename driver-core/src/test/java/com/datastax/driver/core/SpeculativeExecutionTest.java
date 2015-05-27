@@ -236,10 +236,6 @@ public class SpeculativeExecutionTest {
         public void onRemove(Host host) {
             onDown(host);
         }
-
-        @Override
-        public void onSuspected(Host host) {
-        }
     }
 
     /**

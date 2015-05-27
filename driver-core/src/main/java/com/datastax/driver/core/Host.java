@@ -200,23 +200,6 @@ public class Host {
     }
 
     /**
-     * Returns a {@code ListenableFuture} representing the completion of the first
-     * reconnection attempt after a node has been suspected.
-     * <p>
-     * This is useful in load balancing policies when there are no more live nodes and
-     * we are trying suspected nodes.
-     *
-     * @return the future.
-     *
-     * @deprecated the suspicion mechanism has been disabled. This will always return
-     * a completed future.
-     */
-    @Deprecated
-    public ListenableFuture<?> getInitialReconnectionAttemptFuture() {
-        return Futures.immediateFuture(null);
-    }
-
-    /**
      * Returns a {@code ListenableFuture} representing the completion of the reconnection
      * attempts scheduled after a host is marked {@code DOWN}.
      * <p>
@@ -310,32 +293,6 @@ public class Host {
          * @param host the host that has been detected up.
          */
         public void onUp(Host host);
-
-        /**
-         * Called when a node is suspected to be dead.
-         * <p>
-         * A node is suspected to be dead when an error occurs on one of it's
-         * opened connection. As soon as an host is suspected, a connection attempt
-         * to that host is immediately tried. If this succeed, then it means that
-         * the connection was disfunctional but that the node was not really down.
-         * If this fails however, this means the node is truly dead, onDown() is
-         * called and further reconnection attempts are scheduled according to the
-         * {@link com.datastax.driver.core.policies.ReconnectionPolicy} in place.
-         * <p>
-         * When this event is triggered, it is possible to call the host
-         * {@link #getInitialReconnectionAttemptFuture} method to wait until the
-         * initial and immediate reconnection attempt succeed or fail.
-         * <p>
-         * Note that some StateListener may ignore that event. If a node that
-         * that is suspected down turns out to be truly down (that is, the driver
-         * cannot successfully connect to it right away), then {@link #onDown} will
-         * be called.
-         *
-         * @deprecated the suspicion mechanism has been disabled. This will never
-         * get called.
-         */
-        @Deprecated
-        public void onSuspected(Host host);
 
         /**
          * Called when a node is determined to be down.

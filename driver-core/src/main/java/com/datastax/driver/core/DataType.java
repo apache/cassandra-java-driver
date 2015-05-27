@@ -659,7 +659,7 @@ public abstract class DataType {
      * @param value the value to serialize.
      * @param protocolVersion the protocol version to use when serializing
      * {@code bytes}. In most cases, the proper value to provide for this argument
-     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
+     * is the value returned by {@link ProtocolOptions#getProtocolVersionEnum} (which
      * is the protocol version in use by the driver).
      * @return the value serialized, or {@code null} if {@code value} is null.
      *
@@ -681,34 +681,12 @@ public abstract class DataType {
     }
 
     /**
-     * Serialize a value of this type to bytes, with the given numeric protocol version.
-     *
-     * @throws IllegalArgumentException if {@code protocolVersion} does not correspond to any known version.
-     *
-     * @deprecated This method is provided for backward compatibility. Use
-     * {@link #serialize(Object, ProtocolVersion)} instead.
-     */
-    @Deprecated
-    public ByteBuffer serialize(Object value, int protocolVersion) {
-        return serialize(value, ProtocolVersion.fromInt(protocolVersion));
-    }
-
-    /**
-     * @deprecated This method is provided for binary compatibility only. It is no longer supported, will be removed,
-     * and simply throws {@link UnsupportedOperationException}. Use {@link #serialize(Object, ProtocolVersion)} instead.
-     */
-    @Deprecated
-    public ByteBuffer serialize(Object value) {
-        throw new UnsupportedOperationException("Method no longer supported; use serialize(Object,ProtocolVersion)");
-    }
-
-    /**
      * Deserialize a value of this type from the provided bytes using the given protocol version.
      *
      * @param bytes bytes holding the value to deserialize.
      * @param protocolVersion the protocol version to use when deserializing
      * {@code bytes}. In most cases, the proper value to provide for this argument
-     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
+     * is the value returned by {@link ProtocolOptions#getProtocolVersionEnum} (which
      * is the protocol version in use by the driver).
      * @return the deserialized value (of class {@code this.asJavaClass()}).
      * Will return {@code null} if either {@code bytes} is {@code null} or if
@@ -740,15 +718,6 @@ public abstract class DataType {
     }
 
     /**
-     * @deprecated This method is provided for binary compatibility only. It is no longer supported, will be removed,
-     * and simply throws {@link UnsupportedOperationException}. Use {@link #deserialize(ByteBuffer, ProtocolVersion)} instead.
-     */
-    @Deprecated
-    public Object deserialize(ByteBuffer bytes) {
-        throw new UnsupportedOperationException("Method no longer supported; use deserialize(ByteBuffer,ProtocolVersion)");
-    }
-
-    /**
      * Serialize an object based on its java class.
      * <p>
      * This is equivalent to {@link #serialize} but with the difference that
@@ -761,7 +730,7 @@ public abstract class DataType {
      * @param value the value to serialize.
      * @param protocolVersion the protocol version to use when deserializing
      * {@code bytes}. In most cases, the proper value to provide for this argument
-     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
+     * is the value returned by {@link ProtocolOptions#getProtocolVersionEnum} (which
      * is the protocol version in use by the driver).
      * @return the value serialized, or {@code null} if {@code value} is null.
      *
@@ -785,28 +754,6 @@ public abstract class DataType {
             // wrong on that.
             throw new IllegalArgumentException(e.getMessage());
         }
-    }
-
-    /**
-     * Serialize an object based on its java class, with the given numeric protocol version.
-     *
-     * @throws IllegalArgumentException if {@code protocolVersion} does not correspond to any known version.
-     *
-     * @deprecated This method is provided for backward compatibility. Use
-     * {@link #serializeValue(Object, ProtocolVersion)} instead.
-     */
-    @Deprecated
-    public static ByteBuffer serializeValue(Object value, int protocolVersion) {
-        return serializeValue(value, ProtocolVersion.fromInt(protocolVersion));
-    }
-
-    /**
-     * @deprecated This method is provided for binary compatibility only. It is no longer supported, will be removed,
-     * and simply throws {@link UnsupportedOperationException}. Use {@link #serializeValue(Object, ProtocolVersion)} instead.
-     */
-    @Deprecated
-    public static ByteBuffer serializeValue(Object value) {
-        throw new UnsupportedOperationException("Method no longer supported; use serializeValue(Object,ProtocolVersion)");
     }
 
     private static class Native extends DataType {

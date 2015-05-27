@@ -90,50 +90,6 @@ public class PoolingOptions {
     }
 
     /**
-     * Returns the number of simultaneous requests on a connection below which
-     * connections in excess are reclaimed.
-     * <p>
-     * This option is only used with {@code ProtocolVersion#V2} or below.
-     * <p>
-     * If an opened connection to an host at distance {@code distance}
-     * handles less than this number of simultaneous requests and there is
-     * more than {@link #getCoreConnectionsPerHost} connections open to this
-     * host, the connection is closed.
-     * <p>
-     * The default value for this option is 25 for {@code LOCAL} and
-     * {@code REMOTE} hosts.
-     *
-     * @param distance the {@code HostDistance} for which to return this threshold.
-     * @return the configured threshold, or the default one if none have been set.
-     *
-     * @deprecated this option isn't used anymore with the current pool resizing algorithm.
-     */
-    @Deprecated
-    public int getMinSimultaneousRequestsPerConnectionThreshold(HostDistance distance) {
-        return 0;
-    }
-
-    /**
-     * Sets the number of simultaneous requests on a connection below which
-     * connections in excess are reclaimed.
-     * <p>
-     * This option is only used with {@code ProtocolVersion#V2} or below.
-     *
-     * @param distance the {@code HostDistance} for which to configure this threshold.
-     * @param newMinSimultaneousRequests the value to set (between 0 and 128).
-     * @return this {@code PoolingOptions}.
-     *
-     * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}, or if {@code minSimultaneousRequests}
-     * is not in range, or if {@code newMinSimultaneousRequests} is greater than the maximum value for this distance.
-     *
-     * @deprecated this option isn't used anymore with the current pool resizing algorithm.
-     */
-    @Deprecated
-    public synchronized PoolingOptions setMinSimultaneousRequestsPerConnectionThreshold(HostDistance distance, int newMinSimultaneousRequests) {
-        return this;
-    }
-
-    /**
      * Returns the number of simultaneous requests on all connections to an host after
      * which more connections are created.
      * <p>

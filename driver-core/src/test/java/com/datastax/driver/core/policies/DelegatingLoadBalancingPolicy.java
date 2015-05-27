@@ -55,10 +55,6 @@ public abstract class DelegatingLoadBalancingPolicy implements ChainableLoadBala
         delegate.onUp(host);
     }
 
-    public void onSuspected(Host host) {
-        delegate.onSuspected(host);
-    }
-
     public void onDown(Host host) {
         delegate.onDown(host);
     }

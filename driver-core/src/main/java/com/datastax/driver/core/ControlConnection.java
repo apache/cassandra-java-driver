@@ -721,10 +721,6 @@ class ControlConnection implements Host.StateListener {
     }
 
     @Override
-    public void onSuspected(Host host) {
-    }
-
-    @Override
     public void onAdd(Host host) {
         // Refresh infos and token map if we didn't knew about that host, i.e. if we either don't have basic infos on it,
         // or it's not part of our computed token map

@@ -31,22 +31,12 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
      * @param protocolVersion the protocol version in which values returned
      * by {@link #getValue} will be returned. This must be a protocol version
      * supported by this driver. In general, the correct value will be the
-     * value returned by {@link ProtocolOptions#getProtocolVersion}.
+     * value returned by {@link ProtocolOptions#getProtocolVersionEnum}.
      *
      * @throws IllegalArgumentException if {@code protocolVersion} is not a valid protocol version.
      */
     protected AbstractGettableData(ProtocolVersion protocolVersion) {
         super(protocolVersion);
-    }
-
-    /**
-     * @throws IllegalArgumentException if {@code protocolVersion} does not correspond to any known version.
-     *
-     * @deprecated This constructor is provided for backward compatibility, use {@link #AbstractGettableData(ProtocolVersion)} instead.
-     */
-    @Deprecated
-    protected AbstractGettableData(int protocolVersion) {
-        this(ProtocolVersion.fromInt(protocolVersion));
     }
 
     /**

@@ -131,12 +131,6 @@ public class WhiteListPolicy implements ChainableLoadBalancingPolicy, CloseableL
     }
 
     @Override
-    public void onSuspected(Host host) {
-        if (whiteList.contains(host.getSocketAddress()))
-            childPolicy.onSuspected(host);
-    }
-
-    @Override
     public void onDown(Host host) {
         if (whiteList.contains(host.getSocketAddress()))
             childPolicy.onDown(host);

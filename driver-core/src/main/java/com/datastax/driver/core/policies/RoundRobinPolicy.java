@@ -151,10 +151,6 @@ public class RoundRobinPolicy implements LoadBalancingPolicy, CloseableLoadBalan
     }
 
     @Override
-    public void onSuspected(Host host) {
-    }
-
-    @Override
     public void onDown(Host host) {
         liveHosts.remove(host);
     }
