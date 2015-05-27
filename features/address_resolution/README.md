@@ -28,18 +28,10 @@ Cluster cluster = Cluster.builder()
     .build();
 ```
 
-Notes:
-
-* the contact points provided while creating the `Cluster` are not translated, only addresses
-  retrieved from or sent by Cassandra nodes are;
-* you might want to implement [CloseableAddressTranslator][cat] if your
-  implementation has state that should be cleaned up when the `Cluster`
-  shuts down. This is provided as a separate interface for historical
-  reasons, the `close()` method will be merged in `AddressTranslator` in a
-  future release.
+Note: the contact points provided while creating the `Cluster` are not translated, only
+addresses retrieved from or sent by Cassandra nodes are.
 
 [at]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/AddressTranslator.html
-[cat]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/CloseableAddressTranslator.html
 
 ### EC2 multi-region
 

@@ -35,4 +35,8 @@ public class IdentityTranslator implements AddressTranslator {
     public InetSocketAddress translate(InetSocketAddress address) {
         return address;
     }
+
+    @Override
+    public void close() {
+    }
 }

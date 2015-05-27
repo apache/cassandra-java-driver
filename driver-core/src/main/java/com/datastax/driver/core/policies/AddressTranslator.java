@@ -56,4 +56,9 @@ public interface AddressTranslator {
      * {@code address} directly)
      */
     public InetSocketAddress translate(InetSocketAddress address);
+
+    /**
+     * Called at {@link Cluster} shutdown.
+     */
+    void close();
 }

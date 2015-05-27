@@ -48,7 +48,7 @@ import com.datastax.driver.core.exceptions.DriverException;
  * instance. Then it performs a forward DNS lookup of the domain name; the EC2 DNS does the private/public switch automatically
  * based on location.
  */
-public class EC2MultiRegionAddressTranslator implements CloseableAddressTranslator {
+public class EC2MultiRegionAddressTranslator implements AddressTranslator {
 
     private static final Logger logger = LoggerFactory.getLogger(EC2MultiRegionAddressTranslator.class);
 

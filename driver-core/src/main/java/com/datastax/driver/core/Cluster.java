@@ -1398,9 +1398,7 @@ public class Cluster implements Closeable {
                 // And the load balancing policy
                 loadBalancingPolicy().close();
 
-                AddressTranslator translator = configuration.getPolicies().getAddressTranslator();
-                if (translator instanceof CloseableAddressTranslator)
-                    ((CloseableAddressTranslator)translator).close();
+                configuration.getPolicies().getAddressTranslator().close();
 
                 // Then we shutdown all connections
                 List<CloseFuture> futures = new ArrayList<CloseFuture>(sessions.size() + 1);
