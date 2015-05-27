@@ -572,7 +572,7 @@ public class Cluster implements Closeable {
         private LoadBalancingPolicy loadBalancingPolicy;
         private ReconnectionPolicy reconnectionPolicy;
         private RetryPolicy retryPolicy;
-        private AddressTranslater addressTranslater;
+        private AddressTranslator addressTranslator;
         private TimestampGenerator timestampGenerator;
         private SpeculativeExecutionPolicy speculativeExecutionPolicy;
 
@@ -815,8 +815,8 @@ public class Cluster implements Closeable {
          * this one. However, this can be useful if the Cassandra nodes are behind
          * a router and are not accessed directly. Note that if you are in this
          * situtation (Cassandra nodes are behind a router, not directly accessible),
-         * you almost surely want to provide a specific {@code AddressTranslater}
-         * (through {@link #withAddressTranslater}) to translate actual Cassandra node
+         * you almost surely want to provide a specific {@code AddressTranslator}
+         * (through {@link #withAddressTranslator}) to translate actual Cassandra node
          * addresses to the addresses the driver should use, otherwise the driver
          * will not be able to auto-detect new nodes (and will generally not function
          * optimally).
@@ -874,17 +874,17 @@ public class Cluster implements Closeable {
         }
 
         /**
-         * Configures the address translater to use for the new cluster.
+         * Configures the address translator to use for the new cluster.
          * <p>
-         * See {@link AddressTranslater} for more detail on address translation,
-         * but the default translater, {@link IdentityTranslater}, should be
+         * See {@link AddressTranslator} for more detail on address translation,
+         * but the default translator, {@link IdentityTranslator}, should be
          * correct in most cases. If unsure, stick to the default.
          *
-         * @param translater the translater to use.
+         * @param translator the translator to use.
          * @return this Builder.
          */
-        public Builder withAddressTranslater(AddressTranslater translater) {
-            this.addressTranslater = translater;
+        public Builder withAddressTranslator(AddressTranslator translator) {
+            this.addressTranslator = translator;
             return this;
         }
 
@@ -1109,7 +1109,7 @@ public class Cluster implements Closeable {
                 loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
                 Objects.firstNonNull(reconnectionPolicy, Policies.defaultReconnectionPolicy()),
                 Objects.firstNonNull(retryPolicy, Policies.defaultRetryPolicy()),
-                Objects.firstNonNull(addressTranslater, Policies.defaultAddressTranslater()),
+                Objects.firstNonNull(addressTranslator, Policies.defaultAddressTranslator()),
                 Objects.firstNonNull(timestampGenerator, Policies.defaultTimestampGenerator()),
                 Objects.firstNonNull(speculativeExecutionPolicy, Policies.defaultSpeculativeExecutionPolicy())
             );
@@ -1349,7 +1349,7 @@ public class Cluster implements Closeable {
 
         InetSocketAddress translateAddress(InetAddress address) {
             InetSocketAddress sa = new InetSocketAddress(address, connectionFactory.getPort());
-            InetSocketAddress translated = configuration.getPolicies().getAddressTranslater().translate(sa);
+            InetSocketAddress translated = configuration.getPolicies().getAddressTranslator().translate(sa);
             return translated == null ? sa : translated;
         }
 
@@ -1400,9 +1400,9 @@ public class Cluster implements Closeable {
                 if (loadBalancingPolicy instanceof CloseableLoadBalancingPolicy)
                     ((CloseableLoadBalancingPolicy)loadBalancingPolicy).close();
 
-                AddressTranslater translater = configuration.getPolicies().getAddressTranslater();
-                if (translater instanceof CloseableAddressTranslater)
-                    ((CloseableAddressTranslater)translater).close();
+                AddressTranslator translator = configuration.getPolicies().getAddressTranslator();
+                if (translator instanceof CloseableAddressTranslator)
+                    ((CloseableAddressTranslator)translator).close();
 
                 // Then we shutdown all connections
                 List<CloseFuture> futures = new ArrayList<CloseFuture>(sessions.size() + 1);

@@ -18,10 +18,10 @@ package com.datastax.driver.core.policies;
 import java.net.InetSocketAddress;
 
 /**
- * The default {@link AddressTranslater} used by the driver that do no
+ * The default {@link AddressTranslator} used by the driver that do no
  * translation.
  */
-public class IdentityTranslater implements AddressTranslater {
+public class IdentityTranslator implements AddressTranslator {
 
     /**
      * Translates a Cassandra {@code rpc_address} to another address if necessary.

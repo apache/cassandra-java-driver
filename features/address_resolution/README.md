@@ -10,13 +10,13 @@ reachable directly by the driver, or should not be the preferred address to use
 (for instance, it might be a private IP, but some clients  may have to use a public IP, or
 go through a router).
 
-### The [AddressTranslater][at] interface
+### The [AddressTranslator][at] interface
 
 This interface allows you to deal with such cases, by transforming the address sent by a
 Cassandra node to another address to be used by the driver for connection.
 
 ```java
-public class MyAddressTranslater implements AddressTranslater {
+public class MyAddressTranslator implements AddressTranslator {
     public InetSocketAddress translate(InetSocketAddress address) {
         ... // your custom translation logic
     }
@@ -24,7 +24,7 @@ public class MyAddressTranslater implements AddressTranslater {
 
 Cluster cluster = Cluster.builder()
     .addContactPoint("1.2.3.4")
-    .withAddressTranslater(new MyAddressTranslater())
+    .withAddressTranslator(new MyAddressTranslator())
     .build();
 ```
 
@@ -32,18 +32,18 @@ Notes:
 
 * the contact points provided while creating the `Cluster` are not translated, only addresses
   retrieved from or sent by Cassandra nodes are;
-* you might want to implement [CloseableAddressTranslater][cat] if your
+* you might want to implement [CloseableAddressTranslator][cat] if your
   implementation has state that should be cleaned up when the `Cluster`
   shuts down. This is provided as a separate interface for historical
-  reasons, the `close()` method will be merged in `AddressTranslater` in a
+  reasons, the `close()` method will be merged in `AddressTranslator` in a
   future release.
 
-[at]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/AddressTranslater.html
-[cat]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/CloseableAddressTranslater.html
+[at]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/AddressTranslator.html
+[cat]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/CloseableAddressTranslator.html
 
 ### EC2 multi-region
 
-[EC2MultiRegionAddressTranslater][ec2] is provided out of the box. It
+[EC2MultiRegionAddressTranslator][ec2] is provided out of the box. It
 helps optimize network costs when your infrastructure (both Cassandra
 nodes *and* clients) is distributed across multiple Amazon EC2 regions:
 
@@ -56,7 +56,7 @@ To use this implementation, provide an instance when initializing the `Cluster`:
 ```java
 Cluster cluster = Cluster.builder()
     .addContactPoint("1.2.3.4")
-    .withAddressTranslater(new EC2MultiRegionAddressTranslater())
+    .withAddressTranslator(new EC2MultiRegionAddressTranslator())
     .build();
 ```
 
@@ -64,4 +64,4 @@ This class performs a reverse DNS lookup of the origin address, to find the doma
 target instance. Then it performs a forward DNS lookup of the domain name; the EC2 DNS does the
 private/public switch automatically based on location.
 
-[ec2]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/EC2MultiRegionAddressTranslater.html
+[ec2]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/EC2MultiRegionAddressTranslator.html

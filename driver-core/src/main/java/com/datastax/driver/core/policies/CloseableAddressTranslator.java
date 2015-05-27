@@ -18,13 +18,13 @@ package com.datastax.driver.core.policies;
 import com.datastax.driver.core.Cluster;
 
 /**
- * Extends {@link AddressTranslater} for implementations that need to free some resources
+ * Extends {@link AddressTranslator} for implementations that need to free some resources
  * at {@link Cluster} shutdown.
  * <p>
- * Note: the only reason {@link #close()} was not added directly to {@code AddressTranslater}
+ * Note: the only reason {@link #close()} was not added directly to {@code AddressTranslator}
  * is backward-compatibility.
  */
-public interface CloseableAddressTranslater extends AddressTranslater {
+public interface CloseableAddressTranslator extends AddressTranslator {
     /**
      * Called at {@link Cluster} shutdown.
      */

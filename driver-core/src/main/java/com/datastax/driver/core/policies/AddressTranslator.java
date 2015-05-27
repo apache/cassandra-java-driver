@@ -40,7 +40,7 @@ import com.datastax.driver.core.Cluster;
  * {@link Cluster} instance are not "tanslated", only IP address retrieve from or sent
  * by Cassandra nodes to the driver are.
  */
-public interface AddressTranslater {
+public interface AddressTranslator {
 
     /**
      * Translates a Cassandra {@code rpc_address} to another address if necessary.
