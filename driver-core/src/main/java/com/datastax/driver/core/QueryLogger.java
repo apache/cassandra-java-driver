@@ -750,7 +750,7 @@ public abstract class QueryLogger implements LatencyTracker {
         // it at construction time. Cache it field at first use (a volatile field is good enough since we
         // don't need mutual exclusion).
         if (protocolVersion == null) {
-            protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+            protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
             // At least one connection was established when QueryLogger is invoked
             assert protocolVersion != null : "protocol version should be defined";
         }

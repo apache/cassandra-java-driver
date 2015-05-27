@@ -61,7 +61,7 @@ public class Mapper<T> {
         KeyspaceMetadata keyspace = session().getCluster().getMetadata().getKeyspace(mapper.getKeyspace());
         this.tableMetadata = keyspace == null ? null : keyspace.getTable(Metadata.quote(mapper.getTable()));
 
-        this.protocolVersion = manager.getSession().getCluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+        this.protocolVersion = manager.getSession().getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
         this.mapOneFunction = new Function<ResultSet, T>() {
             public T apply(ResultSet rs) {
                 return Mapper.this.map(rs).one();

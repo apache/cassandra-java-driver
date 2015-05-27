@@ -166,7 +166,7 @@ public class ProtocolOptions {
      * Cluster instance is connected, this is guaranteed to return a non-null value). Note that
      * nodes that do not support this protocol version will be ignored.
      */
-    public ProtocolVersion getProtocolVersionEnum() {
+    public ProtocolVersion getProtocolVersion() {
         return manager.connectionFactory.protocolVersion;
     }
 

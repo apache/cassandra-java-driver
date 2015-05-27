@@ -659,7 +659,7 @@ public abstract class DataType {
      * @param value the value to serialize.
      * @param protocolVersion the protocol version to use when serializing
      * {@code bytes}. In most cases, the proper value to provide for this argument
-     * is the value returned by {@link ProtocolOptions#getProtocolVersionEnum} (which
+     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
      * is the protocol version in use by the driver).
      * @return the value serialized, or {@code null} if {@code value} is null.
      *
@@ -686,7 +686,7 @@ public abstract class DataType {
      * @param bytes bytes holding the value to deserialize.
      * @param protocolVersion the protocol version to use when deserializing
      * {@code bytes}. In most cases, the proper value to provide for this argument
-     * is the value returned by {@link ProtocolOptions#getProtocolVersionEnum} (which
+     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
      * is the protocol version in use by the driver).
      * @return the deserialized value (of class {@code this.asJavaClass()}).
      * Will return {@code null} if either {@code bytes} is {@code null} or if
@@ -730,7 +730,7 @@ public abstract class DataType {
      * @param value the value to serialize.
      * @param protocolVersion the protocol version to use when deserializing
      * {@code bytes}. In most cases, the proper value to provide for this argument
-     * is the value returned by {@link ProtocolOptions#getProtocolVersionEnum} (which
+     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
      * is the protocol version in use by the driver).
      * @return the value serialized, or {@code null} if {@code value} is null.
      *
