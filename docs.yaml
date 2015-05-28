@@ -9,6 +9,21 @@ sections:
     sources:
       - type:  markdown
         files: 'features/**/*.md'
+  - title:     Changelog
+    prefix:    /changelog
+    sources:
+      - type:  markdown
+        files: 'changelog/**/*.md'
+  - title:     Upgrading
+    prefix:    /upgrade_guide
+    sources:
+      - type:  markdown
+        files: 'upgrade_guide/**/*.md'
+  - title:     FAQ
+    prefix:    /faq
+    sources:
+      - type:  markdown
+        files: 'faq/**/*.md'
 links:
   - title: Code
     href:  https://github.com/datastax/java-driver/
@@ -23,12 +38,12 @@ links:
   - title: Releases
     href:  https://github.com/datastax/java-driver/releases
 
-versions:
-  - name: 2.1.6
-    ref: '2.1.6'
-  - name: 2.1.5
-    ref: '2.1.5'
-  - name: 2.0.10.1
-    ref: '12f8840'
-  - name: 2.0.10
-    ref: '3a602f1'
+#versions:
+#  - name: 2.1.6
+#    ref: '2.1.6'
+#  - name: 2.1.5
+#    ref: '2.1.5'
+#  - name: 2.0.10.1
+#    ref: '12f8840'
+#  - name: 2.0.10
+#    ref: '3a602f1'

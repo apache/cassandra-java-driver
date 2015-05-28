@@ -16,10 +16,11 @@ Cassandra when the first connection is established. Both sides are
 backward-compatible with older versions:
 
 <table border="1" style="text-align:center; width:100%;margin-bottom:1em;">
-<tr><td>&nbsp;</td><td>Cassandra: 1.2.x<br/>(DSE 3.2)</td><td>2.0.x<br/>(DSE 4.0 to 4.6)</td><td>2.1.x<br/>(DSE 4.7)</td></tr>
-<tr><td>Driver: 1.0.x</td> <td>v1</td> <td>v1</td>  <td>v1</td> </tr>
-<tr><td>2.0.x to 2.1.1</td> <td>v1</td> <td>v2</td>  <td>v2</td> </tr>
-<tr><td>2.1.2 or more</td> <td>v1</td> <td>v2</td>  <td>v3</td> </tr>
+<tr><td>&nbsp;</td><td>Cassandra: 1.2.x<br/>(DSE 3.2)</td><td>2.0.x<br/>(DSE 4.0 to 4.6)</td><td>2.1.x<br/>(DSE 4.7)</td><td>2.2.x</td></tr>
+<tr><td>Driver: 1.0.x</td> <td>v1</td> <td>v1</td>  <td>v1</td> <td>v1</td> </tr>
+<tr><td>2.0.x to 2.1.1</td> <td>v1</td> <td>v2</td>  <td>v2</td> <td>v2</td> </tr>
+<tr><td>2.1.2 to 2.2.0</td> <td>v1</td> <td>v2</td>  <td>v3</td> <td>v3</td> </tr>
+<tr><td>2.2.0 or more</td> <td>v1</td> <td>v2</td>  <td>v3</td> <td>v4</td> </tr>
 </table>
 
 For example, if you use version 2.1.5 of the driver to connect to
@@ -99,3 +100,5 @@ To avoid this issue, you can use one the following workarounds:
   [Connection pooling](../pooling/))
 * [serial consistency on batch statements](http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BatchStatement.html#setSerialConsistencyLevel(com.datastax.driver.core.ConsistencyLevel))
 * [client-side timestamps](../query_timestamps/)
+
+#### v3 to v4

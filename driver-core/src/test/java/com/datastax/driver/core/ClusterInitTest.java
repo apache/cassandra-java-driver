@@ -92,10 +92,7 @@ public class ClusterInitTest {
 
             // We have one live host so 2 successful connections (1 control connection and 1 core connection in the pool).
             // The other 5 hosts are unreachable, we should attempt to connect to each of them only once.
-            int coreConnections = cluster.getConfiguration()
-                    .getPoolingOptions()
-                    .getCoreConnectionsPerHost(HostDistance.LOCAL);
-            verify(socketOptions, times(1 + coreConnections + 5)).getKeepAlive();
+            verify(socketOptions, times(1 + TestUtils.numberOfLocalCoreConnections(cluster) + 5)).getKeepAlive();
         } finally {
             if (cluster != null)
                 cluster.close();

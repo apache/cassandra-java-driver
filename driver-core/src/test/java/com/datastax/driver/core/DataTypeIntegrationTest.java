@@ -120,6 +120,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
 
         // Ensure that bs.getObject() also returns the expected value.
         assertThat(bs.getObject(0)).isEqualTo(table.sampleValue);
+        assertThat(bs.getObject("v")).isEqualTo(table.sampleValue);
     }
 
     /**
