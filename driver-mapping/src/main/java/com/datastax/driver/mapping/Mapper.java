@@ -97,6 +97,15 @@ public class Mapper<T> {
     }
 
     /**
+     * The {@code TableMetadata} for this mapper.
+     *
+     * @return the {@code TableMetadata} for this mapper or {@code null} if keyspace is not set.
+     */
+    public TableMetadata getTableMetadata() {
+        return tableMetadata;
+    }
+
+    /**
      * The {@code MappingManager} managing this mapper.
      *
      * @return the {@code MappingManager} managing this mapper.
