@@ -1,8 +1,6 @@
-Contributing guidelines
-=======================
+# Contributing guidelines
 
-Working on an issue
--------------------
+## Working on an issue
 
 Before starting to work on something, please comment in JIRA or ask on the mailing list
 to make sure nobody else is working on it.
@@ -13,44 +11,41 @@ get merged in 2.1.
 Before you send your pull request, make sure that:
 
 - you have a unit test that failed before the fix and succeeds after.
-- the fix is mentioned in ``driver-core/CHANGELOG.rst``.
+- the fix is mentioned in `driver-core/CHANGELOG.rst`.
 - the commit message include the reference of the JIRA ticket for automatic linking
-  (example: ``Fix NPE when a connection fails during pool construction (JAVA-503).``).
+  (example: `Fix NPE when a connection fails during pool construction (JAVA-503).`).
 
 As long as your pull request is not merged, it's OK to rebase your branch and push with
-``--force``.
+`--force`.
 
-If you want to contribute but don't have a specific issue in mind, the `lhf <https://datastax-oss.atlassian.net/secure/IssueNavigator.jspa?reset=true&mode=hide&jqlQuery=project%20%3D%20JAVA%20AND%20status%20in%20(Open%2C%20Reopened)%20AND%20labels%20%3D%20lhf>`_
+If you want to contribute but don't have a specific issue in mind, the [lhf](https://datastax-oss.atlassian.net/secure/IssueNavigator.jspa?reset=true&mode=hide&jqlQuery=project%20%3D%20JAVA%20AND%20status%20in%20(Open%2C%20Reopened)%20AND%20labels%20%3D%20lhf)
 label in JIRA is a good place to start: it marks "low hanging fruits" that don't require
 in-depth knowledge of the codebase.
 
-Editor configuration
---------------------
+## Editor configuration
 
-General
-~~~~~~~
+### General
 
 We consider automatic formatting as a help, not a crutch. Sometimes it makes sense to
 break the rules to make the code more readable, for instance aligning columns (see the
-constant declarations in ``DataType.Name`` for an example of this).
+constant declarations in `DataType.Name` for an example of this).
 
 **Please do not reformat whole files, only the lines that you have added or modified**.
 
 
-Eclipse
-~~~~~~~
+### Eclipse
 
 Formatter:
 
 - Preferences > Java > Code Style > Formatter.
 - Click "Import".
-- Select ``src/main/config/ide/eclipse-formatter.xml``.
+- Select `src/main/config/ide/eclipse-formatter.xml`.
 
 Import order:
 
 - Preferences > Java > Code Style > Organize imports.
 - Click "Import".
-- Select ``src/main/config/ide/eclipse.importorder``.
+- Select `src/main/config/ide/eclipse.importorder`.
 
 Prevent trailing whitespaces:
 
@@ -63,41 +58,43 @@ Prevent trailing whitespaces:
 - Click "OK" (the text area should only have one action "Remove trailing white spaces").
 
 
-IntelliJ IDEA
-~~~~~~~~~~~~~
+### IntelliJ IDEA
 
 - File > Import Settings...
-- Select ``src/main/config/ide/intellij-code-style.jar``.
+- Select `src/main/config/ide/intellij-code-style.jar`.
 
 This should add a new Code Style scheme called "java-driver".
 
-Running the tests
------------------
+## Running the tests
 
 We use TestNG. There are 3 test categories:
 
 - "unit": pure Java unit tests.
 - "short" and "long": integration tests that launch Cassandra instances.
 
-The Maven build uses profiles named after the categories to choose which tests to run::
+The Maven build uses profiles named after the categories to choose which tests to run:
 
-    mvn test -Pshort
+```
+mvn test -Pshort
+```
 
 The default is "unit". Each profile runs the ones before it ("short" runs unit, etc.)
 
-Integration tests use `CCM https://github.com/pcmanus/ccm`_ to bootstrap Cassandra instances.
+Integration tests use [CCM](https://github.com/pcmanus/ccm) to bootstrap Cassandra instances.
 Two Maven properties control its execution:
 
-- ``cassandra.version``: the Cassandra version. This has a default value in the root POM,
-  you can override it on the command line (``-Dcassandra.version=...``).
-- ``ipprefix``: the prefix of the IP addresses that the Cassandra instances will bind to (see
-  below). This defaults to ``127.0.1.``.
+- `cassandra.version`: the Cassandra version. This has a default value in the root POM,
+  you can override it on the command line (`-Dcassandra.version=...`).
+- `ipprefix`: the prefix of the IP addresses that the Cassandra instances will bind to (see
+  below). This defaults to `127.0.1.`.
 
 
 CCM launches multiple Cassandra instances on localhost by binding to different addresses. The
 driver uses up to 6 different instances (127.0.1.1 to 127.0.1.6 with the default prefix).
 You'll need to define loopback aliases for this to work, on Mac OS X your can do it with:
 
-    sudo ifconfig lo0 alias 127.0.1.1 up
-    sudo ifconfig lo0 alias 127.0.1.2 up
-    ...
+```
+sudo ifconfig lo0 alias 127.0.1.1 up
+sudo ifconfig lo0 alias 127.0.1.2 up
+...
+```
