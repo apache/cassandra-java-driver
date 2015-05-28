@@ -19,17 +19,16 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.utils.Bytes;
+import com.google.common.collect.Maps;
 
 /**
  * This class provides sample values for each primitive data type.
@@ -42,7 +41,8 @@ public class PrimitiveTypeSamples {
 
     private static Map<DataType, Object> generateAll() {
         try {
-            ImmutableMap<DataType, Object> result = ImmutableMap.<DataType, Object>builder()
+            final Collection<DataType> primitiveTypes = DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion());
+            ImmutableMap<DataType, Object> data = ImmutableMap.<DataType, Object>builder()
                 .put(DataType.ascii(), "ascii")
                 .put(DataType.bigint(), Long.MAX_VALUE)
                 .put(DataType.blob(), Bytes.fromHexString("0xCAFE"))
@@ -61,8 +61,16 @@ public class PrimitiveTypeSamples {
                 .put(DataType.varint(), new BigInteger(Integer.toString(Integer.MAX_VALUE) + "000"))
                 .build();
 
+            // Only include data types that support the desired protocol version.
+            Map<DataType, Object> result = Maps.filterKeys(data, new Predicate<DataType>() {
+                @Override
+                public boolean apply(DataType input) {
+                    return primitiveTypes.contains(input);
+                }
+            });
+
             // Check that we cover all types (except counter)
-            List<DataType> tmp = Lists.newArrayList(DataType.allPrimitiveTypes());
+            List<DataType> tmp = Lists.newArrayList(primitiveTypes);
             tmp.removeAll(result.keySet());
             assertThat(tmp)
                 .as("new datatype not covered in test")

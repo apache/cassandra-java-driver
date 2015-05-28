@@ -22,8 +22,10 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import io.netty.buffer.ByteBuf;
 
@@ -59,14 +61,15 @@ public abstract class DataType {
         LIST      (32, List.class),
         SET       (34, Set.class),
         MAP       (33, Map.class),
-        UDT       (48, UDTValue.class),
-        TUPLE     (49, TupleValue.class),
+        UDT       (48, UDTValue.class, ProtocolVersion.V3),
+        TUPLE     (49, TupleValue.class, ProtocolVersion.V3),
         CUSTOM    (0,  ByteBuffer.class),
-        SMALLINT  (19, Short.class),
-        TINYINT   (20, Byte.class);
+        SMALLINT  (19, Short.class, ProtocolVersion.V4),
+        TINYINT   (20, Byte.class, ProtocolVersion.V4);
 
         final int protocolId;
         final Class<?> javaType;
+        final ProtocolVersion minProtocolVersion;
 
         private static final Name[] nameToIds;
         static {
@@ -84,6 +87,13 @@ public abstract class DataType {
         private Name(int protocolId, Class<?> javaType) {
             this.protocolId = protocolId;
             this.javaType = javaType;
+            this.minProtocolVersion = ProtocolVersion.V1;
+        }
+
+        private Name(int protocolId, Class<?> javaType, ProtocolVersion minProtocolVersion) {
+            this.protocolId = protocolId;
+            this.javaType = javaType;
+            this.minProtocolVersion = minProtocolVersion;
         }
 
         static Name fromProtocolId(int id) {
@@ -610,12 +620,32 @@ public abstract class DataType {
     /**
      * Returns a set of all the primitive types, where primitive types are
      * defined as the types that don't have type arguments (that is excluding
-     * lists, sets, and maps).
+     * lists, sets, maps, tuples and udts).
      *
      * @return returns a set of all the primitive types.
      */
     public static Set<DataType> allPrimitiveTypes() {
         return primitiveTypeSet;
+    }
+
+    /**
+     * Returns a set of all primitive types supported by the given protocolVersion.
+     * <p>
+     * Primitive types are defined as the types that don't have type arguments
+     * (that is excluding lists, sets, and maps, tuples and udts).
+     * </p>
+     *
+     * @param protocolVersion protocol version to get types for.
+     * @return returns a set of all the primitive types for the given protocolVersion.
+     */
+    static Set<DataType> allPrimitiveTypes(final ProtocolVersion protocolVersion) {
+        return Sets.filter(primitiveTypeSet, new Predicate<DataType>() {
+
+            @Override
+            public boolean apply(DataType dataType) {
+                return protocolVersion.compareTo(dataType.getName().minProtocolVersion) >= 0;
+            }
+        });
     }
 
     /**
