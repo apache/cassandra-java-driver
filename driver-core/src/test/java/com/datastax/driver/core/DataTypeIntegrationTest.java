@@ -351,6 +351,10 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
                 return bs.getFloat(0);
             case INET:
                 return bs.getInet(0);
+            case TINYINT:
+                return bs.getByte(0);
+            case SMALLINT:
+                return bs.getShort(0);
             case INT:
                 return bs.getInt(0);
             case TEXT:

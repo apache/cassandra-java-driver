@@ -32,6 +32,8 @@ public class CassandraTypeParserTest {
     @Test(groups = "unit")
     public void parseOneTest() {
 
+        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ByteType"), DataType.tinyint());
+        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ShortType"), DataType.smallint());
         assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.InetAddressType"), DataType.inet());
         assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ListType(org.apache.cassandra.db.marshal.UTF8Type)"), DataType.list(DataType.text()));
         assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ReversedType(org.apache.cassandra.db.marshal.UTF8Type)"), DataType.text());

@@ -271,6 +271,12 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
                     case INET:
                         alldatatypes.setInet(index, (InetAddress) sampleData);
                         break;
+                    case TINYINT:
+                        alldatatypes.setByte(index, (Byte) sampleData);
+                        break;
+                    case SMALLINT:
+                        alldatatypes.setShort(index, (Short) sampleData);
+                        break;
                     case INT:
                         alldatatypes.setInt(index, ((Integer) sampleData).intValue());
                         break;

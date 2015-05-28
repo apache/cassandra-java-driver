@@ -78,6 +78,36 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    public T setByte(int i, byte v) {
+        checkType(i, DataType.Name.TINYINT);
+        return setValue(i, TypeCodec.TinyIntCodec.instance.serializeNoBoxing(v));
+    }
+
+    public T setByte(String name, byte v) {
+        int[] indexes = getAllIndexesOf(name);
+        ByteBuffer value = TypeCodec.TinyIntCodec.instance.serializeNoBoxing(v);
+        for (int i = 0; i < indexes.length; i++) {
+            checkType(indexes[i], DataType.Name.TINYINT);
+            setValue(indexes[i], value);
+        }
+        return wrapped;
+    }
+
+    public T setShort(int i, short v) {
+        checkType(i, DataType.Name.SMALLINT);
+        return setValue(i, TypeCodec.SmallIntCodec.instance.serializeNoBoxing(v));
+    }
+
+    public T setShort(String name, short v) {
+        int[] indexes = getAllIndexesOf(name);
+        ByteBuffer value = TypeCodec.SmallIntCodec.instance.serializeNoBoxing(v);
+        for (int i = 0; i < indexes.length; i++) {
+            checkType(indexes[i], DataType.Name.SMALLINT);
+            setValue(indexes[i], value);
+        }
+        return wrapped;
+    }
+
     public T setInt(int i, int v) {
         checkType(i, DataType.Name.INT);
         return setValue(i, TypeCodec.IntCodec.instance.serializeNoBoxing(v));

@@ -44,6 +44,34 @@ public interface SettableByNameData<T extends SettableData<T>> {
 
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided byte.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type TINYINT.
+     */
+    public T setByte(String name, byte v);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
+     * provided short.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type SMALLINT.
+     */
+    public T setShort(String name, short v);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the
      * provided integer.
      *
      * @param name the name of the value to set; if {@code name} is present multiple

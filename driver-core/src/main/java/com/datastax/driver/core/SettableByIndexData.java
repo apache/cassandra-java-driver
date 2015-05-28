@@ -41,6 +41,30 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
     public T setBool(int i, boolean v);
 
     /**
+     * Set the {@code i}th value to the provided byte.
+     *
+     * @param i the index of the value to set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type TINYINT.
+     */
+    public T setByte(int i, byte v);
+
+    /**
+     * Set the {@code i}th value to the provided short.
+     *
+     * @param i the index of the value to set.
+     * @param v the value to set.
+     * @return this object.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type SMALLINT.
+     */
+    public T setShort(int i, short v);
+
+    /**
      * Set the {@code i}th value to the provided integer.
      *
      * @param i the index of the value to set.

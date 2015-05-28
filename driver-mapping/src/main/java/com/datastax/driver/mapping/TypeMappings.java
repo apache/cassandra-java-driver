@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.mapping;
 
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -36,8 +35,12 @@ class TypeMappings {
         if (ByteBuffer.class.isAssignableFrom(klass))
             return DataType.blob();
 
+        if (klass == byte.class || Byte.class.isAssignableFrom(klass))
+            return DataType.tinyint();
+        if (klass == short.class || Short.class.isAssignableFrom(klass))
+            return DataType.smallint();
         if (klass == int.class || Integer.class.isAssignableFrom(klass))
-                return DataType.cint();
+            return DataType.cint();
         if (klass == long.class || Long.class.isAssignableFrom(klass))
             return DataType.bigint();
         if (klass == float.class || Float.class.isAssignableFrom(klass))

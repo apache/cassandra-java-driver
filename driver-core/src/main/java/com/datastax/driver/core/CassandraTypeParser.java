@@ -67,6 +67,8 @@ class CassandraTypeParser {
             .put("org.apache.cassandra.db.marshal.UUIDType",          DataType.uuid())
             .put("org.apache.cassandra.db.marshal.IntegerType",       DataType.varint())
             .put("org.apache.cassandra.db.marshal.TimeUUIDType",      DataType.timeuuid())
+            .put("org.apache.cassandra.db.marshal.ByteType",          DataType.tinyint())
+            .put("org.apache.cassandra.db.marshal.ShortType",         DataType.smallint())
             .build();
 
     static DataType parseOne(String className) {

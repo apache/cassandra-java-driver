@@ -51,6 +51,8 @@ public class PrimitiveTypeSamples {
                 .put(DataType.cdouble(), Double.MAX_VALUE)
                 .put(DataType.cfloat(), Float.MAX_VALUE)
                 .put(DataType.inet(), InetAddress.getByName("123.123.123.123"))
+                .put(DataType.tinyint(), Byte.MAX_VALUE)
+                .put(DataType.smallint(), Short.MAX_VALUE)
                 .put(DataType.cint(), Integer.MAX_VALUE)
                 .put(DataType.text(), "text")
                 .put(DataType.timestamp(), new Date(872835240000L))

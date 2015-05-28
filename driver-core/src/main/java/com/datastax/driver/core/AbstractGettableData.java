@@ -79,6 +79,22 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
      * {@inheritDoc}
      */
     @Override
+    public byte getByte(String name) {
+        return getByte(getIndexOf(name));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public short getShort(String name) {
+        return getShort(getIndexOf(name));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getInt(String name) {
         return getInt(getIndexOf(name));
     }

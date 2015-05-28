@@ -47,6 +47,16 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         return setValue(i, TypeCodec.BooleanCodec.instance.serializeNoBoxing(v));
     }
 
+    public T setByte(int i, byte v) {
+        checkType(i, DataType.Name.TINYINT);
+        return setValue(i, TypeCodec.TinyIntCodec.instance.serializeNoBoxing(v));
+    }
+
+    public T setShort(int i, short v) {
+        checkType(i, DataType.Name.SMALLINT);
+        return setValue(i, TypeCodec.SmallIntCodec.instance.serializeNoBoxing(v));
+    }
+
     public T setInt(int i, int v) {
         checkType(i, DataType.Name.INT);
         return setValue(i, TypeCodec.IntCodec.instance.serializeNoBoxing(v));
