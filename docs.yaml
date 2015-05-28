@@ -14,6 +14,11 @@ sections:
     sources:
       - type:  markdown
         files: 'changelog/**/*.md'
+  - title:     Upgrading
+    prefix:    /upgrade_guide
+    sources:
+      - type:  markdown
+        files: 'upgrade_guide/**/*.md'
 links:
   - title: Code
     href:  https://github.com/datastax/java-driver/
