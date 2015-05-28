@@ -19,6 +19,11 @@ sections:
     sources:
       - type:  markdown
         files: 'upgrade_guide/**/*.md'
+  - title:     FAQ
+    prefix:    /faq
+    sources:
+      - type:  markdown
+        files: 'faq/**/*.md'
 links:
   - title: Code
     href:  https://github.com/datastax/java-driver/
