@@ -52,7 +52,8 @@ import static com.datastax.driver.core.TestUtils.getFixedValue;
  */
 public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
 
-    private static final List<DataType> dataTypes = new ArrayList<DataType>(Sets.filter(DataType.allPrimitiveTypes(), new Predicate<DataType>() {
+    private static final List<DataType> dataTypes = new ArrayList<DataType>(
+            Sets.filter(DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion()), new Predicate<DataType>() {
         @Override
         public boolean apply(DataType type) {
             return type != DataType.counter();

@@ -39,7 +39,7 @@ import com.datastax.driver.core.utils.CassandraVersion;
 @CassandraVersion(major=2.1)
 public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
-    private final static List<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes());
+    private final static List<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion()));
     private final static List<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES =
             new ArrayList<DataType.Name>(EnumSet.of(DataType.Name.LIST, DataType.Name.SET, DataType.Name.MAP, DataType.Name.TUPLE));
 

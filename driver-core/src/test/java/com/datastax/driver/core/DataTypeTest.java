@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.testng.annotations.Test;
 
@@ -276,5 +277,23 @@ public class DataTypeTest {
             .canBeDeserializedAs(new TypeToken<Map<Integer, List<String>>>(){})
             .canBeDeserializedAs(new TypeToken<Map<Number, Collection<String>>>(){})
             .cannotBeDeserializedAs(new TypeToken<Map<Integer, Collection<Integer>>>(){});
+    }
+
+    @Test(groups = "unit")
+    public void should_not_return_v4_types_in_all_primitive_types_with_v3() {
+        Set<DataType> dataTypes = DataType.allPrimitiveTypes(ProtocolVersion.V3);
+
+        // Ensure it does not contain specific newer types tinyint and smallint.
+        assertThat(dataTypes).doesNotContainAnyElementsOf(Lists.newArrayList(DataType.tinyint(), DataType.smallint()));
+
+        // Ensure all values are <= V3.
+        for(DataType dataType : dataTypes) {
+            assertThat(dataType.getName().minProtocolVersion).isLessThanOrEqualTo(ProtocolVersion.V3);
+        }
+    }
+
+    @Test(groups = "unit")
+    public void should_return_same_elements_with_all_primitive_types_using_latest_protocol_version() {
+        assertThat(DataType.allPrimitiveTypes(ProtocolVersion.NEWEST_SUPPORTED)).isEqualTo(DataType.allPrimitiveTypes());
     }
 }

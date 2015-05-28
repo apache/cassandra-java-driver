@@ -49,6 +49,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final String SIMPLE_TABLE = "test";
     private static final String SIMPLE_TABLE2 = "test2";
 
+    private final Collection<DataType> primitiveTypes = DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion());
+
     private boolean exclude(DataType t) {
         return t.getName() == DataType.Name.COUNTER;
     }
@@ -60,7 +62,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE ").append(ALL_NATIVE_TABLE).append(" (k text PRIMARY KEY");
-        for (DataType type : DataType.allPrimitiveTypes()) {
+        for (DataType type : primitiveTypes) {
             if (exclude(type))
                 continue;
             sb.append(", c_").append(type).append(' ').append(type);
@@ -70,7 +72,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         sb = new StringBuilder();
         sb.append("CREATE TABLE ").append(ALL_LIST_TABLE).append(" (k text PRIMARY KEY");
-        for (DataType type : DataType.allPrimitiveTypes()) {
+        for (DataType type : primitiveTypes) {
             if (exclude(type))
                 continue;
             sb.append(", c_list_").append(type).append(" list<").append(type).append('>');
@@ -80,7 +82,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         sb = new StringBuilder();
         sb.append("CREATE TABLE ").append(ALL_SET_TABLE).append(" (k text PRIMARY KEY");
-        for (DataType type : DataType.allPrimitiveTypes()) {
+        for (DataType type : primitiveTypes) {
             // This must be handled separatly
             if (exclude(type))
                 continue;
@@ -91,12 +93,12 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         sb = new StringBuilder();
         sb.append("CREATE TABLE ").append(ALL_MAP_TABLE).append(" (k text PRIMARY KEY");
-        for (DataType keyType : DataType.allPrimitiveTypes()) {
+        for (DataType keyType : primitiveTypes) {
             // This must be handled separatly
             if (exclude(keyType))
                 continue;
 
-            for (DataType valueType : DataType.allPrimitiveTypes()) {
+            for (DataType valueType : primitiveTypes) {
                 // This must be handled separatly
                 if (exclude(valueType))
                     continue;
@@ -115,7 +117,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void preparedNativeTest() {
         // Test preparing/bounding for all native types
-        for (DataType type : DataType.allPrimitiveTypes()) {
+        for (DataType type : primitiveTypes) {
             // This must be handled separatly
             if (exclude(type))
                 continue;
@@ -136,7 +138,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void preparedNativeTest2() {
         // Test preparing/bounding for all native types
-        for (DataType type : DataType.allPrimitiveTypes()) {
+        for (DataType type : primitiveTypes) {
             // This must be handled separatly
             if (exclude(type))
                 continue;
@@ -155,7 +157,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @SuppressWarnings("unchecked")
     public void prepareListTest() {
         // Test preparing/bounding for all possible list types
-        for (DataType rawType : DataType.allPrimitiveTypes()) {
+        for (DataType rawType : primitiveTypes) {
             // This must be handled separatly
             if (exclude(rawType))
                 continue;
@@ -179,7 +181,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @SuppressWarnings("unchecked")
     public void prepareListTest2() {
         // Test preparing/bounding for all possible list types
-        for (DataType rawType : DataType.allPrimitiveTypes()) {
+        for (DataType rawType : primitiveTypes) {
             // This must be handled separatly
             if (exclude(rawType))
                 continue;
@@ -200,7 +202,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @SuppressWarnings("unchecked")
     public void prepareSetTest() {
         // Test preparing/bounding for all possible set types
-        for (DataType rawType : DataType.allPrimitiveTypes()) {
+        for (DataType rawType : primitiveTypes) {
             // This must be handled separatly
             if (exclude(rawType))
                 continue;
@@ -224,7 +226,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @SuppressWarnings("unchecked")
     public void prepareSetTest2() {
         // Test preparing/bounding for all possible set types
-        for (DataType rawType : DataType.allPrimitiveTypes()) {
+        for (DataType rawType : primitiveTypes) {
             // This must be handled separatly
             if (exclude(rawType))
                 continue;
@@ -245,12 +247,12 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @SuppressWarnings("unchecked")
     public void prepareMapTest() {
         // Test preparing/bounding for all possible map types
-        for (DataType rawKeyType : DataType.allPrimitiveTypes()) {
+        for (DataType rawKeyType : primitiveTypes) {
             // This must be handled separatly
             if (exclude(rawKeyType))
                 continue;
 
-            for (DataType rawValueType : DataType.allPrimitiveTypes()) {
+            for (DataType rawValueType : primitiveTypes) {
                 // This must be handled separatly
                 if (exclude(rawValueType))
                     continue;
@@ -275,12 +277,12 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @SuppressWarnings("unchecked")
     public void prepareMapTest2() {
         // Test preparing/bounding for all possible map types
-        for (DataType rawKeyType : DataType.allPrimitiveTypes()) {
+        for (DataType rawKeyType : primitiveTypes) {
             // This must be handled separatly
             if (exclude(rawKeyType))
                 continue;
 
-            for (DataType rawValueType : DataType.allPrimitiveTypes()) {
+            for (DataType rawValueType : primitiveTypes) {
                 // This must be handled separatly
                 if (exclude(rawValueType))
                     continue;
