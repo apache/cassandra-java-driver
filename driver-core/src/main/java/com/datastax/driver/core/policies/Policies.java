@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.AtomicMonotonicTimestampGenerator;
 import com.datastax.driver.core.ServerSideTimestampGenerator;
 import com.datastax.driver.core.TimestampGenerator;
 
@@ -161,7 +162,7 @@ public class Policies {
      * @return the default timestamp generator.
      */
     public static TimestampGenerator defaultTimestampGenerator() {
-        return ServerSideTimestampGenerator.INSTANCE;
+        return new AtomicMonotonicTimestampGenerator();
     }
 
     /**
