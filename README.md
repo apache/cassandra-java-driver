@@ -61,7 +61,7 @@ Please refer to the README of each module for more information.
 - TWITTER: Follow the latest news about DataStax Drivers - [@olim7t](http://twitter.com/olim7t), [@mfiguiere](http://twitter.com/mfiguiere)
 - DOCS: http://www.datastax.com/documentation/developer/java-driver/2.1/index.html
 - API: http://www.datastax.com/drivers/java/2.1
-- CHANGELOG: https://github.com/datastax/java-driver/blob/2.1/driver-core/CHANGELOG.rst
+
 
 ## Maven
 
@@ -106,11 +106,8 @@ an [UnsupportedFeatureException](https://github.com/datastax/java-driver/blob/2.
 
 ## Upgrading from previous versions
 
-If you are upgrading from the 2.0.x branch of the driver, be sure to have a look at
-the [upgrade guide](https://github.com/datastax/java-driver/blob/2.1/driver-core/Upgrade_guide_to_2.1.rst).
-
-If you are upgrading from the 1.x branch, follow the [upgrade guide to 2.0](https://github.com/datastax/java-driver/blob/2.0/driver-core/Upgrade_guide_to_2.0.rst),
-and then the above document.
+If you are upgrading from a previous version of the driver, be sure to have a look at
+the [upgrade guide](/upgrade_guide/).
 
 
 ### Troubleshooting

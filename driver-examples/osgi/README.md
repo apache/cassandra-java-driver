@@ -1,5 +1,4 @@
-OSGi Example
-============
+# OSGi Example
 
 A simple example application that demonstrates using the Java Driver in
 an OSGi service.
@@ -7,8 +6,7 @@ an OSGi service.
 MailboxService is an activated service that uses Cassandra to
 persist a Mailbox by email address.
 
-Usage
------
+## Usage
 
 To build the bundle and run tests execute the following maven task::
 
