@@ -1,6 +1,6 @@
 ## Changelog
 
-### 2.0.11
+### 2.0.11 (in progress)
 
 Merged from 2.0.10_fixes branch:
 
