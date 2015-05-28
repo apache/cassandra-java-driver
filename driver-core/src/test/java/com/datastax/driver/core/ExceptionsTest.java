@@ -16,9 +16,18 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.policies.Policies;
+import com.datastax.driver.core.policies.WhiteListPolicy;
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
+import java.net.InetSocketAddress;
+import java.util.List;
+
 import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -377,6 +386,131 @@ public class ExceptionsTest {
             throw e;
         } finally {
             c.discard();
+        }
+    }
+
+    /**
+     * Validates that a write_failure emitted from a coordinator is properly surfaced as a WriteFailureException.
+     *
+     * Uses JVM argument '-Dcassandra.test.fail_writes_ks=keyspace' in C* to generate write failures for a particular
+     * keyspace to reliably generate write_failure-based errors.
+     *
+     * @since 2.2.0
+     * @jira_ticket JAVA-749
+     * @expected_result WriteFailureException is generated for a failed read.
+     * @test_category queries:basic
+     */
+    @CassandraVersion(major=2.2)
+    @Test(groups = "long", expectedExceptions = WriteFailureException.class)
+    public void should_rethrow_write_failure_when_encountered_on_replica() throws InterruptedException {
+        String keyspace = "writefailureks";
+        String table = "testtable";
+
+        CCMBridge ccm = null;
+        Cluster cluster = null;
+
+        try {
+            ccm = CCMBridge.create("test");
+            ccm.populate(2);
+            // Configure 1 of the nodes to fail writes to the keyspace.
+            ccm.start(1, "-Dcassandra.test.fail_writes_ks=" +keyspace);
+            ccm.start(2);
+
+            cluster = Cluster.builder()
+                    .addContactPoint(CCMBridge.ipOfNode(2))
+                    .withLoadBalancingPolicy(new WhiteListPolicy(Policies.defaultLoadBalancingPolicy(),
+                            Lists.newArrayList(new InetSocketAddress(CCMBridge.ipOfNode(2), 9042))))
+                    .build();
+
+            Session session = cluster.connect();
+
+            session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 2));
+            session.execute("USE " + keyspace);
+            session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
+
+            try {
+                // Query with a CL of ALL to hit all replicas.
+                session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, "1", "2", 3, 4.0f))
+                        .setConsistencyLevel(ConsistencyLevel.ALL));
+            } catch(WriteFailureException e) {
+                // Expect a failure for node configured to fail writes.
+                assertThat(e.getFailures()).isEqualTo(1);
+                // The one node not configured to fail writes should succeed if response processed quickly enough.
+                assertThat(e.getReceivedAcknowledgements()).isLessThanOrEqualTo(1);
+                // There should be 2 required acknowledgements since CL ALL is used.
+                assertThat(e.getRequiredAcknowledgements()).isEqualTo(2);
+                // A simple query was executed so that should be the write type.
+                assertThat(e.getWriteType()).isEqualTo(WriteType.SIMPLE);
+                // Rethrow to trigger validation on expectedExceptions.
+                throw e;
+            }
+        } finally {
+            if (cluster != null)
+                cluster.close();
+            if (ccm != null)
+                ccm.remove();
+        }
+    }
+
+    /**
+     * Validates that a read_failure emitted from a coordinator is properly surfaced as a ReadFailureException.
+     *
+     * Configures C* nodes with a 'tombstone_failure_threshold' of 1000 so that whenever of a read of a row scans more
+     * than 1000 tombstones an exception is emitted, which should cause a read_failure.
+     *
+     * @since 2.2.0
+     * @jira_ticket JAVA-749
+     * @expected_result ReadFailureException is generated for a failed read caused by the tombstone_failure_threshold
+     *   being exceeded.
+     * @test_category queries:basic
+     */
+    @Test(groups = "short", expectedExceptions = ReadFailureException.class)
+    @CassandraVersion(major = 2.2)
+    public void should_rethrow_read_failure_when_tombstone_overwhelm_on_replica() throws InterruptedException {
+        CCMBridge ccm = null;
+        Cluster cluster = null;
+        try {
+            ccm = CCMBridge.create("test");
+
+            // This relies on the fact that the previous line did not start the cluster, which is true
+            // but a bit weird considering that other versions of create do
+            // (JAVA-789 will fix this)
+            ccm.updateConfig("tombstone_failure_threshold", "1000");
+            ccm.populate(2);
+            ccm.start();
+
+            // The rest of the test relies on the fact that the PK '1' will be placed on node1
+            // (hard-coding it is reasonable considering that C* shouldn't change its default partitioner too often)
+            cluster = Cluster.builder()
+                    .addContactPoint(CCMBridge.ipOfNode(2))
+                    .withLoadBalancingPolicy(new WhiteListPolicy(Policies.defaultLoadBalancingPolicy(),
+                            Lists.newArrayList(new InetSocketAddress(CCMBridge.ipOfNode(2), 9042))))
+                    .build();
+
+            Session session = cluster.connect();
+            session.execute("create KEYSPACE test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
+            session.execute("create table test.foo(pk int, cc int, v int, primary key (pk, cc))");
+
+            // Generate 1001 tombstones on node1
+            for (int i = 0; i < 1001; i++)
+                session.execute("insert into test.foo (pk, cc, v) values (1, ?, null)", i);
+
+            try {
+                session.execute("select * from test.foo");
+            } catch(ReadFailureException e) {
+                assertThat(e.getFailures()).isEqualTo(1);
+                assertThat(e.wasDataRetrieved()).isFalse();
+                assertThat(e.getReceivedAcknowledgements()).isEqualTo(0);
+                assertThat(e.getRequiredAcknowledgements()).isEqualTo(1);
+                // Rethrow to trigger validation on expectedExceptions.
+                throw e;
+            }
+
+        } finally {
+            if (cluster != null)
+                cluster.close();
+            if (ccm != null)
+                ccm.remove();
         }
     }
 }

@@ -21,7 +21,7 @@ import com.datastax.driver.core.WriteType;
 /**
  * A Cassandra timeout during a write query.
  */
-public class WriteTimeoutException extends QueryTimeoutException {
+public class WriteTimeoutException extends QueryConsistencyException {
 
     private static final long serialVersionUID = 0;
 

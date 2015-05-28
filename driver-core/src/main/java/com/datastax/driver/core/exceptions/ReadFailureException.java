@@ -18,34 +18,40 @@ package com.datastax.driver.core.exceptions;
 import com.datastax.driver.core.ConsistencyLevel;
 
 /**
- * A Cassandra timeout during a read query.
+ * A non-timeout error during a read query.
+ * <p>
+ * This happens when some of the replicas that were contacted by the coordinator replied with an error.
  */
-public class ReadTimeoutException extends QueryConsistencyException {
+@SuppressWarnings("serial")
+public class ReadFailureException extends QueryConsistencyException {
 
-    private static final long serialVersionUID = 0;
-
+    private final int failed;
     private final boolean dataPresent;
 
-    public ReadTimeoutException(ConsistencyLevel consistency, int received, int required, boolean dataPresent) {
-        super(String.format("Cassandra timeout during read query at consistency %s (%s)", consistency, formatDetails(received, required, dataPresent)),
-              consistency,
-              received,
-              required);
+    public ReadFailureException(ConsistencyLevel consistency, int received, int required, int failed, boolean dataPresent) {
+        super(String.format("Cassandra failure during read query at consistency %s "
+                    + "(%d responses were required but only %d replica responded, %d failed)",
+                consistency, required, received, failed),
+            consistency,
+            received,
+            required);
+        this.failed = failed;
         this.dataPresent = dataPresent;
     }
 
-    private ReadTimeoutException(String msg, Throwable cause, ConsistencyLevel consistency, int received, int required, boolean dataPresent) {
+    private ReadFailureException(String msg, Throwable cause, ConsistencyLevel consistency, int received, int required, int failed, boolean dataPresent) {
         super(msg, cause, consistency, received, required);
+        this.failed = failed;
         this.dataPresent = dataPresent;
     }
 
-    private static String formatDetails(int received, int required, boolean dataPresent) {
-        if (received < required)
-            return String.format("%d responses were required but only %d replica responded", required, received);
-        else if (!dataPresent)
-            return "the replica queried for data didn't respond";
-        else
-            return "timeout while waiting for repair of inconsistent replica";
+    /**
+     * Returns the number of replicas that experienced a failure while executing the request.
+     *
+     * @return the number of failures.
+     */
+    public int getFailures() {
+        return failed;
     }
 
     /**
@@ -65,11 +71,7 @@ public class ReadTimeoutException extends QueryConsistencyException {
 
     @Override
     public DriverException copy() {
-        return new ReadTimeoutException(getMessage(),
-                                        this,
-                                        getConsistencyLevel(),
-                                        getReceivedAcknowledgements(),
-                                        getRequiredAcknowledgements(),
-                                        wasDataRetrieved());
+        return new ReadFailureException(getMessage(), this, getConsistencyLevel(), getReceivedAcknowledgements(),
+            getRequiredAcknowledgements(), getFailures(), wasDataRetrieved());
     }
 }

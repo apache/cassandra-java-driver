@@ -244,7 +244,9 @@ class Connection {
                     case ERROR:
                         Responses.Error error = (Responses.Error)response;
                         // Testing for a specific string is a tad fragile but well, we don't have much choice
-                        if (error.code == ExceptionCode.PROTOCOL_ERROR && error.message.contains("Invalid or unsupported protocol version"))
+                        // C* 2.1 reports a server error instead of protocol error, see CASSANDRA-9451
+                        if ((error.code == ExceptionCode.PROTOCOL_ERROR || error.code == ExceptionCode.SERVER_ERROR) &&
+                            error.message.contains("Invalid or unsupported protocol version"))
                             throw unsupportedProtocolVersionException(protocolVersion, error.serverProtocolVersion);
                         throw new TransportException(address, String.format("Error initializing connection: %s", error.message));
                     case AUTHENTICATE:
@@ -258,6 +260,7 @@ class Connection {
                                     return authenticateV2(authenticator, protocolVersion, initExecutor);
                             case V2:
                             case V3:
+                            case V4:
                                 return authenticateV2(authenticator, protocolVersion, initExecutor);
                             default:
                                 throw defunct(protocolVersion.unsupported());
@@ -1263,6 +1266,7 @@ class Connection {
         private static final Message.ProtocolEncoder messageEncoderV1 = new Message.ProtocolEncoder(ProtocolVersion.V1);
         private static final Message.ProtocolEncoder messageEncoderV2 = new Message.ProtocolEncoder(ProtocolVersion.V2);
         private static final Message.ProtocolEncoder messageEncoderV3 = new Message.ProtocolEncoder(ProtocolVersion.V3);
+        private static final Message.ProtocolEncoder messageEncoderV4 = new Message.ProtocolEncoder(ProtocolVersion.V4);
         private static final Frame.Encoder frameEncoder = new Frame.Encoder();
 
         private final ProtocolVersion protocolVersion;
@@ -1321,6 +1325,8 @@ class Connection {
                     return messageEncoderV2;
                 case V3:
                     return messageEncoderV3;
+                case V4:
+                    return messageEncoderV4;
                 default:
                     throw new DriverInternalError("Unsupported protocol version " + protocolVersion);
             }

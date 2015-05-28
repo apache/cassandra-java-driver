@@ -19,12 +19,14 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.google.common.collect.ImmutableList;
 import io.netty.buffer.ByteBuf;
 
 import com.datastax.driver.core.Responses.Result.Rows.Metadata;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.Bytes;
 
+import static com.datastax.driver.core.ProtocolVersion.V4;
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 import static com.datastax.driver.core.SchemaElement.TABLE;
 
@@ -40,6 +42,8 @@ class Responses {
                 ExceptionCode code = ExceptionCode.fromValue(body.readInt());
                 String msg = CBUtil.readString(body);
                 Object infos = null;
+                ConsistencyLevel clt;
+                int received, blockFor;
                 switch (code) {
                     case UNAVAILABLE:
                         ConsistencyLevel clu = CBUtil.readConsistencyLevel(body);
@@ -49,15 +53,29 @@ class Responses {
                         break;
                     case WRITE_TIMEOUT:
                     case READ_TIMEOUT:
-                        ConsistencyLevel clt = CBUtil.readConsistencyLevel(body);
-                        int received = body.readInt();
-                        int blockFor = body.readInt();
+                        clt = CBUtil.readConsistencyLevel(body);
+                        received = body.readInt();
+                        blockFor = body.readInt();
                         if (code == ExceptionCode.WRITE_TIMEOUT) {
                             WriteType writeType = Enum.valueOf(WriteType.class, CBUtil.readString(body));
                             infos = new WriteTimeoutException(clt, writeType, received, blockFor);
                         } else {
                             byte dataPresent = body.readByte();
                             infos = new ReadTimeoutException(clt, received, blockFor, dataPresent != 0);
+                        }
+                        break;
+                    case WRITE_FAILURE:
+                    case READ_FAILURE:
+                        clt = CBUtil.readConsistencyLevel(body);
+                        received = body.readInt();
+                        blockFor = body.readInt();
+                        int failures = body.readInt();
+                        if (code == ExceptionCode.WRITE_FAILURE) {
+                            WriteType writeType = Enum.valueOf(WriteType.class, CBUtil.readString(body));
+                            infos = new WriteFailureException(clt, writeType, received, blockFor, failures);
+                        } else {
+                            byte dataPresent = body.readByte();
+                            infos = new ReadFailureException(clt, received, blockFor, failures, dataPresent != 0);
                         }
                         break;
                     case UNPREPARED:
@@ -97,6 +115,8 @@ class Responses {
                 case TRUNCATE_ERROR:   return new TruncateException(message);
                 case WRITE_TIMEOUT:    return ((WriteTimeoutException)infos).copy();
                 case READ_TIMEOUT:     return ((ReadTimeoutException)infos).copy();
+                case WRITE_FAILURE:    return ((WriteFailureException)infos).copy();
+                case READ_FAILURE:     return ((ReadFailureException)infos).copy();
                 case SYNTAX_ERROR:     return new SyntaxError(message);
                 case UNAUTHORIZED:     return new UnauthorizedException(message);
                 case INVALID:          return new InvalidQueryException(message);
@@ -311,30 +331,44 @@ class Responses {
                     }
                 }
 
-                static final Metadata EMPTY = new Metadata(0, null, null);
+                static final Metadata EMPTY = new Metadata(0, null, null, null);
 
                 public final int columnCount;
                 public final ColumnDefinitions columns; // Can be null if no metadata was asked by the query
                 public final ByteBuffer pagingState;
+                public final int[] pkIndices;
 
-                private Metadata(int columnCount, ColumnDefinitions columns, ByteBuffer pagingState) {
+                private Metadata(int columnCount, ColumnDefinitions columns, ByteBuffer pagingState, int[] pkIndices) {
                     this.columnCount = columnCount;
                     this.columns = columns;
                     this.pagingState = pagingState;
+                    this.pkIndices = pkIndices;
                 }
 
                 public static Metadata decode(ByteBuf body) {
+                    return decode(body, false);
+                }
+
+                public static Metadata decode(ByteBuf body, boolean withPkIndices) {
 
                     // flags & column count
                     EnumSet<Flag> flags = Flag.deserialize(body.readInt());
                     int columnCount = body.readInt();
+
+                    int[] pkIndices = null;
+                    int pkCount;
+                    if (withPkIndices && (pkCount = body.readInt()) > 0) {
+                        pkIndices = new int[pkCount];
+                        for (int i = 0; i < pkCount; i++)
+                            pkIndices[i] = (int)body.readShort();
+                    }
 
                     ByteBuffer state = null;
                     if (flags.contains(Flag.HAS_MORE_PAGES))
                         state = CBUtil.readValue(body);
 
                     if (flags.contains(Flag.NO_METADATA))
-                        return new Metadata(columnCount, null, state);
+                        return new Metadata(columnCount, null, state, pkIndices);
 
                     boolean globalTablesSpec = flags.contains(Flag.GLOBAL_TABLES_SPEC);
 
@@ -355,7 +389,7 @@ class Responses {
                         defs[i] = new ColumnDefinitions.Definition(ksName, cfName, name, type);
                     }
 
-                    return new Metadata(columnCount, new ColumnDefinitions(defs), state);
+                    return new Metadata(columnCount, new ColumnDefinitions(defs), state, pkIndices);
                 }
 
                 @Override
@@ -442,7 +476,8 @@ class Responses {
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
                 public Result decode(ByteBuf body, ProtocolVersion version) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
-                    Rows.Metadata metadata = Rows.Metadata.decode(body);
+                    boolean withPkIndices = version.compareTo(V4) >= 0;
+                    Rows.Metadata metadata = Rows.Metadata.decode(body, withPkIndices);
                     Rows.Metadata resultMetadata = decodeResultMetadata(body, version);
                     return new Prepared(id, metadata, resultMetadata);
                 }
@@ -453,6 +488,7 @@ class Responses {
                             return Rows.Metadata.EMPTY;
                         case V2:
                         case V3:
+                        case V4:
                             return Rows.Metadata.decode(body);
                         default:
                             throw version.unsupported();
@@ -502,6 +538,7 @@ class Responses {
                             target = name.isEmpty() ? KEYSPACE : TABLE;
                             return new SchemaChange(change, target, keyspace, name);
                         case V3:
+                        case V4:
                             change = CBUtil.readEnumValue(Change.class, body);
                             target = CBUtil.readEnumValue(SchemaElement.class, body);
                             keyspace = CBUtil.readString(body);

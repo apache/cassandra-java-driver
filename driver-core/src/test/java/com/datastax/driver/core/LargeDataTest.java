@@ -21,11 +21,13 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import static com.datastax.driver.core.TestUtils.versionCheck;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 /**
@@ -56,7 +58,7 @@ public class LargeDataTest {
     }
 
     /*
-     * Test a batch that writes a row of size 10,000
+     * Test a batch that writes a row of size 4,000
      * @param c The cluster object
      * @param key The key value that will receive the data
      * @throws Throwable
@@ -64,7 +66,7 @@ public class LargeDataTest {
     private void testWideBatchRows(CCMBridge.CCMCluster c, int key) throws Throwable {
         // Write data
         Batch q = batch();
-        for (int i = 0; i < 10000; ++i) {
+        for (int i = 0; i < 4000; ++i) {
             q = q.add(insertInto("wide_batch_rows").value("k", key).value("i", i));
         }
         c.session.execute(q.setConsistencyLevel(ConsistencyLevel.QUORUM));
@@ -202,7 +204,7 @@ public class LargeDataTest {
     }
 
     /**
-     * Test a batch that writes a row of size 10,000
+     * Test a batch that writes a row of size 4,000 (just below the error threshold for 2.2).
      * @throws Throwable
      */
     @Test(groups = "short")

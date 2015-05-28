@@ -526,7 +526,8 @@ class SessionManager extends AbstractSession {
                 throw new InvalidQueryException(String.format("Tried to execute unknown prepared query : %s. "
                     + "You may have used a PreparedStatement that was created with another Cluster instance.", bs.statement.getPreparedId().id));
             }
-            bs.ensureAllSet();
+            if(protoVersion.compareTo(ProtocolVersion.V4) < 0)
+                bs.ensureAllSet();
             boolean skipMetadata = protoVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.wrapper.values), skipMetadata,
                                                                                       fetchSize, usedPagingState, scl, defaultTimestamp);
@@ -539,7 +540,8 @@ class SessionManager extends AbstractSession {
                 throw new UnsupportedFeatureException(protoVersion, "Protocol level batching is not supported");
 
             BatchStatement bs = (BatchStatement)statement;
-            bs.ensureAllSet();
+            if(protoVersion.compareTo(ProtocolVersion.V4) < 0)
+                bs.ensureAllSet();
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protoVersion);
             Requests.BatchProtocolOptions options = new Requests.BatchProtocolOptions(cl, scl, defaultTimestamp);
             return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, options);

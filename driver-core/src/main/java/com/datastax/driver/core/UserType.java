@@ -76,7 +76,7 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
     @SuppressWarnings("unchecked")
     @Override
     TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
-        return (TypeCodec)TypeCodec.udtOf(this);
+        return (TypeCodec)TypeCodec.udtOf(this, protocolVersion);
     }
 
     /**

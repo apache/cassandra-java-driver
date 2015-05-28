@@ -442,9 +442,20 @@ public abstract class TestUtils {
             return ProtocolVersion.V1;
         } else if (major < 2.1) {
             return ProtocolVersion.V2;
-        } else {
+        } else if (major < 2.2) {
             return ProtocolVersion.V3;
+        } else {
+            return ProtocolVersion.V4;
         }
+    }
+
+    /**
+     * @param maximumAllowed The maximum protocol version to use.
+     * @return The desired protocolVersion or maximumAllowed if {@link #getDesiredProtocolVersion} is greater.
+     */
+    public static ProtocolVersion getDesiredProtocolVersion(ProtocolVersion maximumAllowed) {
+        ProtocolVersion versionToUse = getDesiredProtocolVersion();
+        return versionToUse.compareTo(maximumAllowed) > 0 ? maximumAllowed : versionToUse;
     }
 
     /**

@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
@@ -176,7 +177,8 @@ abstract class Message {
         }
 
         public final Type type;
-        protected UUID tracingId;
+        protected volatile UUID tracingId;
+        protected volatile List<String> warnings;
 
         protected Response(Type type) {
             this.type = type;
@@ -190,6 +192,11 @@ abstract class Message {
         public UUID getTracingId() {
             return tracingId;
         }
+
+        public Response setWarnings(List<String> warnings) {
+            this.warnings = warnings;
+            return this;
+        }
     }
 
     @ChannelHandler.Sharable
@@ -200,9 +207,12 @@ abstract class Message {
             boolean isTracing = frame.header.flags.contains(Frame.Header.Flag.TRACING);
             UUID tracingId = isTracing ? CBUtil.readUUID(frame.body) : null;
 
+            boolean hasWarnings = frame.header.flags.contains(Frame.Header.Flag.WARNING);
+            List<String> warnings = hasWarnings ? CBUtil.readStringList(frame.body) : Collections.<String>emptyList();
+
             try {
                 Response response = Response.Type.fromOpcode(frame.header.opcode).decoder.decode(frame.body, frame.header.version);
-                response.setTracingId(tracingId).setStreamId(frame.header.streamId);
+                response.setTracingId(tracingId).setWarnings(warnings).setStreamId(frame.header.streamId);
                 out.add(response);
             } finally {
                 frame.body.release();

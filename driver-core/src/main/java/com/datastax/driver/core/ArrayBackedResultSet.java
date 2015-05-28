@@ -92,8 +92,13 @@ abstract class ArrayBackedResultSet implements ResultSet {
     }
 
     private static ExecutionInfo update(ExecutionInfo info, Responses.Result msg, SessionManager session) {
+        if (info == null)
+            return null;
+
         UUID tracingId = msg.getTracingId();
-        return tracingId == null || info == null ? info : info.withTrace(new QueryTrace(tracingId, session));
+        QueryTrace trace = (tracingId == null) ? null : new QueryTrace(tracingId, session);
+
+        return info.withTraceAndWarnings(trace, msg.warnings);
     }
 
     private static ArrayBackedResultSet empty(ExecutionInfo info) {

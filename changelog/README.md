@@ -2,6 +2,12 @@
 
 ### 2.2.0-rc1 (in progress)
 
+- [new feature] Protocol V4 enum support (JAVA-783)
+- [new feature] Use PK columns in protocol v4 PREPARED response (JAVA-776)
+- [new feature] Distinguish NULL and UNSET values (JAVA-777)
+- [new feature] Expose server-side warnings on ExecutionInfo (JAVA-780)
+- [new feature] Expose new read/write failure exceptions (JAVA-749)
+
 Merged from 2.1 branch:
 
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)

@@ -126,6 +126,7 @@ class ProtocolEvent {
                     target = name.isEmpty() ? KEYSPACE : TABLE;
                     return new SchemaChange(change, target, keyspace, name);
                 case V3:
+                case V4:
                     change = CBUtil.readEnumValue(Change.class, bb);
                     target = CBUtil.readEnumValue(SchemaElement.class, bb);
                     keyspace = CBUtil.readString(bb);
