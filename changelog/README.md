@@ -1,8 +1,6 @@
-CHANGELOG
-=========
+## Changelog
 
-2.0.11:
--------
+### 2.0.11
 
 Merged from 2.0.10_fixes branch:
 
@@ -12,8 +10,7 @@ Merged from 2.0.10_fixes branch:
 - [bug] Prevent race during pool initialization (JAVA-768)
 
 
-2.0.10.1:
----------
+### 2.0.10.1
 
 - [improvement] Use Netty's pooled ByteBufAllocator by default (JAVA-756)
 - [improvement] Expose "unsafe" paging state API (JAVA-759)
@@ -21,8 +18,7 @@ Merged from 2.0.10_fixes branch:
 - [bug] Prevent race during pool initialization (JAVA-768)
 
 
-2.0.10:
--------
+### 2.0.10
 
 - [new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)
 - [improvement] Add connection heartbeat (JAVA-533)
@@ -81,15 +77,13 @@ Merged from 2.0.9_fixes branch:
 - [bug] Fix edge cases in query cancellation (JAVA-653).
 
 
-2.0.9.2:
---------
+### 2.0.9.2
 
 - [bug] Fix edge cases where a connection was released twice (JAVA-651).
 - [bug] Fix edge cases in query cancellation (JAVA-653).
 
 
-2.0.9.1:
---------
+### 2.0.9.1
 
 - [bug] Prevent race between cancellation and query completion (JAVA-614)
 - [bug] Prevent cancel and timeout from cancelling unrelated ResponseHandler if
@@ -99,8 +93,7 @@ Merged from 2.0.9_fixes branch:
 - [bug] Fix unwanted LBP notifications when a contact host is down (JAVA-613)
 
 
-2.0.9:
-------
+### 2.0.9
 
 - [improvement] Shade Netty dependency (JAVA-538)
 - [improvement] Target schema refreshes more precisely (JAVA-543)
@@ -123,8 +116,7 @@ Merged from 2.0.9_fixes branch:
   (JAVA-597)
 
 
-2.0.8:
-------
+### 2.0.8
 
 - [bug] Fix token awareness for case-sensitive keyspaces and tables (JAVA-526)
 - [bug] Check maximum number of values passed to SimpleStatement (JAVA-515)
@@ -133,8 +125,7 @@ Merged from 2.0.9_fixes branch:
   responsive (JAVA-522)
 
 
-2.0.7:
-------
+### 2.0.7
 
 - [bug] Handle null pool in PooledConnection.release (JAVA-449)
 - [improvement] Defunct connection on request timeout (JAVA-425)
@@ -161,8 +152,7 @@ Merged from 2.0.9_fixes branch:
 - [improvement] Downgrade Guava to 14.0.1 (JAVA-521)
 
 
-2.0.6:
-------
+### 2.0.6
 
 - [bug] Check cluster name when connecting to a new node (JAVA-397)
 - [bug] Add missing CAS delete support in QueryBuilder (JAVA-326)
@@ -176,8 +166,7 @@ Merged from 2.0.9_fixes branch:
 - [improvement] Expose child policy in chainable load balancing policies (JAVA-439)
 
 
-2.0.5:
-------
+### 2.0.5
 
 - [bug] Release connections on ResultSetFuture#cancel (JAVA-407)
 - [bug] Fix handling of SimpleStatement with values in query builder
@@ -187,8 +176,7 @@ Merged from 2.0.9_fixes branch:
 - [bug] Avoid deadlock on close (JAVA-418)
 
 
-2.0.4:
-------
+### 2.0.4
 
 - [improvement] Better handling of dead connections (JAVA-204)
 - [bug] Fix potential NPE in ControlConnection (JAVA-373)
@@ -201,8 +189,7 @@ Merged from 2.0.9_fixes branch:
 - [bug] Fix memory and resource leak on closed Sessions (JAVA-342, JAVA-390)
 
 
-2.0.3:
-------
+### 2.0.3
 
 - [new] The new AbsractSession makes mocking of Session easier.
 - [new] Allow to trigger a refresh of connected hosts (JAVA-309)
@@ -224,8 +211,7 @@ Merged from 1.0 branch:
 - [bug] Fix periodic reconnection to down hosts (JAVA-325)
 
 
-2.0.2:
-------
+### 2.0.2
 
 - [api] The type of the map key returned by NoHostAvailable#getErrors has changed from
   InetAddress to InetSocketAddress. Same for Initializer#getContactPoints return and
@@ -248,8 +234,7 @@ Merged from 1.0 branch:
 - [bug] Don't reconnect to nodes ignored by the load balancing policy (JAVA-314)
 
 
-2.0.1:
-------
+### 2.0.1
 
 - [improvement] Handle the static columns introduced in Cassandra 2.0.6 (JAVA-278)
 - [improvement] Add Cluster#newSession method to create Session without connecting
@@ -264,8 +249,7 @@ Merged from 1.0 branch:
 - [new] Add methods to check if a Cluster/Session instance has been closed already (JAVA-114)
 
 
-2.0.0:
-------
+### 2.0.0
 
 - [api] Case sensitive identifier by default in Metadata (JAVA-269)
 - [bug] Fix potential NPE in Cluster#connect (JAVA-274)
@@ -278,8 +262,7 @@ Merged from 1.0 branch:
   policy (JAVA-270)
 
 
-2.0.0-rc3:
-----------
+### 2.0.0-rc3
 
 - [improvement] The protocol version 1 is now supported (features only supported by the
   version 2 of the protocol throw UnsupportedFeatureException).
@@ -301,8 +284,7 @@ Merged from 1.0 branch:
 - [bug] Use date string in query build to work-around CASSANDRA-6718 (JAVA-264)
 
 
-2.0.0-rc2:
-----------
+### 2.0.0-rc2
 
 - [new] Add LOCAL_ONE consistency level support (requires using C* 2.0.2+) (JAVA-207)
 - [bug] Fix parsing of counter types (JAVA-219)
@@ -316,8 +298,7 @@ Merged from 1.0 branch:
   LatencyAwarePolicy.
 
 
-2.0.0-rc1:
-----------
+### 2.0.0-rc1
 
 - [new] Mark compression dependencies optional in maven (JAVA-199).
 - [api] Renamed TableMetadata#getClusteringKey to TableMetadata#getClusteringColumns.
@@ -332,8 +313,7 @@ Merged from 1.0 branch:
 - [bug] Allow bind markers for collections in the query builder (JAVA-196)
 
 
-2.0.0-beta2:
-------------
+### 2.0.0-beta2
 
 - [api] BoundStatement#setX(String, X) methods now set all values (if there is
   more than one) having the provided name, not just the first occurence.
@@ -348,8 +328,7 @@ Merged from 1.0 branch:
 - [bug] Fix potential NPE during authentication (JAVA-187)
 
 
-2.0.0-beta1:
------------
+### 2.0.0-beta1
 
 - [api] The 2.0 version is an API-breaking upgrade of the driver. While most
   of the breaking changes are minor, there are too numerous to be listed here
@@ -372,8 +351,7 @@ Merged from 1.0 branch:
   first one (JAVA-88).
 
 
-1.0.5:
-------
+### 1.0.5
 
 - [new] OSGi bundle (JAVA-142)
 - [new] Add support for ConsistencyLevel.LOCAL_ONE; note that this
@@ -389,8 +367,7 @@ Merged from 1.0 branch:
 - [bug] Allow bind markers for collections in the query builder (JAVA-196)
 
 
-1.0.4:
-------
+### 1.0.4
 
 - [api] The Cluster.Builder#poolingOptions and Cluster.Builder#socketOptions
   are now deprecated. They are replaced by the new withPoolingOptions and
@@ -411,8 +388,7 @@ Merged from 1.0 branch:
   exporting schema as string.
 
 
-1.0.3:
-------
+### 1.0.3
 
 - [api] The query builder now correctly throw an exception when given a value
   of a type it doesn't know about.
@@ -424,8 +400,7 @@ Merged from 1.0 branch:
 - [bug] Temporary fixup for TimestampType when talking to C* 2.0 nodes.
 
 
-1.0.2:
-------
+### 1.0.2
 
 - [api] Host#getMonitor and all Host.HealthMonitor methods have been
   deprecated. The new Host#isUp method is now prefered to the method
@@ -442,8 +417,7 @@ Merged from 1.0 branch:
   (JAVA-136)
 
 
-1.0.1:
-------
+### 1.0.1
 
 - [api] Function call handling in the query builder has been modified in a
   backward incompatible way. Function calls are not parsed from string values
@@ -460,8 +434,7 @@ Merged from 1.0 branch:
 - [improvement] Improves performance of the stress example application been.
 
 
-1.0.0:
-------
+### 1.0.0
 
 - [api] The AuthInfoProvider has be (temporarily) removed. Instead, the
   Cluster builder has a new withCredentials() method to provide a username
@@ -475,8 +448,7 @@ Merged from 1.0 branch:
   is stateful (JAVA-91).
 
 
-1.0.0-RC1:
-----------
+### 1.0.0-RC1
 
 - [new] Null values are now supported in BoundStatement (but you will need at
   least Cassandra 1.2.3 for it to work). The API of BoundStatement has been
@@ -494,8 +466,7 @@ Merged from 1.0 branch:
 - [bug] Correctly reports errors during authentication phase (JAVA-82).
 
 
-1.0.0-beta2:
-------------
+### 1.0.0-beta2
 
 - [new] Support blob constants, BigInteger, BigDecimal and counter batches in
   the query builder (JAVA-51, JAVA-60, JAVA-58)
@@ -508,7 +479,6 @@ Merged from 1.0 branch:
   (JAVA-66)
 
 
-1.0.0-beta1:
-------------
+### 1.0.0-beta1
 
 - initial release

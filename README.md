@@ -59,7 +59,6 @@ Please refer to the README of each module for more information.
 - TWITTER: Follow the latest news about DataStax Drivers - [@olim7t](http://twitter.com/olim7t), [@mfiguiere](http://twitter.com/mfiguiere)
 - DOCS: http://docs.datastax.com/en/developer/java-driver/2.0/java-driver/whatsNew2.html
 - API: http://docs.datastax.com/en/drivers/java/2.0
-- CHANGELOG: https://github.com/datastax/java-driver/blob/2.0/driver-core/CHANGELOG.rst
 
 
 ## Maven

@@ -9,6 +9,11 @@ sections:
     sources:
       - type:  markdown
         files: 'features/**/*.md'
+  - title:     Changelog
+    prefix:    /changelog
+    sources:
+      - type:  markdown
+        files: 'changelog/**/*.md'
 links:
   - title: Code
     href:  https://github.com/datastax/java-driver/
