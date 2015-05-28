@@ -458,6 +458,8 @@ public class CCMBridge {
 
         protected static Cluster cluster;
         protected static Session session;
+        
+        protected final VersionNumber cassandraVersion = VersionNumber.parse(System.getProperty("cassandra.version"));
 
         protected abstract Collection<String> getTableDefinitions();
 
