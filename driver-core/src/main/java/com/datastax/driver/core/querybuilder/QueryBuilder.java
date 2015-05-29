@@ -227,11 +227,7 @@ public final class QueryBuilder {
      * @return the quoted column name.
      */
     public static String quote(String columnName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append('"');
-        Utils.appendName(columnName, sb);
-        sb.append('"');
-        return sb.toString();
+        return '"' + columnName + '"';
     }
 
     /**
