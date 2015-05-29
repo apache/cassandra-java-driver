@@ -63,7 +63,12 @@ public enum ProtocolVersion {
         return new DriverInternalError("Unsupported protocol version " + this);
     }
 
-    int toInt() {
+    /**
+     * Returns the version as an integer.
+     *
+     * @return the integer representation.
+     */
+    public int toInt() {
         return asInt;
     }
 

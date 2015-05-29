@@ -9,6 +9,7 @@
 - [new feature] Expose new read/write failure exceptions (JAVA-749)
 - [new feature] Expose function and aggregate metadata (JAVA-747)
 - [new feature] Add new client exception for CQL function failure (JAVA-778)
+- [improvement] Expose ProtocolVersion#toInt (JAVA-700)
 
 Merged from 2.1 branch:
 
