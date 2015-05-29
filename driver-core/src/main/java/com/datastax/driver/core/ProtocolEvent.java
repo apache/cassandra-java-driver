@@ -16,9 +16,13 @@
 package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.List;
 
 import io.netty.buffer.ByteBuf;
 
+import static com.datastax.driver.core.SchemaElement.AGGREGATE;
+import static com.datastax.driver.core.SchemaElement.FUNCTION;
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 import static com.datastax.driver.core.SchemaElement.TABLE;
 
@@ -103,35 +107,42 @@ class ProtocolEvent {
         public final SchemaElement targetType;
         public final String targetKeyspace;
         public final String targetName;
+        public final List<String> targetSignature;
 
-        public SchemaChange(Change change, SchemaElement targetType, String targetKeyspace, String targetName) {
+        public SchemaChange(Change change, SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature) {
             super(Type.SCHEMA_CHANGE);
             this.change = change;
             this.targetType = targetType;
             this.targetKeyspace = targetKeyspace;
             this.targetName = targetName;
+            this.targetSignature = targetSignature;
         }
 
         // Assumes the type has already been deserialized
         private static SchemaChange deserializeEvent(ByteBuf bb, ProtocolVersion version) {
             Change change;
-            SchemaElement target;
-            String keyspace, name;
+            SchemaElement targetType;
+            String targetKeyspace, targetName;
+            List<String> targetSignature;
             switch (version) {
                 case V1:
                 case V2:
                     change = CBUtil.readEnumValue(Change.class, bb);
-                    keyspace = CBUtil.readString(bb);
-                    name = CBUtil.readString(bb);
-                    target = name.isEmpty() ? KEYSPACE : TABLE;
-                    return new SchemaChange(change, target, keyspace, name);
+                    targetKeyspace = CBUtil.readString(bb);
+                    targetName = CBUtil.readString(bb);
+                    targetType = targetName.isEmpty() ? KEYSPACE : TABLE;
+                    targetSignature = Collections.emptyList();
+                    return new SchemaChange(change, targetType, targetKeyspace, targetName, targetSignature);
                 case V3:
                 case V4:
                     change = CBUtil.readEnumValue(Change.class, bb);
-                    target = CBUtil.readEnumValue(SchemaElement.class, bb);
-                    keyspace = CBUtil.readString(bb);
-                    name = (target == KEYSPACE) ? "" : CBUtil.readString(bb);
-                    return new SchemaChange(change, target, keyspace, name);
+                    targetType = CBUtil.readEnumValue(SchemaElement.class, bb);
+                    targetKeyspace = CBUtil.readString(bb);
+                    targetName = (targetType == KEYSPACE) ? "" : CBUtil.readString(bb);
+                    targetSignature = (targetType == FUNCTION || targetType == AGGREGATE)
+                        ? CBUtil.readStringList(bb)
+                        : Collections.<String>emptyList();
+                    return new SchemaChange(change, targetType, targetKeyspace, targetName, targetSignature);
                 default:
                     throw version.unsupported();
             }

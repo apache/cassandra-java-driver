@@ -27,6 +27,8 @@ import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.Bytes;
 
 import static com.datastax.driver.core.ProtocolVersion.V4;
+import static com.datastax.driver.core.SchemaElement.AGGREGATE;
+import static com.datastax.driver.core.SchemaElement.FUNCTION;
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 import static com.datastax.driver.core.SchemaElement.TABLE;
 
@@ -117,6 +119,7 @@ class Responses {
                 case READ_TIMEOUT:     return ((ReadTimeoutException)infos).copy();
                 case WRITE_FAILURE:    return ((WriteFailureException)infos).copy();
                 case READ_FAILURE:     return ((ReadFailureException)infos).copy();
+                case FUNCTION_FAILURE: return new FunctionExecutionException(message);
                 case SYNTAX_ERROR:     return new SyntaxError(message);
                 case UNAUTHORIZED:     return new UnauthorizedException(message);
                 case INVALID:          return new InvalidQueryException(message);
@@ -521,41 +524,48 @@ class Responses {
             public final SchemaElement targetType;
             public final String targetKeyspace;
             public final String targetName;
+            public final List<String> targetSignature;
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
                 public Result decode(ByteBuf body, ProtocolVersion version)
                 {
                     // Note: the CREATE KEYSPACE/TABLE/TYPE SCHEMA_CHANGE response is different from the SCHEMA_CHANGE EVENT type
                     Change change;
-                    SchemaElement target;
-                    String keyspace, name;
+                    SchemaElement targetType;
+                    String targetKeyspace, targetName;
+                    List<String> targetSignature;
                     switch (version) {
                         case V1:
                         case V2:
                             change = CBUtil.readEnumValue(Change.class, body);
-                            keyspace = CBUtil.readString(body);
-                            name = CBUtil.readString(body);
-                            target = name.isEmpty() ? KEYSPACE : TABLE;
-                            return new SchemaChange(change, target, keyspace, name);
+                            targetKeyspace = CBUtil.readString(body);
+                            targetName = CBUtil.readString(body);
+                            targetType = targetName.isEmpty() ? KEYSPACE : TABLE;
+                            targetSignature = Collections.emptyList();
+                            return new SchemaChange(change, targetType, targetKeyspace, targetName, targetSignature);
                         case V3:
                         case V4:
                             change = CBUtil.readEnumValue(Change.class, body);
-                            target = CBUtil.readEnumValue(SchemaElement.class, body);
-                            keyspace = CBUtil.readString(body);
-                            name = (target == KEYSPACE) ? "" : CBUtil.readString(body);
-                            return new SchemaChange(change, target, keyspace, name);
+                            targetType = CBUtil.readEnumValue(SchemaElement.class, body);
+                            targetKeyspace = CBUtil.readString(body);
+                            targetName = (targetType == KEYSPACE) ? "" : CBUtil.readString(body);
+                            targetSignature = (targetType == FUNCTION || targetType == AGGREGATE)
+                                ? CBUtil.readStringList(body)
+                                : Collections.<String>emptyList();
+                            return new SchemaChange(change, targetType, targetKeyspace, targetName, targetSignature);
                         default:
                             throw version.unsupported();
                     }
                 }
             };
 
-            private SchemaChange(Change change, SchemaElement targetType, String targetKeyspace, String targetName) {
+            private SchemaChange(Change change, SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature) {
                 super(Kind.SCHEMA_CHANGE);
                 this.change = change;
                 this.targetType = targetType;
                 this.targetKeyspace = targetKeyspace;
                 this.targetName = targetName;
+                this.targetSignature = targetSignature;
             }
 
             @Override

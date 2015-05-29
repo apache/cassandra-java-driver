@@ -32,9 +32,7 @@ import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
-import static com.datastax.driver.core.SchemaElement.KEYSPACE;
-import static com.datastax.driver.core.SchemaElement.TABLE;
-import static com.datastax.driver.core.SchemaElement.TYPE;
+import static com.datastax.driver.core.SchemaElement.*;
 
 class ControlConnection implements Host.StateListener {
 
@@ -54,6 +52,8 @@ class ControlConnection implements Host.StateListener {
     private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
     private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
     private static final String SELECT_USERTYPES = "SELECT * FROM system.schema_usertypes";
+    private static final String SELECT_FUNCTIONS = "SELECT * FROM system.schema_functions";
+    private static final String SELECT_AGGREGATES = "SELECT * FROM system.schema_aggregates";
 
     private static final String SELECT_PEERS = "SELECT * FROM system.peers";
     private static final String SELECT_LOCAL = "SELECT * FROM system.local WHERE key='local'";
@@ -268,7 +268,7 @@ class ControlConnection implements Host.StateListener {
             // We want that because the token map was not properly initialized by the first call above, since it requires the list of keyspaces
             // to be loaded.
             logger.debug("[Control connection] Refreshing schema");
-            refreshSchema(connection, null, null, null, cluster, isInitialConnection);
+            refreshSchema(connection, null, null, null, null, cluster, isInitialConnection);
             return connection;
         } catch (BusyConnectionException e) {
             connection.closeAsync().force();
@@ -288,7 +288,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    public void refreshSchema(SchemaElement targetType, String targetKeyspace, String targetName) throws InterruptedException {
+    public void refreshSchema(SchemaElement targetType, String targetKeyspace, String targetName, List<String> signature) throws InterruptedException {
         logger.debug("[Control connection] Refreshing schema for {}{}",
             targetType == null ? "everything" : targetKeyspace,
             (targetType == KEYSPACE) ? "" : "." + targetName + " (" + targetType + ")");
@@ -297,7 +297,7 @@ class ControlConnection implements Host.StateListener {
             // At startup, when we add the initial nodes, this will be null, which is ok
             if (c == null)
                 return;
-            refreshSchema(c, targetType, targetKeyspace, targetName, cluster, false);
+            refreshSchema(c, targetType, targetKeyspace, targetName, signature, cluster, false);
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing schema ({})", e.getMessage());
             signalError();
@@ -312,7 +312,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    static void refreshSchema(Connection connection, SchemaElement targetType, String targetKeyspace, String targetName, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    static void refreshSchema(Connection connection, SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         Host host = cluster.metadata.getHost(connection.address);
         // Neither host, nor it's version should be null. But instead of dying if there is a race or something, we can kind of try to infer
         // a Cassandra version from the protocol version (this is not full proof, we can have the protocol 1 against C* 2.0+, but it's worth
@@ -334,21 +334,31 @@ class ControlConnection implements Host.StateListener {
                 whereClause += " AND columnfamily_name = '" + targetName + '\'';
             else if (targetType == TYPE)
                 whereClause += " AND type_name = '" + targetName + '\'';
+            else if (targetType == FUNCTION)
+                whereClause += " AND function_name = '" + targetName + "' AND signature = " + DataType.LIST_OF_TEXT.format(targetSignature);
+            else if (targetType == AGGREGATE)
+                whereClause += " AND aggregate_name = '" + targetName + "' AND signature = " + DataType.LIST_OF_TEXT.format(targetSignature);
         }
 
         boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);
         DefaultResultSetFuture ksFuture = isSchemaOrKeyspace
-                                        ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_KEYSPACES + whereClause))
-                                        : null;
+            ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_KEYSPACES + whereClause))
+            : null;
         DefaultResultSetFuture udtFuture = (isSchemaOrKeyspace && supportsUdts(cassandraVersion) || targetType == TYPE)
-                                         ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_USERTYPES + whereClause))
-                                         : null;
+            ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_USERTYPES + whereClause))
+            : null;
         DefaultResultSetFuture cfFuture = (isSchemaOrKeyspace || targetType == TABLE)
-                                        ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause))
-                                        : null;
+            ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause))
+            : null;
         DefaultResultSetFuture colsFuture = (isSchemaOrKeyspace || targetType == TABLE)
-                                          ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMNS + whereClause))
-                                          : null;
+            ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMNS + whereClause))
+            : null;
+        DefaultResultSetFuture functionsFuture = (isSchemaOrKeyspace && supportsUdfs(cassandraVersion) || targetType == FUNCTION)
+            ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_FUNCTIONS + whereClause))
+            : null;
+        DefaultResultSetFuture aggregatesFuture = (isSchemaOrKeyspace && supportsUdfs(cassandraVersion) || targetType == AGGREGATE)
+            ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_AGGREGATES + whereClause))
+            : null;
 
         if (ksFuture != null)
             connection.write(ksFuture);
@@ -358,14 +368,20 @@ class ControlConnection implements Host.StateListener {
             connection.write(cfFuture);
         if (colsFuture != null)
             connection.write(colsFuture);
+        if (functionsFuture != null)
+            connection.write(functionsFuture);
+        if (aggregatesFuture != null)
+            connection.write(aggregatesFuture);
 
         try {
             cluster.metadata.rebuildSchema(targetType, targetKeyspace, targetName,
-                                           ksFuture == null ? null : ksFuture.get(),
-                                           udtFuture == null ? null : udtFuture.get(),
-                                           cfFuture == null ? null : cfFuture.get(),
-                                           colsFuture == null ? null : colsFuture.get(),
-                                           cassandraVersion);
+                ksFuture == null ? null : ksFuture.get(),
+                udtFuture == null ? null : udtFuture.get(),
+                cfFuture == null ? null : cfFuture.get(),
+                colsFuture == null ? null : colsFuture.get(),
+                functionsFuture == null ? null : functionsFuture.get(),
+                aggregatesFuture == null ? null : aggregatesFuture.get(),
+                cassandraVersion);
         } catch (RuntimeException e) {
             // Failure to parse the schema is definitively wrong so log a full-on error, but this won't generally prevent queries to
             // work and this can happen when new Cassandra versions modify stuff in the schema and the driver hasn't yet be modified.
@@ -381,6 +397,10 @@ class ControlConnection implements Host.StateListener {
 
     private static boolean supportsUdts(VersionNumber cassandraVersion) {
         return cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1);
+    }
+
+    private static boolean supportsUdfs(VersionNumber cassandraVersion) {
+        return cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 2);
     }
 
     public void refreshNodeListAndTokenMap() {

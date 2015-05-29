@@ -506,6 +506,11 @@ public class TableMetadata {
         return sb;
     }
 
+    static StringBuilder spaceOrNewLine(StringBuilder sb, boolean formatted) {
+        sb.append(formatted ? '\n' : ' ');
+        return sb;
+    }
+
     public static class Options {
 
         private static final String COMMENT                     = "comment";

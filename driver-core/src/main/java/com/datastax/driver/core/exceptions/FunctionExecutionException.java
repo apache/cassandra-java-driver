@@ -13,8 +13,25 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.core;
+package com.datastax.driver.core.exceptions;
 
-enum SchemaElement {
-    KEYSPACE, TABLE, TYPE, FUNCTION, AGGREGATE
+/**
+ * Error during the execution of a function.
+ */
+public class FunctionExecutionException extends QueryExecutionException {
+
+    private static final long serialVersionUID = 0;
+
+    public FunctionExecutionException(String msg) {
+        super(msg);
+    }
+
+    private FunctionExecutionException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
+
+    @Override
+    public DriverException copy() {
+        return new FunctionExecutionException(getMessage(), this);
+    }
 }

@@ -26,6 +26,10 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.*;
 
+import static com.datastax.driver.core.SchemaElement.KEYSPACE;
+import static com.datastax.driver.core.SchemaElement.TABLE;
+import static com.datastax.driver.core.SchemaElement.TYPE;
+
 /**
  * Internal implementation of ResultSetFuture.
  */
@@ -68,39 +72,37 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                             break;
                         case SCHEMA_CHANGE:
                             Responses.Result.SchemaChange scc = (Responses.Result.SchemaChange)rm;
+                            logger.debug("Applying {}", scc);
                             ResultSet rs = ArrayBackedResultSet.fromMessage(rm, session, protocolVersion, info, statement);
                             switch (scc.change) {
                                 case CREATED:
                                 case UPDATED:
-                                    session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.targetType, scc.targetKeyspace, scc.targetName);
+                                    session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.targetType, scc.targetKeyspace, scc.targetName, scc.targetSignature);
                                     break;
                                 case DROPPED:
-                                    KeyspaceMetadata keyspace;
-                                    switch (scc.targetType) {
-                                        case KEYSPACE:
-                                            // If that the one keyspace we are logged in, reset to null (it shouldn't really happen but ...)
-                                            // Note: Actually, Cassandra doesn't do that so we don't either as this could confuse prepared statements.
-                                            // We'll add it back if CASSANDRA-5358 changes that behavior
-                                            //if (scc.keyspace.equals(session.poolsState.keyspace))
-                                            //    session.poolsState.setKeyspace(null);
-                                            session.cluster.manager.metadata.removeKeyspace(scc.targetKeyspace);
-                                            break;
-                                        case TABLE:
-                                            keyspace = session.cluster.manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
-                                            if (keyspace == null)
-                                                logger.warn("Received a DROPPED notification for table {}.{}, but this keyspace is unknown in our metadata",
-                                                    scc.targetKeyspace, scc.targetName);
-                                            else
-                                                keyspace.removeTable(scc.targetName);
-                                            break;
-                                        case TYPE:
-                                            keyspace = session.cluster.manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
-                                            if (keyspace == null)
-                                                logger.warn("Received a DROPPED notification for UDT {}.{}, but this keyspace is unknown in our metadata",
-                                                    scc.targetKeyspace, scc.targetName);
-                                            else
-                                                keyspace.removeUserType(scc.targetName);
-                                            break;
+                                    if (scc.targetType == KEYSPACE) {
+                                        session.cluster.manager.metadata.removeKeyspace(scc.targetKeyspace);
+                                    } else {
+                                        KeyspaceMetadata keyspace = session.cluster.manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
+                                        if (keyspace == null) {
+                                            logger.warn("Received a DROPPED notification for {} {}.{}, but this keyspace is unknown in our metadata",
+                                                scc.targetType, scc.targetKeyspace, scc.targetName);
+                                        } else {
+                                            switch (scc.targetType) {
+                                                case TABLE:
+                                                    keyspace.removeTable(scc.targetName);
+                                                    break;
+                                                case TYPE:
+                                                    keyspace.removeUserType(scc.targetName);
+                                                    break;
+                                                case FUNCTION:
+                                                    keyspace.removeFunction(Metadata.fullFunctionName(scc.targetName, scc.targetSignature));
+                                                    break;
+                                                case AGGREGATE:
+                                                    keyspace.removeAggregate(Metadata.fullFunctionName(scc.targetName, scc.targetSignature));
+                                                    break;
+                                            }
+                                        }
                                     }
                                     session.cluster.manager.waitForSchemaAgreementAndSignal(connection, this, rs);
                                     break;

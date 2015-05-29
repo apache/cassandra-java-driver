@@ -165,6 +165,7 @@ public class CCMBridge {
         return f;
     }
 
+    /** Note that this method does not start CCM */
     public static CCMBridge create(String name, String... options) {
         // This leads to a confusing CCM error message so check explicitly:
         checkArgument(!"current".equals(name.toLowerCase()),
@@ -486,6 +487,7 @@ public class CCMBridge {
                 try {
                     //launch ccm cluster
                     ccmBridge = CCMBridge.create("test-class");
+                    ccmBridge.updateConfig("enable_user_defined_functions", "true");
 
                     ports = new int[5];
                     for (int i = 0; i < 5; i++) {
