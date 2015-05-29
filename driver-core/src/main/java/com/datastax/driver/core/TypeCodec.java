@@ -934,7 +934,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class SimpleDateCodec extends TypeCodec<Date> {
+    static class SimpleDateCodec extends TypeCodec<Integer> {
 
         public static final SimpleDateCodec instance = new SimpleDateCodec();
         private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
@@ -947,7 +947,7 @@ abstract class TypeCodec<T> {
 
         private SimpleDateCodec() {}
 
-        private static Date parseDate(String str, final String[] parsePatterns) {
+        private static Integer parseDate(String str, final String[] parsePatterns) {
             SimpleDateFormat parser = new SimpleDateFormat();
             parser.setLenient(false);
             parser.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -959,17 +959,17 @@ abstract class TypeCodec<T> {
 
                 Date date = parser.parse(str, pos);
                 if (date != null && pos.getIndex() == str.length()) {
-                    return date;
+                    return Timestamps.millisToSimpleDate(date.getTime());
                 }
             }
             throw new IllegalArgumentException("Unable to parse the date: " + str);
         }
 
         @Override
-        public Date parse(String value) {
+        public Integer parse(String value) {
             if (IS_LONG_PATTERN.matcher(value).matches()) {
                 try {
-                    return new Date(Timestamps.simpleDateToMillis(Integer.parseInt(value)));
+                    return Integer.parseInt(value);
                 } catch (NumberFormatException e) {
                     throw new InvalidTypeException(String.format("Cannot parse date value from \"%s\"", value));
                 }
@@ -983,22 +983,30 @@ abstract class TypeCodec<T> {
         }
 
         @Override
-        public String format(Date value) {
+        public String format(Integer value) {
             SimpleDateFormat parser = new SimpleDateFormat();
             parser.setLenient(false);
             parser.setTimeZone(TimeZone.getTimeZone("UTC"));
             parser.applyPattern(DEFAULT_PATTERN);
-            return parser.format(value);
+            return parser.format(Timestamps.simpleDateToMillis(value));
         }
 
         @Override
-        public ByteBuffer serialize(Date value) {
-            return IntCodec.instance.serializeNoBoxing(Timestamps.millisToSimpleDate(value.getTime()));
+        public ByteBuffer serialize(Integer value) {
+            return serializeNoBoxing(value);
         }
 
         @Override
-        public Date deserialize(ByteBuffer bytes) {
-            return new Date(Timestamps.simpleDateToMillis(IntCodec.instance.deserializeNoBoxing(bytes)));
+        public Integer deserialize(ByteBuffer bytes) {
+            return deserializeNoBoxing(bytes);
+        }
+
+        public ByteBuffer serializeNoBoxing(int value) {
+            return IntCodec.instance.serializeNoBoxing(value);
+        }
+
+        public int deserializeNoBoxing(ByteBuffer bytes) {
+            return IntCodec.instance.deserializeNoBoxing(bytes);
         }
     }
 

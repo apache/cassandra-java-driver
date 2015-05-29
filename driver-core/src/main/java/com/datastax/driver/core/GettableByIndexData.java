@@ -131,13 +131,13 @@ public interface GettableByIndexData {
      * Returns the {@code i}th value as a date as an int in days since epoch.
      *
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
-     * @return the value of the {@code i}th element as a data. If the
+     * @return the value of the {@code i}th element as an int. If the
      * value is NULL, {@code 0} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      * @throws InvalidTypeException if value {@code i} is not of type DATE.
      */
-    public Date getDateWithoutTime(int i);
+    public int getDateWithoutTime(int i);
 
     /**
      * Returns the {@code i}th value as a long in nanoseconds since midnight.

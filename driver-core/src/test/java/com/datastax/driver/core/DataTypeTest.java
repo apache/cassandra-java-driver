@@ -24,7 +24,6 @@ import java.util.*;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 
-import com.datastax.driver.core.utils.Timestamps;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -97,7 +96,7 @@ public class DataTypeTest {
             case TIMESTAMP:
                 return new Object[]{ new Date(42L), new Date(91294377723L), new Date(-133L) };
             case DATE:
-                return new Object[]{ new Date(Timestamps.simpleDateToMillis(-2147467577)) /* 2014-01-01 */, new Date(Timestamps.simpleDateToMillis(-2147483648)) /* 1970-01-01 */ };
+                return new Object[]{ -2147467577 /* 2014-01-01 */, -2147483648 /* 1970-01-01 */ };
             case TIME:
                 return new Object[]{ 54012123450000L /* 15:00:12.123450000 */, 0L };
             case BLOB:

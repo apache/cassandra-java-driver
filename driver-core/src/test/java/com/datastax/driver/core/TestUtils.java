@@ -26,7 +26,6 @@ import java.util.*;
 
 import static org.testng.Assert.fail;
 
-import com.datastax.driver.core.utils.Timestamps;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.slf4j.Logger;
@@ -102,7 +101,7 @@ public abstract class TestUtils {
                 bs.setTimestamp(name, (Date) value);
                 break;
             case DATE:
-                bs.setDateWithoutTime(name, (Date) value);
+                bs.setDateWithoutTime(name, (Integer) value);
                 break;
             case TIME:
                 bs.setTime(name, (Long) value);
@@ -220,7 +219,7 @@ public abstract class TestUtils {
                 case TIMESTAMP:
                     return new Date(1352288289L);
                 case DATE:
-                    return new Date(Timestamps.simpleDateToMillis(-2147483648));
+                    return -2147483648;
                 case TIME:
                     return 54012123450000L;
                 case UUID:
@@ -282,7 +281,7 @@ public abstract class TestUtils {
                 case TIMESTAMP:
                     return new Date(872835240000L);
                 case DATE:
-                    return new Date(Timestamps.simpleDateToMillis(-2147483648));
+                    return -2147483648;
                 case TIME:
                     return 54012123450000L;
                 case UUID:

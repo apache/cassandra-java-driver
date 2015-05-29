@@ -266,7 +266,8 @@ public interface Row extends GettableData {
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      * @throws InvalidTypeException if value {@code i} is not of type DATE.
      */
-    public Date getDateWithoutTime(int i);
+    @Override
+    public int getDateWithoutTime(int i);
 
     /**
      * Returns the value for {@code name} as a date as an int in days since epoch.
@@ -278,7 +279,8 @@ public interface Row extends GettableData {
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
      * @throws InvalidTypeException if value {@code name} is not of type DATE.
      */
-    public Date getDateWithoutTime(String name);
+    @Override
+    public int getDateWithoutTime(String name);
 
     /**
      * Returns the {@code i}th value as a long in nanoseconds since midnight.
@@ -290,6 +292,7 @@ public interface Row extends GettableData {
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      * @throws InvalidTypeException if value {@code i} is not of type TIME.
      */
+    @Override
     public long getTime(int i);
 
     /**
@@ -302,6 +305,7 @@ public interface Row extends GettableData {
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
      * @throws InvalidTypeException if value {@code name} is not of type TIME.
      */
+    @Override
     public long getTime(String name);
 
     /**

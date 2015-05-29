@@ -144,7 +144,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type DATE.
      */
-    public T setDateWithoutTime(String name, Date v);
+    public T setDateWithoutTime(String name, int v);
 
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
