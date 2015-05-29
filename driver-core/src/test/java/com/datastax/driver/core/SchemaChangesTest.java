@@ -43,7 +43,9 @@ public class SchemaChangesTest {
     @BeforeClass(groups = "short")
     public void setup() {
         ccm = CCMBridge.create("schemaChangesTest");
-        ccm.updateConfig("enable_user_defined_functions", "true");
+        // Only enable user defined functions if protocol version is >= 4.
+        if(TestUtils.getDesiredProtocolVersion().compareTo(ProtocolVersion.V4) >= 0)
+            ccm.updateConfig("enable_user_defined_functions", "true");
         ccm.bootstrapNode(1);
 
         cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();

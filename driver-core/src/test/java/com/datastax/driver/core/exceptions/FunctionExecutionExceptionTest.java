@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.utils.CassandraVersion;
 
+@CassandraVersion(major = 2.2)
 public class FunctionExecutionExceptionTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
@@ -35,7 +36,6 @@ public class FunctionExecutionExceptionTest extends CCMBridge.PerClassSingleNode
     }
 
     @Test(groups = "short", expectedExceptions = FunctionExecutionException.class)
-    @CassandraVersion(major = 2.2)
     public void should_throw_when_function_execution_fails() {
         session.execute("SELECT inverse(k) FROM foo");
     }

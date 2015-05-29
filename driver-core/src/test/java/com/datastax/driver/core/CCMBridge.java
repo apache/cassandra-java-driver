@@ -487,7 +487,9 @@ public class CCMBridge {
                 try {
                     //launch ccm cluster
                     ccmBridge = CCMBridge.create("test-class");
-                    ccmBridge.updateConfig("enable_user_defined_functions", "true");
+                    // Only enable user defined functions if protocol version is >= 4.
+                    if(TestUtils.getDesiredProtocolVersion().compareTo(ProtocolVersion.V4) >= 0)
+                        ccmBridge.updateConfig("enable_user_defined_functions", "true");
 
                     ports = new int[5];
                     for (int i = 0; i < 5; i++) {
