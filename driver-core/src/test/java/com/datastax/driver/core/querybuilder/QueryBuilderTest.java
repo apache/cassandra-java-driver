@@ -21,10 +21,18 @@ import java.net.InetAddress;
 import java.util.*;
 
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
+import com.datastax.driver.core.Assertions;
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class QueryBuilderTest {
@@ -151,7 +159,10 @@ public class QueryBuilderTest {
                    .value("a", 123)
                    .value("b", InetAddress.getByName("127.0.0.1"))
                    .value(quote("C"), "foo'bar")
-                   .value("d", new TreeMap<String, Integer>(){{ put("x", 3); put("y", 2); }})
+                   .value("d", new TreeMap<String, Integer>() {{
+                       put("x", 3);
+                       put("y", 2);
+                   }})
                    .using(timestamp(42)).and(ttl(24));
         assertEquals(insert.toString(), query);
 
@@ -162,12 +173,20 @@ public class QueryBuilderTest {
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo(a,b) VALUES ({2,3,4},3.4) USING TTL 24 AND TIMESTAMP 42;";
-        insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
+        insert = insertInto("foo").values(new String[]{ "a", "b" }, new Object[]{ new TreeSet<Integer>() {{
+            add(2);
+            add(3);
+            add(4);
+        }}, 3.4 }).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo.bar(a,b) VALUES ({2,3,4},3.4) USING TTL ? AND TIMESTAMP ?;";
         insert = insertInto("foo", "bar")
-                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 })
+                    .values(new String[]{ "a", "b" }, new Object[]{ new TreeSet<Integer>() {{
+                        add(2);
+                        add(3);
+                        add(4);
+                    }}, 3.4 })
                     .using(ttl(bindMarker()))
                     .and(timestamp(bindMarker()));
         assertEquals(insert.toString(), query);
@@ -176,7 +195,11 @@ public class QueryBuilderTest {
         query = "INSERT INTO foo.bar(a,b,c) VALUES ({2,3,4},3.4,123) USING TIMESTAMP 42;";
         insert = insertInto("foo", "bar")
                     .using(timestamp(42))
-                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 })
+                    .values(new String[]{ "a", "b" }, new Object[]{ new TreeSet<Integer>() {{
+                        add(2);
+                        add(3);
+                        add(4);
+                    }}, 3.4 })
                     .value("c", 123);
         assertEquals(insert.toString(), query);
 
@@ -313,11 +336,11 @@ public class QueryBuilderTest {
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid timestamp, must be positive");
         }
-        
+
         query = "DELETE FROM foo.bar WHERE k1='foo' IF EXISTS;";
         delete = delete().from("foo", "bar").where(eq("k1", "foo")).ifExists();
         assertEquals(delete.toString(), query);
-        
+
         query = "DELETE FROM foo.bar WHERE k1='foo' IF a=1 AND b=2;";
         delete = delete().from("foo", "bar").where(eq("k1", "foo")).onlyIf(eq("a", 1)).and(eq("b", 2));
         assertEquals(delete.toString(), query);
@@ -697,5 +720,47 @@ public class QueryBuilderTest {
         // But we still want to check it client-side, to fail fast instead of sending a bad query to Cassandra.
         // getValues() is called on any RegularStatement before we send it (see SessionManager.makeRequestMessage).
         statement.getValues();
+    }
+
+    @Test(groups = "unit", expectedExceptions = InvalidQueryException.class)
+    public void should_not_allow_bind_marker_for_add() {
+        // This generates the query "UPDATE foo SET s = s + {?} WHERE k = 1", which is invalid in Cassandra
+        update("foo").with(add("s", bindMarker())).where(eq("k", 1));
+    }
+
+    @Test(groups = "unit", expectedExceptions = InvalidQueryException.class)
+    public void should_now_allow_bind_marker_for_prepend() {
+        update("foo").with(prepend("l", bindMarker())).where(eq("k", 1));
+    }
+
+    @Test(groups = "unit", expectedExceptions = InvalidQueryException.class)
+    public void should_not_allow_bind_marker_for_append() {
+        update("foo").with(append("l", bindMarker())).where(eq("k", 1));
+    }
+
+    @Test(groups = "unit", expectedExceptions = InvalidQueryException.class)
+    public void should_not_allow_bind_marker_for_remove() {
+        update("foo").with(remove("s", bindMarker())).where(eq("k", 1));
+    }
+
+    @Test(groups = "unit", expectedExceptions = InvalidQueryException.class)
+    public void should_not_allow_bind_marker_for_discard() {
+        update("foo").with(discard("l", bindMarker())).where(eq("k", 1));
+    }
+
+    @Test(groups = "unit")
+    public void should_quote_complex_column_names() {
+        // A column name can be anything as long as it's quoted, so "foo.bar" is a valid name
+        String query = "SELECT * FROM foo WHERE \"foo.bar\"=1;";
+        Statement statement = select().from("foo").where(eq(quote("foo.bar"), 1));
+
+        assertThat(statement.toString()).isEqualTo(query);
+    }
+
+    @Test(groups = "unit")
+    public void should_not_serialize_raw_query_values() {
+        RegularStatement select = select().from("test").where(gt("i", raw("1")));
+        assertThat(select.getQueryString()).doesNotContain("?");
+        assertThat(select.getValues()).isNull();
     }
 }

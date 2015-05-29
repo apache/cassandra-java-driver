@@ -7,6 +7,7 @@
 - [improvement] Allow DNS name with multiple A-records as contact point (#340)
 - [bug] Allow tracing across multiple result pages (JAVA-794)
 - [bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)
+- [bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)
 
 Merged from 2.0.10_fixes branch:
 
