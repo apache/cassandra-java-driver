@@ -25,10 +25,12 @@ import com.google.common.collect.ImmutableMap;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.querybuilder.Delete.Where;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.Bytes;
 import com.datastax.driver.core.utils.CassandraVersion;
 
@@ -768,5 +770,25 @@ public class QueryBuilderTest {
         query = "UPDATE foo SET l=[[1],[2]]+l WHERE k=1;";
         statement = update("foo").with(prependAll("l", list)).where(eq("k", 1));
         assertThat(statement.toString()).isEqualTo(query);
+    }
+
+    @Test(groups = "unit")
+    public void should_not_allow_bind_marker_as_added_collection_item() {
+        try {
+            // This generates the query "UPDATE foo SET s = s + {?} WHERE k = 1", which is invalid in Cassandra
+            // (individual values in collections can't be bound)
+            update("foo").with(add("s", bindMarker())).where(eq("k", 1));
+            fail("Expected an exception");
+        } catch (InvalidQueryException e) { /*expected*/ }
+
+        // Same for list append/prepend
+        try {
+            update("foo").with(prepend("l", bindMarker())).where(eq("k", 1));
+            fail("Expected an exception");
+        } catch (InvalidQueryException e) { /*expected*/ }
+        try {
+            update("foo").with(append("l", bindMarker())).where(eq("k", 1));
+            fail("Expected an exception");
+        } catch (InvalidQueryException e) { /*expected*/ }
     }
 }
