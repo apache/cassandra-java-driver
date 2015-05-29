@@ -144,7 +144,7 @@ public class LoadBalancingPolicyBootstrapTest {
     }
 
     static class HistoryPolicy extends DelegatingLoadBalancingPolicy {
-        enum Action {INIT, UP, DOWN, ADD, REMOVE, SUSPECT}
+        enum Action {INIT, UP, DOWN, ADD, REMOVE}
 
         static class Entry {
             final Action action;
@@ -197,11 +197,6 @@ public class LoadBalancingPolicyBootstrapTest {
         public void onAdd(Host host) {
             history.add(entry(ADD, host));
             super.onAdd(host);
-        }
-
-        public void onSuspected(Host host) {
-            history.add(entry(SUSPECT, host));
-            super.onSuspected(host);
         }
 
         public void onUp(Host host) {

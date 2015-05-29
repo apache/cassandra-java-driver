@@ -20,9 +20,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.AbstractIterator;
@@ -48,7 +45,7 @@ import com.datastax.driver.core.Statement;
  * datacenter this will be inefficient and you will want to use the
  * {@link DCAwareRoundRobinPolicy} load balancing policy instead.
  */
-public class RoundRobinPolicy implements LoadBalancingPolicy, CloseableLoadBalancingPolicy {
+public class RoundRobinPolicy implements LoadBalancingPolicy {
 
     private static final Logger logger = LoggerFactory.getLogger(RoundRobinPolicy.class);
 
@@ -148,10 +145,6 @@ public class RoundRobinPolicy implements LoadBalancingPolicy, CloseableLoadBalan
     @Override
     public void onUp(Host host) {
         liveHosts.addIfAbsent(host);
-    }
-
-    @Override
-    public void onSuspected(Host host) {
     }
 
     @Override

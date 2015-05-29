@@ -143,7 +143,7 @@ class SessionManager extends AbstractSession {
                         switch (rm.kind) {
                             case PREPARED:
                                 Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
-                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum(), query, poolsState.keyspace);
+                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), cluster.getConfiguration().getProtocolOptions().getProtocolVersion(), query, poolsState.keyspace);
                                 stmt = cluster.manager.addPrepared(stmt);
                                 try {
                                     // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
@@ -180,8 +180,8 @@ class SessionManager extends AbstractSession {
         return cluster.manager.loadBalancingPolicy();
     }
 
-    SpeculativeExecutionPolicy speculativeRetryPolicy() {
-        return cluster.manager.speculativeRetryPolicy();
+    SpeculativeExecutionPolicy speculativeExecutionPolicy() {
+        return cluster.manager.speculativeExecutionPolicy();
     }
 
     ReconnectionPolicy reconnectionPolicy() {
@@ -206,7 +206,7 @@ class SessionManager extends AbstractSession {
             return Futures.immediateFuture(false);
 
         final HostConnectionPool newPool = HostConnectionPool.newInstance(host, distance, SessionManager.this,
-            cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum());
+            cluster.getConfiguration().getProtocolOptions().getProtocolVersion());
         ListenableFuture<Void> poolInitFuture = newPool.initAsync(reusedConnection);
 
         final SettableFuture<Boolean> future = SettableFuture.create();
@@ -249,7 +249,7 @@ class SessionManager extends AbstractSession {
             return MoreFutures.VOID_SUCCESS;
 
         final HostConnectionPool newPool = HostConnectionPool.newInstance(host, distance, this,
-            cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum());
+            cluster.getConfiguration().getProtocolOptions().getProtocolVersion());
         if (previous == null) {
             if (pools.putIfAbsent(host, newPool) != null) {
                 return null;
@@ -596,7 +596,7 @@ class SessionManager extends AbstractSession {
         if (statement.isTracing())
             msg.setTracingRequested();
 
-        DefaultResultSetFuture future = new DefaultResultSetFuture(this, configuration().getProtocolOptions().getProtocolVersionEnum(), msg);
+        DefaultResultSetFuture future = new DefaultResultSetFuture(this, configuration().getProtocolOptions().getProtocolVersion(), msg);
         execute(future, statement);
         return future;
     }

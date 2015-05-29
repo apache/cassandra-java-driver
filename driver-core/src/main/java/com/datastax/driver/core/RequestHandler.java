@@ -79,7 +79,7 @@ class RequestHandler {
         callback.register(this);
 
         this.queryPlan = new QueryPlan(manager.loadBalancingPolicy().newQueryPlan(manager.poolsState.keyspace, statement));
-        this.speculativeExecutionPlan = manager.speculativeRetryPolicy().newPlan(manager.poolsState.keyspace, statement);
+        this.speculativeExecutionPlan = manager.speculativeExecutionPolicy().newPlan(manager.poolsState.keyspace, statement);
         this.allowSpeculativeExecutions = statement != Statement.DEFAULT
             && statement.isIdempotentWithDefault(manager.configuration().getQueryOptions());
         this.statement = statement;

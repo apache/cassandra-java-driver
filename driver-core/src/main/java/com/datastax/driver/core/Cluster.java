@@ -375,6 +375,7 @@ public class Cluster implements Closeable {
      */
     public Cluster register(Host.StateListener listener) {
         checkNotClosed(manager);
+        listener.onRegister(this);
         manager.listeners.add(listener);
         return this;
     }
@@ -390,6 +391,7 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(Host.StateListener listener) {
         checkNotClosed(manager);
+        listener.onUnregister(this);
         manager.listeners.remove(listener);
         return this;
     }
@@ -415,6 +417,7 @@ public class Cluster implements Closeable {
      */
     public Cluster register(LatencyTracker tracker) {
         checkNotClosed(manager);
+        tracker.onRegister(this);
         manager.trackers.add(tracker);
         return this;
     }
@@ -431,6 +434,7 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(LatencyTracker tracker) {
         checkNotClosed(manager);
+        tracker.onUnregister(this);
         manager.trackers.remove(tracker);
         return this;
     }
@@ -572,7 +576,7 @@ public class Cluster implements Closeable {
         private LoadBalancingPolicy loadBalancingPolicy;
         private ReconnectionPolicy reconnectionPolicy;
         private RetryPolicy retryPolicy;
-        private AddressTranslater addressTranslater;
+        private AddressTranslator addressTranslator;
         private TimestampGenerator timestampGenerator;
         private SpeculativeExecutionPolicy speculativeExecutionPolicy;
 
@@ -711,24 +715,8 @@ public class Cluster implements Closeable {
         }
 
         /**
-         * The native protocol version to use, as a number.
-         *
-         * @param version the native protocol version as a number.
-         * @return this Builder.
-         * @throws IllegalArgumentException if the number does not correspond to any known
-         * native protocol version.
-         *
-         * @deprecated This method is provided for backward compatibility. Use
-         * {@link #withProtocolVersion(ProtocolVersion)} instead.
-         */
-        @Deprecated
-        public Builder withProtocolVersion(int version) {
-            this.protocolVersion = ProtocolVersion.fromInt(version);
-            return this;
-        }
-
-        /**
-         * Adds a contact point.
+         * Adds a contact point - or many if it host resolves to multiple
+         * <code>InetAddress</code>s (A records).
          * <p>
          * Contact points are addresses of Cassandra nodes that the driver uses
          * to discover the cluster topology. Only one contact point is required
@@ -738,13 +726,17 @@ public class Cluster implements Closeable {
          * the driver cannot initialize itself correctly.
          * <p>
          * Note that by default (that is, unless you use the {@link #withLoadBalancingPolicy})
-         * method of this builder), the first succesfully contacted host will be use
+         * method of this builder), the first succesfully contacted host will be used
          * to define the local data-center for the client. If follows that if you are
          * running Cassandra in a  multiple data-center setting, it is a good idea to
-         * only provided contact points that are in the same datacenter than the client,
+         * only provide contact points that are in the same datacenter than the client,
          * or to provide manually the load balancing policy that suits your need.
-         *
-         * @param address the address of the node to connect to
+         * <p>
+         * If the host name points to a DNS record with multiple a-records, all InetAddresses
+         * returned will be used. Make sure that all resulting <code>InetAddress</code>s returned
+         * point to the same cluster and datacenter.
+
+         * @param address the address of the node(s) to connect to
          * @return this Builder.
          *
          * @throws IllegalArgumentException if no IP address for {@code address}
@@ -760,7 +752,7 @@ public class Cluster implements Closeable {
                 throw new NullPointerException();
 
             try {
-                this.rawAddresses.add(InetAddress.getByName(address));
+                addContactPoints(InetAddress.getAllByName(address));
                 return this;
             } catch (UnknownHostException e) {
                 throw new IllegalArgumentException(e.getMessage());
@@ -832,8 +824,8 @@ public class Cluster implements Closeable {
          * this one. However, this can be useful if the Cassandra nodes are behind
          * a router and are not accessed directly. Note that if you are in this
          * situtation (Cassandra nodes are behind a router, not directly accessible),
-         * you almost surely want to provide a specific {@code AddressTranslater}
-         * (through {@link #withAddressTranslater}) to translate actual Cassandra node
+         * you almost surely want to provide a specific {@code AddressTranslator}
+         * (through {@link #withAddressTranslator}) to translate actual Cassandra node
          * addresses to the addresses the driver should use, otherwise the driver
          * will not be able to auto-detect new nodes (and will generally not function
          * optimally).
@@ -891,17 +883,17 @@ public class Cluster implements Closeable {
         }
 
         /**
-         * Configures the address translater to use for the new cluster.
+         * Configures the address translator to use for the new cluster.
          * <p>
-         * See {@link AddressTranslater} for more detail on address translation,
-         * but the default translater, {@link IdentityTranslater}, should be
+         * See {@link AddressTranslator} for more detail on address translation,
+         * but the default translator, {@link IdentityTranslator}, should be
          * correct in most cases. If unsure, stick to the default.
          *
-         * @param translater the translater to use.
+         * @param translator the translator to use.
          * @return this Builder.
          */
-        public Builder withAddressTranslater(AddressTranslater translater) {
-            this.addressTranslater = translater;
+        public Builder withAddressTranslator(AddressTranslator translator) {
+            this.addressTranslator = translator;
             return this;
         }
 
@@ -1126,7 +1118,7 @@ public class Cluster implements Closeable {
                 loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
                 Objects.firstNonNull(reconnectionPolicy, Policies.defaultReconnectionPolicy()),
                 Objects.firstNonNull(retryPolicy, Policies.defaultRetryPolicy()),
-                Objects.firstNonNull(addressTranslater, Policies.defaultAddressTranslater()),
+                Objects.firstNonNull(addressTranslator, Policies.defaultAddressTranslator()),
                 Objects.firstNonNull(timestampGenerator, Policies.defaultTimestampGenerator()),
                 Objects.firstNonNull(speculativeExecutionPolicy, Policies.defaultSpeculativeExecutionPolicy())
             );
@@ -1292,6 +1284,16 @@ public class Cluster implements Closeable {
                 // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
                 // rack...) to initialize the load balancing policy
                 loadBalancingPolicy().init(Cluster.this, contactPointHosts);
+
+                speculativeExecutionPolicy().init(Cluster.this);
+                configuration.getPolicies().getRetryPolicy().init(Cluster.this);
+                reconnectionPolicy().init(Cluster.this);
+                configuration.getPolicies().getAddressTranslator().init(Cluster.this);
+                for (LatencyTracker tracker : trackers)
+                    tracker.onRegister(Cluster.this);
+                for (Host.StateListener listener : listeners)
+                    listener.onRegister(Cluster.this);
+
                 for (Host host : downContactPointHosts) {
                     loadBalancingPolicy().onDown(host);
                     for (Host.StateListener listener : listeners)
@@ -1356,7 +1358,7 @@ public class Cluster implements Closeable {
             return configuration.getPolicies().getLoadBalancingPolicy();
         }
 
-        SpeculativeExecutionPolicy speculativeRetryPolicy() {
+        SpeculativeExecutionPolicy speculativeExecutionPolicy() {
             return configuration.getPolicies().getSpeculativeExecutionPolicy();
         }
 
@@ -1366,7 +1368,7 @@ public class Cluster implements Closeable {
 
         InetSocketAddress translateAddress(InetAddress address) {
             InetSocketAddress sa = new InetSocketAddress(address, connectionFactory.getPort());
-            InetSocketAddress translated = configuration.getPolicies().getAddressTranslater().translate(sa);
+            InetSocketAddress translated = configuration.getPolicies().getAddressTranslator().translate(sa);
             return translated == null ? sa : translated;
         }
 
@@ -1412,14 +1414,15 @@ public class Cluster implements Closeable {
                 if (metrics != null)
                     metrics.shutdown();
 
-                // And the load balancing policy
-                LoadBalancingPolicy loadBalancingPolicy = loadBalancingPolicy();
-                if (loadBalancingPolicy instanceof CloseableLoadBalancingPolicy)
-                    ((CloseableLoadBalancingPolicy)loadBalancingPolicy).close();
-
-                AddressTranslater translater = configuration.getPolicies().getAddressTranslater();
-                if (translater instanceof CloseableAddressTranslater)
-                    ((CloseableAddressTranslater)translater).close();
+                loadBalancingPolicy().close();
+                speculativeExecutionPolicy().close();
+                configuration.getPolicies().getRetryPolicy().close();
+                reconnectionPolicy().close();
+                configuration.getPolicies().getAddressTranslator().close();
+                for (LatencyTracker tracker : trackers)
+                    tracker.onUnregister(Cluster.this);
+                for (Host.StateListener listener : listeners)
+                    listener.onUnregister(Cluster.this);
 
                 // Then we shutdown all connections
                 List<CloseFuture> futures = new ArrayList<CloseFuture>(sessions.size() + 1);

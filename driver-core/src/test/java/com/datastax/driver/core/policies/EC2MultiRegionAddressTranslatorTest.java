@@ -26,17 +26,17 @@ import java.net.InetSocketAddress;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-public class EC2MultiRegionAddressTranslaterTest {
+public class EC2MultiRegionAddressTranslatorTest {
 
     @Test(groups = "unit")
     public void should_return_same_address_when_no_entry_found() throws Exception {
         InitialDirContext mock = mock(InitialDirContext.class);
         when(mock.getAttributes(anyString(), any(String[].class)))
                 .thenReturn(new BasicAttributes());
-        EC2MultiRegionAddressTranslater translater = new EC2MultiRegionAddressTranslater(mock);
+        EC2MultiRegionAddressTranslator translator = new EC2MultiRegionAddressTranslator(mock);
 
         InetSocketAddress address = new InetSocketAddress("192.0.2.5", 9042);
-        assertThat(translater.translate(address)).isEqualTo(address);
+        assertThat(translator.translate(address)).isEqualTo(address);
     }
 
     @Test(groups = "unit")
@@ -44,10 +44,10 @@ public class EC2MultiRegionAddressTranslaterTest {
         InitialDirContext mock = mock(InitialDirContext.class);
         when(mock.getAttributes(anyString(), any(String[].class)))
                 .thenThrow(new NamingException("Problem resolving address (not really)."));
-        EC2MultiRegionAddressTranslater translater = new EC2MultiRegionAddressTranslater(mock);
+        EC2MultiRegionAddressTranslator translator = new EC2MultiRegionAddressTranslator(mock);
 
         InetSocketAddress address = new InetSocketAddress("192.0.2.5", 9042);
-        assertThat(translater.translate(address)).isEqualTo(address);
+        assertThat(translator.translate(address)).isEqualTo(address);
     }
 
     @Test(groups = "unit")
@@ -57,20 +57,20 @@ public class EC2MultiRegionAddressTranslaterTest {
         InitialDirContext mock = mock(InitialDirContext.class);
         when(mock.getAttributes("5.2.0.192.in-addr.arpa", new String[] { "PTR" }))
                 .thenReturn(new BasicAttributes("PTR", expectedAddress.getHostName()));
-        EC2MultiRegionAddressTranslater translater = new EC2MultiRegionAddressTranslater(mock);
+        EC2MultiRegionAddressTranslator translator = new EC2MultiRegionAddressTranslator(mock);
 
         InetSocketAddress address = new InetSocketAddress("192.0.2.5", 9042);
-        assertThat(translater.translate(address)).isEqualTo(expectedAddress);
+        assertThat(translator.translate(address)).isEqualTo(expectedAddress);
     }
 
     @Test(groups = "unit")
     public void should_close_context_when_closed() throws Exception {
         InitialDirContext mock = mock(InitialDirContext.class);
-        EC2MultiRegionAddressTranslater translater = new EC2MultiRegionAddressTranslater(mock);
+        EC2MultiRegionAddressTranslator translator = new EC2MultiRegionAddressTranslator(mock);
 
         // ensure close has not been called to this point.
         verify(mock, times(0)).close();
-        translater.close();
+        translator.close();
         // ensure close is closed.
         verify(mock).close();
     }
@@ -79,7 +79,7 @@ public class EC2MultiRegionAddressTranslaterTest {
     public void should_build_reversed_domain_name_for_ip_v4() throws Exception {
         InetAddress address = InetAddress.getByName("192.0.2.5");
         assertThat(
-            EC2MultiRegionAddressTranslater.reverse(address)
+            EC2MultiRegionAddressTranslator.reverse(address)
         ).isEqualTo(
             "5.2.0.192.in-addr.arpa"
         );
@@ -89,7 +89,7 @@ public class EC2MultiRegionAddressTranslaterTest {
     public void should_build_reversed_domain_name_for_ip_v6() throws Exception {
         InetAddress address = InetAddress.getByName("2001:db8::567:89ab");
         assertThat(
-            EC2MultiRegionAddressTranslater.reverse(address)
+            EC2MultiRegionAddressTranslator.reverse(address)
         ).isEqualTo(
             "b.a.9.8.7.6.5.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa"
         );

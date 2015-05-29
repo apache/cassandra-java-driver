@@ -238,8 +238,7 @@ public class SpeculativeExecutionTest {
         }
 
         @Override
-        public void onSuspected(Host host) {
-        }
+        public void close() {}
     }
 
     /**
@@ -263,6 +262,12 @@ public class SpeculativeExecutionTest {
         public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
             return RetryDecision.rethrow();
         }
+
+        @Override
+        public void init(Cluster cluster) {}
+
+        @Override
+        public void close() {}
     }
 
     private static List<Map<String, ?>> row(String key, String value) {

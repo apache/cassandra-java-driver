@@ -384,6 +384,12 @@ public class ReconnectionTest {
                 return childSchedule.nextDelayMs();
             }
         }
+
+        @Override
+        public void init(Cluster cluster) {}
+
+        @Override
+        public void close() { childPolicy.close(); }
     }
 
     /**

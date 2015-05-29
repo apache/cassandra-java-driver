@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.AtomicMonotonicTimestampGenerator;
 import com.datastax.driver.core.ServerSideTimestampGenerator;
 import com.datastax.driver.core.TimestampGenerator;
 
@@ -25,24 +26,24 @@ public class Policies {
 
     private static final ReconnectionPolicy DEFAULT_RECONNECTION_POLICY = new ExponentialReconnectionPolicy(1000, 10 * 60 * 1000);
     private static final RetryPolicy DEFAULT_RETRY_POLICY = DefaultRetryPolicy.INSTANCE;
-    private static final AddressTranslater DEFAULT_ADDRESS_TRANSLATER = new IdentityTranslater();
+    private static final AddressTranslator DEFAULT_ADDRESS_TRANSLATOR = new IdentityTranslator();
     private static final SpeculativeExecutionPolicy DEFAULT_SPECULATIVE_EXECUTION_POLICY = NoSpeculativeExecutionPolicy.INSTANCE;
 
     private final LoadBalancingPolicy loadBalancingPolicy;
     private final ReconnectionPolicy reconnectionPolicy;
     private final RetryPolicy retryPolicy;
-    private final AddressTranslater addressTranslater;
+    private final AddressTranslator addressTranslator;
     private final TimestampGenerator timestampGenerator;
     private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
 
     public Policies() {
-        this(defaultLoadBalancingPolicy(), defaultReconnectionPolicy(), defaultRetryPolicy(), defaultAddressTranslater(), defaultTimestampGenerator(), defaultSpeculativeExecutionPolicy());
+        this(defaultLoadBalancingPolicy(), defaultReconnectionPolicy(), defaultRetryPolicy(), defaultAddressTranslator(), defaultTimestampGenerator(), defaultSpeculativeExecutionPolicy());
     }
 
     /**
      * Creates a new {@code Policies} object using the provided policies.
      * <p>
-     * This constructor use the default {@link IdentityTranslater} and {@link TimestampGenerator}.
+     * This constructor use the default {@link IdentityTranslator} and {@link TimestampGenerator}.
      *
      * @param loadBalancingPolicy the load balancing policy to use.
      * @param reconnectionPolicy the reconnection policy to use.
@@ -52,7 +53,7 @@ public class Policies {
                     ReconnectionPolicy reconnectionPolicy,
                     RetryPolicy retryPolicy,
                     SpeculativeExecutionPolicy speculativeExecutionPolicy) {
-        this(loadBalancingPolicy, reconnectionPolicy, retryPolicy, DEFAULT_ADDRESS_TRANSLATER, speculativeExecutionPolicy);
+        this(loadBalancingPolicy, reconnectionPolicy, retryPolicy, DEFAULT_ADDRESS_TRANSLATOR, speculativeExecutionPolicy);
     }
 
     /**
@@ -61,18 +62,18 @@ public class Policies {
      * @param loadBalancingPolicy the load balancing policy to use.
      * @param reconnectionPolicy the reconnection policy to use.
      * @param retryPolicy the retry policy to use.
-     * @param addressTranslater the address translater to use.
+     * @param addressTranslator the address translator to use.
      */
     public Policies(LoadBalancingPolicy loadBalancingPolicy,
                     ReconnectionPolicy reconnectionPolicy,
                     RetryPolicy retryPolicy,
-                    AddressTranslater addressTranslater,
+                    AddressTranslator addressTranslator,
                     SpeculativeExecutionPolicy speculativeExecutionPolicy) {
         // NB: this constructor is provided for backward compatibility with 2.1.0
         this.loadBalancingPolicy = loadBalancingPolicy;
         this.reconnectionPolicy = reconnectionPolicy;
         this.retryPolicy = retryPolicy;
-        this.addressTranslater = addressTranslater;
+        this.addressTranslator = addressTranslator;
         this.speculativeExecutionPolicy = speculativeExecutionPolicy;
         this.timestampGenerator = defaultTimestampGenerator();
     }
@@ -83,20 +84,20 @@ public class Policies {
      * @param loadBalancingPolicy the load balancing policy to use.
      * @param reconnectionPolicy the reconnection policy to use.
      * @param retryPolicy the retry policy to use.
-     * @param addressTranslater the address translater to use.
+     * @param addressTranslator the address translator to use.
      * @param timestampGenerator the timestamp generator to use.
      * @param speculativeExecutionPolicy the speculative execution policy to use.
      */
     public Policies(LoadBalancingPolicy loadBalancingPolicy,
                     ReconnectionPolicy reconnectionPolicy,
                     RetryPolicy retryPolicy,
-                    AddressTranslater addressTranslater,
+                    AddressTranslator addressTranslator,
                     TimestampGenerator timestampGenerator,
                     SpeculativeExecutionPolicy speculativeExecutionPolicy) {
         this.loadBalancingPolicy = loadBalancingPolicy;
         this.reconnectionPolicy = reconnectionPolicy;
         this.retryPolicy = retryPolicy;
-        this.addressTranslater = addressTranslater;
+        this.addressTranslator = addressTranslator;
         this.timestampGenerator = timestampGenerator;
         this.speculativeExecutionPolicy = speculativeExecutionPolicy;
     }
@@ -143,14 +144,14 @@ public class Policies {
     }
 
     /**
-     * The default address translater.
+     * The default address translator.
      * <p>
-     * The default address translater is {@link IdentityTranslater}.
+     * The default address translator is {@link IdentityTranslator}.
      *
-     * @return the default address translater.
+     * @return the default address translator.
      */
-    public static AddressTranslater defaultAddressTranslater() {
-        return DEFAULT_ADDRESS_TRANSLATER;
+    public static AddressTranslator defaultAddressTranslator() {
+        return DEFAULT_ADDRESS_TRANSLATOR;
     }
 
     /**
@@ -161,7 +162,7 @@ public class Policies {
      * @return the default timestamp generator.
      */
     public static TimestampGenerator defaultTimestampGenerator() {
-        return ServerSideTimestampGenerator.INSTANCE;
+        return new AtomicMonotonicTimestampGenerator();
     }
 
     /**
@@ -210,12 +211,12 @@ public class Policies {
     }
 
     /**
-     * The address translater in use.
+     * The address translator in use.
      *
-     * @return the address translater in use.
+     * @return the address translator in use.
      */
-    public AddressTranslater getAddressTranslater() {
-        return addressTranslater;
+    public AddressTranslator getAddressTranslator() {
+        return addressTranslator;
     }
 
     /**

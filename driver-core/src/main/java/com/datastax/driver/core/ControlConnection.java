@@ -34,7 +34,7 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import static com.datastax.driver.core.SchemaElement.*;
 
-class ControlConnection implements Host.StateListener {
+class ControlConnection {
 
     private static final Logger logger = LoggerFactory.getLogger(ControlConnection.class);
 
@@ -702,11 +702,9 @@ class ControlConnection implements Host.StateListener {
         return c != null && !c.isClosed();
     }
 
-    @Override
     public void onUp(Host host) {
     }
 
-    @Override
     public void onDown(Host host) {
         // If that's the host we're connected to, and we haven't yet schedule a reconnection, preemptively start one
         Connection current = connectionRef.get();
@@ -720,11 +718,6 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    @Override
-    public void onSuspected(Host host) {
-    }
-
-    @Override
     public void onAdd(Host host) {
         // Refresh infos and token map if we didn't knew about that host, i.e. if we either don't have basic infos on it,
         // or it's not part of our computed token map
@@ -733,7 +726,6 @@ class ControlConnection implements Host.StateListener {
             refreshNodeListAndTokenMap();
     }
 
-    @Override
     public void onRemove(Host host) {
         Connection current = connectionRef.get();
         if (logger.isDebugEnabled())

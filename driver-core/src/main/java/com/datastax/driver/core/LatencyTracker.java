@@ -48,4 +48,21 @@ public interface LatencyTracker {
      *                        will approximately be the timeout value).
      */
     public void update(Host host, Statement statement, Exception exception, long newLatencyNanos);
+
+    /**
+     * Gets invoked when the tracker is registered with a cluster, or at cluster startup if the
+     * tracker was registered at initialization with
+     * {@link com.datastax.driver.core.Cluster.Initializer#register(LatencyTracker)}.
+     *
+     * @param cluster the cluster that this tracker is registered with.
+     */
+    void onRegister(Cluster cluster);
+
+    /**
+     * Gets invoked when the tracker is unregistered from a cluster, or at cluster shutdown if
+     * the tracker was not unregistered.
+     *
+     * @param cluster the cluster that this tracker was registered with.
+     */
+    void onUnregister(Cluster cluster);
 }

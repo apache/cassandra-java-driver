@@ -59,28 +59,6 @@ public abstract class RegularStatement extends Statement {
     public abstract ByteBuffer[] getValues(ProtocolVersion protocolVersion);
 
     /**
-     * The values to use for this statement, for the given numeric protocol version.
-     *
-     * @throws IllegalArgumentException if {@code protocolVersion} does not correspond to any known version.
-     *
-     * @deprecated This method is provided for backward compatibility. Use
-     * {@link #getValues(ProtocolVersion)} instead.
-     */
-    @Deprecated
-    public ByteBuffer[] getValues(int protocolVersion) {
-        return getValues(ProtocolVersion.fromInt(protocolVersion));
-    }
-
-    /**
-     * @deprecated This method is provided for binary compatibility only. It is no longer supported, will be removed,
-     * and simply throws {@link UnsupportedOperationException}. Use {@link #getValues(ProtocolVersion)} instead.
-     */
-    @Deprecated
-    public ByteBuffer[] getValues() {
-        throw new UnsupportedOperationException("Method no longer supported; use getValues(ProtocolVersion)");
-    }
-
-    /**
      * Whether or not this statement has values, that is if {@code getValues}
      * will return {@code null} or not.
      *

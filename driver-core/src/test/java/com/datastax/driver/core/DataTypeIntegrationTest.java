@@ -78,7 +78,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
     }
 
     protected void should_insert_and_retrieve_data(StatementType statementType) {
-        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
 
         for (TestTable table : tables) {
             if (cassandraVersion.compareTo(table.minCassandraVersion) < 0)

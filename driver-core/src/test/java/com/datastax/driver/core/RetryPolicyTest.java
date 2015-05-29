@@ -49,6 +49,10 @@ public class RetryPolicyTest extends AbstractPoliciesTest {
             assertEquals(RetryDecision.rethrow().toString(), "Rethrow");
             assertEquals(RetryDecision.ignore().toString(), "Ignore");
         }
+        @Override
+        public void init(Cluster cluster) {}
+        @Override
+        public void close() {}
     }
 
     /**

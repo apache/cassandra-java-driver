@@ -31,10 +31,11 @@ import javax.naming.directory.InitialDirContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.exceptions.DriverException;
 
 /**
- * {@link AddressTranslater} implementation for a multi-region EC2 deployment <b>where clients are also deployed in EC2</b>.
+ * {@link AddressTranslator} implementation for a multi-region EC2 deployment <b>where clients are also deployed in EC2</b>.
  * <p>
  * Its distinctive feature is that it translates addresses according to the location of the Cassandra host:
  * <ul>
@@ -48,26 +49,31 @@ import com.datastax.driver.core.exceptions.DriverException;
  * instance. Then it performs a forward DNS lookup of the domain name; the EC2 DNS does the private/public switch automatically
  * based on location.
  */
-public class EC2MultiRegionAddressTranslater implements CloseableAddressTranslater {
+public class EC2MultiRegionAddressTranslator implements AddressTranslator {
 
-    private static final Logger logger = LoggerFactory.getLogger(EC2MultiRegionAddressTranslater.class);
+    private static final Logger logger = LoggerFactory.getLogger(EC2MultiRegionAddressTranslator.class);
 
     // TODO when we switch to Netty 4.1, we can replace this with the Netty built-in DNS client
     private final DirContext ctx;
 
-    public EC2MultiRegionAddressTranslater() {
+    public EC2MultiRegionAddressTranslator() {
         Hashtable<Object, Object> env = new Hashtable<Object, Object>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.dns.DnsContextFactory");
         try {
             ctx = new InitialDirContext(env);
         } catch (NamingException e) {
-            throw new DriverException("Could not create translater", e);
+            throw new DriverException("Could not create translator", e);
         }
     }
 
     @VisibleForTesting
-    EC2MultiRegionAddressTranslater(DirContext ctx) {
+    EC2MultiRegionAddressTranslator(DirContext ctx) {
         this.ctx = ctx;
+    }
+
+    @Override
+    public void init(Cluster cluster) {
+        // nothing to do
     }
 
     @Override
@@ -106,7 +112,7 @@ public class EC2MultiRegionAddressTranslater implements CloseableAddressTranslat
         try {
             ctx.close();
         } catch (NamingException e) {
-            logger.warn("Error closing translater", e);
+            logger.warn("Error closing translator", e);
         }
     }
 

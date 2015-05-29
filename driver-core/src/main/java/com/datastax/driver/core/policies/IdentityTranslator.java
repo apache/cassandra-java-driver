@@ -17,11 +17,18 @@ package com.datastax.driver.core.policies;
 
 import java.net.InetSocketAddress;
 
+import com.datastax.driver.core.Cluster;
+
 /**
- * The default {@link AddressTranslater} used by the driver that do no
+ * The default {@link AddressTranslator} used by the driver that do no
  * translation.
  */
-public class IdentityTranslater implements AddressTranslater {
+public class IdentityTranslator implements AddressTranslator {
+
+    @Override
+    public void init(Cluster cluster) {
+        // Nothing to do
+    }
 
     /**
      * Translates a Cassandra {@code rpc_address} to another address if necessary.
@@ -34,5 +41,9 @@ public class IdentityTranslater implements AddressTranslater {
      */
     public InetSocketAddress translate(InetSocketAddress address) {
         return address;
+    }
+
+    @Override
+    public void close() {
     }
 }

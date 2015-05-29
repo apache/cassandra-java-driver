@@ -40,16 +40,6 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
     }
 
     /**
-     * @throws IllegalArgumentException if {@code protocolVersion} does not correspond to any known version.
-     *
-     * @deprecated This constructor is provided for backward compatibility, use {@link #AbstractGettableData(ProtocolVersion)} instead.
-     */
-    @Deprecated
-    protected AbstractGettableData(int protocolVersion) {
-        this(ProtocolVersion.fromInt(protocolVersion));
-    }
-
-    /**
      * Returns the index corresponding to a given name.
      *
      * @param name the name for which to return the index of.

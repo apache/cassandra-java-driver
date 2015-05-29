@@ -61,7 +61,7 @@ public class FetchingTest extends CCMBridge.PerClassSingleNodeCluster {
 
         } catch (UnsupportedFeatureException e) {
             // This is expected when testing the protocol v1
-            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum() != ProtocolVersion.V1)
+            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersion() != ProtocolVersion.V1)
                 throw e;
         } catch (Throwable e) {
             errorOut();
