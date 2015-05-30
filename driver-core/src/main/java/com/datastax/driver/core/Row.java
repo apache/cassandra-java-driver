@@ -261,26 +261,26 @@ public interface Row extends GettableData {
      *
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as a data. If the
-     * value is NULL, {@code 0} is returned.
+     * value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      * @throws InvalidTypeException if value {@code i} is not of type DATE.
      */
     @Override
-    public int getDateWithoutTime(int i);
+    public DateWithoutTime getDateWithoutTime(int i);
 
     /**
      * Returns the value for {@code name} as a date as an int in days since epoch.
      *
      * @param name the name to retrieve.
      * @return the value for {@code name} as a date. If the value is NULL,
-     * {@code 0} is returned.
+     * {@code null} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
      * @throws InvalidTypeException if value {@code name} is not of type DATE.
      */
     @Override
-    public int getDateWithoutTime(String name);
+    public DateWithoutTime getDateWithoutTime(String name);
 
     /**
      * Returns the {@code i}th value as a long in nanoseconds since midnight.

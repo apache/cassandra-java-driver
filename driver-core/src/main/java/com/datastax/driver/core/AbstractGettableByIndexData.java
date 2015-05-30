@@ -196,14 +196,14 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      * {@inheritDoc}
      */
     @Override
-    public int getDateWithoutTime(int i) {
+    public DateWithoutTime getDateWithoutTime(int i) {
         checkType(i, DataType.Name.DATE);
 
         ByteBuffer value = getValue(i);
         if (value == null || value.remaining() == 0)
-            return 0;
+            return null;
 
-        return TypeCodec.SimpleDateCodec.instance.deserializeNoBoxing(value);
+        return TypeCodec.SimpleDateCodec.instance.deserialize(value);
     }
 
     /**

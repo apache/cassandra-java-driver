@@ -13,30 +13,38 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.core.utils;
+package com.datastax.driver.core;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Helper functions to deal with {@code TIMESTAMP}, {@code DATE} and {@code TIME} types.
+ * Represents a Cassandra {@code DATE} data type.
+ * The {@code DATE} data type is available since Cassandra 2.2 via native protocol V4.
+ *
+ * @since 2.2
  */
-public final class Timestamps {
-    private Timestamps() {}
+public abstract class DateWithoutTime {
+
+    private static final String DEFAULT_PATTERN = "yyyy-MM-dd";
 
     private static final long minSupportedDateMillis = TimeUnit.DAYS.toMillis(Integer.MIN_VALUE);
     private static final long maxSupportedDateMillis = TimeUnit.DAYS.toMillis(Integer.MAX_VALUE);
 
-    /**
-     * Convert a {@code DATE} value to a {@code TIMESTAMP} value.
-     * Both values are in UTC and are since epoch (1970-01-01).
-     *
-     * @param date input value for {@code DATE} type
-     * @return value for {@code TIMESTAMP} type
-     */
-    public static long simpleDateToMillis(int date) {
-        long days = date + Integer.MIN_VALUE;
-        return TimeUnit.DAYS.toMillis(days);
+    private final int days;
+
+    public DateWithoutTime(int days) {
+        this.days = days;
+    }
+
+    public int getDays() {
+        return days;
+    }
+
+    public long toMillis() {
+        return TimeUnit.DAYS.toMillis(this.days + Integer.MIN_VALUE);
     }
 
     /**
@@ -48,13 +56,24 @@ public final class Timestamps {
      *
      * @throws IllegalArgumentException if input value is out of allowed range
      */
-    public static int millisToSimpleDate(long millis) throws IllegalArgumentException {
+    public static DateWithoutTime fromMillis(long millis) throws IllegalArgumentException {
         if (millis < minSupportedDateMillis || millis > maxSupportedDateMillis)
             throw new IllegalArgumentException("Input value out of range");
 
         int result = (int)TimeUnit.MILLISECONDS.toDays(millis);
         result -= Integer.MIN_VALUE;
-        return result;
+        return new DefaultDateWithoutTime(result);
+    }
+
+    /**
+     * Convert a Cassandra {@code DATE} raw representation, which is an {@code int}, to
+     * a {@code DateWithoutTime} instance.
+     *
+     * @param days Cassandra {@code DATE} raw value
+     * @return {@code DateWithoutTime} instance.
+     */
+    public static DateWithoutTime fromSimpleDate(int days) {
+        return new DefaultDateWithoutTime(days);
     }
 
     // not public since it has no timezone support
@@ -63,15 +82,15 @@ public final class Timestamps {
     }
 
     /**
-     * Convert a {@code DATE} + {@code TIME} with a timezone to a Java {@link Calendar} object.
+     * Convert this date-without-time + {@code TIME} with a timezone to a Java
+     * {@link Calendar} object.
      *
-     * @param date {@code DATE} value
      * @param time {@code TIME} value
      * @param target the Calendar object initialized with the correct time zone
      * @return modified Calendar object
      */
-    public static Calendar toCalendar(int date, long time, Calendar target) {
-        long millis = simpleDateToMillis(date);
+    public Calendar toCalendar(long time, Calendar target) {
+        long millis = toMillis();
         target.setTimeInMillis(millis);
         time = timeToMillis(time);
         target.set(Calendar.MILLISECOND, (int) (time % 1000L));
@@ -84,10 +103,36 @@ public final class Timestamps {
         return target;
     }
 
-    // NOTE: Be careful with additional methods that work on Joda types or Calendar since C* TIME type
-    // does not handle time zone - i.e. time changes from/to summer/winter time are not handled.
-    //
-    // For example:
-    // 2015-03-29 02:30 is illegal (it just does not exist, time is advanced from 02:00 to 03:00)
-    // 2015-10-25 02:30 is ambiguous without CET or CEST (one hour difference, time is set back from 03:00 CEST to 02:00 CET)
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DateWithoutTime that = (DateWithoutTime) o;
+
+        return days == that.days;
+    }
+
+    public int hashCode()
+    {
+        return days;
+    }
+
+    public String toString() {
+        SimpleDateFormat parser = new SimpleDateFormat();
+        parser.setLenient(false);
+        parser.setTimeZone(TimeZone.getTimeZone("UTC"));
+        parser.applyPattern(DEFAULT_PATTERN);
+        return parser.format(toMillis());
+    }
+
+    /**
+     * Internal default implementation.
+     */
+    static final class DefaultDateWithoutTime extends DateWithoutTime {
+        public DefaultDateWithoutTime(int days) {
+            super(days);
+        }
+    }
+
 }

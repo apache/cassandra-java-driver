@@ -28,7 +28,6 @@ import com.google.common.collect.Lists;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.utils.Bytes;
-import com.datastax.driver.core.utils.Timestamps;
 
 import com.google.common.collect.Maps;
 
@@ -58,7 +57,7 @@ public class PrimitiveTypeSamples {
                 .put(DataType.cint(), Integer.MAX_VALUE)
                 .put(DataType.text(), "text")
                 .put(DataType.timestamp(), new Date(872835240000L))
-                .put(DataType.date(), -2147467577)
+                .put(DataType.date(), DateWithoutTime.fromSimpleDate(-2147467577))
                 .put(DataType.time(), 54012123450000L)
                 .put(DataType.timeuuid(), UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66"))
                 .put(DataType.uuid(), UUID.fromString("067e6162-3b6f-4ae2-a171-2470b63dff00"))

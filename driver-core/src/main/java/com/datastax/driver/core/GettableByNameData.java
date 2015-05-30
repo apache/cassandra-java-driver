@@ -131,12 +131,12 @@ public interface GettableByNameData {
      *
      * @param name the name to retrieve.
      * @return the value for {@code name} as a date. If the value is NULL,
-     * {@code 0} is returned.
+     * {@code null} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
      * @throws InvalidTypeException if value {@code name} is not of type DATE.
      */
-    public int getDateWithoutTime(String name);
+    public DateWithoutTime getDateWithoutTime(String name);
 
     /**
      * Returns the value for {@code name} as a long in nanoseconds since midnight.

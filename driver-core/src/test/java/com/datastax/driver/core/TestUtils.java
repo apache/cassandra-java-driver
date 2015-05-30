@@ -101,7 +101,7 @@ public abstract class TestUtils {
                 bs.setTimestamp(name, (Date) value);
                 break;
             case DATE:
-                bs.setDateWithoutTime(name, (Integer) value);
+                bs.setDateWithoutTime(name, (DateWithoutTime) value);
                 break;
             case TIME:
                 bs.setTime(name, (Long) value);
@@ -219,7 +219,7 @@ public abstract class TestUtils {
                 case TIMESTAMP:
                     return new Date(1352288289L);
                 case DATE:
-                    return -2147483648;
+                    return DateWithoutTime.fromSimpleDate(-2147483648);
                 case TIME:
                     return 54012123450000L;
                 case UUID:
@@ -281,7 +281,7 @@ public abstract class TestUtils {
                 case TIMESTAMP:
                     return new Date(872835240000L);
                 case DATE:
-                    return -2147483648;
+                    return DateWithoutTime.fromSimpleDate(-2147483648);
                 case TIME:
                     return 54012123450000L;
                 case UUID:

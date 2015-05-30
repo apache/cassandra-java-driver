@@ -13,46 +13,38 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.core.utils;
+package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentSkipListSet;
-
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.ProtocolVersion;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
-public class TimestampsTest
+public class DateWithoutTimeTest
 {
     @Test(groups = "unit")
     public void conformanceTest() {
         // -2147467577 : 2014-01-01
         // -2147483648 : 1970-01-01
-        long millis = Timestamps.simpleDateToMillis(-2147467577);
-        int days = Timestamps.millisToSimpleDate(millis);
+        DateWithoutTime dateWithoutTime = DateWithoutTime.fromSimpleDate(-2147467577);
+        long millis = dateWithoutTime.toMillis();
+        int days = DateWithoutTime.fromMillis(millis).getDays();
         assertEquals(days, -2147467577);
         // 1 hour later - must be same day
-        days = Timestamps.millisToSimpleDate(millis + 360000L);
+        days = DateWithoutTime.fromMillis(millis + 360000L).getDays();
         assertEquals(days, -2147467577);
         // 2 hours later - must be same day
-        days = Timestamps.millisToSimpleDate(millis + 720000L);
+        days = DateWithoutTime.fromMillis(millis + 720000L).getDays();
         assertEquals(days, -2147467577);
 
-        millis = Timestamps.simpleDateToMillis(-2147483648);
-        days = Timestamps.millisToSimpleDate(millis);
+        dateWithoutTime = DateWithoutTime.fromSimpleDate(-2147483648);
+        millis = dateWithoutTime.toMillis();
+        days = DateWithoutTime.fromMillis(millis).getDays();
         assertEquals(days, -2147483648);
         // 1 hour later - must be same day
-        days = Timestamps.millisToSimpleDate(millis + 360000L);
+        days = DateWithoutTime.fromMillis(millis + 360000L).getDays();
         assertEquals(days, -2147483648);
         // 2 hours later - must be same day
-        days = Timestamps.millisToSimpleDate(millis + 720000L);
+        days = DateWithoutTime.fromMillis(millis + 720000L).getDays();
         assertEquals(days, -2147483648);
     }
 }

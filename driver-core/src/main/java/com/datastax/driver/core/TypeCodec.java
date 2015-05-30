@@ -28,7 +28,6 @@ import java.util.regex.Pattern;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
-import com.datastax.driver.core.utils.Timestamps;
 
 abstract class TypeCodec<T> {
 
@@ -934,20 +933,19 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class SimpleDateCodec extends TypeCodec<Integer> {
+    static class SimpleDateCodec extends TypeCodec<DateWithoutTime> {
 
         public static final SimpleDateCodec instance = new SimpleDateCodec();
         private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
-        private static final String DEFAULT_PATTERN = "yyyy-MM-dd";
 
         private static final String[] patterns = new String[] {
-                                                              DEFAULT_PATTERN,
+                                                              "yyyy-MM-dd",
                                                               "yyyy-MM-ddZ"
         };
 
         private SimpleDateCodec() {}
 
-        private static Integer parseDate(String str, final String[] parsePatterns) {
+        private static DateWithoutTime parseDate(String str, final String[] parsePatterns) {
             SimpleDateFormat parser = new SimpleDateFormat();
             parser.setLenient(false);
             parser.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -959,17 +957,17 @@ abstract class TypeCodec<T> {
 
                 Date date = parser.parse(str, pos);
                 if (date != null && pos.getIndex() == str.length()) {
-                    return Timestamps.millisToSimpleDate(date.getTime());
+                    return DateWithoutTime.fromMillis(date.getTime());
                 }
             }
             throw new IllegalArgumentException("Unable to parse the date: " + str);
         }
 
         @Override
-        public Integer parse(String value) {
+        public DateWithoutTime parse(String value) {
             if (IS_LONG_PATTERN.matcher(value).matches()) {
                 try {
-                    return Integer.parseInt(value);
+                    return DateWithoutTime.fromSimpleDate(Integer.parseInt(value));
                 } catch (NumberFormatException e) {
                     throw new InvalidTypeException(String.format("Cannot parse date value from \"%s\"", value));
                 }
@@ -983,30 +981,18 @@ abstract class TypeCodec<T> {
         }
 
         @Override
-        public String format(Integer value) {
-            SimpleDateFormat parser = new SimpleDateFormat();
-            parser.setLenient(false);
-            parser.setTimeZone(TimeZone.getTimeZone("UTC"));
-            parser.applyPattern(DEFAULT_PATTERN);
-            return parser.format(Timestamps.simpleDateToMillis(value));
+        public String format(DateWithoutTime value) {
+            return value.toString();
         }
 
         @Override
-        public ByteBuffer serialize(Integer value) {
-            return serializeNoBoxing(value);
+        public ByteBuffer serialize(DateWithoutTime value) {
+            return IntCodec.instance.serializeNoBoxing(value.getDays());
         }
 
         @Override
-        public Integer deserialize(ByteBuffer bytes) {
-            return deserializeNoBoxing(bytes);
-        }
-
-        public ByteBuffer serializeNoBoxing(int value) {
-            return IntCodec.instance.serializeNoBoxing(value);
-        }
-
-        public int deserializeNoBoxing(ByteBuffer bytes) {
-            return IntCodec.instance.deserializeNoBoxing(bytes);
+        public DateWithoutTime deserialize(ByteBuffer bytes) {
+            return DateWithoutTime.fromSimpleDate(IntCodec.instance.deserializeNoBoxing(bytes));
         }
     }
 

@@ -64,7 +64,7 @@ public abstract class DataType {
         UDT       (48, UDTValue.class, ProtocolVersion.V3),
         TUPLE     (49, TupleValue.class, ProtocolVersion.V3),
         CUSTOM    (0,  ByteBuffer.class),
-        DATE      (17, Integer.class, ProtocolVersion.V4),
+        DATE      (17, DateWithoutTime.class, ProtocolVersion.V4),
         TIME      (18, Long.class, ProtocolVersion.V4),
         SMALLINT  (19, Short.class, ProtocolVersion.V4),
         TINYINT   (20, Byte.class, ProtocolVersion.V4);
