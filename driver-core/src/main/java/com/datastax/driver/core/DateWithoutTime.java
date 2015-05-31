@@ -24,83 +24,97 @@ import java.util.concurrent.TimeUnit;
  * Represents a Cassandra {@code DATE} data type.
  * The {@code DATE} data type is available since Cassandra 2.2 via native protocol V4.
  *
+ * Note: the internal representation of this class uses a {@code long}
+ *
  * @since 2.2
  */
-public abstract class DateWithoutTime {
+public final class DateWithoutTime {
 
     private static final String DEFAULT_PATTERN = "yyyy-MM-dd";
-
-    private static final long minSupportedDateMillis = TimeUnit.DAYS.toMillis(Integer.MIN_VALUE);
-    private static final long maxSupportedDateMillis = TimeUnit.DAYS.toMillis(Integer.MAX_VALUE);
+    private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
 
     private final int days;
 
-    public DateWithoutTime(int days) {
-        this.days = days;
+    /**
+     * Convert a days-since-epoch value (epoch==0) to a {@code DateWithoutTime} instance.
+     *
+     * @param daysSinceEpoch days since epoch (1970-01-01)
+     */
+    public DateWithoutTime(int daysSinceEpoch) {
+        this.days = daysSinceEpoch;
     }
 
-    public int getDays() {
+    /**
+     * Get the days-since-epoch value.
+     */
+    public int getDaysSinceEpoch() {
         return days;
     }
 
-    public long toMillis() {
-        return TimeUnit.DAYS.toMillis(this.days + Integer.MIN_VALUE);
+    /**
+     * Get the year that this date represents.
+     */
+    public int getYear() {
+        return toCalendar().get(Calendar.YEAR);
     }
 
     /**
-     * Convert a {@code TIMESTAMP} value to a {@code DATE} value.
-     * Both values are in UTC and are since epoch (1970-01-01).
+     * Get the month that this date represents.
+     * @return month value is 0-based. e.g., 0 for January.
+     */
+    public int getMonth() {
+        return toCalendar().get(Calendar.MONTH);
+    }
+
+    /**
+     * Get the day-of-month that this date represents.
+     */
+    public int getDay() {
+        return toCalendar().get(Calendar.DAY_OF_MONTH);
+    }
+
+    /**
+     * Convert this date-without-time value to milliseconds since epoch.
+     */
+    public long toMillis() {
+        return toCalendar().getTimeInMillis();
+    }
+
+    /**
+     * Convert this date-without-time value to a {@link Calendar} instance.
+     */
+    public Calendar toCalendar() {
+        Calendar cal = Calendar.getInstance(UTC);
+        cal.clear();
+        cal.add(Calendar.DAY_OF_YEAR, days);
+        return cal;
+    }
+
+    /**
+     * Convert a milliseconds-since-epoch (1970-01-01) value to a {@code DateWithoutTime}.
      *
-     * @param millis input value for {@code TIMESTAMP} type
-     * @return value for {@code DATE} type
-     *
-     * @throws IllegalArgumentException if input value is out of allowed range
+     * @param millis input value
+     * @return corresponding DateWithoutTime for input value
      */
     public static DateWithoutTime fromMillis(long millis) throws IllegalArgumentException {
-        if (millis < minSupportedDateMillis || millis > maxSupportedDateMillis)
-            throw new IllegalArgumentException("Input value out of range");
-
         int result = (int)TimeUnit.MILLISECONDS.toDays(millis);
-        result -= Integer.MIN_VALUE;
-        return new DefaultDateWithoutTime(result);
+        return new DateWithoutTime(result);
     }
 
     /**
-     * Convert a Cassandra {@code DATE} raw representation, which is an {@code int}, to
-     * a {@code DateWithoutTime} instance.
+     * Convert year, month, day to a {@code DateWithoutTime}.
      *
-     * @param days Cassandra {@code DATE} raw value
-     * @return {@code DateWithoutTime} instance.
+     * @param year the value used to set the <code>YEAR</code> calendar field.
+     * @param month the value used to set the <code>MONTH</code> calendar field.
+     *              Month value is 0-based. e.g., 0 for January.
+     * @param day the value used to set the <code>DAY_OF_MONTH</code> calendar field.
+     * @return converted {@code DateWithoutTime}
      */
-    public static DateWithoutTime fromSimpleDate(int days) {
-        return new DefaultDateWithoutTime(days);
-    }
-
-    // not public since it has no timezone support
-    static long timeToMillis(long time) {
-        return TimeUnit.NANOSECONDS.toMillis(time);
-    }
-
-    /**
-     * Convert this date-without-time + {@code TIME} with a timezone to a Java
-     * {@link Calendar} object.
-     *
-     * @param time {@code TIME} value
-     * @param target the Calendar object initialized with the correct time zone
-     * @return modified Calendar object
-     */
-    public Calendar toCalendar(long time, Calendar target) {
-        long millis = toMillis();
-        target.setTimeInMillis(millis);
-        time = timeToMillis(time);
-        target.set(Calendar.MILLISECOND, (int) (time % 1000L));
-        time /= 1000L;
-        target.set(Calendar.SECOND, (int) (time % 60));
-        time /= 60L;
-        target.set(Calendar.MINUTE, (int) (time % 60));
-        time /= 60L;
-        target.set(Calendar.HOUR_OF_DAY, (int) (time % 24));
-        return target;
+    public static DateWithoutTime fromYearMonthDay(int year, int month, int day) {
+        Calendar cal = Calendar.getInstance(UTC);
+        cal.clear();
+        cal.set(year, month, day, 0, 0, 0);
+        return fromMillis(cal.getTimeInMillis());
     }
 
     public boolean equals(Object o)
@@ -119,20 +133,10 @@ public abstract class DateWithoutTime {
     }
 
     public String toString() {
-        SimpleDateFormat parser = new SimpleDateFormat();
+        SimpleDateFormat parser = new SimpleDateFormat(DEFAULT_PATTERN);
         parser.setLenient(false);
-        parser.setTimeZone(TimeZone.getTimeZone("UTC"));
-        parser.applyPattern(DEFAULT_PATTERN);
+        parser.setTimeZone(UTC);
         return parser.format(toMillis());
-    }
-
-    /**
-     * Internal default implementation.
-     */
-    static final class DefaultDateWithoutTime extends DateWithoutTime {
-        public DefaultDateWithoutTime(int days) {
-            super(days);
-        }
     }
 
 }

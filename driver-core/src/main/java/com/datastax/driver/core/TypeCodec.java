@@ -937,47 +937,43 @@ abstract class TypeCodec<T> {
 
         public static final SimpleDateCodec instance = new SimpleDateCodec();
         private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
-
-        private static final String[] patterns = new String[] {
-                                                              "yyyy-MM-dd",
-                                                              "yyyy-MM-ddZ"
-        };
+        private static final String pattern = "yyyy-MM-dd";
+        private static final long MAX_LONG_VALUE = (1L << 32) - 1;
+        private static final long EPOCH_AS_CQL_LONG = (1L << 31);
 
         private SimpleDateCodec() {}
-
-        private static DateWithoutTime parseDate(String str, final String[] parsePatterns) {
-            SimpleDateFormat parser = new SimpleDateFormat();
-            parser.setLenient(false);
-            parser.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-            ParsePosition pos = new ParsePosition(0);
-            for (String parsePattern : parsePatterns) {
-                parser.applyPattern(parsePattern);
-                pos.setIndex(0);
-
-                Date date = parser.parse(str, pos);
-                if (date != null && pos.getIndex() == str.length()) {
-                    return DateWithoutTime.fromMillis(date.getTime());
-                }
-            }
-            throw new IllegalArgumentException("Unable to parse the date: " + str);
-        }
 
         @Override
         public DateWithoutTime parse(String value) {
             if (IS_LONG_PATTERN.matcher(value).matches()) {
+                // In CQL, numeric DATE literals are longs between 0 and 2^32 - 1, with the epoch in the middle,
+                // so parse it as a long and re-center at 0
+                long cqlLong;
                 try {
-                    return DateWithoutTime.fromSimpleDate(Integer.parseInt(value));
+                    cqlLong = Long.parseLong(value);
                 } catch (NumberFormatException e) {
                     throw new InvalidTypeException(String.format("Cannot parse date value from \"%s\"", value));
                 }
+                if (cqlLong < 0 || cqlLong > MAX_LONG_VALUE)
+                    throw new InvalidTypeException(String.format("Numeric literals for DATE must be between 0 and %d (got %d)",
+                                                                 MAX_LONG_VALUE, cqlLong));
+
+                int days = (int)(cqlLong - EPOCH_AS_CQL_LONG);
+
+                return new DateWithoutTime(days);
             }
 
-            try {
-                return parseDate(value, patterns);
-            } catch (IllegalArgumentException e) {
-                throw new InvalidTypeException(String.format("Cannot parse date value from \"%s\"", value));
+            SimpleDateFormat parser = new SimpleDateFormat(pattern);
+            parser.setLenient(false);
+            parser.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+            ParsePosition pos = new ParsePosition(0);
+            Date date = parser.parse(value, pos);
+            if (date != null && pos.getIndex() == value.length()) {
+                return DateWithoutTime.fromMillis(date.getTime());
             }
+
+            throw new InvalidTypeException(String.format("Cannot parse date value from \"%s\"", value));
         }
 
         @Override
@@ -987,18 +983,34 @@ abstract class TypeCodec<T> {
 
         @Override
         public ByteBuffer serialize(DateWithoutTime value) {
-            return IntCodec.instance.serializeNoBoxing(value.getDays());
+            return IntCodec.instance.serializeNoBoxing(javaToProtocol(value.getDaysSinceEpoch()));
         }
 
         @Override
         public DateWithoutTime deserialize(ByteBuffer bytes) {
-            return DateWithoutTime.fromSimpleDate(IntCodec.instance.deserializeNoBoxing(bytes));
+            return new DateWithoutTime(protocolToJava(IntCodec.instance.deserializeNoBoxing(bytes)));
+        }
+
+        // The protocol encodes DATE as an _unsigned_ int with the epoch in the middle of the range (2^31).
+        // Because ByteBuffer does not have a `getUnsignedInt` method, we read those 4 bytes as a signed int
+        // and convert it. In addition, we shift the value to have the epoch at 0 like is usual in Java.
+        // These two methods handle the conversions.
+
+        private static int protocolToJava(int p) {
+            return (p >= 0)
+                   ? Integer.MIN_VALUE + p
+                   : Integer.MAX_VALUE + p + 1;
+        }
+
+        private static int javaToProtocol(int j) {
+            return (j >= 0)
+                   ? j - Integer.MIN_VALUE
+                   : j - Integer.MAX_VALUE - 1;
         }
     }
 
     static class TimeCodec extends TypeCodec<Long> {
 
-        private static final Pattern timePattern = Pattern.compile("^-?\\d+$");
         private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
 
         public static final TimeCodec instance = new TimeCodec();
@@ -1006,7 +1018,7 @@ abstract class TypeCodec<T> {
         private TimeCodec() {}
 
         // Time specific parsing loosely based on java.sql.Timestamp
-        private static Long parseTimeStrictly(String s) throws IllegalArgumentException
+        private static Long parseTime(String s) throws IllegalArgumentException
         {
             String nanos_s;
 
@@ -1072,34 +1084,6 @@ abstract class TypeCodec<T> {
             return rawTime;
         }
 
-        private static Long parseTime(String value) throws ParseException {
-            // nano since start of day, raw
-            if (timePattern.matcher(value).matches())
-            {
-                try
-                {
-                    long result = Long.parseLong(value);
-                    if (result < 0 || result >= TimeUnit.DAYS.toNanos(1))
-                        throw new NumberFormatException("Input long out of bounds: " + value);
-                    return result;
-                }
-                catch (NumberFormatException e)
-                {
-                    throw new ParseException(String.format("Unable to make long (for time) from: '%s'", value), -1);
-                }
-            }
-
-            // Last chance, attempt to parse as time string
-            try
-            {
-                return parseTimeStrictly(value);
-            }
-            catch (IllegalArgumentException e1)
-            {
-                throw new ParseException(String.format("(TimeType) Unable to coerce '%s' to a formatted time (long)", value), -1);
-            }
-        }
-
         @Override
         public Long parse(String value) {
             if (IS_LONG_PATTERN.matcher(value).matches()) {
@@ -1112,7 +1096,7 @@ abstract class TypeCodec<T> {
 
             try {
                 return parseTime(value);
-            } catch (ParseException e) {
+            } catch (IllegalArgumentException e) {
                 throw new InvalidTypeException(String.format("Cannot parse time value from \"%s\"", value));
             }
         }
@@ -1171,7 +1155,7 @@ abstract class TypeCodec<T> {
 
         @Override
         public UUID deserialize(ByteBuffer bytes) {
-            return new UUID(bytes.getLong(bytes.position() + 0), bytes.getLong(bytes.position() + 8));
+            return new UUID(bytes.getLong(bytes.position()), bytes.getLong(bytes.position() + 8));
         }
     }
 
