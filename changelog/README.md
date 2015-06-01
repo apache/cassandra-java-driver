@@ -2,6 +2,8 @@
 
 ### 2.0.11 (in progress)
 
+- [bug] Fix SpeculativeExecutionPolicy.init() and close() are never called (JAVA-796)
+
 Merged from 2.0.10_fixes branch:
 
 - [improvement] Use Netty's pooled ByteBufAllocator by default (JAVA-756)
