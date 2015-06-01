@@ -97,25 +97,11 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      * @throws InvalidTypeException if value {@code i} is not of type TIMESTAMP.
-     * @deprecated deprecated in favor of {@link #setTimestamp(int, Date)}
-     */
-    @Deprecated
-    public T setDate(int i, Date v);
-
-    /**
-     * Set the {@code i}th value to the provided date.
-     *
-     * @param i the index of the value to set.
-     * @param v the value to set.
-     * @return this object.
-     *
-     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type TIMESTAMP.
      */
     public T setTimestamp(int i, Date v);
 
     /**
-     * Set the {@code i}th value to the provided date as an int in days since epoch.
+     * Set the {@code i}th value to the provided date (without time).
      *
      * @param i the index of the value to set.
      * @param v the value to set.
@@ -124,7 +110,7 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      * @throws InvalidTypeException if value {@code i} is not of type DATE.
      */
-    public T setDateWithoutTime(int i, DateWithoutTime v);
+    public T setDate(int i, DateWithoutTime v);
 
     /**
      * Set the {@code i}th value to the provided time as a long in nanoseconds since midnight.

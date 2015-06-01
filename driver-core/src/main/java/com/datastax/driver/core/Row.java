@@ -207,37 +207,6 @@ public interface Row extends GettableData {
      *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
      * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
-     * @deprecated deprecated in favor of {@link #getTimestamp(int)}
-     */
-    @Deprecated
-    @Override
-    public Date getDate(int i);
-
-    /**
-     * Returns the value of column {@code name} as a date.
-     *
-     * @param name the name of the column to retrieve.
-     * @return the value of column {@code name} as a date. If the value is NULL,
-     * {@code null} is returned.
-     *
-     * @throws IllegalArgumentException if {@code name} is not part of the
-     * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not of type TIMESTAMP.
-     * @deprecated deprecated in favor of {@link #getTimestamp(String)}
-     */
-    @Deprecated
-    @Override
-    public Date getDate(String name);
-
-    /**
-     * Returns the {@code i}th value of this row as a date.
-     *
-     * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
-     * @return the value of the {@code i}th column in this row as a data. If the
-     * value is NULL, {@code null} is returned.
-     *
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
      */
     @Override
     public Date getTimestamp(int i);
@@ -257,20 +226,20 @@ public interface Row extends GettableData {
     public Date getTimestamp(String name);
 
     /**
-     * Returns the {@code i}th value as a date as an int in days since epoch.
+     * Returns the {@code i}th value as a date (without time).
      *
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
-     * @return the value of the {@code i}th element as a data. If the
+     * @return the value of the {@code i}th element as a date. If the
      * value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      * @throws InvalidTypeException if value {@code i} is not of type DATE.
      */
     @Override
-    public DateWithoutTime getDateWithoutTime(int i);
+    public DateWithoutTime getDate(int i);
 
     /**
-     * Returns the value for {@code name} as a date as an int in days since epoch.
+     * Returns the value for {@code name} as a date (without time).
      *
      * @param name the name to retrieve.
      * @return the value for {@code name} as a date. If the value is NULL,
@@ -280,7 +249,7 @@ public interface Row extends GettableData {
      * @throws InvalidTypeException if value {@code name} is not of type DATE.
      */
     @Override
-    public DateWithoutTime getDateWithoutTime(String name);
+    public DateWithoutTime getDate(String name);
 
     /**
      * Returns the {@code i}th value as a long in nanoseconds since midnight.

@@ -290,7 +290,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
                         alldatatypes.setTimestamp(index, ((Date) sampleData));
                         break;
                     case DATE:
-                        alldatatypes.setDateWithoutTime(index, ((DateWithoutTime) sampleData));
+                        alldatatypes.setDate(index, ((DateWithoutTime)sampleData));
                         break;
                     case TIME:
                         alldatatypes.setTime(index, ((Long) sampleData));

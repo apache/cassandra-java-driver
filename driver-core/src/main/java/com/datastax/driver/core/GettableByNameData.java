@@ -101,20 +101,6 @@ public interface GettableByNameData {
     public long getLong(String name);
 
     /**
-     * Returns the value for {@code name} as an int.
-     *
-     * @param name the name to retrieve.
-     * @return the value for {@code name} as an int. If the value is NULL,
-     * {@code null} is returned.
-     *
-     * @throws IllegalArgumentException if {@code name} is not valid name for this object.
-     * @throws InvalidTypeException if value {@code name} is not of type TIMESTAMP.
-     * @deprecated deprecated in favor of {@link #getTimestamp(String)}
-     */
-    @Deprecated
-    public Date getDate(String name);
-
-    /**
      * Returns the value for {@code name} as a date.
      *
      * @param name the name to retrieve.
@@ -127,7 +113,7 @@ public interface GettableByNameData {
     public Date getTimestamp(String name);
 
     /**
-     * Returns the value for {@code name} as a date as an int in days since epoch.
+     * Returns the value for {@code name} as a date (without time).
      *
      * @param name the name to retrieve.
      * @return the value for {@code name} as a date. If the value is NULL,
@@ -136,7 +122,7 @@ public interface GettableByNameData {
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
      * @throws InvalidTypeException if value {@code name} is not of type DATE.
      */
-    public DateWithoutTime getDateWithoutTime(String name);
+    public DateWithoutTime getDate(String name);
 
     /**
      * Returns the value for {@code name} as a long in nanoseconds since midnight.

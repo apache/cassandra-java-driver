@@ -15,128 +15,243 @@
  */
 package com.datastax.driver.core;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
- * Represents a Cassandra {@code DATE} data type.
- * The {@code DATE} data type is available since Cassandra 2.2 via native protocol V4.
+ * A date with no time components, no time zone, in the ISO 8601 calendar.
  *
- * Note: the internal representation of this class uses a {@code long}
+ * Note that ISO 8601 has a number of differences with the default gregorian calendar used in Java:
+ * <ul>
+ *     <li>it uses a proleptic gregorian calendar, meaning that it's gregorian indefinitely back in the past (there is no gregorian change);</li>
+ *     <li>there is a year 0.</li>
+ * </ul>
+ *
+ * This class implements these differences, so that year/month/day fields match exactly the ones in
+ * CQL string literals.
  *
  * @since 2.2
  */
 public final class DateWithoutTime {
 
-    private static final String DEFAULT_PATTERN = "yyyy-MM-dd";
     private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
 
-    private final int days;
+    private final long millisSinceEpoch;
+    private final int daysSinceEpoch;
 
-    /**
-     * Convert a days-since-epoch value (epoch==0) to a {@code DateWithoutTime} instance.
-     *
-     * @param daysSinceEpoch days since epoch (1970-01-01)
-     */
-    public DateWithoutTime(int daysSinceEpoch) {
-        this.days = daysSinceEpoch;
+    // This gets initialized lazily if we ever need it. Once set, it is effectively immutable.
+    private volatile GregorianCalendar calendar;
+
+    private DateWithoutTime(int daysSinceEpoch) {
+        this.daysSinceEpoch = daysSinceEpoch;
+        this.millisSinceEpoch = TimeUnit.DAYS.toMillis(daysSinceEpoch);
     }
 
     /**
-     * Get the days-since-epoch value.
+     * Builds a new instance from a number of days since January 1st, 1970 GMT.
+     *
+     * @param daysSinceEpoch the number of days.
+     *
+     * @return the new instance.
+     */
+    public static DateWithoutTime fromDaysSinceEpoch(int daysSinceEpoch) {
+        return new DateWithoutTime(daysSinceEpoch);
+    }
+
+    /**
+     * Builds a new instance from a number of milliseconds since January 1st, 1970 GMT.
+     *
+     * @param millisSinceEpoch the number of milliseconds. Note that if it does not correspond to a whole number of days,
+     *                         it will be rounded towards 0.
+     *
+     * @return the new instance.
+     *
+     * @throws IllegalArgumentException if the date is not in the range [-5877641-06-23; 5881580-07-11].
+     */
+    public static DateWithoutTime fromMillisSinceEpoch(long millisSinceEpoch) throws IllegalArgumentException {
+        long daysSinceEpoch = TimeUnit.MILLISECONDS.toDays(millisSinceEpoch);
+        checkArgument(daysSinceEpoch >= Integer.MIN_VALUE && daysSinceEpoch <= Integer.MAX_VALUE,
+            "Date should be in the range [-5877641-06-23; 5881580-07-11]");
+
+        return new DateWithoutTime((int)daysSinceEpoch);
+    }
+
+    /**
+     * Builds a new instance from a year/month/day specification.
+     *
+     * This method is not lenient, i.e. '2014-12-32' will not be treated as '2015-01-01', but
+     * instead throw an {@code IllegalArgumentException}.
+     *
+     * @param year the year in ISO format (see {@link DateWithoutTime this class's Javadoc}).
+     * @param month the month. It is 1-based (e.g. 1 for January).
+     * @param dayOfMonth the day of the month.
+     *
+     * @return the new instance.
+     *
+     * @throws IllegalArgumentException if the corresponding date does not exist in the ISO8601
+     * calendar.
+     */
+    public static DateWithoutTime fromYearMonthDay(int year, int month, int dayOfMonth) {
+        int calendarYear = (year <= 0) ? -year + 1 : year;
+        int calendarEra = (year <= 0) ? GregorianCalendar.BC : GregorianCalendar.AD;
+
+        GregorianCalendar calendar = isoCalendar();
+        // We can't allow leniency because that could mess with our year shift above (for example if the arguments were 0, 12, 32)
+        calendar.setLenient(false);
+        calendar.clear();
+        calendar.set(calendarYear, month - 1, dayOfMonth, 0, 0, 0);
+        calendar.set(Calendar.ERA, calendarEra);
+
+        DateWithoutTime date = fromMillisSinceEpoch(calendar.getTimeInMillis());
+        date.calendar = calendar;
+        return date;
+    }
+
+    /**
+     * Returns the number of days since January 1st, 1970 GMT.
+     *
+     * @return the number of days.
      */
     public int getDaysSinceEpoch() {
-        return days;
+        return daysSinceEpoch;
     }
 
     /**
-     * Get the year that this date represents.
+     * Returns the number of milliseconds since January 1st, 1970 GMT.
+     *
+     * @return the number of milliseconds.
+     */
+    public long getMillisSinceEpoch() {
+        return millisSinceEpoch;
+    }
+
+    /**
+     * Returns the year.
+     *
+     * @return the year.
      */
     public int getYear() {
-        return toCalendar().get(Calendar.YEAR);
+        GregorianCalendar c = getCalendar();
+        int year = c.get(Calendar.YEAR);
+        if (c.get(Calendar.ERA) == GregorianCalendar.BC)
+            year = -year + 1;
+        return year;
     }
 
     /**
-     * Get the month that this date represents.
-     * @return month value is 0-based. e.g., 0 for January.
+     * Returns the month.
+     *
+     * @return the month. It is 1-based, e.g. 1 for January.
      */
     public int getMonth() {
-        return toCalendar().get(Calendar.MONTH);
+        return getCalendar().get(Calendar.MONTH) + 1;
     }
 
     /**
-     * Get the day-of-month that this date represents.
+     * Returns the day in the month.
+     *
+     * @return the day in the month.
      */
     public int getDay() {
-        return toCalendar().get(Calendar.DAY_OF_MONTH);
+        return getCalendar().get(Calendar.DAY_OF_MONTH);
     }
 
     /**
-     * Convert this date-without-time value to milliseconds since epoch.
-     */
-    public long toMillis() {
-        return toCalendar().getTimeInMillis();
-    }
-
-    /**
-     * Convert this date-without-time value to a {@link Calendar} instance.
-     */
-    public Calendar toCalendar() {
-        Calendar cal = Calendar.getInstance(UTC);
-        cal.clear();
-        cal.add(Calendar.DAY_OF_YEAR, days);
-        return cal;
-    }
-
-    /**
-     * Convert a milliseconds-since-epoch (1970-01-01) value to a {@code DateWithoutTime}.
+     * Builds a new instance by adding a number of years.
      *
-     * @param millis input value
-     * @return corresponding DateWithoutTime for input value
+     * @param years the number of years (can be negative).
+     * @return the new instance.
+     *
+     * @throws IllegalArgumentException if the new date is not in the range [-5877641-06-23; 5881580-07-11].
      */
-    public static DateWithoutTime fromMillis(long millis) throws IllegalArgumentException {
-        int result = (int)TimeUnit.MILLISECONDS.toDays(millis);
-        return new DateWithoutTime(result);
+    public DateWithoutTime plusYears(int years) {
+        return add(Calendar.YEAR, years);
     }
 
     /**
-     * Convert year, month, day to a {@code DateWithoutTime}.
+     * Builds a new instance by adding a number of months.
      *
-     * @param year the value used to set the <code>YEAR</code> calendar field.
-     * @param month the value used to set the <code>MONTH</code> calendar field.
-     *              Month value is 0-based. e.g., 0 for January.
-     * @param day the value used to set the <code>DAY_OF_MONTH</code> calendar field.
-     * @return converted {@code DateWithoutTime}
+     * @param months the number of months (can be negative).
+     * @return the new instance.
+     *
+     * @throws IllegalArgumentException if the new date is not in the range [-5877641-06-23; 5881580-07-11].
      */
-    public static DateWithoutTime fromYearMonthDay(int year, int month, int day) {
-        Calendar cal = Calendar.getInstance(UTC);
-        cal.clear();
-        cal.set(year, month, day, 0, 0, 0);
-        return fromMillis(cal.getTimeInMillis());
+    public DateWithoutTime plusMonths(int months) {
+        return add(Calendar.MONTH, months);
     }
 
-    public boolean equals(Object o)
-    {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        DateWithoutTime that = (DateWithoutTime) o;
-
-        return days == that.days;
+    /**
+     * Builds a new instance by adding a number of days.
+     *
+     * @param days the number of days (can be negative).
+     * @return the new instance.
+     *
+     * @throws IllegalArgumentException if the new date is not in the range [-5877641-06-23; 5881580-07-11].
+     */
+    public DateWithoutTime plusDays(int days) {
+        return add(Calendar.DAY_OF_MONTH, days);
     }
 
-    public int hashCode()
-    {
-        return days;
+    private DateWithoutTime add(int field, int amount) {
+        GregorianCalendar newCalendar = isoCalendar();
+        newCalendar.setTimeInMillis(millisSinceEpoch);
+        newCalendar.add(field, amount);
+        DateWithoutTime newDate = fromMillisSinceEpoch(newCalendar.getTimeInMillis());
+        newDate.calendar = newCalendar;
+        return newDate;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+
+        if (o instanceof DateWithoutTime) {
+            DateWithoutTime that = (DateWithoutTime)o;
+            return this.daysSinceEpoch == that.daysSinceEpoch;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return daysSinceEpoch;
+    }
+
+    @Override
     public String toString() {
-        SimpleDateFormat parser = new SimpleDateFormat(DEFAULT_PATTERN);
-        parser.setLenient(false);
-        parser.setTimeZone(UTC);
-        return parser.format(toMillis());
+        return String.format("%d-%s-%s", getYear(),
+            pad2(getMonth()),
+            pad2(getDay()));
     }
 
+    private static String pad2(int i) {
+        String s = Integer.toString(i);
+        return s.length() == 2 ? s : "0" + s;
+    }
+
+    private GregorianCalendar getCalendar() {
+        // Two threads can race and both create a calendar. This is not a problem.
+        if (calendar == null) {
+
+            // Use a local variable to only expose after we're done mutating it.
+            GregorianCalendar tmp = isoCalendar();
+            tmp.setTimeInMillis(millisSinceEpoch);
+
+            calendar = tmp;
+        }
+        return calendar;
+    }
+
+    // This matches what Cassandra uses server side (from Joda Time's LocalDate)
+    private static GregorianCalendar isoCalendar() {
+        GregorianCalendar calendar = new GregorianCalendar(UTC);
+        calendar.setGregorianChange(new Date(Long.MIN_VALUE));
+        return calendar;
+    }
 }

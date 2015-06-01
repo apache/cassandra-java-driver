@@ -173,14 +173,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      * {@inheritDoc}
      */
     @Override
-    public Date getDate(int i) {
-        return getTimestamp(i);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public Date getTimestamp(int i)
     {
         checkType(i, DataType.Name.TIMESTAMP);
@@ -189,21 +181,21 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return TypeCodec.DateCodec.instance.deserialize(value);
+        return TypeCodec.TimestampCodec.instance.deserialize(value);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public DateWithoutTime getDateWithoutTime(int i) {
+    public DateWithoutTime getDate(int i) {
         checkType(i, DataType.Name.DATE);
 
         ByteBuffer value = getValue(i);
         if (value == null || value.remaining() == 0)
             return null;
 
-        return TypeCodec.SimpleDateCodec.instance.deserialize(value);
+        return TypeCodec.DateCodec.instance.deserialize(value);
     }
 
     /**

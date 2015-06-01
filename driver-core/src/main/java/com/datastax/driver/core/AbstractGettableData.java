@@ -100,15 +100,6 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
     /**
      * {@inheritDoc}
      */
-    @Deprecated
-    @Override
-    public Date getDate(String name) {
-        return getTimestamp(getIndexOf(name));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Date getTimestamp(String name) {
         return getTimestamp(getIndexOf(name));
@@ -118,8 +109,8 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
      * {@inheritDoc}
      */
     @Override
-    public DateWithoutTime getDateWithoutTime(String name) {
-        return getDateWithoutTime(getIndexOf(name));
+    public DateWithoutTime getDate(String name) {
+        return getDate(getIndexOf(name));
     }
 
     /**

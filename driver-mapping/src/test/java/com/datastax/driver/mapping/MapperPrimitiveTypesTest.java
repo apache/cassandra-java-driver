@@ -135,7 +135,7 @@ public class MapperPrimitiveTypesTest extends CCMBridge.PerClassSingleNodeCluste
     @Test(groups = "short")
     public void testWriteRead22() throws Exception {
         ByteBuffer byteBufferCol = Bytes.fromHexString("0xCAFEBABE");
-        DateWithoutTime dateWithoutTimeCol = DateWithoutTime.fromMillis(System.currentTimeMillis());
+        DateWithoutTime dateWithoutTimeCol = DateWithoutTime.fromMillisSinceEpoch(System.currentTimeMillis());
         long timeCol = 123456789L;
         Long timeWrapperCol = 123456789L;
         byte byteCol = 42;
