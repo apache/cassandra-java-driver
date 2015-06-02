@@ -47,10 +47,6 @@ The driver contains the following modules:
 - driver-examples: example applications using the other modules which are
   only meant for demonstration purposes.
 
-More modules including a simple object mapper will come shortly.
-
-Please refer to the README of each module for more information.
-
 **Community:**
 
 - JIRA: https://datastax-oss.atlassian.net/browse/JAVA
@@ -59,6 +55,8 @@ Please refer to the README of each module for more information.
 - TWITTER: Follow the latest news about DataStax Drivers - [@olim7t](http://twitter.com/olim7t), [@mfiguiere](http://twitter.com/mfiguiere)
 - DOCS: http://docs.datastax.com/en/developer/java-driver/2.0/java-driver/whatsNew2.html
 - API: http://docs.datastax.com/en/drivers/java/2.0
+
+**Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).
 
 
 ## Maven
@@ -90,7 +88,7 @@ an [UnsupportedFeatureException](https://github.com/datastax/java-driver/blob/2.
 ## Upgrading from 1.x branch
 
 If you are upgrading from the 1.x branch of the driver, be sure to have a look at
-the [upgrade guide](https://github.com/datastax/java-driver/blob/2.0/driver-core/Upgrade_guide_to_2.0.rst).
+the [upgrade guide](upgrade_guide/).
 
 We used the opportunity of a major version bump to incorporate your feedback and improve the API, 
 to fix a number of inconsistencies and remove cruft. 
