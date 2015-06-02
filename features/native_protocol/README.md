@@ -7,7 +7,7 @@ Cassandra codebase][native_spec] if you're curious); the most visible
 aspect is that some features are only available with specific protocol
 versions.
 
-[native_spec]: https://git-wip-us.apache.org/repos/asf?p=cassandra.git;a=tree;f=doc;hb=HEAD
+[native_spec]: https://github.com/apache/cassandra/tree/trunk/doc
 
 ### Compatibility matrix
 
