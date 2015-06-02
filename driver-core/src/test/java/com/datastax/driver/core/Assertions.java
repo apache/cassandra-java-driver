@@ -34,4 +34,8 @@ public class Assertions extends org.assertj.core.api.Assertions{
     public static DataTypeAssert assertThat(DataType type) {
         return new DataTypeAssert(type);
     }
+
+    public static DateWithoutTimeAssert assertThat(DateWithoutTime dateWithoutTime) {
+        return new DateWithoutTimeAssert(dateWithoutTime);
+    }
 }

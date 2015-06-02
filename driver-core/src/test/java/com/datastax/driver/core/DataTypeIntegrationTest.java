@@ -361,7 +361,11 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
             case VARCHAR:
                 return bs.getString(0);
             case TIMESTAMP:
+                return bs.getTimestamp(0);
+            case DATE:
                 return bs.getDate(0);
+            case TIME:
+                return bs.getTime(0);
             case UUID:
             case TIMEUUID:
                 return bs.getUUID(0);

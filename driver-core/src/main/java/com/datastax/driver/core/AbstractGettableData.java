@@ -101,8 +101,24 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
      * {@inheritDoc}
      */
     @Override
-    public Date getDate(String name) {
+    public Date getTimestamp(String name) {
+        return getTimestamp(getIndexOf(name));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DateWithoutTime getDate(String name) {
         return getDate(getIndexOf(name));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getTime(String name) {
+        return getTime(getIndexOf(name));
     }
 
     /**

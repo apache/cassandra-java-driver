@@ -111,7 +111,31 @@ public interface GettableByIndexData {
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      * @throws InvalidTypeException if value {@code i} is not of type TIMESTAMP.
      */
-    public Date getDate(int i);
+    public Date getTimestamp(int i);
+
+    /**
+     * Returns the {@code i}th value as a date (without time).
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @return the value of the {@code i}th element as an date. If the
+     * value is NULL, {@code null} is returned.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type DATE.
+     */
+    public DateWithoutTime getDate(int i);
+
+    /**
+     * Returns the {@code i}th value as a long in nanoseconds since midnight.
+     *
+     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @return the value of the {@code i}th element as a long. If the
+     * value is NULL, {@code 0L} is returned.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not of type TIME.
+     */
+    public long getTime(int i);
 
     /**
      * Returns the {@code i}th value as a float.

@@ -10,6 +10,7 @@
 - [new feature] Expose function and aggregate metadata (JAVA-747)
 - [new feature] Add new client exception for CQL function failure (JAVA-778)
 - [improvement] Expose ProtocolVersion#toInt (JAVA-700)
+- [new feature] Support new C* 2.2 CQL date and time types (JAVA-404)
 
 Merged from 2.1 branch:
 
