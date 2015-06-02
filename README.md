@@ -62,6 +62,8 @@ Please refer to the README of each module for more information.
 - DOCS: http://www.datastax.com/documentation/developer/java-driver/2.1/index.html
 - API: http://www.datastax.com/drivers/java/2.1
 
+**Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).  
+
 
 ## Maven
 
