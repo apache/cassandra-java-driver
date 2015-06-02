@@ -74,6 +74,11 @@ public class BoundStatement extends Statement implements SettableData<BoundState
             this.enableTracing();
         if (statement.getRetryPolicy() != null)
             this.setRetryPolicy(statement.getRetryPolicy());
+        if (statement.getOutgoingPayload() != null)
+            this.setOutgoingPayload(statement.getOutgoingPayload());
+        else
+            // propagate incoming payload as outgoing payload, if no outgoing payload has been explicitly set
+            this.setOutgoingPayload(statement.getIncomingPayload());
     }
 
     /**

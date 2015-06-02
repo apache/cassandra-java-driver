@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.policies.RetryPolicy;
@@ -268,4 +269,72 @@ public interface PreparedStatement {
      * @return the PreparedId corresponding to this statement.
      */
     public PreparedId getPreparedId();
+
+    /**
+     * Return the incoming payload, that is, the payload that the server
+     * sent back with its {@code PREPARED} response, if any,
+     * or {@code null}, if the server did not include any custom payload.
+     * <p>
+     * Note that if an incoming payload is present,
+     * and if no outgoing payload has been {@link #setOutgoingPayload(Map) explicitly set}, then each time
+     * a {@link BoundStatement} is created (with either {@link #bind()} or {@link #bind(Object...)}),
+     * the resulting {@link BoundStatement} will inherit from this value
+     * as its default outgoing payload.
+     * <p>
+     * Implementors should return a read-only view of the original map, but even though,
+     * its values would remain inherently mutable.
+     * Callers should take care not to modify the returned map in any way.
+     * <p>
+     * This feature is only available with {@link ProtocolVersion#V4} or above; with lower
+     * versions, this method will always return {@code null}.
+     *
+     * @return the custom payload that the server sent back with its response, if any,
+     * or {@code null}, if the server did not include any custom payload.
+     * @since 2.2
+     */
+    public Map<String, ByteBuffer> getIncomingPayload();
+
+    /**
+     * Return the outgoing payload currently associated with this statement.
+     * <p>
+     * If this is set to a non-null value, each time a {@link BoundStatement} is
+     * created (with either {@link #bind()} or {@link #bind(Object...)}),
+     * the resulting {@link BoundStatement} will inherit from this value
+     * as its default outgoing payload.
+     * <p>
+     * Implementors should return a read-only view of the original map, but even though,
+     * its values would remain inherently mutable.
+     * Callers should take care not to modify the returned map in any way.
+     * <p>
+     * This feature is only available with {@link ProtocolVersion#V4} or above.
+     * @return this statement's outgoing payload, if any, or {@code null} if no outgoing payload is set
+     * @since 2.2
+     */
+    public Map<String, ByteBuffer> getOutgoingPayload();
+
+    /**
+     * Associate the given payload with this prepared statement.
+     * <p>
+     * If this is set to a non-null value, each time a {@link BoundStatement} is
+     * created (with either {@link #bind()} or {@link #bind(Object...)}),
+     * the resulting {@link BoundStatement} will inherit from this value
+     * as its default outgoing payload.
+     * <p>
+     * Implementors should make a defensive, thread-safe copy of the given map, but even though,
+     * its values would remain inherently mutable.
+     * Callers should take care not to modify the original map once it is passed to this method.
+     * <p>
+     * This feature is only available with {@link ProtocolVersion#V4} or above.
+     * Trying to include custom payloads in requests sent by the driver
+     * under lower protocol versions will result in an
+     * {@link com.datastax.driver.core.exceptions.UnsupportedFeatureException}
+     * (wrapped in a {@link com.datastax.driver.core.exceptions.NoHostAvailableException}).
+     *
+     * @param payload the outgoing payload to associate with this statement,
+     *                or {@code null} to clear any previously associated payload.
+     * @return this {@link Statement} object.
+     * @since 2.2
+     */
+    public PreparedStatement setOutgoingPayload(Map<String, ByteBuffer> payload);
+
 }

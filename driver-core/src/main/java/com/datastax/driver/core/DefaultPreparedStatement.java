@@ -17,17 +17,21 @@ package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
 
 import com.datastax.driver.core.policies.RetryPolicy;
 
 import static com.datastax.driver.core.ProtocolVersion.V4;
 
-public class DefaultPreparedStatement implements PreparedStatement{
+public class DefaultPreparedStatement implements PreparedStatement {
 
     final PreparedId preparedId;
 
     final String query;
     final String queryKeyspace;
+    final Map<String, ByteBuffer> incomingPayload;
 
     volatile ByteBuffer routingKey;
 
@@ -35,11 +39,13 @@ public class DefaultPreparedStatement implements PreparedStatement{
     volatile ConsistencyLevel serialConsistency;
     volatile boolean traceQuery;
     volatile RetryPolicy retryPolicy;
+    volatile ImmutableMap<String, ByteBuffer> outgoingPayload;
 
-    private DefaultPreparedStatement(PreparedId id, String query, String queryKeyspace) {
+    private DefaultPreparedStatement(PreparedId id, String query, String queryKeyspace, Map<String, ByteBuffer> incomingPayload) {
         this.preparedId = id;
         this.query = query;
         this.queryKeyspace = queryKeyspace;
+        this.incomingPayload = incomingPayload;
     }
 
     static DefaultPreparedStatement fromMessage(Responses.Result.Prepared msg, Metadata clusterMetadata, ProtocolVersion protocolVersion, String query, String queryKeyspace) {
@@ -48,7 +54,7 @@ public class DefaultPreparedStatement implements PreparedStatement{
         ColumnDefinitions defs = msg.metadata.columns;
 
         if (defs.size() == 0)
-            return new DefaultPreparedStatement(new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null, protocolVersion), query, queryKeyspace);
+            return new DefaultPreparedStatement(new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null, protocolVersion), query, queryKeyspace, msg.getCustomPayload());
 
         int[] pkIndices = (protocolVersion.compareTo(V4) >= 0)
             ? msg.metadata.pkIndices
@@ -56,7 +62,7 @@ public class DefaultPreparedStatement implements PreparedStatement{
 
         PreparedId prepId = new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, pkIndices, protocolVersion);
 
-        return new DefaultPreparedStatement(prepId, query, queryKeyspace);
+        return new DefaultPreparedStatement(prepId, query, queryKeyspace, msg.getCustomPayload());
     }
 
     private static int[] computePkIndices(Metadata clusterMetadata, ColumnDefinitions boundColumns) {
@@ -184,5 +190,21 @@ public class DefaultPreparedStatement implements PreparedStatement{
 
     public PreparedId getPreparedId() {
         return preparedId;
+    }
+
+    @Override
+    public Map<String, ByteBuffer> getIncomingPayload() {
+        return incomingPayload;
+    }
+
+    @Override
+    public Map<String, ByteBuffer> getOutgoingPayload() {
+        return outgoingPayload;
+    }
+
+    @Override
+    public PreparedStatement setOutgoingPayload(Map<String, ByteBuffer> payload) {
+        this.outgoingPayload = payload == null ? null : ImmutableMap.copyOf(payload);
+        return this;
     }
 }

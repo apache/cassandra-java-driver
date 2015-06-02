@@ -180,6 +180,9 @@ class RequestHandler {
             }
             if (execution.retryConsistencyLevel != null)
                 info = info.withAchievedConsistency(execution.retryConsistencyLevel);
+            if (response.getCustomPayload() != null)
+                info = info.withIncomingPayload(response.getCustomPayload());
+
             callback.onSet(connection, response, info, statement, System.nanoTime() - startTime);
         } catch (Exception e) {
             callback.onException(connection,
@@ -611,7 +614,10 @@ class RequestHandler {
 
                 @Override
                 public Message.Request request() {
-                    return new Requests.Prepare(toPrepare);
+                    Requests.Prepare request = new Requests.Prepare(toPrepare);
+                    // propagate the original custom payload in the prepare request
+                    request.setCustomPayload(statement.getOutgoingPayload());
+                    return request;
                 }
 
                 @Override

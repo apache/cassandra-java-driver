@@ -5,6 +5,7 @@
 - [new feature] Protocol V4 enum support (JAVA-783)
 - [new feature] Use PK columns in protocol v4 PREPARED response (JAVA-776)
 - [new feature] Distinguish NULL and UNSET values (JAVA-777)
+- [new feature] Add k/v payload for 3rd party usage (JAVA-779)
 - [new feature] Expose server-side warnings on ExecutionInfo (JAVA-780)
 - [new feature] Expose new read/write failure exceptions (JAVA-749)
 - [new feature] Expose function and aggregate metadata (JAVA-747)

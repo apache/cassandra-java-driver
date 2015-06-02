@@ -272,13 +272,18 @@ public class CCMBridge {
     }
 
     public void bootstrapNodeWithPorts(int n, int thriftPort, int storagePort, int binaryPort, int jmxPort, int remoteDebugPort) {
+        bootstrapNodeWithPorts(n, thriftPort, storagePort, binaryPort, jmxPort, remoteDebugPort, null);
+    }
+
+    public void bootstrapNodeWithPorts(int n, int thriftPort, int storagePort, int binaryPort, int jmxPort, int remoteDebugPort, String option) {
         String thriftItf = IP_PREFIX + n + ":" + thriftPort;
         String storageItf = IP_PREFIX + n + ":" + storagePort;
         String binaryItf = IP_PREFIX + n + ":" + binaryPort;
         String remoteLogItf = IP_PREFIX + n + ":" + remoteDebugPort;
         execute("ccm add node%d -i %s%d -b -t %s -l %s --binary-itf %s -j %d -r %s -s",
             n, IP_PREFIX, n, thriftItf, storageItf, binaryItf, jmxPort, remoteLogItf);
-        execute("ccm node%d start --wait-other-notice --wait-for-binary-proto", n);
+        if(option == null) start(n);
+        else start(n, option);
     }
 
     public void decommissionNode(int n) {
@@ -425,7 +430,7 @@ public class CCMBridge {
         return IP_PREFIX + Integer.toString(nodeNumber);
     }
 
-    public static class terminationHook extends Thread {
+    public static class TerminationHook extends Thread {
         public void run() {
             logger.debug("shut down hook task..");
 
@@ -447,6 +452,16 @@ public class CCMBridge {
 
     // One cluster for the whole test class
     public static abstract class PerClassSingleNodeCluster {
+
+        /**
+         * The JVM args to use when starting nodes.
+         * Unfortunately, this must be set for all tests because
+         * CCM cluster instances are reused between tests,
+         * so a specific test cannot ask for specific JVM options.
+         */
+        private static final String JVM_ARGS =
+            // custom query handler to test protocol v4 custom payloads
+            "-Dcassandra.custom_query_handler_class=org.apache.cassandra.cql3.CustomPayloadMirroringQueryHandler";
 
         protected static CCMBridge ccmBridge;
         private static boolean erroredOut;
@@ -496,13 +511,13 @@ public class CCMBridge {
                         ports[i] = TestUtils.findAvailablePort(11000 + i);
                     }
 
-                    ccmBridge.bootstrapNodeWithPorts(1, ports[0], ports[1], ports[2], ports[3], ports[4]);
+                    ccmBridge.bootstrapNodeWithPorts(1, ports[0], ports[1], ports[2], ports[3], ports[4], JVM_ARGS);
                     ksNumber = new AtomicLong(0);
                     erroredOut = false;
                     hostAddress = new InetSocketAddress(InetAddress.getByName(IP_PREFIX + 1), ports[2]);
 
                     Runtime r = Runtime.getRuntime();
-                    r.addShutdownHook(new terminationHook());
+                    r.addShutdownHook(new TerminationHook());
                     clusterInitialized = true;
 
                 } catch (UnknownHostException e) {
