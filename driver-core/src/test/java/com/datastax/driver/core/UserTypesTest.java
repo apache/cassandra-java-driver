@@ -40,6 +40,9 @@ import com.datastax.driver.core.utils.CassandraVersion;
 public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private final static List<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion()));
+    static {
+        DATA_TYPE_PRIMITIVES.remove(DataType.counter());
+    }
     private final static List<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES =
             new ArrayList<DataType.Name>(EnumSet.of(DataType.Name.LIST, DataType.Name.SET, DataType.Name.MAP, DataType.Name.TUPLE));
 
@@ -284,7 +287,13 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
                         alldatatypes.setString(index, (String) sampleData);
                         break;
                     case TIMESTAMP:
-                        alldatatypes.setDate(index, ((Date) sampleData));
+                        alldatatypes.setTimestamp(index, ((Date) sampleData));
+                        break;
+                    case DATE:
+                        alldatatypes.setDateWithoutTime(index, ((DateWithoutTime) sampleData));
+                        break;
+                    case TIME:
+                        alldatatypes.setTime(index, ((Long) sampleData));
                         break;
                     case TIMEUUID:
                         alldatatypes.setUUID(index, (UUID) sampleData);
