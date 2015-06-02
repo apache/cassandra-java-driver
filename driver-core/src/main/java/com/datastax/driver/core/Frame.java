@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,26 +15,20 @@
  */
 package com.datastax.driver.core;
 
-import java.io.IOException;
 import java.util.EnumSet;
+import java.util.List;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.frame.CorruptedFrameException;
-import org.jboss.netty.handler.codec.frame.FrameDecoder;
-import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
-import org.jboss.netty.handler.codec.frame.TooLongFrameException;
-import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
-import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.*;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
 class Frame {
 
     public final Header header;
-    public final ChannelBuffer body;
+    public final ByteBuf body;
 
     /**
      * On-wire frame.
@@ -58,12 +52,12 @@ class Frame {
      *   | length  |
      *   +---------+
      */
-    private Frame(Header header, ChannelBuffer body) {
+    private Frame(Header header, ByteBuf body) {
         this.header = header;
         this.body = body;
     }
 
-    private static Frame create(ChannelBuffer fullFrame) {
+    private static Frame create(ByteBuf fullFrame) {
         assert fullFrame.readableBytes() >= 1 : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
 
         int versionBytes = fullFrame.readByte();
@@ -82,7 +76,7 @@ class Frame {
         return new Frame(header, fullFrame);
     }
 
-    private static int readStreamid(ChannelBuffer fullFrame, ProtocolVersion version) {
+    private static int readStreamid(ByteBuf fullFrame, ProtocolVersion version) {
         switch (version) {
             case V1:
             case V2:
@@ -94,7 +88,7 @@ class Frame {
         }
     }
 
-    public static Frame create(ProtocolVersion version, int opcode, int streamId, EnumSet<Header.Flag> flags, ChannelBuffer body) {
+    public static Frame create(ProtocolVersion version, int opcode, int streamId, EnumSet<Header.Flag> flags, ByteBuf body) {
         Header header = new Header(version, flags, streamId, opcode);
         return new Frame(header, body);
     }
@@ -154,104 +148,83 @@ class Frame {
         }
     }
 
-    public Frame with(ChannelBuffer newBody) {
+    public Frame with(ByteBuf newBody) {
         return new Frame(header, newBody);
     }
 
-    public static final class Decoder extends FrameDecoder {
-        static final DecoderV1 decoderV1 = new DecoderV1();
-        static final DecoderV3 decoderV3 = new DecoderV3();
+    public static final class Decoder extends ByteToMessageDecoder {
+        static final DecoderForStreamIdSize decoderV1 = new DecoderForStreamIdSize(1);
+        static final DecoderForStreamIdSize decoderV3 = new DecoderForStreamIdSize(2);
 
-        @Override protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
+        @Override
+        protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
+            if (buffer.readableBytes() < 1)
+                return;
+
             int version = buffer.getByte(0);
             // version first bit is the "direction" of the frame (request or response)
             version = version & 0x7F;
 
-            return version >= 3 ? decoderV3.decode(ctx, channel, buffer) : decoderV1.decode(ctx, channel, buffer);
-        }
-    }
-
-    public static class DecoderV1 extends LengthFieldBasedFrameDecoder {
-
-        private static final int MAX_FRAME_LENTH = 256 * 1024 * 1024; // 256 MB
-
-        public DecoderV1() {
-            super(MAX_FRAME_LENTH, 4, 4, 0, 0, true);
+            DecoderForStreamIdSize decoder = (version >= 3) ? decoderV3 : decoderV1;
+            Object frame = decoder.decode(ctx, buffer);
+            if (frame != null)
+                out.add(frame);
         }
 
-        @Override
-        protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
-            try {
-                if (buffer.readableBytes() < 4)
-                    return null;
+        static class DecoderForStreamIdSize extends LengthFieldBasedFrameDecoder {
+            private static final int MAX_FRAME_LENGTH = 256 * 1024 * 1024; // 256 MB
+            private final int opcodeOffset;
 
-                // Validate the opcode (this will throw if it's not a response)
-                Message.Response.Type.fromOpcode(buffer.getByte(3));
+            DecoderForStreamIdSize(int streamIdSize) {
+                super(MAX_FRAME_LENGTH, /*lengthOffset=*/ 3 + streamIdSize, 4, 0, 0, true);
+                this.opcodeOffset = 2 + streamIdSize;
+            }
 
-                ChannelBuffer frame = (ChannelBuffer) super.decode(ctx, channel, buffer);
-                if (frame == null) {
-                    return null;
+            @Override
+            protected Object decode(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
+                try {
+                    if (buffer.readableBytes() < opcodeOffset + 1)
+                        return null;
+
+                    // Validate the opcode (this will throw if it's not a response)
+                    Message.Response.Type.fromOpcode(buffer.getByte(opcodeOffset));
+
+                    ByteBuf frame = (ByteBuf) super.decode(ctx, buffer);
+                    if (frame == null) {
+                        return null;
+                    }
+                    // Do not deallocate `frame` just yet, because it is stored as Frame.body and will be used
+                    // in Message.ProtocolDecoder or Frame.Decompressor if compression is enabled (we deallocate
+                    // it there).
+                    return Frame.create(frame);
+                } catch (CorruptedFrameException e) {
+                    throw new DriverInternalError(e.getMessage());
+                } catch (TooLongFrameException e) {
+                    throw new DriverInternalError(e.getMessage());
                 }
-
-                return Frame.create(frame);
-            } catch (CorruptedFrameException e) {
-                throw new DriverInternalError(e.getMessage());
-            } catch (TooLongFrameException e) {
-                throw new DriverInternalError(e.getMessage());
             }
         }
     }
 
-    public static class DecoderV3 extends LengthFieldBasedFrameDecoder {
-
-        private static final int MAX_FRAME_LENTH = 256 * 1024 * 1024; // 256 MB
-
-        public DecoderV3() {
-            super(MAX_FRAME_LENTH, 5, 4, 0, 0, true);
-        }
+    @ChannelHandler.Sharable
+    public static class Encoder extends MessageToMessageEncoder<Frame> {
 
         @Override
-        protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
-            try {
-                if (buffer.readableBytes() < 4)
-                    return null;
-
-                // Validate the opcode (this will throw if it's not a response)
-                Message.Response.Type.fromOpcode(buffer.getByte(4));
-
-                ChannelBuffer frame = (ChannelBuffer) super.decode(ctx, channel, buffer);
-                if (frame == null) {
-                    return null;
-                }
-
-                return Frame.create(frame);
-            } catch (CorruptedFrameException e) {
-                throw new DriverInternalError(e.getMessage());
-            } catch (TooLongFrameException e) {
-                throw new DriverInternalError(e.getMessage());
-            }
-        }
-    }
-
-    public static class Encoder extends OneToOneEncoder {
-
-        public Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws IOException {
-            assert msg instanceof Frame : "Expecting frame, got " + msg;
-
-            Frame frame = (Frame)msg;
+        protected void encode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
             ProtocolVersion protocolVersion = frame.header.version;
-
-            ChannelBuffer header = ChannelBuffers.buffer(Header.lengthFor(protocolVersion));
+            ByteBuf header = ctx.alloc().ioBuffer(Frame.Header.lengthFor(protocolVersion));
             // We don't bother with the direction, we only send requests.
             header.writeByte(frame.header.version.toInt());
             header.writeByte(Header.Flag.serialize(frame.header.flags));
             writeStreamId(frame.header.streamId, header, protocolVersion);
             header.writeByte(frame.header.opcode);
             header.writeInt(frame.body.readableBytes());
-            return ChannelBuffers.wrappedBuffer(header, frame.body);
+
+            out.add(header);
+            out.add(frame.body);
         }
 
-        private void writeStreamId(int streamId, ChannelBuffer header, ProtocolVersion protocolVersion) {
+        private void writeStreamId(int streamId, ByteBuf header, ProtocolVersion protocolVersion) {
             switch (protocolVersion) {
                 case V1:
                 case V2:
@@ -266,7 +239,7 @@ class Frame {
         }
     }
 
-    public static class Decompressor extends OneToOneDecoder {
+    public static class Decompressor extends MessageToMessageDecoder<Frame> {
 
         private final FrameCompressor compressor;
 
@@ -275,19 +248,24 @@ class Frame {
             this.compressor = compressor;
         }
 
-        public Object decode(ChannelHandlerContext ctx, Channel channel, Object msg) throws IOException {
-
-            assert msg instanceof Frame : "Expecting frame, got " + msg;
-
-            Frame frame = (Frame)msg;
-
-            return frame.header.flags.contains(Header.Flag.COMPRESSED)
-                 ? compressor.decompress(frame)
-                 : frame;
+        @Override
+        protected void decode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
+            if (frame.header.flags.contains(Header.Flag.COMPRESSED)) {
+                // All decompressors allocate a new buffer for the decompressed data, so this is the last time
+                // we have a reference to the compressed body (and therefore a chance to release it).
+                ByteBuf compressedBody = frame.body;
+                try {
+                    out.add(compressor.decompress(frame));
+                } finally {
+                    compressedBody.release();
+                }
+            } else {
+                out.add(frame);
+            }
         }
     }
 
-    public static class Compressor extends OneToOneEncoder {
+    public static class Compressor extends MessageToMessageEncoder<Frame> {
 
         private final FrameCompressor compressor;
 
@@ -296,18 +274,21 @@ class Frame {
             this.compressor = compressor;
         }
 
-        public Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws IOException {
-
-            assert msg instanceof Frame : "Expecting frame, got " + msg;
-
-            Frame frame = (Frame)msg;
-
+        @Override
+        protected void encode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
             // Never compress STARTUP messages
-            if (frame.header.opcode == Message.Request.Type.STARTUP.opcode)
-                return frame;
-
-            frame.header.flags.add(Header.Flag.COMPRESSED);
-            return compressor.compress(frame);
+            if (frame.header.opcode == Message.Request.Type.STARTUP.opcode) {
+                out.add(frame);
+            } else {
+                frame.header.flags.add(Header.Flag.COMPRESSED);
+                // See comment in decode()
+                ByteBuf uncompressedBody = frame.body;
+                try {
+                    out.add(compressor.compress(frame));
+                } finally {
+                    uncompressedBody.release();
+                }
+            }
         }
     }
 }

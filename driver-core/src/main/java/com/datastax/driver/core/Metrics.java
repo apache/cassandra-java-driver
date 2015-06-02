@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -18,10 +18,9 @@ package com.datastax.driver.core;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.MetricRegistryListener;
-
 import com.codahale.metrics.*;
+
+import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 
 /**
  * Metrics exposed by the driver.
@@ -67,6 +66,44 @@ public class Metrics {
                 for (HostConnectionPool pool : session.pools.values())
                     value += pool.opened();
             return value;
+        }
+    });
+    private final Gauge<Integer> trashedConnections = registry.register("trashed-connections", new Gauge<Integer>() {
+        @Override
+        public Integer getValue() {
+            int value = 0;
+            for (SessionManager session : manager.sessions)
+                for (HostConnectionPool pool : session.pools.values())
+                    value += pool.trashed();
+            return value;
+        }
+    });
+
+    private final Gauge<Integer> executorQueueDepth = registry.register("executor-queue-depth", new Gauge<Integer>() {
+        @Override
+        public Integer getValue() {
+            return manager.executorQueue.size();
+        }
+    });
+
+    private final Gauge<Integer> blockingExecutorQueueDepth = registry.register("blocking-executor-queue-depth", new Gauge<Integer>() {
+        @Override
+        public Integer getValue() {
+            return manager.blockingExecutorQueue.size();
+        }
+    });
+
+    private final Gauge<Integer> reconnectionSchedulerQueueSize= registry.register("reconnection-scheduler-task-count", new Gauge<Integer>() {
+        @Override
+        public Integer getValue() {
+            return manager.reconnectionExecutor.getQueue().size();
+        }
+    });
+
+    private final Gauge<Integer> taskSchedulerQueueSize = registry.register("task-scheduler-task-count", new Gauge<Integer>() {
+        @Override
+        public Integer getValue() {
+            return manager.scheduledTasksExecutor.getQueue().size();
         }
     });
 
@@ -177,6 +214,50 @@ public class Metrics {
         return openConnections;
     }
 
+    /**
+     * Returns the total number of currently "trashed" connections to Cassandra hosts.
+     * <p>
+     * When the load to a host decreases, the driver will reclaim some connections in order to save
+     * resources. No requests are sent to these connections anymore, but they are kept open for an
+     * additional amount of time ({@link PoolingOptions#getIdleTimeoutSeconds()}), in case the load
+     * goes up again. This metric counts connections in that state.
+     *
+     * @return The total number of currently trashed connections to Cassandra hosts.
+     */
+    public Gauge<Integer> getTrashedConnections() {
+        return trashedConnections;
+    }
+
+    /**
+     * @return The number of queued up tasks in the non-blocking executor (Cassandra Java Driver workers).
+     */
+    public Gauge<Integer> getExecutorQueueDepth() {
+        return executorQueueDepth;
+    }
+
+    /**
+     * @return The number of queued up tasks in the blocking executor (Cassandra Java Driver blocking tasks worker).
+     */
+    public Gauge<Integer> getBlockingExecutorQueueDepth() {
+        return blockingExecutorQueueDepth;
+    }
+
+    /**
+     * @return The size of the work queue for the reconnection scheduler (Reconnection).  A queue size > 0 does not
+     * necessarily indicate a backlog as some tasks may not have been scheduled to execute yet.
+     */
+    public Gauge<Integer> getReconnectionSchedulerQueueSize() {
+        return reconnectionSchedulerQueueSize;
+    }
+
+    /**
+     * @return The size of the work queue for the task scheduler (Scheduled Tasks).  A queue size > 0 does not
+     * necessarily indicate a backlog as some tasks may not have been scheduled to execute yet.
+     */
+    public Gauge<Integer> getTaskSchedulerQueueSize() {
+        return taskSchedulerQueueSize;
+    }
+
     void shutdown() {
         if (jmxReporter != null)
             jmxReporter.stop();
@@ -203,6 +284,8 @@ public class Metrics {
         private final Counter ignoresOnWriteTimeout = registry.counter("ignores-on-write-timeout");
         private final Counter ignoresOnReadTimeout = registry.counter("ignores-on-read-timeout");
         private final Counter ignoresOnUnavailable = registry.counter("ignores-on-unavailable");
+
+        private final Counter speculativeExecutions = registry.counter("speculative-executions");
 
         /**
          * Returns the number of connection to Cassandra nodes errors.
@@ -362,6 +445,17 @@ public class Metrics {
          */
         public Counter getIgnoresOnUnavailable() {
             return ignoresOnUnavailable;
+        }
+
+        /**
+         * Returns the number of times a speculative execution was started
+         * because a previous execution did not complete within the delay
+         * specified by {@link SpeculativeExecutionPolicy}.
+         *
+         * @return the number of speculative executions.
+         */
+        public Counter getSpeculativeExecutions() {
+            return speculativeExecutions;
         }
     }
 }

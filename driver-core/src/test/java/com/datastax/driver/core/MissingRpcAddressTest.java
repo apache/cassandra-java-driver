@@ -1,3 +1,18 @@
+/*
+ *      Copyright (C) 2012-2015 DataStax Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
@@ -22,10 +37,10 @@ public class MissingRpcAddressTest {
     @Test(groups = "short")
     public void testMissingRpcAddressAtStartup() throws Exception {
         CCMBridge ccm = CCMBridge.create("ccm", 2);
-        deleteNode2RpcAddressFromNode1();
 
         Cluster cluster = null;
         try {
+            deleteNode2RpcAddressFromNode1();
             // Use only one contact point to make sure that the control connection is on node1
             cluster = Cluster.builder()
                              .addContactPoint(CCMBridge.IP_PREFIX + "1")
@@ -53,7 +68,9 @@ public class MissingRpcAddressTest {
                                                                           Lists.newArrayList(socketAddress(1))))
                              .build();
             Session session = cluster.connect();
-            session.execute("DELETE rpc_address FROM system.peers WHERE peer = ?", InetAddress.getByName(CCMBridge.IP_PREFIX + "2"));
+            String deleteStmt = String.format("DELETE rpc_address FROM system.peers WHERE peer = '%s'",
+                    InetAddress.getByName(CCMBridge.IP_PREFIX + "2").getHostName());
+            session.execute(deleteStmt);
             session.close();
         } finally {
             if (cluster != null)

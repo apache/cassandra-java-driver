@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.datastax.driver.core;
 import java.util.*;
 
 import com.google.common.collect.ImmutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.utils.Bytes;
@@ -35,8 +37,10 @@ import com.datastax.driver.core.utils.Bytes;
  * so there shouldn't be anything wrong with them.
  */
 class CassandraTypeParser {
+    private static final Logger logger = LoggerFactory.getLogger(CassandraTypeParser.class);
 
     private static final String REVERSED_TYPE = "org.apache.cassandra.db.marshal.ReversedType";
+    private static final String FROZEN_TYPE = "org.apache.cassandra.db.marshal.FrozenType";
     private static final String COMPOSITE_TYPE = "org.apache.cassandra.db.marshal.CompositeType";
     private static final String COLLECTION_TYPE = "org.apache.cassandra.db.marshal.ColumnToCollectionType";
     private static final String LIST_TYPE = "org.apache.cassandra.db.marshal.ListType";
@@ -66,29 +70,32 @@ class CassandraTypeParser {
             .build();
 
     static DataType parseOne(String className) {
+        boolean frozen = false;
         if (isReversed(className)) {
             // Just skip the ReversedType part, we don't care
-            Parser p = new Parser(className, 0);
-            p.parseNextName();
-            List<String> l = p.getTypeParameters();
-            if (l.size() != 1)
-                throw new IllegalStateException();
-            className = l.get(0);
+            className = getNestedClassName(className);
+        } else if (isFrozen(className)) {
+            frozen = true;
+            className = getNestedClassName(className);
         }
 
         Parser parser = new Parser(className, 0);
         String next = parser.parseNextName();
 
         if (next.startsWith(LIST_TYPE))
-            return DataType.list(parseOne(parser.getTypeParameters().get(0)));
+            return DataType.list(parseOne(parser.getTypeParameters().get(0)), frozen);
 
         if (next.startsWith(SET_TYPE))
-            return DataType.set(parseOne(parser.getTypeParameters().get(0)));
+            return DataType.set(parseOne(parser.getTypeParameters().get(0)), frozen);
 
         if (next.startsWith(MAP_TYPE)) {
             List<String> params = parser.getTypeParameters();
-            return DataType.map(parseOne(params.get(0)), parseOne(params.get(1)));
+            return DataType.map(parseOne(params.get(0)), parseOne(params.get(1)), frozen);
         }
+
+        if (frozen)
+            logger.warn("Got o.a.c.db.marshal.FrozenType for something else than a collection, "
+                + "this driver version might be too old for your version of Cassandra");
 
         if (isUserType(next)) {
             ++parser.idx; // skipping '('
@@ -119,6 +126,20 @@ class CassandraTypeParser {
 
     public static boolean isReversed(String className) {
         return className.startsWith(REVERSED_TYPE);
+    }
+
+    public static boolean isFrozen(String className) {
+        return className.startsWith(FROZEN_TYPE);
+    }
+
+    private static String getNestedClassName(String className) {
+        Parser p = new Parser(className, 0);
+        p.parseNextName();
+        List<String> l = p.getTypeParameters();
+        if (l.size() != 1)
+            throw new IllegalStateException();
+        className = l.get(0);
+        return className;
     }
 
     public static boolean isUserType(String className) {

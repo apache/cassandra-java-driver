@@ -1,3 +1,18 @@
+/*
+ *      Copyright (C) 2012-2015 DataStax Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package com.datastax.driver.core.schemabuilder;
 
 import java.util.ArrayList;
@@ -11,6 +26,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.schemabuilder.TableOptions.CompactionOptions.DateTieredCompactionStrategyOptions.TimeStampResolution;
+import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.schemabuilder.SchemaBuilder.dateTieredStrategy;
 import static com.datastax.driver.core.schemabuilder.SchemaBuilder.percentile;
@@ -25,9 +41,8 @@ public class SchemaBuilderIT extends CCMBridge.PerClassSingleNodeCluster{
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major=2.1, minor=2)
     public void should_modify_table_metadata() {
-        TestUtils.versionCheck(2.1, 2, "This test requires Cassandra 2.1.2");
-
         // Create a table
         session.execute(SchemaBuilder.createTable("ks", "TableMetadata")
                 .addPartitionKey("a", DataType.cint())
@@ -122,9 +137,8 @@ public class SchemaBuilderIT extends CCMBridge.PerClassSingleNodeCluster{
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major=2.1)
     public void should_create_a_table_and_a_udt() {
-        TestUtils.versionCheck(2.1, 0, "This test requires Cassandra 2.1.0");
-
         // Create a UDT and a table
         session.execute(SchemaBuilder.createType("MyUDT")
                 .ifNotExists()

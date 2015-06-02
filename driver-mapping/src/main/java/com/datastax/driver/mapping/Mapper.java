@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -94,6 +94,15 @@ public class Mapper<T> {
             }
         }
         return stmt;
+    }
+
+    /**
+     * The {@code TableMetadata} for this mapper.
+     *
+     * @return the {@code TableMetadata} for this mapper or {@code null} if keyspace is not set.
+     */
+    public TableMetadata getTableMetadata() {
+        return tableMetadata;
     }
 
     /**

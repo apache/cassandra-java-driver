@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -436,7 +436,7 @@ public class TableMetadata {
         else
             and(sb, formatted).append("caching = ").append(formatOptionMap(options.caching));
         if (options.comment != null)
-            and(sb, formatted).append("comment = '").append(options.comment).append('\'');
+            and(sb, formatted).append("comment = '").append(options.comment.replace("'","''")).append('\'');
         and(sb, formatted).append("compaction = ").append(formatOptionMap(options.compaction));
         and(sb, formatted).append("compression = ").append(formatOptionMap(options.compression));
         if (cassandraVersion.getMajor() >= 2) {

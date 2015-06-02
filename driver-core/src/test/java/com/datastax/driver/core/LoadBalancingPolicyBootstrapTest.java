@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,95 +15,207 @@
  */
 package com.datastax.driver.core;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Collection;
+import java.util.List;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 
+import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryPolicy.Action.*;
+import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryPolicy.entry;
+
 public class LoadBalancingPolicyBootstrapTest {
-    CountingPolicy policy;
-    CCMBridge.CCMCluster c;
 
-    @BeforeClass(groups = "short")
-    private void setup() {
-        policy = new CountingPolicy(new RoundRobinPolicy());
-        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(policy);
-        c = CCMBridge.buildCluster(2, builder);
-    }
+    private static final Logger logger = LoggerFactory.getLogger(LoadBalancingPolicyBootstrapTest.class);
 
+    /**
+     * Ensures that when a cluster is initialized that {@link LoadBalancingPolicy#init(Cluster, Collection)} is called
+     * with each reachable contact point.
+     *
+     * @test_category load_balancing:notification
+     * @expected_result init() is called for each of two contact points.
+     */
     @Test(groups = "short")
-    public void notificationsTest() throws Exception {
-        assertEquals(policy.inits, 2, "inits\n" + policy.history);
-        assertEquals(policy.adds, 0, "adds\n" + policy.history);
-        assertEquals(policy.suspecteds, 0, "suspecteds\n" + policy.history);
-        assertEquals(policy.removes, 0, "removes\n" + policy.history);
-        assertEquals(policy.ups, 0, "ups\n" + policy.history);
-        assertEquals(policy.downs, 0, "downs\n" + policy.history);
+    public void should_init_policy_with_up_contact_points() throws Exception {
+        HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
+
+        CCMBridge ccm = null;
+        Cluster cluster = null;
+        try {
+            ccm = CCMBridge.create("test", 2);
+            cluster = Cluster.builder()
+                .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
+                .withLoadBalancingPolicy(policy)
+                .build();
+
+            cluster.init();
+
+            assertThat(policy.history).containsOnly(
+                entry(INIT, TestUtils.findHost(cluster, 1)),
+                entry(INIT, TestUtils.findHost(cluster, 2))
+            );
+        } finally {
+            if (cluster != null)
+                cluster.close();
+            if (ccm != null)
+                ccm.remove();
+        }
     }
 
-    @AfterClass(groups = "short")
-    private void tearDown() {
-        c.discard();
+    /**
+     * Ensures that {@link LoadBalancingPolicy#onDown(Host)} is called for a contact point that couldn't
+     * be reached while initializing the control connection, but only after
+     * {@link LoadBalancingPolicy#init(Cluster, Collection)} has been called.
+     *
+     * @test_category load_balancing:notification
+     * @expected_result init() is called with the up host, followed by onDown() for the downed host.
+     * @jira_ticket JAVA-613
+     * @since 2.0.10, 2.1.5
+     */
+    @Test(groups = "short")
+    public void should_send_down_notifications_after_init_when_contact_points_are_down() throws Exception {
+        CCMBridge ccm = null;
+        Cluster cluster = null;
+        try {
+            ccm = CCMBridge.create("test", 2);
+
+            // In order to validate this behavior, we need to stop the first node that would be attempted to be
+            // established as the control connection.
+            // This depends on the internal behavior and will even be made totally random by JAVA-618, therefore
+            // we retry the scenario until we get the desired preconditions.
+
+            int nodeToStop = 1;
+            int tries = 1, maxTries = 10;
+            for (; tries <= maxTries; tries++) {
+                nodeToStop = (nodeToStop == 1) ? 2 : 1; // switch nodes at each try
+                int activeNode = nodeToStop == 2 ? 1 : 2;
+
+                ccm.stop(nodeToStop);
+                ccm.waitForDown(nodeToStop);
+
+                HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
+                cluster = Cluster.builder()
+                    .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
+                    .withLoadBalancingPolicy(policy)
+                    .build();
+
+                cluster.init();
+
+                if (policy.history.contains(entry(DOWN, TestUtils.findHost(cluster, nodeToStop)))) {
+                    // This is the situation we're testing, the control connection tried the stopped node first.
+                    assertThat(policy.history).containsExactly(
+                        entry(INIT, TestUtils.findHost(cluster, activeNode)),
+                        entry(DOWN, TestUtils.findHost(cluster, nodeToStop))
+                    );
+                    break;
+                } else {
+                    assertThat(policy.history).containsOnly(
+                        entry(INIT, TestUtils.findHost(cluster, 1)),
+                        entry(INIT, TestUtils.findHost(cluster, 2))
+                    );
+
+                    logger.info("Could not get first contact point to fail, retrying");
+
+                    cluster.close();
+
+                    ccm.start(nodeToStop);
+                    ccm.waitForUp(nodeToStop);
+                }
+            }
+
+            if (tries == maxTries + 1)
+                logger.warn("Could not get first contact point to fail after {} tries", maxTries);
+
+        } finally {
+            if (cluster != null)
+                cluster.close();
+            if (ccm != null)
+                ccm.remove();
+        }
     }
 
-    static class CountingPolicy extends DelegatingLoadBalancingPolicy {
+    static class HistoryPolicy extends DelegatingLoadBalancingPolicy {
+        enum Action {INIT, UP, DOWN, ADD, REMOVE, SUSPECT}
 
-        int inits;
-        int adds;
-        int suspecteds;
-        int removes;
-        int ups;
-        int downs;
+        static class Entry {
+            final Action action;
+            final Host host;
 
-        final StringWriter history = new StringWriter();
-        private final PrintWriter out = new PrintWriter(history);
+            public Entry(Action action, Host host) {
+                this.action = action;
+                this.host = host;
+            }
 
-        public CountingPolicy(LoadBalancingPolicy delegate) {
+            @Override
+            public boolean equals(Object other) {
+                if (other == this)
+                    return true;
+                if (other instanceof Entry) {
+                    Entry that = (Entry)other;
+                    return this.action == that.action && this.host.equals(that.host);
+                }
+                return false;
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hashCode(action, host);
+            }
+
+            @Override public String toString() {
+                return Objects.toStringHelper(this).add("action", action).add("host", host).toString();
+            }
+        }
+
+        static Entry entry(Action action, Host host) {
+            return new Entry(action, host);
+        }
+
+        List<Entry> history = Lists.newArrayList();
+
+        public HistoryPolicy(LoadBalancingPolicy delegate) {
             super(delegate);
         }
 
         @Override
         public void init(Cluster cluster, Collection<Host> hosts) {
             super.init(cluster, hosts);
-            inits += hosts.size();
+            for (Host host : hosts) {
+                history.add(entry(INIT, host));
+            }
         }
 
         public void onAdd(Host host) {
-            out.printf("add %s%n", host);
-            adds++;
+            history.add(entry(ADD, host));
             super.onAdd(host);
         }
 
         public void onSuspected(Host host) {
-            out.printf("suspect %s%n", host);
-            suspecteds++;
+            history.add(entry(SUSPECT, host));
             super.onSuspected(host);
         }
 
         public void onUp(Host host) {
-            out.printf("up %s%n", host);
-            ups++;
+            history.add(entry(UP, host));
             super.onUp(host);
         }
 
         public void onDown(Host host) {
-            out.printf("down %s%n", host);
-            downs++;
+            history.add(entry(DOWN, host));
             super.onDown(host);
         }
 
         public void onRemove(Host host) {
-            out.printf("remove %s%n", host);
-            removes++;
+            history.add(entry(REMOVE, host));
             super.onRemove(host);
         }
     }

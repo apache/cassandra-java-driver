@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -17,16 +17,20 @@ package com.datastax.driver.mapping;
 
 import java.util.*;
 
+import com.google.common.collect.Maps;
 import org.testng.annotations.BeforeMethod;
 
 import com.google.common.base.Objects;
 import org.testng.annotations.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 import com.datastax.driver.core.utils.UUIDs;
 
 import com.datastax.driver.mapping.annotations.*;
@@ -43,7 +47,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         session.execute("TRUNCATE users");
     }
 
-    @Table(keyspace = "ks", name = "users",
+    @Table(name = "users",
            readConsistency = "QUORUM",
            writeConsistency = "QUORUM")
     public static class User {
@@ -58,7 +62,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
         @Column(name = "other_addresses")
         @FrozenValue
-        private Map<String, Address> otherAddresses;
+        private Map<String, Address> otherAddresses = Maps.newHashMap();
 
         public User() {
         }
@@ -119,7 +123,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @UDT(keyspace = "ks", name = "address")
+    @UDT(name = "address")
     public static class Address {
 
         // Dummy constant to test that static fields are properly ignored
@@ -195,13 +199,16 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Accessor
     public interface UserAccessor {
-        @Query("SELECT * FROM ks.users WHERE user_id=:userId")
+        @Query("SELECT * FROM users WHERE user_id=:userId")
         User getOne(@Param("userId") UUID userId);
 
-        @Query("UPDATE ks.users SET other_addresses[:name]=:address WHERE user_id=:id")
+        @Query("UPDATE users SET other_addresses[:name]=:address WHERE user_id=:id")
         ResultSet addAddress(@Param("id") UUID id, @Param("name") String addressName, @Param("address") Address address);
 
-        @Query("SELECT * FROM ks.users")
+        @Query("UPDATE users SET other_addresses=:addresses where user_id=:id")
+        ResultSet setOtherAddresses(@Param("id") UUID id, @Param("addresses") Map<String, Address> addresses);
+
+        @Query("SELECT * FROM users")
         public Result<User> getAll();
     }
 
@@ -242,9 +249,28 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         User u2 = userAccessor.getOne(u1.getUserId());
         assertEquals(workAddress, u2.getOtherAddresses().get("work"));
 
+        // Adding a null value should remove it from the list.
+        userAccessor.addAddress(u1.getUserId(), "work", null);
+        User u3 = userAccessor.getOne(u1.getUserId());
+        assertThat(u3.getOtherAddresses()).doesNotContainKey("work");
+
+        // Add a bunch of other addresses
+        Map<String, Address> otherAddresses = Maps.newHashMap();
+        otherAddresses.put("work", workAddress);
+        otherAddresses.put("cabin", new Address("42 Middle of Nowhere", "Lake of the Woods", 49553, "8675309"));
+
+        userAccessor.setOtherAddresses(u1.getUserId(), otherAddresses);
+        User u4 = userAccessor.getOne(u1.getUserId());
+        assertThat(u4.getOtherAddresses()).isEqualTo(otherAddresses);
+
+        // Nullify other addresses
+        userAccessor.setOtherAddresses(u1.getUserId(), null);
+        User u5 = userAccessor.getOne(u1.getUserId());
+        assertThat(u5.getOtherAddresses()).isEmpty();
+
         // No argument call
         Result<User> u = userAccessor.getAll();
-        assertEquals(u.one(), u2);
+        assertEquals(u.one(), u5);
         assertTrue(u.isExhausted());
     }
 }

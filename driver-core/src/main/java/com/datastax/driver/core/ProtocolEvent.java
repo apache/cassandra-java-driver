@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@ package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
 
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
+
+import static com.datastax.driver.core.SchemaElement.KEYSPACE;
+import static com.datastax.driver.core.SchemaElement.TABLE;
 
 class ProtocolEvent {
 
@@ -29,14 +32,14 @@ class ProtocolEvent {
         this.type = type;
     }
 
-    public static ProtocolEvent deserialize(ChannelBuffer cb, ProtocolVersion version) {
-        switch (CBUtil.readEnumValue(Type.class, cb)) {
+    public static ProtocolEvent deserialize(ByteBuf bb, ProtocolVersion version) {
+        switch (CBUtil.readEnumValue(Type.class, bb)) {
             case TOPOLOGY_CHANGE:
-                return TopologyChange.deserializeEvent(cb);
+                return TopologyChange.deserializeEvent(bb);
             case STATUS_CHANGE:
-                return StatusChange.deserializeEvent(cb);
+                return StatusChange.deserializeEvent(bb);
             case SCHEMA_CHANGE:
-                return SchemaChange.deserializeEvent(cb, version);
+                return SchemaChange.deserializeEvent(bb, version);
         }
         throw new AssertionError();
     }
@@ -54,9 +57,9 @@ class ProtocolEvent {
         }
 
         // Assumes the type has already been deserialized
-        private static TopologyChange deserializeEvent(ChannelBuffer cb) {
-            Change change = CBUtil.readEnumValue(Change.class, cb);
-            InetSocketAddress node = CBUtil.readInet(cb);
+        private static TopologyChange deserializeEvent(ByteBuf bb) {
+            Change change = CBUtil.readEnumValue(Change.class, bb);
+            InetSocketAddress node = CBUtil.readInet(bb);
             return new TopologyChange(change, node);
         }
 
@@ -80,9 +83,9 @@ class ProtocolEvent {
         }
 
         // Assumes the type has already been deserialized
-        private static StatusChange deserializeEvent(ChannelBuffer cb) {
-            Status status = CBUtil.readEnumValue(Status.class, cb);
-            InetSocketAddress node = CBUtil.readInet(cb);
+        private static StatusChange deserializeEvent(ByteBuf bb) {
+            Status status = CBUtil.readEnumValue(Status.class, bb);
+            InetSocketAddress node = CBUtil.readInet(bb);
             return new StatusChange(status, node);
         }
 
@@ -95,39 +98,38 @@ class ProtocolEvent {
     public static class SchemaChange extends ProtocolEvent {
 
         public enum Change { CREATED, UPDATED, DROPPED }
-        public enum Target { KEYSPACE, TABLE, TYPE }
 
         public final Change change;
-        public final Target target;
-        public final String keyspace;
-        public final String name;
+        public final SchemaElement targetType;
+        public final String targetKeyspace;
+        public final String targetName;
 
-        public SchemaChange(Change change, Target target, String keyspace, String name) {
+        public SchemaChange(Change change, SchemaElement targetType, String targetKeyspace, String targetName) {
             super(Type.SCHEMA_CHANGE);
             this.change = change;
-            this.target = target;
-            this.keyspace = keyspace;
-            this.name = name;
+            this.targetType = targetType;
+            this.targetKeyspace = targetKeyspace;
+            this.targetName = targetName;
         }
 
         // Assumes the type has already been deserialized
-        private static SchemaChange deserializeEvent(ChannelBuffer cb, ProtocolVersion version) {
+        private static SchemaChange deserializeEvent(ByteBuf bb, ProtocolVersion version) {
             Change change;
-            Target target;
+            SchemaElement target;
             String keyspace, name;
             switch (version) {
                 case V1:
                 case V2:
-                    change = CBUtil.readEnumValue(Change.class, cb);
-                    keyspace = CBUtil.readString(cb);
-                    name = CBUtil.readString(cb);
-                    target = name.isEmpty() ? Target.KEYSPACE : Target.TABLE;
+                    change = CBUtil.readEnumValue(Change.class, bb);
+                    keyspace = CBUtil.readString(bb);
+                    name = CBUtil.readString(bb);
+                    target = name.isEmpty() ? KEYSPACE : TABLE;
                     return new SchemaChange(change, target, keyspace, name);
                 case V3:
-                    change = CBUtil.readEnumValue(Change.class, cb);
-                    target = CBUtil.readEnumValue(Target.class, cb);
-                    keyspace = CBUtil.readString(cb);
-                    name = (target == Target.KEYSPACE) ? "" : CBUtil.readString(cb);
+                    change = CBUtil.readEnumValue(Change.class, bb);
+                    target = CBUtil.readEnumValue(SchemaElement.class, bb);
+                    keyspace = CBUtil.readString(bb);
+                    name = (target == KEYSPACE) ? "" : CBUtil.readString(bb);
                     return new SchemaChange(change, target, keyspace, name);
                 default:
                     throw version.unsupported();
@@ -136,7 +138,7 @@ class ProtocolEvent {
 
         @Override
         public String toString() {
-            return change.toString() + ' ' + target + ' ' + keyspace + (name.isEmpty() ? "" : '.' + name);
+            return change.toString() + ' ' + targetType + ' ' + targetKeyspace + (targetName.isEmpty() ? "" : '.' + targetName);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,13 +26,13 @@ import com.datastax.driver.core.TableMetadata;
 public class Delete extends BuiltStatement {
 
     private final String table;
-    private final List<Object> columnNames;
+    private final List<?> columnNames;
     private final Where where;
     private final Options usings;
     private final Conditions conditions;
     private boolean ifExists;
 
-    Delete(String keyspace, String table, List<Object> columnNames) {
+    Delete(String keyspace, String table, List<?> columnNames) {
         super(keyspace);
         this.table = table;
         this.columnNames = columnNames;
@@ -361,7 +360,7 @@ public class Delete extends BuiltStatement {
             StringBuilder sb = new StringBuilder();
             Utils.appendName(columnName, sb);
             sb.append('[');
-            Utils.appendFlatValue(key, sb);
+            Utils.appendValue(key, sb);
             return column(sb.append(']').toString());
         }
     }

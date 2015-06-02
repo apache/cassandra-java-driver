@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingDeque;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -29,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.utils.MoreFutures;
 
 /**
  * Default implementation of a result set, backed by an ArrayDeque of ArrayList.
@@ -40,14 +40,15 @@ abstract class ArrayBackedResultSet implements ResultSet {
     private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque<List<ByteBuffer>>(0);
 
     protected final ColumnDefinitions metadata;
-
+    protected final Token.Factory tokenFactory;
     private final boolean wasApplied;
 
     protected final ProtocolVersion protocolVersion;
 
-    private ArrayBackedResultSet(ColumnDefinitions metadata, List<ByteBuffer> firstRow, ProtocolVersion protocolVersion) {
+    private ArrayBackedResultSet(ColumnDefinitions metadata, Token.Factory tokenFactory, List<ByteBuffer> firstRow, ProtocolVersion protocolVersion) {
         this.metadata = metadata;
         this.protocolVersion = protocolVersion;
+        this.tokenFactory = tokenFactory;
         this.wasApplied = checkWasApplied(firstRow, metadata);
     }
 
@@ -69,12 +70,15 @@ abstract class ArrayBackedResultSet implements ResultSet {
                     columnDefs = r.metadata.columns;
                 }
 
+                Token.Factory tokenFactory = (session == null) ? null
+                    : session.getCluster().getMetadata().tokenFactory();
+
                 // info can be null only for internal calls, but we don't page those. We assert
                 // this explicitly because MultiPage implementation don't support info == null.
                 assert r.metadata.pagingState == null || info != null;
                 return r.metadata.pagingState == null
-                     ? new SinglePage(columnDefs, protocolVersion, r.data, info)
-                     : new MultiPage(columnDefs, protocolVersion, r.data, info, r.metadata.pagingState, session, statement);
+                    ? new SinglePage(columnDefs, tokenFactory, protocolVersion, r.data, info)
+                    : new MultiPage(columnDefs, tokenFactory, protocolVersion, r.data, info, r.metadata.pagingState, session, statement);
 
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
@@ -93,8 +97,8 @@ abstract class ArrayBackedResultSet implements ResultSet {
     }
 
     private static ArrayBackedResultSet empty(ExecutionInfo info) {
-        // We could pass the protocol version but we know we won't need it so passing a bogus value (-1)
-        return new SinglePage(ColumnDefinitions.EMPTY, null, EMPTY_QUEUE, info);
+        // We could pass the protocol version but we know we won't need it so passing a bogus value (null)
+        return new SinglePage(ColumnDefinitions.EMPTY, null,  null, EMPTY_QUEUE, info);
     }
 
     public ColumnDefinitions getColumnDefinitions() {
@@ -153,10 +157,11 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final ExecutionInfo info;
 
         private SinglePage(ColumnDefinitions metadata,
+                           Token.Factory tokenFactory,
                            ProtocolVersion protocolVersion,
                            Queue<List<ByteBuffer>> rows,
                            ExecutionInfo info) {
-            super(metadata, rows.peek(), protocolVersion);
+            super(metadata, tokenFactory, rows.peek(), protocolVersion);
             this.info = info;
             this.rows = rows;
         }
@@ -166,7 +171,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         }
 
         public Row one() {
-            return ArrayBackedRow.fromData(metadata, protocolVersion, rows.poll());
+            return ArrayBackedRow.fromData(metadata, tokenFactory, protocolVersion, rows.poll());
         }
 
         public int getAvailableWithoutFetching() {
@@ -178,7 +183,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         }
 
         public ListenableFuture<Void> fetchMoreResults() {
-            return Futures.immediateFuture(null);
+            return MoreFutures.VOID_SUCCESS;
         }
 
         public ExecutionInfo getExecutionInfo() {
@@ -216,6 +221,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final Statement statement;
 
         private MultiPage(ColumnDefinitions metadata,
+                          Token.Factory tokenFactory,
                           ProtocolVersion protocolVersion,
                           Queue<List<ByteBuffer>> rows,
                           ExecutionInfo info,
@@ -226,9 +232,9 @@ abstract class ArrayBackedResultSet implements ResultSet {
             // Note: as of Cassandra 2.1.0, it turns out that the result of a CAS update is never paged, so
             // we could hard-code the result of wasApplied in this class to "true". However, we can not be sure
             // that this will never change, so apply the generic check by peeking at the first row.
-            super(metadata, rows.peek(), protocolVersion);
+            super(metadata, tokenFactory, rows.peek(), protocolVersion);
             this.currentPage = rows;
-            this.infos.offer(info);
+            this.infos.offer(info.withPagingState(pagingState, protocolVersion).withStatement(statement));
 
             this.fetchState = new FetchingState(pagingState, null);
             this.session = session;
@@ -242,7 +248,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
         public Row one() {
             prepareNextRow();
-            return ArrayBackedRow.fromData(metadata, protocolVersion, currentPage.poll());
+            return ArrayBackedRow.fromData(metadata, tokenFactory, protocolVersion, currentPage.poll());
         }
 
         public int getAvailableWithoutFetching() {
@@ -287,7 +293,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
         private ListenableFuture<Void> fetchMoreResults(FetchingState fetchState) {
             if (fetchState == null)
-                return Futures.immediateFuture(null);
+                return MoreFutures.VOID_SUCCESS;
 
             if (fetchState.inProgress != null)
                 return fetchState.inProgress;
@@ -322,9 +328,10 @@ abstract class ArrayBackedResultSet implements ResultSet {
                             case RESULT:
                                 Responses.Result rm = (Responses.Result)response;
                                 info = update(info, rm, MultiPage.this.session);
-
                                 if (rm.kind == Responses.Result.Kind.ROWS) {
                                     Responses.Result.Rows rows = (Responses.Result.Rows)rm;
+                                    if (rows.metadata.pagingState != null)
+                                        info = info.withPagingState(rows.metadata.pagingState, protocolVersion).withStatement(statement);
                                     MultiPage.this.nextPages.offer(rows.data);
                                     MultiPage.this.fetchState = rows.metadata.pagingState == null ? null : new FetchingState(rows.metadata.pagingState, null);
                                 } else if (rm.kind == Responses.Result.Kind.VOID) {

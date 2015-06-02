@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,7 +15,11 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
+
+import java.util.Set;
+
 import static org.testng.Assert.assertEquals;
 
 import static com.datastax.driver.core.TestUtils.*;
@@ -25,7 +29,7 @@ import static com.datastax.driver.core.TestUtils.*;
  */
 public class StateListenerTest {
 
-    @Test(groups = "short")
+    @Test(groups = "long")
     public void listenerTest() throws Throwable {
 
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, Cluster.builder());
@@ -42,22 +46,22 @@ public class StateListenerTest {
             // just before the listeners are called, and since waitFor is based on isUP,
             // it can return *just* before the listener are called.
             Thread.sleep(500);
-            assertEquals(listener.adds, 1);
+            assertEquals(listener.adds.size(), 1);
 
             c.cassandraCluster.forceStop(1);
             waitForDown(CCMBridge.IP_PREFIX + '1', cluster);
             Thread.sleep(500);
-            assertEquals(listener.downs, 1);
+            assertEquals(listener.downs.size(), 1);
 
             c.cassandraCluster.start(1);
             waitFor(CCMBridge.IP_PREFIX + '1', cluster);
             Thread.sleep(500);
-            assertEquals(listener.ups, 1);
+            assertEquals(listener.ups.size(), 1);
 
             c.cassandraCluster.decommissionNode(2);
             waitForDecommission(CCMBridge.IP_PREFIX + '2', cluster);
             Thread.sleep(500);
-            assertEquals(listener.removes, 1);
+            assertEquals(listener.removes.size(), 1);
         } catch (Throwable e) {
             c.errorOut();
             throw e;
@@ -68,28 +72,19 @@ public class StateListenerTest {
 
     private static class CountingListener implements Host.StateListener {
 
-        public int adds;
-        public int removes;
-        public int ups;
-        public int downs;
+        public Set<Host> adds = Sets.newHashSet();
+        public Set<Host> removes = Sets.newHashSet();
+        public Set<Host> ups = Sets.newHashSet();
+        public Set<Host> downs = Sets.newHashSet();
 
-        public void onAdd(Host host) {
-            adds++;
-        }
+        public void onAdd(Host host) { adds.add(host); }
 
-        public void onUp(Host host) {
-            ups++;
-        }
+        public void onUp(Host host) { ups.add(host); }
 
-        public void onSuspected(Host host) {
-        }
+        public void onSuspected(Host host) {}
 
-        public void onDown(Host host) {
-            downs++;
-        }
+        public void onDown(Host host) { downs.add(host); }
 
-        public void onRemove(Host host) {
-            removes++;
-        }
+        public void onRemove(Host host) { removes.add(host); }
     }
 }

@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public abstract class BuiltStatement extends RegularStatement {
     private List<Object> values;
 
     Boolean isCounterOp;
+    boolean hasNonIdempotentOps;
 
     // Whether the user has inputted bind markers. If that's the case, we never generate values as
     // it means the user meant for the statement to be prepared and we shouldn't add our own markers.
@@ -119,6 +120,14 @@ public abstract class BuiltStatement extends RegularStatement {
         this.isCounterOp = isCounterOp;
     }
 
+    boolean hasNonIdempotentOps() {
+        return hasNonIdempotentOps;
+    }
+
+    void setNonIdempotentOps() {
+        hasNonIdempotentOps = true;
+    }
+
     void checkForBindMarkers(Object value) {
         dirty = true;
         if (Utils.containsBindMarker(value))
@@ -176,6 +185,16 @@ public abstract class BuiltStatement extends RegularStatement {
     public boolean hasValues() {
         maybeRebuildCache();
         return values != null;
+    }
+
+    @Override
+    public Boolean isIdempotent() {
+        // If a value was forced with setIdempotent, it takes priority
+        if (idempotent != null)
+            return idempotent;
+
+        // Otherwise return the computed value
+        return !hasNonIdempotentOps();
     }
 
     @Override
@@ -284,6 +303,11 @@ public abstract class BuiltStatement extends RegularStatement {
         @Override
         boolean isCounterOp() {
             return statement.isCounterOp();
+        }
+
+        @Override
+        boolean hasNonIdempotentOps() {
+            return statement.hasNonIdempotentOps();
         }
 
         @Override

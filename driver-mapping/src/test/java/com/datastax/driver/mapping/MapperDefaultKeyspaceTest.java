@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package com.datastax.driver.mapping;
 import java.util.*;
 
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import org.testng.annotations.Test;
 
+import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
@@ -31,11 +33,14 @@ import com.datastax.driver.core.utils.UUIDs;
 /**
  * Tests usage of mapping annotations without specifying a keyspace.
  */
+@CassandraVersion(major=2.1)
 public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeCluster {
+
+    private static final String KEYSPACE = "mapper_default_keyspace_test_ks";
+
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList("CREATE TABLE groups (group_id uuid PRIMARY KEY, name text)",
-                             "CREATE TYPE group_name (name text)",
-                             "CREATE TABLE groups2 (group_id uuid PRIMARY KEY, name frozen<group_name>)");
+                "CREATE TYPE IF NOT EXISTS group_name (name text)");
     }
 
     /*
@@ -93,7 +98,7 @@ public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeClust
     @Test(groups = "short")
     public void testTableWithDefaultKeyspace() throws Exception {
         // Ensure that the test session is logged into the "ks" keyspace.
-        session.execute("USE ks");
+        session.execute("USE " + keyspace);
 
         MappingManager manager = new MappingManager(session);
         Mapper<Group> m = manager.mapper(Group.class);
@@ -112,7 +117,7 @@ public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeClust
         assertNull(m.get(groupId));
     }
 
-    @Table(keyspace = "ks", name = "groups2")
+    @Table(keyspace = KEYSPACE, name = "groups2")
     public static class Group2 {
 
         @PartitionKey
@@ -201,8 +206,12 @@ public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeClust
 
     @Test(groups = "short")
     public void testUDTWithDefaultKeyspace() throws Exception {
-        // Ensure that the test session is logged into the "ks" keyspace.
-        session.execute("USE ks");
+        // Create test specific keyspace and table.
+        session.execute(String.format("CREATE KEYSPACE IF NOT EXISTS %s WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }", KEYSPACE));
+        session.execute(String.format("CREATE TYPE IF NOT EXISTS %s.group_name (name text)", KEYSPACE));
+        session.execute(String.format("CREATE TABLE IF NOT EXISTS %s.groups2 (group_id uuid PRIMARY KEY, name frozen<group_name>)", KEYSPACE));
+        // Ensure that the test session is logged into the keyspace.
+        session.execute("USE " + keyspace);
 
         MappingManager manager = new MappingManager(session);
         Mapper<Group2> m = manager.mapper(Group2.class);

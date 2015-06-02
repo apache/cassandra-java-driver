@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -21,15 +21,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.nio.ByteBuffer;
-import java.math.BigInteger;
-import java.math.BigDecimal;
 import java.util.*;
 
 import com.datastax.driver.core.*;
-
-import com.datastax.driver.mapping.annotations.UDT;
 
 /**
  * An {@link EntityMapper} implementation that use reflection to read and write fields
@@ -62,7 +56,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         private final Method writeMethod;
 
         private LiteralMapper(Field field, int position, PropertyDescriptor pd) {
-            this(field, extractType(field), position, pd);
+            this(field, extractSimpleType(field), position, pd);
         }
 
         private LiteralMapper(Field field, DataType type, int position, PropertyDescriptor pd) {
@@ -166,159 +160,36 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         }
     }
 
-    private static class UDTListMapper<T, V> extends LiteralMapper<T> {
+    private static class NestedUDTMapper<T> extends LiteralMapper<T> {
+        private final InferredCQLType inferredCQLType;
 
-        private final UDTMapper<V> valueMapper;
-
-        UDTListMapper(Field field, int position, PropertyDescriptor pd, UDTMapper<V> valueMapper) {
-            super(field, DataType.list(valueMapper.getUserType()), position, pd);
-            this.valueMapper = valueMapper;
-        }
-
-        @Override
-        public Object getValue(T entity) {
-            @SuppressWarnings("unchecked")
-            List<V> entities = (List<V>) super.getValue(entity);
-            return valueMapper.toUDTValues(entities);
-        }
-
-        @Override
-        public void setValue(Object entity, Object value) {
-            @SuppressWarnings("unchecked")
-            List<UDTValue> udtValues = (List<UDTValue>) value;
-            super.setValue(entity, valueMapper.toEntities(udtValues));
-        }
-    }
-
-    private static class UDTSetMapper<T, V> extends LiteralMapper<T> {
-
-        private final UDTMapper<V> valueMapper;
-
-        UDTSetMapper(Field field, int position, PropertyDescriptor pd, UDTMapper<V> valueMapper) {
-            super(field, DataType.set(valueMapper.getUserType()), position, pd);
-            this.valueMapper = valueMapper;
-        }
-
-        @Override
-        public Object getValue(T entity) {
-            @SuppressWarnings("unchecked")
-            Set<V> entities = (Set<V>) super.getValue(entity);
-            return valueMapper.toUDTValues(entities);
-        }
-
-        @Override
-        public void setValue(Object entity, Object value) {
-            @SuppressWarnings("unchecked")
-            Set<UDTValue> udtValues = (Set<UDTValue>) value;
-            super.setValue(entity, valueMapper.toEntities(udtValues));
-        }
-    }
-
-    /**
-     * A map field that contains UDT values.
-     * <p>
-     * UDTs may be used either as keys, or as values, or both. This is reflected
-     * in keyMapper and valueMapper being null or non-null.
-     * </p>
-     */
-    private static class UDTMapMapper<T, K, V> extends LiteralMapper<T> {
-        private final UDTMapper<K> keyMapper;
-        private final UDTMapper<V> valueMapper;
-
-        UDTMapMapper(Field field, int position, PropertyDescriptor pd, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper, Class<?> keyClass, Class<?> valueClass) {
-            super(field, buildDataType(field, keyMapper, valueMapper, keyClass, valueClass), position, pd);
-            this.keyMapper = keyMapper;
-            this.valueMapper = valueMapper;
-        }
-
-        @Override
-        public Object getValue(T entity) {
-            @SuppressWarnings("unchecked")
-            Map<K, V> entities = (Map<K, V>) super.getValue(entity);
-            return UDTMapper.toUDTValues(entities, keyMapper, valueMapper);
+        public NestedUDTMapper(Field field, int position, PropertyDescriptor pd, InferredCQLType inferredCQLType) {
+            super(field, inferredCQLType.dataType, position, pd);
+            this.inferredCQLType = inferredCQLType;
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public void setValue(Object entity, Object fieldValue) {
-            Map<Object, Object> udtValues = (Map<Object, Object>) fieldValue;
-            super.setValue(entity, UDTMapper.toEntities(udtValues, keyMapper, valueMapper));
+        public Object getValue(T entity) {
+            Object valueWithEntities = super.getValue(entity);
+            return (T)UDTMapper.convertEntitiesToUDTs(valueWithEntities, inferredCQLType);
         }
 
-        private static <K, V> DataType buildDataType(Field field, UDTMapper<K> keyMapper, UDTMapper<V> valueMapper, Class<?> keyClass, Class<?> valueClass) {
-            assert keyMapper != null || valueMapper != null;
-
-            DataType keyType = (keyMapper != null) ?
-                                                  keyMapper.getUserType() :
-                                                  getSimpleType(keyClass, field);
-            DataType valueType = (valueMapper != null) ?
-                                                  valueMapper.getUserType() :
-                                                  getSimpleType(valueClass, field);
-            return DataType.map(keyType, valueType);
+        @Override
+        public void setValue(Object entity, Object valueWithUDTValues) {
+            super.setValue(entity, UDTMapper.convertUDTsToEntities(valueWithUDTValues, inferredCQLType));
         }
     }
 
-    static DataType extractType(Field f) {
+    static DataType extractSimpleType(Field f) {
         Type type = f.getGenericType();
 
-        if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType)type;
-            Type raw = pt.getRawType();
-            if (!(raw instanceof Class))
-                throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
-
-            Class<?> klass = (Class<?>)raw;
-            if (List.class.isAssignableFrom(klass)) {
-                return DataType.list(getSimpleType(ReflectionUtils.getParam(pt, 0, f.getName()), f));
-            }
-            if (Set.class.isAssignableFrom(klass)) {
-                return DataType.set(getSimpleType(ReflectionUtils.getParam(pt, 0, f.getName()), f));
-            }
-            if (Map.class.isAssignableFrom(klass)) {
-                return DataType.map(getSimpleType(ReflectionUtils.getParam(pt, 0, f.getName()), f), getSimpleType(ReflectionUtils.getParam(pt, 1, f.getName()), f));
-            }
-            throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
-        }
+        assert !(type instanceof ParameterizedType);
 
         if (!(type instanceof Class))
             throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
 
-        return getSimpleType((Class<?>)type, f);
-    }
-
-    static DataType getSimpleType(Class<?> klass, Field f) {
-        if (ByteBuffer.class.isAssignableFrom(klass))
-            return DataType.blob();
-
-        if (klass == int.class || Integer.class.isAssignableFrom(klass))
-                return DataType.cint();
-        if (klass == long.class || Long.class.isAssignableFrom(klass))
-            return DataType.bigint();
-        if (klass == float.class || Float.class.isAssignableFrom(klass))
-            return DataType.cfloat();
-        if (klass == double.class || Double.class.isAssignableFrom(klass))
-            return DataType.cdouble();
-        if (klass == boolean.class || Boolean.class.isAssignableFrom(klass))
-            return DataType.cboolean();
-
-        if (BigDecimal.class.isAssignableFrom(klass))
-            return DataType.decimal();
-        if (BigInteger.class.isAssignableFrom(klass))
-            return DataType.varint();
-
-        if (String.class.isAssignableFrom(klass))
-            return DataType.text();
-        if (InetAddress.class.isAssignableFrom(klass))
-            return DataType.inet();
-        if (Date.class.isAssignableFrom(klass))
-            return DataType.timestamp();
-        if (UUID.class.isAssignableFrom(klass))
-            return DataType.uuid();
-
-        if (Collection.class.isAssignableFrom(klass))
-            throw new IllegalArgumentException(String.format("Cannot map non-parametrized collection type %s for field %s; Please use a concrete type parameter", klass.getName(), f.getName()));
-
-        throw new IllegalArgumentException(String.format("Cannot map unknown class %s for field %s", klass.getName(), f));
+        return TypeMappings.getSimpleType((Class<?>)type, f.getName());
     }
 
     private static class ReflectionFactory implements Factory {
@@ -337,35 +208,19 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                     return new EnumMapper<T>(field, position, pd, AnnotationParser.enumType(field));
                 }
 
-                if (field.getType().isAnnotationPresent(UDT.class)) {
+                if (TypeMappings.isMappedUDT(field.getType())) {
                     UDTMapper<?> udtMapper = mappingManager.getUDTMapper(field.getType());
                     return (ColumnMapper<T>) new UDTColumnMapper(field, position, pd, udtMapper);
                 }
 
                 if (field.getGenericType() instanceof ParameterizedType) {
-                    ParameterizedType pt = (ParameterizedType) field.getGenericType();
-                    Type raw = pt.getRawType();
-                    if (!(raw instanceof Class))
-                        throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", field, field.getName()));
-
-                    Class<?> klass = (Class<?>)raw;
-                    Class<?> firstTypeParam = ReflectionUtils.getParam(pt, 0, field.getName());
-                    if (List.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
-                        UDTMapper<?> valueMapper = mappingManager.getUDTMapper(firstTypeParam);
-                        return (ColumnMapper<T>) new UDTListMapper(field, position, pd, valueMapper);
-                    }
-                    if (Set.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
-                        UDTMapper<?> valueMapper = mappingManager.getUDTMapper(firstTypeParam);
-                        return (ColumnMapper<T>) new UDTSetMapper(field, position, pd, valueMapper);
-                    }
-                    if (Map.class.isAssignableFrom(klass)) {
-                        Class<?> secondTypeParam = ReflectionUtils.getParam(pt, 1, field.getName());
-                        UDTMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getUDTMapper(firstTypeParam) : null;
-                        UDTMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getUDTMapper(secondTypeParam) : null;
-
-                        if (keyMapper != null || valueMapper != null) {
-                            return (ColumnMapper<T>) new UDTMapMapper(field, position, pd, keyMapper, valueMapper, firstTypeParam, secondTypeParam);
-                        }
+                    InferredCQLType inferredCQLType = InferredCQLType.from(field, mappingManager);
+                    if (inferredCQLType.containsMappedUDT) {
+                        // We need a specialized mapper to convert UDT instances in the hierarchy.
+                        return (ColumnMapper<T>)new NestedUDTMapper(field, position, pd, inferredCQLType);
+                    } else {
+                        // The default codecs will know how to handle the extracted datatype.
+                        return new LiteralMapper<T>(field, inferredCQLType.dataType, position, pd);
                     }
                 }
 

@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -22,28 +22,29 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.base.Joiner;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 import static com.datastax.driver.core.Metadata.quote;
-import static com.datastax.driver.core.TestUtils.versionCheck;
 import static org.testng.Assert.assertNotEquals;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+
+@CassandraVersion(major=2.1)
 public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private final static List<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes());
     private final static List<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES =
             new ArrayList<DataType.Name>(EnumSet.of(DataType.Name.LIST, DataType.Name.SET, DataType.Name.MAP, DataType.Name.TUPLE));
 
-    private final static HashMap<DataType, Object> SAMPLE_DATA = DataTypeIntegrationTest.getSampleData();
-
     @Override
     protected Collection<String> getTableDefinitions() {
-        versionCheck(2.1, 0, "This will only work with Cassandra 2.1.0");
-
         String type1 = "CREATE TYPE phone (alias text, number text)";
         String type2 = "CREATE TYPE address (street text, \"ZIP\" int, phones set<frozen<phone>>)";
 
@@ -62,12 +63,12 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
         int userId = 0;
 
         try {
-            session.execute("USE ks");
+            session.execute("USE " + keyspace);
             PreparedStatement ins = session.prepare("INSERT INTO user(id, addr) VALUES (?, ?)");
             PreparedStatement sel = session.prepare("SELECT * FROM user WHERE id=?");
 
-            UserType addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
-            UserType phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+            UserType addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
+            UserType phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
 
             UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
             UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
@@ -95,9 +96,9 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
         int userId = 1;
 
         try {
-            session.execute("USE ks");
-            UserType addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
-            UserType phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+            session.execute("USE " + keyspace);
+            UserType addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
+            UserType phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
 
             UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
             UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
@@ -123,32 +124,33 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void nonExistingTypesTest() throws Exception {
         try {
-            session.execute("USE ks");
+            session.execute("USE " + keyspace);
 
-            UserType addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address1");
-            UserType phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone1");
+            UserType addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address1");
+            UserType phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone1");
             assertEquals(addrDef, null);
             assertEquals(phoneDef, null);
 
-            addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
-            phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+            addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
+            phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
             assertNotEquals(addrDef, null);
             assertNotEquals(phoneDef, null);
 
             // create keyspace
-            session.execute("CREATE KEYSPACE nonExistingTypesTest " +
+            String nonExistingKeyspace = keyspace + "_nonEx";
+            session.execute("CREATE KEYSPACE " + nonExistingKeyspace + " " +
                     "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-            session.execute("USE nonExistingTypesTest");
+            session.execute("USE " + nonExistingKeyspace);
 
-            addrDef = cluster.getMetadata().getKeyspace("nonExistingTypesTest").getUserType("address");
-            phoneDef = cluster.getMetadata().getKeyspace("nonExistingTypesTest").getUserType("phone");
+            addrDef = cluster.getMetadata().getKeyspace(nonExistingKeyspace).getUserType("address");
+            phoneDef = cluster.getMetadata().getKeyspace(nonExistingKeyspace).getUserType("phone");
             assertEquals(addrDef, null);
             assertEquals(phoneDef, null);
 
-            session.execute("USE ks");
+            session.execute("USE " + keyspace);
 
-            addrDef = cluster.getMetadata().getKeyspace("ks").getUserType("address");
-            phoneDef = cluster.getMetadata().getKeyspace("ks").getUserType("phone");
+            addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
+            phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
             assertNotEquals(addrDef, null);
             assertNotEquals(phoneDef, null);
 
@@ -242,7 +244,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             for (int i = 0; i < DATA_TYPE_PRIMITIVES.size(); i++) {
                 DataType dataType = DATA_TYPE_PRIMITIVES.get(i);
                 String index = Character.toString((char) (startIndex + i));
-                Object sampleData = SAMPLE_DATA.get(dataType);
+                Object sampleData = PrimitiveTypeSamples.ALL.get(dataType);
 
                 switch (dataType.getName()) {
                     case ASCII:
@@ -365,19 +367,19 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
                     DataType dataType = DATA_TYPE_PRIMITIVES.get(j);
 
                     String index = Character.toString((char) (startIndex + i)) + "_" + Character.toString((char) (startIndex + j));
-                    Object sample = DataTypeIntegrationTest.getCollectionSample(name, dataType);
+                    Object sampleElement = PrimitiveTypeSamples.ALL.get(dataType);
                     switch(name) {
                         case LIST:
-                            alldatatypes.setList(index, (ArrayList<DataType>) sample);
+                            alldatatypes.setList(index, Lists.newArrayList(sampleElement));
                             break;
                         case SET:
-                            alldatatypes.setSet(index, (Set<DataType>) sample);
+                            alldatatypes.setSet(index, Sets.newHashSet(sampleElement));
                             break;
                         case MAP:
-                            alldatatypes.setMap(index, (HashMap<DataType, DataType>) sample);
+                            alldatatypes.setMap(index, ImmutableMap.of(sampleElement, sampleElement));
                             break;
                         case TUPLE:
-                            alldatatypes.setTupleValue(index, (TupleValue) sample);
+                            alldatatypes.setTupleValue(index, TupleType.of(dataType).newValue(sampleElement));
                     }
                 }
 

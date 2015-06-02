@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -64,8 +64,6 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
 
     @VisibleForTesting
     volatile String localDc;
-
-    private final ConcurrentMap<String, CopyOnWriteArrayList<Host>> perDcSuspectedHosts = new ConcurrentHashMap<String, CopyOnWriteArrayList<Host>>();
 
     private final int usedHostsPerRemoteDc;
     private final boolean dontHopForLocalCL;
@@ -282,51 +280,23 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
             private int idx = startIdx;
             private int remainingLocal = hosts.size();
 
-            private Iterator<Host> localSuspected;
-
             // For remote Dcs
             private Iterator<String> remoteDcs;
             private List<Host> currentDcHosts;
             private int currentDcRemaining;
-            private Iterator<Host> currentDcSuspected;
 
             @Override
             protected Host computeNext() {
-                if (remainingLocal > 0) {
-                    remainingLocal--;
-                    int c = idx++ % hosts.size();
-                    if (c < 0) {
-                        c += hosts.size();
-                    }
-                    return hosts.get(c);
-                }
-
-                if (localSuspected == null) {
-                    List<Host> l = perDcSuspectedHosts.get(localDc);
-                    localSuspected = l == null ? Collections.<Host>emptySet().iterator() : l.iterator();
-                }
-
-                while (localSuspected.hasNext()) {
-                    Host h = localSuspected.next();
-                    waitOnReconnection(h);
-                    if (h.isUp())
-                        return h;
-                }
-
-                ConsistencyLevel cl = statement.getConsistencyLevel() == null
-                                    ? configuration.getQueryOptions().getConsistencyLevel()
-                                    : statement.getConsistencyLevel();
-
-                if (dontHopForLocalCL && cl.isDCLocal())
-                    return endOfData();
-
-                if (remoteDcs == null) {
-                    Set<String> copy = new HashSet<String>(perDcLiveHosts.keySet());
-                    copy.remove(localDc);
-                    remoteDcs = copy.iterator();
-                }
-
                 while (true) {
+                    if (remainingLocal > 0) {
+                        remainingLocal--;
+                        int c = idx++ % hosts.size();
+                        if (c < 0) {
+                            c += hosts.size();
+                        }
+                        return hosts.get(c);
+                    }
+
                     if (currentDcHosts != null && currentDcRemaining > 0) {
                         currentDcRemaining--;
                         int c = idx++ % currentDcHosts.size();
@@ -336,13 +306,17 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
                         return currentDcHosts.get(c);
                     }
 
-                    if (currentDcSuspected != null) {
-                        while (currentDcSuspected.hasNext()) {
-                            Host h = currentDcSuspected.next();
-                            waitOnReconnection(h);
-                            if (h.isUp())
-                                return h;
-                        }
+                    ConsistencyLevel cl = statement.getConsistencyLevel() == null
+                        ? configuration.getQueryOptions().getConsistencyLevel()
+                        : statement.getConsistencyLevel();
+
+                    if (dontHopForLocalCL && cl.isDCLocal())
+                        return endOfData();
+
+                    if (remoteDcs == null) {
+                        Set<String> copy = new HashSet<String>(perDcLiveHosts.keySet());
+                        copy.remove(localDc);
+                        remoteDcs = copy.iterator();
                     }
 
                     if (!remoteDcs.hasNext())
@@ -356,25 +330,10 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
                         currentDcHosts = dcHosts.subList(0, Math.min(dcHosts.size(), usedHostsPerRemoteDc));
                         currentDcRemaining = currentDcHosts.size();
                     }
-                    List<Host> suspectedList = perDcSuspectedHosts.get(nextRemoteDc);
-                    currentDcSuspected = suspectedList == null ? null : suspectedList.iterator();
                 }
                 return endOfData();
             }
         };
-    }
-
-    private void waitOnReconnection(Host h) {
-        try {
-            h.getInitialReconnectionAttemptFuture().get(configuration.getSocketOptions().getConnectTimeoutMillis(), TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (ExecutionException e) {
-            throw new AssertionError(e);
-        } catch (TimeoutException e) {
-            // Shouldn't really happen but isn't really a huge deal
-            logger.debug("Timeout while waiting on initial reconnection future for " + h, e);
-        }
     }
 
     @Override
@@ -396,24 +355,10 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
                 return;
         }
         dcHosts.addIfAbsent(host);
-
-        CopyOnWriteArrayList<Host> dcSuspected = perDcSuspectedHosts.get(dc(host));
-        if (dcSuspected != null)
-            dcSuspected.remove(host);
     }
 
     @Override
     public void onSuspected(Host host) {
-        String dc = dc(host);
-        CopyOnWriteArrayList<Host> dcSuspected = perDcSuspectedHosts.get(dc);
-        if (dcSuspected == null) {
-            CopyOnWriteArrayList<Host> newMap = new CopyOnWriteArrayList<Host>(Collections.singletonList(host));
-            dcSuspected = perDcSuspectedHosts.putIfAbsent(dc, newMap);
-            // If we've successfully put our new host, we're good, otherwise we've been beaten so continue
-            if (dcSuspected == null)
-                return;
-        }
-        dcSuspected.addIfAbsent(host);
     }
 
     @Override
@@ -421,10 +366,6 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
         CopyOnWriteArrayList<Host> dcHosts = perDcLiveHosts.get(dc(host));
         if (dcHosts != null)
             dcHosts.remove(host);
-
-        CopyOnWriteArrayList<Host> dcSuspected = perDcSuspectedHosts.get(dc(host));
-        if (dcSuspected != null)
-            dcSuspected.remove(host);
     }
 
     @Override

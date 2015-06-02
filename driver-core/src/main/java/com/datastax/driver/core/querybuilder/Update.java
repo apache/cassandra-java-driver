@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -175,6 +175,8 @@ public class Update extends BuiltStatement {
          */
         public Assignments and(Assignment assignment) {
             statement.setCounterOp(assignment instanceof CounterAssignment);
+            if (!assignment.isIdempotent())
+                statement.setNonIdempotentOps();
             assignments.add(assignment);
             checkForBindMarkers(assignment);
             return this;

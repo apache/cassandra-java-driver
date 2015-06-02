@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,17 +15,25 @@
  */
 package com.datastax.driver.core;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.util.*;
 
 import static org.testng.Assert.fail;
 
+import org.scassandra.Scassandra;
+import org.scassandra.ScassandraFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.SkipException;
+
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.WhiteListPolicy;
 
 /**
  * A number of static fields/methods handy for tests.
@@ -44,6 +52,8 @@ public abstract class TestUtils {
 
     public static final String INSERT_FORMAT = "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)";
     public static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
+
+    public static final int TEST_BASE_NODE_WAIT = SystemProperties.getInt("com.datastax.driver.TEST_BASE_NODE_WAIT", 60);
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static BoundStatement setBoundValue(BoundStatement bs, String name, DataType type, Object value) {
@@ -177,7 +187,7 @@ public abstract class TestUtils {
                 case FLOAT:
                     return 3.142519f;
                 case INET:
-                    return InetAddress.getByAddress(new byte[]{(byte)127, (byte)0, (byte)0, (byte)1});
+                    return InetAddress.getByAddress(new byte[]{ (byte)127, (byte)0, (byte)0, (byte)1 });
                 case INT:
                     return 24;
                 case TEXT:
@@ -263,7 +273,7 @@ public abstract class TestUtils {
     // This is used because there is some delay between when a node has been
     // added through ccm and when it's actually available for querying
     public static void waitFor(String node, Cluster cluster) {
-        waitFor(node, cluster, 60, false, false);
+        waitFor(node, cluster, TEST_BASE_NODE_WAIT, false, false);
     }
 
     public static void waitFor(String node, Cluster cluster, int maxTry) {
@@ -271,11 +281,11 @@ public abstract class TestUtils {
     }
 
     public static void waitForDown(String node, Cluster cluster) {
-        waitFor(node, cluster, 180, true, false);
+        waitFor(node, cluster, TEST_BASE_NODE_WAIT * 3, true, false);
     }
 
     public static void waitForDownWithWait(String node, Cluster cluster, int waitTime) {
-        waitFor(node, cluster, 180, true, false);
+        waitForDown(node, cluster);
 
         // FIXME: Once stop() works, remove this line
         try {
@@ -295,7 +305,7 @@ public abstract class TestUtils {
     }
 
     public static void waitForDecommission(String node, Cluster cluster) {
-        waitFor(node, cluster, 30, true, true);
+        waitFor(node, cluster, TEST_BASE_NODE_WAIT / 2, true, true);
     }
 
     public static void waitForDecommission(String node, Cluster cluster, int maxTry) {
@@ -368,7 +378,7 @@ public abstract class TestUtils {
         int minor = Integer.parseInt(versionArray[2]);
 
         if (major < majorCheck || (major == majorCheck && minor < minorCheck)) {
-            throw new SkipException(skipString);
+            throw new SkipException("Version >= " + majorCheck + "." + minorCheck + " required.  Description: " + skipString);
         }
     }
 
@@ -389,5 +399,63 @@ public abstract class TestUtils {
         return (protocolVersion.compareTo(ProtocolVersion.V3) < 0)
             ? configuration.getPoolingOptions().getCoreConnectionsPerHost(HostDistance.LOCAL)
             : 1;
+    }
+
+    /**
+     * @return A Scassandra instance with an arbitrarily chosen binary port from 8042-8142 and admin port from
+     * 8052-8152.
+     */
+    public static Scassandra createScassandraServer() {
+        int binaryPort = findAvailablePort(8042);
+        int adminPort = findAvailablePort(8052);
+        return ScassandraFactory.createServer(binaryPort, adminPort);
+    }
+
+    /**
+     * @param startingWith The first port to try, if unused will keep trying the next port until one is found up to
+     *                     100 subsequent ports.
+     * @return A local port that is currently unused.
+     */
+    public static int findAvailablePort(int startingWith) {
+        IOException last = null;
+        for (int port = startingWith; port < startingWith + 100; port++) {
+            try {
+                ServerSocket s = new ServerSocket(port);
+                s.close();
+                return port;
+            } catch (IOException e) {
+                last = e;
+            }
+        }
+        // If for whatever reason a port could not be acquired throw the last encountered exception.
+        throw new RuntimeException("Could not acquire an available port", last);
+    }
+
+    /**
+     * @return The desired target protocol version based on the 'cassandra.version' System property.
+     */
+    public static ProtocolVersion getDesiredProtocolVersion() {
+        String version = System.getProperty("cassandra.version");
+        String[] versionArray = version.split("\\.|-");
+        double major = Double.parseDouble(versionArray[0] + "." + versionArray[1]);
+        if(major < 2.0) {
+            return ProtocolVersion.V1;
+        } else if (major < 2.1) {
+            return ProtocolVersion.V2;
+        } else {
+            return ProtocolVersion.V3;
+        }
+    }
+
+    /**
+     * @return a {@Cluster} instance that connects only to the control host of the given cluster.
+     */
+    public static Cluster buildControlCluster(Cluster cluster) {
+        Host controlHost = cluster.manager.controlConnection.connectedHost();
+        List<InetSocketAddress> singleAddress = Collections.singletonList(controlHost.getSocketAddress());
+        return Cluster.builder()
+            .addContactPointsWithPorts(singleAddress)
+            .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), singleAddress))
+            .build();
     }
 }

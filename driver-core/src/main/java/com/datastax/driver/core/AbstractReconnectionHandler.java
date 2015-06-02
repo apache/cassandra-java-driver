@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -141,9 +141,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
                 currentAttempt.compareAndSet(handlerFuture, null);
             }
         } catch (InterruptedException e) {
-            // If interrupted, skip this attempt but still skip scheduling reconnections
             Thread.currentThread().interrupt();
-            reschedule(schedule.nextDelayMs());
         } catch (UnsupportedProtocolVersionException e) {
             logger.error(e.getMessage());
             long nextDelay = schedule.nextDelayMs();

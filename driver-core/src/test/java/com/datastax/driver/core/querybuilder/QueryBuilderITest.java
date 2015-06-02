@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,16 +15,18 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.TreeSet;
 
 import org.testng.annotations.Test;
+
 import static org.testng.Assert.*;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.SyntaxError;
+import com.datastax.driver.core.utils.CassandraVersion;
+
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
@@ -42,10 +44,10 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     public void remainingDeleteTests() throws Exception {
 
         Statement query;
-        TableMetadata table = cluster.getMetadata().getKeyspace(TestUtils.SIMPLE_KEYSPACE).getTable(TABLE_TEXT);
+        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable(TABLE_TEXT);
         assertNotNull(table);
 
-        String expected = "DELETE k FROM ks.test_text;";
+        String expected = String.format("DELETE k FROM %s.test_text;", keyspace);
         query = delete("k").from(table);
         assertEquals(query.toString(), expected);
         try {
@@ -206,26 +208,27 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
-    public void conditionalDeletesTest() throws Exception {        
-        session.execute("INSERT INTO ks.test_int (k, a, b) VALUES (1, 1, 1)");
+    @CassandraVersion(major=2.0, minor=7, description="DELETE..IF EXISTS only supported in 2.0.7+ (CASSANDRA-5708)")
+    public void conditionalDeletesTest() throws Exception {
+        session.execute(String.format("INSERT INTO %s.test_int (k, a, b) VALUES (1, 1, 1)",keyspace));
         
         Statement delete;
         Row row;
-        delete = delete().from(TestUtils.SIMPLE_KEYSPACE, TABLE_INT).where(eq("k", 2)).ifExists();
+        delete = delete().from(keyspace, TABLE_INT).where(eq("k", 2)).ifExists();
         row = session.execute(delete).one();
         assertFalse(row.getBool("[applied]"));
         
-        delete = delete().from(TestUtils.SIMPLE_KEYSPACE, TABLE_INT).where(eq("k", 1)).ifExists();
+        delete = delete().from(keyspace, TABLE_INT).where(eq("k", 1)).ifExists();
         row = session.execute(delete).one();
         assertTrue(row.getBool("[applied]"));
 
-        session.execute("INSERT INTO ks.test_int (k, a, b) VALUES (1, 1, 1)");
+        session.execute(String.format("INSERT INTO %s.test_int (k, a, b) VALUES (1, 1, 1)", keyspace));
 
-        delete = delete().from(TestUtils.SIMPLE_KEYSPACE, TABLE_INT).where(eq("k", 1)).onlyIf(eq("a", 1)).and(eq("b", 2));
+        delete = delete().from(keyspace, TABLE_INT).where(eq("k", 1)).onlyIf(eq("a", 1)).and(eq("b", 2));
         row = session.execute(delete).one();
         assertFalse(row.getBool("[applied]"));
         
-        delete = delete().from(TestUtils.SIMPLE_KEYSPACE, TABLE_INT).where(eq("k", 1)).onlyIf(eq("a", 1)).and(eq("b", 1));
+        delete = delete().from(keyspace, TABLE_INT).where(eq("k", 1)).onlyIf(eq("a", 1)).and(eq("b", 1));
         row = session.execute(delete).one();
         assertTrue(row.getBool("[applied]"));
     }

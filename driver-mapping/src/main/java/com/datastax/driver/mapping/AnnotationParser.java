@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -16,26 +16,21 @@
 package com.datastax.driver.mapping;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.lang.reflect.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
-import com.google.common.collect.ImmutableSet.Builder;
-import com.google.common.collect.ImmutableSet;
-
-import com.datastax.driver.mapping.annotations.Frozen;
+import com.google.common.base.Strings;
 
 import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.DataType;
-
-import com.datastax.driver.mapping.MethodMapper.ParamMapper;
-import com.datastax.driver.mapping.MethodMapper.UDTListParamMapper;
-import com.datastax.driver.mapping.MethodMapper.UDTMapParamMapper;
-import com.datastax.driver.mapping.MethodMapper.UDTParamMapper;
-import com.datastax.driver.mapping.MethodMapper.UDTSetParamMapper;
 import com.datastax.driver.mapping.MethodMapper.EnumParamMapper;
+import com.datastax.driver.mapping.MethodMapper.NestedUDTParamMapper;
+import com.datastax.driver.mapping.MethodMapper.ParamMapper;
+import com.datastax.driver.mapping.MethodMapper.UDTParamMapper;
 import com.datastax.driver.mapping.annotations.*;
-import com.google.common.base.Strings;
 
 /**
  * Static metods that facilitates parsing class annotations into the corresponding {@link EntityMapper}.
@@ -291,29 +286,14 @@ class AnnotationParser {
             }
             return new ParamMapper(paramName, idx);
         } if (paramType instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) paramType;
-            Type raw = pt.getRawType();
-            if (!(raw instanceof Class))
-                throw new IllegalArgumentException(String.format("Cannot map class %s for parameter %s of %s.%s", paramType, paramName, className, methodName));
-            Class<?> klass = (Class<?>)raw;
-            Class<?> firstTypeParam = ReflectionUtils.getParam(pt, 0, paramName);
-            if (List.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
-                UDTMapper<?> valueMapper = mappingManager.getUDTMapper(firstTypeParam);
-                return new UDTListParamMapper(paramName, idx, valueMapper);
+            InferredCQLType inferredCQLType = InferredCQLType.from(className, methodName, idx, paramName, paramType, mappingManager);
+            if (inferredCQLType.containsMappedUDT) {
+                // We need a specialized mapper to convert UDT instances in the hierarchy.
+                return new NestedUDTParamMapper(paramName, idx, inferredCQLType);
+            } else {
+                // Use the default mapper but provide the extracted type
+                return new ParamMapper(paramName, idx, inferredCQLType.dataType);
             }
-            if (Set.class.isAssignableFrom(klass) && firstTypeParam.isAnnotationPresent(UDT.class)) {
-                UDTMapper<?> valueMapper = mappingManager.getUDTMapper(firstTypeParam);
-                return new UDTSetParamMapper(paramName, idx, valueMapper);
-            }
-            if (Map.class.isAssignableFrom(klass)) {
-                Class<?> secondTypeParam = ReflectionUtils.getParam(pt, 1, paramName);
-                UDTMapper<?> keyMapper = firstTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getUDTMapper(firstTypeParam) : null;
-                UDTMapper<?> valueMapper = secondTypeParam.isAnnotationPresent(UDT.class) ? mappingManager.getUDTMapper(secondTypeParam) : null;
-                if (keyMapper != null || valueMapper != null) {
-                    return new UDTMapParamMapper(paramName, idx, keyMapper, valueMapper);
-                }
-            }
-            return new ParamMapper(paramName, idx);
         } else {
             throw new IllegalArgumentException(String.format("Cannot map class %s for parameter %s of %s.%s", paramType, paramName, className, methodName));
         }

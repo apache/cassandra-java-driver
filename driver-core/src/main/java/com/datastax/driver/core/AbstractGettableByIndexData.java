@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import com.google.common.reflect.TypeToken;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
@@ -290,7 +292,28 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
 
         Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
         if (!elementsClass.isAssignableFrom(expectedClass))
-            throw new InvalidTypeException(String.format("Column %s is a list of %s (CQL type %s), cannot be retrieve as a list of %s", getName(i), expectedClass, type, elementsClass));
+            throw new InvalidTypeException(String.format("Column %s is a list of %s (CQL type %s), cannot be retrieved as a list of %s", getName(i), expectedClass, type, elementsClass));
+
+        ByteBuffer value = getValue(i);
+        if (value == null)
+            return Collections.<T>emptyList();
+
+        return Collections.unmodifiableList((List<T>)type.codec(protocolVersion).deserialize(value));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> List<T> getList(int i, TypeToken<T> elementsType) {
+        DataType type = getType(i);
+        if (type.getName() != DataType.Name.LIST)
+            throw new InvalidTypeException(String.format("Column %s is not of list type", getName(i)));
+
+        DataType expectedType = type.getTypeArguments().get(0);
+        if (!expectedType.canBeDeserializedAs(elementsType))
+            throw new InvalidTypeException(String.format("Column %s has CQL type %s, cannot be retrieved as a list of %s", getName(i), type, elementsType));
 
         ByteBuffer value = getValue(i);
         if (value == null)
@@ -311,7 +334,28 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
 
         Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
         if (!elementsClass.isAssignableFrom(expectedClass))
-            throw new InvalidTypeException(String.format("Column %s is a set of %s (CQL type %s), cannot be retrieve as a set of %s", getName(i), expectedClass, type, elementsClass));
+            throw new InvalidTypeException(String.format("Column %s is a set of %s (CQL type %s), cannot be retrieved as a set of %s", getName(i), expectedClass, type, elementsClass));
+
+        ByteBuffer value = getValue(i);
+        if (value == null)
+            return Collections.<T>emptySet();
+
+        return Collections.unmodifiableSet((Set<T>)type.codec(protocolVersion).deserialize(value));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> Set<T> getSet(int i, TypeToken<T> elementsType) {
+        DataType type = getType(i);
+        if (type.getName() != DataType.Name.SET)
+            throw new InvalidTypeException(String.format("Column %s is not of set type", getName(i)));
+
+        DataType expectedType = type.getTypeArguments().get(0);
+        if (!expectedType.canBeDeserializedAs(elementsType))
+            throw new InvalidTypeException(String.format("Column %s has CQL type %s, cannot be retrieved as a set of %s", getName(i), type, elementsType));
 
         ByteBuffer value = getValue(i);
         if (value == null)
@@ -333,7 +377,29 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         Class<?> expectedKeysClass = type.getTypeArguments().get(0).getName().javaType;
         Class<?> expectedValuesClass = type.getTypeArguments().get(1).getName().javaType;
         if (!keysClass.isAssignableFrom(expectedKeysClass) || !valuesClass.isAssignableFrom(expectedValuesClass))
-            throw new InvalidTypeException(String.format("Column %s is a map of %s->%s (CQL type %s), cannot be retrieve as a map of %s->%s", getName(i), expectedKeysClass, expectedValuesClass, type, keysClass, valuesClass));
+            throw new InvalidTypeException(String.format("Column %s is a map of %s->%s (CQL type %s), cannot be retrieved as a map of %s->%s", getName(i), expectedKeysClass, expectedValuesClass, type, keysClass, valuesClass));
+
+        ByteBuffer value = getValue(i);
+        if (value == null)
+            return Collections.<K, V>emptyMap();
+
+        return Collections.unmodifiableMap((Map<K, V>)type.codec(protocolVersion).deserialize(value));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public <K, V> Map<K, V> getMap(int i, TypeToken<K> keysType, TypeToken<V> valuesType) {
+        DataType type = getType(i);
+        if (type.getName() != DataType.Name.MAP)
+            throw new InvalidTypeException(String.format("Column %s is not of map type", getName(i)));
+
+        DataType expectedKeysType = type.getTypeArguments().get(0);
+        DataType expectedValuesType = type.getTypeArguments().get(1);
+        if (!expectedKeysType.canBeDeserializedAs(keysType) || !expectedValuesType.canBeDeserializedAs(valuesType))
+            throw new InvalidTypeException(String.format("Column %s has CQL type %s, cannot be retrieved as a map of %s->%s", getName(i), type, keysType, valuesType));
 
         ByteBuffer value = getValue(i);
         if (value == null)
@@ -376,5 +442,27 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
 
         // tuples always use the protocol V3 to encode values
         return (TupleValue)type.codec(ProtocolVersion.V3).deserialize(value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Object getObject(int i) {
+        ByteBuffer raw = getValue(i);
+        DataType type = getType(i);
+        if (raw == null)
+            switch (type.getName()) {
+                case LIST:
+                    return Collections.emptyList();
+                case SET:
+                    return Collections.emptySet();
+                case MAP:
+                    return Collections.emptyMap();
+                default:
+                    return null;
+            }
+        else
+            return type.deserialize(raw, protocolVersion);
     }
 }

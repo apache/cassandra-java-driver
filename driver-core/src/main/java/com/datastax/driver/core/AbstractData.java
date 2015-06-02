@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -268,6 +268,21 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             checkType(indexes[i], DataType.Name.INET);
             setValue(indexes[i], value);
         }
+        return wrapped;
+    }
+
+    // setToken is package-private because we only want to expose it in BoundStatement
+    T setToken(int i, Token v) {
+        if (v == null)
+            throw new NullPointerException(String.format("Cannot set a null token for column %s", getName(i)));
+        checkType(i, v.getType().getName());
+        return setValue(i, v.getType().codec(protocolVersion).serialize(v.getValue()));
+    }
+
+    T setToken(String name, Token v) {
+        int[] indexes = getAllIndexesOf(name);
+        for (int i = 0; i < indexes.length; i++)
+            setToken(indexes[i], v);
         return wrapped;
     }
 

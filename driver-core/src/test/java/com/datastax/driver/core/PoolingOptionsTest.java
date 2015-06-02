@@ -1,96 +1,87 @@
+/*
+ *      Copyright (C) 2012-2015 DataStax Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package com.datastax.driver.core;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
-import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
-import com.datastax.driver.core.Host.State;
-import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
-import com.datastax.driver.core.policies.LimitingLoadBalancingPolicy;
-import com.datastax.driver.core.policies.RoundRobinPolicy;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.*;
 
-import static com.datastax.driver.core.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
-public class PoolingOptionsTest {
+public class PoolingOptionsTest extends CCMBridge.PerClassSingleNodeCluster {
+    @Override
+    protected Collection<String> getTableDefinitions() {
+        return Collections.emptyList();
+    }
 
     /**
-     * Tests {@link PoolingOptions#refreshConnectedHost(Host)} through a custom load balancing policy.
+     * <p>
+     * Validates that if a custom executor is provided via {@link PoolingOptions#setInitializationExecutor} that it
+     * is used to create and tear down connections.
+     * </p>
+     *
+     * @test_category connection:connection_pool
+     * @expected_result executor is used and successfully able to connect and tear down connections.
+     * @jira_ticket JAVA-692
+     * @since 2.0.10, 2.1.6
      */
-    @Test(groups = "long")
-    public void should_refresh_single_connected_host() {
-        CCMBridge ccm = null;
-        Cluster cluster = null;
+    @Test(groups = "short")
+    public void should_be_able_to_use_custom_initialization_executor() {
+        ThreadPoolExecutor executor = spy(new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>()));
+
+        PoolingOptions poolingOptions = new PoolingOptions();
+        poolingOptions.setInitializationExecutor(executor);
+
+        Cluster cluster = Cluster.builder()
+                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                .withPoolingOptions(poolingOptions).build();
         try {
-            // This will make the driver use at most 2 hosts, the others will be ignored
-            LimitingLoadBalancingPolicy loadBalancingPolicy = new LimitingLoadBalancingPolicy(new RoundRobinPolicy(), 2, 1);
+            cluster.init();
+            // Ensure executor used.
+            verify(executor, atLeastOnce()).execute(any(Runnable.class));
 
-            // Setup a 3-host cluster, start only two hosts so that we know in advance which ones the policy will use
-            ccm = CCMBridge.create("test");
-            ccm.populate(3);
-            ccm.start(1);
-            ccm.start(2);
-            ccm.waitForUp(1);
-            ccm.waitForUp(2);
-
-            PoolingOptions poolingOptions = Mockito.spy(new PoolingOptions());
-            cluster = Cluster.builder()
-                             .addContactPoint(CCMBridge.ipOfNode(1))
-                             .withPoolingOptions(poolingOptions)
-                             .withLoadBalancingPolicy(loadBalancingPolicy)
-                             .withReconnectionPolicy(new ConstantReconnectionPolicy(1000))
-                             .build();
+            // Reset invocation count.
+            reset();
 
             Session session = cluster.connect();
 
-            assertThat(cluster).usesControlHost(1);
-            assertThat(cluster).host(1)
-                               .hasState(State.UP)
-                               .isAtDistance(HostDistance.LOCAL);
-            // Wait for the node to be up, because apparently on Jenkins it's still only ADDED when we reach this line
-            assertThat(cluster).host(2)
-                               .comesUpWithin(120, SECONDS)
-                               .isAtDistance(HostDistance.LOCAL);
+            // Ensure executor used again to establish core connections.
+            verify(executor, atLeastOnce()).execute(any(Runnable.class));
 
-            // Bring host 3 up, its presence should be acknowledged but it should be ignored
-            ccm.start(3);
-            ccm.waitForUp(3);
+            // Expect core connections + control connection.
+            assertThat(cluster.getMetrics().getOpenConnections().getValue()).isEqualTo(
+                    TestUtils.numberOfLocalCoreConnections(cluster) + 1);
 
-            assertThat(cluster).host(1)
-                               .hasState(State.UP)
-                               .isAtDistance(HostDistance.LOCAL);
-            assertThat(cluster).host(2)
-                               .hasState(State.UP)
-                               .isAtDistance(HostDistance.LOCAL);
-            assertThat(cluster).host(3)
-                               .comesUpWithin(120, SECONDS)
-                               .isAtDistance(HostDistance.IGNORED);
-            assertThat(session).hasNoPoolFor(3);
+            reset();
 
-            // Kill host 2, host 3 should take its place
-            ccm.stop(2);
-            TestUtils.waitFor(CCMBridge.ipOfNode(3), cluster, 120);
+            session.close();
 
-            assertThat(cluster).host(1)
-                               .hasState(State.UP)
-                               .isAtDistance(HostDistance.LOCAL);
-            assertThat(cluster).host(2)
-                               .hasState(State.DOWN);
-            assertThat(cluster).host(3)
-                               .hasState(State.UP)
-                               .isAtDistance(HostDistance.LOCAL);
-            assertThat(session).hasPoolFor(3);
+            // Executor should have been used to close connections associated with the session.
+            verify(executor, atLeastOnce()).execute(any(Runnable.class));
 
-            // This is when refreshConnectedHost should have been invoked, it triggers pool creation when
-            // we switch the node from IGNORED to UP:
-            Mockito.verify(poolingOptions)
-                   .refreshConnectedHost(TestUtils.findHost(cluster, 3));
-
+            // Only the control connection should remain.
+            assertThat(cluster.getMetrics().getOpenConnections().getValue()).isEqualTo(1);
         } finally {
-            if (cluster != null)
-                cluster.close();
-            if (ccm != null)
-                ccm.remove();
+            cluster.close();
+            executor.shutdown();
         }
     }
 }

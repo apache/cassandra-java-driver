@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 
 class Requests {
 
@@ -35,7 +35,7 @@ class Requests {
         public static final String COMPRESSION_OPTION = "COMPRESSION";
 
         public static final Message.Coder<Startup> coder = new Message.Coder<Startup>() {
-            public void encode(Startup msg, ChannelBuffer dest, ProtocolVersion version) {
+            public void encode(Startup msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeStringMap(msg.options, dest);
             }
 
@@ -67,7 +67,7 @@ class Requests {
 
         public static final Message.Coder<Credentials> coder = new Message.Coder<Credentials>() {
 
-            public void encode(Credentials msg, ChannelBuffer dest, ProtocolVersion version) {
+            public void encode(Credentials msg, ByteBuf dest, ProtocolVersion version) {
                 assert version == ProtocolVersion.V1;
                 CBUtil.writeStringMap(msg.credentials, dest);
             }
@@ -90,7 +90,7 @@ class Requests {
 
         public static final Message.Coder<Options> coder = new Message.Coder<Options>()
         {
-            public void encode(Options msg, ChannelBuffer dest, ProtocolVersion version) {}
+            public void encode(Options msg, ByteBuf dest, ProtocolVersion version) {}
 
             public int encodedSize(Options msg, ProtocolVersion version) {
                 return 0;
@@ -110,7 +110,7 @@ class Requests {
     public static class Query extends Message.Request {
 
         public static final Message.Coder<Query> coder = new Message.Coder<Query>() {
-            public void encode(Query msg, ChannelBuffer dest, ProtocolVersion version) {
+            public void encode(Query msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeLongString(msg.query, dest);
                 msg.options.encode(dest, version);
             }
@@ -143,7 +143,7 @@ class Requests {
     public static class Execute extends Message.Request {
 
         public static final Message.Coder<Execute> coder = new Message.Coder<Execute>() {
-            public void encode(Execute msg, ChannelBuffer dest, ProtocolVersion version) {
+            public void encode(Execute msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeBytes(msg.statementId.bytes, dest);
                 msg.options.encode(dest, version);
             }
@@ -248,7 +248,7 @@ class Requests {
                 flags.add(QueryFlag.DEFAULT_TIMESTAMP);
         }
 
-        public void encode(ChannelBuffer dest, ProtocolVersion version) {
+        public void encode(ByteBuf dest, ProtocolVersion version) {
             switch (version) {
                 case V1:
                     if (flags.contains(QueryFlag.VALUES))
@@ -310,7 +310,7 @@ class Requests {
     public static class Batch extends Message.Request {
 
         public static final Message.Coder<Batch> coder = new Message.Coder<Batch>() {
-            public void encode(Batch msg, ChannelBuffer dest, ProtocolVersion version) {
+            public void encode(Batch msg, ByteBuf dest, ProtocolVersion version) {
                 int queries = msg.queryOrIdList.size();
                 assert queries <= 0xFFFF;
 
@@ -398,7 +398,7 @@ class Requests {
                 flags.add(QueryFlag.DEFAULT_TIMESTAMP);
         }
 
-        public void encode(ChannelBuffer dest, ProtocolVersion version) {
+        public void encode(ByteBuf dest, ProtocolVersion version) {
             switch (version) {
                 case V2:
                     CBUtil.writeConsistencyLevel(consistency, dest);
@@ -445,7 +445,7 @@ class Requests {
 
         public static final Message.Coder<Prepare> coder = new Message.Coder<Prepare>() {
 
-            public void encode(Prepare msg, ChannelBuffer dest, ProtocolVersion version) {
+            public void encode(Prepare msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeLongString(msg.query, dest);
             }
 
@@ -470,7 +470,7 @@ class Requests {
     public static class Register extends Message.Request {
 
         public static final Message.Coder<Register> coder = new Message.Coder<Register>() {
-            public void encode(Register msg, ChannelBuffer dest, ProtocolVersion version) {
+            public void encode(Register msg, ByteBuf dest, ProtocolVersion version) {
                 dest.writeShort(msg.eventTypes.size());
                 for (ProtocolEvent.Type type : msg.eventTypes)
                     CBUtil.writeEnumValue(type, dest);
@@ -501,7 +501,7 @@ class Requests {
 
         public static final Message.Coder<AuthResponse> coder = new Message.Coder<AuthResponse>() {
 
-            public void encode(AuthResponse response, ChannelBuffer dest, ProtocolVersion version) {
+            public void encode(AuthResponse response, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeValue(response.token, dest);
             }
 

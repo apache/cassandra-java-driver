@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 /**
  * A set of connections to a live host.
  *
@@ -26,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 abstract class HostConnectionPool {
 
-    static HostConnectionPool newInstance(Host host, HostDistance hostDistance, SessionManager manager, ProtocolVersion version) throws ConnectionException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+    static HostConnectionPool newInstance(Host host, HostDistance hostDistance, SessionManager manager, ProtocolVersion version) {
         switch (version) {
             case V1:
             case V2:
@@ -44,6 +46,9 @@ abstract class HostConnectionPool {
 
     protected final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
+    protected enum Phase { INITIALIZING, READY, INIT_FAILED, CLOSING }
+    protected final AtomicReference<Phase> phase = new AtomicReference<Phase>(Phase.INITIALIZING);
+
     protected HostConnectionPool(Host host, HostDistance hostDistance, SessionManager manager) {
         assert hostDistance != HostDistance.IGNORED;
         this.host = host;
@@ -51,15 +56,26 @@ abstract class HostConnectionPool {
         this.manager = manager;
     }
 
-    abstract PooledConnection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException;
+    /**
+     * @param reusedConnection an existing connection (from a reconnection attempt) that we want to
+     *                         reuse as part of this pool. Might be null or already used by another
+     *                         pool.
+     */
+    abstract ListenableFuture<Void> initAsync(Connection reusedConnection);
 
-    abstract void returnConnection(PooledConnection connection);
+    abstract Connection borrowConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException;
+
+    abstract void returnConnection(Connection connection);
 
     abstract void ensureCoreConnections();
 
-    abstract void replaceDefunctConnection(final PooledConnection connection);
+    abstract void replaceDefunctConnection(final Connection connection);
+
+    abstract void cleanupIdleConnections(long now);
 
     abstract int opened();
+
+    abstract int trashed();
 
     abstract int inFlightQueriesCount();
 
@@ -74,6 +90,8 @@ abstract class HostConnectionPool {
         CloseFuture future = closeFuture.get();
         if (future != null)
             return future;
+
+        phase.set(Phase.CLOSING);
 
         future = makeCloseFuture();
 

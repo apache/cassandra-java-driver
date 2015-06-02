@@ -1,3 +1,18 @@
+/*
+ *      Copyright (C) 2012-2015 DataStax Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package com.datastax.driver.mapping;
 
 import java.util.Collection;
@@ -9,13 +24,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.Accessor;
+import com.datastax.driver.mapping.annotations.Param;
 import com.datastax.driver.mapping.annotations.Query;
 
 public class MapperAccessorTest extends CCMBridge.PerClassSingleNodeCluster {
 
-    @Override protected Collection<String> getTableDefinitions() {
-        return Lists.newArrayList("CREATE TABLE foo (i int primary key)");
+    @Override
+    protected Collection<String> getTableDefinitions() {
+        return Lists.newArrayList("CREATE TABLE foo (k int primary key, v text)");
     }
 
     @Test(groups = "short")
@@ -36,9 +55,45 @@ public class MapperAccessorTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(accessor.hashCode()).isEqualTo(System.identityHashCode(accessor));
     }
 
+    @Test(groups = "short")
+    @CassandraVersion(major=2.0)
+    public void should_allow_null_argument_in_accessor_when_set_by_name() {
+        FooAccessor accessor = new MappingManager(session)
+            .createAccessor(FooAccessor.class);
+
+        accessor.insert(1, null);
+        Row row = session.execute("select * from foo where k = 1").one();
+
+        assertThat(row.getString("v")).isNull();
+    }
+
+    @Test(groups = "short")
+    public void should_allow_null_argument_in_accessor_when_set_by_index() {
+        FooBindMarkerAccessor accessor = new MappingManager(session)
+            .createAccessor(FooBindMarkerAccessor.class);
+
+        accessor.insert(1, null);
+
+        Row row = session.execute("select * from foo where k = 1").one();
+
+        assertThat(row.getString("v")).isNull();
+    }
+
     @Accessor
     public interface SystemAccessor {
         @Query("select release_version from system.local")
         ResultSet getCassandraVersion();
+    }
+
+    @Accessor
+    public interface FooAccessor {
+        @Query("insert into foo (k, v) values (:k, :v)")
+        ResultSet insert(@Param("k") int k, @Param("v") String v);
+    }
+
+    @Accessor
+    public interface FooBindMarkerAccessor {
+        @Query("insert into foo (k, v) values (?, ?)")
+        ResultSet insert(int k, String v);
     }
 }

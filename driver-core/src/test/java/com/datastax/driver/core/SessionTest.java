@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -15,21 +15,32 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.*;
+import java.net.InetSocketAddress;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.core.utils.SocketChannelMonitor;
+import io.netty.channel.socket.SocketChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
+
+
 
 /**
  * Simple test of the Sessions methods against a one node cluster.
  */
 public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
+
+    private static final Logger logger = LoggerFactory.getLogger(SessionTest.class);
 
     private static final String TABLE1 = "test1";
     private static final String TABLE2 = "test2";
@@ -103,19 +114,38 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(rows.get(0).getLong("c"), 2L);
     }
 
+    /**
+     * Validates that a session can be established using snappy compression and executes some queries that inserts and
+     * retrieves data using that session.
+     *
+     * @test_category connection:compression
+     * @expected_result session established and queries made successfully using it.
+     */
     @Test(groups = "short")
-    public void compressionTest() throws Exception {
+    public void session_should_function_with_snappy_compression() throws Exception {
+        compressionTest(ProtocolOptions.Compression.SNAPPY);
+    }
 
-        // Same as executeTest, but with compression enabled
+    /**
+     * Validates that a session can be established using lz4 compression and executes some queries that inserts and
+     * retrieves data using that session.
+     *
+     * @test_category connection:compression
+     * @expected_result session established and queries made successfully using it.
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major=2.0)
+    public void session_should_function_with_lz4_compression() throws Exception {
+        compressionTest(ProtocolOptions.Compression.LZ4);
+    }
 
-        cluster.getConfiguration().getProtocolOptions().setCompression(ProtocolOptions.Compression.SNAPPY);
-
+    public void compressionTest(ProtocolOptions.Compression compression) {
+        cluster.getConfiguration().getProtocolOptions().setCompression(compression);
         try {
-
-            Session compressedSession = cluster.connect(TestUtils.SIMPLE_KEYSPACE);
+            Session compressedSession = cluster.connect(keyspace);
 
             // Simple calls to all versions of the execute/executeAsync methods
-            String key = "execute_compressed_test";
+            String key = "execute_compressed_test_" + compression;
             ResultSet rs = compressedSession.execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE3, key, "foo", 42, 24.03f));
             assertTrue(rs.isExhausted());
 
@@ -134,78 +164,6 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @Test(groups = "short")
-    public void getStateTest() throws Exception {
-        Session.State state = session.getState();
-        Host host = state.getConnectedHosts().iterator().next();
-
-        String hostAddress = String.format("/%s1", CCMBridge.IP_PREFIX);
-
-        assertEquals(state.getConnectedHosts().size(), 1);
-        assertEquals(host.getAddress().toString(), hostAddress);
-        assertEquals(host.getDatacenter(), "datacenter1");
-        assertEquals(host.getRack(), "rack1");
-        assertEquals(host.getSocketAddress().toString(), hostAddress + ":9042");
-
-        assertEquals(state.getOpenConnections(host), TestUtils.numberOfLocalCoreConnections(cluster));
-        assertEquals(state.getInFlightQueries(host), 0);
-        assertEquals(state.getSession(), session);
-    }
-
-    @Test(groups = "short")
-    public void connectionLeakTest() throws Exception {
-        // Checking for JAVA-342
-
-        // give the driver time to close other sessions in this class
-        Thread.sleep(10);
-
-        // create a new cluster object and ensure 0 sessions and connections
-        Cluster cluster = Cluster.builder().addContactPoints(CCMBridge.IP_PREFIX + '1').build();
-        assertEquals(cluster.manager.sessions.size(), 0);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 0);
-
-        Session session = cluster.connect();
-        assertEquals(cluster.manager.sessions.size(), 1);
-        int coreConnections = TestUtils.numberOfLocalCoreConnections(cluster);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(),
-                     1 + coreConnections);
-
-        // ensure sessions.size() returns to 0 with only 1 active connection
-        session.close();
-        assertEquals(cluster.manager.sessions.size(), 0);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-
-        try {
-            Session thisSession;
-
-            // ensure bootstrapping a node does not create additional connections
-            cassandraCluster.bootstrapNode(2);
-            assertEquals(cluster.manager.sessions.size(), 0);
-            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-
-            // ensure a new session gets registered and control connections are established
-            // an additional 2 control connections should be seen for node2
-            thisSession = cluster.connect();
-            assertEquals(cluster.manager.sessions.size(), 1);
-            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(),
-                         1 + coreConnections * 2);
-
-            // ensure bootstrapping a node does not create additional connections that won't get cleaned up
-            thisSession.close();
-            assertEquals(cluster.manager.sessions.size(), 0);
-            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-
-        } finally {
-            // ensure we decommission node2 for the rest of the tests
-            cassandraCluster.decommissionNode(2);
-
-            assertEquals(cluster.manager.sessions.size(), 0);
-            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-
-            cluster.close();
-        }
-    }
-
     /**
      * Checks for deadlocks when a session shutdown races with the initialization of the cluster (JAVA-418).
      */
@@ -215,7 +173,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
             // Use our own cluster and session (not the ones provided by the parent class) because we want an uninitialized cluster
             // (note the use of newSession below)
-            final Cluster cluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "1").build();
+            final Cluster cluster = Cluster.builder().addContactPointsWithPorts(Collections.singletonList(hostAddress)).build();
             final Session session = cluster.newSession();
 
             // Spawn two threads to simulate the race

@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -26,15 +26,17 @@ public class Policies {
     private static final ReconnectionPolicy DEFAULT_RECONNECTION_POLICY = new ExponentialReconnectionPolicy(1000, 10 * 60 * 1000);
     private static final RetryPolicy DEFAULT_RETRY_POLICY = DefaultRetryPolicy.INSTANCE;
     private static final AddressTranslater DEFAULT_ADDRESS_TRANSLATER = new IdentityTranslater();
+    private static final SpeculativeExecutionPolicy DEFAULT_SPECULATIVE_EXECUTION_POLICY = NoSpeculativeExecutionPolicy.INSTANCE;
 
     private final LoadBalancingPolicy loadBalancingPolicy;
     private final ReconnectionPolicy reconnectionPolicy;
     private final RetryPolicy retryPolicy;
     private final AddressTranslater addressTranslater;
     private final TimestampGenerator timestampGenerator;
+    private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
 
     public Policies() {
-        this(defaultLoadBalancingPolicy(), defaultReconnectionPolicy(), defaultRetryPolicy(), defaultAddressTranslater(), defaultTimestampGenerator());
+        this(defaultLoadBalancingPolicy(), defaultReconnectionPolicy(), defaultRetryPolicy(), defaultAddressTranslater(), defaultTimestampGenerator(), defaultSpeculativeExecutionPolicy());
     }
 
     /**
@@ -48,8 +50,9 @@ public class Policies {
      */
     public Policies(LoadBalancingPolicy loadBalancingPolicy,
                     ReconnectionPolicy reconnectionPolicy,
-                    RetryPolicy retryPolicy) {
-        this(loadBalancingPolicy, reconnectionPolicy, retryPolicy, DEFAULT_ADDRESS_TRANSLATER, defaultTimestampGenerator());
+                    RetryPolicy retryPolicy,
+                    SpeculativeExecutionPolicy speculativeExecutionPolicy) {
+        this(loadBalancingPolicy, reconnectionPolicy, retryPolicy, DEFAULT_ADDRESS_TRANSLATER, speculativeExecutionPolicy);
     }
 
     /**
@@ -63,12 +66,14 @@ public class Policies {
     public Policies(LoadBalancingPolicy loadBalancingPolicy,
                     ReconnectionPolicy reconnectionPolicy,
                     RetryPolicy retryPolicy,
-                    AddressTranslater addressTranslater) {
+                    AddressTranslater addressTranslater,
+                    SpeculativeExecutionPolicy speculativeExecutionPolicy) {
         // NB: this constructor is provided for backward compatibility with 2.1.0
         this.loadBalancingPolicy = loadBalancingPolicy;
         this.reconnectionPolicy = reconnectionPolicy;
         this.retryPolicy = retryPolicy;
         this.addressTranslater = addressTranslater;
+        this.speculativeExecutionPolicy = speculativeExecutionPolicy;
         this.timestampGenerator = defaultTimestampGenerator();
     }
 
@@ -80,17 +85,20 @@ public class Policies {
      * @param retryPolicy the retry policy to use.
      * @param addressTranslater the address translater to use.
      * @param timestampGenerator the timestamp generator to use.
+     * @param speculativeExecutionPolicy the speculative execution policy to use.
      */
     public Policies(LoadBalancingPolicy loadBalancingPolicy,
                     ReconnectionPolicy reconnectionPolicy,
                     RetryPolicy retryPolicy,
                     AddressTranslater addressTranslater,
-                    TimestampGenerator timestampGenerator) {
+                    TimestampGenerator timestampGenerator,
+                    SpeculativeExecutionPolicy speculativeExecutionPolicy) {
         this.loadBalancingPolicy = loadBalancingPolicy;
         this.reconnectionPolicy = reconnectionPolicy;
         this.retryPolicy = retryPolicy;
         this.addressTranslater = addressTranslater;
         this.timestampGenerator = timestampGenerator;
+        this.speculativeExecutionPolicy = speculativeExecutionPolicy;
     }
 
     /**
@@ -157,6 +165,17 @@ public class Policies {
     }
 
     /**
+     * The default speculative retry policy.
+     * <p>
+     * The default speculative retry policy is a {@link NoSpeculativeExecutionPolicy}.
+     *
+     * @return the default speculative retry policy.
+     */
+    public static SpeculativeExecutionPolicy defaultSpeculativeExecutionPolicy() {
+        return DEFAULT_SPECULATIVE_EXECUTION_POLICY;
+    }
+
+    /**
      * The load balancing policy in use.
      * <p>
      * The load balancing policy defines how Cassandra hosts are picked for queries.
@@ -206,5 +225,14 @@ public class Policies {
      */
     public TimestampGenerator getTimestampGenerator() {
         return timestampGenerator;
+    }
+
+    /**
+     * The speculative execution policy in use.
+     *
+     * @return the speculative execution policy in use.
+     */
+    public SpeculativeExecutionPolicy getSpeculativeExecutionPolicy() {
+        return speculativeExecutionPolicy;
     }
 }

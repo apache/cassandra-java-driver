@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -71,60 +71,38 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                             ResultSet rs = ArrayBackedResultSet.fromMessage(rm, session, protocolVersion, info, statement);
                             switch (scc.change) {
                                 case CREATED:
-                                    switch (scc.target) {
-                                        case KEYSPACE:
-                                            session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, null, null);
-                                            break;
-                                        case TABLE:
-                                            session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, scc.name, null);
-                                            break;
-                                        case TYPE:
-                                            session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, null, scc.name);
-                                            break;
-                                    }
+                                case UPDATED:
+                                    session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.targetType, scc.targetKeyspace, scc.targetName);
                                     break;
                                 case DROPPED:
                                     KeyspaceMetadata keyspace;
-                                    switch (scc.target) {
+                                    switch (scc.targetType) {
                                         case KEYSPACE:
                                             // If that the one keyspace we are logged in, reset to null (it shouldn't really happen but ...)
                                             // Note: Actually, Cassandra doesn't do that so we don't either as this could confuse prepared statements.
                                             // We'll add it back if CASSANDRA-5358 changes that behavior
                                             //if (scc.keyspace.equals(session.poolsState.keyspace))
                                             //    session.poolsState.setKeyspace(null);
-                                            session.cluster.manager.metadata.removeKeyspace(scc.keyspace);
+                                            session.cluster.manager.metadata.removeKeyspace(scc.targetKeyspace);
                                             break;
                                         case TABLE:
-                                            keyspace = session.cluster.manager.metadata.getKeyspace(scc.keyspace);
+                                            keyspace = session.cluster.manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
                                             if (keyspace == null)
                                                 logger.warn("Received a DROPPED notification for table {}.{}, but this keyspace is unknown in our metadata",
-                                                    scc.keyspace, scc.name);
+                                                    scc.targetKeyspace, scc.targetName);
                                             else
-                                                keyspace.removeTable(scc.name);
+                                                keyspace.removeTable(scc.targetName);
                                             break;
                                         case TYPE:
-                                            keyspace = session.cluster.manager.metadata.getKeyspace(scc.keyspace);
+                                            keyspace = session.cluster.manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
                                             if (keyspace == null)
                                                 logger.warn("Received a DROPPED notification for UDT {}.{}, but this keyspace is unknown in our metadata",
-                                                    scc.keyspace, scc.name);
+                                                    scc.targetKeyspace, scc.targetName);
                                             else
-                                                keyspace.removeUserType(scc.name);
+                                                keyspace.removeUserType(scc.targetName);
                                             break;
                                     }
-                                    this.setResult(rs);
-                                    break;
-                                case UPDATED:
-                                    switch (scc.target) {
-                                        case KEYSPACE:
-                                            session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, null, null);
-                                            break;
-                                        case TABLE:
-                                            session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, scc.name, null);
-                                            break;
-                                        case TYPE:
-                                            session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, null, scc.name);
-                                            break;
-                                    }
+                                    session.cluster.manager.waitForSchemaAgreementAndSignal(connection, this, rs);
                                     break;
                                 default:
                                     logger.info("Ignoring unknown schema change result");
@@ -167,7 +145,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
     public boolean onTimeout(Connection connection, long latency, int retryCount) {
         // This is only called for internal calls (i.e, when the future is not wrapped in RequestHandler).
         // So just set an exception for the final result, which should be handled correctly by said internal call.
-        setException(new ConnectionException(connection.address, "Operation timed out"));
+        setException(new OperationTimedOutException(connection.address));
         return true;
     }
 
@@ -275,7 +253,9 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
         if (!super.cancel(mayInterruptIfRunning))
             return false;
 
-        handler.cancel();
+        if(handler != null) {
+            handler.cancel();
+        }
         return true;
     }
 

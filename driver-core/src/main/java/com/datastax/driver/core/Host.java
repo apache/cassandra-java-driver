@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2014 DataStax Inc.
+ *      Copyright (C) 2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -25,8 +26,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.datastax.driver.core.policies.ReconnectionPolicy;
 
 /**
  * A Cassandra node.
@@ -40,16 +39,13 @@ public class Host {
 
     private final InetSocketAddress address;
 
-    enum State { ADDED, DOWN, SUSPECT, UP }
+    enum State { ADDED, DOWN, UP }
     volatile State state;
     /** Ensures state change notifications for that host are handled serially */
     final ReentrantLock notificationsLock = new ReentrantLock(true);
 
     private final ConvictionPolicy policy;
     private final Cluster.Manager manager;
-
-    // Tracks the first "immediate" reconnection attempt when a node get suspected.
-    final AtomicReference<ListenableFuture<?>> initialReconnectionAttempt = new AtomicReference<ListenableFuture<?>>(Futures.immediateFuture(null));
 
     // Tracks later reconnection attempts to that host so we avoid adding multiple tasks.
     final AtomicReference<ListenableFuture<?>> reconnectionAttempt = new AtomicReference<ListenableFuture<?>>();
@@ -65,6 +61,8 @@ public class Host {
     // ControlConnection.refreshNodeInfo. We don't want to expose however because we don't always have the info
     // (partly because the 'System.local' doesn't have it for some weird reason for instance).
     volatile InetAddress listenAddress;
+
+    private volatile Set<Token> tokens;
 
     // ClusterMetadata keeps one Host object per inet address and we rely on this (more precisely,
     // we rely on the fact that we can use Object equality as a valid equality), so don't use
@@ -159,6 +157,19 @@ public class Host {
     }
 
     /**
+     * Returns the tokens that this host owns.
+     *
+     * @return the (immutable) set of tokens.
+     */
+    public Set<Token> getTokens() {
+        return tokens;
+    }
+
+    void setTokens(Set<Token> tokens) {
+        this.tokens = tokens;
+    }
+
+    /**
      * Returns whether the host is considered up by the driver.
      * <p>
      * Please note that this is only the view of the driver and may not reflect
@@ -172,9 +183,20 @@ public class Host {
      * @return whether the node is considered up.
      */
     public boolean isUp() {
-        // Consider a suspected host UP until proved otherwise to avoid
-        // having the status flapping if it turns out the host is not really down.
-        return state == State.UP || state == State.SUSPECT;
+        return state == State.UP;
+    }
+
+    /**
+     * Returns a description of the host's state, as seen by the driver.
+     * <p>
+     * This is exposed for debugging purposes only; the format of this string might
+     * change between driver versions, so clients should not make any assumptions
+     * about it.
+     *
+     * @return a description of the host's state.
+     */
+    public String getState() {
+        return state.name();
     }
 
     /**
@@ -185,9 +207,13 @@ public class Host {
      * we are trying suspected nodes.
      *
      * @return the future.
+     *
+     * @deprecated the suspicion mechanism has been disabled. This will always return
+     * a completed future.
      */
+    @Deprecated
     public ListenableFuture<?> getInitialReconnectionAttemptFuture() {
-        return initialReconnectionAttempt.get();
+        return Futures.immediateFuture(null);
     }
 
     /**
@@ -207,14 +233,17 @@ public class Host {
     }
 
     /**
-     * Triggers an asynchronous one-time reconnection attempt to this host.
+     * Triggers an asynchronous reconnection attempt to this host.
      * <p>
-     * If reconnection succeeds, the host will be marked {@code UP} and its connection pool(s)
-     * will be initialized (unless the load balancing policy returns {@link HostDistance#IGNORED}
-     * for it). If reconnection fails, no further attempts will be scheduled.
+     * This method is intended for load balancing policies that mark hosts as {@link HostDistance#IGNORED IGNORED},
+     * but still need a way to periodically check these hosts' states (UP / DOWN).
      * <p>
-     * This method has no effect if the node is already {@code UP}, or if a reconnection attempt
-     * is already in progress.
+     * For a host that is at distance {@code IGNORED}, this method will try to reconnect exactly once: if
+     * reconnection succeeds, the host is marked {@code UP}; otherwise, no further attempts will be scheduled.
+     * It has no effect if the node is already {@code UP}, or if a reconnection attempt is already in progress.
+     * <p>
+     * Note that if the host is <em>not</em> a distance {@code IGNORED}, this method <em>will</em> trigger a periodic
+     * reconnection attempt if the reconnection fails.
      */
     public void tryReconnectOnce() {
         this.manager.startSingleReconnectionAttempt(this);
@@ -250,14 +279,6 @@ public class Host {
     void setUp() {
         policy.reset();
         state = State.UP;
-    }
-
-    boolean setSuspected() {
-        if (state != State.UP)
-            return false;
-
-        state = State.SUSPECT;
-        return true;
     }
 
     boolean signalConnectionFailure(ConnectionException exception) {
@@ -309,7 +330,11 @@ public class Host {
          * that is suspected down turns out to be truly down (that is, the driver
          * cannot successfully connect to it right away), then {@link #onDown} will
          * be called.
+         *
+         * @deprecated the suspicion mechanism has been disabled. This will never
+         * get called.
          */
+        @Deprecated
         public void onSuspected(Host host);
 
         /**
