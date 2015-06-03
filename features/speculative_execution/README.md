@@ -332,11 +332,7 @@ But now the second execution of the first query finally reaches its
 target node, which applies the mutation. The row that you've just
 deleted is back!
 
-The workaround is to use a timestamp with your queries:
-
-    insert into my_table (k, v) values (1, 1) USING TIMESTAMP 1432764000;
-
-If you're using native protocol v3, you can also enable client-side
-timestamps to have this done automatically; see
-[this blog post](http://www.datastax.com/dev/blog/java-driver-2-1-2-native-protocol-v3)
-for more information.
+The workaround is to use
+[client-sidetimestamps](../query_timestamps/#client-side-generation) (if
+you're using native protocol v3 or more, the driver already does this
+automatically.
