@@ -93,7 +93,7 @@ for (Row row : rs) {
 }
 ```
 
-### Manual paging
+### Saving and reusing the paging state
 
 Sometimes it is convenient to save the paging state in order to restore
 it later. For example, consider a stateless web service that displays a
@@ -216,3 +216,49 @@ There are two situations where you might want to use the unsafe API:
 
 [gpsu]: http://www.datastax.com/drivers/java/2.1/com/datastax/driver/core/ExecutionInfo.html#getPagingStateUnsafe()
 [spsu]: http://www.datastax.com/drivers/java/2.1/com/datastax/driver/core/Statement.html#setPagingStateUnsafe(byte[])
+
+
+### Offset queries
+
+Saving the paging state works well when you only let the user move from
+one page to the next. But it doesn't allow random jumps (like "go
+directly to page 10"), because you can't fetch a page unless you have
+the paging state of the previous one. Such a feature would require
+*offset queries*, but they are not natively supported by Cassandra (see
+[CASSANDRA-6511](https://issues.apache.org/jira/browse/CASSANDRA-6511)).
+The rationale is that offset queries are inherently inefficient (the
+performance will always be linear in the number of rows skipped), so the
+Cassandra team doesn't want to encourage their use.
+
+If you really want offset queries, you can emulate them client-side.
+You'll still get linear performance, but maybe that's acceptable for
+your use case. For example, if each page holds 10 rows and you show at
+most 20 pages, this means you'll fetch at most 190 extra rows, which
+doesn't sound like a big deal.
+
+For example, if the page size is 10, the fetch size is 50, and the user
+asks for page 12 (rows 110 to 119):
+
+* execute the statement a first time (the result set contains rows 0 to
+  49, but you're not going to use them, only the paging state);
+* execute the statement a second time with the paging state from the
+  first query;
+* execute the statement a third time with the paging state from the
+  second query. The result set now contains rows 100 to 149;
+* skip the first 10 rows of the iterator. Read the next 10 rows and
+  discard the remaining ones.
+
+You'll want to experiment with the fetch size to find the best balance:
+too small means many background queries; too big means bigger messages
+and too many unneeded rows returned (we picked 50 above for the sake of
+example, but it's probably too small -- the default is 5000).
+
+Again, offset queries are inefficient by nature. Emulating them
+client-side is a compromise when you think you can get away with the
+performance hit. We recommend that you:
+
+* test your code at scale with the expected query patterns, to make sure
+  that your assumptions are correct;
+* set a hard limit on the highest possible page number, to prevent
+  malicious users from triggering queries that would skip a huge amount
+  of rows.
