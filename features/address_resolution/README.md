@@ -31,7 +31,7 @@ Cluster cluster = Cluster.builder()
 Note: the contact points provided while creating the `Cluster` are not translated, only
 addresses retrieved from or sent by Cassandra nodes are.
 
-[at]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/AddressTranslator.html
+[at]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/policies/AddressTranslator.html
 
 ### EC2 multi-region
 
@@ -56,4 +56,4 @@ This class performs a reverse DNS lookup of the origin address, to find the doma
 target instance. Then it performs a forward DNS lookup of the domain name; the EC2 DNS does the
 private/public switch automatically based on location.
 
-[ec2]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/EC2MultiRegionAddressTranslator.html
+[ec2]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/policies/EC2MultiRegionAddressTranslator.html

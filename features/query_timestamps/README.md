@@ -57,7 +57,7 @@ statement.setDefaultTimestamp(1234567890);
 session.execute(statement);
 ```
 
-[tsg]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/TimestampGenerator.html
+[tsg]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TimestampGenerator.html
 
 ### Summary
 

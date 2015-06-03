@@ -28,16 +28,16 @@ exclusively Cassandra's binary protocol and Cassandra Query Language v3.
 * [Object mapper][mapper]
 
 
-[sync]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#execute(com.datastax.driver.core.Statement)
-[async]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)
-[simple_st]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SimpleStatement.html
-[prepared_st]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#prepare(com.datastax.driver.core.RegularStatement)
-[batch_st]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BatchStatement.html
+[sync]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Session.html#execute(com.datastax.driver.core.Statement)
+[async]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)
+[simple_st]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/SimpleStatement.html
+[prepared_st]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Session.html#prepare(com.datastax.driver.core.RegularStatement)
+[batch_st]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/BatchStatement.html
 [pool]: features/pooling/
-[lbp]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/LoadBalancingPolicy.html
-[retry_policy]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/RetryPolicy.html
-[query_builder]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/querybuilder/QueryBuilder.html
-[mapper]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/mapping/MappingManager.html 
+[lbp]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/policies/LoadBalancingPolicy.html
+[retry_policy]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/policies/RetryPolicy.html
+[query_builder]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/querybuilder/QueryBuilder.html
+[mapper]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/MappingManager.html
 
 The driver architecture is based on layers. At the bottom lies the driver core.
 This core handles everything related to the connections to a Cassandra
