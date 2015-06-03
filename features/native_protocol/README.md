@@ -31,7 +31,7 @@ same version to connect to Cassandra 2.1.4, you can use protocol v3.
 ### Controlling the protocol version
 
 To find out which version you're currently using, use
-[ProtocolOptions#getProtocolVersionEnum()][gpve]:
+[ProtocolOptions#getProtocolVersion()][gpv]:
 
 ```java
 ProtocolVersion myCurrentVersion = cluster.getConfiguration()
@@ -59,7 +59,7 @@ All host(s) tried for query failed
   [/127.0.0.1:9042] Host /127.0.0.1:9042 does not support protocol version V3 but V2))
 ```
 
-[gpve]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersionEnum()
+[gpv]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion()
 
 #### Protocol version with mixed clusters
 
@@ -103,5 +103,6 @@ To avoid this issue, you can use one the following workarounds:
 
 #### v3 to v4
 
-* custom payloads (see
-  [Custom payloads](../custom_payloads/))
+* [query warnings](http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/ExecutionInfo.html#getWarnings())
+* allowed unset values in bound statements
+* [Custom payloads](../custom_payloads/)
